@@ -1,3 +1,5 @@
+using ArgoBooks.Core.Models;
+
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
@@ -32,15 +34,14 @@ public interface IGlobalSettingsService
     /// <summary>
     /// Gets the list of recent companies.
     /// </summary>
-    /// <returns>List of recent company info.</returns>
-    IReadOnlyList<RecentCompanyInfo> GetRecentCompanies();
+    /// <returns>List of recent company file paths.</returns>
+    IReadOnlyList<string> GetRecentCompanies();
 
     /// <summary>
     /// Adds a company to the recent list.
     /// </summary>
-    /// <param name="name">Company name.</param>
     /// <param name="filePath">Path to company file.</param>
-    void AddRecentCompany(string name, string filePath);
+    void AddRecentCompany(string filePath);
 
     /// <summary>
     /// Removes a company from the recent list.
@@ -78,71 +79,4 @@ public class WindowStateSettings
     /// Whether window is maximized.
     /// </summary>
     public bool IsMaximized { get; set; }
-}
-
-/// <summary>
-/// Global application settings including window state.
-/// </summary>
-public class GlobalSettings
-{
-    /// <summary>
-    /// Saved window state.
-    /// </summary>
-    public WindowStateSettings? WindowState { get; set; }
-
-    /// <summary>
-    /// List of recently opened companies.
-    /// </summary>
-    public List<RecentCompanyInfo>? RecentCompanies { get; set; }
-
-    /// <summary>
-    /// Application theme (System, Light, Dark).
-    /// </summary>
-    public string? Theme { get; set; } = "System";
-
-    /// <summary>
-    /// Application language/locale.
-    /// </summary>
-    public string? Language { get; set; } = "en-US";
-
-    /// <summary>
-    /// Whether auto-save is enabled.
-    /// </summary>
-    public bool AutoSaveEnabled { get; set; } = true;
-
-    /// <summary>
-    /// Auto-save interval in seconds.
-    /// </summary>
-    public int AutoSaveIntervalSeconds { get; set; } = 300;
-
-    /// <summary>
-    /// Whether to check for updates on startup.
-    /// </summary>
-    public bool CheckForUpdates { get; set; } = true;
-
-    /// <summary>
-    /// Maximum number of recent companies to remember.
-    /// </summary>
-    public int MaxRecentCompanies { get; set; } = 10;
-}
-
-/// <summary>
-/// Information about a recently opened company.
-/// </summary>
-public class RecentCompanyInfo
-{
-    /// <summary>
-    /// Company name.
-    /// </summary>
-    public string? Name { get; set; }
-
-    /// <summary>
-    /// Full path to the company file.
-    /// </summary>
-    public string? FilePath { get; set; }
-
-    /// <summary>
-    /// When the company was last opened.
-    /// </summary>
-    public DateTime LastOpened { get; set; }
 }
