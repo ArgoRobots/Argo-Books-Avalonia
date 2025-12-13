@@ -3,10 +3,89 @@
         xmlns:vm="using:ArgoBooks.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:views="using:ArgoBooks.Views"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:controls="using:ArgoBooks.Controls"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="ArgoBooks.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{Binding WindowTitle}"
         Icon="/Assets/avalonia-logo.ico"
-        Title="ArgoBooks">
-        <views:MainView />
+        MinWidth="1024"
+        MinHeight="680"
+        Width="{Binding WindowWidth, Mode=TwoWay}"
+        Height="{Binding WindowHeight, Mode=TwoWay}"
+        WindowState="{Binding WindowState, Mode=TwoWay}"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}"
+        TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="PreferSystemChrome"
+        ExtendClientAreaTitleBarHeightHint="40"
+        SystemDecorations="Full">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- Modal Overlay (behind content but available for modals) -->
+        <controls:ModalOverlay x:Name="ModalOverlay"
+                               ZIndex="100" />
+
+        <!-- Main Application Shell -->
+        <DockPanel>
+            <!-- Custom Title Bar (for platforms supporting client area extension) -->
+            <Border DockPanel.Dock="Top"
+                    Height="40"
+                    Background="Transparent"
+                    IsHitTestVisible="True"
+                    x:Name="TitleBar">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- App Icon and Name -->
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                Spacing="8"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                IsHitTestVisible="False">
+                        <Image Source="/Assets/avalonia-logo.ico"
+                               Width="20" Height="20"
+                               VerticalAlignment="Center" />
+                        <TextBlock Text="Argo Books"
+                                   FontSize="{StaticResource FontSizeSm}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <!-- Separator and Company Name -->
+                        <TextBlock Text="-"
+                                   FontSize="{StaticResource FontSizeSm}"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center"
+                                   IsVisible="{Binding HasCompanyOpen}" />
+                        <TextBlock Text="{Binding CurrentCompanyName}"
+                                   FontSize="{StaticResource FontSizeSm}"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center"
+                                   IsVisible="{Binding HasCompanyOpen}" />
+                    </StackPanel>
+
+                    <!-- Drag Region (center) -->
+                    <Border Grid.Column="1"
+                            Background="Transparent"
+                            x:Name="DragRegion" />
+
+                    <!-- Window Controls placeholder - handled by system on most platforms -->
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                Margin="0,0,8,0"
+                                IsVisible="False"
+                                x:Name="WindowControls">
+                        <!-- Custom window controls if needed -->
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Main Content Area -->
+            <ContentControl Content="{Binding CurrentView}" />
+        </DockPanel>
+    </Panel>
 </Window>
