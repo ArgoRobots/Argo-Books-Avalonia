@@ -56,6 +56,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create header with navigation service
         HeaderViewModel = new HeaderViewModel(navigationService);
+
+        // Wire up hamburger menu to toggle sidebar
+        HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
     }
 
     /// <summary>

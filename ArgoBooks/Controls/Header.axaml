@@ -114,10 +114,10 @@
                 <Button Classes="header-icon"
                         Command="{Binding OpenUpgradeCommand}"
                         ToolTip.Tip="Upgrades">
-                    <Panel Width="20" Height="20">
-                        <Ellipse Fill="{DynamicResource PrimaryBrush}" />
-                        <PathIcon Data="M12 16V8M8 12l4-4 4 4"
-                                  Width="12" Height="12"
+                    <Panel Width="24" Height="24">
+                        <Ellipse Fill="{DynamicResource PrimaryBrush}" Width="24" Height="24" />
+                        <PathIcon Data="M12 4L6 10h4v8h4v-8h4L12 4z"
+                                  Width="14" Height="14"
                                   Foreground="White" />
                     </Panel>
                 </Button>
