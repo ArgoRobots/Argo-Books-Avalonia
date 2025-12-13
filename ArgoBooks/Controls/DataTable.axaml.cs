@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -24,8 +26,14 @@ public enum DataTableSelectionMode
 /// <summary>
 /// A data table control with sorting, pagination, search, and row selection.
 /// </summary>
-public partial class DataTable : UserControl
+public partial class DataTable : UserControl, INotifyPropertyChanged
 {
+    public new event PropertyChangedEventHandler? PropertyChanged;
+
+    protected void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
     private readonly List<object> _allItems = new();
     private readonly List<object> _filteredItems = new();
     private DataTableColumn? _currentSortColumn;
@@ -313,12 +321,28 @@ public partial class DataTable : UserControl
         SelectRowCommand = new RelayCommand<object>(SelectRow);
 
         InitializeComponent();
+    }
 
-        // Subscribe to property changes
-        this.GetObservable(ItemsSourceProperty).Subscribe(_ => OnItemsSourceChanged());
-        this.GetObservable(SearchTextProperty).Subscribe(_ => OnSearchTextChanged());
-        this.GetObservable(PageSizeProperty).Subscribe(_ => OnPagingChanged());
-        this.GetObservable(CurrentPageProperty).Subscribe(_ => UpdateDisplayedItems());
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == ItemsSourceProperty)
+        {
+            OnItemsSourceChanged();
+        }
+        else if (change.Property == SearchTextProperty)
+        {
+            OnSearchTextChanged();
+        }
+        else if (change.Property == PageSizeProperty)
+        {
+            OnPagingChanged();
+        }
+        else if (change.Property == CurrentPageProperty)
+        {
+            UpdateDisplayedItems();
+        }
     }
 
     private void OnItemsSourceChanged()

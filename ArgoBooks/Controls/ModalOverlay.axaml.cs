@@ -95,8 +95,16 @@ public partial class ModalOverlay : UserControl
     {
         BackdropClickCommand = new RelayCommand(OnBackdropClick);
         InitializeComponent();
+    }
 
-        this.GetObservable(IsOpenProperty).Subscribe(OnIsOpenChanged);
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == IsOpenProperty)
+        {
+            OnIsOpenChanged(IsOpen);
+        }
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

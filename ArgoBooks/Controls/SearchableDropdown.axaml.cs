@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -13,8 +15,14 @@ namespace ArgoBooks.Controls;
 /// <summary>
 /// A searchable dropdown control with filtering, keyboard navigation, and "Add new" support.
 /// </summary>
-public partial class SearchableDropdown : UserControl
+public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 {
+    public new event PropertyChangedEventHandler? PropertyChanged;
+
+    protected void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
     private TextBox? _searchTextBox;
     private int _highlightedIndex = -1;
 
@@ -236,10 +244,20 @@ public partial class SearchableDropdown : UserControl
         SelectItemCommand = new RelayCommand<object>(SelectItem);
 
         InitializeComponent();
+    }
 
-        // Subscribe to property changes
-        this.GetObservable(ItemsSourceProperty).Subscribe(_ => UpdateFilteredItems());
-        this.GetObservable(SearchTextProperty).Subscribe(_ => OnSearchTextChanged());
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == ItemsSourceProperty)
+        {
+            UpdateFilteredItems();
+        }
+        else if (change.Property == SearchTextProperty)
+        {
+            OnSearchTextChanged();
+        }
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)

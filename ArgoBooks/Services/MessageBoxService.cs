@@ -167,7 +167,7 @@ public class MessageBoxService : IMessageBoxService
                 messageBox.ResultSelected -= OnResultSelected;
             }
 
-            _resultTcs?.TrySetResult(e.Result);
+            _resultTcs?.TrySetResult(ConvertResult(e.Result));
         });
     }
 
@@ -204,6 +204,19 @@ public class MessageBoxService : IMessageBoxService
             MessageBoxButtons.YesNo => Controls.MessageBoxButtons.YesNo,
             MessageBoxButtons.YesNoCancel => Controls.MessageBoxButtons.YesNoCancel,
             _ => Controls.MessageBoxButtons.Ok
+        };
+    }
+
+    private static MessageBoxResult ConvertResult(Controls.MessageBoxResult result)
+    {
+        return result switch
+        {
+            Controls.MessageBoxResult.None => MessageBoxResult.None,
+            Controls.MessageBoxResult.Ok => MessageBoxResult.Ok,
+            Controls.MessageBoxResult.Cancel => MessageBoxResult.Cancel,
+            Controls.MessageBoxResult.Yes => MessageBoxResult.Yes,
+            Controls.MessageBoxResult.No => MessageBoxResult.No,
+            _ => MessageBoxResult.None
         };
     }
 }

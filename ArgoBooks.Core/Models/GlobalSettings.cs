@@ -1,3 +1,5 @@
+using ArgoBooks.Core.Services;
+
 namespace ArgoBooks.Core.Models;
 
 /// <summary>
@@ -11,6 +13,7 @@ public class GlobalSettings
     public UiSettings Ui { get; set; } = new();
     public LicenseSettings License { get; set; } = new();
     public PrivacySettings Privacy { get; set; } = new();
+    public WindowStateSettings? WindowState { get; set; }
 }
 
 public class WelcomeSettings

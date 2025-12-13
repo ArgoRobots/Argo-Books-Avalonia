@@ -124,9 +124,16 @@ public partial class LoadingSpinner : UserControl
     public LoadingSpinner()
     {
         InitializeComponent();
+    }
 
-        // Set default brush from theme
-        this.GetObservable(SpinnerBrushProperty).Subscribe(_ => UpdateBrush());
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == SpinnerBrushProperty)
+        {
+            UpdateBrush();
+        }
     }
 
     protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
@@ -140,7 +147,7 @@ public partial class LoadingSpinner : UserControl
         if (SpinnerBrush == null)
         {
             // Try to get the primary brush from resources
-            if (TryFindResource("PrimaryBrush", out var brush) && brush is IBrush primaryBrush)
+            if (this.TryFindResource("PrimaryBrush", this.ActualThemeVariant, out var brush) && brush is IBrush primaryBrush)
             {
                 SetCurrentValue(SpinnerBrushProperty, primaryBrush);
             }
