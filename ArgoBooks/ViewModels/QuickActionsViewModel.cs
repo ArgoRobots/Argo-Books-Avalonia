@@ -22,6 +22,9 @@ public partial class QuickActionsViewModel : ViewModelBase
     private bool _isOpen;
 
     [ObservableProperty]
+    private bool _isDropdownMode;
+
+    [ObservableProperty]
     private int _selectedIndex;
 
     /// <summary>
@@ -175,14 +178,36 @@ public partial class QuickActionsViewModel : ViewModelBase
     #region Commands
 
     /// <summary>
-    /// Opens the Quick Actions panel.
+    /// Opens the Quick Actions panel in dropdown mode (below search box).
+    /// </summary>
+    [RelayCommand]
+    private void OpenDropdown()
+    {
+        IsDropdownMode = true;
+        IsOpen = true;
+        SearchQuery = null;
+        FilterActions(null);
+    }
+
+    /// <summary>
+    /// Opens the Quick Actions panel in modal mode (centered).
+    /// </summary>
+    [RelayCommand]
+    private void OpenModal()
+    {
+        IsDropdownMode = false;
+        IsOpen = true;
+        SearchQuery = null;
+        FilterActions(null);
+    }
+
+    /// <summary>
+    /// Opens the Quick Actions panel (defaults to modal mode).
     /// </summary>
     [RelayCommand]
     private void Open()
     {
-        IsOpen = true;
-        SearchQuery = null;
-        FilterActions(null);
+        OpenModal();
     }
 
     /// <summary>

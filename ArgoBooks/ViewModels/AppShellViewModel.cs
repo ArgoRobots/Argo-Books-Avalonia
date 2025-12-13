@@ -69,8 +69,8 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
-        // Wire up header's quick actions button to open the panel
-        HeaderViewModel.OpenQuickActionsRequested += (_, _) => QuickActionsViewModel.OpenCommand.Execute(null);
+        // Wire up header's quick actions button to open the panel in dropdown mode
+        HeaderViewModel.OpenQuickActionsRequested += (_, _) => QuickActionsViewModel.OpenDropdownCommand.Execute(null);
 
         // Subscribe to navigation events to update UI state
         if (_navigationService != null)
@@ -80,12 +80,12 @@ public partial class AppShellViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens the quick actions panel.
+    /// Opens the quick actions panel in modal mode (Ctrl+K).
     /// </summary>
     [RelayCommand]
     private void OpenQuickActions()
     {
-        QuickActionsViewModel.OpenCommand.Execute(null);
+        QuickActionsViewModel.OpenModalCommand.Execute(null);
     }
 
     /// <summary>

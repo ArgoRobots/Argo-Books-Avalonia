@@ -11,23 +11,55 @@
         <vm:QuickActionsViewModel />
     </Design.DataContext>
 
-    <!-- Modal Overlay -->
     <Panel IsVisible="{Binding IsOpen}">
-        <!-- Backdrop -->
-        <Border Background="{DynamicResource OverlayBrush}"
-                PointerPressed="Backdrop_PointerPressed" />
+        <!-- Modal Mode: Full overlay with centered panel -->
+        <Panel IsVisible="{Binding !IsDropdownMode}">
+            <!-- Backdrop -->
+            <Border Background="{DynamicResource OverlayBrush}"
+                    PointerPressed="Backdrop_PointerPressed" />
 
-        <!-- Panel Container -->
-        <Border Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="1"
-                CornerRadius="12"
-                Width="500"
-                MaxHeight="500"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Top"
-                Margin="0,80,0,0"
-                BoxShadow="0 8 32 0 #40000000">
+            <!-- Centered Panel Container -->
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="500"
+                    MaxHeight="500"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Margin="0,100,0,0"
+                    BoxShadow="0 8 32 0 #40000000">
+                <ContentControl Content="{Binding}"
+                                ContentTemplate="{StaticResource PanelContentTemplate}" />
+            </Border>
+        </Panel>
+
+        <!-- Dropdown Mode: No backdrop, positioned below header -->
+        <Panel IsVisible="{Binding IsDropdownMode}">
+            <!-- Light backdrop for click-away -->
+            <Border Background="Transparent"
+                    PointerPressed="Backdrop_PointerPressed" />
+
+            <!-- Dropdown Panel Container -->
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Width="450"
+                    MaxHeight="450"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Margin="0,68,0,0"
+                    BoxShadow="0 4 16 0 #30000000">
+                <ContentControl Content="{Binding}"
+                                ContentTemplate="{StaticResource PanelContentTemplate}" />
+            </Border>
+        </Panel>
+    </Panel>
+
+    <UserControl.Resources>
+        <!-- Shared panel content template -->
+        <DataTemplate x:Key="PanelContentTemplate" x:DataType="vm:QuickActionsViewModel">
             <Grid RowDefinitions="Auto,*">
                 <!-- Search Input -->
                 <Border Grid.Row="0"
@@ -71,7 +103,7 @@
                 <ScrollViewer Grid.Row="1"
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
-                              MaxHeight="400">
+                              MaxHeight="380">
                     <StackPanel Spacing="0">
                         <!-- Quick Actions Section -->
                         <StackPanel IsVisible="{Binding HasQuickActions}">
@@ -205,8 +237,8 @@
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
-        </Border>
-    </Panel>
+        </DataTemplate>
+    </UserControl.Resources>
 
     <UserControl.Styles>
         <!-- Search Input Style -->
