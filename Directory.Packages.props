@@ -5,20 +5,18 @@
     </PropertyGroup>
     <ItemGroup>
         <!-- Avalonia packages -->
-        <PackageVersion Include="Avalonia" Version="11.2.2" />
-        <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.2.2" />
-        <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.2.2" />
-        <PackageVersion Include="Avalonia.Diagnostics" Version="11.2.2" />
-        <PackageVersion Include="Avalonia.Desktop" Version="11.2.2" />
-        <PackageVersion Include="Avalonia.Browser" Version="11.2.2" />
+        <PackageVersion Include="Avalonia" Version="11.3.9" />
+        <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.9" />
+        <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.9" />
+        <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.9" />
+        <PackageVersion Include="Avalonia.Desktop" Version="11.3.9" />
+        <PackageVersion Include="Avalonia.Browser" Version="11.3.9" />
 
         <!-- MVVM -->
         <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 
         <!-- Dependency Injection -->
         <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-
-        <!-- Note: System.Text.Json and System.Formats.Tar are built into .NET 7+ -->
 
         <!-- Charts -->
         <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc3.3" />
