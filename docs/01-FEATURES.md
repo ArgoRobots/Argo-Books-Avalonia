@@ -39,9 +39,8 @@ This document describes all features of the Argo Books Avalonia application base
 31. [Security](#31-security)
 32. [Import/Export](#32-importexport)
 33. [Currency & Exchange Rates](#33-currency--exchange-rates)
-34. [Password Manager](#34-password-manager)
-35. [Log & Debug System](#35-log--debug-system)
-36. [Auto-Update System](#36-auto-update-system)
+34. [Log & Debug System](#34-log--debug-system)
+35. [Auto-Update System](#35-auto-update-system)
 
 ---
 
@@ -1184,9 +1183,11 @@ Slide-out panel with:
 ## 31. Security
 
 ### 31.1 File Encryption
-- Optional AES-256 encryption for company files
-- Password protection
+- Optional password to protect company files
+- When enabled, password required to open the .argo file
+- AES-256 encryption when password is set
 - Encryption status stored in file footer
+- Set/change/remove password in Settings > Security
 
 ### 31.2 Biometric Authentication
 Platform-specific implementation:
@@ -1281,66 +1282,45 @@ Export charts directly to Google Sheets:
 
 ---
 
-## 34. Password Manager
+## 34. Log & Debug System
 
-### 34.1 Password Vault
-Secure storage for business-related passwords:
-- Add/Edit/Delete passwords
-- Password categories
-- Encrypted storage (AES-256)
-- Copy password to clipboard
-- Show/hide password toggle
-- Password strength indicator
-
-### 34.2 Password Entry Fields
-- Name/Label (required)
-- Username
-- Password (required)
-- Website/URL
-- Notes
-- Category
-
----
-
-## 35. Log & Debug System
-
-### 35.1 Application Log
+### 34.1 Application Log
 In-app log viewer for debugging:
-- Log categories: Error, Debug, General, Product Manager, Password Manager
+- Log categories: Error, Debug, General, Product Manager
 - Timestamp for each entry
 - Translatable log messages
 - In-memory log (last 1000 entries)
 
-### 35.2 Log Operations
+### 34.2 Log Operations
 - View logs in dedicated window
 - Save logs to file
 - Clear logs
 - Auto-cleanup of old log files (keep last 30)
 
-### 35.3 Error Tracking
+### 34.3 Error Tracking
 - Error codes for each error type (e.g., "Error-3vknm9")
 - Stack trace capture (admin mode)
 - Anonymous error reporting (with consent)
 
 ---
 
-## 36. Auto-Update System
+## 35. Auto-Update System
 
-### 36.1 Update Checker (Desktop Only)
+### 35.1 Update Checker (Desktop Only)
 - Check for updates on startup
 - Manual check via Help menu
 - NetSparkle integration
 - Update notification with changelog
 - Download progress indicator
 
-### 36.2 Update Process
+### 35.2 Update Process
 - Download update in background
 - Verify update integrity
 - Prompt user to install
 - Restart application after update
 - Auto-open recent company after update (optional)
 
-### 36.3 Platform Support
+### 35.3 Platform Support
 | Platform | Auto-Update |
 |----------|-------------|
 | Windows | Yes (NetSparkle) |

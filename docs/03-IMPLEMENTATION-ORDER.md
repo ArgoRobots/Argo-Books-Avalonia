@@ -1162,29 +1162,7 @@ ArgoBooks.Core/
 │   └── ExchangeRateCache.cs
 ```
 
-### 8.15 Password Manager
-- [ ] Password vault UI
-- [ ] Add/Edit/Delete passwords
-- [ ] Encrypted storage
-- [ ] Copy to clipboard
-
-**Files to create:**
-```
-ArgoBooks.UI/
-├── Views/
-│   └── PasswordManagerView.axaml / .axaml.cs
-├── ViewModels/
-│   └── PasswordManagerViewModel.cs
-├── Dialogs/
-│   └── PasswordEntryDialog.axaml / .axaml.cs
-ArgoBooks.Core/
-├── Services/
-│   └── PasswordVaultService.cs
-├── Models/
-│   └── StoredPassword.cs
-```
-
-### 8.16 Log & Debug System
+### 8.15 Log & Debug System
 - [ ] Log service with categories
 - [ ] Log viewer UI
 - [ ] Save/export logs

@@ -774,27 +774,6 @@ cache/
 └── anonymousUserData.json
 ```
 
-### 4.4 Password Manager File (passwords.json)
-Stored in global settings directory, encrypted with AES-256:
-```json
-{
-  "passwords": [
-    {
-      "id": "PWD-001",
-      "name": "Supplier Portal",
-      "username": "admin@company.com",
-      "password": "encrypted-password-data",
-      "website": "https://supplier.example.com",
-      "category": "Suppliers",
-      "notes": "Main supplier account",
-      "createdAt": "2024-01-01T00:00:00",
-      "updatedAt": "2024-06-15T00:00:00"
-    }
-  ],
-  "categories": ["Suppliers", "Banking", "Services", "Other"]
-}
-```
-
 ---
 
 ## 5. File Operations
