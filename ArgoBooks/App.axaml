@@ -24,17 +24,21 @@
             <ResourceDictionary.MergedDictionaries>
                 <!-- Global colors (shared across themes) -->
                 <ResourceInclude Source="avares://ArgoBooks/Themes/Colors.axaml" />
-
-                <!-- Theme-specific resources -->
-                <ResourceDictionary.ThemeDictionaries>
-                    <ResourceDictionary x:Key="Light">
-                        <ResourceInclude Source="avares://ArgoBooks/Themes/LightTheme.axaml" />
-                    </ResourceDictionary>
-                    <ResourceDictionary x:Key="Dark">
-                        <ResourceInclude Source="avares://ArgoBooks/Themes/DarkTheme.axaml" />
-                    </ResourceDictionary>
-                </ResourceDictionary.ThemeDictionaries>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Theme-specific resources -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceInclude Source="avares://ArgoBooks/Themes/LightTheme.axaml" />
+                    </ResourceDictionary.MergedDictionaries>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <ResourceDictionary.MergedDictionaries>
+                        <ResourceInclude Source="avares://ArgoBooks/Themes/DarkTheme.axaml" />
+                    </ResourceDictionary.MergedDictionaries>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

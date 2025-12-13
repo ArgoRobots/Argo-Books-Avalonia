@@ -44,9 +44,8 @@
                         <Animation Duration="0:0:0.2" FillMode="Forward" Easing="CubicEaseOut">
                             <KeyFrame Cue="100%">
                                 <Setter Property="Opacity" Value="1" />
-                                <Setter Property="RenderTransform">
-                                    <ScaleTransform ScaleX="1" ScaleY="1" />
-                                </Setter>
+                                <Setter Property="ScaleTransform.ScaleX" Value="1" />
+                                <Setter Property="ScaleTransform.ScaleY" Value="1" />
                             </KeyFrame>
                         </Animation>
                     </Style.Animations>
