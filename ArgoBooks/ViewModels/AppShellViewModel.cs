@@ -19,18 +19,10 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public SidebarViewModel SidebarViewModel { get; }
 
-    #endregion
-
-    #region Header Properties
-
-    [ObservableProperty]
-    private string? _searchQuery;
-
-    [ObservableProperty]
-    private bool _hasUnreadNotifications;
-
-    [ObservableProperty]
-    private int _unreadNotificationCount;
+    /// <summary>
+    /// Gets the header view model.
+    /// </summary>
+    public HeaderViewModel HeaderViewModel { get; }
 
     #endregion
 
@@ -63,51 +55,8 @@ public partial class AppShellViewModel : ViewModelBase
         // Create sidebar with navigation service
         SidebarViewModel = new SidebarViewModel(navigationService, settingsService);
 
-        // Design-time defaults
-        HasUnreadNotifications = true;
-        UnreadNotificationCount = 3;
-    }
-
-    /// <summary>
-    /// Opens the quick actions panel.
-    /// </summary>
-    [RelayCommand]
-    private void OpenQuickActions()
-    {
-        // TODO: Show quick actions panel
-    }
-
-    /// <summary>
-    /// Opens the notifications panel.
-    /// </summary>
-    [RelayCommand]
-    private void OpenNotifications()
-    {
-        // TODO: Show notifications panel
-        // Clear unread badge when opened
-        HasUnreadNotifications = false;
-        UnreadNotificationCount = 0;
-    }
-
-    /// <summary>
-    /// Opens the user menu.
-    /// </summary>
-    [RelayCommand]
-    private void OpenUserMenu()
-    {
-        // TODO: Show user menu
-    }
-
-    /// <summary>
-    /// Performs a global search.
-    /// </summary>
-    [RelayCommand]
-    private void Search()
-    {
-        if (string.IsNullOrWhiteSpace(SearchQuery))
-            return;
-
-        // TODO: Implement global search
+        // Create header with navigation service
+        HeaderViewModel = new HeaderViewModel(navigationService);
     }
 
     /// <summary>
@@ -116,6 +65,14 @@ public partial class AppShellViewModel : ViewModelBase
     public void SetCompanyInfo(string? companyName, string? userRole = null)
     {
         SidebarViewModel.SetCompanyInfo(companyName, null, userRole);
+    }
+
+    /// <summary>
+    /// Sets the user information on the header.
+    /// </summary>
+    public void SetUserInfo(string? displayName, string? email = null, string? role = null)
+    {
+        HeaderViewModel.SetUserInfo(displayName, email, role);
     }
 
     /// <summary>
@@ -132,17 +89,25 @@ public partial class AppShellViewModel : ViewModelBase
     public void NavigateTo(string pageName)
     {
         SidebarViewModel.SetActivePage(pageName);
+        HeaderViewModel.SetPageTitle(pageName);
         CurrentPageName = pageName;
         _navigationService?.NavigateTo(pageName);
     }
 
     /// <summary>
-    /// Adds a notification badge.
+    /// Adds a notification.
     /// </summary>
-    public void AddNotification()
+    /// <param name="title">Notification title.</param>
+    /// <param name="message">Notification message.</param>
+    /// <param name="type">Notification type.</param>
+    public void AddNotification(string title, string message, NotificationType type = NotificationType.Info)
     {
-        UnreadNotificationCount++;
-        HasUnreadNotifications = true;
+        HeaderViewModel.AddNotification(new NotificationItem
+        {
+            Title = title,
+            Message = message,
+            Type = type
+        });
     }
 }
 
