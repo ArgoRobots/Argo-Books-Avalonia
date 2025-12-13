@@ -1,0 +1,166 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="120"
+             x:Class="ArgoBooks.Controls.StatCard"
+             x:DataType="controls:StatCard">
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="{StaticResource RadiusMd}"
+            Padding="20">
+        <Grid ColumnDefinitions="Auto,*">
+            <!-- Icon Container -->
+            <Border Grid.Column="0"
+                    Width="48" Height="48"
+                    CornerRadius="{StaticResource RadiusMd}"
+                    VerticalAlignment="Top"
+                    Margin="0,0,16,0"
+                    IsVisible="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <Border.Styles>
+                    <!-- Icon Background Colors based on IconColor property -->
+                    <Style Selector="Border.primary">
+                        <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
+                    </Style>
+                    <Style Selector="Border.success">
+                        <Setter Property="Background" Value="{DynamicResource SuccessIconBgBrush}" />
+                    </Style>
+                    <Style Selector="Border.danger">
+                        <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
+                    </Style>
+                    <Style Selector="Border.warning">
+                        <Setter Property="Background" Value="{DynamicResource WarningIconBgBrush}" />
+                    </Style>
+                    <Style Selector="Border.info">
+                        <Setter Property="Background" Value="{DynamicResource InfoIconBgBrush}" />
+                    </Style>
+                </Border.Styles>
+                <Border.Classes>
+                    <MultiBinding Converter="{x:Static controls:StatCard.IconColorClassConverter}">
+                        <Binding Path="IconColor" RelativeSource="{RelativeSource AncestorType=controls:StatCard}" />
+                    </MultiBinding>
+                </Border.Classes>
+                <PathIcon Data="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                          Width="24" Height="24">
+                    <PathIcon.Styles>
+                        <Style Selector="PathIcon.primary">
+                            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+                        </Style>
+                        <Style Selector="PathIcon.success">
+                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                        </Style>
+                        <Style Selector="PathIcon.danger">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </Style>
+                        <Style Selector="PathIcon.warning">
+                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                        </Style>
+                        <Style Selector="PathIcon.info">
+                            <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+                        </Style>
+                    </PathIcon.Styles>
+                    <PathIcon.Classes>
+                        <MultiBinding Converter="{x:Static controls:StatCard.IconColorClassConverter}">
+                            <Binding Path="IconColor" RelativeSource="{RelativeSource AncestorType=controls:StatCard}" />
+                        </MultiBinding>
+                    </PathIcon.Classes>
+                </PathIcon>
+            </Border>
+
+            <!-- Content -->
+            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                <!-- Label -->
+                <TextBlock Text="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                           FontSize="{StaticResource FontSizeSm}"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           IsVisible="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                <!-- Value Row -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <!-- Main Value -->
+                    <TextBlock Text="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                               FontSize="{StaticResource FontSize2xl}"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                    <!-- Change Indicator -->
+                    <Border CornerRadius="{StaticResource RadiusSm}"
+                            Padding="6,2"
+                            VerticalAlignment="Center"
+                            IsVisible="{Binding ShowChange, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
+                        <Border.Styles>
+                            <Style Selector="Border.positive">
+                                <Setter Property="Background" Value="{DynamicResource SuccessIconBgBrush}" />
+                            </Style>
+                            <Style Selector="Border.negative">
+                                <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
+                            </Style>
+                            <Style Selector="Border.neutral">
+                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                            </Style>
+                        </Border.Styles>
+                        <Border.Classes>
+                            <MultiBinding Converter="{x:Static controls:StatCard.TrendClassConverter}">
+                                <Binding Path="ChangeValue" RelativeSource="{RelativeSource AncestorType=controls:StatCard}" />
+                            </MultiBinding>
+                        </Border.Classes>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <!-- Trend Arrow -->
+                            <PathIcon Width="12" Height="12">
+                                <PathIcon.Styles>
+                                    <Style Selector="PathIcon.up">
+                                        <Setter Property="Data" Value="M7 14l5-5 5 5z" />
+                                        <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                    </Style>
+                                    <Style Selector="PathIcon.down">
+                                        <Setter Property="Data" Value="M7 10l5 5 5-5z" />
+                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                    </Style>
+                                    <Style Selector="PathIcon.flat">
+                                        <Setter Property="Data" Value="M4 12h16" />
+                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                    </Style>
+                                </PathIcon.Styles>
+                                <PathIcon.Classes>
+                                    <MultiBinding Converter="{x:Static controls:StatCard.TrendArrowClassConverter}">
+                                        <Binding Path="ChangeValue" RelativeSource="{RelativeSource AncestorType=controls:StatCard}" />
+                                    </MultiBinding>
+                                </PathIcon.Classes>
+                            </PathIcon>
+                            <!-- Change Text -->
+                            <TextBlock Text="{Binding ChangeText, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                                       FontSize="{StaticResource FontSizeXs}"
+                                       FontWeight="SemiBold">
+                                <TextBlock.Styles>
+                                    <Style Selector="TextBlock.positive">
+                                        <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                    </Style>
+                                    <Style Selector="TextBlock.negative">
+                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                    </Style>
+                                    <Style Selector="TextBlock.neutral">
+                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                    </Style>
+                                </TextBlock.Styles>
+                                <TextBlock.Classes>
+                                    <MultiBinding Converter="{x:Static controls:StatCard.TrendClassConverter}">
+                                        <Binding Path="ChangeValue" RelativeSource="{RelativeSource AncestorType=controls:StatCard}" />
+                                    </MultiBinding>
+                                </TextBlock.Classes>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Secondary Text -->
+                <TextBlock Text="{Binding SecondaryText, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                           FontSize="{StaticResource FontSizeXs}"
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           IsVisible="{Binding SecondaryText, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

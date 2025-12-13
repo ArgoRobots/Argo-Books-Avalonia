@@ -69,6 +69,11 @@
     <SolidColorBrush x:Key="ErrorLightBrush" Color="{StaticResource ErrorLightColor}" />
     <SolidColorBrush x:Key="ErrorDarkBrush" Color="{StaticResource ErrorDarkColor}" />
 
+    <!-- Danger aliases (same as Error) -->
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource ErrorColor}" />
+    <SolidColorBrush x:Key="DangerLightBrush" Color="{StaticResource ErrorLightColor}" />
+    <SolidColorBrush x:Key="DangerDarkBrush" Color="{StaticResource ErrorDarkColor}" />
+
     <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
     <SolidColorBrush x:Key="InfoLightBrush" Color="{StaticResource InfoLightColor}" />
     <SolidColorBrush x:Key="InfoDarkBrush" Color="{StaticResource InfoDarkColor}" />

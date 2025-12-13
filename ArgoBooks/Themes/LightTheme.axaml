@@ -57,6 +57,16 @@
     <Color x:Key="OverlayColor">#80000000</Color>
     <Color x:Key="LoadingOverlayColor">#E6FFFFFF</Color>
 
+    <!-- Surface Alternate (for neutral backgrounds) -->
+    <Color x:Key="SurfaceAltColor">#F3F4F6</Color>
+
+    <!-- Icon Background Tints (soft pastels) -->
+    <Color x:Key="PrimaryIconBgColor">#DBEAFE</Color>
+    <Color x:Key="SuccessIconBgColor">#D1FAE5</Color>
+    <Color x:Key="DangerIconBgColor">#FEE2E2</Color>
+    <Color x:Key="WarningIconBgColor">#FEF3C7</Color>
+    <Color x:Key="InfoIconBgColor">#CFFAFE</Color>
+
     <!-- Brushes -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
     <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondaryColor}" />
@@ -99,5 +109,14 @@
     <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource ShadowColor}" />
     <SolidColorBrush x:Key="OverlayBrush" Color="{StaticResource OverlayColor}" />
     <SolidColorBrush x:Key="LoadingOverlayBrush" Color="{StaticResource LoadingOverlayColor}" />
+
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
+
+    <!-- Icon Background Tint Brushes -->
+    <SolidColorBrush x:Key="PrimaryIconBgBrush" Color="{StaticResource PrimaryIconBgColor}" />
+    <SolidColorBrush x:Key="SuccessIconBgBrush" Color="{StaticResource SuccessIconBgColor}" />
+    <SolidColorBrush x:Key="DangerIconBgBrush" Color="{StaticResource DangerIconBgColor}" />
+    <SolidColorBrush x:Key="WarningIconBgBrush" Color="{StaticResource WarningIconBgColor}" />
+    <SolidColorBrush x:Key="InfoIconBgBrush" Color="{StaticResource InfoIconBgColor}" />
 
 </ResourceDictionary>
