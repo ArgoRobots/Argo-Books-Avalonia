@@ -1,0 +1,148 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Argo Books Card Styles
+        Styles for cards, panels, and container components.
+    -->
+
+    <!-- Base Card -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingMd}" />
+    </Style>
+
+    <!-- Card with hover effect -->
+    <Style Selector="Border.card-interactive">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingMd}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.card-interactive:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderDarkBrush}" />
+    </Style>
+
+    <!-- Stat Card (for dashboard stats) -->
+    <Style Selector="Border.stat-card">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusLg}" />
+        <Setter Property="Padding" Value="20" />
+        <Setter Property="MinWidth" Value="200" />
+    </Style>
+
+    <!-- Elevated Card (with shadow effect) -->
+    <Style Selector="Border.card-elevated">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingMd}" />
+        <Setter Property="BoxShadow" Value="0 4 6 -1 #1A000000, 0 2 4 -2 #1A000000" />
+    </Style>
+
+    <!-- Modal/Dialog Card -->
+    <Style Selector="Border.modal-card">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusLg}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingLg}" />
+        <Setter Property="BoxShadow" Value="0 25 50 -12 #40000000" />
+        <Setter Property="MinWidth" Value="400" />
+        <Setter Property="MaxWidth" Value="600" />
+    </Style>
+
+    <!-- Section Panel -->
+    <Style Selector="Border.section">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingLg}" />
+        <Setter Property="Margin" Value="0,0,0,16" />
+    </Style>
+
+    <!-- Outlined Card (no background) -->
+    <Style Selector="Border.card-outlined">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingMd}" />
+    </Style>
+
+    <!-- Info Card (blue tint) -->
+    <Style Selector="Border.card-info">
+        <Setter Property="Background" Value="#EFF6FF" />
+        <Setter Property="BorderBrush" Value="#BFDBFE" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingMd}" />
+    </Style>
+
+    <!-- Success Card (green tint) -->
+    <Style Selector="Border.card-success">
+        <Setter Property="Background" Value="#ECFDF5" />
+        <Setter Property="BorderBrush" Value="#A7F3D0" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingMd}" />
+    </Style>
+
+    <!-- Warning Card (yellow tint) -->
+    <Style Selector="Border.card-warning">
+        <Setter Property="Background" Value="#FFFBEB" />
+        <Setter Property="BorderBrush" Value="#FDE68A" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingMd}" />
+    </Style>
+
+    <!-- Error Card (red tint) -->
+    <Style Selector="Border.card-error">
+        <Setter Property="Background" Value="#FEF2F2" />
+        <Setter Property="BorderBrush" Value="#FECACA" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="Padding" Value="{StaticResource PaddingMd}" />
+    </Style>
+
+    <!-- Table Container -->
+    <Style Selector="Border.table-container">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+
+    <!-- Separator -->
+    <Style Selector="Border.separator">
+        <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Margin" Value="0,8" />
+    </Style>
+
+    <!-- Separator Vertical -->
+    <Style Selector="Border.separator-vertical">
+        <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Width" Value="1" />
+        <Setter Property="Margin" Value="8,0" />
+    </Style>
+
+</ResourceDictionary>

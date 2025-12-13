@@ -3,7 +3,7 @@
              xmlns:local="using:ArgoBooks"
              x:Class="ArgoBooks.App"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
         <local:ViewLocator/>
@@ -11,5 +11,30 @@
 
     <Application.Styles>
         <FluentTheme />
+
+        <!-- Argo Books Styles -->
+        <StyleInclude Source="avares://ArgoBooks/Styles/BaseStyles.axaml" />
+        <StyleInclude Source="avares://ArgoBooks/Styles/ButtonStyles.axaml" />
+        <StyleInclude Source="avares://ArgoBooks/Styles/TextStyles.axaml" />
+        <StyleInclude Source="avares://ArgoBooks/Styles/CardStyles.axaml" />
     </Application.Styles>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Global colors (shared across themes) -->
+                <ResourceInclude Source="avares://ArgoBooks/Themes/Colors.axaml" />
+
+                <!-- Theme-specific resources -->
+                <ResourceDictionary.ThemeDictionaries>
+                    <ResourceDictionary x:Key="Light">
+                        <ResourceInclude Source="avares://ArgoBooks/Themes/LightTheme.axaml" />
+                    </ResourceDictionary>
+                    <ResourceDictionary x:Key="Dark">
+                        <ResourceInclude Source="avares://ArgoBooks/Themes/DarkTheme.axaml" />
+                    </ResourceDictionary>
+                </ResourceDictionary.ThemeDictionaries>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>
