@@ -49,6 +49,9 @@
 
             <!-- User Panel (overlay within content area) -->
             <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
+
+            <!-- File Menu Panel (overlay within content area) -->
+            <panels:FileMenuPanel DataContext="{Binding FileMenuPanelViewModel}" />
         </Panel>
     </Grid>
 </UserControl>

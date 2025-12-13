@@ -187,6 +187,15 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Opens the file menu.
+    /// </summary>
+    [RelayCommand]
+    private void OpenFileMenu()
+    {
+        OpenFileMenuRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// Opens the help panel.
     /// </summary>
     [RelayCommand]
@@ -297,6 +306,11 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when user menu panel should be opened.
     /// </summary>
     public event EventHandler? OpenUserMenuRequested;
+
+    /// <summary>
+    /// Event raised when file menu should be opened.
+    /// </summary>
+    public event EventHandler? OpenFileMenuRequested;
 
     #endregion
 

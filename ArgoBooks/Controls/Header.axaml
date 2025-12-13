@@ -19,7 +19,7 @@
             Padding="12,0,30,0">
         <Grid ColumnDefinitions="Auto,*,Auto">
 
-            <!-- Left Section: Menu Toggle, Undo, Redo, Save -->
+            <!-- Left Section: Menu Toggle, File, Undo, Redo, Save -->
             <StackPanel Grid.Column="0"
                         Orientation="Horizontal"
                         VerticalAlignment="Center"
@@ -30,6 +30,14 @@
                         ToolTip.Tip="Toggle Sidebar">
                     <PathIcon Data="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
                               Width="20" Height="20" />
+                </Button>
+
+                <!-- File Menu Button -->
+                <Button Classes="header-icon"
+                        Command="{Binding OpenFileMenuCommand}"
+                        ToolTip.Tip="File">
+                    <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                              Width="18" Height="18" />
                 </Button>
 
                 <!-- Undo Button -->

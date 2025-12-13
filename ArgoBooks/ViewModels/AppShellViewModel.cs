@@ -39,6 +39,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public UserPanelViewModel UserPanelViewModel { get; }
 
+    /// <summary>
+    /// Gets the file menu panel view model.
+    /// </summary>
+    public FileMenuPanelViewModel FileMenuPanelViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -82,6 +87,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Create user panel with navigation service and header view model
         UserPanelViewModel = new UserPanelViewModel(navigationService, HeaderViewModel);
 
+        // Create file menu panel with navigation service
+        FileMenuPanelViewModel = new FileMenuPanelViewModel(navigationService);
+
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
@@ -93,6 +101,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Wire up header's user menu button to toggle the user panel
         HeaderViewModel.OpenUserMenuRequested += (_, _) => UserPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up header's file menu button to toggle the file menu panel
+        HeaderViewModel.OpenFileMenuRequested += (_, _) => FileMenuPanelViewModel.ToggleCommand.Execute(null);
 
         // Subscribe to navigation events to update UI state
         if (_navigationService != null)
