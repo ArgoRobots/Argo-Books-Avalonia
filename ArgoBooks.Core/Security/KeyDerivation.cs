@@ -51,13 +51,12 @@ public static class KeyDerivation
         ArgumentException.ThrowIfNullOrEmpty(password);
         ArgumentNullException.ThrowIfNull(salt);
 
-        using var pbkdf2 = new Rfc2898DeriveBytes(
+        return Rfc2898DeriveBytes.Pbkdf2(
             password,
             salt,
             Iterations,
-            HashAlgorithmName.SHA256);
-
-        return pbkdf2.GetBytes(KeySize);
+            HashAlgorithmName.SHA256,
+            KeySize);
     }
 
     /// <summary>
@@ -119,13 +118,12 @@ public static class KeyDerivation
         ArgumentException.ThrowIfNullOrEmpty(password);
         ArgumentNullException.ThrowIfNull(salt);
 
-        using var pbkdf2 = new Rfc2898DeriveBytes(
+        return Rfc2898DeriveBytes.Pbkdf2(
             password,
             salt,
             Iterations,
-            HashAlgorithmName.SHA256);
-
-        return pbkdf2.GetBytes(HashSize);
+            HashAlgorithmName.SHA256,
+            HashSize);
     }
 
     /// <summary>
