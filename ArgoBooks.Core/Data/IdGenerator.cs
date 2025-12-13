@@ -6,22 +6,15 @@ namespace ArgoBooks.Core.Data;
 /// Service for generating sequential IDs for entities.
 /// IDs follow the pattern: PREFIX-SEQUENCE or PREFIX-YEAR-SEQUENCE
 /// </summary>
-public class IdGenerator
+public class IdGenerator(CompanyData companyData)
 {
-    private readonly CompanyData _companyData;
-
-    public IdGenerator(CompanyData companyData)
-    {
-        _companyData = companyData;
-    }
-
     /// <summary>
     /// Generates a new customer ID (CUS-001).
     /// </summary>
     public string NextCustomerId()
     {
-        _companyData.IdCounters.Customer++;
-        return $"CUS-{_companyData.IdCounters.Customer:D3}";
+        companyData.IdCounters.Customer++;
+        return $"CUS-{companyData.IdCounters.Customer:D3}";
     }
 
     /// <summary>
@@ -29,8 +22,8 @@ public class IdGenerator
     /// </summary>
     public string NextProductId()
     {
-        _companyData.IdCounters.Product++;
-        return $"PRD-{_companyData.IdCounters.Product:D3}";
+        companyData.IdCounters.Product++;
+        return $"PRD-{companyData.IdCounters.Product:D3}";
     }
 
     /// <summary>
@@ -38,8 +31,8 @@ public class IdGenerator
     /// </summary>
     public string NextSupplierId()
     {
-        _companyData.IdCounters.Supplier++;
-        return $"SUP-{_companyData.IdCounters.Supplier:D3}";
+        companyData.IdCounters.Supplier++;
+        return $"SUP-{companyData.IdCounters.Supplier:D3}";
     }
 
     /// <summary>
@@ -47,8 +40,8 @@ public class IdGenerator
     /// </summary>
     public string NextEmployeeId()
     {
-        _companyData.IdCounters.Employee++;
-        return $"EMP-{_companyData.IdCounters.Employee:D3}";
+        companyData.IdCounters.Employee++;
+        return $"EMP-{companyData.IdCounters.Employee:D3}";
     }
 
     /// <summary>
@@ -56,8 +49,8 @@ public class IdGenerator
     /// </summary>
     public string NextDepartmentId()
     {
-        _companyData.IdCounters.Department++;
-        return $"DEP-{_companyData.IdCounters.Department:D3}";
+        companyData.IdCounters.Department++;
+        return $"DEP-{companyData.IdCounters.Department:D3}";
     }
 
     /// <summary>
@@ -65,7 +58,7 @@ public class IdGenerator
     /// </summary>
     public string NextCategoryId(CategoryType type)
     {
-        _companyData.IdCounters.Category++;
+        companyData.IdCounters.Category++;
         var typePrefix = type switch
         {
             CategoryType.Sales => "SAL",
@@ -73,7 +66,7 @@ public class IdGenerator
             CategoryType.Rental => "RNT",
             _ => "GEN"
         };
-        return $"CAT-{typePrefix}-{_companyData.IdCounters.Category:D3}";
+        return $"CAT-{typePrefix}-{companyData.IdCounters.Category:D3}";
     }
 
     /// <summary>
@@ -81,8 +74,8 @@ public class IdGenerator
     /// </summary>
     public string NextAccountantId()
     {
-        _companyData.IdCounters.Accountant++;
-        return $"ACC-{_companyData.IdCounters.Accountant:D3}";
+        companyData.IdCounters.Accountant++;
+        return $"ACC-{companyData.IdCounters.Accountant:D3}";
     }
 
     /// <summary>
@@ -90,8 +83,8 @@ public class IdGenerator
     /// </summary>
     public string NextLocationId()
     {
-        _companyData.IdCounters.Location++;
-        return $"LOC-{_companyData.IdCounters.Location:D3}";
+        companyData.IdCounters.Location++;
+        return $"LOC-{companyData.IdCounters.Location:D3}";
     }
 
     /// <summary>
@@ -99,8 +92,8 @@ public class IdGenerator
     /// </summary>
     public string NextSaleId()
     {
-        _companyData.IdCounters.Sale++;
-        return $"SAL-{DateTime.UtcNow.Year}-{_companyData.IdCounters.Sale:D5}";
+        companyData.IdCounters.Sale++;
+        return $"SAL-{DateTime.UtcNow.Year}-{companyData.IdCounters.Sale:D5}";
     }
 
     /// <summary>
@@ -108,8 +101,8 @@ public class IdGenerator
     /// </summary>
     public string NextPurchaseId()
     {
-        _companyData.IdCounters.Purchase++;
-        return $"PUR-{DateTime.UtcNow.Year}-{_companyData.IdCounters.Purchase:D5}";
+        companyData.IdCounters.Purchase++;
+        return $"PUR-{DateTime.UtcNow.Year}-{companyData.IdCounters.Purchase:D5}";
     }
 
     /// <summary>
@@ -117,8 +110,8 @@ public class IdGenerator
     /// </summary>
     public string NextInvoiceId()
     {
-        _companyData.IdCounters.Invoice++;
-        return $"INV-{DateTime.UtcNow.Year}-{_companyData.IdCounters.Invoice:D5}";
+        companyData.IdCounters.Invoice++;
+        return $"INV-{DateTime.UtcNow.Year}-{companyData.IdCounters.Invoice:D5}";
     }
 
     /// <summary>
@@ -126,7 +119,7 @@ public class IdGenerator
     /// </summary>
     public string NextInvoiceNumber()
     {
-        return $"#INV-{DateTime.UtcNow.Year}-{_companyData.IdCounters.Invoice:D3}";
+        return $"#INV-{DateTime.UtcNow.Year}-{companyData.IdCounters.Invoice:D3}";
     }
 
     /// <summary>
@@ -134,8 +127,8 @@ public class IdGenerator
     /// </summary>
     public string NextPaymentId()
     {
-        _companyData.IdCounters.Payment++;
-        return $"PAY-{DateTime.UtcNow.Year}-{_companyData.IdCounters.Payment:D5}";
+        companyData.IdCounters.Payment++;
+        return $"PAY-{DateTime.UtcNow.Year}-{companyData.IdCounters.Payment:D5}";
     }
 
     /// <summary>
@@ -143,8 +136,8 @@ public class IdGenerator
     /// </summary>
     public string NextRecurringInvoiceId()
     {
-        _companyData.IdCounters.RecurringInvoice++;
-        return $"REC-INV-{_companyData.IdCounters.RecurringInvoice:D3}";
+        companyData.IdCounters.RecurringInvoice++;
+        return $"REC-INV-{companyData.IdCounters.RecurringInvoice:D3}";
     }
 
     /// <summary>
@@ -152,8 +145,8 @@ public class IdGenerator
     /// </summary>
     public string NextInventoryItemId()
     {
-        _companyData.IdCounters.InventoryItem++;
-        return $"INV-ITM-{_companyData.IdCounters.InventoryItem:D3}";
+        companyData.IdCounters.InventoryItem++;
+        return $"INV-ITM-{companyData.IdCounters.InventoryItem:D3}";
     }
 
     /// <summary>
@@ -161,8 +154,8 @@ public class IdGenerator
     /// </summary>
     public string NextStockAdjustmentId()
     {
-        _companyData.IdCounters.StockAdjustment++;
-        return $"ADJ-{_companyData.IdCounters.StockAdjustment:D3}";
+        companyData.IdCounters.StockAdjustment++;
+        return $"ADJ-{companyData.IdCounters.StockAdjustment:D3}";
     }
 
     /// <summary>
@@ -170,8 +163,8 @@ public class IdGenerator
     /// </summary>
     public string NextStockTransferId()
     {
-        _companyData.IdCounters.StockTransfer++;
-        return $"TRF-{_companyData.IdCounters.StockTransfer:D3}";
+        companyData.IdCounters.StockTransfer++;
+        return $"TRF-{companyData.IdCounters.StockTransfer:D3}";
     }
 
     /// <summary>
@@ -179,8 +172,8 @@ public class IdGenerator
     /// </summary>
     public string NextPurchaseOrderId()
     {
-        _companyData.IdCounters.PurchaseOrder++;
-        return $"PO-{_companyData.IdCounters.PurchaseOrder:D3}";
+        companyData.IdCounters.PurchaseOrder++;
+        return $"PO-{companyData.IdCounters.PurchaseOrder:D3}";
     }
 
     /// <summary>
@@ -188,7 +181,7 @@ public class IdGenerator
     /// </summary>
     public string NextPurchaseOrderNumber()
     {
-        return $"#PO-{DateTime.UtcNow.Year}-{_companyData.IdCounters.PurchaseOrder:D3}";
+        return $"#PO-{DateTime.UtcNow.Year}-{companyData.IdCounters.PurchaseOrder:D3}";
     }
 
     /// <summary>
@@ -196,8 +189,8 @@ public class IdGenerator
     /// </summary>
     public string NextRentalItemId()
     {
-        _companyData.IdCounters.RentalItem++;
-        return $"RNT-ITM-{_companyData.IdCounters.RentalItem:D3}";
+        companyData.IdCounters.RentalItem++;
+        return $"RNT-ITM-{companyData.IdCounters.RentalItem:D3}";
     }
 
     /// <summary>
@@ -205,8 +198,8 @@ public class IdGenerator
     /// </summary>
     public string NextRentalId()
     {
-        _companyData.IdCounters.Rental++;
-        return $"RNT-{_companyData.IdCounters.Rental:D3}";
+        companyData.IdCounters.Rental++;
+        return $"RNT-{companyData.IdCounters.Rental:D3}";
     }
 
     /// <summary>
@@ -214,8 +207,8 @@ public class IdGenerator
     /// </summary>
     public string NextReturnId()
     {
-        _companyData.IdCounters.Return++;
-        return $"RET-{_companyData.IdCounters.Return:D3}";
+        companyData.IdCounters.Return++;
+        return $"RET-{companyData.IdCounters.Return:D3}";
     }
 
     /// <summary>
@@ -223,8 +216,8 @@ public class IdGenerator
     /// </summary>
     public string NextLostDamagedId()
     {
-        _companyData.IdCounters.LostDamaged++;
-        return $"LOST-{_companyData.IdCounters.LostDamaged:D3}";
+        companyData.IdCounters.LostDamaged++;
+        return $"LOST-{companyData.IdCounters.LostDamaged:D3}";
     }
 
     /// <summary>
@@ -232,8 +225,8 @@ public class IdGenerator
     /// </summary>
     public string NextReceiptId()
     {
-        _companyData.IdCounters.Receipt++;
-        return $"RCP-{_companyData.IdCounters.Receipt:D3}";
+        companyData.IdCounters.Receipt++;
+        return $"RCP-{companyData.IdCounters.Receipt:D3}";
     }
 
     /// <summary>
@@ -241,8 +234,8 @@ public class IdGenerator
     /// </summary>
     public string NextReportTemplateId()
     {
-        _companyData.IdCounters.ReportTemplate++;
-        return $"TPL-{_companyData.IdCounters.ReportTemplate:D3}";
+        companyData.IdCounters.ReportTemplate++;
+        return $"TPL-{companyData.IdCounters.ReportTemplate:D3}";
     }
 
     /// <summary>
@@ -260,6 +253,6 @@ public class IdGenerator
         if (string.IsNullOrEmpty(prefix))
             prefix = "SKU";
 
-        return $"{prefix}-{_companyData.IdCounters.Product:D3}";
+        return $"{prefix}-{companyData.IdCounters.Product:D3}";
     }
 }

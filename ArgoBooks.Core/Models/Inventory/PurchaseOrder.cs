@@ -1,6 +1,4 @@
-using System.Text.Json.Serialization;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Common;
 
 namespace ArgoBooks.Core.Models.Inventory;
 

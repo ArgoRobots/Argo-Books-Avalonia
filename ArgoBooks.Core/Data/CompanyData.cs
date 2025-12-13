@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
@@ -19,13 +18,13 @@ public class CompanyData
     /// Company settings (stored as appSettings.json).
     /// </summary>
     [JsonPropertyName("settings")]
-    public CompanySettings Settings { get; set; } = new();
+    public CompanySettings Settings { get; init; } = new();
 
     /// <summary>
     /// ID counters for generating sequential IDs.
     /// </summary>
     [JsonPropertyName("idCounters")]
-    public IdCounters IdCounters { get; set; } = new();
+    public IdCounters IdCounters { get; init; } = new();
 
     #region Entities
 
@@ -33,49 +32,49 @@ public class CompanyData
     /// All customers.
     /// </summary>
     [JsonPropertyName("customers")]
-    public List<Customer> Customers { get; set; } = [];
+    public List<Customer> Customers { get; init; } = [];
 
     /// <summary>
     /// All products and services.
     /// </summary>
     [JsonPropertyName("products")]
-    public List<Product> Products { get; set; } = [];
+    public List<Product> Products { get; init; } = [];
 
     /// <summary>
     /// All suppliers.
     /// </summary>
     [JsonPropertyName("suppliers")]
-    public List<Supplier> Suppliers { get; set; } = [];
+    public List<Supplier> Suppliers { get; init; } = [];
 
     /// <summary>
     /// All employees.
     /// </summary>
     [JsonPropertyName("employees")]
-    public List<Employee> Employees { get; set; } = [];
+    public List<Employee> Employees { get; init; } = [];
 
     /// <summary>
     /// All departments.
     /// </summary>
     [JsonPropertyName("departments")]
-    public List<Department> Departments { get; set; } = [];
+    public List<Department> Departments { get; init; } = [];
 
     /// <summary>
     /// All categories (sales, purchase, rental).
     /// </summary>
     [JsonPropertyName("categories")]
-    public List<Category> Categories { get; set; } = [];
+    public List<Category> Categories { get; init; } = [];
 
     /// <summary>
     /// All accountants.
     /// </summary>
     [JsonPropertyName("accountants")]
-    public List<Accountant> Accountants { get; set; } = [];
+    public List<Accountant> Accountants { get; init; } = [];
 
     /// <summary>
     /// All warehouse/storage locations.
     /// </summary>
     [JsonPropertyName("locations")]
-    public List<Location> Locations { get; set; } = [];
+    public List<Location> Locations { get; init; } = [];
 
     #endregion
 
@@ -85,31 +84,31 @@ public class CompanyData
     /// All sales/revenue transactions.
     /// </summary>
     [JsonPropertyName("sales")]
-    public List<Sale> Sales { get; set; } = [];
+    public List<Sale> Sales { get; init; } = [];
 
     /// <summary>
     /// All purchases/expense transactions.
     /// </summary>
     [JsonPropertyName("purchases")]
-    public List<Purchase> Purchases { get; set; } = [];
+    public List<Purchase> Purchases { get; init; } = [];
 
     /// <summary>
     /// All invoices.
     /// </summary>
     [JsonPropertyName("invoices")]
-    public List<Invoice> Invoices { get; set; } = [];
+    public List<Invoice> Invoices { get; init; } = [];
 
     /// <summary>
     /// All payments received.
     /// </summary>
     [JsonPropertyName("payments")]
-    public List<Payment> Payments { get; set; } = [];
+    public List<Payment> Payments { get; init; } = [];
 
     /// <summary>
     /// All recurring invoice schedules.
     /// </summary>
     [JsonPropertyName("recurringInvoices")]
-    public List<RecurringInvoice> RecurringInvoices { get; set; } = [];
+    public List<RecurringInvoice> RecurringInvoices { get; init; } = [];
 
     #endregion
 
@@ -119,25 +118,25 @@ public class CompanyData
     /// All inventory items (stock levels).
     /// </summary>
     [JsonPropertyName("inventory")]
-    public List<InventoryItem> Inventory { get; set; } = [];
+    public List<InventoryItem> Inventory { get; init; } = [];
 
     /// <summary>
     /// All stock adjustments.
     /// </summary>
     [JsonPropertyName("stockAdjustments")]
-    public List<StockAdjustment> StockAdjustments { get; set; } = [];
+    public List<StockAdjustment> StockAdjustments { get; init; } = [];
 
     /// <summary>
     /// All stock transfers.
     /// </summary>
     [JsonPropertyName("stockTransfers")]
-    public List<StockTransfer> StockTransfers { get; set; } = [];
+    public List<StockTransfer> StockTransfers { get; init; } = [];
 
     /// <summary>
     /// All purchase orders.
     /// </summary>
     [JsonPropertyName("purchaseOrders")]
-    public List<PurchaseOrder> PurchaseOrders { get; set; } = [];
+    public List<PurchaseOrder> PurchaseOrders { get; init; } = [];
 
     #endregion
 
@@ -147,13 +146,13 @@ public class CompanyData
     /// All rental inventory items.
     /// </summary>
     [JsonPropertyName("rentalInventory")]
-    public List<RentalItem> RentalInventory { get; set; } = [];
+    public List<RentalItem> RentalInventory { get; init; } = [];
 
     /// <summary>
     /// All rental records.
     /// </summary>
     [JsonPropertyName("rentals")]
-    public List<RentalRecord> Rentals { get; set; } = [];
+    public List<RentalRecord> Rentals { get; init; } = [];
 
     #endregion
 
@@ -163,19 +162,19 @@ public class CompanyData
     /// All return records.
     /// </summary>
     [JsonPropertyName("returns")]
-    public List<Return> Returns { get; set; } = [];
+    public List<Return> Returns { get; init; } = [];
 
     /// <summary>
     /// All lost/damaged records.
     /// </summary>
     [JsonPropertyName("lostDamaged")]
-    public List<LostDamaged> LostDamaged { get; set; } = [];
+    public List<LostDamaged> LostDamaged { get; init; } = [];
 
     /// <summary>
     /// All receipts.
     /// </summary>
     [JsonPropertyName("receipts")]
-    public List<Receipt> Receipts { get; set; } = [];
+    public List<Receipt> Receipts { get; init; } = [];
 
     #endregion
 
@@ -185,7 +184,7 @@ public class CompanyData
     /// All custom report templates.
     /// </summary>
     [JsonPropertyName("reportTemplates")]
-    public List<ReportTemplate> ReportTemplates { get; set; } = [];
+    public List<ReportTemplate> ReportTemplates { get; init; } = [];
 
     #endregion
 

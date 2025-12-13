@@ -71,11 +71,11 @@ public partial class SidebarViewModel : ViewModelBase
     [ObservableProperty]
     private string _currentPage = "Dashboard";
 
-    public ObservableCollection<SidebarItemModel> MainItems { get; } = new();
-    public ObservableCollection<SidebarItemModel> TransactionItems { get; } = new();
-    public ObservableCollection<SidebarItemModel> InventoryItems { get; } = new();
-    public ObservableCollection<SidebarItemModel> ContactItems { get; } = new();
-    public ObservableCollection<SidebarItemModel> RentalItems { get; } = new();
+    public ObservableCollection<SidebarItemModel> MainItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> TransactionItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> InventoryItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> ContactItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> RentalItems { get; } = [];
 
     #endregion
 
