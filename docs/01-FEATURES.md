@@ -38,6 +38,10 @@ This document describes all features of the Argo Books Avalonia application base
 30. [Help & Support](#30-help--support)
 31. [Security](#31-security)
 32. [Import/Export](#32-importexport)
+33. [Currency & Exchange Rates](#33-currency--exchange-rates)
+34. [Password Manager](#34-password-manager)
+35. [Log & Debug System](#35-log--debug-system)
+36. [Auto-Update System](#36-auto-update-system)
 
 ---
 
@@ -56,8 +60,10 @@ This document describes all features of the Argo Books Avalonia application base
 - **Data Storage:** Custom .argo file format (tar + gzip + optional AES-256 encryption)
 - **Charts:** LiveCharts2
 - **PDF Generation:** QuestPDF
-- **OCR:** Google Cloud Vision API (For scanning receipts)
+- **OCR:** Google Cloud Vision API (for scanning receipts)
 - **Email:** PHP API on web server
+- **Exchange Rates:** OpenExchangeRates API
+- **Auto-Updates:** NetSparkle (desktop only)
 
 ### 1.3 Multi-Company Support
 - Each company is stored as a separate `.argo` file
@@ -67,6 +73,40 @@ This document describes all features of the Argo Books Avalonia application base
   - Company name
   - Address
   - Logo (image)
+
+### 1.4 Licensing Tiers
+
+#### Free Tier
+- Up to 10 products
+- Unlimited transactions
+- Real-time analytics
+- Receipt management
+- Excel import/export
+- Report generator
+- Basic password protection
+- Email support
+
+#### Standard Tier ($20 CAD one-time)
+- Everything in Free
+- **Unlimited products**
+- Biometric login security (Windows Hello, Touch ID)
+- Priority support
+- Lifetime updates
+
+#### Premium Tier ($5 CAD/month or $50 CAD/year)
+- Everything in Standard
+- **Invoices & payments module**
+- **AI receipt scanning** (Google Cloud Vision)
+- **Predictive sales analysis**
+- **AI business insights**
+- Natural language search
+
+#### License System
+- License key validation via web API
+- One license per computer (can transfer)
+- License key entry modal in app
+- Upgrade prompts for locked features
+- Standard users get $20 discount on first year of Premium
 
 ---
 
@@ -1210,10 +1250,103 @@ Two export modes:
 - Select All option
 - Record counts shown per data type
 
-### 32.3 Backup Data
+### 32.3 Google Sheets Export
+Export charts directly to Google Sheets:
+- OAuth 2.0 authentication with Google
+- Creates new spreadsheet with company name and date
+- Exports chart data with formatting
+- Supports all chart types (line, column, pie)
+- Opens spreadsheet in browser after export
+
+### 32.4 Backup Data
 - Create .argobk backup file
 - Automatic unique naming for duplicates
 - ZIP compression for backup
+
+---
+
+## 33. Currency & Exchange Rates
+
+### 33.1 Multi-Currency Support
+- 28 supported currencies (USD, EUR, CAD, GBP, etc.)
+- Currency symbol display
+- Currency selection per company
+
+### 33.2 Exchange Rate API
+- Real-time exchange rates via OpenExchangeRates API
+- Historical rates for past transactions
+- Local caching to minimize API calls
+- Automatic conversion for reports
+- Offline fallback to cached rates
+
+---
+
+## 34. Password Manager
+
+### 34.1 Password Vault
+Secure storage for business-related passwords:
+- Add/Edit/Delete passwords
+- Password categories
+- Encrypted storage (AES-256)
+- Copy password to clipboard
+- Show/hide password toggle
+- Password strength indicator
+
+### 34.2 Password Entry Fields
+- Name/Label (required)
+- Username
+- Password (required)
+- Website/URL
+- Notes
+- Category
+
+---
+
+## 35. Log & Debug System
+
+### 35.1 Application Log
+In-app log viewer for debugging:
+- Log categories: Error, Debug, General, Product Manager, Password Manager
+- Timestamp for each entry
+- Translatable log messages
+- In-memory log (last 1000 entries)
+
+### 35.2 Log Operations
+- View logs in dedicated window
+- Save logs to file
+- Clear logs
+- Auto-cleanup of old log files (keep last 30)
+
+### 35.3 Error Tracking
+- Error codes for each error type (e.g., "Error-3vknm9")
+- Stack trace capture (admin mode)
+- Anonymous error reporting (with consent)
+
+---
+
+## 36. Auto-Update System
+
+### 36.1 Update Checker (Desktop Only)
+- Check for updates on startup
+- Manual check via Help menu
+- NetSparkle integration
+- Update notification with changelog
+- Download progress indicator
+
+### 36.2 Update Process
+- Download update in background
+- Verify update integrity
+- Prompt user to install
+- Restart application after update
+- Auto-open recent company after update (optional)
+
+### 36.3 Platform Support
+| Platform | Auto-Update |
+|----------|-------------|
+| Windows | Yes (NetSparkle) |
+| macOS | Yes (NetSparkle) |
+| Linux | Yes (NetSparkle) |
+| Browser | No (always latest) |
 
 ---
 

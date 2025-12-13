@@ -56,12 +56,17 @@ ArgoBooks/
 <PackageReference Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.*" />
 
 <!-- PDF -->
-<PackageReference Include="SkiaSharp" Version="2.*" />
-<!-- OR -->
 <PackageReference Include="QuestPDF" Version="2024.*" />
 
 <!-- Excel -->
 <PackageReference Include="ClosedXML" Version="0.102.*" />
+
+<!-- Auto-Update (Desktop only) -->
+<PackageReference Include="NetSparkleUpdater.UI.Avalonia" Version="2.*" />
+
+<!-- Google APIs -->
+<PackageReference Include="Google.Apis.Sheets.v4" Version="1.*" />
+<PackageReference Include="Google.Apis.Drive.v3" Version="1.*" />
 ```
 
 ### 1.2 Core Services Architecture
@@ -1091,6 +1096,114 @@ ArgoBooks.UI/
 │   └── RecurringInvoiceService.cs
 ```
 
+### 8.11 Licensing System
+- [ ] License validation service (web API)
+- [ ] Upgrade modal UI
+- [ ] License key entry modal
+- [ ] Feature gating based on tier
+- [ ] Standard/Premium tier detection
+
+**Files to create:**
+```
+ArgoBooks.Core/
+├── Services/
+│   └── LicenseService.cs
+├── Models/
+│   └── LicenseInfo.cs
+ArgoBooks.UI/
+├── Dialogs/
+│   ├── UpgradeDialog.axaml / .axaml.cs
+│   └── LicenseKeyDialog.axaml / .axaml.cs
+├── ViewModels/
+│   └── LicenseViewModel.cs
+```
+
+### 8.12 Auto-Update System (Desktop Only)
+- [ ] NetSparkle integration
+- [ ] Check for updates on startup
+- [ ] Update notification UI
+- [ ] Download and install updates
+
+**Files to create:**
+```
+ArgoBooks.Core/
+├── Services/
+│   └── UpdateService.cs
+ArgoBooks.Desktop/
+├── Services/
+│   └── NetSparkleUpdateService.cs
+```
+
+### 8.13 Google Sheets Export
+- [ ] Google OAuth 2.0 authentication
+- [ ] Export chart data to Sheets
+- [ ] Create formatted spreadsheets
+
+**Files to create:**
+```
+ArgoBooks.Core/
+├── Services/
+│   └── GoogleSheetsService.cs
+├── Auth/
+│   └── GoogleCredentialsManager.cs
+```
+
+### 8.14 Exchange Rate Service
+- [ ] OpenExchangeRates API integration
+- [ ] Exchange rate caching
+- [ ] Currency conversion utilities
+
+**Files to create:**
+```
+ArgoBooks.Core/
+├── Services/
+│   └── ExchangeRateService.cs
+├── Models/
+│   └── ExchangeRateCache.cs
+```
+
+### 8.15 Password Manager
+- [ ] Password vault UI
+- [ ] Add/Edit/Delete passwords
+- [ ] Encrypted storage
+- [ ] Copy to clipboard
+
+**Files to create:**
+```
+ArgoBooks.UI/
+├── Views/
+│   └── PasswordManagerView.axaml / .axaml.cs
+├── ViewModels/
+│   └── PasswordManagerViewModel.cs
+├── Dialogs/
+│   └── PasswordEntryDialog.axaml / .axaml.cs
+ArgoBooks.Core/
+├── Services/
+│   └── PasswordVaultService.cs
+├── Models/
+│   └── StoredPassword.cs
+```
+
+### 8.16 Log & Debug System
+- [ ] Log service with categories
+- [ ] Log viewer UI
+- [ ] Save/export logs
+- [ ] Error tracking
+
+**Files to create:**
+```
+ArgoBooks.Core/
+├── Services/
+│   └── LogService.cs
+├── Models/
+│   └── LogEntry.cs
+ArgoBooks.UI/
+├── Views/
+│   └── LogViewerView.axaml / .axaml.cs
+├── ViewModels/
+│   └── LogViewerViewModel.cs
+```
+
 **Dependencies:** Phase 7
 
 ---
@@ -1099,21 +1212,21 @@ ArgoBooks.UI/
 
 ### Phase Order
 ```
-Phase 1: Project Foundation        (Week 1)
+Phase 1: Project Foundation
     ↓
-Phase 2: Data Layer                (Week 2)
+Phase 2: Data Layer
     ↓
-Phase 3: Core UI Components        (Week 2-3)
+Phase 3: Core UI Components
     ↓
-Phase 4: App Shell & Navigation    (Week 3)
+Phase 4: App Shell & Navigation
     ↓
-Phase 5: Startup & Company Mgmt    (Week 4)
+Phase 5: Startup & Company Mgmt
     ↓
-Phase 6: Core Feature Pages        (Week 5-6)
+Phase 6: Core Feature Pages
     ↓
-Phase 7: Transaction & Inventory   (Week 7-9)
+Phase 7: Transaction & Inventory
     ↓
-Phase 8: Dashboard & Advanced      (Week 10-12)
+Phase 8: Dashboard & Advanced
 ```
 
 ### Dependency Graph (Simplified)

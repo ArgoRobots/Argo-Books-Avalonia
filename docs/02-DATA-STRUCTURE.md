@@ -729,28 +729,39 @@ Settings stored outside company files:
 | Linux | `~/.config/ArgoBooks/` |
 
 ### 4.2 Global Settings File (globalSettings.json)
-```
+```json
 {
   "welcome": {
     "showWelcomeForm": true,
     "eulaAccepted": true
   },
-  
+
   "recentCompanies": [
     "/path/to/company1.argo",
     "/path/to/company2.argo"
   ],
-  
+
   "updates": {
     "lastUpdateCheck": "2024-12-01T00:00:00",
     "autoOpenRecentAfterUpdate": true
   },
- 
+
   "ui": {
     "sidebarCollapsed": false
+  },
+
+  "license": {
+    "standardKey": "XXXX-XXXX-XXXX-XXXX",
+    "premiumSubscriptionId": null,
+    "premiumExpiryDate": null,
+    "lastValidationDate": "2024-12-01T00:00:00"
+  },
+
+  "privacy": {
+    "anonymousDataCollectionConsent": false,
+    "consentDate": null
   }
 }
-
 ```
 
 ### 4.3 Cache Directory Structure
@@ -761,6 +772,27 @@ cache/
 ├── exchangeRates.json
 ├── translations.json
 └── anonymousUserData.json
+```
+
+### 4.4 Password Manager File (passwords.json)
+Stored in global settings directory, encrypted with AES-256:
+```json
+{
+  "passwords": [
+    {
+      "id": "PWD-001",
+      "name": "Supplier Portal",
+      "username": "admin@company.com",
+      "password": "encrypted-password-data",
+      "website": "https://supplier.example.com",
+      "category": "Suppliers",
+      "notes": "Main supplier account",
+      "createdAt": "2024-01-01T00:00:00",
+      "updatedAt": "2024-06-15T00:00:00"
+    }
+  ],
+  "categories": ["Suppliers", "Banking", "Services", "Other"]
+}
 ```
 
 ---
