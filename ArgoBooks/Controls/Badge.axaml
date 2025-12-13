@@ -1,0 +1,132 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="100" d:DesignHeight="24"
+             x:Class="ArgoBooks.Controls.Badge"
+             x:DataType="controls:Badge">
+
+    <Border x:Name="BadgeBorder"
+            CornerRadius="{StaticResource RadiusFull}"
+            Padding="8,4"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Center"
+            Classes.primary="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:Badge}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:BadgeVariant.Primary}}"
+            Classes.success="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:Badge}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:BadgeVariant.Success}}"
+            Classes.warning="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:Badge}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:BadgeVariant.Warning}}"
+            Classes.error="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:Badge}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:BadgeVariant.Error}}"
+            Classes.info="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:Badge}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:BadgeVariant.Info}}"
+            Classes.neutral="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:Badge}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:BadgeVariant.Neutral}}"
+            Classes.outline="{Binding IsOutline, RelativeSource={RelativeSource AncestorType=controls:Badge}}"
+            Classes.sm="{Binding Size, RelativeSource={RelativeSource AncestorType=controls:Badge}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:BadgeSize.Small}}"
+            Classes.lg="{Binding Size, RelativeSource={RelativeSource AncestorType=controls:Badge}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:BadgeSize.Large}}">
+
+        <Border.Styles>
+            <!-- Primary -->
+            <Style Selector="Border.primary">
+                <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+            </Style>
+            <Style Selector="Border.primary TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource PrimaryDarkBrush}" />
+            </Style>
+            <Style Selector="Border.primary.outline">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <!-- Success -->
+            <Style Selector="Border.success">
+                <Setter Property="Background" Value="{DynamicResource SuccessLightBrush}" />
+            </Style>
+            <Style Selector="Border.success TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource SuccessDarkBrush}" />
+            </Style>
+            <Style Selector="Border.success.outline">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <!-- Warning -->
+            <Style Selector="Border.warning">
+                <Setter Property="Background" Value="{DynamicResource WarningLightBrush}" />
+            </Style>
+            <Style Selector="Border.warning TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource WarningDarkBrush}" />
+            </Style>
+            <Style Selector="Border.warning.outline">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <!-- Error -->
+            <Style Selector="Border.error">
+                <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
+            </Style>
+            <Style Selector="Border.error TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource ErrorDarkBrush}" />
+            </Style>
+            <Style Selector="Border.error.outline">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <!-- Info -->
+            <Style Selector="Border.info">
+                <Setter Property="Background" Value="{DynamicResource InfoLightBrush}" />
+            </Style>
+            <Style Selector="Border.info TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource InfoDarkBrush}" />
+            </Style>
+            <Style Selector="Border.info.outline">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource InfoBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <!-- Neutral -->
+            <Style Selector="Border.neutral">
+                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            </Style>
+            <Style Selector="Border.neutral TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            </Style>
+            <Style Selector="Border.neutral.outline">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <!-- Size modifiers -->
+            <Style Selector="Border.sm">
+                <Setter Property="Padding" Value="6,2" />
+            </Style>
+            <Style Selector="Border.sm TextBlock">
+                <Setter Property="FontSize" Value="{StaticResource FontSizeXs}" />
+            </Style>
+            <Style Selector="Border.lg">
+                <Setter Property="Padding" Value="12,6" />
+            </Style>
+            <Style Selector="Border.lg TextBlock">
+                <Setter Property="FontSize" Value="{StaticResource FontSizeMd}" />
+            </Style>
+        </Border.Styles>
+
+        <StackPanel Orientation="Horizontal" Spacing="4">
+            <!-- Icon -->
+            <PathIcon IsVisible="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:Badge}, Converter={x:Static ObjectConverters.IsNotNull}}"
+                      Data="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:Badge}}"
+                      Width="12" Height="12" />
+
+            <!-- Text -->
+            <TextBlock Text="{Binding Text, RelativeSource={RelativeSource AncestorType=controls:Badge}}"
+                       FontSize="{StaticResource FontSizeSm}"
+                       FontWeight="Medium"
+                       VerticalAlignment="Center" />
+        </StackPanel>
+    </Border>
+</UserControl>

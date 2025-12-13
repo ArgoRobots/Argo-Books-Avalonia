@@ -1,0 +1,113 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="80"
+             x:Class="ArgoBooks.Controls.ArgoTextBox"
+             x:DataType="controls:ArgoTextBox">
+
+    <StackPanel Spacing="4">
+        <!-- Label -->
+        <StackPanel Orientation="Horizontal" Spacing="4"
+                    IsVisible="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                       FontSize="{StaticResource FontSizeSm}"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
+            <TextBlock Text="*"
+                       FontSize="{StaticResource FontSizeSm}"
+                       Foreground="{DynamicResource ErrorBrush}"
+                       IsVisible="{Binding IsRequired, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}" />
+        </StackPanel>
+
+        <!-- Input Container -->
+        <Border CornerRadius="{StaticResource RadiusMd}"
+                BorderThickness="1"
+                Padding="12,10"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                Classes.error="{Binding HasError, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                Classes.focused="{Binding #InputTextBox.IsFocused}">
+            <Border.Styles>
+                <Style Selector="Border.error">
+                    <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}" />
+                </Style>
+                <Style Selector="Border.focused:not(.error)">
+                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                </Style>
+                <Style Selector="Border:pointerover:not(.focused):not(.error)">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderHoverBrush}" />
+                </Style>
+            </Border.Styles>
+
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <!-- Left Icon -->
+                <PathIcon Grid.Column="0"
+                          IsVisible="{Binding LeftIcon, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}, Converter={x:Static ObjectConverters.IsNotNull}}"
+                          Data="{Binding LeftIcon, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                          Width="{StaticResource IconSizeMd}" Height="{StaticResource IconSizeMd}"
+                          Foreground="{DynamicResource TextTertiaryBrush}"
+                          Margin="0,0,8,0" />
+
+                <!-- TextBox -->
+                <TextBox x:Name="InputTextBox"
+                         Grid.Column="1"
+                         Text="{Binding Text, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}, Mode=TwoWay}"
+                         Watermark="{Binding Placeholder, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                         MaxLength="{Binding MaxLength, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                         IsReadOnly="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                         PasswordChar="{Binding PasswordChar, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                         AcceptsReturn="{Binding AcceptsReturn, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                         TextWrapping="{Binding TextWrapping, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="0"
+                         VerticalAlignment="Center" />
+
+                <!-- Right Icon / Clear Button -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                    <!-- Clear Button -->
+                    <Button Classes="icon"
+                            Width="24" Height="24"
+                            Padding="4"
+                            IsVisible="{Binding ShowClearButton, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                            Command="{Binding ClearCommand, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}">
+                        <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                  Width="14" Height="14"
+                                  Foreground="{DynamicResource TextTertiaryBrush}" />
+                    </Button>
+
+                    <!-- Right Icon -->
+                    <PathIcon IsVisible="{Binding RightIcon, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}, Converter={x:Static ObjectConverters.IsNotNull}}"
+                              Data="{Binding RightIcon, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}"
+                              Width="{StaticResource IconSizeMd}" Height="{StaticResource IconSizeMd}"
+                              Foreground="{DynamicResource TextTertiaryBrush}"
+                              Margin="8,0,0,0" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Helper Text / Error Message -->
+        <TextBlock FontSize="{StaticResource FontSizeXs}"
+                   Margin="0,2,0,0">
+            <TextBlock.Styles>
+                <Style Selector="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+                    <Setter Property="Text" Value="{Binding HelperText, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}" />
+                    <Setter Property="IsVisible" Value="{Binding HelperText, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </Style>
+                <Style Selector="TextBlock.error">
+                    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                    <Setter Property="Text" Value="{Binding ErrorMessage, RelativeSource={RelativeSource AncestorType=controls:ArgoTextBox}}" />
+                    <Setter Property="IsVisible" Value="True" />
+                </Style>
+            </TextBlock.Styles>
+            <TextBlock.Classes>
+                <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                    <Binding Path="HasError" RelativeSource="{RelativeSource AncestorType=controls:ArgoTextBox}" />
+                </MultiBinding>
+            </TextBlock.Classes>
+        </TextBlock>
+    </StackPanel>
+</UserControl>

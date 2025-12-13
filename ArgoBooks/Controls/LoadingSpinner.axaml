@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="48" d:DesignHeight="48"
+             x:Class="ArgoBooks.Controls.LoadingSpinner"
+             x:DataType="controls:LoadingSpinner">
+
+    <Border x:Name="SpinnerContainer"
+            Width="{Binding SpinnerSize, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+            Height="{Binding SpinnerSize, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+            RenderTransformOrigin="0.5,0.5"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            IsVisible="{Binding IsSpinning, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}">
+        <Border.RenderTransform>
+            <RotateTransform />
+        </Border.RenderTransform>
+        <Border.Styles>
+            <Style Selector="Border#SpinnerContainer">
+                <Style.Animations>
+                    <Animation Duration="0:0:1" IterationCount="INFINITE">
+                        <KeyFrame Cue="0%">
+                            <Setter Property="RenderTransform" Value="rotate(0deg)" />
+                        </KeyFrame>
+                        <KeyFrame Cue="100%">
+                            <Setter Property="RenderTransform" Value="rotate(360deg)" />
+                        </KeyFrame>
+                    </Animation>
+                </Style.Animations>
+            </Style>
+        </Border.Styles>
+
+        <!-- Arc spinner using PathIcon -->
+        <Panel>
+            <!-- Background circle (lighter) -->
+            <Ellipse StrokeThickness="{Binding StrokeThickness, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+                     Stroke="{DynamicResource SurfaceHoverBrush}"
+                     Fill="Transparent" />
+
+            <!-- Spinning arc -->
+            <Path Stroke="{Binding SpinnerBrush, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+                  StrokeThickness="{Binding StrokeThickness, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+                  StrokeLineCap="Round">
+                <Path.Data>
+                    <PathGeometry>
+                        <PathFigure StartPoint="{Binding ArcStart, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+                                    IsClosed="False">
+                            <ArcSegment Point="{Binding ArcEnd, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+                                        Size="{Binding ArcSize, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+                                        SweepDirection="Clockwise"
+                                        IsLargeArc="False" />
+                        </PathFigure>
+                    </PathGeometry>
+                </Path.Data>
+            </Path>
+        </Panel>
+    </Border>
+</UserControl>

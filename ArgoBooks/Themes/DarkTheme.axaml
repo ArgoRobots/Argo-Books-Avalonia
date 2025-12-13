@@ -20,6 +20,7 @@
     <Color x:Key="BorderColor">#374151</Color>
     <Color x:Key="BorderLightColor">#4B5563</Color>
     <Color x:Key="BorderDarkColor">#1F2937</Color>
+    <Color x:Key="BorderHoverColor">#6B7280</Color>
 
     <!-- Text Colors -->
     <Color x:Key="TextPrimaryColor">#F9FAFB</Color>
@@ -54,6 +55,7 @@
     <!-- Shadow/Overlay Colors -->
     <Color x:Key="ShadowColor">#40000000</Color>
     <Color x:Key="OverlayColor">#B0000000</Color>
+    <Color x:Key="LoadingOverlayColor">#E6111827</Color>
 
     <!-- Brushes -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
@@ -67,6 +69,7 @@
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
     <SolidColorBrush x:Key="BorderLightBrush" Color="{StaticResource BorderLightColor}" />
     <SolidColorBrush x:Key="BorderDarkBrush" Color="{StaticResource BorderDarkColor}" />
+    <SolidColorBrush x:Key="BorderHoverBrush" Color="{StaticResource BorderHoverColor}" />
 
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
@@ -95,5 +98,6 @@
 
     <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource ShadowColor}" />
     <SolidColorBrush x:Key="OverlayBrush" Color="{StaticResource OverlayColor}" />
+    <SolidColorBrush x:Key="LoadingOverlayBrush" Color="{StaticResource LoadingOverlayColor}" />
 
 </ResourceDictionary>
