@@ -14,6 +14,9 @@
         <!-- MVVM -->
         <PackageReference Include="CommunityToolkit.Mvvm" />
 
+        <!-- Dependency Injection -->
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+
         <!-- PDF -->
         <PackageReference Include="QuestPDF" />
 

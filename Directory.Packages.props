@@ -15,6 +15,9 @@
         <!-- MVVM -->
         <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 
+        <!-- Dependency Injection -->
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+
         <!-- Data -->
         <PackageVersion Include="System.Text.Json" Version="9.0.0" />
         <PackageVersion Include="System.Formats.Tar" Version="9.0.0" />
