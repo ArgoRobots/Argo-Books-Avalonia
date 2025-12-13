@@ -64,10 +64,10 @@ public partial class LoadingSpinner : UserControl
     /// <summary>
     /// Gets the computed spinner size based on the preset.
     /// </summary>
-    public double SpinnerSize => SizePreset switch
+    public double ComputedSize => SizePreset switch
     {
-        Controls.SpinnerSize.Small => 16,
-        Controls.SpinnerSize.Large => 48,
+        SpinnerSize.Small => 16,
+        SpinnerSize.Large => 48,
         _ => 24
     };
 
@@ -76,8 +76,8 @@ public partial class LoadingSpinner : UserControl
     /// </summary>
     public double StrokeThickness => SizePreset switch
     {
-        Controls.SpinnerSize.Small => 2,
-        Controls.SpinnerSize.Large => 4,
+        SpinnerSize.Small => 2,
+        SpinnerSize.Large => 4,
         _ => 3
     };
 
@@ -88,7 +88,7 @@ public partial class LoadingSpinner : UserControl
     {
         get
         {
-            var center = SpinnerSize / 2;
+            var center = ComputedSize / 2;
             var radius = center - StrokeThickness / 2;
             return new Point(center, StrokeThickness / 2);
         }
@@ -101,7 +101,7 @@ public partial class LoadingSpinner : UserControl
     {
         get
         {
-            var center = SpinnerSize / 2;
+            var center = ComputedSize / 2;
             var radius = center - StrokeThickness / 2;
             return new Point(center + radius, center);
         }
@@ -114,7 +114,7 @@ public partial class LoadingSpinner : UserControl
     {
         get
         {
-            var radius = (SpinnerSize - StrokeThickness) / 2;
+            var radius = (ComputedSize - StrokeThickness) / 2;
             return new Size(radius, radius);
         }
     }
