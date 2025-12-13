@@ -96,6 +96,25 @@ public enum MessageBoxResult
 }
 
 /// <summary>
+/// Event args for message box result selection.
+/// </summary>
+public class MessageBoxResultEventArgs : EventArgs
+{
+    /// <summary>
+    /// Gets the result that was selected.
+    /// </summary>
+    public MessageBoxResult Result { get; }
+
+    /// <summary>
+    /// Creates a new instance with the specified result.
+    /// </summary>
+    public MessageBoxResultEventArgs(MessageBoxResult result)
+    {
+        Result = result;
+    }
+}
+
+/// <summary>
 /// A custom message box control for displaying alerts, confirmations, and messages.
 /// </summary>
 public partial class MessageBox : UserControl
@@ -245,7 +264,7 @@ public partial class MessageBox : UserControl
     /// <summary>
     /// Event raised when a result is selected.
     /// </summary>
-    public event EventHandler<MessageBoxResult>? ResultSelected;
+    public event EventHandler<MessageBoxResultEventArgs>? ResultSelected;
 
     #endregion
 
@@ -358,7 +377,7 @@ public partial class MessageBox : UserControl
 
     private void OnResultSelected(MessageBoxResult result)
     {
-        ResultSelected?.Invoke(this, result);
+        ResultSelected?.Invoke(this, new MessageBoxResultEventArgs(result));
     }
 
     /// <summary>
@@ -374,7 +393,7 @@ public partial class MessageBox : UserControl
             Buttons = MessageBoxButtons.Ok
         };
         if (onResult != null)
-            box.ResultSelected += (_, r) => onResult(r);
+            box.ResultSelected += (_, e) => onResult(e.Result);
         return box;
     }
 
@@ -391,7 +410,7 @@ public partial class MessageBox : UserControl
             Buttons = MessageBoxButtons.Ok
         };
         if (onResult != null)
-            box.ResultSelected += (_, r) => onResult(r);
+            box.ResultSelected += (_, e) => onResult(e.Result);
         return box;
     }
 
@@ -408,7 +427,7 @@ public partial class MessageBox : UserControl
             Buttons = MessageBoxButtons.Ok
         };
         if (onResult != null)
-            box.ResultSelected += (_, r) => onResult(r);
+            box.ResultSelected += (_, e) => onResult(e.Result);
         return box;
     }
 
@@ -425,7 +444,7 @@ public partial class MessageBox : UserControl
             Buttons = MessageBoxButtons.Ok
         };
         if (onResult != null)
-            box.ResultSelected += (_, r) => onResult(r);
+            box.ResultSelected += (_, e) => onResult(e.Result);
         return box;
     }
 
@@ -442,7 +461,7 @@ public partial class MessageBox : UserControl
             Buttons = MessageBoxButtons.YesNo
         };
         if (onResult != null)
-            box.ResultSelected += (_, r) => onResult(r);
+            box.ResultSelected += (_, e) => onResult(e.Result);
         return box;
     }
 }

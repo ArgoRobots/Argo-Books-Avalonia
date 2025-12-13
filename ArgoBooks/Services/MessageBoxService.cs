@@ -3,6 +3,7 @@ using ArgoBooks.Core.Services;
 using Avalonia.Threading;
 using MessageBoxButtons = ArgoBooks.Core.Services.MessageBoxButtons;
 using MessageBoxResult = ArgoBooks.Core.Services.MessageBoxResult;
+using MessageBoxResultEventArgs = ArgoBooks.Controls.MessageBoxResultEventArgs;
 using MessageBoxType = ArgoBooks.Core.Services.MessageBoxType;
 
 namespace ArgoBooks.Services;
@@ -151,7 +152,7 @@ public class MessageBoxService : IMessageBoxService
         });
     }
 
-    private void OnResultSelected(object? sender, MessageBoxResult result)
+    private void OnResultSelected(object? sender, MessageBoxResultEventArgs e)
     {
         Dispatcher.UIThread.Post(() =>
         {
@@ -166,7 +167,7 @@ public class MessageBoxService : IMessageBoxService
                 messageBox.ResultSelected -= OnResultSelected;
             }
 
-            _resultTcs?.TrySetResult(result);
+            _resultTcs?.TrySetResult(e.Result);
         });
     }
 
