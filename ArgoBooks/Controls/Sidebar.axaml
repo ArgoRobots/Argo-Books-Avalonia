@@ -19,77 +19,80 @@
                 Padding="15"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,0">
-            <Button Classes="sidebar-header"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Left"
-                    IsVisible="{Binding !IsCollapsed}">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <!-- Logo (40px square with gradient) -->
-                    <Border Grid.Column="0"
-                            Width="40" Height="40"
-                            CornerRadius="8"
-                            ClipToBounds="True">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
-                                <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Panel>
-                            <Image Source="{Binding CompanyLogo}"
-                                   Stretch="UniformToFill"
-                                   IsVisible="{Binding HasCompanyLogo}" />
-                            <TextBlock Text="{Binding CompanyInitial}"
-                                       FontSize="18"
-                                       FontWeight="Bold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       IsVisible="{Binding !HasCompanyLogo}" />
-                        </Panel>
-                    </Border>
+            <Panel>
+                <!-- Expanded Header with Button -->
+                <Button Classes="sidebar-header"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left"
+                        IsVisible="{Binding !IsCollapsed}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Logo (40px square with gradient) -->
+                        <Border Grid.Column="0"
+                                Width="40" Height="40"
+                                CornerRadius="8"
+                                ClipToBounds="True">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                                    <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Panel>
+                                <Image Source="{Binding CompanyLogo}"
+                                       Stretch="UniformToFill"
+                                       IsVisible="{Binding HasCompanyLogo}" />
+                                <TextBlock Text="{Binding CompanyInitial}"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !HasCompanyLogo}" />
+                            </Panel>
+                        </Border>
 
-                    <!-- Brand Name -->
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding CompanyName}"
-                               FontSize="15"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource SidebarTextBrush}"
-                               VerticalAlignment="Center"
-                               Margin="12,0,0,0"
-                               MaxWidth="140"
-                               TextTrimming="CharacterEllipsis" />
+                        <!-- Brand Name -->
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding CompanyName}"
+                                   FontSize="15"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SidebarTextBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,0,0"
+                                   MaxWidth="140"
+                                   TextTrimming="CharacterEllipsis" />
 
-                    <!-- Chevron Down Icon -->
-                    <PathIcon Grid.Column="2"
-                              Data="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
-                              Width="16" Height="16"
-                              Foreground="{DynamicResource SidebarTextMutedBrush}"
-                              VerticalAlignment="Center"
-                              Margin="8,0,0,0" />
-                </Grid>
-            </Button>
+                        <!-- Chevron Down Icon -->
+                        <PathIcon Grid.Column="2"
+                                  Data="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                  VerticalAlignment="Center"
+                                  Margin="8,0,0,0" />
+                    </Grid>
+                </Button>
 
-            <!-- Collapsed Logo Only -->
-            <Border Width="40" Height="40"
-                    CornerRadius="8"
-                    ClipToBounds="True"
-                    IsVisible="{Binding IsCollapsed}"
-                    ToolTip.Tip="{Binding CompanyName}"
-                    HorizontalAlignment="Center">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                        <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
-                        <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
-                    </LinearGradientBrush>
-                </Border.Background>
-                <TextBlock Text="{Binding CompanyInitial}"
-                           FontSize="18"
-                           FontWeight="Bold"
-                           Foreground="White"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center" />
-            </Border>
+                <!-- Collapsed Logo Only -->
+                <Border Width="40" Height="40"
+                        CornerRadius="8"
+                        ClipToBounds="True"
+                        IsVisible="{Binding IsCollapsed}"
+                        ToolTip.Tip="{Binding CompanyName}"
+                        HorizontalAlignment="Center">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                            <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                            <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <TextBlock Text="{Binding CompanyInitial}"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+            </Panel>
         </Border>
 
         <!-- Footer: Settings and Help -->
