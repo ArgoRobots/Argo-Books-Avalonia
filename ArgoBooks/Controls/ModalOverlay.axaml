@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Controls.ModalOverlay"
+             x:DataType="controls:ModalOverlay">
+
+    <Panel x:Name="OverlayPanel"
+           IsVisible="{Binding IsOpen, RelativeSource={RelativeSource AncestorType=controls:ModalOverlay}}">
+        <!-- Semi-transparent backdrop -->
+        <Border x:Name="Backdrop"
+                Background="{DynamicResource OverlayBrush}"
+                IsHitTestVisible="True"
+                Opacity="0">
+            <Border.Styles>
+                <Style Selector="Border#Backdrop">
+                    <Style.Animations>
+                        <Animation Duration="0:0:0.2" FillMode="Forward">
+                            <KeyFrame Cue="100%">
+                                <Setter Property="Opacity" Value="1" />
+                            </KeyFrame>
+                        </Animation>
+                    </Style.Animations>
+                </Style>
+            </Border.Styles>
+            <Interaction.Behaviors>
+                <EventTriggerBehavior EventName="PointerPressed">
+                    <InvokeCommandAction Command="{Binding BackdropClickCommand, RelativeSource={RelativeSource AncestorType=controls:ModalOverlay}}" />
+                </EventTriggerBehavior>
+            </Interaction.Behaviors>
+        </Border>
+
+        <!-- Modal content container -->
+        <Border x:Name="ContentContainer"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                RenderTransformOrigin="0.5,0.5"
+                IsHitTestVisible="True">
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+            </Border.RenderTransform>
+            <Border.Styles>
+                <Style Selector="Border#ContentContainer">
+                    <Setter Property="Opacity" Value="0" />
+                    <Style.Animations>
+                        <Animation Duration="0:0:0.2" FillMode="Forward" Easing="CubicEaseOut">
+                            <KeyFrame Cue="100%">
+                                <Setter Property="Opacity" Value="1" />
+                                <Setter Property="RenderTransform">
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </Setter>
+                            </KeyFrame>
+                        </Animation>
+                    </Style.Animations>
+                </Style>
+            </Border.Styles>
+
+            <ContentPresenter Content="{Binding Content, RelativeSource={RelativeSource AncestorType=controls:ModalOverlay}}" />
+        </Border>
+    </Panel>
+</UserControl>
