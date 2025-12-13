@@ -139,6 +139,11 @@ public partial class ModalOverlay : UserControl
         }
     }
 
+    private void OnBackdropPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        OnBackdropClick();
+    }
+
     /// <summary>
     /// Requests to close the modal. Can be cancelled via Closing event.
     /// </summary>

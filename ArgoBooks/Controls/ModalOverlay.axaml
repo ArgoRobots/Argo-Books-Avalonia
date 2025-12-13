@@ -13,7 +13,8 @@
         <Border x:Name="Backdrop"
                 Background="{DynamicResource OverlayBrush}"
                 IsHitTestVisible="True"
-                Opacity="0">
+                Opacity="0"
+                PointerPressed="OnBackdropPointerPressed">
             <Border.Styles>
                 <Style Selector="Border#Backdrop">
                     <Style.Animations>
@@ -25,11 +26,6 @@
                     </Style.Animations>
                 </Style>
             </Border.Styles>
-            <Interaction.Behaviors>
-                <EventTriggerBehavior EventName="PointerPressed">
-                    <InvokeCommandAction Command="{Binding BackdropClickCommand, RelativeSource={RelativeSource AncestorType=controls:ModalOverlay}}" />
-                </EventTriggerBehavior>
-            </Interaction.Behaviors>
         </Border>
 
         <!-- Modal content container -->

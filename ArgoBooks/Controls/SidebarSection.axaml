@@ -18,8 +18,6 @@
                            FontSize="{StaticResource FontSizeXs}"
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource SidebarTextMutedBrush}"
-                           TextTransform="Uppercase"
-                           LetterSpacing="0.5"
                            IsVisible="{Binding !IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
 
                 <!-- Divider line when collapsed -->
@@ -37,23 +35,18 @@
                         Width="20" Height="20"
                         Command="{Binding ToggleExpandedCommand, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
                         IsVisible="{Binding IsCollapsible, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
-                    <PathIcon Width="12" Height="12"
-                              Foreground="{DynamicResource SidebarTextMutedBrush}">
-                        <PathIcon.Styles>
-                            <Style Selector="PathIcon.expanded">
-                                <Setter Property="Data" Value="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
-                            </Style>
-                            <Style Selector="PathIcon.collapsed">
-                                <Setter Property="Data" Value="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-                            </Style>
-                        </PathIcon.Styles>
-                        <PathIcon.Classes>
-                            <Binding Path="IsExpanded"
-                                     RelativeSource="{RelativeSource AncestorType=controls:SidebarSection}"
-                                     Converter="{x:Static BoolConverters.ToString}"
-                                     ConverterParameter="expanded,collapsed" />
-                        </PathIcon.Classes>
-                    </PathIcon>
+                    <Panel>
+                        <!-- Expanded icon (down arrow) -->
+                        <PathIcon Width="12" Height="12"
+                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                  Data="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
+                                  IsVisible="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
+                        <!-- Collapsed icon (right arrow) -->
+                        <PathIcon Width="12" Height="12"
+                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                  Data="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
+                                  IsVisible="{Binding !IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
+                    </Panel>
                 </Button>
             </Grid>
         </Border>

@@ -83,22 +83,18 @@
                             Width="28" Height="28"
                             Command="{Binding ToggleCollapseCommand}"
                             ToolTip.Tip="{Binding CollapseTooltip}">
-                        <PathIcon Width="16" Height="16"
-                                  Foreground="{DynamicResource SidebarTextMutedBrush}">
-                            <PathIcon.Styles>
-                                <Style Selector="PathIcon.expanded">
-                                    <Setter Property="Data" Value="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-                                </Style>
-                                <Style Selector="PathIcon.collapsed">
-                                    <Setter Property="Data" Value="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-                                </Style>
-                            </PathIcon.Styles>
-                            <PathIcon.Classes>
-                                <Binding Path="IsCollapsed"
-                                         Converter="{x:Static BoolConverters.ToString}"
-                                         ConverterParameter="collapsed,expanded" />
-                            </PathIcon.Classes>
-                        </PathIcon>
+                        <Panel>
+                            <!-- Expanded icon (left arrow) -->
+                            <PathIcon Width="16" Height="16"
+                                      Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                      Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                      IsVisible="{Binding !IsCollapsed}" />
+                            <!-- Collapsed icon (right arrow) -->
+                            <PathIcon Width="16" Height="16"
+                                      Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                      Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                      IsVisible="{Binding IsCollapsed}" />
+                        </Panel>
                     </Button>
                 </Grid>
             </Border>

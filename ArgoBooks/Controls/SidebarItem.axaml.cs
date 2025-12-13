@@ -18,6 +18,9 @@ public partial class SidebarItem : UserControl
     public static readonly StyledProperty<Geometry?> IconProperty =
         AvaloniaProperty.Register<SidebarItem, Geometry?>(nameof(Icon));
 
+    public static readonly StyledProperty<string?> IconDataProperty =
+        AvaloniaProperty.Register<SidebarItem, string?>(nameof(IconData));
+
     public static readonly StyledProperty<bool> IsActiveProperty =
         AvaloniaProperty.Register<SidebarItem, bool>(nameof(IsActive));
 
@@ -62,6 +65,15 @@ public partial class SidebarItem : UserControl
     {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the icon path data string (alternative to Icon property).
+    /// </summary>
+    public string? IconData
+    {
+        get => GetValue(IconDataProperty);
+        set => SetValue(IconDataProperty, value);
     }
 
     /// <summary>
@@ -157,6 +169,19 @@ public partial class SidebarItem : UserControl
         if (change.Property == PageNameProperty && CommandParameter == null)
         {
             CommandParameter = PageName;
+        }
+
+        // Convert IconData string to Icon geometry
+        if (change.Property == IconDataProperty && !string.IsNullOrEmpty(IconData))
+        {
+            try
+            {
+                Icon = Geometry.Parse(IconData);
+            }
+            catch
+            {
+                // Invalid path data - ignore
+            }
         }
     }
 }
