@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Views.PlaceholderPage"
+             x:DataType="vm:PlaceholderPageViewModel">
+
+    <Design.DataContext>
+        <vm:PlaceholderPageViewModel Title="Dashboard" Description="Welcome to the Dashboard" />
+    </Design.DataContext>
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            CornerRadius="12"
+            Padding="40">
+        <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="16">
+            <!-- Icon placeholder -->
+            <Border Width="80" Height="80"
+                    CornerRadius="40"
+                    Background="{DynamicResource PrimaryIconBgBrush}"
+                    HorizontalAlignment="Center">
+                <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                          Width="40" Height="40"
+                          Foreground="{DynamicResource PrimaryBrush}" />
+            </Border>
+
+            <!-- Title -->
+            <TextBlock Text="{Binding Title}"
+                       FontSize="24"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       HorizontalAlignment="Center" />
+
+            <!-- Description -->
+            <TextBlock Text="{Binding Description}"
+                       FontSize="14"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       HorizontalAlignment="Center" />
+
+            <!-- Coming soon badge -->
+            <Border Background="{DynamicResource SurfaceAltBrush}"
+                    CornerRadius="16"
+                    Padding="16,8"
+                    HorizontalAlignment="Center"
+                    Margin="0,16,0,0">
+                <TextBlock Text="Coming Soon"
+                           FontSize="12"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextTertiaryBrush}" />
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

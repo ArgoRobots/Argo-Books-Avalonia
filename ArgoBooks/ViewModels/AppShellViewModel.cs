@@ -59,6 +59,22 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
+
+        // Subscribe to navigation events to update UI state
+        if (_navigationService != null)
+        {
+            _navigationService.Navigated += OnNavigated;
+        }
+    }
+
+    /// <summary>
+    /// Handles navigation events to update UI state.
+    /// </summary>
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        CurrentPageName = e.PageName;
+        SidebarViewModel.SetActivePage(e.PageName);
+        HeaderViewModel.SetPageTitle(e.PageName);
     }
 
     /// <summary>
