@@ -18,9 +18,7 @@
         <!-- Dependency Injection -->
         <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
 
-        <!-- Data -->
-        <PackageVersion Include="System.Text.Json" Version="9.0.0" />
-        <PackageVersion Include="System.Formats.Tar" Version="9.0.0" />
+        <!-- Note: System.Text.Json and System.Formats.Tar are built into .NET 7+ -->
 
         <!-- Charts -->
         <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc3.3" />
@@ -35,8 +33,8 @@
         <PackageVersion Include="NetSparkleUpdater.UI.Avalonia" Version="2.3.0" />
 
         <!-- Google APIs -->
-        <PackageVersion Include="Google.Apis.Sheets.v4" Version="1.68.0.3520" />
-        <PackageVersion Include="Google.Apis.Drive.v3" Version="1.68.0.3520" />
+        <PackageVersion Include="Google.Apis.Sheets.v4" Version="1.68.0.3525" />
+        <PackageVersion Include="Google.Apis.Drive.v3" Version="1.68.0.3533" />
 
         <!-- Testing -->
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />

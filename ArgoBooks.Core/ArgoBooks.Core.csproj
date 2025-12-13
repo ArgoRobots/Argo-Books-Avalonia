@@ -7,9 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <!-- Data -->
-        <PackageReference Include="System.Text.Json" />
-        <PackageReference Include="System.Formats.Tar" />
+        <!-- Note: System.Text.Json and System.Formats.Tar are built into .NET 7+ -->
 
         <!-- MVVM -->
         <PackageReference Include="CommunityToolkit.Mvvm" />
