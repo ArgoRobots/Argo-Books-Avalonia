@@ -30,11 +30,11 @@
             <controls:Header Grid.Row="0"
                              DataContext="{Binding HeaderViewModel}" />
 
-            <!-- Page Content -->
+            <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
             <Border Grid.Row="1"
                     Background="{DynamicResource BackgroundSecondaryBrush}">
                 <ContentControl Content="{Binding CurrentPage}"
-                                Margin="24" />
+                                Margin="30" />
             </Border>
         </Grid>
     </Grid>

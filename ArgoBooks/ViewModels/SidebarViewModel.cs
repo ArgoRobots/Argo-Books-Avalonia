@@ -24,10 +24,11 @@ public partial class SidebarViewModel : ViewModelBase
     private string _collapseTooltip = "Collapse sidebar";
 
     [ObservableProperty]
-    private double _width = 240;
+    private double _width = 250;
 
-    private const double ExpandedWidth = 240;
-    private const double CollapsedWidth = 64;
+    // Dimensions from mockup: 250px expanded, 70px collapsed
+    private const double ExpandedWidth = 250;
+    private const double CollapsedWidth = 70;
 
     #endregion
 

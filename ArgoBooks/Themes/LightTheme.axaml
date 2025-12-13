@@ -4,64 +4,65 @@
     <!--
         Argo Books Light Theme
         Theme-specific colors for light mode.
+        Based on UI mockup specifications.
     -->
 
-    <!-- Background Colors -->
+    <!-- Background Colors (from mockup) -->
     <Color x:Key="BackgroundColor">#FFFFFF</Color>
-    <Color x:Key="BackgroundSecondaryColor">#F9FAFB</Color>
-    <Color x:Key="BackgroundTertiaryColor">#F3F4F6</Color>
+    <Color x:Key="BackgroundSecondaryColor">#F5F7FA</Color>
+    <Color x:Key="BackgroundTertiaryColor">#F8F9FA</Color>
 
     <!-- Surface Colors (cards, panels) -->
     <Color x:Key="SurfaceColor">#FFFFFF</Color>
-    <Color x:Key="SurfaceHoverColor">#F9FAFB</Color>
-    <Color x:Key="SurfacePressedColor">#F3F4F6</Color>
+    <Color x:Key="SurfaceHoverColor">#F8F9FA</Color>
+    <Color x:Key="SurfacePressedColor">#E9ECEF</Color>
 
-    <!-- Border Colors -->
-    <Color x:Key="BorderColor">#E5E7EB</Color>
+    <!-- Border Colors (from mockup: #e1e5eb) -->
+    <Color x:Key="BorderColor">#E1E5EB</Color>
     <Color x:Key="BorderLightColor">#F3F4F6</Color>
-    <Color x:Key="BorderDarkColor">#D1D5DB</Color>
-    <Color x:Key="BorderHoverColor">#9CA3AF</Color>
+    <Color x:Key="BorderDarkColor">#CED4DA</Color>
+    <Color x:Key="BorderHoverColor">#868E96</Color>
 
-    <!-- Text Colors -->
-    <Color x:Key="TextPrimaryColor">#111827</Color>
-    <Color x:Key="TextSecondaryColor">#6B7280</Color>
-    <Color x:Key="TextTertiaryColor">#9CA3AF</Color>
-    <Color x:Key="TextDisabledColor">#D1D5DB</Color>
+    <!-- Text Colors (from mockup) -->
+    <Color x:Key="TextPrimaryColor">#212529</Color>
+    <Color x:Key="TextSecondaryColor">#6C757D</Color>
+    <Color x:Key="TextTertiaryColor">#ADB5BD</Color>
+    <Color x:Key="TextDisabledColor">#CED4DA</Color>
     <Color x:Key="TextInverseColor">#FFFFFF</Color>
 
-    <!-- Sidebar Colors -->
-    <Color x:Key="SidebarBackgroundColor">#1F2937</Color>
-    <Color x:Key="SidebarTextColor">#F9FAFB</Color>
-    <Color x:Key="SidebarTextMutedColor">#9CA3AF</Color>
-    <Color x:Key="SidebarHoverColor">#374151</Color>
-    <Color x:Key="SidebarActiveColor">#2563EB</Color>
+    <!-- Sidebar Colors (from mockup: bg #1e2a3a, hover #2d3e52, active #0075ff, text #a8b2c1) -->
+    <Color x:Key="SidebarBackgroundColor">#1E2A3A</Color>
+    <Color x:Key="SidebarTextColor">#FFFFFF</Color>
+    <Color x:Key="SidebarTextMutedColor">#A8B2C1</Color>
+    <Color x:Key="SidebarHoverColor">#2D3E52</Color>
+    <Color x:Key="SidebarActiveColor">#0075FF</Color>
 
-    <!-- Header Colors -->
+    <!-- Header Colors (from mockup: bg white, border #e1e5eb) -->
     <Color x:Key="HeaderBackgroundColor">#FFFFFF</Color>
-    <Color x:Key="HeaderBorderColor">#E5E7EB</Color>
+    <Color x:Key="HeaderBorderColor">#E1E5EB</Color>
 
     <!-- Input Colors -->
     <Color x:Key="InputBackgroundColor">#FFFFFF</Color>
-    <Color x:Key="InputBorderColor">#D1D5DB</Color>
-    <Color x:Key="InputFocusBorderColor">#2563EB</Color>
-    <Color x:Key="InputPlaceholderColor">#9CA3AF</Color>
+    <Color x:Key="InputBorderColor">#E1E5EB</Color>
+    <Color x:Key="InputFocusBorderColor">#0075FF</Color>
+    <Color x:Key="InputPlaceholderColor">#ADB5BD</Color>
 
-    <!-- Table/DataGrid Colors -->
-    <Color x:Key="TableHeaderBackgroundColor">#F9FAFB</Color>
-    <Color x:Key="TableRowAlternateColor">#F9FAFB</Color>
-    <Color x:Key="TableRowHoverColor">#F3F4F6</Color>
-    <Color x:Key="TableRowSelectedColor">#DBEAFE</Color>
+    <!-- Table/DataGrid Colors (from mockup: header #f8f9fa) -->
+    <Color x:Key="TableHeaderBackgroundColor">#F8F9FA</Color>
+    <Color x:Key="TableRowAlternateColor">#F8F9FA</Color>
+    <Color x:Key="TableRowHoverColor">#F8F9FA</Color>
+    <Color x:Key="TableRowSelectedColor">#E6F2FF</Color>
 
     <!-- Shadow/Overlay Colors -->
-    <Color x:Key="ShadowColor">#1A000000</Color>
+    <Color x:Key="ShadowColor">#14000000</Color>
     <Color x:Key="OverlayColor">#80000000</Color>
     <Color x:Key="LoadingOverlayColor">#E6FFFFFF</Color>
 
     <!-- Surface Alternate (for neutral backgrounds) -->
-    <Color x:Key="SurfaceAltColor">#F3F4F6</Color>
+    <Color x:Key="SurfaceAltColor">#E9ECEF</Color>
 
     <!-- Icon Background Tints (soft pastels) -->
-    <Color x:Key="PrimaryIconBgColor">#DBEAFE</Color>
+    <Color x:Key="PrimaryIconBgColor">#E6F2FF</Color>
     <Color x:Key="SuccessIconBgColor">#D1FAE5</Color>
     <Color x:Key="DangerIconBgColor">#FEE2E2</Color>
     <Color x:Key="WarningIconBgColor">#FEF3C7</Color>

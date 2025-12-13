@@ -239,6 +239,57 @@ public partial class HeaderViewModel : ViewModelBase
         // TODO: Implement sign out logic
     }
 
+    /// <summary>
+    /// Toggles the sidebar collapsed state.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleSidebar()
+    {
+        // This will be connected to the AppShell to toggle sidebar
+        ToggleSidebarRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Performs an undo operation.
+    /// </summary>
+    [RelayCommand]
+    private void Undo()
+    {
+        // TODO: Implement undo logic
+    }
+
+    /// <summary>
+    /// Performs a redo operation.
+    /// </summary>
+    [RelayCommand]
+    private void Redo()
+    {
+        // TODO: Implement redo logic
+    }
+
+    /// <summary>
+    /// Saves the current company file.
+    /// </summary>
+    [RelayCommand]
+    private void Save()
+    {
+        // TODO: Implement save logic
+    }
+
+    /// <summary>
+    /// Opens the upgrade dialog.
+    /// </summary>
+    [RelayCommand]
+    private void OpenUpgrade()
+    {
+        // TODO: Show upgrade modal
+    }
+
+    /// <summary>
+    /// Event raised when sidebar toggle is requested.
+    /// </summary>
+    public event EventHandler? ToggleSidebarRequested;
+
     #endregion
 
     #region Public Methods
