@@ -34,22 +34,22 @@
             </Border>
         </Panel>
 
-        <!-- Dropdown Mode: No backdrop, positioned below header -->
+        <!-- Dropdown Mode: No backdrop, positioned below header searchbox -->
         <Panel IsVisible="{Binding IsDropdownMode}">
             <!-- Light backdrop for click-away -->
             <Border Background="Transparent"
                     PointerPressed="Backdrop_PointerPressed" />
 
-            <!-- Dropdown Panel Container -->
+            <!-- Dropdown Panel Container (width matches searchbox, centered below header) -->
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="8"
-                    Width="450"
-                    MaxHeight="450"
+                    Width="280"
+                    MaxHeight="400"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"
-                    Margin="0,68,0,0"
+                    Margin="0,60,0,0"
                     BoxShadow="0 4 16 0 #30000000">
                 <ContentControl Content="{Binding}"
                                 ContentTemplate="{StaticResource PanelContentTemplate}" />
@@ -61,11 +61,12 @@
         <!-- Shared panel content template -->
         <DataTemplate x:Key="PanelContentTemplate" x:DataType="vm:QuickActionsViewModel">
             <Grid RowDefinitions="Auto,*">
-                <!-- Search Input -->
+                <!-- Search Input (hidden in dropdown mode - uses header searchbox) -->
                 <Border Grid.Row="0"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1"
-                        Padding="16">
+                        Padding="16"
+                        IsVisible="{Binding !IsDropdownMode}">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <!-- Search Icon -->
                         <PathIcon Grid.Column="0"

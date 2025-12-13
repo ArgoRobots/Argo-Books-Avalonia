@@ -8,21 +8,22 @@
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.AppShell"
              x:DataType="vm:AppShellViewModel"
-             Background="{DynamicResource BackgroundBrush}">
+             Background="{DynamicResource BackgroundBrush}"
+             Focusable="True">
 
     <Design.DataContext>
         <vm:AppShellViewModel />
     </Design.DataContext>
 
-    <Panel>
-        <Grid ColumnDefinitions="Auto,*">
-            <!-- Sidebar -->
-            <controls:Sidebar Grid.Column="0"
-                              DataContext="{Binding SidebarViewModel}"
-                              Width="{Binding Width}" />
+    <Grid ColumnDefinitions="Auto,*">
+        <!-- Sidebar -->
+        <controls:Sidebar Grid.Column="0"
+                          DataContext="{Binding SidebarViewModel}"
+                          Width="{Binding Width}" />
 
-            <!-- Main Content Area -->
-            <Grid Grid.Column="1">
+        <!-- Main Content Area with Quick Actions overlay -->
+        <Panel Grid.Column="1">
+            <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -39,13 +40,9 @@
                                     Margin="30" />
                 </Border>
             </Grid>
-        </Grid>
 
-        <!-- Quick Actions Panel (modal overlay) -->
-        <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
-    </Panel>
-
-    <UserControl.KeyBindings>
-        <KeyBinding Gesture="Ctrl+K" Command="{Binding OpenQuickActionsCommand}" />
-    </UserControl.KeyBindings>
+            <!-- Quick Actions Panel (overlay within content area) -->
+            <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
+        </Panel>
+    </Grid>
 </UserControl>
