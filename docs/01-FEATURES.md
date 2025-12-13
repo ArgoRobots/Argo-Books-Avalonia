@@ -55,8 +55,8 @@ This document describes all features of the Argo Books Avalonia application base
 - **Language:** C#
 - **Data Storage:** Custom .argo file format (tar + gzip + optional AES-256 encryption)
 - **Charts:** LiveCharts2
-- **PDF Generation:** SkiaSharp or QuestPDF
-- **OCR:** Google Cloud Vision API
+- **PDF Generation:** QuestPDF
+- **OCR:** Google Cloud Vision API (For scanning receipts)
 - **Email:** PHP API on web server
 
 ### 1.3 Multi-Company Support
@@ -65,8 +65,6 @@ This document describes all features of the Argo Books Avalonia application base
 - Recent companies list (up to 10)
 - Company information includes:
   - Company name
-  - Business email
-  - Phone number
   - Address
   - Logo (image)
 
@@ -90,9 +88,7 @@ This document describes all features of the Argo Books Avalonia application base
 ### 2.2 Company Creation
 Fields:
 - Company name (required)
-- Business email
-- Phone number
-- Address (textarea)
+- Address (optional)
 - Logo upload (optional)
 
 ### 2.3 Auto-Save & Recovery
@@ -177,12 +173,65 @@ Actions:
 ## 4. Analytics & Insights
 
 ### 4.1 Analytics Page
-Detailed analytics with:
-- Revenue trends over time
-- Expense analysis by category
-- Profit margins
-- Customer acquisition trends
-- Product performance metrics
+Comprehensive analytics with interactive charts and date range filtering.
+
+#### 4.1.1 Revenue & Expense Charts
+- **Total Revenue** - Bar/line chart showing revenue over time (daily/weekly/monthly/yearly)
+- **Total Expenses** - Bar/line chart showing expenses over time
+- **Revenue Distribution** - Pie chart breakdown by category/product
+- **Expenses Distribution** - Pie chart breakdown by category/vendor
+- **Total Profits** - Bar/line chart showing profit margins over time
+- **Sales vs Expenses** - Dual-axis comparison chart (revenue vs expenses over time)
+
+#### 4.1.2 Transaction Analysis Charts
+- **Average Transaction Value** - Line chart comparing average purchase vs sale values over time
+- **Total Transactions** - Bar chart showing transaction count (purchases vs sales) over time
+- **Average Shipping Costs** - Line chart comparing shipping costs for purchases vs sales (with option to include/exclude free shipping)
+- **Growth Rates** - Line chart showing expense and revenue growth rate percentages over time
+
+#### 4.1.3 Geographic Analysis Charts
+- **Countries of Origin** - Pie chart showing where purchases come from
+- **Companies of Origin** - Pie chart showing vendor distribution for purchases
+- **Countries of Destination** - Pie chart showing where sales are shipped to
+- **World Map** (LiveCharts GeoMap) - Interactive geographic heat map showing transaction distribution (Combined/Purchases Only/Sales Only modes)
+
+#### 4.1.4 Operational Charts
+- **Transactions by Accountant** - Pie chart showing workload distribution across accountants
+
+#### 4.1.5 Returns Analysis Charts
+- **Returns Over Time** - Dual-axis chart showing purchase returns vs sale returns over time
+- **Return Reasons** - Pie chart breakdown of why items are returned
+- **Financial Impact of Returns** - Dual-axis chart showing monetary value of returns over time
+- **Returns by Category** - Pie chart showing which product categories have most returns
+- **Returns by Product** - Pie chart showing which specific products are returned most
+- **Purchase vs Sale Returns** - Comparison bar chart of return counts
+
+#### 4.1.6 Losses Analysis Charts
+- **Losses Over Time** - Dual-axis chart showing purchase losses vs sale losses over time
+- **Loss Reasons** - Pie chart breakdown of why items were lost (damaged, stolen, expired, etc.)
+- **Financial Impact of Losses** - Dual-axis chart showing monetary value of losses over time
+- **Losses by Category** - Pie chart showing which categories have most losses
+- **Losses by Product** - Pie chart showing which products are lost most frequently
+- **Purchase vs Sale Losses** - Comparison bar chart of loss counts
+
+#### 4.1.7 Customer Analysis Charts
+- **Top Customers by Revenue** - Bar chart showing highest-spending customers
+- **Customer Payment Status** - Pie chart showing paid vs outstanding balances
+- **Customer Growth** - Line chart showing new customer acquisition over time
+- **Active vs Inactive Customers** - Pie chart showing customer engagement
+- **Customer Lifetime Value** - Bar chart showing top customers by total lifetime spend
+- **Rentals per Customer** - Distribution chart showing customer rental frequency (0, 1, 2-5, 6-10, 11-20, 21+ rentals)
+
+### 4.2 Chart Features
+- Toggle between bar chart and line chart views (where applicable)
+- Date range filtering (custom start/end dates)
+- Pie chart grouping options (individual items, grouped by threshold percentage)
+- Right-click context menu on charts
+- Export chart to Excel
+- Export chart as image
+- Interactive tooltips with detailed values
+- Theme-aware colors (adapts to light/dark mode)
+
 
 ### 4.2 Insights Page
 AI-powered business insights:

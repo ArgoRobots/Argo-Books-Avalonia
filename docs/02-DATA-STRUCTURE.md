@@ -27,7 +27,7 @@ The company file is a custom format with the following structure:
 │  GZip Compressed TAR Archive        │
 │  ┌─────────────────────────────┐    │
 │  │  JSON/TXT Data Files        │    │
-│  │  - appSettings.txt          │    │
+│  │  - appSettings.json         │    │
 │  │  - sales.json               │    │
 │  │  - purchases.json           │    │
 │  │  - invoices.json            │    │
@@ -85,7 +85,7 @@ Read .argo file
 
 ```
 CompanyName/
-├── appSettings.txt          # Company settings
+├── appSettings.json         # Company settings
 ├── sales.json               # Revenue/Sales transactions
 ├── purchases.json           # Expense transactions
 ├── invoices.json            # Invoice records
@@ -114,30 +114,52 @@ CompanyName/
     └── RCP-003.pdf
 ```
 
-### 2.2 appSettings.txt Format
+### 2.2 appSettings.json Format
 
-Key-value pairs, one per line:
 ```
-AppVersion:1.0.0
-DefaultCurrencyType:USD
-ChangesMade:false
-CompanyName:My Business Inc
-CompanyEmail:contact@mybusiness.com
-CompanyPhone:(555) 123-4567
-CompanyAddress:123 Main St, City, State 12345
-Theme:System
-AccentColor:Blue
-Language:en-US
-DateFormat:MM/DD/YYYY
-TimeZone:America/New_York
-EnabledModules:Invoices,Payments,Inventory,Employees,Rentals
-LowStockAlert:true
-InvoiceOverdueAlert:true
-PaymentReceivedAlert:true
-LargeTransactionAlert:true
-LargeTransactionThreshold:10000
-AutoLockEnabled:false
-AutoLockMinutes:5
+{
+  "appVersion": "1.0.0",
+  "changesMade": false,
+  
+  "company": {
+    "name": "My Business Inc",
+    "address": "123 Main St, City, State"
+  },
+  
+  "localization": {
+    "language": "en-US",
+    "currency": "USD",
+    "dateFormat": "MM/DD/YYYY",
+    "timeZone": "America/New_York"
+  },
+  
+  "appearance": {
+    "theme": "System",
+    "accentColor": "Blue"
+  },
+  
+  "enabledModules": {
+    "invoices": true,
+    "payments": true,
+    "inventory": true,
+    "employees": true,
+    "rentals": true
+  },
+  
+  "notifications": {
+    "lowStockAlert": true,
+    "invoiceOverdueAlert": true,
+    "paymentReceivedAlert": true,
+    "largeTransactionAlert": true,
+    "largeTransactionThreshold": 10000
+  },
+  
+  "security": {
+    "autoLockEnabled": false,
+    "autoLockMinutes": 5
+  }
+}
+
 ```
 
 ---
@@ -706,17 +728,29 @@ Settings stored outside company files:
 | macOS | `~/Library/Application Support/ArgoBooks/` |
 | Linux | `~/.config/ArgoBooks/` |
 
-### 4.2 Global Settings File (globalSettings.txt)
+### 4.2 Global Settings File (globalSettings.json)
 ```
-ShowWelcomeForm:true
-EULAAccepted:true
-RecentCompanies:/path/to/company1.argo,/path/to/company2.argo
-LastUpdateCheck:2024-12-01T00:00:00
-AutoOpenRecentAfterUpdate:true
-WindowPosition:100,100
-WindowSize:1280,720
-WindowState:Normal
-SidebarCollapsed:false
+{
+  "welcome": {
+    "showWelcomeForm": true,
+    "eulaAccepted": true
+  },
+  
+  "recentCompanies": [
+    "/path/to/company1.argo",
+    "/path/to/company2.argo"
+  ],
+  
+  "updates": {
+    "lastUpdateCheck": "2024-12-01T00:00:00",
+    "autoOpenRecentAfterUpdate": true
+  },
+ 
+  "ui": {
+    "sidebarCollapsed": false
+  }
+}
+
 ```
 
 ### 4.3 Cache Directory Structure
@@ -824,7 +858,7 @@ public void OpenCompany(string filePath)
 ### 5.3 Auto-Save Recovery
 On startup:
 1. Check temp directory for any company folders
-2. For each folder, check `appSettings.txt` for `ChangesMade:true`
+2. For each folder, check `appSettings.json` for `ChangesMade:true`
 3. If changes found, prompt user to recover
 4. If user accepts, let them choose save location
 5. If user declines, delete temp folder
@@ -1010,5 +1044,5 @@ All IDs follow the pattern: `PREFIX-SEQUENCE`
 ### Company Logo
 - JPEG (.jpg, .jpeg)
 - PNG (.png)
-- Maximum size: 2 MB
-- Recommended: 200x200 pixels
+- Maximum source size: 5 MB
+- Automatically resized to 200x200 pixels on import
