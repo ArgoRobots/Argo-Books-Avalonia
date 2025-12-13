@@ -43,6 +43,9 @@
 
             <!-- Quick Actions Panel (overlay within content area) -->
             <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
+
+            <!-- Notification Panel (overlay within content area) -->
+            <panels:NotificationPanel DataContext="{Binding NotificationPanelViewModel}" />
         </Panel>
     </Grid>
 </UserControl>

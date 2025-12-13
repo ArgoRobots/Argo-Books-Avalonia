@@ -202,10 +202,7 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenNotifications()
     {
-        // TODO: Show notifications flyout
-
-        // Mark all as read when panel is opened
-        MarkAllNotificationsAsRead();
+        OpenNotificationsRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -294,6 +291,11 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when quick actions panel should be opened.
     /// </summary>
     public event EventHandler? OpenQuickActionsRequested;
+
+    /// <summary>
+    /// Event raised when notifications panel should be opened.
+    /// </summary>
+    public event EventHandler? OpenNotificationsRequested;
 
     #endregion
 

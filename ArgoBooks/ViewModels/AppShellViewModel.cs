@@ -29,6 +29,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public QuickActionsViewModel QuickActionsViewModel { get; }
 
+    /// <summary>
+    /// Gets the notification panel view model.
+    /// </summary>
+    public NotificationPanelViewModel NotificationPanelViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -66,11 +71,17 @@ public partial class AppShellViewModel : ViewModelBase
         // Create quick actions panel with navigation service
         QuickActionsViewModel = new QuickActionsViewModel(navigationService);
 
+        // Create notification panel with header view model (shares notifications)
+        NotificationPanelViewModel = new NotificationPanelViewModel(HeaderViewModel);
+
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
         // Wire up header's quick actions button to open the panel in dropdown mode
         HeaderViewModel.OpenQuickActionsRequested += (_, _) => QuickActionsViewModel.OpenDropdownCommand.Execute(null);
+
+        // Wire up header's notification button to toggle the notification panel
+        HeaderViewModel.OpenNotificationsRequested += (_, _) => NotificationPanelViewModel.ToggleCommand.Execute(null);
 
         // Subscribe to navigation events to update UI state
         if (_navigationService != null)
