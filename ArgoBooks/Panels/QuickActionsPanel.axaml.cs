@@ -1,6 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Panels;
@@ -35,10 +37,24 @@ public partial class QuickActionsPanel : UserControl
             {
                 if (args.PropertyName == nameof(QuickActionsViewModel.IsOpen) && vm.IsOpen)
                 {
-                    // Focus the search input
-                    SearchInput?.Focus();
+                    // Find and focus the search input (it's inside a DataTemplate)
+                    var searchInput = this.FindDescendantOfType<TextBox>();
+                    searchInput?.Focus();
                 }
             };
         }
+    }
+
+    /// <summary>
+    /// Finds the first descendant of a specific type in the visual tree.
+    /// </summary>
+    private T? FindDescendantOfType<T>() where T : class
+    {
+        foreach (var descendant in this.GetVisualDescendants())
+        {
+            if (descendant is T typed)
+                return typed;
+        }
+        return null;
     }
 }
