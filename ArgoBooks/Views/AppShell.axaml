@@ -46,6 +46,9 @@
 
             <!-- Notification Panel (overlay within content area) -->
             <panels:NotificationPanel DataContext="{Binding NotificationPanelViewModel}" />
+
+            <!-- User Panel (overlay within content area) -->
+            <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
         </Panel>
     </Grid>
 </UserControl>

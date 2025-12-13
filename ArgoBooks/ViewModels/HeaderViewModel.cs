@@ -220,11 +220,7 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenUserMenu()
     {
-        // TODO: Show user menu flyout with options like:
-        // - Profile
-        // - Account Settings
-        // - Switch Company
-        // - Sign Out
+        OpenUserMenuRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -296,6 +292,11 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when notifications panel should be opened.
     /// </summary>
     public event EventHandler? OpenNotificationsRequested;
+
+    /// <summary>
+    /// Event raised when user menu panel should be opened.
+    /// </summary>
+    public event EventHandler? OpenUserMenuRequested;
 
     #endregion
 
