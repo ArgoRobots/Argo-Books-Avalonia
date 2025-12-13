@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="240" d:DesignHeight="40"
+             x:Class="ArgoBooks.Controls.SidebarItem"
+             x:DataType="controls:SidebarItem">
+
+    <Button x:Name="ItemButton"
+            Classes="sidebar-item"
+            Classes.active="{Binding IsActive, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+            Classes.collapsed="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+            Command="{Binding Command, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+            CommandParameter="{Binding CommandParameter, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+            ToolTip.Tip="{Binding TooltipText, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+            HorizontalAlignment="Stretch">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+            <!-- Icon -->
+            <Border Grid.Column="0"
+                    Width="36" Height="36"
+                    CornerRadius="{StaticResource RadiusSm}">
+                <PathIcon Data="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+                          Width="18" Height="18" />
+            </Border>
+
+            <!-- Text -->
+            <TextBlock Grid.Column="1"
+                       Text="{Binding Text, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0"
+                       IsVisible="{Binding !IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}" />
+
+            <!-- Badge -->
+            <Border Grid.Column="2"
+                    Background="{DynamicResource DangerBrush}"
+                    CornerRadius="10"
+                    Padding="6,2"
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center"
+                    IsVisible="{Binding ShowBadge, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}">
+                <TextBlock Text="{Binding BadgeText, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+                           FontSize="{StaticResource FontSizeXs}"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextInverseBrush}" />
+            </Border>
+        </Grid>
+    </Button>
+
+    <UserControl.Styles>
+        <!-- Sidebar Item Base Style -->
+        <Style Selector="Button.sidebar-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource SidebarTextMutedBrush}" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style Selector="Button.sidebar-item /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style Selector="Button.sidebar-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SidebarHoverBrush}" />
+        </Style>
+
+        <Style Selector="Button.sidebar-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SidebarHoverBrush}" />
+        </Style>
+
+        <!-- Active State -->
+        <Style Selector="Button.sidebar-item.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SidebarActiveBrush}" />
+        </Style>
+
+        <Style Selector="Button.sidebar-item.active">
+            <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}" />
+        </Style>
+
+        <Style Selector="Button.sidebar-item.active PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}" />
+        </Style>
+
+        <Style Selector="Button.sidebar-item.active TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}" />
+        </Style>
+
+        <!-- Default Icon/Text colors -->
+        <Style Selector="Button.sidebar-item PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SidebarTextMutedBrush}" />
+        </Style>
+
+        <Style Selector="Button.sidebar-item TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSm}" />
+            <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
+        </Style>
+
+        <!-- Collapsed State -->
+        <Style Selector="Button.sidebar-item.collapsed">
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

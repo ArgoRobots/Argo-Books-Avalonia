@@ -6,28 +6,18 @@ using CommunityToolkit.Mvvm.Input;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// ViewModel for the application shell, managing sidebar navigation and header.
+/// ViewModel for the application shell, managing sidebar and header.
 /// </summary>
 public partial class AppShellViewModel : ViewModelBase
 {
-    private const double ExpandedSidebarWidth = 240;
-    private const double CollapsedSidebarWidth = 64;
-
     private readonly INavigationService? _navigationService;
 
-    #region Sidebar Properties
+    #region ViewModels
 
-    [ObservableProperty]
-    private bool _isSidebarCollapsed;
-
-    [ObservableProperty]
-    private double _sidebarWidth = ExpandedSidebarWidth;
-
-    [ObservableProperty]
-    private string _sidebarToggleTooltip = "Collapse sidebar";
-
-    [ObservableProperty]
-    private string? _companyName;
+    /// <summary>
+    /// Gets the sidebar view model.
+    /// </summary>
+    public SidebarViewModel SidebarViewModel { get; }
 
     #endregion
 
@@ -52,81 +42,30 @@ public partial class AppShellViewModel : ViewModelBase
     [ObservableProperty]
     private string _currentPageName = "Dashboard";
 
-    /// <summary>
-    /// Dictionary to track which page is active for sidebar highlighting.
-    /// </summary>
-    public ObservableDictionary<string, bool> IsPageActive { get; } = new()
-    {
-        ["Dashboard"] = true,
-        ["Analytics"] = false,
-        ["Revenue"] = false,
-        ["Expenses"] = false,
-        ["Invoices"] = false,
-        ["Products"] = false,
-        ["StockLevels"] = false,
-        ["Customers"] = false,
-        ["Suppliers"] = false,
-        ["Employees"] = false
-    };
-
     #endregion
 
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
-    public AppShellViewModel() : this(null)
+    public AppShellViewModel() : this(null, null)
     {
-        // Design-time defaults
-        CompanyName = "Sample Company";
-        HasUnreadNotifications = true;
-        UnreadNotificationCount = 3;
     }
 
     /// <summary>
     /// Constructor with dependency injection.
     /// </summary>
     /// <param name="navigationService">Navigation service.</param>
-    public AppShellViewModel(INavigationService? navigationService)
+    /// <param name="settingsService">Settings service.</param>
+    public AppShellViewModel(INavigationService? navigationService, ISettingsService? settingsService)
     {
         _navigationService = navigationService;
-    }
 
-    /// <summary>
-    /// Updates sidebar width when collapsed state changes.
-    /// </summary>
-    partial void OnIsSidebarCollapsedChanged(bool value)
-    {
-        SidebarWidth = value ? CollapsedSidebarWidth : ExpandedSidebarWidth;
-        SidebarToggleTooltip = value ? "Expand sidebar" : "Collapse sidebar";
-    }
+        // Create sidebar with navigation service
+        SidebarViewModel = new SidebarViewModel(navigationService, settingsService);
 
-    /// <summary>
-    /// Toggles the sidebar between collapsed and expanded states.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleSidebar()
-    {
-        IsSidebarCollapsed = !IsSidebarCollapsed;
-    }
-
-    /// <summary>
-    /// Navigates to the specified page.
-    /// </summary>
-    /// <param name="pageName">Name of the page to navigate to.</param>
-    [RelayCommand]
-    private void Navigate(string pageName)
-    {
-        // Update active states
-        foreach (var key in IsPageActive.Keys.ToList())
-        {
-            IsPageActive[key] = key == pageName;
-        }
-
-        CurrentPageName = pageName;
-        _navigationService?.NavigateTo(pageName);
-
-        // TODO: Set CurrentPage to actual view
-        // CurrentPage = _navigationService?.GetView(pageName);
+        // Design-time defaults
+        HasUnreadNotifications = true;
+        UnreadNotificationCount = 3;
     }
 
     /// <summary>
@@ -145,6 +84,9 @@ public partial class AppShellViewModel : ViewModelBase
     private void OpenNotifications()
     {
         // TODO: Show notifications panel
+        // Clear unread badge when opened
+        HasUnreadNotifications = false;
+        UnreadNotificationCount = 0;
     }
 
     /// <summary>
@@ -157,21 +99,50 @@ public partial class AppShellViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens the settings dialog.
+    /// Performs a global search.
     /// </summary>
     [RelayCommand]
-    private void OpenSettings()
+    private void Search()
     {
-        // TODO: Show settings dialog
+        if (string.IsNullOrWhiteSpace(SearchQuery))
+            return;
+
+        // TODO: Implement global search
     }
 
     /// <summary>
-    /// Opens the help panel.
+    /// Sets the company information on the sidebar.
     /// </summary>
-    [RelayCommand]
-    private void OpenHelp()
+    public void SetCompanyInfo(string? companyName, string? userRole = null)
     {
-        // TODO: Show help panel
+        SidebarViewModel.SetCompanyInfo(companyName, null, userRole);
+    }
+
+    /// <summary>
+    /// Updates feature visibility based on settings.
+    /// </summary>
+    public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals, bool showPayroll)
+    {
+        SidebarViewModel.UpdateFeatureVisibility(showTransactions, showInventory, showRentals, showPayroll);
+    }
+
+    /// <summary>
+    /// Navigates to a page programmatically.
+    /// </summary>
+    public void NavigateTo(string pageName)
+    {
+        SidebarViewModel.SetActivePage(pageName);
+        CurrentPageName = pageName;
+        _navigationService?.NavigateTo(pageName);
+    }
+
+    /// <summary>
+    /// Adds a notification badge.
+    /// </summary>
+    public void AddNotification()
+    {
+        UnreadNotificationCount++;
+        HasUnreadNotifications = true;
     }
 }
 
