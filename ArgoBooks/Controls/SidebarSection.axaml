@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="240" d:DesignHeight="200"
+             x:Class="ArgoBooks.Controls.SidebarSection"
+             x:DataType="controls:SidebarSection">
+
+    <StackPanel Spacing="2">
+        <!-- Section Header -->
+        <Border Padding="12,8,12,4"
+                IsVisible="{Binding ShowHeader, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
+            <Grid ColumnDefinitions="*,Auto">
+                <!-- Title (hidden when collapsed) -->
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Title, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+                           FontSize="{StaticResource FontSizeXs}"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource SidebarTextMutedBrush}"
+                           IsVisible="{Binding !IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
+
+                <!-- Divider line when collapsed -->
+                <Border Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Height="1"
+                        Background="{DynamicResource BorderBrush}"
+                        Margin="4,8"
+                        HorizontalAlignment="Stretch"
+                        IsVisible="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
+
+                <!-- Collapse/Expand button (optional) -->
+                <Button Grid.Column="1"
+                        Classes="icon"
+                        Width="20" Height="20"
+                        Command="{Binding ToggleExpandedCommand, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+                        IsVisible="{Binding IsCollapsible, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
+                    <Panel>
+                        <!-- Expanded icon (down arrow) -->
+                        <PathIcon Width="12" Height="12"
+                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                  Data="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
+                                  IsVisible="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
+                        <!-- Collapsed icon (right arrow) -->
+                        <PathIcon Width="12" Height="12"
+                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                  Data="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
+                                  IsVisible="{Binding !IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
+                    </Panel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Section Items -->
+        <ItemsControl ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+                      IsVisible="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+                      Padding="4,0">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <controls:SidebarItem Text="{Binding Text}"
+                                          Icon="{Binding Icon}"
+                                          PageName="{Binding PageName}"
+                                          IsActive="{Binding IsActive}"
+                                          IsCollapsed="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+                                          Command="{Binding Command}"
+                                          CommandParameter="{Binding PageName}"
+                                          BadgeText="{Binding BadgeText}"
+                                          ShowBadge="{Binding ShowBadge}"
+                                          TooltipText="{Binding Text}"
+                                          IsVisible="{Binding IsVisible}"
+                                          Margin="0,1" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>

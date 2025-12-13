@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.AppShell"
+             x:DataType="vm:AppShellViewModel"
+             Background="{DynamicResource BackgroundBrush}">
+
+    <Design.DataContext>
+        <vm:AppShellViewModel />
+    </Design.DataContext>
+
+    <Grid ColumnDefinitions="Auto,*">
+        <!-- Sidebar -->
+        <controls:Sidebar Grid.Column="0"
+                          DataContext="{Binding SidebarViewModel}"
+                          Width="{Binding Width}" />
+
+        <!-- Main Content Area -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <controls:Header Grid.Row="0"
+                             DataContext="{Binding HeaderViewModel}" />
+
+            <!-- Page Content -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource BackgroundSecondaryBrush}">
+                <ContentControl Content="{Binding CurrentPage}"
+                                Margin="24" />
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

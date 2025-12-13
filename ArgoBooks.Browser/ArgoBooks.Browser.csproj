@@ -4,13 +4,15 @@
         <OutputType>Exe</OutputType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia.Browser"/>
+        <PackageReference Include="Avalonia.Browser" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ArgoBooks\ArgoBooks.csproj"/>
+        <ProjectReference Include="..\ArgoBooks\ArgoBooks.csproj" />
     </ItemGroup>
 </Project>

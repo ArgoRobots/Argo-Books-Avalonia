@@ -1,0 +1,91 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Argo Books Color Palette
+        These colors are used throughout the application for consistent theming.
+    -->
+
+    <!-- Primary Brand Colors -->
+    <Color x:Key="PrimaryColor">#2563EB</Color>
+    <Color x:Key="PrimaryLightColor">#3B82F6</Color>
+    <Color x:Key="PrimaryDarkColor">#1D4ED8</Color>
+
+    <!-- Secondary/Accent Colors -->
+    <Color x:Key="AccentColor">#8B5CF6</Color>
+    <Color x:Key="AccentLightColor">#A78BFA</Color>
+    <Color x:Key="AccentDarkColor">#7C3AED</Color>
+
+    <!-- Semantic Colors - Success -->
+    <Color x:Key="SuccessColor">#10B981</Color>
+    <Color x:Key="SuccessLightColor">#34D399</Color>
+    <Color x:Key="SuccessDarkColor">#059669</Color>
+
+    <!-- Semantic Colors - Warning -->
+    <Color x:Key="WarningColor">#F59E0B</Color>
+    <Color x:Key="WarningLightColor">#FBBF24</Color>
+    <Color x:Key="WarningDarkColor">#D97706</Color>
+
+    <!-- Semantic Colors - Error/Danger -->
+    <Color x:Key="ErrorColor">#EF4444</Color>
+    <Color x:Key="ErrorLightColor">#F87171</Color>
+    <Color x:Key="ErrorDarkColor">#DC2626</Color>
+
+    <!-- Semantic Colors - Info -->
+    <Color x:Key="InfoColor">#06B6D4</Color>
+    <Color x:Key="InfoLightColor">#22D3EE</Color>
+    <Color x:Key="InfoDarkColor">#0891B2</Color>
+
+    <!-- Chart Colors (for LiveCharts2) -->
+    <Color x:Key="Chart1Color">#2563EB</Color>
+    <Color x:Key="Chart2Color">#10B981</Color>
+    <Color x:Key="Chart3Color">#F59E0B</Color>
+    <Color x:Key="Chart4Color">#8B5CF6</Color>
+    <Color x:Key="Chart5Color">#EC4899</Color>
+    <Color x:Key="Chart6Color">#06B6D4</Color>
+    <Color x:Key="Chart7Color">#84CC16</Color>
+    <Color x:Key="Chart8Color">#F97316</Color>
+
+    <!-- Solid Color Brushes - Primary -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}" />
+    <SolidColorBrush x:Key="PrimaryLightBrush" Color="{StaticResource PrimaryLightColor}" />
+    <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDarkColor}" />
+
+    <!-- Solid Color Brushes - Accent -->
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="AccentLightBrush" Color="{StaticResource AccentLightColor}" />
+    <SolidColorBrush x:Key="AccentDarkBrush" Color="{StaticResource AccentDarkColor}" />
+
+    <!-- Solid Color Brushes - Semantic -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+    <SolidColorBrush x:Key="SuccessLightBrush" Color="{StaticResource SuccessLightColor}" />
+    <SolidColorBrush x:Key="SuccessDarkBrush" Color="{StaticResource SuccessDarkColor}" />
+
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="WarningLightBrush" Color="{StaticResource WarningLightColor}" />
+    <SolidColorBrush x:Key="WarningDarkBrush" Color="{StaticResource WarningDarkColor}" />
+
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
+    <SolidColorBrush x:Key="ErrorLightBrush" Color="{StaticResource ErrorLightColor}" />
+    <SolidColorBrush x:Key="ErrorDarkBrush" Color="{StaticResource ErrorDarkColor}" />
+
+    <!-- Danger aliases (same as Error) -->
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource ErrorColor}" />
+    <SolidColorBrush x:Key="DangerLightBrush" Color="{StaticResource ErrorLightColor}" />
+    <SolidColorBrush x:Key="DangerDarkBrush" Color="{StaticResource ErrorDarkColor}" />
+
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
+    <SolidColorBrush x:Key="InfoLightBrush" Color="{StaticResource InfoLightColor}" />
+    <SolidColorBrush x:Key="InfoDarkBrush" Color="{StaticResource InfoDarkColor}" />
+
+    <!-- Chart Brushes -->
+    <SolidColorBrush x:Key="Chart1Brush" Color="{StaticResource Chart1Color}" />
+    <SolidColorBrush x:Key="Chart2Brush" Color="{StaticResource Chart2Color}" />
+    <SolidColorBrush x:Key="Chart3Brush" Color="{StaticResource Chart3Color}" />
+    <SolidColorBrush x:Key="Chart4Brush" Color="{StaticResource Chart4Color}" />
+    <SolidColorBrush x:Key="Chart5Brush" Color="{StaticResource Chart5Color}" />
+    <SolidColorBrush x:Key="Chart6Brush" Color="{StaticResource Chart6Color}" />
+    <SolidColorBrush x:Key="Chart7Brush" Color="{StaticResource Chart7Color}" />
+    <SolidColorBrush x:Key="Chart8Brush" Color="{StaticResource Chart8Color}" />
+
+</ResourceDictionary>

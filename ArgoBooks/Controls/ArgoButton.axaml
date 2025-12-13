@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="40"
+             x:Class="ArgoBooks.Controls.ArgoButton"
+             x:DataType="controls:ArgoButton">
+
+    <Button x:Name="InnerButton"
+            Classes.primary="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Primary}}"
+            Classes.secondary="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Secondary}}"
+            Classes.ghost="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Ghost}}"
+            Classes.success="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Success}}"
+            Classes.danger="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Danger}}"
+            Classes.warning="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Warning}}"
+            Classes.icon="{Binding Variant, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonVariant.Icon}}"
+            Classes.sm="{Binding Size, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonSize.Small}}"
+            Classes.lg="{Binding Size, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static controls:ButtonSize.Large}}"
+            Classes.full-width="{Binding IsFullWidth, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}}"
+            Command="{Binding Command, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}}"
+            CommandParameter="{Binding CommandParameter, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}}"
+            IsEnabled="{Binding !IsLoading, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}}">
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <!-- Loading Spinner -->
+            <Border IsVisible="{Binding IsLoading, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}}"
+                    Width="16" Height="16">
+                <Border.RenderTransform>
+                    <RotateTransform />
+                </Border.RenderTransform>
+                <Border.Styles>
+                    <Style Selector="Border">
+                        <Style.Animations>
+                            <Animation Duration="0:0:1" IterationCount="INFINITE">
+                                <KeyFrame Cue="0%">
+                                    <Setter Property="RenderTransform" Value="rotate(0deg)" />
+                                </KeyFrame>
+                                <KeyFrame Cue="100%">
+                                    <Setter Property="RenderTransform" Value="rotate(360deg)" />
+                                </KeyFrame>
+                            </Animation>
+                        </Style.Animations>
+                    </Style>
+                </Border.Styles>
+                <PathIcon Data="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"
+                          Width="16" Height="16"
+                          Foreground="{Binding Foreground, ElementName=InnerButton}" />
+            </Border>
+
+            <!-- Icon (Left) -->
+            <PathIcon IsVisible="{Binding LeftIcon, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.IsNotNull}}"
+                      Data="{Binding LeftIcon, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}}"
+                      Width="{StaticResource IconSizeMd}" Height="{StaticResource IconSizeMd}"
+                      Foreground="{Binding Foreground, ElementName=InnerButton}" />
+
+            <!-- Text Content -->
+            <TextBlock Text="{Binding Text, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}}"
+                       IsVisible="{Binding Text, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                       VerticalAlignment="Center" />
+
+            <!-- Icon (Right) -->
+            <PathIcon IsVisible="{Binding RightIcon, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}, Converter={x:Static ObjectConverters.IsNotNull}}"
+                      Data="{Binding RightIcon, RelativeSource={RelativeSource AncestorType=controls:ArgoButton}}"
+                      Width="{StaticResource IconSizeMd}" Height="{StaticResource IconSizeMd}"
+                      Foreground="{Binding Foreground, ElementName=InnerButton}" />
+        </StackPanel>
+    </Button>
+</UserControl>

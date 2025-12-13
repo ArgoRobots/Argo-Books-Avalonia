@@ -1,0 +1,170 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="300"
+             x:Class="ArgoBooks.Controls.SearchableDropdown"
+             x:DataType="controls:SearchableDropdown"
+             Focusable="True">
+
+    <StackPanel Spacing="4">
+        <!-- Label -->
+        <StackPanel Orientation="Horizontal" Spacing="4"
+                    IsVisible="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                       FontSize="{StaticResource FontSizeSm}"
+                       FontWeight="Medium"
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
+            <TextBlock Text="*"
+                       FontSize="{StaticResource FontSizeSm}"
+                       Foreground="{DynamicResource ErrorBrush}"
+                       IsVisible="{Binding IsRequired, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
+        </StackPanel>
+
+        <!-- Dropdown Container -->
+        <Border x:Name="DropdownBorder"
+                CornerRadius="{StaticResource RadiusMd}"
+                BorderThickness="1"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                Classes.error="{Binding HasError, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                Classes.focused="{Binding IsDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+            <Border.Styles>
+                <Style Selector="Border.error">
+                    <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}" />
+                </Style>
+                <Style Selector="Border.focused:not(.error)">
+                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                </Style>
+                <Style Selector="Border:pointerover:not(.focused):not(.error)">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderHoverBrush}" />
+                </Style>
+            </Border.Styles>
+
+            <Grid ColumnDefinitions="*,Auto">
+                <!-- Search TextBox -->
+                <TextBox x:Name="SearchTextBox"
+                         Grid.Column="0"
+                         Text="{Binding SearchText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}, Mode=TwoWay}"
+                         Watermark="{Binding Placeholder, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="12,10"
+                         VerticalAlignment="Center" />
+
+                <!-- Dropdown Arrow -->
+                <Button Grid.Column="1"
+                        Classes="icon"
+                        Width="32" Height="32"
+                        Margin="0,0,4,0"
+                        Command="{Binding ToggleDropdownCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+                    <PathIcon Data="M7 10l5 5 5-5z"
+                              Width="16" Height="16"
+                              Foreground="{DynamicResource TextTertiaryBrush}">
+                        <PathIcon.Styles>
+                            <Style Selector="PathIcon">
+                                <Setter Property="RenderTransform" Value="rotate(0deg)" />
+                            </Style>
+                        </PathIcon.Styles>
+                    </PathIcon>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Dropdown Popup -->
+        <Popup x:Name="DropdownPopup"
+               IsOpen="{Binding IsDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}, Mode=TwoWay}"
+               PlacementTarget="{Binding #DropdownBorder}"
+               Placement="Bottom"
+               PlacementGravity="BottomLeft"
+               IsLightDismissEnabled="True"
+               WindowManagerAddShadowHint="True">
+
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusMd}"
+                    MinWidth="{Binding #DropdownBorder.Bounds.Width}"
+                    MaxHeight="300"
+                    Margin="0,4,0,0"
+                    BoxShadow="0 4 12 0 #20000000">
+
+                <DockPanel>
+                    <!-- Add New Button -->
+                    <Button DockPanel.Dock="Bottom"
+                            Classes="ghost"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left"
+                            Padding="12,10"
+                            IsVisible="{Binding ShowAddNew, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                            Command="{Binding AddNewCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource PrimaryBrush}" />
+                            <TextBlock Text="{Binding AddNewText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                                       Foreground="{DynamicResource PrimaryBrush}"
+                                       FontWeight="Medium" />
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Separator when Add New is visible -->
+                    <Border DockPanel.Dock="Bottom"
+                            Height="1"
+                            Background="{DynamicResource BorderLightBrush}"
+                            IsVisible="{Binding ShowAddNew, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
+
+                    <!-- Items List -->
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <!-- No Results Message -->
+                            <TextBlock Text="No results found"
+                                       FontSize="{StaticResource FontSizeSm}"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Padding="12,16"
+                                       HorizontalAlignment="Center"
+                                       IsVisible="{Binding !HasFilteredItems, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
+
+                            <!-- Filtered Items -->
+                            <ItemsControl ItemsSource="{Binding FilteredItems, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Classes="ghost"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
+                                                Padding="12,10"
+                                                Tag="{Binding}"
+                                                Command="{Binding SelectItemCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                                                CommandParameter="{Binding}">
+                                            <Button.Styles>
+                                                <Style Selector="Button.selected /template/ ContentPresenter">
+                                                    <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+                                                </Style>
+                                            </Button.Styles>
+                                            <TextBlock Text="{Binding}" />
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Popup>
+
+        <!-- Helper Text / Error Message -->
+        <TextBlock FontSize="{StaticResource FontSizeXs}"
+                   Margin="0,2,0,0"
+                   Foreground="{DynamicResource TextTertiaryBrush}"
+                   Text="{Binding HelperText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                   IsVisible="{Binding HelperText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+        <TextBlock FontSize="{StaticResource FontSizeXs}"
+                   Margin="0,2,0,0"
+                   Foreground="{DynamicResource ErrorBrush}"
+                   Text="{Binding ErrorMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                   IsVisible="{Binding HasError, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
+    </StackPanel>
+</UserControl>

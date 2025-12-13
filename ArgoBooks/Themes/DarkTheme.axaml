@@ -1,0 +1,122 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Argo Books Dark Theme
+        Theme-specific colors for dark mode.
+    -->
+
+    <!-- Background Colors -->
+    <Color x:Key="BackgroundColor">#111827</Color>
+    <Color x:Key="BackgroundSecondaryColor">#1F2937</Color>
+    <Color x:Key="BackgroundTertiaryColor">#374151</Color>
+
+    <!-- Surface Colors (cards, panels) -->
+    <Color x:Key="SurfaceColor">#1F2937</Color>
+    <Color x:Key="SurfaceHoverColor">#374151</Color>
+    <Color x:Key="SurfacePressedColor">#4B5563</Color>
+
+    <!-- Border Colors -->
+    <Color x:Key="BorderColor">#374151</Color>
+    <Color x:Key="BorderLightColor">#4B5563</Color>
+    <Color x:Key="BorderDarkColor">#1F2937</Color>
+    <Color x:Key="BorderHoverColor">#6B7280</Color>
+
+    <!-- Text Colors -->
+    <Color x:Key="TextPrimaryColor">#F9FAFB</Color>
+    <Color x:Key="TextSecondaryColor">#D1D5DB</Color>
+    <Color x:Key="TextTertiaryColor">#9CA3AF</Color>
+    <Color x:Key="TextDisabledColor">#6B7280</Color>
+    <Color x:Key="TextInverseColor">#111827</Color>
+
+    <!-- Sidebar Colors -->
+    <Color x:Key="SidebarBackgroundColor">#0F172A</Color>
+    <Color x:Key="SidebarTextColor">#F9FAFB</Color>
+    <Color x:Key="SidebarTextMutedColor">#9CA3AF</Color>
+    <Color x:Key="SidebarHoverColor">#1E293B</Color>
+    <Color x:Key="SidebarActiveColor">#3B82F6</Color>
+
+    <!-- Header Colors -->
+    <Color x:Key="HeaderBackgroundColor">#1F2937</Color>
+    <Color x:Key="HeaderBorderColor">#374151</Color>
+
+    <!-- Input Colors -->
+    <Color x:Key="InputBackgroundColor">#1F2937</Color>
+    <Color x:Key="InputBorderColor">#4B5563</Color>
+    <Color x:Key="InputFocusBorderColor">#3B82F6</Color>
+    <Color x:Key="InputPlaceholderColor">#6B7280</Color>
+
+    <!-- Table/DataGrid Colors -->
+    <Color x:Key="TableHeaderBackgroundColor">#1F2937</Color>
+    <Color x:Key="TableRowAlternateColor">#1F2937</Color>
+    <Color x:Key="TableRowHoverColor">#374151</Color>
+    <Color x:Key="TableRowSelectedColor">#1E3A5F</Color>
+
+    <!-- Shadow/Overlay Colors -->
+    <Color x:Key="ShadowColor">#40000000</Color>
+    <Color x:Key="OverlayColor">#B0000000</Color>
+    <Color x:Key="LoadingOverlayColor">#E6111827</Color>
+
+    <!-- Surface Alternate (for neutral backgrounds) -->
+    <Color x:Key="SurfaceAltColor">#374151</Color>
+
+    <!-- Icon Background Tints (darker variants) -->
+    <Color x:Key="PrimaryIconBgColor">#1E3A5F</Color>
+    <Color x:Key="SuccessIconBgColor">#064E3B</Color>
+    <Color x:Key="DangerIconBgColor">#7F1D1D</Color>
+    <Color x:Key="WarningIconBgColor">#78350F</Color>
+    <Color x:Key="InfoIconBgColor">#164E63</Color>
+
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
+    <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondaryColor}" />
+    <SolidColorBrush x:Key="BackgroundTertiaryBrush" Color="{StaticResource BackgroundTertiaryColor}" />
+
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="{StaticResource SurfaceHoverColor}" />
+    <SolidColorBrush x:Key="SurfacePressedBrush" Color="{StaticResource SurfacePressedColor}" />
+
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="BorderLightBrush" Color="{StaticResource BorderLightColor}" />
+    <SolidColorBrush x:Key="BorderDarkBrush" Color="{StaticResource BorderDarkColor}" />
+    <SolidColorBrush x:Key="BorderHoverBrush" Color="{StaticResource BorderHoverColor}" />
+
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="{StaticResource TextTertiaryColor}" />
+    <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}" />
+    <SolidColorBrush x:Key="TextInverseBrush" Color="{StaticResource TextInverseColor}" />
+
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource SidebarBackgroundColor}" />
+    <SolidColorBrush x:Key="SidebarTextBrush" Color="{StaticResource SidebarTextColor}" />
+    <SolidColorBrush x:Key="SidebarTextMutedBrush" Color="{StaticResource SidebarTextMutedColor}" />
+    <SolidColorBrush x:Key="SidebarHoverBrush" Color="{StaticResource SidebarHoverColor}" />
+    <SolidColorBrush x:Key="SidebarActiveBrush" Color="{StaticResource SidebarActiveColor}" />
+
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{StaticResource HeaderBackgroundColor}" />
+    <SolidColorBrush x:Key="HeaderBorderBrush" Color="{StaticResource HeaderBorderColor}" />
+
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="{StaticResource InputBackgroundColor}" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="{StaticResource InputBorderColor}" />
+    <SolidColorBrush x:Key="InputFocusBorderBrush" Color="{StaticResource InputFocusBorderColor}" />
+    <SolidColorBrush x:Key="InputPlaceholderBrush" Color="{StaticResource InputPlaceholderColor}" />
+
+    <SolidColorBrush x:Key="TableHeaderBackgroundBrush" Color="{StaticResource TableHeaderBackgroundColor}" />
+    <SolidColorBrush x:Key="TableRowAlternateBrush" Color="{StaticResource TableRowAlternateColor}" />
+    <SolidColorBrush x:Key="TableRowHoverBrush" Color="{StaticResource TableRowHoverColor}" />
+    <SolidColorBrush x:Key="TableRowSelectedBrush" Color="{StaticResource TableRowSelectedColor}" />
+
+    <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource ShadowColor}" />
+    <SolidColorBrush x:Key="OverlayBrush" Color="{StaticResource OverlayColor}" />
+    <SolidColorBrush x:Key="LoadingOverlayBrush" Color="{StaticResource LoadingOverlayColor}" />
+
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
+
+    <!-- Icon Background Tint Brushes -->
+    <SolidColorBrush x:Key="PrimaryIconBgBrush" Color="{StaticResource PrimaryIconBgColor}" />
+    <SolidColorBrush x:Key="SuccessIconBgBrush" Color="{StaticResource SuccessIconBgColor}" />
+    <SolidColorBrush x:Key="DangerIconBgBrush" Color="{StaticResource DangerIconBgColor}" />
+    <SolidColorBrush x:Key="WarningIconBgBrush" Color="{StaticResource WarningIconBgColor}" />
+    <SolidColorBrush x:Key="InfoIconBgBrush" Color="{StaticResource InfoIconBgColor}" />
+
+</ResourceDictionary>

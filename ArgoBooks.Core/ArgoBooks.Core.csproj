@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Note: System.Text.Json and System.Formats.Tar are built into .NET 7+ -->
+
+        <!-- MVVM -->
+        <PackageReference Include="CommunityToolkit.Mvvm" />
+
+        <!-- Dependency Injection -->
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+
+        <!-- PDF -->
+        <PackageReference Include="QuestPDF" />
+
+        <!-- Excel -->
+        <PackageReference Include="ClosedXML" />
+
+        <!-- Google APIs -->
+        <PackageReference Include="Google.Apis.Sheets.v4" />
+        <PackageReference Include="Google.Apis.Drive.v3" />
+    </ItemGroup>
+</Project>
