@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
 
@@ -22,6 +23,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// Gets the header view model.
     /// </summary>
     public HeaderViewModel HeaderViewModel { get; }
+
+    /// <summary>
+    /// Gets the quick actions view model.
+    /// </summary>
+    public QuickActionsViewModel QuickActionsViewModel { get; }
 
     #endregion
 
@@ -57,14 +63,29 @@ public partial class AppShellViewModel : ViewModelBase
         // Create header with navigation service
         HeaderViewModel = new HeaderViewModel(navigationService);
 
+        // Create quick actions panel with navigation service
+        QuickActionsViewModel = new QuickActionsViewModel(navigationService);
+
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
+
+        // Wire up header's quick actions button to open the panel
+        HeaderViewModel.OpenQuickActionsRequested += (_, _) => QuickActionsViewModel.OpenCommand.Execute(null);
 
         // Subscribe to navigation events to update UI state
         if (_navigationService != null)
         {
             _navigationService.Navigated += OnNavigated;
         }
+    }
+
+    /// <summary>
+    /// Opens the quick actions panel.
+    /// </summary>
+    [RelayCommand]
+    private void OpenQuickActions()
+    {
+        QuickActionsViewModel.OpenCommand.Execute(null);
     }
 
     /// <summary>

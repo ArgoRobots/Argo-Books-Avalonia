@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:panels="using:ArgoBooks.Panels"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.AppShell"
              x:DataType="vm:AppShellViewModel"
@@ -13,29 +14,38 @@
         <vm:AppShellViewModel />
     </Design.DataContext>
 
-    <Grid ColumnDefinitions="Auto,*">
-        <!-- Sidebar -->
-        <controls:Sidebar Grid.Column="0"
-                          DataContext="{Binding SidebarViewModel}"
-                          Width="{Binding Width}" />
+    <Panel>
+        <Grid ColumnDefinitions="Auto,*">
+            <!-- Sidebar -->
+            <controls:Sidebar Grid.Column="0"
+                              DataContext="{Binding SidebarViewModel}"
+                              Width="{Binding Width}" />
 
-        <!-- Main Content Area -->
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+            <!-- Main Content Area -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <controls:Header Grid.Row="0"
-                             DataContext="{Binding HeaderViewModel}" />
+                <!-- Header -->
+                <controls:Header Grid.Row="0"
+                                 DataContext="{Binding HeaderViewModel}" />
 
-            <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource BackgroundSecondaryBrush}">
-                <ContentControl Content="{Binding CurrentPage}"
-                                Margin="30" />
-            </Border>
+                <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
+                <Border Grid.Row="1"
+                        Background="{DynamicResource BackgroundSecondaryBrush}">
+                    <ContentControl Content="{Binding CurrentPage}"
+                                    Margin="30" />
+                </Border>
+            </Grid>
         </Grid>
-    </Grid>
+
+        <!-- Quick Actions Panel (modal overlay) -->
+        <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
+    </Panel>
+
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="Ctrl+K" Command="{Binding OpenQuickActionsCommand}" />
+    </UserControl.KeyBindings>
 </UserControl>

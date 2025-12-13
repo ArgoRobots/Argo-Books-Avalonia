@@ -58,11 +58,10 @@
             </StackPanel>
 
             <!-- Center Section: Search Box -->
-            <Border Grid.Column="1"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6"
+            <Button x:Name="SearchBoxButton"
+                    Grid.Column="1"
+                    Classes="search-box"
+                    Command="{Binding OpenQuickActionsCommand}"
                     Width="280"
                     Height="40"
                     HorizontalAlignment="Center"
@@ -76,19 +75,12 @@
                               Margin="15,0,10,0"
                               VerticalAlignment="Center" />
 
-                    <!-- Search Input -->
-                    <TextBox Grid.Column="1"
-                             Watermark="Search or jump to..."
-                             BorderThickness="0"
-                             Background="Transparent"
-                             Padding="0,10"
-                             FontSize="14"
-                             VerticalAlignment="Center"
-                             Text="{Binding SearchQuery, Mode=TwoWay}">
-                        <TextBox.KeyBindings>
-                            <KeyBinding Gesture="Enter" Command="{Binding SearchCommand}" />
-                        </TextBox.KeyBindings>
-                    </TextBox>
+                    <!-- Search Placeholder Text -->
+                    <TextBlock Grid.Column="1"
+                               Text="Search or jump to..."
+                               FontSize="14"
+                               Foreground="{DynamicResource TextTertiaryBrush}"
+                               VerticalAlignment="Center" />
 
                     <!-- Keyboard Shortcut Hint -->
                     <Border Grid.Column="2"
@@ -102,7 +94,7 @@
                                    Foreground="{DynamicResource TextTertiaryBrush}" />
                     </Border>
                 </Grid>
-            </Border>
+            </Button>
 
             <!-- Right Section: Upgrade, Notifications, Help, User -->
             <StackPanel Grid.Column="2"
@@ -224,6 +216,30 @@
         </Style>
         <Style Selector="Button.header-icon PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Search Box Button Style -->
+        <Style Selector="Button.search-box">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="Button.search-box /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.search-box:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        </Style>
+        <Style Selector="Button.search-box:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.search-box:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         </Style>
 
         <!-- User Menu Button Style -->

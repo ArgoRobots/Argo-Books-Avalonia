@@ -1,0 +1,254 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="500"
+             x:Class="ArgoBooks.Panels.QuickActionsPanel"
+             x:DataType="vm:QuickActionsViewModel">
+
+    <Design.DataContext>
+        <vm:QuickActionsViewModel />
+    </Design.DataContext>
+
+    <!-- Modal Overlay -->
+    <Panel IsVisible="{Binding IsOpen}">
+        <!-- Backdrop -->
+        <Border Background="{DynamicResource OverlayBrush}"
+                PointerPressed="Backdrop_PointerPressed" />
+
+        <!-- Panel Container -->
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="500"
+                MaxHeight="500"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,80,0,0"
+                BoxShadow="0 8 32 0 #40000000">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Search Input -->
+                <Border Grid.Row="0"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="16">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Search Icon -->
+                        <PathIcon Grid.Column="0"
+                                  Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                                  Width="20" Height="20"
+                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                  Margin="0,0,12,0"
+                                  VerticalAlignment="Center" />
+
+                        <!-- Search TextBox -->
+                        <TextBox x:Name="SearchInput"
+                                 Grid.Column="1"
+                                 Classes="search-input"
+                                 Watermark="Type to search..."
+                                 Text="{Binding SearchQuery, Mode=TwoWay}"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 FontSize="16"
+                                 VerticalAlignment="Center" />
+
+                        <!-- Close hint -->
+                        <Border Grid.Column="2"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="4"
+                                Padding="8,4"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="Esc"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Results -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              MaxHeight="400">
+                    <StackPanel Spacing="0">
+                        <!-- Quick Actions Section -->
+                        <StackPanel IsVisible="{Binding HasQuickActions}">
+                            <TextBlock Text="Quick Actions"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Margin="16,12,16,8" />
+                            <ItemsControl ItemsSource="{Binding QuickActions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:QuickActionItem">
+                                        <Button Classes="action-item"
+                                                Command="{Binding $parent[UserControl].((vm:QuickActionsViewModel)DataContext).ExecuteActionCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Border Grid.Column="0"
+                                                        Width="36" Height="36"
+                                                        CornerRadius="8"
+                                                        Background="{DynamicResource PrimaryIconBgBrush}"
+                                                        Margin="0,0,12,0">
+                                                    <PathIcon Data="{Binding IconData}"
+                                                              Width="18" Height="18"
+                                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- Navigation Section -->
+                        <StackPanel IsVisible="{Binding HasNavigationItems}">
+                            <TextBlock Text="Go To"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Margin="16,12,16,8" />
+                            <ItemsControl ItemsSource="{Binding NavigationItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:QuickActionItem">
+                                        <Button Classes="action-item"
+                                                Command="{Binding $parent[UserControl].((vm:QuickActionsViewModel)DataContext).ExecuteActionCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Border Grid.Column="0"
+                                                        Width="36" Height="36"
+                                                        CornerRadius="8"
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        Margin="0,0,12,0">
+                                                    <PathIcon Data="{Binding IconData}"
+                                                              Width="18" Height="18"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- Tools Section -->
+                        <StackPanel IsVisible="{Binding HasToolsItems}">
+                            <TextBlock Text="Tools &amp; Settings"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       Margin="16,12,16,8" />
+                            <ItemsControl ItemsSource="{Binding ToolsItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:QuickActionItem">
+                                        <Button Classes="action-item"
+                                                Command="{Binding $parent[UserControl].((vm:QuickActionsViewModel)DataContext).ExecuteActionCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Border Grid.Column="0"
+                                                        Width="36" Height="36"
+                                                        CornerRadius="8"
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        Margin="0,0,12,0">
+                                                    <PathIcon Data="{Binding IconData}"
+                                                              Width="18" Height="18"
+                                                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- No Results -->
+                        <StackPanel IsVisible="{Binding !HasResults}"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,40">
+                            <TextBlock Text="No results found"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- Bottom padding -->
+                        <Border Height="8" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Search Input Style -->
+        <Style Selector="TextBox.search-input">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBox.search-input /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TextBox.search-input:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TextBox.search-input:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Action Item Style -->
+        <Style Selector="Button.action-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="16,8" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.action-item /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.action-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.action-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="Escape" Command="{Binding CloseCommand}" />
+        <KeyBinding Gesture="Up" Command="{Binding MoveUpCommand}" />
+        <KeyBinding Gesture="Down" Command="{Binding MoveDownCommand}" />
+        <KeyBinding Gesture="Enter" Command="{Binding ExecuteSelectedCommand}" />
+    </UserControl.KeyBindings>
+</UserControl>

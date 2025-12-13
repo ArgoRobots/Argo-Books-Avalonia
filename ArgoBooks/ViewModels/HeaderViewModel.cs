@@ -183,7 +183,7 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenQuickActions()
     {
-        // TODO: Show quick actions modal/flyout
+        OpenQuickActionsRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -289,6 +289,11 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when sidebar toggle is requested.
     /// </summary>
     public event EventHandler? ToggleSidebarRequested;
+
+    /// <summary>
+    /// Event raised when quick actions panel should be opened.
+    /// </summary>
+    public event EventHandler? OpenQuickActionsRequested;
 
     #endregion
 
