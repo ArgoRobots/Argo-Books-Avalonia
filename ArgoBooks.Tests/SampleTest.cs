@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace ArgoBooks.Tests;
 
 public class SampleTest

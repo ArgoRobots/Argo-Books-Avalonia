@@ -9,7 +9,7 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class MainViewModel : ViewModelBase
 {
-    private readonly ISettingsService _settingsService;
+    private readonly ISettingsService? _settingsService;
 
     [ObservableProperty]
     private string _title = "Argo Books";
@@ -26,7 +26,17 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSidebarCollapsed;
 
-    public MainViewModel(ISettingsService settingsService)
+    /// <summary>
+    /// Default constructor for design-time and initial setup.
+    /// </summary>
+    public MainViewModel() : this(null)
+    {
+    }
+
+    /// <summary>
+    /// Constructor with dependency injection.
+    /// </summary>
+    public MainViewModel(ISettingsService? settingsService)
     {
         _settingsService = settingsService;
     }
