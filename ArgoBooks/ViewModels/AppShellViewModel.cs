@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
 
