@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models;
 using Avalonia.Controls;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
