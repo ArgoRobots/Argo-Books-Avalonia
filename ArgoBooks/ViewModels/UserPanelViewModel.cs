@@ -50,16 +50,6 @@ public partial class UserPanelViewModel : ViewModelBase
 
     #endregion
 
-    #region Company Info
-
-    [ObservableProperty]
-    private string? _companyName = "Acme Corporation";
-
-    [ObservableProperty]
-    private string? _companyPlan = "Professional";
-
-    #endregion
-
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
@@ -177,23 +167,13 @@ public partial class UserPanelViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Switches to a different company.
+    /// Switches to a different account.
     /// </summary>
     [RelayCommand]
-    private void SwitchCompany()
+    private void SwitchAccount()
     {
         Close();
-        // TODO: Show company switcher
-    }
-
-    /// <summary>
-    /// Closes the current company file.
-    /// </summary>
-    [RelayCommand]
-    private void CloseCompany()
-    {
-        Close();
-        // TODO: Close current company and return to welcome screen
+        // TODO: Show account switcher modal
     }
 
     /// <summary>

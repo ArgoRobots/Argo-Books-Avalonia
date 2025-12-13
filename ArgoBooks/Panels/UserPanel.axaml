@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="400"
+             mc:Ignorable="d" d:DesignWidth="260" d:DesignHeight="300"
              x:Class="ArgoBooks.Panels.UserPanel"
              x:DataType="vm:UserPanelViewModel">
 
@@ -21,28 +21,28 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
-                Width="280"
+                Width="260"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,60,20,0"
-                BoxShadow="0 4 16 0 #30000000">
+                BoxShadow="0 4 20 0 #26000000">
             <StackPanel>
-                <!-- User Profile Section -->
-                <Border Padding="16"
+                <!-- User Profile Header -->
+                <Border Padding="16,16,20,16"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="Auto,*">
                         <!-- Avatar -->
                         <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="24"
+                                Width="44" Height="44"
+                                CornerRadius="22"
                                 Background="{DynamicResource PrimaryBrush}"
                                 ClipToBounds="True"
                                 Margin="0,0,12,0">
                             <Panel>
                                 <!-- User Initials -->
                                 <TextBlock Text="{Binding UserInitials}"
-                                           FontSize="18"
+                                           FontSize="16"
                                            FontWeight="SemiBold"
                                            Foreground="White"
                                            HorizontalAlignment="Center"
@@ -67,41 +67,13 @@
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        TextTrimming="CharacterEllipsis"
                                        IsVisible="{Binding UserEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                            <TextBlock Text="{Binding UserRole}"
-                                       FontSize="11"
-                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                       IsVisible="{Binding UserRole, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Company Section -->
-                <Border Padding="12,8"
-                        Background="{DynamicResource SurfaceAltBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="0,0,0,1">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Spacing="0">
-                            <TextBlock Text="{Binding CompanyName}"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding CompanyPlan}"
-                                       FontSize="11"
-                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                        </StackPanel>
-                        <Button Grid.Column="1"
-                                Classes="text-button-small"
-                                Content="Switch"
-                                Command="{Binding SwitchCompanyCommand}"
-                                VerticalAlignment="Center" />
                     </Grid>
                 </Border>
 
                 <!-- Menu Items -->
-                <StackPanel Margin="4,4">
-                    <!-- Profile -->
+                <StackPanel Margin="0,8,0,8">
+                    <!-- My Profile -->
                     <Button Classes="menu-item"
                             Command="{Binding OpenProfileCommand}">
                         <Grid ColumnDefinitions="Auto,*">
@@ -109,7 +81,7 @@
                                       Data="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                                       Width="18" Height="18"
                                       Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="Profile" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="My Profile" VerticalAlignment="Center" />
                         </Grid>
                     </Button>
 
@@ -125,59 +97,24 @@
                         </Grid>
                     </Button>
 
-                    <!-- Help -->
+                    <!-- Divider -->
+                    <Border Height="1"
+                            Background="{DynamicResource BorderBrush}"
+                            Margin="0,8" />
+
+                    <!-- Switch Account -->
                     <Button Classes="menu-item"
-                            Command="{Binding OpenHelpCommand}">
+                            Command="{Binding SwitchAccountCommand}">
                         <Grid ColumnDefinitions="Auto,*">
                             <PathIcon Grid.Column="0"
-                                      Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
+                                      Data="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"
                                       Width="18" Height="18"
                                       Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="Help &amp; Support" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="Switch Account" VerticalAlignment="Center" />
                         </Grid>
                     </Button>
 
-                    <!-- Keyboard Shortcuts -->
-                    <Button Classes="menu-item"
-                            Command="{Binding OpenKeyboardShortcutsCommand}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <PathIcon Grid.Column="0"
-                                      Data="M20 5H4c-1.1 0-1.99.9-1.99 2L2 17c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z"
-                                      Width="18" Height="18"
-                                      Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="Keyboard Shortcuts" VerticalAlignment="Center" />
-                            <Border Grid.Column="2"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="4"
-                                    Padding="6,2">
-                                <TextBlock Text="?"
-                                           FontSize="11"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                            </Border>
-                        </Grid>
-                    </Button>
-                </StackPanel>
-
-                <!-- Divider -->
-                <Border Height="1"
-                        Background="{DynamicResource BorderBrush}"
-                        Margin="12,4" />
-
-                <!-- Sign Out Section -->
-                <StackPanel Margin="4,4,4,8">
-                    <!-- Close Company -->
-                    <Button Classes="menu-item"
-                            Command="{Binding CloseCompanyCommand}">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <PathIcon Grid.Column="0"
-                                      Data="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"
-                                      Width="18" Height="18"
-                                      Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="Close Company" VerticalAlignment="Center" />
-                        </Grid>
-                    </Button>
-
-                    <!-- Sign Out -->
+                    <!-- Log Out -->
                     <Button Classes="menu-item danger"
                             Command="{Binding SignOutCommand}">
                         <Grid ColumnDefinitions="Auto,*">
@@ -185,7 +122,7 @@
                                       Data="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
                                       Width="18" Height="18"
                                       Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="Sign Out" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="Log Out" VerticalAlignment="Center" />
                         </Grid>
                     </Button>
                 </StackPanel>
@@ -198,12 +135,12 @@
         <Style Selector="Button.menu-item">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="Padding" Value="20,10" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="CornerRadius" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.menu-item /template/ ContentPresenter#PART_ContentPresenter">
@@ -221,26 +158,10 @@
 
         <!-- Danger Menu Item Style -->
         <Style Selector="Button.menu-item.danger">
-            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+            <Setter Property="Foreground" Value="#dc2626" />
         </Style>
         <Style Selector="Button.menu-item.danger PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-        </Style>
-
-        <!-- Small Text Button Style -->
-        <Style Selector="Button.text-button-small">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.text-button-small /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.text-button-small:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="Foreground" Value="#dc2626" />
         </Style>
     </UserControl.Styles>
 </UserControl>
