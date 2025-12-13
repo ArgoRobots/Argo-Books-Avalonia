@@ -1,5 +1,5 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!--
         Argo Books Card Styles
@@ -145,4 +145,4 @@
         <Setter Property="Margin" Value="8,0" />
     </Style>
 
-</ResourceDictionary>
+</Styles>
