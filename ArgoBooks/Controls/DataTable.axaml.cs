@@ -308,6 +308,15 @@ public partial class DataTable : UserControl, INotifyPropertyChanged
     /// </summary>
     public event EventHandler<object?>? RowDoubleClicked;
 
+    /// <summary>
+    /// Raises the RowDoubleClicked event.
+    /// </summary>
+    /// <param name="item">The item that was double-clicked.</param>
+    protected virtual void OnRowDoubleClicked(object? item)
+    {
+        RowDoubleClicked?.Invoke(this, item);
+    }
+
     #endregion
 
     public DataTable()

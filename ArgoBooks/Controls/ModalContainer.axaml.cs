@@ -63,16 +63,16 @@ public partial class ModalContainer : UserControl
     public static readonly StyledProperty<double> ModalWidthProperty =
         AvaloniaProperty.Register<ModalContainer, double>(nameof(ModalWidth), double.NaN);
 
-    public static readonly StyledProperty<double> MinWidthProperty =
+    public static new readonly StyledProperty<double> MinWidthProperty =
         AvaloniaProperty.Register<ModalContainer, double>(nameof(MinWidth), 300);
 
-    public static readonly StyledProperty<double> MaxWidthProperty =
+    public static new readonly StyledProperty<double> MaxWidthProperty =
         AvaloniaProperty.Register<ModalContainer, double>(nameof(MaxWidth), double.PositiveInfinity);
 
-    public static readonly StyledProperty<double> MinHeightProperty =
+    public static new readonly StyledProperty<double> MinHeightProperty =
         AvaloniaProperty.Register<ModalContainer, double>(nameof(MinHeight), 150);
 
-    public static readonly StyledProperty<double> MaxHeightProperty =
+    public static new readonly StyledProperty<double> MaxHeightProperty =
         AvaloniaProperty.Register<ModalContainer, double>(nameof(MaxHeight), double.PositiveInfinity);
 
     public static readonly StyledProperty<bool> ShowHeaderProperty =

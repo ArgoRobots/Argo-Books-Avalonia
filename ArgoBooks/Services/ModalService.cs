@@ -239,7 +239,12 @@ public class ModalService : IModalService
             _execute = execute;
         }
 
-        public event EventHandler? CanExecuteChanged;
+        // CanExecute is always true, so we never need to raise CanExecuteChanged
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
 
         public bool CanExecute(object? parameter) => true;
 
