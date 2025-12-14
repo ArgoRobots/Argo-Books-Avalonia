@@ -185,6 +185,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public void CloseCompany()
     {
         CurrentCompanyName = null;
-        CurrentView = null;
+        // Don't reset CurrentView - keep showing the AppShell
+        // The navigation will handle showing the appropriate page
     }
 }

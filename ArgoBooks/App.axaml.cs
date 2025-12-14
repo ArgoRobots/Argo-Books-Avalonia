@@ -39,23 +39,20 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    public override async void OnFrameworkInitializationCompleted()
+    public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
             DisableAvaloniaDataAnnotationValidation();
 
-            // Initialize services
+            // Initialize services synchronously
             var compressionService = new CompressionService();
             var footerService = new FooterService();
             var encryptionService = new EncryptionService();
             var fileService = new FileService(compressionService, footerService, encryptionService);
             SettingsService = new GlobalSettingsService();
             CompanyManager = new CompanyManager(fileService, encryptionService, SettingsService, footerService);
-
-            // Load global settings
-            await SettingsService.LoadGlobalSettingsAsync();
 
             // Create navigation service
             NavigationService = new NavigationService();
@@ -101,8 +98,8 @@ public partial class App : Application
                 DataContext = _mainWindowViewModel
             };
 
-            // Load and display recent companies
-            await LoadRecentCompaniesAsync();
+            // Load settings and recent companies asynchronously after window is shown
+            _ = InitializeAsync();
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
@@ -113,6 +110,29 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>
+    /// Performs async initialization after the main window is displayed.
+    /// </summary>
+    private static async Task InitializeAsync()
+    {
+        try
+        {
+            // Load global settings
+            if (SettingsService != null)
+            {
+                await SettingsService.LoadGlobalSettingsAsync();
+            }
+
+            // Load and display recent companies
+            await LoadRecentCompaniesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't crash the app
+            System.Diagnostics.Debug.WriteLine($"Error during async initialization: {ex.Message}");
+        }
     }
 
     /// <summary>

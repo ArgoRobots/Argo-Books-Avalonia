@@ -85,7 +85,7 @@
             </Border>
 
             <!-- Main Content Area -->
-            <ContentControl Content="{Binding CurrentView}" />
+            <ContentControl x:Name="MainContent" Content="{Binding CurrentView}" />
         </DockPanel>
     </Panel>
 </Window>

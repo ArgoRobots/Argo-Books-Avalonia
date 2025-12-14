@@ -4,6 +4,7 @@ using Avalonia.Input;
 using ArgoBooks.Controls;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
+using System.ComponentModel;
 
 namespace ArgoBooks.Views;
 
@@ -18,6 +19,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        // Subscribe to DataContext changes to ensure content is set
+        DataContextChanged += OnDataContextChanged;
 
         // Set up window drag behavior for custom title bar
         var dragRegion = this.FindControl<Border>("DragRegion");
@@ -139,6 +143,36 @@ public partial class MainWindow : Window
         {
             viewModel.WindowLeft = e.Point.X;
             viewModel.WindowTop = e.Point.Y;
+        }
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        // Manually set the content when DataContext changes to work around binding timing issues
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            // Subscribe to property changes to update content when CurrentView changes
+            viewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+            // Set initial content
+            UpdateMainContent(viewModel.CurrentView);
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainWindowViewModel.CurrentView) && DataContext is MainWindowViewModel viewModel)
+        {
+            UpdateMainContent(viewModel.CurrentView);
+        }
+    }
+
+    private void UpdateMainContent(object? content)
+    {
+        var contentControl = this.FindControl<ContentControl>("MainContent");
+        if (contentControl != null && content != null)
+        {
+            contentControl.Content = content;
         }
     }
 }
