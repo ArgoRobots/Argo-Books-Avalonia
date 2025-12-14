@@ -17,7 +17,8 @@
                 PointerPressed="Backdrop_PointerPressed" />
 
         <!-- User Panel Container (positioned top-right below header) -->
-        <Border Background="{DynamicResource SurfaceBrush}"
+        <Border x:Name="UserPanelBorder"
+                Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
@@ -25,7 +26,9 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,60,20,0"
-                BoxShadow="0 4 20 0 #26000000">
+                BoxShadow="0 4 20 0 #26000000"
+                Focusable="True"
+                KeyDown="UserPanel_KeyDown">
             <StackPanel>
                 <!-- User Profile Header -->
                 <Border Padding="16,16,20,16"
@@ -74,7 +77,8 @@
                 <!-- Menu Items -->
                 <StackPanel Margin="0,8,0,8">
                     <!-- My Profile -->
-                    <Button Classes="menu-item"
+                    <Button x:Name="MenuItem0"
+                            Classes="menu-item"
                             Command="{Binding OpenProfileCommand}">
                         <Grid ColumnDefinitions="Auto,*">
                             <PathIcon Grid.Column="0"
@@ -86,7 +90,8 @@
                     </Button>
 
                     <!-- Settings -->
-                    <Button Classes="menu-item"
+                    <Button x:Name="MenuItem1"
+                            Classes="menu-item"
                             Command="{Binding OpenSettingsCommand}">
                         <Grid ColumnDefinitions="Auto,*">
                             <PathIcon Grid.Column="0"
@@ -103,7 +108,8 @@
                             Margin="0,8" />
 
                     <!-- Switch Account -->
-                    <Button Classes="menu-item"
+                    <Button x:Name="MenuItem2"
+                            Classes="menu-item"
                             Command="{Binding SwitchAccountCommand}">
                         <Grid ColumnDefinitions="Auto,*">
                             <PathIcon Grid.Column="0"
@@ -115,7 +121,8 @@
                     </Button>
 
                     <!-- Log Out -->
-                    <Button Classes="menu-item danger"
+                    <Button x:Name="MenuItem3"
+                            Classes="menu-item danger"
                             Command="{Binding SignOutCommand}">
                         <Grid ColumnDefinitions="Auto,*">
                             <PathIcon Grid.Column="0"
@@ -151,6 +158,13 @@
         </Style>
         <Style Selector="Button.menu-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Button.menu-item:focus /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.menu-item:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="2,0,0,0" />
         </Style>
         <Style Selector="Button.menu-item PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />

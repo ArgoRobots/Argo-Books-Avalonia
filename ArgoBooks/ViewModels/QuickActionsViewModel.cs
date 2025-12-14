@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -144,7 +145,7 @@ public partial class QuickActionsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Filters all action lists based on query.
+    /// Filters all action lists based on query using fuzzy matching.
     /// </summary>
     private void FilterActions(string? query)
     {
@@ -152,11 +153,29 @@ public partial class QuickActionsViewModel : ViewModelBase
         NavigationItems.Clear();
         ToolsItems.Clear();
 
-        var filteredItems = string.IsNullOrWhiteSpace(query)
-            ? _allActions
-            : _allActions.Where(a =>
-                a.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                a.Description.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+        IEnumerable<(QuickActionItem Item, double Score)> scoredItems;
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            // No query - show all items with score 1
+            scoredItems = _allActions.Select(a => (a, 1.0));
+        }
+        else
+        {
+            // Use Levenshtein-based fuzzy search
+            scoredItems = _allActions
+                .Select(a =>
+                {
+                    // Get best score from title or description
+                    var titleScore = LevenshteinDistance.ComputeSearchScore(query, a.Title);
+                    var descScore = LevenshteinDistance.ComputeSearchScore(query, a.Description);
+                    return (Item: a, Score: Math.Max(titleScore, descScore));
+                })
+                .Where(x => x.Score > 0) // Only include matches
+                .OrderByDescending(x => x.Score);
+        }
+
+        var filteredItems = scoredItems.Select(x => x.Item).ToList();
 
         foreach (var item in filteredItems.Where(a => a.Type == QuickActionType.QuickAction).Take(6))
             QuickActions.Add(item);

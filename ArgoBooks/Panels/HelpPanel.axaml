@@ -151,5 +151,12 @@
         <Style Selector="Button.menu-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
         </Style>
+        <Style Selector="Button.menu-item:focus /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.menu-item:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="2,0,0,0" />
+        </Style>
     </UserControl.Styles>
 </UserControl>

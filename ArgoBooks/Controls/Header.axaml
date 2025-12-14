@@ -236,6 +236,7 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="TextBox.header-search /template/ Border#PART_BorderElement">
             <Setter Property="Background" Value="Transparent" />
