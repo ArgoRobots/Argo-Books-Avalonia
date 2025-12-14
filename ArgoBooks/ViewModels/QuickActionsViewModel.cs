@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Utilities;
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -13,6 +14,7 @@ public partial class QuickActionsViewModel : ViewModelBase
 {
     private readonly INavigationService? _navigationService;
     private readonly List<QuickActionItem> _allActions = [];
+    private SidebarViewModel? _sidebarViewModel;
 
     #region Properties
 
@@ -27,6 +29,16 @@ public partial class QuickActionsViewModel : ViewModelBase
 
     [ObservableProperty]
     private int _selectedIndex;
+
+    /// <summary>
+    /// Gets the center offset based on sidebar width (half of sidebar width).
+    /// </summary>
+    public double CenterOffset => (_sidebarViewModel?.Width ?? 250) / 2;
+
+    /// <summary>
+    /// Gets the modal margin with dynamic center offset based on sidebar width.
+    /// </summary>
+    public Thickness ModalMargin => new(CenterOffset, 100, 0, 0);
 
     /// <summary>
     /// Filtered quick actions based on search query.
@@ -80,6 +92,22 @@ public partial class QuickActionsViewModel : ViewModelBase
         _navigationService = navigationService;
         InitializeActions();
         FilterActions(null);
+    }
+
+    /// <summary>
+    /// Sets the sidebar view model to track sidebar width for centering.
+    /// </summary>
+    public void SetSidebarViewModel(SidebarViewModel sidebarViewModel)
+    {
+        _sidebarViewModel = sidebarViewModel;
+        _sidebarViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(SidebarViewModel.Width))
+            {
+                OnPropertyChanged(nameof(CenterOffset));
+                OnPropertyChanged(nameof(ModalMargin));
+            }
+        };
     }
 
     /// <summary>

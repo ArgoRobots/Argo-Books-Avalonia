@@ -103,8 +103,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Create header with navigation service
         HeaderViewModel = new HeaderViewModel(navigationService);
 
-        // Create quick actions panel with navigation service
+        // Create quick actions panel with navigation service and link to sidebar
         QuickActionsViewModel = new QuickActionsViewModel(navigationService);
+        QuickActionsViewModel.SetSidebarViewModel(SidebarViewModel);
 
         // Create notification panel with header view model (shares notifications)
         NotificationPanelViewModel = new NotificationPanelViewModel(HeaderViewModel);
