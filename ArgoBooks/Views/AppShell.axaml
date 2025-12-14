@@ -16,6 +16,7 @@
         <vm:AppShellViewModel />
     </Design.DataContext>
 
+    <Panel>
     <Grid ColumnDefinitions="Auto,*">
         <!-- Sidebar -->
         <controls:Sidebar Grid.Column="0"
@@ -67,4 +68,8 @@
             <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}" />
         </Panel>
     </Grid>
+
+    <!-- Company Switcher Panel (overlay at root level to cover sidebar) -->
+    <panels:CompanySwitcherPanel DataContext="{Binding CompanySwitcherPanelViewModel}" />
+    </Panel>
 </UserControl>

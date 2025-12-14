@@ -82,6 +82,15 @@ public partial class SidebarViewModel : ViewModelBase
 
     #endregion
 
+    #region Events
+
+    /// <summary>
+    /// Event raised when the company header is clicked to open the company switcher.
+    /// </summary>
+    public event EventHandler? OpenCompanySwitcherRequested;
+
+    #endregion
+
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
@@ -228,6 +237,15 @@ public partial class SidebarViewModel : ViewModelBase
     private void ToggleCollapse()
     {
         IsCollapsed = !IsCollapsed;
+    }
+
+    /// <summary>
+    /// Opens the company switcher panel.
+    /// </summary>
+    [RelayCommand]
+    private void OpenCompanySwitcher()
+    {
+        OpenCompanySwitcherRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

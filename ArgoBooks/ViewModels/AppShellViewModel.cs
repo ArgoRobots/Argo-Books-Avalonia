@@ -64,6 +64,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public CreateCompanyViewModel CreateCompanyViewModel { get; }
 
+    /// <summary>
+    /// Gets the company switcher panel view model.
+    /// </summary>
+    public CompanySwitcherPanelViewModel CompanySwitcherPanelViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -122,6 +127,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Create company creation wizard
         CreateCompanyViewModel = new CreateCompanyViewModel();
 
+        // Create company switcher panel
+        CompanySwitcherPanelViewModel = new CompanySwitcherPanelViewModel();
+
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
@@ -151,6 +159,12 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Wire up file menu's create new company to open the wizard
         FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
+
+        // Wire up sidebar's company header click to open the company switcher
+        SidebarViewModel.OpenCompanySwitcherRequested += (_, _) => CompanySwitcherPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up company switcher's create new company to open the wizard
+        CompanySwitcherPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
 
         // Sync search query between header and quick actions
         HeaderViewModel.PropertyChanged += (_, e) =>

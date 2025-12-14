@@ -24,7 +24,8 @@
                 <Button Classes="sidebar-header"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Left"
-                        IsVisible="{Binding !IsCollapsed}">
+                        IsVisible="{Binding !IsCollapsed}"
+                        Command="{Binding OpenCompanySwitcherCommand}">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <!-- Logo (40px square with gradient) -->
                         <Border Grid.Column="0"

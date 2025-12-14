@@ -1,0 +1,197 @@
+using System.Collections.ObjectModel;
+using Avalonia.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+namespace ArgoBooks.ViewModels;
+
+/// <summary>
+/// ViewModel for the company switcher panel.
+/// </summary>
+public partial class CompanySwitcherPanelViewModel : ViewModelBase
+{
+    [ObservableProperty]
+    private bool _isOpen;
+
+    #region Current Company
+
+    [ObservableProperty]
+    private string _currentCompanyName = "Argo Books";
+
+    [ObservableProperty]
+    private string _currentCompanyInitial = "A";
+
+    [ObservableProperty]
+    private Bitmap? _currentCompanyLogo;
+
+    [ObservableProperty]
+    private bool _hasCurrentCompanyLogo;
+
+    [ObservableProperty]
+    private string? _currentCompanyPath;
+
+    #endregion
+
+    /// <summary>
+    /// Recent companies for quick switching.
+    /// </summary>
+    public ObservableCollection<CompanyItem> RecentCompanies { get; } = [];
+
+    /// <summary>
+    /// Default constructor for design-time.
+    /// </summary>
+    public CompanySwitcherPanelViewModel()
+    {
+        // Design-time defaults
+        RecentCompanies.Add(new CompanyItem
+        {
+            Name = "My Company Inc.",
+            Initial = "M",
+            FilePath = "/path/to/my-company.argo"
+        });
+        RecentCompanies.Add(new CompanyItem
+        {
+            Name = "Side Business LLC",
+            Initial = "S",
+            FilePath = "/path/to/side-business.argo"
+        });
+        RecentCompanies.Add(new CompanyItem
+        {
+            Name = "Consulting Services",
+            Initial = "C",
+            FilePath = "/path/to/consulting.argo"
+        });
+    }
+
+    #region Commands
+
+    /// <summary>
+    /// Opens the company switcher panel.
+    /// </summary>
+    [RelayCommand]
+    private void Open()
+    {
+        IsOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the company switcher panel.
+    /// </summary>
+    [RelayCommand]
+    private void Close()
+    {
+        IsOpen = false;
+    }
+
+    /// <summary>
+    /// Toggles the company switcher panel.
+    /// </summary>
+    [RelayCommand]
+    private void Toggle()
+    {
+        IsOpen = !IsOpen;
+    }
+
+    /// <summary>
+    /// Switches to a different company.
+    /// </summary>
+    [RelayCommand]
+    private void SwitchCompany(CompanyItem? company)
+    {
+        if (company == null) return;
+        Close();
+        SwitchCompanyRequested?.Invoke(this, company);
+    }
+
+    /// <summary>
+    /// Creates a new company.
+    /// </summary>
+    [RelayCommand]
+    private void CreateNewCompany()
+    {
+        Close();
+        CreateNewCompanyRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Opens an existing company file.
+    /// </summary>
+    [RelayCommand]
+    private void OpenCompany()
+    {
+        Close();
+        OpenCompanyRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    #endregion
+
+    #region Events
+
+    public event EventHandler<CompanyItem>? SwitchCompanyRequested;
+    public event EventHandler? CreateNewCompanyRequested;
+    public event EventHandler? OpenCompanyRequested;
+
+    #endregion
+
+    /// <summary>
+    /// Sets the current company information.
+    /// </summary>
+    public void SetCurrentCompany(string name, string? path = null, Bitmap? logo = null)
+    {
+        CurrentCompanyName = name;
+        CurrentCompanyInitial = string.IsNullOrEmpty(name) ? "A" : name[0].ToString().ToUpper();
+        CurrentCompanyPath = path;
+        CurrentCompanyLogo = logo;
+        HasCurrentCompanyLogo = logo != null;
+    }
+
+    /// <summary>
+    /// Adds a recent company to the list.
+    /// </summary>
+    public void AddRecentCompany(string name, string filePath, Bitmap? logo = null)
+    {
+        // Don't add duplicates
+        var existing = RecentCompanies.FirstOrDefault(c => c.FilePath == filePath);
+        if (existing != null)
+        {
+            RecentCompanies.Remove(existing);
+        }
+
+        // Add to the beginning
+        RecentCompanies.Insert(0, new CompanyItem
+        {
+            Name = name,
+            Initial = string.IsNullOrEmpty(name) ? "?" : name[0].ToString().ToUpper(),
+            FilePath = filePath,
+            Logo = logo
+        });
+
+        // Keep only the last 5 recent companies
+        while (RecentCompanies.Count > 5)
+        {
+            RecentCompanies.RemoveAt(RecentCompanies.Count - 1);
+        }
+    }
+
+    /// <summary>
+    /// Clears the recent companies list.
+    /// </summary>
+    [RelayCommand]
+    private void ClearRecent()
+    {
+        RecentCompanies.Clear();
+    }
+}
+
+/// <summary>
+/// Represents a company item in the switcher.
+/// </summary>
+public class CompanyItem
+{
+    public string Name { get; set; } = "";
+    public string Initial { get; set; } = "?";
+    public string? FilePath { get; set; }
+    public Bitmap? Logo { get; set; }
+    public bool HasLogo => Logo != null;
+    public DateTime LastOpened { get; set; } = DateTime.Now;
+}
