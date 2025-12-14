@@ -72,83 +72,16 @@
                 </Border>
 
                 <!-- Content -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="24,20" Spacing="12">
-                        <!-- Banking & Transactions -->
-                        <TextBlock Text="Banking &amp; Transactions"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   Margin="0,0,0,4" />
-
-                        <!-- QIF (Quicken) -->
-                        <Button Classes="import-option"
-                                Command="{Binding SelectFormatCommand}"
-                                CommandParameter="QIF">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <Border Grid.Column="0"
-                                        Width="40" Height="40"
-                                        CornerRadius="8"
-                                        Background="{DynamicResource PrimaryIconBgBrush}"
-                                        Margin="0,0,16,0">
-                                    <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
-                                              Width="20" Height="20"
-                                              Foreground="{DynamicResource PrimaryBrush}" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="QIF (Quicken Interchange Format)"
-                                               FontSize="14"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Import transactions from Quicken, banks, and financial software"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                                <PathIcon Grid.Column="2"
-                                          Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
-                                          Width="16" Height="16"
-                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                          VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
-                        <!-- OFX/QFX -->
-                        <Button Classes="import-option"
-                                Command="{Binding SelectFormatCommand}"
-                                CommandParameter="OFX">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <Border Grid.Column="0"
-                                        Width="40" Height="40"
-                                        CornerRadius="8"
-                                        Background="{DynamicResource SuccessIconBgBrush}"
-                                        Margin="0,0,16,0">
-                                    <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"
-                                              Width="20" Height="20"
-                                              Foreground="{DynamicResource SuccessBrush}" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="OFX / QFX (Open Financial Exchange)"
-                                               FontSize="14"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Import bank statements and credit card transactions"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                                <PathIcon Grid.Column="2"
-                                          Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
-                                          Width="16" Height="16"
-                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                          VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
                         <!-- Spreadsheets -->
                         <TextBlock Text="Spreadsheets"
                                    FontSize="12"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                   Margin="0,12,0,4" />
+                                   Margin="0,0,0,4" />
 
                         <!-- CSV -->
                         <Button Classes="import-option"

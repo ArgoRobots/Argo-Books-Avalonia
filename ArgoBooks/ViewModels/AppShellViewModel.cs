@@ -89,6 +89,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public ExportAsModalViewModel ExportAsModalViewModel { get; }
 
+    /// <summary>
+    /// Gets the switch account modal view model.
+    /// </summary>
+    public SwitchAccountModalViewModel SwitchAccountModalViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -162,6 +167,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create export as modal
         ExportAsModalViewModel = new ExportAsModalViewModel();
+
+        // Create switch account modal
+        SwitchAccountModalViewModel = new SwitchAccountModalViewModel();
 
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
