@@ -56,9 +56,9 @@ public class CompanyManager : IDisposable
     public CompanySettings? CurrentCompanySettings => _companyData?.Settings;
 
     /// <summary>
-    /// Gets the current company logo as a bitmap, if one exists.
+    /// Gets the current company logo file path, if one exists.
     /// </summary>
-    public Avalonia.Media.Imaging.Bitmap? CurrentCompanyLogo
+    public string? CurrentCompanyLogoPath
     {
         get
         {
@@ -66,17 +66,7 @@ public class CompanyManager : IDisposable
                 return null;
 
             var logoPath = Path.Combine(_currentTempDirectory, _companyData.Settings.Company.LogoFileName);
-            if (!File.Exists(logoPath))
-                return null;
-
-            try
-            {
-                return new Avalonia.Media.Imaging.Bitmap(logoPath);
-            }
-            catch
-            {
-                return null;
-            }
+            return File.Exists(logoPath) ? logoPath : null;
         }
     }
 
