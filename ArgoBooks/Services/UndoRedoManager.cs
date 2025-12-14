@@ -96,6 +96,16 @@ public partial class UndoRedoManager : ObservableObject
     public IReadOnlyList<IUndoableAction> RedoHistory => _redoStack.ToList();
 
     /// <summary>
+    /// Gets the descriptions of all undo actions.
+    /// </summary>
+    public List<string> GetUndoDescriptions() => _undoStack.Select(a => a.Description).ToList();
+
+    /// <summary>
+    /// Gets the descriptions of all redo actions.
+    /// </summary>
+    public List<string> GetRedoDescriptions() => _redoStack.Select(a => a.Description).ToList();
+
+    /// <summary>
     /// Records an action for undo/redo.
     /// </summary>
     /// <param name="action">The action to record.</param>

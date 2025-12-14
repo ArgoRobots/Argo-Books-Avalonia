@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="550"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
              x:Class="ArgoBooks.Modals.ExportAsModal"
              x:DataType="vm:ExportAsModalViewModel">
 
@@ -28,7 +28,8 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
-                Width="500"
+                Width="550"
+                MaxHeight="700"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 BoxShadow="0 8 32 0 #40000000"
@@ -58,7 +59,7 @@
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Export your data to various file formats"
+                            <TextBlock Text="Choose how you want to export your data"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                         </StackPanel>
@@ -75,113 +76,199 @@
                 <ScrollViewer Grid.Row="1"
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Margin="24,20" Spacing="12">
-                        <!-- Spreadsheets -->
-                        <TextBlock Text="Spreadsheets"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   Margin="0,0,0,4" />
+                    <StackPanel Margin="24,20" Spacing="16">
+                        <!-- Export Type Selection -->
+                        <StackPanel Spacing="12">
+                            <!-- Backup File Option -->
+                            <Button Classes="export-type-card"
+                                    Classes.selected="{Binding IsBackupSelected}"
+                                    Command="{Binding SelectBackupCommand}">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="48" Height="48"
+                                            CornerRadius="8"
+                                            Background="{DynamicResource PrimaryIconBgBrush}"
+                                            Margin="0,0,16,0">
+                                        <PathIcon Data="M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
+                                                  Width="24" Height="24"
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Backup File"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="Save a complete backup of all your data (.argobk)"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
 
-                        <!-- CSV -->
-                        <Button Classes="export-option"
-                                Command="{Binding SelectFormatCommand}"
-                                CommandParameter="CSV">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <Border Grid.Column="0"
-                                        Width="40" Height="40"
-                                        CornerRadius="8"
-                                        Background="{DynamicResource WarningIconBgBrush}"
-                                        Margin="0,0,16,0">
-                                    <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"
-                                              Width="20" Height="20"
-                                              Foreground="{DynamicResource WarningBrush}" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="CSV (Comma-Separated Values)"
-                                               FontSize="14"
+                            <!-- Spreadsheet Option -->
+                            <Button Classes="export-type-card"
+                                    Classes.selected="{Binding IsSpreadsheetSelected}"
+                                    Command="{Binding SelectSpreadsheetCommand}">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="48" Height="48"
+                                            CornerRadius="8"
+                                            Background="{DynamicResource SuccessIconBgBrush}"
+                                            Margin="0,0,16,0">
+                                        <PathIcon Data="M21 5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                                  Width="24" Height="24"
+                                                  Foreground="{DynamicResource SuccessBrush}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Spreadsheet"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="Export selected data as Excel or CSV file"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Backup Options (shown when backup is selected) -->
+                        <Border IsVisible="{Binding IsBackupSelected}"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16">
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"
+                                              Width="28" Height="28"
+                                              Foreground="{DynamicResource PrimaryBrush}"
+                                              Margin="0,0,14,0"
+                                              VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Complete Backup"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="Includes all data, settings, and attachments"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <CheckBox IsChecked="{Binding IncludeAttachments}"
+                                          Margin="0,4,0,0">
+                                    <TextBlock Text="Include file attachments"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </CheckBox>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Spreadsheet Options (shown when spreadsheet is selected) -->
+                        <StackPanel IsVisible="{Binding IsSpreadsheetSelected}" Spacing="16">
+                            <!-- File Format -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="File Format"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <ComboBox ItemsSource="{Binding FileFormats}"
+                                          SelectedItem="{Binding SelectedFileFormat}"
+                                          HorizontalAlignment="Stretch"
+                                          Classes="form-select">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0}">
+                                                        <Binding Path="." />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <!-- Date Range -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Date Range"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Grid ColumnDefinitions="*,Auto,*">
+                                    <DatePicker Grid.Column="0"
+                                                SelectedDate="{Binding StartDate}"
+                                                Classes="form-date" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="to"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="12,0" />
+                                    <DatePicker Grid.Column="2"
+                                                SelectedDate="{Binding EndDate}"
+                                                Classes="form-date" />
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Select Data to Export -->
+                            <StackPanel Spacing="8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0"
+                                               Text="Select Data to Export"
+                                               FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Import data from spreadsheet exports and text files"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                                <PathIcon Grid.Column="2"
-                                          Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
-                                          Width="16" Height="16"
-                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                          VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
-                        <!-- Excel -->
-                        <Button Classes="export-option"
-                                Command="{Binding SelectFormatCommand}"
-                                CommandParameter="Excel">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <Border Grid.Column="0"
-                                        Width="40" Height="40"
+                                    <CheckBox Grid.Column="1"
+                                              IsChecked="{Binding SelectAllData}">
+                                        <TextBlock Text="Select All"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </CheckBox>
+                                </Grid>
+                                <Border Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
                                         CornerRadius="8"
-                                        Background="#1D6F421A"
-                                        Margin="0,0,16,0">
-                                    <PathIcon Data="M21 5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
-                                              Width="20" Height="20"
-                                              Foreground="#1D6F42" />
+                                        MaxHeight="200"
+                                        ClipToBounds="True">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsControl ItemsSource="{Binding DataItems}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:ExportDataItem">
+                                                    <Border Padding="14,12"
+                                                            BorderBrush="{DynamicResource BorderBrush}"
+                                                            BorderThickness="0,0,0,1"
+                                                            Classes="data-item">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                                            <CheckBox Grid.Column="0"
+                                                                      IsChecked="{Binding IsSelected}"
+                                                                      Margin="0,0,12,0" />
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding Name}"
+                                                                       FontSize="14"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center" />
+                                                            <TextBlock Grid.Column="2"
+                                                                       Text="{Binding RecordCount, StringFormat='({0:N0} records)'}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       VerticalAlignment="Center" />
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
                                 </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="Excel (XLSX)"
-                                               FontSize="14"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Import data from Microsoft Excel workbooks"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                                <PathIcon Grid.Column="2"
-                                          Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
-                                          Width="16" Height="16"
-                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                          VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
-                        <!-- Other Software -->
-                        <TextBlock Text="Other Software"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   Margin="0,12,0,4" />
-
-                        <!-- QuickBooks (IIF) -->
-                        <Button Classes="export-option"
-                                Command="{Binding SelectFormatCommand}"
-                                CommandParameter="IIF">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <Border Grid.Column="0"
-                                        Width="40" Height="40"
-                                        CornerRadius="8"
-                                        Background="#2CA01C1A"
-                                        Margin="0,0,16,0">
-                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                                              Width="20" Height="20"
-                                              Foreground="#2CA01C" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="QuickBooks (IIF)"
-                                               FontSize="14"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Import lists and transactions from QuickBooks"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                                <PathIcon Grid.Column="2"
-                                          Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
-                                          Width="16" Height="16"
-                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                          VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
+                            </StackPanel>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -196,6 +283,14 @@
                         <Button Classes="secondary-button"
                                 Content="Cancel"
                                 Command="{Binding CloseCommand}" />
+                        <Button Classes="primary-button"
+                                Command="{Binding ExportCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
+                                          Width="16" Height="16" />
+                                <TextBlock Text="Export" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -223,6 +318,33 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
 
+        <!-- Export Type Card Button -->
+        <Style Selector="Button.export-type-card">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.export-type-card /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.export-type-card:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.export-type-card:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.export-type-card.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.export-type-card.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
+        </Style>
+
         <!-- Secondary Button -->
         <Style Selector="Button.secondary-button">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
@@ -240,20 +362,47 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
 
-        <!-- Export Option Button -->
-        <Style Selector="Button.export-option">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        <!-- Primary Button -->
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="16" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <Style Selector="Button.export-option /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         </Style>
-        <Style Selector="Button.export-option:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button PathIcon">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- Form Select (ComboBox) -->
+        <Style Selector="ComboBox.form-select">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+
+        <!-- Form DatePicker -->
+        <Style Selector="DatePicker.form-date">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+
+        <!-- Data Item hover -->
+        <Style Selector="Border.data-item:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
     </UserControl.Styles>

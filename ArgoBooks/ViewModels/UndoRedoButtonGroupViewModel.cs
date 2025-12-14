@@ -1,9 +1,19 @@
+using System.Collections.ObjectModel;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ArgoBooks.Services;
 
 namespace ArgoBooks.ViewModels;
+
+/// <summary>
+/// Represents an item in the undo/redo history.
+/// </summary>
+public class UndoRedoHistoryItem
+{
+    public int Index { get; set; }
+    public string Description { get; set; } = string.Empty;
+}
 
 /// <summary>
 /// ViewModel for the undo/redo button group control.
@@ -23,6 +33,16 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _redoTooltip = "Redo";
+
+    /// <summary>
+    /// Undo history items.
+    /// </summary>
+    public ObservableCollection<UndoRedoHistoryItem> UndoHistory { get; } = new();
+
+    /// <summary>
+    /// Redo history items.
+    /// </summary>
+    public ObservableCollection<UndoRedoHistoryItem> RedoHistory { get; } = new();
 
     /// <summary>
     /// Event raised when the undo dropdown should be shown.
@@ -98,6 +118,37 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Refreshes the history collections from the manager.
+    /// </summary>
+    public void RefreshHistory()
+    {
+        UndoHistory.Clear();
+        RedoHistory.Clear();
+
+        if (_undoRedoManager == null) return;
+
+        var undoDescriptions = _undoRedoManager.GetUndoDescriptions();
+        for (int i = 0; i < undoDescriptions.Count; i++)
+        {
+            UndoHistory.Add(new UndoRedoHistoryItem
+            {
+                Index = i,
+                Description = undoDescriptions[i]
+            });
+        }
+
+        var redoDescriptions = _undoRedoManager.GetRedoDescriptions();
+        for (int i = 0; i < redoDescriptions.Count; i++)
+        {
+            RedoHistory.Add(new UndoRedoHistoryItem
+            {
+                Index = i,
+                Description = redoDescriptions[i]
+            });
+        }
+    }
+
+    /// <summary>
     /// Performs an undo operation.
     /// </summary>
     [RelayCommand]
@@ -119,6 +170,40 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase
         {
             ActionPerformed?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    /// <summary>
+    /// Undoes to a specific index in the history.
+    /// </summary>
+    [RelayCommand]
+    private void UndoTo(int index)
+    {
+        if (_undoRedoManager == null) return;
+
+        // Undo (index + 1) times to reach the selected state
+        for (int i = 0; i <= index; i++)
+        {
+            _undoRedoManager.Undo();
+        }
+
+        ActionPerformed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Redoes to a specific index in the history.
+    /// </summary>
+    [RelayCommand]
+    private void RedoTo(int index)
+    {
+        if (_undoRedoManager == null) return;
+
+        // Redo (index + 1) times to reach the selected state
+        for (int i = 0; i <= index; i++)
+        {
+            _undoRedoManager.Redo();
+        }
+
+        ActionPerformed?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

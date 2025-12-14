@@ -122,11 +122,11 @@
                                 <Border Grid.Column="0"
                                         Width="40" Height="40"
                                         CornerRadius="8"
-                                        Background="#1D6F421A"
+                                        Background="{DynamicResource SuccessIconBgBrush}"
                                         Margin="0,0,16,0">
                                     <PathIcon Data="M21 5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                               Width="20" Height="20"
-                                              Foreground="#1D6F42" />
+                                              Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                     <TextBlock Text="Excel (XLSX)"
@@ -160,11 +160,11 @@
                                 <Border Grid.Column="0"
                                         Width="40" Height="40"
                                         CornerRadius="8"
-                                        Background="#2CA01C1A"
+                                        Background="{DynamicResource PrimaryIconBgBrush}"
                                         Margin="0,0,16,0">
                                     <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
                                               Width="20" Height="20"
-                                              Foreground="#2CA01C" />
+                                              Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                     <TextBlock Text="QuickBooks (IIF)"

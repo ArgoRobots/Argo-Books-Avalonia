@@ -1,14 +1,47 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Controls;
 
 public partial class UndoRedoButtonGroup : UserControl
 {
+    private Popup? _undoPopup;
+    private Popup? _redoPopup;
+
     public UndoRedoButtonGroup()
     {
         InitializeComponent();
+    }
+
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+
+        _undoPopup = this.FindControl<Popup>("UndoPopup");
+        _redoPopup = this.FindControl<Popup>("RedoPopup");
+    }
+
+    private void UndoDropdownButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_undoPopup != null && DataContext is UndoRedoButtonGroupViewModel vm)
+        {
+            vm.RefreshHistory();
+            _redoPopup?.Close();
+            _undoPopup.IsOpen = !_undoPopup.IsOpen;
+        }
+    }
+
+    private void RedoDropdownButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_redoPopup != null && DataContext is UndoRedoButtonGroupViewModel vm)
+        {
+            vm.RefreshHistory();
+            _undoPopup?.Close();
+            _redoPopup.IsOpen = !_redoPopup.IsOpen;
+        }
     }
 
     /// <summary>
@@ -37,5 +70,14 @@ public partial class UndoRedoButtonGroup : UserControl
             return position ?? new Point(0, 0);
         }
         return new Point(0, 0);
+    }
+
+    /// <summary>
+    /// Closes all popups.
+    /// </summary>
+    public void ClosePopups()
+    {
+        _undoPopup?.Close();
+        _redoPopup?.Close();
     }
 }
