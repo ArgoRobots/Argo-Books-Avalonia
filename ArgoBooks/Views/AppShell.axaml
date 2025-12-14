@@ -80,8 +80,7 @@
         <!-- Upgrade Modal -->
         <modals:UpgradeModal DataContext="{Binding UpgradeModalViewModel}" />
 
-        <!-- Create Company Wizard -->
-        <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}" />
+        <!-- Note: CreateCompanyWizard is now at MainWindow level for full-screen overlay -->
 
         <!-- Settings Modal -->
         <modals:SettingsModal DataContext="{Binding SettingsModalViewModel}" />

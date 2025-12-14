@@ -52,6 +52,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string? _loadingMessage;
 
+    /// <summary>
+    /// Gets or sets the CreateCompanyViewModel for the full-screen wizard.
+    /// </summary>
+    [ObservableProperty]
+    private CreateCompanyViewModel? _createCompanyViewModel;
+
     #endregion
 
     /// <summary>

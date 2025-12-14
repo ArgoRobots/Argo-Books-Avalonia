@@ -146,9 +146,9 @@ public class FileService : IFileService
         string? password = null,
         CancellationToken cancellationToken = default)
     {
-        // Create TAR archive
+        // Create TAR archive - use includeBaseDirectory: false to avoid nesting under temp dir GUID
         await using var tarStream = await _compressionService.CreateTarArchiveAsync(
-            tempDirectory, includeBaseDirectory: true, cancellationToken);
+            tempDirectory, includeBaseDirectory: false, cancellationToken);
 
         // Compress with GZip
         await using var compressedStream = await _compressionService.CompressGZipAsync(
@@ -355,23 +355,36 @@ public class FileService : IFileService
 
     private static string GetCompanyDirectory(string tempDirectory)
     {
+        // Find the deepest directory that contains data files (for backward compatibility)
         var subdirs = Directory.GetDirectories(tempDirectory);
-        return subdirs.Length > 0 ? subdirs[0] : tempDirectory;
+        if (subdirs.Length == 0)
+            return tempDirectory;
+
+        // Check if this level has data files (appSettings.json is our marker)
+        var candidate = subdirs[0];
+        if (File.Exists(Path.Combine(candidate, "appSettings.json")))
+            return candidate;
+
+        // Otherwise recurse into subdirectories (handles nested archive case)
+        return GetCompanyDirectory(candidate);
     }
 
-    private static string? FindFileInDirectory(string directory, string fileName)
+    private static string? FindFileInDirectory(string directory, string fileName, int maxDepth = 3)
     {
         // First check directly in directory
         var directPath = Path.Combine(directory, fileName);
         if (File.Exists(directPath))
             return directPath;
 
-        // Check in subdirectories (company folder)
+        if (maxDepth <= 0)
+            return null;
+
+        // Check in subdirectories recursively (for backward compatibility with nested archives)
         foreach (var subDir in Directory.GetDirectories(directory))
         {
-            var subPath = Path.Combine(subDir, fileName);
-            if (File.Exists(subPath))
-                return subPath;
+            var result = FindFileInDirectory(subDir, fileName, maxDepth - 1);
+            if (result != null)
+                return result;
         }
 
         return null;

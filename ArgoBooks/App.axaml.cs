@@ -91,6 +91,9 @@ public partial class App : Application
             // Wire up company switcher events
             WireCompanySwitcherEvents(desktop);
 
+            // Share CreateCompanyViewModel with MainWindow for full-screen overlay
+            _mainWindowViewModel.CreateCompanyViewModel = _appShellViewModel.CreateCompanyViewModel;
+
             // Navigate to Welcome screen on startup (no company open)
             NavigationService.NavigateTo("Welcome");
 
