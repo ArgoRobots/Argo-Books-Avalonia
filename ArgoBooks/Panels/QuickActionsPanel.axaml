@@ -16,9 +16,15 @@
         <Panel IsVisible="{Binding !IsDropdownMode}">
             <!-- Backdrop (lighter than modals) -->
             <Border Background="#40000000"
-                    PointerPressed="Backdrop_PointerPressed" />
+                    PointerPressed="Backdrop_PointerPressed">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                    </Transitions>
+                </Border.Transitions>
+            </Border>
 
-            <!-- Centered Panel Container -->
+            <!-- Centered Panel Container with animation -->
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -28,7 +34,17 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"
                     Margin="0,100,0,0"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 32 0 #40000000"
+                    RenderTransformOrigin="0.5,0">
+                <Border.RenderTransform>
+                    <ScaleTransform />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <ContentControl Content="{Binding}"
                                 ContentTemplate="{StaticResource PanelContentTemplate}" />
             </Border>
@@ -37,10 +53,16 @@
         <!-- Dropdown Mode: No backdrop, positioned below header searchbox -->
         <Panel IsVisible="{Binding IsDropdownMode}">
             <!-- Light backdrop for click-away -->
-            <Border Background="Transparent"
-                    PointerPressed="Backdrop_PointerPressed" />
+            <Border Background="#10000000"
+                    PointerPressed="Backdrop_PointerPressed">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                    </Transitions>
+                </Border.Transitions>
+            </Border>
 
-            <!-- Dropdown Panel Container (wider than searchbox, centered below header) -->
+            <!-- Dropdown Panel Container with animation -->
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -50,7 +72,17 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"
                     Margin="0,60,0,0"
-                    BoxShadow="0 4 16 0 #30000000">
+                    BoxShadow="0 4 16 0 #30000000"
+                    RenderTransformOrigin="0.5,0">
+                <Border.RenderTransform>
+                    <TranslateTransform />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <ContentControl Content="{Binding}"
                                 ContentTemplate="{StaticResource PanelContentTemplate}" />
             </Border>

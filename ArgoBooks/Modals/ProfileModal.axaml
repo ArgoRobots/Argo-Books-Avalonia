@@ -12,11 +12,17 @@
     </Design.DataContext>
 
     <Panel IsVisible="{Binding IsOpen}">
-        <!-- Modal Backdrop -->
+        <!-- Modal Backdrop with fade animation -->
         <Border Background="#80000000"
-                PointerPressed="Backdrop_PointerPressed" />
+                PointerPressed="Backdrop_PointerPressed">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                </Transitions>
+            </Border.Transitions>
+        </Border>
 
-        <!-- Modal Container -->
+        <!-- Modal Container with scale animation -->
         <Border x:Name="ModalBorder"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -27,7 +33,17 @@
                 VerticalAlignment="Center"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
-                KeyDown="Modal_KeyDown">
+                KeyDown="Modal_KeyDown"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
 
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Modal Header -->

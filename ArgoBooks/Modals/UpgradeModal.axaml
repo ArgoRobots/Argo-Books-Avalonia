@@ -14,9 +14,17 @@
     <Panel>
         <!-- Upgrade Modal -->
         <Panel IsVisible="{Binding IsOpen}">
+            <!-- Backdrop with fade animation -->
             <Border Background="#80000000"
-                    PointerPressed="Backdrop_PointerPressed" />
+                    PointerPressed="Backdrop_PointerPressed">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                    </Transitions>
+                </Border.Transitions>
+            </Border>
 
+            <!-- Modal with scale animation -->
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -24,7 +32,17 @@
                     Width="600"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 32 0 #40000000"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
 
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->

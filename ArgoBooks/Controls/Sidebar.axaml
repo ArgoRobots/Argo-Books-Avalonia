@@ -23,7 +23,7 @@
                 <!-- Expanded Header with Button -->
                 <Button Classes="sidebar-header"
                         HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left"
+                        HorizontalContentAlignment="Stretch"
                         IsVisible="{Binding !IsCollapsed}"
                         Command="{Binding OpenCompanySwitcherCommand}">
                     <Grid ColumnDefinitions="Auto,*,Auto">

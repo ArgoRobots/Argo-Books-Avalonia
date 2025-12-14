@@ -12,11 +12,17 @@
     </Design.DataContext>
 
     <Panel IsVisible="{Binding IsOpen}">
-        <!-- Transparent backdrop for click-away -->
-        <Border Background="Transparent"
-                PointerPressed="Backdrop_PointerPressed" />
+        <!-- Semi-transparent backdrop for click-away -->
+        <Border Background="#20000000"
+                PointerPressed="Backdrop_PointerPressed">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                </Transitions>
+            </Border.Transitions>
+        </Border>
 
-        <!-- Notification Panel Container (positioned top-right below header) -->
+        <!-- Notification Panel Container with animation -->
         <Border Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
@@ -26,7 +32,17 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,60,20,0"
-                BoxShadow="0 4 16 0 #30000000">
+                BoxShadow="0 4 16 0 #30000000"
+                RenderTransformOrigin="1,0">
+            <Border.RenderTransform>
+                <TranslateTransform />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0"

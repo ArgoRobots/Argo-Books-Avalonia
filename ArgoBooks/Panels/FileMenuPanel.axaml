@@ -12,11 +12,17 @@
     </Design.DataContext>
 
     <Panel IsVisible="{Binding IsOpen}">
-        <!-- Transparent backdrop for click-away -->
-        <Border Background="Transparent"
-                PointerPressed="Backdrop_PointerPressed" />
+        <!-- Semi-transparent backdrop for click-away -->
+        <Border Background="#20000000"
+                PointerPressed="Backdrop_PointerPressed">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                </Transitions>
+            </Border.Transitions>
+        </Border>
 
-        <!-- File Menu Panel -->
+        <!-- File Menu Panel with animation -->
         <Border x:Name="FileMenuBorder"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -28,7 +34,17 @@
                 Margin="56,60,0,0"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
-                KeyDown="FileMenu_KeyDown">
+                KeyDown="FileMenu_KeyDown"
+                RenderTransformOrigin="0,0">
+            <Border.RenderTransform>
+                <TranslateTransform />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
             <StackPanel x:Name="MenuItems" Margin="0,8">
                 <!-- Create New Company -->
                 <Button x:Name="MenuItem0"

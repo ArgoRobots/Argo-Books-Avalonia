@@ -17,15 +17,21 @@
     </Design.DataContext>
 
     <Panel>
-    <Grid ColumnDefinitions="Auto,*">
-        <!-- Sidebar -->
-        <controls:Sidebar Grid.Column="0"
-                          DataContext="{Binding SidebarViewModel}"
-                          Width="{Binding Width}" />
+        <!-- Main Layout -->
+        <Grid ColumnDefinitions="Auto,*">
+            <!-- Sidebar with smooth width transition -->
+            <controls:Sidebar Grid.Column="0"
+                              DataContext="{Binding SidebarViewModel}"
+                              Width="{Binding Width}">
+                <controls:Sidebar.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    </Transitions>
+                </controls:Sidebar.Transitions>
+            </controls:Sidebar>
 
-        <!-- Main Content Area with Quick Actions overlay -->
-        <Panel Grid.Column="1">
-            <Grid>
+            <!-- Main Content Area -->
+            <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -42,34 +48,35 @@
                                     Margin="30" />
                 </Border>
             </Grid>
+        </Grid>
 
-            <!-- Quick Actions Panel (overlay within content area) -->
-            <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
+        <!-- All Panels/Modals at root level so backdrop covers entire window -->
 
-            <!-- Notification Panel (overlay within content area) -->
-            <panels:NotificationPanel DataContext="{Binding NotificationPanelViewModel}" />
+        <!-- Company Switcher Panel -->
+        <panels:CompanySwitcherPanel DataContext="{Binding CompanySwitcherPanelViewModel}" />
 
-            <!-- User Panel (overlay within content area) -->
-            <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
+        <!-- Quick Actions Panel -->
+        <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
 
-            <!-- File Menu Panel (overlay within content area) -->
-            <panels:FileMenuPanel DataContext="{Binding FileMenuPanelViewModel}" />
+        <!-- Notification Panel -->
+        <panels:NotificationPanel DataContext="{Binding NotificationPanelViewModel}" />
 
-            <!-- Help Panel (overlay within content area) -->
-            <panels:HelpPanel DataContext="{Binding HelpPanelViewModel}" />
+        <!-- User Panel -->
+        <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
 
-            <!-- Profile Modal (overlay within content area) -->
-            <modals:ProfileModal DataContext="{Binding ProfileModalViewModel}" />
+        <!-- File Menu Panel -->
+        <panels:FileMenuPanel DataContext="{Binding FileMenuPanelViewModel}" />
 
-            <!-- Upgrade Modal (overlay within content area) -->
-            <modals:UpgradeModal DataContext="{Binding UpgradeModalViewModel}" />
+        <!-- Help Panel -->
+        <panels:HelpPanel DataContext="{Binding HelpPanelViewModel}" />
 
-            <!-- Create Company Wizard (overlay within content area) -->
-            <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}" />
-        </Panel>
-    </Grid>
+        <!-- Profile Modal -->
+        <modals:ProfileModal DataContext="{Binding ProfileModalViewModel}" />
 
-    <!-- Company Switcher Panel (overlay at root level to cover sidebar) -->
-    <panels:CompanySwitcherPanel DataContext="{Binding CompanySwitcherPanelViewModel}" />
+        <!-- Upgrade Modal -->
+        <modals:UpgradeModal DataContext="{Binding UpgradeModalViewModel}" />
+
+        <!-- Create Company Wizard -->
+        <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}" />
     </Panel>
 </UserControl>
