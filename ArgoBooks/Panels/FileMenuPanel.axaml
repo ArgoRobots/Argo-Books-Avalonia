@@ -16,7 +16,7 @@
         <Border Background="Transparent"
                 PointerPressed="Backdrop_PointerPressed" />
 
-        <!-- File Menu Panel - positioned relative to hamburger button (sidebar 250 + offset 56) -->
+        <!-- File Menu Panel - positioned relative to hamburger button -->
         <Border x:Name="FileMenuBorder"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -25,7 +25,7 @@
                 Width="260"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="306,60,0,0"
+                Margin="56,60,0,0"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
                 KeyDown="FileMenu_KeyDown"
@@ -198,7 +198,7 @@
                 Width="220"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="570,140,0,0"
+                Margin="320,140,0,0"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
                 KeyDown="FileMenu_KeyDown"

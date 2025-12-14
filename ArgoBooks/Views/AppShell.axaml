@@ -31,44 +31,48 @@
             </controls:Sidebar>
 
             <!-- Main Content Area -->
-            <Grid Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+            <Panel Grid.Column="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                <!-- Header -->
-                <controls:Header Grid.Row="0"
-                                 DataContext="{Binding HeaderViewModel}" />
+                    <!-- Header -->
+                    <controls:Header Grid.Row="0"
+                                     DataContext="{Binding HeaderViewModel}" />
 
-                <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
-                <Border Grid.Row="1"
-                        Background="{DynamicResource BackgroundSecondaryBrush}">
-                    <ContentControl Content="{Binding CurrentPage}"
-                                    Margin="30" />
-                </Border>
-            </Grid>
+                    <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
+                    <Border Grid.Row="1"
+                            Background="{DynamicResource BackgroundSecondaryBrush}">
+                        <ContentControl Content="{Binding CurrentPage}"
+                                        Margin="30" />
+                    </Border>
+                </Grid>
+
+                <!-- Panels centered in main content area -->
+
+                <!-- Quick Actions Panel -->
+                <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
+
+                <!-- File Menu Panel -->
+                <panels:FileMenuPanel DataContext="{Binding FileMenuPanelViewModel}" />
+
+                <!-- Notification Panel -->
+                <panels:NotificationPanel DataContext="{Binding NotificationPanelViewModel}" />
+
+                <!-- User Panel -->
+                <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
+
+                <!-- Help Panel -->
+                <panels:HelpPanel DataContext="{Binding HelpPanelViewModel}" />
+            </Panel>
         </Grid>
 
-        <!-- All Panels/Modals at root level so backdrop covers entire window -->
+        <!-- Panels/Modals at root level (need full window coverage) -->
 
-        <!-- Company Switcher Panel -->
+        <!-- Company Switcher Panel (positioned relative to sidebar) -->
         <panels:CompanySwitcherPanel DataContext="{Binding CompanySwitcherPanelViewModel}" />
-
-        <!-- Quick Actions Panel -->
-        <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
-
-        <!-- Notification Panel -->
-        <panels:NotificationPanel DataContext="{Binding NotificationPanelViewModel}" />
-
-        <!-- User Panel -->
-        <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
-
-        <!-- File Menu Panel -->
-        <panels:FileMenuPanel DataContext="{Binding FileMenuPanelViewModel}" />
-
-        <!-- Help Panel -->
-        <panels:HelpPanel DataContext="{Binding HelpPanelViewModel}" />
 
         <!-- Profile Modal -->
         <modals:ProfileModal DataContext="{Binding ProfileModalViewModel}" />
