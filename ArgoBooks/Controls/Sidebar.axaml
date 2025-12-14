@@ -110,22 +110,32 @@
                                          Items="{Binding TransactionItems}"
                                          IsVisible="{Binding ShowTransactions}" />
 
+                <!-- Rentals Section -->
+                <controls:SidebarSection Title="RENTALS"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         Items="{Binding RentalItems}"
+                                         IsVisible="{Binding ShowRentals}" />
+
+                <!-- Management Section -->
+                <controls:SidebarSection Title="MANAGEMENT"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         Items="{Binding ManagementItems}" />
+
                 <!-- Inventory Section -->
                 <controls:SidebarSection Title="INVENTORY"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          Items="{Binding InventoryItems}"
                                          IsVisible="{Binding ShowInventory}" />
 
-                <!-- Contacts Section -->
-                <controls:SidebarSection Title="CONTACTS"
+                <!-- Team Section -->
+                <controls:SidebarSection Title="TEAM"
                                          IsCollapsed="{Binding IsCollapsed}"
-                                         Items="{Binding ContactItems}" />
+                                         Items="{Binding TeamItems}" />
 
-                <!-- Rentals Section -->
-                <controls:SidebarSection Title="RENTALS"
+                <!-- Tracking Section -->
+                <controls:SidebarSection Title="TRACKING"
                                          IsCollapsed="{Binding IsCollapsed}"
-                                         Items="{Binding RentalItems}"
-                                         IsVisible="{Binding ShowRentals}" />
+                                         Items="{Binding TrackingItems}" />
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

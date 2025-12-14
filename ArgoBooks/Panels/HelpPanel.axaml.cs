@@ -7,7 +7,7 @@ namespace ArgoBooks.Panels;
 
 public partial class HelpPanel : UserControl
 {
-    private int _focusedIndex = 0;
+    private int _focusedIndex = -1;
     private readonly int _menuItemCount = 5; // Total menu items (0-4)
 
     public HelpPanel()
@@ -25,7 +25,7 @@ public partial class HelpPanel : UserControl
                     {
                         Dispatcher.UIThread.Post(() =>
                         {
-                            _focusedIndex = 0;
+                            _focusedIndex = -1;
                             HelpPanelBorder?.Focus();
                         }, DispatcherPriority.Background);
                     }
@@ -70,13 +70,19 @@ public partial class HelpPanel : UserControl
 
     private void NavigateUp()
     {
-        _focusedIndex = (_focusedIndex - 1 + _menuItemCount) % _menuItemCount;
+        if (_focusedIndex <= 0)
+            _focusedIndex = _menuItemCount - 1;
+        else
+            _focusedIndex--;
         FocusMenuItem(_focusedIndex);
     }
 
     private void NavigateDown()
     {
-        _focusedIndex = (_focusedIndex + 1) % _menuItemCount;
+        if (_focusedIndex >= _menuItemCount - 1)
+            _focusedIndex = 0;
+        else
+            _focusedIndex++;
         FocusMenuItem(_focusedIndex);
     }
 

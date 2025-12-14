@@ -74,9 +74,11 @@ public partial class SidebarViewModel : ViewModelBase
 
     public ObservableCollection<SidebarItemModel> MainItems { get; } = [];
     public ObservableCollection<SidebarItemModel> TransactionItems { get; } = [];
-    public ObservableCollection<SidebarItemModel> InventoryItems { get; } = [];
-    public ObservableCollection<SidebarItemModel> ContactItems { get; } = [];
     public ObservableCollection<SidebarItemModel> RentalItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> ManagementItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> InventoryItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> TeamItems { get; } = [];
+    public ObservableCollection<SidebarItemModel> TrackingItems { get; } = [];
 
     #endregion
 
@@ -103,49 +105,69 @@ public partial class SidebarViewModel : ViewModelBase
     /// </summary>
     private void InitializeNavigationItems()
     {
-        // Main Section
+        // Main Section (mockup: Dashboard, Analytics, Insights, Reports)
         MainItems.Add(CreateItem("Dashboard", "Dashboard",
-            "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"));
+            "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z")); // fa-home
         MainItems.Add(CreateItem("Analytics", "Analytics",
-            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"));
+            "M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z")); // fa-chart-line
+        MainItems.Add(CreateItem("Insights", "Insights",
+            "M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z")); // fa-lightbulb
         MainItems.Add(CreateItem("Reports", "Reports",
-            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"));
+            "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z")); // fa-file-alt
 
-        // Transactions Section (Revenue with up arrow, Expenses with down arrow - per mockup)
-        TransactionItems.Add(CreateItem("Revenue", "Revenue",
-            "M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"));
+        // Transactions Section (mockup: Expenses, Revenue, Invoices, Payments)
         TransactionItems.Add(CreateItem("Expenses", "Expenses",
-            "M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"));
+            "M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z")); // fa-arrow-down
+        TransactionItems.Add(CreateItem("Revenue", "Revenue",
+            "M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z")); // fa-arrow-up
         TransactionItems.Add(CreateItem("Invoices", "Invoices",
-            "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"));
+            "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z")); // fa-file-invoice
         TransactionItems.Add(CreateItem("Payments", "Payments",
-            "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"));
+            "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z")); // fa-credit-card
 
-        // Inventory Section
-        InventoryItems.Add(CreateItem("Products", "Products",
-            "M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V4h16v3z"));
-        InventoryItems.Add(CreateItem("Stock Levels", "StockLevels",
-            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"));
-        InventoryItems.Add(CreateItem("Purchase Orders", "PurchaseOrders",
-            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"));
-        InventoryItems.Add(CreateItem("Categories", "Categories",
-            "M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"));
-
-        // Contacts Section
-        ContactItems.Add(CreateItem("Customers", "Customers",
-            "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"));
-        ContactItems.Add(CreateItem("Suppliers", "Suppliers",
-            "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"));
-        ContactItems.Add(CreateItem("Employees", "Employees",
-            "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"));
-        ContactItems.Add(CreateItem("Accountants", "Accountants",
-            "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"));
-
-        // Rentals Section
+        // Rentals Section (mockup: Rental Inventory, Rental Records)
         RentalItems.Add(CreateItem("Rental Inventory", "RentalInventory",
-            "M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zM7 4V3h10v1H7zm0 14V6h10v12H7zm0 3v-1h10v1H7z"));
+            "M21 3H3C1.9 3 1 3.9 1 5v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM5 15h14v2H5zm0-4h14v2H5zm0-4h14v2H5z")); // fa-box
         RentalItems.Add(CreateItem("Rental Records", "RentalRecords",
-            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"));
+            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z")); // fa-clipboard-list (with check)
+
+        // Management Section (mockup: Customers, Products/Services, Categories, Suppliers)
+        ManagementItems.Add(CreateItem("Customers", "Customers",
+            "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z")); // fa-users
+        ManagementItems.Add(CreateItem("Products/Services", "Products",
+            "M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15z")); // fa-cube
+        ManagementItems.Add(CreateItem("Categories", "Categories",
+            "M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z")); // fa-tags
+        ManagementItems.Add(CreateItem("Suppliers", "Suppliers",
+            "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z")); // fa-truck
+
+        // Inventory Section (mockup: Stock Levels, Adjustments, Locations, Transfers, Purchase Orders)
+        InventoryItems.Add(CreateItem("Stock Levels", "StockLevels",
+            "M22 18V3H2v15H0v2h24v-2h-2zm-2-1H4V5h16v12zM6 15h2v-5H6v5zm4 0h2V8h-2v7zm4 0h2v-3h-2v3z")); // fa-warehouse
+        InventoryItems.Add(CreateItem("Adjustments", "Adjustments",
+            "M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z")); // fa-sliders-h
+        InventoryItems.Add(CreateItem("Locations", "Locations",
+            "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z")); // fa-map-marker-alt
+        InventoryItems.Add(CreateItem("Transfers", "Transfers",
+            "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z")); // fa-exchange-alt
+        InventoryItems.Add(CreateItem("Purchase Orders", "PurchaseOrders",
+            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z")); // fa-clipboard-list
+
+        // Team Section (mockup: Employees, Departments, Accountants)
+        TeamItems.Add(CreateItem("Employees", "Employees",
+            "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z")); // fa-user-tie (simplified)
+        TeamItems.Add(CreateItem("Departments", "Departments",
+            "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z")); // fa-building
+        TeamItems.Add(CreateItem("Accountants", "Accountants",
+            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 10h-4v4H9v-4H5v-2h4V7h2v4h4v2z")); // fa-calculator (simplified)
+
+        // Tracking Section (mockup: Returns, Lost/Damaged, Receipts)
+        TrackingItems.Add(CreateItem("Returns", "Returns",
+            "M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z")); // fa-undo
+        TrackingItems.Add(CreateItem("Lost/Damaged", "LostDamaged",
+            "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z")); // fa-exclamation-triangle
+        TrackingItems.Add(CreateItem("Receipts", "Receipts",
+            "M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z")); // fa-receipt
 
         // Set Dashboard as active by default
         SetActivePage("Dashboard");
@@ -192,9 +214,11 @@ public partial class SidebarViewModel : ViewModelBase
     {
         foreach (var item in MainItems) item.IsCollapsed = isCollapsed;
         foreach (var item in TransactionItems) item.IsCollapsed = isCollapsed;
-        foreach (var item in InventoryItems) item.IsCollapsed = isCollapsed;
-        foreach (var item in ContactItems) item.IsCollapsed = isCollapsed;
         foreach (var item in RentalItems) item.IsCollapsed = isCollapsed;
+        foreach (var item in ManagementItems) item.IsCollapsed = isCollapsed;
+        foreach (var item in InventoryItems) item.IsCollapsed = isCollapsed;
+        foreach (var item in TeamItems) item.IsCollapsed = isCollapsed;
+        foreach (var item in TrackingItems) item.IsCollapsed = isCollapsed;
     }
 
     /// <summary>
@@ -229,9 +253,11 @@ public partial class SidebarViewModel : ViewModelBase
         // Update active state on all items
         foreach (var item in MainItems) item.IsActive = item.PageName == pageName;
         foreach (var item in TransactionItems) item.IsActive = item.PageName == pageName;
-        foreach (var item in InventoryItems) item.IsActive = item.PageName == pageName;
-        foreach (var item in ContactItems) item.IsActive = item.PageName == pageName;
         foreach (var item in RentalItems) item.IsActive = item.PageName == pageName;
+        foreach (var item in ManagementItems) item.IsActive = item.PageName == pageName;
+        foreach (var item in InventoryItems) item.IsActive = item.PageName == pageName;
+        foreach (var item in TeamItems) item.IsActive = item.PageName == pageName;
+        foreach (var item in TrackingItems) item.IsActive = item.PageName == pageName;
     }
 
     /// <summary>

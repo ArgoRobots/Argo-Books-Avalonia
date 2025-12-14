@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using ArgoBooks.ViewModels;
 
@@ -37,9 +38,13 @@ public partial class QuickActionsPanel : UserControl
             {
                 if (args.PropertyName == nameof(QuickActionsViewModel.IsOpen) && vm.IsOpen)
                 {
-                    // Find and focus the search input (it's inside a DataTemplate)
-                    var searchInput = this.FindDescendantOfType<TextBox>();
-                    searchInput?.Focus();
+                    // Use dispatcher to ensure visual tree is ready
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        // Find and focus the search input (it's inside a DataTemplate)
+                        var searchInput = FindDescendantOfType<TextBox>();
+                        searchInput?.Focus();
+                    }, DispatcherPriority.Background);
                 }
             };
         }

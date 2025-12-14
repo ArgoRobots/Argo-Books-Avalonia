@@ -193,7 +193,8 @@
                 PointerExited="RecentSubmenu_PointerExited">
             <StackPanel Margin="0,8">
                 <!-- Recent Company Items -->
-                <Button Classes="menu-item"
+                <Button x:Name="SubmenuItem0"
+                        Classes="menu-item"
                         Command="{Binding OpenRecentCompanyCommand}"
                         CommandParameter="{Binding RecentCompanies[0]}">
                     <Grid ColumnDefinitions="Auto,*">
@@ -204,7 +205,8 @@
                         <TextBlock Grid.Column="1" Text="My Company Inc." VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Button Classes="menu-item"
+                <Button x:Name="SubmenuItem1"
+                        Classes="menu-item"
                         Command="{Binding OpenRecentCompanyCommand}"
                         CommandParameter="{Binding RecentCompanies[1]}">
                     <Grid ColumnDefinitions="Auto,*">
@@ -215,7 +217,8 @@
                         <TextBlock Grid.Column="1" Text="Side Business LLC" VerticalAlignment="Center" />
                     </Grid>
                 </Button>
-                <Button Classes="menu-item"
+                <Button x:Name="SubmenuItem2"
+                        Classes="menu-item"
                         Command="{Binding OpenRecentCompanyCommand}"
                         CommandParameter="{Binding RecentCompanies[2]}">
                     <Grid ColumnDefinitions="Auto,*">
@@ -233,7 +236,8 @@
                         Margin="0,8" />
 
                 <!-- Clear Recent -->
-                <Button Classes="menu-item"
+                <Button x:Name="SubmenuItem3"
+                        Classes="menu-item"
                         Command="{Binding ClearRecentCommand}">
                     <Grid ColumnDefinitions="Auto,*">
                         <PathIcon Grid.Column="0"
