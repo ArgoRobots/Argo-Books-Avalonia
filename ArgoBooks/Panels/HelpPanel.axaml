@@ -17,7 +17,8 @@
                 PointerPressed="Backdrop_PointerPressed" />
 
         <!-- Help Panel -->
-        <Border Background="{DynamicResource SurfaceBrush}"
+        <Border x:Name="HelpPanelBorder"
+                Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
@@ -25,7 +26,9 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,60,20,0"
-                BoxShadow="0 4 20 0 #26000000">
+                BoxShadow="0 4 20 0 #26000000"
+                Focusable="True"
+                KeyDown="HelpPanel_KeyDown">
             <StackPanel>
                 <!-- Header -->
                 <Border Padding="20,16"
@@ -40,7 +43,8 @@
                 <!-- Menu Items -->
                 <StackPanel Margin="0,8">
                     <!-- What's New -->
-                    <Button Classes="menu-item"
+                    <Button x:Name="MenuItem0"
+                            Classes="menu-item"
                             Command="{Binding OpenWhatsNewCommand}">
                         <Grid ColumnDefinitions="Auto,*">
                             <PathIcon Grid.Column="0"
@@ -53,7 +57,8 @@
                     </Button>
 
                     <!-- Documentation -->
-                    <Button Classes="menu-item"
+                    <Button x:Name="MenuItem1"
+                            Classes="menu-item"
                             Command="{Binding OpenDocumentationCommand}">
                         <Grid ColumnDefinitions="Auto,*">
                             <PathIcon Grid.Column="0"
@@ -66,7 +71,8 @@
                     </Button>
 
                     <!-- Community -->
-                    <Button Classes="menu-item"
+                    <Button x:Name="MenuItem2"
+                            Classes="menu-item"
                             Command="{Binding OpenCommunityCommand}">
                         <Grid ColumnDefinitions="Auto,*">
                             <PathIcon Grid.Column="0"
@@ -79,7 +85,8 @@
                     </Button>
 
                     <!-- Support -->
-                    <Button Classes="menu-item"
+                    <Button x:Name="MenuItem3"
+                            Classes="menu-item"
                             Command="{Binding OpenSupportCommand}">
                         <Grid ColumnDefinitions="Auto,*">
                             <PathIcon Grid.Column="0"
@@ -97,7 +104,8 @@
                             Margin="0,8" />
 
                     <!-- Check for Updates -->
-                    <Button Classes="menu-item"
+                    <Button x:Name="MenuItem4"
+                            Classes="menu-item"
                             Command="{Binding CheckForUpdatesCommand}">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <PathIcon Grid.Column="0"

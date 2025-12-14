@@ -40,12 +40,12 @@
             <Border Background="Transparent"
                     PointerPressed="Backdrop_PointerPressed" />
 
-            <!-- Dropdown Panel Container (width matches searchbox, centered below header) -->
+            <!-- Dropdown Panel Container (wider than searchbox, centered below header) -->
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="8"
-                    Width="280"
+                    Width="340"
                     MaxHeight="400"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"

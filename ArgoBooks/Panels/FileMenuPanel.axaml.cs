@@ -15,6 +15,25 @@ public partial class FileMenuPanel : UserControl
     public FileMenuPanel()
     {
         InitializeComponent();
+
+        // Focus the menu when it opens
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is FileMenuPanelViewModel vm)
+            {
+                vm.PropertyChanged += (_, e) =>
+                {
+                    if (e.PropertyName == nameof(FileMenuPanelViewModel.IsOpen) && vm.IsOpen)
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            _focusedIndex = 0;
+                            FileMenuBorder?.Focus();
+                        }, DispatcherPriority.Background);
+                    }
+                };
+            }
+        };
     }
 
     /// <summary>
