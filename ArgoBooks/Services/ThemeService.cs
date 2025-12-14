@@ -193,6 +193,14 @@ public class ThemeService : IThemeService
         app.Resources["AccentColor"] = colors.Secondary;
         app.Resources["AccentBrush"] = new SolidColorBrush(colors.Secondary);
 
+        // Update sidebar active color (used for navigation buttons)
+        app.Resources["SidebarActiveColor"] = colors.Primary;
+        app.Resources["SidebarActiveBrush"] = new SolidColorBrush(colors.Primary);
+
+        // Update input focus border color
+        app.Resources["InputFocusBorderColor"] = colors.Primary;
+        app.Resources["InputFocusBorderBrush"] = new SolidColorBrush(colors.Primary);
+
         // Update icon background colors (depends on current theme)
         var iconBgColor = IsDarkTheme ? colors.IconBgDark : colors.IconBgLight;
         app.Resources["PrimaryIconBgColor"] = iconBgColor;

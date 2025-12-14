@@ -1051,9 +1051,23 @@
             <Setter Property="FontSize" Value="14" />
             <Setter Property="Padding" Value="16,12" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="TabItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="TabItem:selected">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- TabStrip Item for underline indicator -->
+        <Style Selector="TabControl > TabItem /template/ Border#PART_LayoutRoot">
+            <Setter Property="BorderThickness" Value="0,0,0,2" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Margin" Value="0,0,0,-1" />
+        </Style>
+        <Style Selector="TabControl > TabItem:selected /template/ Border#PART_LayoutRoot">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

@@ -117,6 +117,15 @@ public partial class HeaderViewModel : ViewModelBase
 
     #endregion
 
+    #region Undo/Redo
+
+    /// <summary>
+    /// The undo/redo button group view model.
+    /// </summary>
+    public UndoRedoButtonGroupViewModel UndoRedoViewModel { get; } = new();
+
+    #endregion
+
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
