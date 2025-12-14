@@ -141,6 +141,15 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up header's upgrade button to open upgrade modal
         HeaderViewModel.OpenUpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
 
+        // Sync search query between header and quick actions
+        HeaderViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(HeaderViewModel.SearchQuery))
+            {
+                QuickActionsViewModel.SearchQuery = HeaderViewModel.SearchQuery;
+            }
+        };
+
         // Subscribe to navigation events to update UI state
         if (_navigationService != null)
         {
