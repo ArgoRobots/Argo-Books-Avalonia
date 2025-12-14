@@ -33,6 +33,7 @@ public partial class App : Application
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
+    private static WelcomeScreenViewModel? _welcomeScreenViewModel;
 
     public override void Initialize()
     {
@@ -90,8 +91,8 @@ public partial class App : Application
             // Wire up company switcher events
             WireCompanySwitcherEvents(desktop);
 
-            // Navigate to Dashboard by default
-            NavigationService.NavigateTo("Dashboard");
+            // Navigate to Welcome screen on startup (no company open)
+            NavigationService.NavigateTo("Welcome");
 
             desktop.MainWindow = new MainWindow
             {
@@ -149,6 +150,9 @@ public partial class App : Application
             _appShellViewModel.SetCompanyInfo(args.CompanyName);
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(args.CompanyName, args.FilePath);
             _mainWindowViewModel.HideLoading();
+
+            // Navigate to Dashboard when company is opened
+            NavigationService?.NavigateTo("Dashboard");
         };
 
         CompanyManager.CompanyClosed += (_, _) =>
@@ -156,6 +160,9 @@ public partial class App : Application
             _mainWindowViewModel.CloseCompany();
             _appShellViewModel.SetCompanyInfo(null);
             _mainWindowViewModel.HideLoading();
+
+            // Navigate back to Welcome screen when company is closed
+            NavigationService?.NavigateTo("Welcome");
         };
 
         CompanyManager.CompanySaved += (_, _) =>
@@ -355,8 +362,52 @@ public partial class App : Application
     /// </summary>
     private static void WireWelcomeScreenEvents(IClassicDesktopStyleApplicationLifetime desktop)
     {
-        // The welcome screen is navigated to via the navigation service
-        // We'll wire it up when/if we show it
+        if (_welcomeScreenViewModel == null)
+            return;
+
+        // Create new company - show create company wizard
+        _welcomeScreenViewModel.CreateNewCompanyRequested += (_, _) =>
+        {
+            _appShellViewModel?.CreateCompanyViewModel.StartWizard();
+        };
+
+        // Open company - show file picker
+        _welcomeScreenViewModel.OpenCompanyRequested += async (_, _) =>
+        {
+            await OpenCompanyFileDialogAsync(desktop);
+        };
+
+        // Open recent company
+        _welcomeScreenViewModel.OpenRecentCompanyRequested += async (_, company) =>
+        {
+            if (string.IsNullOrEmpty(company.FilePath)) return;
+
+            _mainWindowViewModel?.ShowLoading("Opening company...");
+            try
+            {
+                var success = await CompanyManager!.OpenCompanyAsync(company.FilePath);
+                if (success)
+                {
+                    await LoadRecentCompaniesAsync();
+                }
+                else
+                {
+                    _mainWindowViewModel?.HideLoading();
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                _mainWindowViewModel?.HideLoading();
+                _appShellViewModel?.AddNotification("File Not Found", "The company file no longer exists.", NotificationType.Error);
+                SettingsService?.RemoveRecentCompany(company.FilePath);
+                await LoadRecentCompaniesAsync();
+            }
+            catch (Exception ex)
+            {
+                _mainWindowViewModel?.HideLoading();
+                _appShellViewModel?.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
+            }
+        };
     }
 
     /// <summary>
@@ -537,10 +588,21 @@ public partial class App : Application
                     company.FilePath);
             }
 
-            // Wire up opening recent companies
-            foreach (var item in _appShellViewModel.FileMenuPanelViewModel.RecentCompanies)
+            // Update welcome screen
+            if (_welcomeScreenViewModel != null)
             {
-                // Items are opened via command in the view model
+                _welcomeScreenViewModel.RecentCompanies.Clear();
+                foreach (var company in recentCompanies.Take(10))
+                {
+                    _welcomeScreenViewModel.RecentCompanies.Add(new RecentCompanyItem
+                    {
+                        Name = company.CompanyName,
+                        FilePath = company.FilePath,
+                        LastOpened = company.ModifiedAt,
+                        Icon = company.IsEncrypted ? "Lock" : "Building"
+                    });
+                }
+                _welcomeScreenViewModel.HasRecentCompanies = _welcomeScreenViewModel.RecentCompanies.Count > 0;
             }
         }
         catch
@@ -575,6 +637,10 @@ public partial class App : Application
     {
         // Register placeholder pages - these will be replaced with actual views as they're implemented
         // The page factory receives optional parameters and returns a view or viewmodel
+
+        // Welcome Screen (shown when no company is open)
+        _welcomeScreenViewModel = new WelcomeScreenViewModel(navigationService);
+        navigationService.RegisterPage("Welcome", _ => new WelcomeScreen { DataContext = _welcomeScreenViewModel });
 
         // Main Section
         navigationService.RegisterPage("Dashboard", _ => CreatePlaceholderPage("Dashboard", "Welcome to the Dashboard"));

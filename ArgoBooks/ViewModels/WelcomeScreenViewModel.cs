@@ -59,7 +59,9 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     public WelcomeScreenViewModel(INavigationService? navigationService)
     {
         _navigationService = navigationService;
-        HasRecentCompanies = RecentCompanies.Count > 0;
+        // Real data will be populated by LoadRecentCompaniesAsync
+        // Start with no recent companies
+        HasRecentCompanies = false;
     }
 
     #region Commands
