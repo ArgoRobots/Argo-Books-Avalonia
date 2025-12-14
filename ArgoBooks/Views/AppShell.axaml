@@ -85,5 +85,14 @@
 
         <!-- Settings Modal -->
         <modals:SettingsModal DataContext="{Binding SettingsModalViewModel}" />
+
+        <!-- Check for Update Modal -->
+        <modals:CheckForUpdateModal DataContext="{Binding CheckForUpdateModalViewModel}" />
+
+        <!-- Import Modal -->
+        <modals:ImportModal DataContext="{Binding ImportModalViewModel}" />
+
+        <!-- Export As Modal -->
+        <modals:ExportAsModal DataContext="{Binding ExportAsModalViewModel}" />
     </Panel>
 </UserControl>

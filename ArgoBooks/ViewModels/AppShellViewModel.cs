@@ -74,6 +74,21 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public SettingsModalViewModel SettingsModalViewModel { get; }
 
+    /// <summary>
+    /// Gets the check for update modal view model.
+    /// </summary>
+    public CheckForUpdateModalViewModel CheckForUpdateModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the import modal view model.
+    /// </summary>
+    public ImportModalViewModel ImportModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the export as modal view model.
+    /// </summary>
+    public ExportAsModalViewModel ExportAsModalViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -139,6 +154,15 @@ public partial class AppShellViewModel : ViewModelBase
         // Create settings modal
         SettingsModalViewModel = new SettingsModalViewModel();
 
+        // Create check for update modal
+        CheckForUpdateModalViewModel = new CheckForUpdateModalViewModel();
+
+        // Create import modal
+        ImportModalViewModel = new ImportModalViewModel();
+
+        // Create export as modal
+        ExportAsModalViewModel = new ExportAsModalViewModel();
+
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
@@ -177,6 +201,15 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Wire up company switcher's create new company to open the wizard
         CompanySwitcherPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
+
+        // Wire up help panel's check for updates to open the check for update modal
+        HelpPanelViewModel.CheckForUpdatesRequested += (_, _) => CheckForUpdateModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up file menu's import to open the import modal
+        FileMenuPanelViewModel.ImportRequested += (_, _) => ImportModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up file menu's export as to open the export as modal
+        FileMenuPanelViewModel.ExportAsRequested += (_, _) => ExportAsModalViewModel.OpenCommand.Execute(null);
 
         // Sync search query between header and quick actions
         HeaderViewModel.PropertyChanged += (_, e) =>
