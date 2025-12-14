@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using ArgoBooks.ViewModels;
 
@@ -19,22 +20,43 @@ public partial class FileMenuPanel : UserControl
     {
         InitializeComponent();
 
-        // Focus the menu when it opens
+        // Animate and focus the menu when it opens
         DataContextChanged += (_, _) =>
         {
             if (DataContext is FileMenuPanelViewModel vm)
             {
                 vm.PropertyChanged += (_, e) =>
                 {
-                    if (e.PropertyName == nameof(FileMenuPanelViewModel.IsOpen) && vm.IsOpen)
+                    if (e.PropertyName == nameof(FileMenuPanelViewModel.IsOpen))
                     {
-                        Dispatcher.UIThread.Post(() =>
+                        if (vm.IsOpen)
                         {
-                            _focusedIndex = -1;
-                            _submenuFocusedIndex = -1;
-                            _isInSubmenu = false;
-                            FileMenuBorder?.Focus();
-                        }, DispatcherPriority.Background);
+                            // Animate in
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                if (FileMenuBorder != null)
+                                {
+                                    FileMenuBorder.Opacity = 1;
+                                    FileMenuBorder.RenderTransform = new TranslateTransform(0, 0);
+                                }
+                                _focusedIndex = -1;
+                                _submenuFocusedIndex = -1;
+                                _isInSubmenu = false;
+                                FileMenuBorder?.Focus();
+                            }, DispatcherPriority.Render);
+                        }
+                        else
+                        {
+                            // Reset for next open
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                if (FileMenuBorder != null)
+                                {
+                                    FileMenuBorder.Opacity = 0;
+                                    FileMenuBorder.RenderTransform = new TranslateTransform(0, -8);
+                                }
+                            }, DispatcherPriority.Background);
+                        }
                     }
                 };
             }

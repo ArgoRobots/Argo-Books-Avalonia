@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using ArgoBooks.ViewModels;
 
@@ -11,19 +12,38 @@ public partial class ProfileModal : UserControl
     {
         InitializeComponent();
 
-        // Focus the modal when it opens
+        // Animate and focus the modal when it opens
         DataContextChanged += (_, _) =>
         {
             if (DataContext is ProfileModalViewModel vm)
             {
                 vm.PropertyChanged += (_, e) =>
                 {
-                    if (e.PropertyName == nameof(ProfileModalViewModel.IsOpen) && vm.IsOpen)
+                    if (e.PropertyName == nameof(ProfileModalViewModel.IsOpen))
                     {
-                        Dispatcher.UIThread.Post(() =>
+                        if (vm.IsOpen)
                         {
-                            ModalBorder?.Focus();
-                        }, DispatcherPriority.Background);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                if (ModalBorder != null)
+                                {
+                                    ModalBorder.Opacity = 1;
+                                    ModalBorder.RenderTransform = new ScaleTransform(1, 1);
+                                }
+                                ModalBorder?.Focus();
+                            }, DispatcherPriority.Render);
+                        }
+                        else
+                        {
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                if (ModalBorder != null)
+                                {
+                                    ModalBorder.Opacity = 0;
+                                    ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
+                                }
+                            }, DispatcherPriority.Background);
+                        }
                     }
                 };
             }

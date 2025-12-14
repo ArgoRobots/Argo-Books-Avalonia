@@ -22,7 +22,7 @@
             </Border.Transitions>
         </Border>
 
-        <!-- File Menu Panel with animation -->
+        <!-- File Menu Panel - positioned relative to hamburger button (sidebar 250 + offset 56) -->
         <Border x:Name="FileMenuBorder"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -31,18 +31,19 @@
                 Width="260"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="56,60,0,0"
+                Margin="306,60,0,0"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
                 KeyDown="FileMenu_KeyDown"
+                Opacity="0"
                 RenderTransformOrigin="0,0">
             <Border.RenderTransform>
-                <TranslateTransform />
+                <TranslateTransform Y="-8" />
             </Border.RenderTransform>
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
                 </Transitions>
             </Border.Transitions>
             <StackPanel x:Name="MenuItems" Margin="0,8">

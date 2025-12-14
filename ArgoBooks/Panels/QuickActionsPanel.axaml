@@ -25,7 +25,8 @@
             </Border>
 
             <!-- Centered Panel Container with animation -->
-            <Border Background="{DynamicResource SurfaceBrush}"
+            <Border x:Name="ModalBorder"
+                    Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -35,14 +36,15 @@
                     VerticalAlignment="Top"
                     Margin="0,100,0,0"
                     BoxShadow="0 8 32 0 #40000000"
-                    RenderTransformOrigin="0.5,0">
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform>
-                    <ScaleTransform />
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
                 </Border.RenderTransform>
                 <Border.Transitions>
                     <Transitions>
                         <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
                     </Transitions>
                 </Border.Transitions>
                 <ContentControl Content="{Binding}"
@@ -63,7 +65,8 @@
             </Border>
 
             <!-- Dropdown Panel Container with animation -->
-            <Border Background="{DynamicResource SurfaceBrush}"
+            <Border x:Name="DropdownBorder"
+                    Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="8"
@@ -73,14 +76,15 @@
                     VerticalAlignment="Top"
                     Margin="0,60,0,0"
                     BoxShadow="0 4 16 0 #30000000"
+                    Opacity="0"
                     RenderTransformOrigin="0.5,0">
                 <Border.RenderTransform>
-                    <TranslateTransform />
+                    <TranslateTransform Y="-8" />
                 </Border.RenderTransform>
                 <Border.Transitions>
                     <Transitions>
                         <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
                     </Transitions>
                 </Border.Transitions>
                 <ContentControl Content="{Binding}"

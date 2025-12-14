@@ -36,14 +36,15 @@
                 BoxShadow="0 8 32 0 #40000000"
                 Focusable="True"
                 KeyDown="Panel_KeyDown"
+                Opacity="0"
                 RenderTransformOrigin="0,0">
             <Border.RenderTransform>
-                <TranslateTransform />
+                <TranslateTransform Y="-8" />
             </Border.RenderTransform>
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
                 </Transitions>
             </Border.Transitions>
 

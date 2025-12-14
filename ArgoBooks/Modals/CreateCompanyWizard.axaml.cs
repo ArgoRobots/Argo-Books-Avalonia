@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using ArgoBooks.ViewModels;
@@ -25,9 +26,33 @@ public partial class CreateCompanyWizard : UserControl
 
             vm.PropertyChanged += (_, args) =>
             {
-                if (args.PropertyName == nameof(CreateCompanyViewModel.IsOpen) && vm.IsOpen)
+                if (args.PropertyName == nameof(CreateCompanyViewModel.IsOpen))
                 {
-                    Dispatcher.UIThread.Post(() => WizardBorder?.Focus(), DispatcherPriority.Background);
+                    if (vm.IsOpen)
+                    {
+                        // Animate in
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            if (WizardBorder != null)
+                            {
+                                WizardBorder.Opacity = 1;
+                                WizardBorder.RenderTransform = new ScaleTransform(1, 1);
+                            }
+                            WizardBorder?.Focus();
+                        }, DispatcherPriority.Render);
+                    }
+                    else
+                    {
+                        // Reset for next open
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            if (WizardBorder != null)
+                            {
+                                WizardBorder.Opacity = 0;
+                                WizardBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
+                            }
+                        }, DispatcherPriority.Background);
+                    }
                 }
             };
         }

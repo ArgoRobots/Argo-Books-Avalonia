@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using ArgoBooks.ViewModels;
@@ -34,18 +35,50 @@ public partial class QuickActionsPanel : UserControl
         {
             vm.PropertyChanged += (_, args) =>
             {
-                if (args.PropertyName == nameof(QuickActionsViewModel.IsOpen) && vm.IsOpen)
+                if (args.PropertyName == nameof(QuickActionsViewModel.IsOpen))
                 {
-                    // Use dispatcher to ensure visual tree is ready
-                    Dispatcher.UIThread.Post(() =>
+                    if (vm.IsOpen)
                     {
-                        // Focus the search input when opening in modal mode
-                        if (!vm.IsDropdownMode)
+                        // Animate in
+                        Dispatcher.UIThread.Post(() =>
                         {
-                            var searchInput = FindDescendantOfType<TextBox>();
-                            searchInput?.Focus();
-                        }
-                    }, DispatcherPriority.Background);
+                            if (vm.IsDropdownMode)
+                            {
+                                if (DropdownBorder != null)
+                                {
+                                    DropdownBorder.Opacity = 1;
+                                    DropdownBorder.RenderTransform = new TranslateTransform(0, 0);
+                                }
+                            }
+                            else
+                            {
+                                if (ModalBorder != null)
+                                {
+                                    ModalBorder.Opacity = 1;
+                                    ModalBorder.RenderTransform = new ScaleTransform(1, 1);
+                                }
+                                var searchInput = FindDescendantOfType<TextBox>();
+                                searchInput?.Focus();
+                            }
+                        }, DispatcherPriority.Render);
+                    }
+                    else
+                    {
+                        // Reset for next open
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            if (DropdownBorder != null)
+                            {
+                                DropdownBorder.Opacity = 0;
+                                DropdownBorder.RenderTransform = new TranslateTransform(0, -8);
+                            }
+                            if (ModalBorder != null)
+                            {
+                                ModalBorder.Opacity = 0;
+                                ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
+                            }
+                        }, DispatcherPriority.Background);
+                    }
                 }
                 else if (args.PropertyName == nameof(QuickActionsViewModel.SelectedIndex))
                 {

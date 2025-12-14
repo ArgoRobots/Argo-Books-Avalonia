@@ -34,9 +34,10 @@
                 BoxShadow="0 8 32 0 #40000000"
                 Focusable="True"
                 KeyDown="Wizard_KeyDown"
+                Opacity="0"
                 RenderTransformOrigin="0.5,0.5">
             <Border.RenderTransform>
-                <ScaleTransform />
+                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
             </Border.RenderTransform>
             <Border.Transitions>
                 <Transitions>

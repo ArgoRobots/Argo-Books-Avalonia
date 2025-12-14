@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using ArgoBooks.ViewModels;
 
@@ -14,20 +15,39 @@ public partial class UserPanel : UserControl
     {
         InitializeComponent();
 
-        // Focus the panel when it opens
+        // Animate and focus the panel when it opens
         DataContextChanged += (_, _) =>
         {
             if (DataContext is UserPanelViewModel vm)
             {
                 vm.PropertyChanged += (_, e) =>
                 {
-                    if (e.PropertyName == nameof(UserPanelViewModel.IsOpen) && vm.IsOpen)
+                    if (e.PropertyName == nameof(UserPanelViewModel.IsOpen))
                     {
-                        Dispatcher.UIThread.Post(() =>
+                        if (vm.IsOpen)
                         {
-                            _focusedIndex = -1;
-                            UserPanelBorder?.Focus();
-                        }, DispatcherPriority.Background);
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                if (UserPanelBorder != null)
+                                {
+                                    UserPanelBorder.Opacity = 1;
+                                    UserPanelBorder.RenderTransform = new TranslateTransform(0, 0);
+                                }
+                                _focusedIndex = -1;
+                                UserPanelBorder?.Focus();
+                            }, DispatcherPriority.Render);
+                        }
+                        else
+                        {
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                if (UserPanelBorder != null)
+                                {
+                                    UserPanelBorder.Opacity = 0;
+                                    UserPanelBorder.RenderTransform = new TranslateTransform(0, -8);
+                                }
+                            }, DispatcherPriority.Background);
+                        }
                     }
                 };
             }

@@ -23,7 +23,8 @@
         </Border>
 
         <!-- Notification Panel Container with animation -->
-        <Border Background="{DynamicResource SurfaceBrush}"
+        <Border x:Name="NotificationBorder"
+                Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
@@ -33,14 +34,15 @@
                 VerticalAlignment="Top"
                 Margin="0,60,20,0"
                 BoxShadow="0 4 16 0 #30000000"
+                Opacity="0"
                 RenderTransformOrigin="1,0">
             <Border.RenderTransform>
-                <TranslateTransform />
+                <TranslateTransform Y="-8" />
             </Border.RenderTransform>
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
                 </Transitions>
             </Border.Transitions>
             <Grid RowDefinitions="Auto,*,Auto">
