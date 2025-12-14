@@ -100,5 +100,8 @@
 
         <!-- Login Modal -->
         <modals:LoginModal DataContext="{Binding LoginModalViewModel}" />
+
+        <!-- Password Prompt Modal -->
+        <modals:PasswordPromptModal DataContext="{Binding PasswordPromptModalViewModel}" />
     </Panel>
 </UserControl>
