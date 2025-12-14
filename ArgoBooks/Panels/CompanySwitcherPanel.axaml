@@ -12,16 +12,9 @@
     </Design.DataContext>
 
     <Panel IsVisible="{Binding IsOpen}">
-        <!-- Semi-transparent backdrop for click-away with fade animation -->
-        <Border Background="#20000000"
-                PointerPressed="Backdrop_PointerPressed"
-                Opacity="1">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
+        <!-- Transparent backdrop for click-away -->
+        <Border Background="Transparent"
+                PointerPressed="Backdrop_PointerPressed" />
 
         <!-- Company Switcher Panel with slide-in animation -->
         <Border x:Name="SwitcherBorder"

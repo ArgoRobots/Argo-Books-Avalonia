@@ -12,15 +12,9 @@
     </Design.DataContext>
 
     <Panel IsVisible="{Binding IsOpen}">
-        <!-- Semi-transparent backdrop for click-away -->
-        <Border Background="#20000000"
-                PointerPressed="Backdrop_PointerPressed">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
+        <!-- Transparent backdrop for click-away -->
+        <Border Background="Transparent"
+                PointerPressed="Backdrop_PointerPressed" />
 
         <!-- User Panel Container with animation -->
         <Border x:Name="UserPanelBorder"

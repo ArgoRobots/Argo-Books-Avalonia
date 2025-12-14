@@ -14,17 +14,11 @@
     <Panel IsVisible="{Binding IsOpen}">
         <!-- Modal Mode: Full overlay with centered panel -->
         <Panel IsVisible="{Binding !IsDropdownMode}">
-            <!-- Backdrop (lighter than modals) -->
-            <Border Background="#40000000"
-                    PointerPressed="Backdrop_PointerPressed">
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-                    </Transitions>
-                </Border.Transitions>
-            </Border>
+            <!-- Transparent backdrop for click-away -->
+            <Border Background="Transparent"
+                    PointerPressed="Backdrop_PointerPressed" />
 
-            <!-- Centered Panel Container with animation -->
+            <!-- Centered Panel Container with animation - offset by half sidebar width (125px) -->
             <Border x:Name="ModalBorder"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -34,7 +28,7 @@
                     MaxHeight="500"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"
-                    Margin="0,100,0,0"
+                    Margin="125,100,0,0"
                     BoxShadow="0 8 32 0 #40000000"
                     Opacity="0"
                     RenderTransformOrigin="0.5,0.5">
@@ -54,15 +48,9 @@
 
         <!-- Dropdown Mode: No backdrop, positioned below header searchbox -->
         <Panel IsVisible="{Binding IsDropdownMode}">
-            <!-- Light backdrop for click-away -->
-            <Border Background="#10000000"
-                    PointerPressed="Backdrop_PointerPressed">
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-                    </Transitions>
-                </Border.Transitions>
-            </Border>
+            <!-- Transparent backdrop for click-away -->
+            <Border Background="Transparent"
+                    PointerPressed="Backdrop_PointerPressed" />
 
             <!-- Dropdown Panel Container with animation -->
             <Border x:Name="DropdownBorder"

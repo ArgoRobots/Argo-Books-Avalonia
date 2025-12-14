@@ -12,15 +12,9 @@
     </Design.DataContext>
 
     <Panel IsVisible="{Binding IsOpen}">
-        <!-- Semi-transparent backdrop for click-away -->
-        <Border Background="#20000000"
-                PointerPressed="Backdrop_PointerPressed">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
+        <!-- Transparent backdrop for click-away -->
+        <Border Background="Transparent"
+                PointerPressed="Backdrop_PointerPressed" />
 
         <!-- File Menu Panel - positioned relative to hamburger button (sidebar 250 + offset 56) -->
         <Border x:Name="FileMenuBorder"
@@ -204,7 +198,7 @@
                 Width="220"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="328,140,0,0"
+                Margin="570,140,0,0"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
                 KeyDown="FileMenu_KeyDown"
