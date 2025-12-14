@@ -59,6 +59,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public UpgradeModalViewModel UpgradeModalViewModel { get; }
 
+    /// <summary>
+    /// Gets the create company wizard view model.
+    /// </summary>
+    public CreateCompanyViewModel CreateCompanyViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -114,6 +119,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Create upgrade modal
         UpgradeModalViewModel = new UpgradeModalViewModel();
 
+        // Create company creation wizard
+        CreateCompanyViewModel = new CreateCompanyViewModel();
+
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
@@ -140,6 +148,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Wire up header's upgrade button to open upgrade modal
         HeaderViewModel.OpenUpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up file menu's create new company to open the wizard
+        FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
 
         // Sync search query between header and quick actions
         HeaderViewModel.PropertyChanged += (_, e) =>
