@@ -45,13 +45,44 @@
                 <controls:UndoRedoButtonGroup x:Name="UndoRedoButtons"
                                               DataContext="{Binding UndoRedoViewModel}" />
 
-                <!-- Save Button -->
-                <Button Classes="header-icon"
-                        Command="{Binding SaveCommand}"
-                        ToolTip.Tip="Save">
-                    <PathIcon Data="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"
-                              Width="18" Height="18" />
-                </Button>
+                <!-- Save Button with Asterisk and Saved Indicator -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Unsaved Changes Asterisk -->
+                    <TextBlock Text="*"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource WarningBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,2,0"
+                               IsVisible="{Binding HasUnsavedChanges}" />
+
+                    <!-- Save Button -->
+                    <Button Classes="header-icon"
+                            Command="{Binding SaveCommand}"
+                            ToolTip.Tip="Save">
+                        <PathIcon Data="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"
+                                  Width="18" Height="18" />
+                    </Button>
+
+                    <!-- Saved Indicator -->
+                    <Border Background="{DynamicResource SuccessLightBrush}"
+                            CornerRadius="4"
+                            Padding="8,4"
+                            Margin="4,0,0,0"
+                            VerticalAlignment="Center"
+                            IsVisible="{Binding ShowSavedIndicator}"
+                            Opacity="{Binding SavedIndicatorOpacity}">
+                        <Border.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Opacity" Duration="0:0:0.3" />
+                            </Transitions>
+                        </Border.Transitions>
+                        <TextBlock Text="Saved"
+                                   FontSize="12"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource SuccessBrush}" />
+                    </Border>
+                </StackPanel>
             </StackPanel>
 
             <!-- Center Section: Search Box -->

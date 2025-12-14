@@ -54,59 +54,71 @@
 
                 <!-- Current Company -->
                 <Border Padding="8,8,8,0">
-                    <Button Classes="company-item current"
-                            IsEnabled="False">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <!-- Company Logo/Initial -->
-                            <Border Grid.Column="0"
-                                    Width="40" Height="40"
-                                    CornerRadius="8"
-                                    ClipToBounds="True"
-                                    Margin="0,0,12,0">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                        <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
-                                        <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                                <Panel>
-                                    <Image Source="{Binding CurrentCompanyLogo}"
-                                           Stretch="UniformToFill"
-                                           IsVisible="{Binding HasCurrentCompanyLogo}" />
-                                    <TextBlock Text="{Binding CurrentCompanyInitial}"
-                                               FontSize="16"
-                                               FontWeight="Bold"
-                                               Foreground="White"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               IsVisible="{Binding !HasCurrentCompanyLogo}" />
-                                </Panel>
-                            </Border>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Button Grid.Column="0"
+                                Classes="company-item current"
+                                IsEnabled="False">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <!-- Company Logo/Initial -->
+                                <Border Grid.Column="0"
+                                        Width="40" Height="40"
+                                        CornerRadius="8"
+                                        ClipToBounds="True"
+                                        Margin="0,0,12,0">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                            <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                                            <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <Panel>
+                                        <Image Source="{Binding CurrentCompanyLogo}"
+                                               Stretch="UniformToFill"
+                                               IsVisible="{Binding HasCurrentCompanyLogo}" />
+                                        <TextBlock Text="{Binding CurrentCompanyInitial}"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   IsVisible="{Binding !HasCurrentCompanyLogo}" />
+                                    </Panel>
+                                </Border>
 
-                            <!-- Company Name -->
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="{Binding CurrentCompanyName}"
-                                           FontSize="14"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="Current"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                            </StackPanel>
+                                <!-- Company Name -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="{Binding CurrentCompanyName}"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="Current"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
 
-                            <!-- Checkmark -->
-                            <Border Grid.Column="2"
-                                    Width="24" Height="24"
-                                    CornerRadius="12"
-                                    Background="{DynamicResource SuccessBrush}"
-                                    VerticalAlignment="Center">
-                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                                          Width="14" Height="14"
-                                          Foreground="White" />
-                            </Border>
-                        </Grid>
-                    </Button>
+                                <!-- Checkmark -->
+                                <Border Grid.Column="2"
+                                        Width="24" Height="24"
+                                        CornerRadius="12"
+                                        Background="{DynamicResource SuccessBrush}"
+                                        VerticalAlignment="Center">
+                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                              Width="14" Height="14"
+                                              Foreground="White" />
+                                </Border>
+                            </Grid>
+                        </Button>
+
+                        <!-- Edit Button -->
+                        <Button Grid.Column="1"
+                                Classes="edit-button"
+                                Command="{Binding EditCompanyCommand}"
+                                ToolTip.Tip="Edit Company">
+                            <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                      Width="16" Height="16" />
+                        </Button>
+                    </Grid>
                 </Border>
 
                 <!-- Recent Companies Section -->
@@ -271,6 +283,31 @@
         </Style>
         <Style Selector="Button.action-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+
+        <!-- Edit Button Style -->
+        <Style Selector="Button.edit-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+        </Style>
+        <Style Selector="Button.edit-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.edit-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.edit-button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Button.edit-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

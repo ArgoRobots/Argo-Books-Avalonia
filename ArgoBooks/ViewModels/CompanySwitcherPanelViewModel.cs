@@ -130,6 +130,16 @@ public partial class CompanySwitcherPanelViewModel : ViewModelBase
         OpenCompanyRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Opens the edit company modal.
+    /// </summary>
+    [RelayCommand]
+    private void EditCompany()
+    {
+        Close();
+        EditCompanyRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     #endregion
 
     #region Events
@@ -137,6 +147,7 @@ public partial class CompanySwitcherPanelViewModel : ViewModelBase
     public event EventHandler<CompanyItem>? SwitchCompanyRequested;
     public event EventHandler? CreateNewCompanyRequested;
     public event EventHandler? OpenCompanyRequested;
+    public event EventHandler? EditCompanyRequested;
 
     #endregion
 

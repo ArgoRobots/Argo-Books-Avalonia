@@ -104,6 +104,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public PasswordPromptModalViewModel PasswordPromptModalViewModel { get; }
 
+    /// <summary>
+    /// Gets the edit company modal view model.
+    /// </summary>
+    public EditCompanyModalViewModel EditCompanyModalViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -186,6 +191,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create password prompt modal
         PasswordPromptModalViewModel = new PasswordPromptModalViewModel();
+
+        // Create edit company modal
+        EditCompanyModalViewModel = new EditCompanyModalViewModel();
 
         // Wire up switch account modal's account selected to open login modal
         SwitchAccountModalViewModel.AccountSelected += (_, account) => LoginModalViewModel.OpenForAccount(account);
