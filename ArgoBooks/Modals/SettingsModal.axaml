@@ -429,8 +429,7 @@
                                                         Background="{DynamicResource PrimaryBrush}"
                                                         HorizontalAlignment="Right"
                                                         VerticalAlignment="Top"
-                                                        Margin="0,-6,-6,0"
-                                                        IsVisible="{Binding SelectedTheme, Converter={x:Static StringConverters.IsNotNullOrEmpty}, ConverterParameter=Light}">
+                                                        Margin="0,-6,-6,0">
                                                     <Border.IsVisible>
                                                         <Binding Path="SelectedTheme">
                                                             <Binding.Converter>
