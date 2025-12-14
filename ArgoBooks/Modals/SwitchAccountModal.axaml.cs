@@ -77,7 +77,7 @@ public partial class SwitchAccountModal : UserControl
             case Key.Enter:
                 if (vm.SelectedAccount != null)
                 {
-                    vm.SwitchToAccountCommand.Execute(null);
+                    vm.SelectAccountCommand.Execute(vm.SelectedAccount);
                     e.Handled = true;
                 }
                 break;
