@@ -41,14 +41,9 @@
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock FontSize="13"
-                                       Foreground="{DynamicResource TextTertiaryBrush}">
-                                <TextBlock.Text>
-                                    <MultiBinding StringFormat="Step {0} of 3">
-                                        <Binding Path="CurrentStep" />
-                                    </MultiBinding>
-                                </TextBlock.Text>
-                            </TextBlock>
+                            <TextBlock Text="{Binding CurrentStep, StringFormat='Step {0} of 3'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                         </StackPanel>
                         <Button Grid.Column="1"
                                 Classes="icon-button"
@@ -60,26 +55,58 @@
                 </Border>
 
                 <!-- Step Indicators -->
-                <Border Grid.Row="0"
-                        VerticalAlignment="Bottom"
-                        Margin="24,-12,24,0">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                        <Button Classes="step-indicator" Classes.active="{Binding IsStep1}"
-                                Command="{Binding GoToStepCommand}" CommandParameter="1">
-                            <TextBlock Text="1" />
-                        </Button>
-                        <Border Width="40" Height="2" Background="{DynamicResource BorderBrush}" VerticalAlignment="Center" />
-                        <Button Classes="step-indicator" Classes.active="{Binding IsStep2}"
-                                Command="{Binding GoToStepCommand}" CommandParameter="2">
-                            <TextBlock Text="2" />
-                        </Button>
-                        <Border Width="40" Height="2" Background="{DynamicResource BorderBrush}" VerticalAlignment="Center" />
-                        <Button Classes="step-indicator" Classes.active="{Binding IsStep3}"
-                                Command="{Binding GoToStepCommand}" CommandParameter="3">
-                            <TextBlock Text="3" />
-                        </Button>
-                    </StackPanel>
-                </Border>
+                <StackPanel Grid.Row="0"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Bottom"
+                            Margin="0,0,0,-16"
+                            Spacing="8">
+                    <!-- Step 1 -->
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource PrimaryBrush}"
+                            IsVisible="{Binding IsStep1}">
+                        <TextBlock Text="1" Foreground="White" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            IsVisible="{Binding !IsStep1}">
+                        <TextBlock Text="1" Foreground="{DynamicResource TextTertiaryBrush}" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <Border Width="40" Height="2" Background="{DynamicResource BorderBrush}" VerticalAlignment="Center" />
+
+                    <!-- Step 2 -->
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource PrimaryBrush}"
+                            IsVisible="{Binding IsStep2}">
+                        <TextBlock Text="2" Foreground="White" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            IsVisible="{Binding !IsStep2}">
+                        <TextBlock Text="2" Foreground="{DynamicResource TextTertiaryBrush}" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <Border Width="40" Height="2" Background="{DynamicResource BorderBrush}" VerticalAlignment="Center" />
+
+                    <!-- Step 3 -->
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource PrimaryBrush}"
+                            IsVisible="{Binding IsStep3}">
+                        <TextBlock Text="3" Foreground="White" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            IsVisible="{Binding !IsStep3}">
+                        <TextBlock Text="3" Foreground="{DynamicResource TextTertiaryBrush}" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </StackPanel>
 
                 <!-- Body -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -410,31 +437,6 @@
         </Style>
         <Style Selector="Button.icon-button PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-        </Style>
-
-        <!-- Step Indicator -->
-        <Style Selector="Button.step-indicator">
-            <Setter Property="Width" Value="32" />
-            <Setter Property="Height" Value="32" />
-            <Setter Property="CornerRadius" Value="16" />
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Button.step-indicator /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-        </Style>
-        <Style Selector="Button.step-indicator.active">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Foreground" Value="White" />
-        </Style>
-        <Style Selector="Button.step-indicator.active /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         </Style>
 
         <!-- Form Input -->
