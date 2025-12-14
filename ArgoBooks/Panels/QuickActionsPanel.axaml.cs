@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -31,7 +30,6 @@ public partial class QuickActionsPanel : UserControl
     {
         base.OnLoaded(e);
 
-        // Focus the search input when the panel opens
         if (DataContext is QuickActionsViewModel vm)
         {
             vm.PropertyChanged += (_, args) =>
@@ -41,12 +39,38 @@ public partial class QuickActionsPanel : UserControl
                     // Use dispatcher to ensure visual tree is ready
                     Dispatcher.UIThread.Post(() =>
                     {
-                        // Find and focus the search input (it's inside a DataTemplate)
-                        var searchInput = FindDescendantOfType<TextBox>();
-                        searchInput?.Focus();
+                        // Focus the search input when opening in modal mode
+                        if (!vm.IsDropdownMode)
+                        {
+                            var searchInput = FindDescendantOfType<TextBox>();
+                            searchInput?.Focus();
+                        }
                     }, DispatcherPriority.Background);
                 }
+                else if (args.PropertyName == nameof(QuickActionsViewModel.SelectedIndex))
+                {
+                    // Focus the selected action item
+                    Dispatcher.UIThread.Post(() => FocusSelectedItem(vm.SelectedIndex), DispatcherPriority.Background);
+                }
             };
+        }
+    }
+
+    /// <summary>
+    /// Focuses the button at the specified index.
+    /// </summary>
+    private void FocusSelectedItem(int index)
+    {
+        if (index < 0) return;
+
+        var buttons = this.GetVisualDescendants()
+            .OfType<Button>()
+            .Where(b => b.Classes.Contains("action-item"))
+            .ToList();
+
+        if (index < buttons.Count)
+        {
+            buttons[index].Focus();
         }
     }
 

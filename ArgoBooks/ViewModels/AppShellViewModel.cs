@@ -150,6 +150,27 @@ public partial class AppShellViewModel : ViewModelBase
             }
         };
 
+        // Wire up header search key events to quick actions panel
+        HeaderViewModel.SearchKeyPressed += (_, action) =>
+        {
+            switch (action)
+            {
+                case SearchKeyAction.Escape:
+                    QuickActionsViewModel.CloseCommand.Execute(null);
+                    HeaderViewModel.SearchQuery = null;
+                    break;
+                case SearchKeyAction.Up:
+                    QuickActionsViewModel.MoveUpCommand.Execute(null);
+                    break;
+                case SearchKeyAction.Down:
+                    QuickActionsViewModel.MoveDownCommand.Execute(null);
+                    break;
+                case SearchKeyAction.Enter:
+                    QuickActionsViewModel.ExecuteSelectedCommand.Execute(null);
+                    break;
+            }
+        };
+
         // Subscribe to navigation events to update UI state
         if (_navigationService != null)
         {

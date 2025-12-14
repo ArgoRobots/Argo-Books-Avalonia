@@ -91,6 +91,7 @@
                              Watermark="Search or jump to..."
                              Classes="header-search"
                              GotFocus="SearchInput_GotFocus"
+                             KeyDown="SearchInput_KeyDown"
                              VerticalAlignment="Center" />
 
                     <!-- Keyboard Shortcut Hint -->

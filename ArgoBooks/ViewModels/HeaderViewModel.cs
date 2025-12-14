@@ -321,6 +321,19 @@ public partial class HeaderViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? OpenUpgradeRequested;
 
+    /// <summary>
+    /// Event raised when a search key is pressed (for Quick Actions navigation).
+    /// </summary>
+    public event EventHandler<SearchKeyAction>? SearchKeyPressed;
+
+    /// <summary>
+    /// Raises the SearchKeyPressed event.
+    /// </summary>
+    public void OnSearchKeyPressed(SearchKeyAction action)
+    {
+        SearchKeyPressed?.Invoke(this, action);
+    }
+
     #endregion
 
     #region Public Methods
@@ -571,4 +584,30 @@ public enum NotificationType
     /// System/update notification.
     /// </summary>
     System
+}
+
+/// <summary>
+/// Keyboard actions for search navigation.
+/// </summary>
+public enum SearchKeyAction
+{
+    /// <summary>
+    /// Escape key pressed - close panel.
+    /// </summary>
+    Escape,
+
+    /// <summary>
+    /// Up arrow key pressed - move selection up.
+    /// </summary>
+    Up,
+
+    /// <summary>
+    /// Down arrow key pressed - move selection down.
+    /// </summary>
+    Down,
+
+    /// <summary>
+    /// Enter key pressed - execute selection.
+    /// </summary>
+    Enter
 }
