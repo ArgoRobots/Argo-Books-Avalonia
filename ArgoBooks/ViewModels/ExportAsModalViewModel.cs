@@ -37,10 +37,10 @@ public partial class ExportAsModalViewModel : ViewModelBase
     private string _selectedFileFormat = "xlsx";
 
     [ObservableProperty]
-    private DateTime _startDate = DateTime.Now.AddMonths(-1);
+    private DateTimeOffset? _startDate = DateTimeOffset.Now.AddMonths(-1);
 
     [ObservableProperty]
-    private DateTime _endDate = DateTime.Now;
+    private DateTimeOffset? _endDate = DateTimeOffset.Now;
 
     [ObservableProperty]
     private bool _includeAttachments = true;
@@ -139,7 +139,7 @@ public partial class ExportAsModalViewModel : ViewModelBase
         else
         {
             var selectedItems = DataItems.Where(x => x.IsSelected).Select(x => x.Name).ToList();
-            ExportRequested?.Invoke(this, new ExportEventArgs(SelectedFileFormat, selectedItems, StartDate, EndDate));
+            ExportRequested?.Invoke(this, new ExportEventArgs(SelectedFileFormat, selectedItems, StartDate?.DateTime, EndDate?.DateTime));
         }
         Close();
     }
@@ -169,7 +169,7 @@ public class ExportEventArgs : EventArgs
         SelectedDataItems = new List<string>();
     }
 
-    public ExportEventArgs(string format, List<string> selectedDataItems, DateTime startDate, DateTime endDate)
+    public ExportEventArgs(string format, List<string> selectedDataItems, DateTime? startDate, DateTime? endDate)
     {
         Format = format;
         SelectedDataItems = selectedDataItems;

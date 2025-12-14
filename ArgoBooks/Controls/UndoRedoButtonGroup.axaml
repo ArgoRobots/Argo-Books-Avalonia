@@ -14,7 +14,7 @@
     <Panel>
         <StackPanel Orientation="Horizontal" Spacing="8">
             <!-- Undo Button Group -->
-            <Grid>
+            <Grid x:Name="UndoButtonGroup">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
@@ -45,7 +45,7 @@
             </Grid>
 
             <!-- Redo Button Group -->
-            <Grid>
+            <Grid x:Name="RedoButtonGroup">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
@@ -79,17 +79,16 @@
         <!-- Undo History Popup -->
         <Popup x:Name="UndoPopup"
                IsLightDismissEnabled="True"
-               PlacementTarget="{Binding #UndoDropdownButton}"
-               Placement="BottomEdgeAlignedLeft">
+               PlacementTarget="{Binding #UndoButtonGroup}"
+               Placement="BottomEdgeAlignedRight">
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="8"
                     BoxShadow="0 4 16 0 #30000000"
-                    MinWidth="200"
-                    MaxWidth="300"
-                    MaxHeight="300">
-                <Grid RowDefinitions="Auto,*">
+                    MinWidth="220"
+                    MaxWidth="300">
+                <Grid RowDefinitions="Auto,*,Auto">
                     <Border Grid.Row="0"
                             Padding="12,10"
                             BorderBrush="{DynamicResource BorderBrush}"
@@ -102,13 +101,18 @@
                     <ScrollViewer Grid.Row="1"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
-                                  MaxHeight="250">
-                        <ItemsControl ItemsSource="{Binding UndoHistory}">
+                                  MaxHeight="200">
+                        <ItemsControl x:Name="UndoHistoryList" ItemsSource="{Binding UndoHistory}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:UndoRedoHistoryItem">
-                                    <Button Classes="history-item"
-                                            Command="{Binding $parent[ItemsControl].((vm:UndoRedoButtonGroupViewModel)DataContext).UndoToCommand}"
-                                            CommandParameter="{Binding Index}">
+                                    <Border x:Name="ItemBorder"
+                                            Padding="12,8"
+                                            Background="Transparent"
+                                            Cursor="Hand"
+                                            PointerEntered="UndoItem_PointerEntered"
+                                            PointerExited="UndoItem_PointerExited"
+                                            PointerPressed="UndoItem_PointerPressed"
+                                            Tag="{Binding Index}">
                                         <Grid ColumnDefinitions="Auto,*">
                                             <PathIcon Grid.Column="0"
                                                       Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
@@ -121,11 +125,22 @@
                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis" />
                                         </Grid>
-                                    </Button>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
+                    <Border Grid.Row="2"
+                            Padding="12,8"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0"
+                            Background="{DynamicResource SurfaceAltBrush}">
+                        <TextBlock x:Name="UndoCountLabel"
+                                   Text="Hover to select actions"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center" />
+                    </Border>
                 </Grid>
             </Border>
         </Popup>
@@ -133,17 +148,16 @@
         <!-- Redo History Popup -->
         <Popup x:Name="RedoPopup"
                IsLightDismissEnabled="True"
-               PlacementTarget="{Binding #RedoDropdownButton}"
+               PlacementTarget="{Binding #RedoButtonGroup}"
                Placement="BottomEdgeAlignedLeft">
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="8"
                     BoxShadow="0 4 16 0 #30000000"
-                    MinWidth="200"
-                    MaxWidth="300"
-                    MaxHeight="300">
-                <Grid RowDefinitions="Auto,*">
+                    MinWidth="220"
+                    MaxWidth="300">
+                <Grid RowDefinitions="Auto,*,Auto">
                     <Border Grid.Row="0"
                             Padding="12,10"
                             BorderBrush="{DynamicResource BorderBrush}"
@@ -156,13 +170,18 @@
                     <ScrollViewer Grid.Row="1"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
-                                  MaxHeight="250">
-                        <ItemsControl ItemsSource="{Binding RedoHistory}">
+                                  MaxHeight="200">
+                        <ItemsControl x:Name="RedoHistoryList" ItemsSource="{Binding RedoHistory}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:UndoRedoHistoryItem">
-                                    <Button Classes="history-item"
-                                            Command="{Binding $parent[ItemsControl].((vm:UndoRedoButtonGroupViewModel)DataContext).RedoToCommand}"
-                                            CommandParameter="{Binding Index}">
+                                    <Border x:Name="ItemBorder"
+                                            Padding="12,8"
+                                            Background="Transparent"
+                                            Cursor="Hand"
+                                            PointerEntered="RedoItem_PointerEntered"
+                                            PointerExited="RedoItem_PointerExited"
+                                            PointerPressed="RedoItem_PointerPressed"
+                                            Tag="{Binding Index}">
                                         <Grid ColumnDefinitions="Auto,*">
                                             <PathIcon Grid.Column="0"
                                                       Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
@@ -175,11 +194,22 @@
                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis" />
                                         </Grid>
-                                    </Button>
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
+                    <Border Grid.Row="2"
+                            Padding="12,8"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0"
+                            Background="{DynamicResource SurfaceAltBrush}">
+                        <TextBlock x:Name="RedoCountLabel"
+                                   Text="Hover to select actions"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   HorizontalAlignment="Center" />
+                    </Border>
                 </Grid>
             </Border>
         </Popup>
@@ -246,22 +276,6 @@
         </Style>
         <Style Selector="Button.undo-redo-dropdown:disabled PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
-        </Style>
-
-        <!-- History Item Button -->
-        <Style Selector="Button.history-item">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="12,10" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.history-item /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.history-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

@@ -195,6 +195,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up user panel's open settings to open settings modal
         UserPanelViewModel.OpenSettingsRequested += (_, _) => SettingsModalViewModel.OpenCommand.Execute(null);
 
+        // Wire up user panel's switch account to open switch account modal
+        UserPanelViewModel.SwitchAccountRequested += (_, _) => SwitchAccountModalViewModel.OpenCommand.Execute(null);
+
         // Wire up header's help button to toggle help panel
         HeaderViewModel.OpenHelpRequested += (_, _) => HelpPanelViewModel.ToggleCommand.Execute(null);
 
