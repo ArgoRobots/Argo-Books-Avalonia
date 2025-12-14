@@ -404,65 +404,85 @@
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <RadioButton GroupName="Theme"
-                                                     IsChecked="{Binding SelectedTheme, Converter={x:Static StringConverters.IsNotNullOrEmpty}, ConverterParameter=Light}"
-                                                     Classes="theme-radio">
-                                            <StackPanel Spacing="8">
-                                                <Border Width="80" Height="50"
+                                    <StackPanel Orientation="Horizontal" Spacing="24">
+                                        <!-- Light Theme -->
+                                        <StackPanel Spacing="8">
+                                            <Grid>
+                                                <Border Width="100" Height="60"
                                                         Background="#FFFFFF"
                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                         BorderThickness="1"
                                                         CornerRadius="6">
-                                                    <StackPanel Margin="8" Spacing="4">
-                                                        <Border Height="8" Background="#E5E7EB" CornerRadius="2" />
-                                                        <Border Height="6" Width="40" Background="#E5E7EB" CornerRadius="2" HorizontalAlignment="Left" />
+                                                    <StackPanel Margin="10" Spacing="6">
+                                                        <Border Height="10" Background="#E5E7EB" CornerRadius="2" />
+                                                        <Border Height="8" Width="50" Background="#E5E7EB" CornerRadius="2" HorizontalAlignment="Left" />
                                                     </StackPanel>
                                                 </Border>
-                                                <TextBlock Text="Light"
-                                                           FontSize="12"
-                                                           HorizontalAlignment="Center"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            </StackPanel>
-                                        </RadioButton>
-                                        <RadioButton GroupName="Theme"
-                                                     IsChecked="True"
-                                                     Classes="theme-radio">
-                                            <StackPanel Spacing="8">
-                                                <Border Width="80" Height="50"
+                                                <RadioButton x:Name="LightThemeRadio"
+                                                             GroupName="Theme"
+                                                             Classes="theme-radio-overlay"
+                                                             HorizontalAlignment="Left"
+                                                             VerticalAlignment="Top"
+                                                             Margin="-8,-8,0,0" />
+                                            </Grid>
+                                            <TextBlock Text="Light"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
+
+                                        <!-- Dark Theme -->
+                                        <StackPanel Spacing="8">
+                                            <Grid>
+                                                <Border Width="100" Height="60"
                                                         Background="#1F2937"
                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                         BorderThickness="1"
                                                         CornerRadius="6">
-                                                    <StackPanel Margin="8" Spacing="4">
-                                                        <Border Height="8" Background="#374151" CornerRadius="2" />
-                                                        <Border Height="6" Width="40" Background="#374151" CornerRadius="2" HorizontalAlignment="Left" />
+                                                    <StackPanel Margin="10" Spacing="6">
+                                                        <Border Height="10" Background="#374151" CornerRadius="2" />
+                                                        <Border Height="8" Width="50" Background="#374151" CornerRadius="2" HorizontalAlignment="Left" />
                                                     </StackPanel>
                                                 </Border>
-                                                <TextBlock Text="Dark"
-                                                           FontSize="12"
-                                                           HorizontalAlignment="Center"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            </StackPanel>
-                                        </RadioButton>
-                                        <RadioButton GroupName="Theme"
-                                                     Classes="theme-radio">
-                                            <StackPanel Spacing="8">
-                                                <Border Width="80" Height="50"
+                                                <RadioButton x:Name="DarkThemeRadio"
+                                                             GroupName="Theme"
+                                                             IsChecked="True"
+                                                             Classes="theme-radio-overlay"
+                                                             HorizontalAlignment="Left"
+                                                             VerticalAlignment="Top"
+                                                             Margin="-8,-8,0,0" />
+                                            </Grid>
+                                            <TextBlock Text="Dark"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
+
+                                        <!-- System Theme -->
+                                        <StackPanel Spacing="8">
+                                            <Grid>
+                                                <Border Width="100" Height="60"
                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                         BorderThickness="1"
-                                                        CornerRadius="6">
+                                                        CornerRadius="6"
+                                                        ClipToBounds="True">
                                                     <Grid>
-                                                        <Border Background="#FFFFFF" CornerRadius="6,0,0,6" HorizontalAlignment="Left" Width="40" />
-                                                        <Border Background="#1F2937" CornerRadius="0,6,6,0" HorizontalAlignment="Right" Width="40" />
+                                                        <Border Background="#FFFFFF" CornerRadius="6,0,0,6" HorizontalAlignment="Left" Width="50" />
+                                                        <Border Background="#1F2937" CornerRadius="0,6,6,0" HorizontalAlignment="Right" Width="50" />
                                                     </Grid>
                                                 </Border>
-                                                <TextBlock Text="System"
-                                                           FontSize="12"
-                                                           HorizontalAlignment="Center"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            </StackPanel>
-                                        </RadioButton>
+                                                <RadioButton x:Name="SystemThemeRadio"
+                                                             GroupName="Theme"
+                                                             Classes="theme-radio-overlay"
+                                                             HorizontalAlignment="Left"
+                                                             VerticalAlignment="Top"
+                                                             Margin="-8,-8,0,0" />
+                                            </Grid>
+                                            <TextBlock Text="System"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
 
@@ -512,25 +532,54 @@
                     <TabItem Header="Security">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
                             <StackPanel Spacing="16">
-                                <!-- Change Password -->
+                                <!-- Password - No password set -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        Padding="16">
+                                        Padding="16"
+                                        IsVisible="{Binding !HasPassword}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="Password"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Change your account password"
+                                            <TextBlock Text="Add a password to protect your company file"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
                                         <Button Grid.Column="1"
-                                                Classes="secondary-button"
-                                                Content="Change Password"
-                                                Command="{Binding ChangePasswordCommand}"
+                                                Classes="primary-button"
+                                                Content="Add Password"
+                                                Command="{Binding OpenAddPasswordCommand}"
                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Password - Has password set -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        IsVisible="{Binding HasPassword}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="Password"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Your company file is password protected"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                            <Button Classes="secondary-button"
+                                                    Content="Change"
+                                                    Command="{Binding OpenChangePasswordCommand}"
+                                                    VerticalAlignment="Center" />
+                                            <Button Classes="danger-button"
+                                                    Content="Remove"
+                                                    Command="{Binding OpenRemovePasswordCommand}"
+                                                    VerticalAlignment="Center" />
+                                        </StackPanel>
                                     </Grid>
                                 </Border>
 
@@ -610,6 +659,121 @@
                 </Border>
             </Grid>
         </Border>
+
+        <!-- Add Password Modal -->
+        <Panel IsVisible="{Binding IsAddPasswordModalOpen}">
+            <Border Background="#80000000" PointerPressed="PasswordBackdrop_PointerPressed" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Add Password" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                    <StackPanel Margin="20" Spacing="16">
+                        <TextBlock Text="Create a password to protect your company file. You'll need this password to open the file."
+                                   FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding NewPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Confirm Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding ConfirmPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
+                                   IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding ClosePasswordModalCommand}" />
+                            <Button Classes="primary-button" Content="Add Password" Command="{Binding ConfirmAddPasswordCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Change Password Modal -->
+        <Panel IsVisible="{Binding IsChangePasswordModalOpen}">
+            <Border Background="#80000000" PointerPressed="PasswordBackdrop_PointerPressed" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Change Password" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                    <StackPanel Margin="20" Spacing="16">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Current Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding CurrentPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding NewPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Confirm New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding ConfirmPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
+                                   IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding ClosePasswordModalCommand}" />
+                            <Button Classes="primary-button" Content="Change Password" Command="{Binding ConfirmChangePasswordCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Remove Password Modal -->
+        <Panel IsVisible="{Binding IsRemovePasswordModalOpen}">
+            <Border Background="#80000000" PointerPressed="PasswordBackdrop_PointerPressed" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Remove Password" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                    <StackPanel Margin="20" Spacing="16">
+                        <TextBlock Text="Are you sure you want to remove password protection? Your company file will no longer be protected."
+                                   FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Current Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding CurrentPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
+                                   IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding ClosePasswordModalCommand}" />
+                            <Button Classes="danger-button" Content="Remove Password" Command="{Binding ConfirmRemovePasswordCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
     </Panel>
 
     <UserControl.Styles>
@@ -679,6 +843,42 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
 
+        <!-- Danger Button -->
+        <Style Selector="Button.danger-button">
+            <Setter Property="Background" Value="#dc2626" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#dc2626" />
+        </Style>
+        <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#b91c1c" />
+        </Style>
+
+        <!-- Form Input -->
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBox.form-input /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
         <!-- Color Button -->
         <Style Selector="Button.color-button">
             <Setter Property="Background" Value="Transparent" />
@@ -693,14 +893,13 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
 
-        <!-- Theme Radio -->
-        <Style Selector="RadioButton.theme-radio">
+        <!-- Theme Radio Overlay - Shows only the radio indicator -->
+        <Style Selector="RadioButton.theme-radio-overlay">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="RadioButton.theme-radio /template/ Border#RootBorder">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
         </Style>
 
         <!-- Tab Item Styling -->

@@ -148,10 +148,33 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _selectedAutoLock = "5 minutes";
 
+    [ObservableProperty]
+    private bool _hasPassword;
+
+    [ObservableProperty]
+    private bool _isAddPasswordModalOpen;
+
+    [ObservableProperty]
+    private bool _isChangePasswordModalOpen;
+
+    [ObservableProperty]
+    private bool _isRemovePasswordModalOpen;
+
+    [ObservableProperty]
+    private string _newPassword = string.Empty;
+
+    [ObservableProperty]
+    private string _confirmPassword = string.Empty;
+
+    [ObservableProperty]
+    private string _currentPassword = string.Empty;
+
+    [ObservableProperty]
+    private string? _passwordError;
+
     public ObservableCollection<string> AutoLockOptions { get; } = new()
     {
         "Never",
-        "1 minute",
         "5 minutes",
         "15 minutes",
         "30 minutes",
@@ -199,12 +222,128 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens the change password dialog.
+    /// Opens the add password modal.
     /// </summary>
     [RelayCommand]
-    private void ChangePassword()
+    private void OpenAddPassword()
     {
-        // TODO: Show change password modal
+        ClearPasswordFields();
+        IsAddPasswordModalOpen = true;
+    }
+
+    /// <summary>
+    /// Opens the change password modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenChangePassword()
+    {
+        ClearPasswordFields();
+        IsChangePasswordModalOpen = true;
+    }
+
+    /// <summary>
+    /// Opens the remove password modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenRemovePassword()
+    {
+        ClearPasswordFields();
+        IsRemovePasswordModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closes all password modals.
+    /// </summary>
+    [RelayCommand]
+    private void ClosePasswordModal()
+    {
+        IsAddPasswordModalOpen = false;
+        IsChangePasswordModalOpen = false;
+        IsRemovePasswordModalOpen = false;
+        ClearPasswordFields();
+    }
+
+    /// <summary>
+    /// Confirms adding a new password.
+    /// </summary>
+    [RelayCommand]
+    private void ConfirmAddPassword()
+    {
+        if (string.IsNullOrWhiteSpace(NewPassword))
+        {
+            PasswordError = "Password is required";
+            return;
+        }
+        if (NewPassword.Length < 6)
+        {
+            PasswordError = "Password must be at least 6 characters";
+            return;
+        }
+        if (NewPassword != ConfirmPassword)
+        {
+            PasswordError = "Passwords do not match";
+            return;
+        }
+
+        // TODO: Actually set the password
+        HasPassword = true;
+        ClosePasswordModal();
+    }
+
+    /// <summary>
+    /// Confirms changing the password.
+    /// </summary>
+    [RelayCommand]
+    private void ConfirmChangePassword()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentPassword))
+        {
+            PasswordError = "Current password is required";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(NewPassword))
+        {
+            PasswordError = "New password is required";
+            return;
+        }
+        if (NewPassword.Length < 6)
+        {
+            PasswordError = "New password must be at least 6 characters";
+            return;
+        }
+        if (NewPassword != ConfirmPassword)
+        {
+            PasswordError = "Passwords do not match";
+            return;
+        }
+
+        // TODO: Actually verify and change the password
+        ClosePasswordModal();
+    }
+
+    /// <summary>
+    /// Confirms removing the password.
+    /// </summary>
+    [RelayCommand]
+    private void ConfirmRemovePassword()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentPassword))
+        {
+            PasswordError = "Current password is required";
+            return;
+        }
+
+        // TODO: Actually verify and remove the password
+        HasPassword = false;
+        ClosePasswordModal();
+    }
+
+    private void ClearPasswordFields()
+    {
+        NewPassword = string.Empty;
+        ConfirmPassword = string.Empty;
+        CurrentPassword = string.Empty;
+        PasswordError = null;
     }
 
     /// <summary>

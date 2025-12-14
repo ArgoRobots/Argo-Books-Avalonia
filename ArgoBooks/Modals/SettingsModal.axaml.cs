@@ -62,11 +62,27 @@ public partial class SettingsModal : UserControl
         }
     }
 
+    private void PasswordBackdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is SettingsModalViewModel vm)
+        {
+            vm.ClosePasswordModalCommand.Execute(null);
+        }
+    }
+
     private void Modal_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && DataContext is SettingsModalViewModel vm)
         {
-            vm.CloseCommand.Execute(null);
+            // Close password modals first if open
+            if (vm.IsAddPasswordModalOpen || vm.IsChangePasswordModalOpen || vm.IsRemovePasswordModalOpen)
+            {
+                vm.ClosePasswordModalCommand.Execute(null);
+            }
+            else
+            {
+                vm.CloseCommand.Execute(null);
+            }
             e.Handled = true;
         }
     }
