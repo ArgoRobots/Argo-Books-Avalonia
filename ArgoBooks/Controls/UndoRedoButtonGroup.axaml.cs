@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -117,10 +118,9 @@ public partial class UndoRedoButtonGroup : UserControl
     {
         if (_undoHistoryList == null) return;
 
-        var itemContainerGenerator = _undoHistoryList.ItemContainerGenerator;
         for (int i = 0; i < _undoHistoryList.Items.Count; i++)
         {
-            var container = itemContainerGenerator.ContainerFromIndex(i);
+            var container = _undoHistoryList.ContainerFromIndex(i);
             if (container is ContentPresenter cp && cp.Child is Border border)
             {
                 // Highlight items from 0 to hoverIndex (inclusive)
@@ -133,10 +133,9 @@ public partial class UndoRedoButtonGroup : UserControl
     {
         if (_redoHistoryList == null) return;
 
-        var itemContainerGenerator = _redoHistoryList.ItemContainerGenerator;
         for (int i = 0; i < _redoHistoryList.Items.Count; i++)
         {
-            var container = itemContainerGenerator.ContainerFromIndex(i);
+            var container = _redoHistoryList.ContainerFromIndex(i);
             if (container is ContentPresenter cp && cp.Child is Border border)
             {
                 // Highlight items from 0 to hoverIndex (inclusive)
@@ -181,9 +180,10 @@ public partial class UndoRedoButtonGroup : UserControl
     public Point GetUndoDropdownPosition()
     {
         var button = this.FindControl<Button>("UndoDropdownButton");
-        if (button != null)
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (button != null && topLevel != null)
         {
-            var position = button.TranslatePoint(new Point(0, button.Bounds.Height), TopLevel.GetTopLevel(this));
+            var position = button.TranslatePoint(new Point(0, button.Bounds.Height), topLevel);
             return position ?? new Point(0, 0);
         }
         return new Point(0, 0);
@@ -195,9 +195,10 @@ public partial class UndoRedoButtonGroup : UserControl
     public Point GetRedoDropdownPosition()
     {
         var button = this.FindControl<Button>("RedoDropdownButton");
-        if (button != null)
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (button != null && topLevel != null)
         {
-            var position = button.TranslatePoint(new Point(0, button.Bounds.Height), TopLevel.GetTopLevel(this));
+            var position = button.TranslatePoint(new Point(0, button.Bounds.Height), topLevel);
             return position ?? new Point(0, 0);
         }
         return new Point(0, 0);
