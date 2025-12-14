@@ -9,7 +9,14 @@ namespace ArgoBooks.Services;
 /// </summary>
 public class ThemeService : IThemeService
 {
-    private ThemeMode _currentTheme = ThemeMode.System;
+    private static ThemeService? _instance;
+
+    /// <summary>
+    /// Gets the singleton instance of the ThemeService.
+    /// </summary>
+    public static ThemeService Instance => _instance ??= new ThemeService();
+
+    private ThemeMode _currentTheme = ThemeMode.Dark;
 
     /// <inheritdoc />
     public ThemeMode CurrentTheme => _currentTheme;
@@ -47,6 +54,33 @@ public class ThemeService : IThemeService
         ApplyTheme();
         ThemeChanged?.Invoke(this, theme);
     }
+
+    /// <summary>
+    /// Sets the theme by name (Light, Dark, System).
+    /// </summary>
+    /// <param name="themeName">The theme name.</param>
+    public void SetTheme(string themeName)
+    {
+        var theme = themeName switch
+        {
+            "Light" => ThemeMode.Light,
+            "Dark" => ThemeMode.Dark,
+            "System" => ThemeMode.System,
+            _ => ThemeMode.System
+        };
+        SetTheme(theme);
+    }
+
+    /// <summary>
+    /// Gets the current theme name.
+    /// </summary>
+    public string CurrentThemeName => _currentTheme switch
+    {
+        ThemeMode.Light => "Light",
+        ThemeMode.Dark => "Dark",
+        ThemeMode.System => "System",
+        _ => "System"
+    };
 
     /// <summary>
     /// Initializes the theme service and sets up system theme detection.

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:local="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.SettingsModal"
              x:DataType="vm:SettingsModalViewModel">
@@ -404,11 +405,14 @@
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <StackPanel Orientation="Horizontal" Spacing="24">
+                                    <StackPanel Orientation="Horizontal" Spacing="16">
                                         <!-- Light Theme -->
-                                        <StackPanel Spacing="8">
-                                            <Grid>
-                                                <Border Width="100" Height="60"
+                                        <Button Classes="theme-selector"
+                                                Command="{Binding SelectThemeCommand}"
+                                                CommandParameter="Light">
+                                            <Grid RowDefinitions="Auto,Auto">
+                                                <Border Grid.Row="0"
+                                                        Width="100" Height="60"
                                                         Background="#FFFFFF"
                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                         BorderThickness="1"
@@ -418,23 +422,42 @@
                                                         <Border Height="8" Width="50" Background="#E5E7EB" CornerRadius="2" HorizontalAlignment="Left" />
                                                     </StackPanel>
                                                 </Border>
-                                                <RadioButton x:Name="LightThemeRadio"
-                                                             GroupName="Theme"
-                                                             Classes="theme-radio-overlay"
-                                                             HorizontalAlignment="Left"
-                                                             VerticalAlignment="Top"
-                                                             Margin="-8,-8,0,0" />
+                                                <!-- Selection indicator -->
+                                                <Border Grid.Row="0"
+                                                        Width="20" Height="20"
+                                                        CornerRadius="10"
+                                                        Background="{DynamicResource PrimaryBrush}"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Top"
+                                                        Margin="0,-6,-6,0"
+                                                        IsVisible="{Binding SelectedTheme, Converter={x:Static StringConverters.IsNotNullOrEmpty}, ConverterParameter=Light}">
+                                                    <Border.IsVisible>
+                                                        <Binding Path="SelectedTheme">
+                                                            <Binding.Converter>
+                                                                <local:StringEqualsConverter CompareValue="Light" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </Border.IsVisible>
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="12" Height="12"
+                                                              Foreground="White" />
+                                                </Border>
+                                                <TextBlock Grid.Row="1"
+                                                           Text="Light"
+                                                           FontSize="12"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,8,0,0"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                             </Grid>
-                                            <TextBlock Text="Light"
-                                                       FontSize="12"
-                                                       HorizontalAlignment="Center"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        </StackPanel>
+                                        </Button>
 
                                         <!-- Dark Theme -->
-                                        <StackPanel Spacing="8">
-                                            <Grid>
-                                                <Border Width="100" Height="60"
+                                        <Button Classes="theme-selector"
+                                                Command="{Binding SelectThemeCommand}"
+                                                CommandParameter="Dark">
+                                            <Grid RowDefinitions="Auto,Auto">
+                                                <Border Grid.Row="0"
+                                                        Width="100" Height="60"
                                                         Background="#1F2937"
                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                         BorderThickness="1"
@@ -444,24 +467,41 @@
                                                         <Border Height="8" Width="50" Background="#374151" CornerRadius="2" HorizontalAlignment="Left" />
                                                     </StackPanel>
                                                 </Border>
-                                                <RadioButton x:Name="DarkThemeRadio"
-                                                             GroupName="Theme"
-                                                             IsChecked="True"
-                                                             Classes="theme-radio-overlay"
-                                                             HorizontalAlignment="Left"
-                                                             VerticalAlignment="Top"
-                                                             Margin="-8,-8,0,0" />
+                                                <!-- Selection indicator -->
+                                                <Border Grid.Row="0"
+                                                        Width="20" Height="20"
+                                                        CornerRadius="10"
+                                                        Background="{DynamicResource PrimaryBrush}"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Top"
+                                                        Margin="0,-6,-6,0">
+                                                    <Border.IsVisible>
+                                                        <Binding Path="SelectedTheme">
+                                                            <Binding.Converter>
+                                                                <local:StringEqualsConverter CompareValue="Dark" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </Border.IsVisible>
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="12" Height="12"
+                                                              Foreground="White" />
+                                                </Border>
+                                                <TextBlock Grid.Row="1"
+                                                           Text="Dark"
+                                                           FontSize="12"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,8,0,0"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                             </Grid>
-                                            <TextBlock Text="Dark"
-                                                       FontSize="12"
-                                                       HorizontalAlignment="Center"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        </StackPanel>
+                                        </Button>
 
                                         <!-- System Theme -->
-                                        <StackPanel Spacing="8">
-                                            <Grid>
-                                                <Border Width="100" Height="60"
+                                        <Button Classes="theme-selector"
+                                                Command="{Binding SelectThemeCommand}"
+                                                CommandParameter="System">
+                                            <Grid RowDefinitions="Auto,Auto">
+                                                <Border Grid.Row="0"
+                                                        Width="100" Height="60"
                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                         BorderThickness="1"
                                                         CornerRadius="6"
@@ -471,18 +511,33 @@
                                                         <Border Background="#1F2937" CornerRadius="0,6,6,0" HorizontalAlignment="Right" Width="50" />
                                                     </Grid>
                                                 </Border>
-                                                <RadioButton x:Name="SystemThemeRadio"
-                                                             GroupName="Theme"
-                                                             Classes="theme-radio-overlay"
-                                                             HorizontalAlignment="Left"
-                                                             VerticalAlignment="Top"
-                                                             Margin="-8,-8,0,0" />
+                                                <!-- Selection indicator -->
+                                                <Border Grid.Row="0"
+                                                        Width="20" Height="20"
+                                                        CornerRadius="10"
+                                                        Background="{DynamicResource PrimaryBrush}"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Top"
+                                                        Margin="0,-6,-6,0">
+                                                    <Border.IsVisible>
+                                                        <Binding Path="SelectedTheme">
+                                                            <Binding.Converter>
+                                                                <local:StringEqualsConverter CompareValue="System" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </Border.IsVisible>
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="12" Height="12"
+                                                              Foreground="White" />
+                                                </Border>
+                                                <TextBlock Grid.Row="1"
+                                                           Text="System"
+                                                           FontSize="12"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,8,0,0"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                             </Grid>
-                                            <TextBlock Text="System"
-                                                       FontSize="12"
-                                                       HorizontalAlignment="Center"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        </StackPanel>
+                                        </Button>
                                     </StackPanel>
                                 </StackPanel>
 
@@ -893,13 +948,18 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
 
-        <!-- Theme Radio Overlay - Shows only the radio indicator -->
-        <Style Selector="RadioButton.theme-radio-overlay">
+        <!-- Theme Selector Button -->
+        <Style Selector="Button.theme-selector">
             <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Width" Value="20" />
-            <Setter Property="Height" Value="20" />
+        </Style>
+        <Style Selector="Button.theme-selector /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.theme-selector:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
         </Style>
 
         <!-- Tab Item Styling -->

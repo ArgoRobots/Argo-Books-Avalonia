@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -347,6 +348,19 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Selects a theme.
+    /// </summary>
+    [RelayCommand]
+    private void SelectTheme(string? theme)
+    {
+        if (!string.IsNullOrEmpty(theme))
+        {
+            SelectedTheme = theme;
+            ApplyTheme(theme);
+        }
+    }
+
+    /// <summary>
     /// Selects an accent color.
     /// </summary>
     [RelayCommand]
@@ -356,6 +370,12 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             SelectedAccentColor = color.Name;
         }
+    }
+
+    private void ApplyTheme(string theme)
+    {
+        // Theme application will be handled by the ThemeService
+        ThemeService.Instance.SetTheme(theme);
     }
 
     #endregion
