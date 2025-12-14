@@ -368,7 +368,7 @@ public partial class App : Application
         // Create new company - show create company wizard
         _welcomeScreenViewModel.CreateNewCompanyRequested += (_, _) =>
         {
-            _appShellViewModel?.CreateCompanyViewModel.StartWizard();
+            _appShellViewModel?.CreateCompanyViewModel.OpenCommand.Execute(null);
         };
 
         // Open company - show file picker
