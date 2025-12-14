@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Media;
 using Avalonia.Styling;
 using ArgoBooks.Core.Services;
 
@@ -17,6 +18,18 @@ public class ThemeService : IThemeService
     public static ThemeService Instance => _instance ??= new ThemeService();
 
     private ThemeMode _currentTheme = ThemeMode.Dark;
+    private string _currentAccentColor = "Blue";
+
+    // Accent color definitions: (Primary, Hover, Light, Dark)
+    private static readonly Dictionary<string, (Color Primary, Color Hover, Color Light, Color Dark)> AccentColors = new()
+    {
+        ["Blue"] = (Color.Parse("#3B82F6"), Color.Parse("#2563EB"), Color.Parse("#DBEAFE"), Color.Parse("#1D4ED8")),
+        ["Green"] = (Color.Parse("#10B981"), Color.Parse("#059669"), Color.Parse("#D1FAE5"), Color.Parse("#047857")),
+        ["Purple"] = (Color.Parse("#8B5CF6"), Color.Parse("#7C3AED"), Color.Parse("#EDE9FE"), Color.Parse("#6D28D9")),
+        ["Pink"] = (Color.Parse("#EC4899"), Color.Parse("#DB2777"), Color.Parse("#FCE7F3"), Color.Parse("#BE185D")),
+        ["Orange"] = (Color.Parse("#F97316"), Color.Parse("#EA580C"), Color.Parse("#FFEDD5"), Color.Parse("#C2410C")),
+        ["Teal"] = (Color.Parse("#14B8A6"), Color.Parse("#0D9488"), Color.Parse("#CCFBF1"), Color.Parse("#0F766E"))
+    };
 
     /// <inheritdoc />
     public ThemeMode CurrentTheme => _currentTheme;
@@ -81,6 +94,43 @@ public class ThemeService : IThemeService
         ThemeMode.System => "System",
         _ => "System"
     };
+
+    /// <summary>
+    /// Gets or sets the current accent color name.
+    /// </summary>
+    public string CurrentAccentColor => _currentAccentColor;
+
+    /// <summary>
+    /// Sets the accent color by name.
+    /// </summary>
+    /// <param name="colorName">The color name (Blue, Green, Purple, Pink, Orange, Teal).</param>
+    public void SetAccentColor(string colorName)
+    {
+        if (!AccentColors.ContainsKey(colorName))
+            return;
+
+        _currentAccentColor = colorName;
+        ApplyAccentColor();
+    }
+
+    private void ApplyAccentColor()
+    {
+        var app = Application.Current;
+        if (app == null || !AccentColors.TryGetValue(_currentAccentColor, out var colors))
+            return;
+
+        // Update the application resources
+        app.Resources["PrimaryColor"] = colors.Primary;
+        app.Resources["PrimaryHoverColor"] = colors.Hover;
+        app.Resources["PrimaryLightColor"] = colors.Light;
+        app.Resources["PrimaryDarkColor"] = colors.Dark;
+
+        // Update the brushes
+        app.Resources["PrimaryBrush"] = new SolidColorBrush(colors.Primary);
+        app.Resources["PrimaryHoverBrush"] = new SolidColorBrush(colors.Hover);
+        app.Resources["PrimaryLightBrush"] = new SolidColorBrush(colors.Light);
+        app.Resources["PrimaryDarkBrush"] = new SolidColorBrush(colors.Dark);
+    }
 
     /// <summary>
     /// Initializes the theme service and sets up system theme detection.

@@ -547,37 +547,122 @@
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <ItemsControl ItemsSource="{Binding AccentColors}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="vm:AccentColorItem">
-                                                <Button Classes="color-button"
-                                                        Command="{Binding $parent[UserControl].((vm:SettingsModalViewModel)DataContext).SelectAccentColorCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        Margin="0,0,12,12">
-                                                    <StackPanel Spacing="6">
-                                                        <Border Width="48" Height="48"
-                                                                CornerRadius="24"
-                                                                Background="{Binding ColorHex}">
-                                                            <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                                                                      Width="20" Height="20"
-                                                                      Foreground="White"
-                                                                      IsVisible="{Binding Name, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                                                      Opacity="0" />
-                                                        </Border>
-                                                        <TextBlock Text="{Binding Name}"
-                                                                   FontSize="11"
-                                                                   HorizontalAlignment="Center"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                    </StackPanel>
-                                                </Button>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <!-- Blue -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Blue">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#3B82F6">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Blue" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Green -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Green">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#10B981">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Green" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Purple -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Purple">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#8B5CF6">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Purple" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Pink -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Pink">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#EC4899">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Pink" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Orange -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Orange">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#F97316">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Orange" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Teal -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Teal">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#14B8A6">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Teal" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </ScrollViewer>

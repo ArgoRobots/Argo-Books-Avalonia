@@ -6,11 +6,11 @@
         These colors are used throughout the application for consistent theming.
     -->
 
-    <!-- Primary Brand Colors (from mockup: #0075ff) -->
-    <Color x:Key="PrimaryColor">#0075FF</Color>
-    <Color x:Key="PrimaryLightColor">#E6F2FF</Color>
-    <Color x:Key="PrimaryDarkColor">#0056CC</Color>
-    <Color x:Key="PrimaryHoverColor">#0066E6</Color>
+    <!-- Primary Brand Colors (Blue accent - can be changed in Settings) -->
+    <Color x:Key="PrimaryColor">#3B82F6</Color>
+    <Color x:Key="PrimaryLightColor">#DBEAFE</Color>
+    <Color x:Key="PrimaryDarkColor">#1D4ED8</Color>
+    <Color x:Key="PrimaryHoverColor">#2563EB</Color>
 
     <!-- Secondary/Accent Colors (from mockup: #5c6ac4) -->
     <Color x:Key="AccentColor">#5C6AC4</Color>

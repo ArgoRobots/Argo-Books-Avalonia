@@ -10,6 +10,10 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class SettingsModalViewModel : ViewModelBase
 {
+    // Store original values for reverting on cancel
+    private string _originalTheme = "Dark";
+    private string _originalAccentColor = "Blue";
+
     [ObservableProperty]
     private bool _isOpen;
 
@@ -189,6 +193,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public SettingsModalViewModel()
     {
+        // Sync with current ThemeService values
+        _selectedTheme = ThemeService.Instance.CurrentThemeName;
+        _selectedAccentColor = ThemeService.Instance.CurrentAccentColor;
+        _originalTheme = _selectedTheme;
+        _originalAccentColor = _selectedAccentColor;
     }
 
     #region Commands
@@ -199,16 +208,30 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void Open()
     {
+        // Store original values for potential revert
+        _originalTheme = SelectedTheme;
+        _originalAccentColor = SelectedAccentColor;
         SelectedTabIndex = 0;
         IsOpen = true;
     }
 
     /// <summary>
-    /// Closes the settings modal.
+    /// Closes the settings modal and reverts unsaved changes.
     /// </summary>
     [RelayCommand]
     private void Close()
     {
+        // Revert to original values
+        if (SelectedTheme != _originalTheme)
+        {
+            SelectedTheme = _originalTheme;
+            ApplyTheme(_originalTheme);
+        }
+        if (SelectedAccentColor != _originalAccentColor)
+        {
+            SelectedAccentColor = _originalAccentColor;
+            ApplyAccentColor(_originalAccentColor);
+        }
         IsOpen = false;
     }
 
@@ -218,8 +241,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void Save()
     {
-        // TODO: Persist settings
-        Close();
+        // Update original values to current (so close doesn't revert)
+        _originalTheme = SelectedTheme;
+        _originalAccentColor = SelectedAccentColor;
+        // TODO: Persist other settings
+        IsOpen = false;
     }
 
     /// <summary>
@@ -364,11 +390,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// Selects an accent color.
     /// </summary>
     [RelayCommand]
-    private void SelectAccentColor(AccentColorItem? color)
+    private void SelectAccentColor(string? colorName)
     {
-        if (color != null)
+        if (!string.IsNullOrEmpty(colorName))
         {
-            SelectedAccentColor = color.Name;
+            SelectedAccentColor = colorName;
+            ApplyAccentColor(colorName);
         }
     }
 
@@ -376,6 +403,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         // Theme application will be handled by the ThemeService
         ThemeService.Instance.SetTheme(theme);
+    }
+
+    private void ApplyAccentColor(string colorName)
+    {
+        // Apply accent color via ThemeService
+        ThemeService.Instance.SetAccentColor(colorName);
     }
 
     #endregion
