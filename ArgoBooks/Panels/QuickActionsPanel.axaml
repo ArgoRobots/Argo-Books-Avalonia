@@ -14,8 +14,8 @@
     <Panel IsVisible="{Binding IsOpen}">
         <!-- Modal Mode: Full overlay with centered panel -->
         <Panel IsVisible="{Binding !IsDropdownMode}">
-            <!-- Backdrop -->
-            <Border Background="{DynamicResource OverlayBrush}"
+            <!-- Backdrop (lighter than modals) -->
+            <Border Background="#40000000"
                     PointerPressed="Backdrop_PointerPressed" />
 
             <!-- Centered Panel Container -->
@@ -61,11 +61,12 @@
         <!-- Shared panel content template -->
         <DataTemplate x:Key="PanelContentTemplate" x:DataType="vm:QuickActionsViewModel">
             <Grid RowDefinitions="Auto,*">
-                <!-- Search Input -->
+                <!-- Search Input (hidden in dropdown mode - uses header searchbox) -->
                 <Border Grid.Row="0"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1"
-                        Padding="16">
+                        Padding="16"
+                        IsVisible="{Binding !IsDropdownMode}">
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <!-- Search Icon -->
                         <PathIcon Grid.Column="0"

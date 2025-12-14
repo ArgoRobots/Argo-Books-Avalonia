@@ -1,7 +1,9 @@
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
+using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Controls;
 
@@ -345,5 +347,16 @@ public partial class Header : UserControl
     public Header()
     {
         InitializeComponent();
+    }
+
+    /// <summary>
+    /// Opens the quick actions panel when the search input receives focus.
+    /// </summary>
+    private void SearchInput_GotFocus(object? sender, GotFocusEventArgs e)
+    {
+        if (DataContext is HeaderViewModel vm)
+        {
+            vm.OpenQuickActionsCommand.Execute(null);
+        }
     }
 }

@@ -189,6 +189,8 @@
                 VerticalAlignment="Top"
                 Margin="328,140,0,0"
                 BoxShadow="0 4 20 0 #26000000"
+                Focusable="True"
+                KeyDown="FileMenu_KeyDown"
                 PointerEntered="RecentSubmenu_PointerEntered"
                 PointerExited="RecentSubmenu_PointerExited">
             <StackPanel Margin="0,8">
@@ -275,6 +277,10 @@
         </Style>
         <Style Selector="Button.menu-item:focus /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.menu-item:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="2,0,0,0" />
         </Style>
         <Style Selector="Button.menu-item PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
