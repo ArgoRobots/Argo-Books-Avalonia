@@ -325,7 +325,8 @@
                                     <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                               Width="16" Height="16"
                                               IsVisible="{Binding !IsVerifying}" />
-                                    <TextBlock Text="{Binding IsVerifying, Converter={x:Static BoolConverters.Or}, ConverterParameter='Verifying...|Verify Key'}" />
+                                    <TextBlock Text="Verify Key" IsVisible="{Binding !IsVerifying}" />
+                                    <TextBlock Text="Verifying..." IsVisible="{Binding IsVerifying}" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
