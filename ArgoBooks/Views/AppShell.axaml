@@ -97,5 +97,8 @@
 
         <!-- Switch Account Modal -->
         <modals:SwitchAccountModal DataContext="{Binding SwitchAccountModalViewModel}" />
+
+        <!-- Login Modal -->
+        <modals:LoginModal DataContext="{Binding LoginModalViewModel}" />
     </Panel>
 </UserControl>

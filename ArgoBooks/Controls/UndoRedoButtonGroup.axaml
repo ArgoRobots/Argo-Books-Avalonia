@@ -12,7 +12,7 @@
     </Design.DataContext>
 
     <Panel>
-        <StackPanel Orientation="Horizontal" Spacing="8">
+        <StackPanel Orientation="Horizontal" Spacing="6">
             <!-- Undo Button Group -->
             <Grid x:Name="UndoButtonGroup">
                 <Grid.ColumnDefinitions>
@@ -29,7 +29,7 @@
                         Command="{Binding UndoCommand}"
                         IsEnabled="{Binding CanUndo}">
                     <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
-                              Width="18" Height="18" />
+                              Width="15" Height="15" />
                 </Button>
 
                 <!-- Undo Dropdown Button -->
@@ -40,7 +40,7 @@
                         Click="UndoDropdownButton_Click"
                         IsEnabled="{Binding CanUndo}">
                     <PathIcon Data="M7 10l5 5 5-5z"
-                              Width="12" Height="12" />
+                              Width="10" Height="10" />
                 </Button>
             </Grid>
 
@@ -60,7 +60,7 @@
                         Command="{Binding RedoCommand}"
                         IsEnabled="{Binding CanRedo}">
                     <PathIcon Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
-                              Width="18" Height="18" />
+                              Width="15" Height="15" />
                 </Button>
 
                 <!-- Redo Dropdown Button -->
@@ -71,7 +71,7 @@
                         Click="RedoDropdownButton_Click"
                         IsEnabled="{Binding CanRedo}">
                     <PathIcon Data="M7 10l5 5 5-5z"
-                              Width="12" Height="12" />
+                              Width="10" Height="10" />
                 </Button>
             </Grid>
         </StackPanel>
@@ -84,29 +84,20 @@
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="8"
+                    CornerRadius="6"
                     BoxShadow="0 4 16 0 #30000000"
-                    MinWidth="220"
-                    MaxWidth="300">
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <Border Grid.Row="0"
-                            Padding="12,10"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <TextBlock Text="Undo History"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                    </Border>
-                    <ScrollViewer Grid.Row="1"
+                    MinWidth="180"
+                    MaxWidth="260">
+                <Grid RowDefinitions="*,Auto">
+                    <ScrollViewer Grid.Row="0"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
-                                  MaxHeight="200">
+                                  MaxHeight="180">
                         <ItemsControl x:Name="UndoHistoryList" ItemsSource="{Binding UndoHistory}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:UndoRedoHistoryItem">
                                     <Border x:Name="ItemBorder"
-                                            Padding="12,8"
+                                            Padding="10,6"
                                             Background="Transparent"
                                             Cursor="Hand"
                                             PointerEntered="UndoItem_PointerEntered"
@@ -116,12 +107,12 @@
                                         <Grid ColumnDefinitions="Auto,*">
                                             <PathIcon Grid.Column="0"
                                                       Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
-                                                      Width="14" Height="14"
+                                                      Width="12" Height="12"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,10,0" />
+                                                      Margin="0,0,8,0" />
                                             <TextBlock Grid.Column="1"
                                                        Text="{Binding Description}"
-                                                       FontSize="13"
+                                                       FontSize="12"
                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis" />
                                         </Grid>
@@ -130,14 +121,14 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
-                    <Border Grid.Row="2"
-                            Padding="12,8"
+                    <Border Grid.Row="1"
+                            Padding="10,6"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0"
                             Background="{DynamicResource SurfaceAltBrush}">
                         <TextBlock x:Name="UndoCountLabel"
                                    Text="Hover to select actions"
-                                   FontSize="12"
+                                   FontSize="11"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    HorizontalAlignment="Center" />
                     </Border>
@@ -153,29 +144,20 @@
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="8"
+                    CornerRadius="6"
                     BoxShadow="0 4 16 0 #30000000"
-                    MinWidth="220"
-                    MaxWidth="300">
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <Border Grid.Row="0"
-                            Padding="12,10"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <TextBlock Text="Redo History"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                    </Border>
-                    <ScrollViewer Grid.Row="1"
+                    MinWidth="180"
+                    MaxWidth="260">
+                <Grid RowDefinitions="*,Auto">
+                    <ScrollViewer Grid.Row="0"
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
-                                  MaxHeight="200">
+                                  MaxHeight="180">
                         <ItemsControl x:Name="RedoHistoryList" ItemsSource="{Binding RedoHistory}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:UndoRedoHistoryItem">
                                     <Border x:Name="ItemBorder"
-                                            Padding="12,8"
+                                            Padding="10,6"
                                             Background="Transparent"
                                             Cursor="Hand"
                                             PointerEntered="RedoItem_PointerEntered"
@@ -185,12 +167,12 @@
                                         <Grid ColumnDefinitions="Auto,*">
                                             <PathIcon Grid.Column="0"
                                                       Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
-                                                      Width="14" Height="14"
+                                                      Width="12" Height="12"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,10,0" />
+                                                      Margin="0,0,8,0" />
                                             <TextBlock Grid.Column="1"
                                                        Text="{Binding Description}"
-                                                       FontSize="13"
+                                                       FontSize="12"
                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis" />
                                         </Grid>
@@ -199,14 +181,14 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
-                    <Border Grid.Row="2"
-                            Padding="12,8"
+                    <Border Grid.Row="1"
+                            Padding="10,6"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0"
                             Background="{DynamicResource SurfaceAltBrush}">
                         <TextBlock x:Name="RedoCountLabel"
                                    Text="Hover to select actions"
-                                   FontSize="12"
+                                   FontSize="11"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    HorizontalAlignment="Center" />
                     </Border>
@@ -221,8 +203,8 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Width" Value="42" />
-            <Setter Property="Height" Value="36" />
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="28" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="CornerRadius" Value="4,0,0,4" />
             <Setter Property="Cursor" Value="Hand" />
@@ -252,8 +234,8 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="0,1,1,1" />
-            <Setter Property="Width" Value="22" />
-            <Setter Property="Height" Value="36" />
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="28" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="CornerRadius" Value="0,4,4,0" />
             <Setter Property="Cursor" Value="Hand" />

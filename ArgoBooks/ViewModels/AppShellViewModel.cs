@@ -94,6 +94,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public SwitchAccountModalViewModel SwitchAccountModalViewModel { get; }
 
+    /// <summary>
+    /// Gets the login modal view model.
+    /// </summary>
+    public LoginModalViewModel LoginModalViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -170,6 +175,15 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create switch account modal
         SwitchAccountModalViewModel = new SwitchAccountModalViewModel();
+
+        // Create login modal
+        LoginModalViewModel = new LoginModalViewModel();
+
+        // Wire up switch account modal's account selected to open login modal
+        SwitchAccountModalViewModel.AccountSelected += (_, account) => LoginModalViewModel.OpenForAccount(account);
+
+        // Wire up switch account modal's create account to open company wizard
+        SwitchAccountModalViewModel.CreateAccountRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
 
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;

@@ -29,7 +29,7 @@
                 BorderThickness="1"
                 CornerRadius="12"
                 Width="480"
-                MaxHeight="600"
+                MaxHeight="550"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 BoxShadow="0 8 32 0 #40000000"
@@ -47,7 +47,7 @@
                 </Transitions>
             </Border.Transitions>
 
-            <Grid RowDefinitions="Auto,Auto,*,Auto">
+            <Grid RowDefinitions="Auto,Auto,*">
                 <!-- Header -->
                 <Border Grid.Row="0"
                         Padding="24,20"
@@ -59,7 +59,7 @@
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Select an account to switch to"
+                            <TextBlock Text="Select an account to sign in"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                         </StackPanel>
@@ -107,8 +107,6 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:AccountItem">
                                     <Button Classes="account-item"
-                                            Classes.selected="{Binding IsSelected}"
-                                            Classes.current="{Binding IsCurrent}"
                                             Command="{Binding $parent[ItemsControl].((vm:SwitchAccountModalViewModel)DataContext).SelectAccountCommand}"
                                             CommandParameter="{Binding}">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
@@ -133,35 +131,21 @@
 
                                             <!-- Account Info -->
                                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <TextBlock Text="{Binding Name}"
-                                                               FontSize="14"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <Border IsVisible="{Binding IsCurrent}"
-                                                            Background="{DynamicResource PrimaryIconBgBrush}"
-                                                            CornerRadius="4"
-                                                            Padding="6,2">
-                                                        <TextBlock Text="Current"
-                                                                   FontSize="11"
-                                                                   Foreground="{DynamicResource PrimaryBrush}" />
-                                                    </Border>
-                                                </StackPanel>
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <TextBlock Text="{Binding Description}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                             </StackPanel>
 
-                                            <!-- Selection Indicator -->
-                                            <Panel Grid.Column="2"
-                                                   VerticalAlignment="Center"
-                                                   IsVisible="{Binding IsSelected}">
-                                                <Ellipse Width="20" Height="20"
-                                                         Fill="{DynamicResource PrimaryBrush}" />
-                                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                                                          Width="12" Height="12"
-                                                          Foreground="White" />
-                                            </Panel>
+                                            <!-- Arrow Indicator -->
+                                            <PathIcon Grid.Column="2"
+                                                      Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                                      Width="18" Height="18"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      VerticalAlignment="Center" />
                                         </Grid>
                                     </Button>
                                 </DataTemplate>
@@ -195,24 +179,6 @@
                         </Button>
                     </StackPanel>
                 </ScrollViewer>
-
-                <!-- Footer -->
-                <Border Grid.Row="3"
-                        Padding="24,16"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="0,1,0,0">
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Right"
-                                Spacing="12">
-                        <Button Classes="secondary-button"
-                                Content="Cancel"
-                                Command="{Binding CloseCommand}" />
-                        <Button Classes="primary-button"
-                                Content="Switch Account"
-                                Command="{Binding SwitchToAccountCommand}"
-                                IsEnabled="{Binding SelectedAccount, Converter={x:Static ObjectConverters.IsNotNull}}" />
-                    </StackPanel>
-                </Border>
             </Grid>
         </Border>
     </Panel>
@@ -269,12 +235,8 @@
         <Style Selector="Button.account-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
-        <Style Selector="Button.account-item.selected">
+        <Style Selector="Button.account-item:pointerover">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="2" />
-        </Style>
-        <Style Selector="Button.account-item.selected /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
         </Style>
 
         <!-- Add Account Button -->
@@ -296,46 +258,6 @@
         </Style>
         <Style Selector="Button.add-account:pointerover">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-
-        <!-- Secondary Button -->
-        <Style Selector="Button.secondary-button">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-        </Style>
-        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-
-        <!-- Primary Button -->
-        <Style Selector="Button.primary-button">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
-        </Style>
-        <Style Selector="Button.primary-button:disabled /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-        </Style>
-        <Style Selector="Button.primary-button:disabled">
-            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

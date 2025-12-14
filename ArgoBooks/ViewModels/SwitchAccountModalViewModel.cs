@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -36,6 +37,8 @@ public partial class AccountItem : ObservableObject
 /// </summary>
 public partial class SwitchAccountModalViewModel : ViewModelBase
 {
+    private readonly List<AccountItem> _allAccounts = new();
+
     [ObservableProperty]
     private bool _isOpen;
 
@@ -46,7 +49,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
     private AccountItem? _selectedAccount;
 
     /// <summary>
-    /// Available accounts to switch between.
+    /// Filtered accounts to display (excludes current account).
     /// </summary>
     public ObservableCollection<AccountItem> Accounts { get; } = new();
 
@@ -56,7 +59,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
     public SwitchAccountModalViewModel()
     {
         // Add sample accounts for design-time and testing
-        Accounts.Add(new AccountItem
+        _allAccounts.Add(new AccountItem
         {
             Id = "1",
             Name = "Acme Corporation",
@@ -65,7 +68,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
             Color = "#3B82F6",
             IsCurrent = true
         });
-        Accounts.Add(new AccountItem
+        _allAccounts.Add(new AccountItem
         {
             Id = "2",
             Name = "Smith Consulting LLC",
@@ -73,7 +76,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
             Initials = "SC",
             Color = "#10B981"
         });
-        Accounts.Add(new AccountItem
+        _allAccounts.Add(new AccountItem
         {
             Id = "3",
             Name = "Personal Finances",
@@ -81,7 +84,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
             Initials = "PF",
             Color = "#8B5CF6"
         });
-        Accounts.Add(new AccountItem
+        _allAccounts.Add(new AccountItem
         {
             Id = "4",
             Name = "Johnson & Partners",
@@ -89,6 +92,38 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
             Initials = "JP",
             Color = "#F97316"
         });
+
+        RefreshFilteredAccounts();
+    }
+
+    partial void OnSearchQueryChanged(string value)
+    {
+        RefreshFilteredAccounts();
+    }
+
+    private void RefreshFilteredAccounts()
+    {
+        Accounts.Clear();
+
+        var query = SearchQuery?.Trim() ?? string.Empty;
+
+        // Filter and score accounts
+        var filteredAccounts = _allAccounts
+            .Where(a => !a.IsCurrent) // Exclude current account
+            .Select(a => new
+            {
+                Account = a,
+                NameScore = LevenshteinDistance.ComputeSearchScore(query, a.Name),
+                DescScore = LevenshteinDistance.ComputeSearchScore(query, a.Description)
+            })
+            .Where(x => string.IsNullOrEmpty(query) || x.NameScore > 0 || x.DescScore > 0)
+            .OrderByDescending(x => Math.Max(x.NameScore, x.DescScore))
+            .Select(x => x.Account);
+
+        foreach (var account in filteredAccounts)
+        {
+            Accounts.Add(account);
+        }
     }
 
     #region Commands
@@ -100,6 +135,8 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
     private void Open()
     {
         SearchQuery = string.Empty;
+        SelectedAccount = null;
+        RefreshFilteredAccounts();
         IsOpen = true;
     }
 
@@ -113,38 +150,16 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Selects an account.
+    /// Selects an account and requests login.
     /// </summary>
     [RelayCommand]
     private void SelectAccount(AccountItem? account)
     {
-        if (account == null) return;
+        if (account == null || account.IsCurrent) return;
 
-        // Clear previous selection
-        foreach (var acc in Accounts)
-        {
-            acc.IsSelected = false;
-        }
-
-        account.IsSelected = true;
         SelectedAccount = account;
-    }
-
-    /// <summary>
-    /// Switches to the selected account.
-    /// </summary>
-    [RelayCommand]
-    private void SwitchToAccount()
-    {
-        if (SelectedAccount == null) return;
-
-        // Update current account
-        foreach (var acc in Accounts)
-        {
-            acc.IsCurrent = acc.Id == SelectedAccount.Id;
-        }
-
         Close();
+        AccountSelected?.Invoke(this, account);
     }
 
     /// <summary>
@@ -153,9 +168,23 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
     [RelayCommand]
     private void CreateAccount()
     {
-        // TODO: Open create company wizard
         Close();
+        CreateAccountRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    #endregion
+
+    #region Events
+
+    /// <summary>
+    /// Raised when an account is selected (should open login modal).
+    /// </summary>
+    public event EventHandler<AccountItem>? AccountSelected;
+
+    /// <summary>
+    /// Raised when create new account is requested.
+    /// </summary>
+    public event EventHandler? CreateAccountRequested;
 
     #endregion
 }
