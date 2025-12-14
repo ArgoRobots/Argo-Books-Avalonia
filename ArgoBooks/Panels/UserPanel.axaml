@@ -1,0 +1,192 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="260" d:DesignHeight="300"
+             x:Class="ArgoBooks.Panels.UserPanel"
+             x:DataType="vm:UserPanelViewModel">
+
+    <Design.DataContext>
+        <vm:UserPanelViewModel />
+    </Design.DataContext>
+
+    <Panel IsVisible="{Binding IsOpen}">
+        <!-- Transparent backdrop for click-away -->
+        <Border Background="Transparent"
+                PointerPressed="Backdrop_PointerPressed" />
+
+        <!-- User Panel Container with animation -->
+        <Border x:Name="UserPanelBorder"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Width="260"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,60,20,0"
+                BoxShadow="0 4 20 0 #26000000"
+                Focusable="True"
+                KeyDown="UserPanel_KeyDown"
+                Opacity="0"
+                RenderTransformOrigin="1,0">
+            <Border.RenderTransform>
+                <TranslateTransform Y="-8" />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
+            <StackPanel>
+                <!-- User Profile Header -->
+                <Border Padding="16,16,20,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <!-- Avatar -->
+                        <Border Grid.Column="0"
+                                Width="44" Height="44"
+                                CornerRadius="22"
+                                Background="{DynamicResource PrimaryBrush}"
+                                ClipToBounds="True"
+                                Margin="0,0,12,0">
+                            <Panel>
+                                <!-- User Initials -->
+                                <TextBlock Text="{Binding UserInitials}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !HasUserAvatar}" />
+                                <!-- User Avatar Image -->
+                                <Image Source="{Binding UserAvatarSource}"
+                                       Stretch="UniformToFill"
+                                       IsVisible="{Binding HasUserAvatar}" />
+                            </Panel>
+                        </Border>
+
+                        <!-- User Info -->
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="{Binding UserDisplayName}"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding UserEmail}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextTrimming="CharacterEllipsis"
+                                       IsVisible="{Binding UserEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Menu Items -->
+                <StackPanel Margin="0,8,0,8">
+                    <!-- My Profile -->
+                    <Button x:Name="MenuItem0"
+                            Classes="menu-item"
+                            Command="{Binding OpenProfileCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <PathIcon Grid.Column="0"
+                                      Data="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                                      Width="18" Height="18"
+                                      Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="My Profile" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+
+                    <!-- Settings -->
+                    <Button x:Name="MenuItem1"
+                            Classes="menu-item"
+                            Command="{Binding OpenSettingsCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <PathIcon Grid.Column="0"
+                                      Data="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                                      Width="18" Height="18"
+                                      Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="Settings" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+
+                    <!-- Divider -->
+                    <Border Height="1"
+                            Background="{DynamicResource BorderBrush}"
+                            Margin="0,8" />
+
+                    <!-- Switch Account -->
+                    <Button x:Name="MenuItem2"
+                            Classes="menu-item"
+                            Command="{Binding SwitchAccountCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <PathIcon Grid.Column="0"
+                                      Data="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"
+                                      Width="18" Height="18"
+                                      Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="Switch Account" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+
+                    <!-- Log Out -->
+                    <Button x:Name="MenuItem3"
+                            Classes="menu-item danger"
+                            Command="{Binding SignOutCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <PathIcon Grid.Column="0"
+                                      Data="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
+                                      Width="18" Height="18"
+                                      Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="Log Out" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Menu Item Style -->
+        <Style Selector="Button.menu-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.menu-item /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.menu-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.menu-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Button.menu-item:focus /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.menu-item:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="2,0,0,0" />
+        </Style>
+        <Style Selector="Button.menu-item PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Danger Menu Item Style -->
+        <Style Selector="Button.menu-item.danger">
+            <Setter Property="Foreground" Value="#dc2626" />
+        </Style>
+        <Style Selector="Button.menu-item.danger PathIcon">
+            <Setter Property="Foreground" Value="#dc2626" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

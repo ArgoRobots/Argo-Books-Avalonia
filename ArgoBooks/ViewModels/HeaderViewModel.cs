@@ -117,6 +117,20 @@ public partial class HeaderViewModel : ViewModelBase
 
     #endregion
 
+    #region Undo/Redo
+
+    /// <summary>
+    /// The undo/redo button group view model.
+    /// </summary>
+    public UndoRedoButtonGroupViewModel UndoRedoViewModel { get; } = new();
+
+    /// <summary>
+    /// The shared undo/redo manager for the application.
+    /// </summary>
+    public static Services.UndoRedoManager SharedUndoRedoManager { get; } = new();
+
+    #endregion
+
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
@@ -138,6 +152,45 @@ public partial class HeaderViewModel : ViewModelBase
     public HeaderViewModel(INavigationService? navigationService)
     {
         _navigationService = navigationService;
+
+        // Initialize undo/redo with the shared manager
+        UndoRedoViewModel.SetUndoRedoManager(SharedUndoRedoManager);
+
+        // Add test data for undo/redo testing
+        AddTestUndoRedoData();
+    }
+
+    /// <summary>
+    /// Adds test data to the undo/redo stacks for testing purposes.
+    /// </summary>
+    private void AddTestUndoRedoData()
+    {
+        // Add some test actions to the undo stack
+        SharedUndoRedoManager.RecordAction(new TestAction("Create Invoice #1001"));
+        SharedUndoRedoManager.RecordAction(new TestAction("Add Customer: John Smith"));
+        SharedUndoRedoManager.RecordAction(new TestAction("Edit Product Price"));
+        SharedUndoRedoManager.RecordAction(new TestAction("Delete Payment Record"));
+        SharedUndoRedoManager.RecordAction(new TestAction("Update Tax Rate"));
+
+        // Undo a couple to have items in the redo stack
+        SharedUndoRedoManager.Undo();
+        SharedUndoRedoManager.Undo();
+    }
+
+    /// <summary>
+    /// Simple test action for undo/redo testing.
+    /// </summary>
+    private class TestAction : Services.IUndoableAction
+    {
+        public string Description { get; }
+
+        public TestAction(string description)
+        {
+            Description = description;
+        }
+
+        public void Undo() { /* Test action - no actual operation */ }
+        public void Redo() { /* Test action - no actual operation */ }
     }
 
     #region Commands
@@ -183,7 +236,16 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenQuickActions()
     {
-        // TODO: Show quick actions modal/flyout
+        OpenQuickActionsRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Opens the file menu.
+    /// </summary>
+    [RelayCommand]
+    private void OpenFileMenu()
+    {
+        OpenFileMenuRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -192,8 +254,7 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenHelp()
     {
-        // TODO: Show help modal or navigate to help page
-        _navigationService?.NavigateTo("Help");
+        OpenHelpRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -202,10 +263,7 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenNotifications()
     {
-        // TODO: Show notifications flyout
-
-        // Mark all as read when panel is opened
-        MarkAllNotificationsAsRead();
+        OpenNotificationsRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -223,11 +281,7 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenUserMenu()
     {
-        // TODO: Show user menu flyout with options like:
-        // - Profile
-        // - Account Settings
-        // - Switch Company
-        // - Sign Out
+        OpenUserMenuRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -237,6 +291,100 @@ public partial class HeaderViewModel : ViewModelBase
     private void SignOut()
     {
         // TODO: Implement sign out logic
+    }
+
+    /// <summary>
+    /// Toggles the sidebar collapsed state.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleSidebar()
+    {
+        // This will be connected to the AppShell to toggle sidebar
+        ToggleSidebarRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Performs an undo operation.
+    /// </summary>
+    [RelayCommand]
+    private void Undo()
+    {
+        // TODO: Implement undo logic
+    }
+
+    /// <summary>
+    /// Performs a redo operation.
+    /// </summary>
+    [RelayCommand]
+    private void Redo()
+    {
+        // TODO: Implement redo logic
+    }
+
+    /// <summary>
+    /// Saves the current company file.
+    /// </summary>
+    [RelayCommand]
+    private void Save()
+    {
+        // TODO: Implement save logic
+    }
+
+    /// <summary>
+    /// Opens the upgrade dialog.
+    /// </summary>
+    [RelayCommand]
+    private void OpenUpgrade()
+    {
+        OpenUpgradeRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Event raised when sidebar toggle is requested.
+    /// </summary>
+    public event EventHandler? ToggleSidebarRequested;
+
+    /// <summary>
+    /// Event raised when quick actions panel should be opened.
+    /// </summary>
+    public event EventHandler? OpenQuickActionsRequested;
+
+    /// <summary>
+    /// Event raised when notifications panel should be opened.
+    /// </summary>
+    public event EventHandler? OpenNotificationsRequested;
+
+    /// <summary>
+    /// Event raised when user menu panel should be opened.
+    /// </summary>
+    public event EventHandler? OpenUserMenuRequested;
+
+    /// <summary>
+    /// Event raised when file menu should be opened.
+    /// </summary>
+    public event EventHandler? OpenFileMenuRequested;
+
+    /// <summary>
+    /// Event raised when help panel should be opened.
+    /// </summary>
+    public event EventHandler? OpenHelpRequested;
+
+    /// <summary>
+    /// Event raised when upgrade modal should be opened.
+    /// </summary>
+    public event EventHandler? OpenUpgradeRequested;
+
+    /// <summary>
+    /// Event raised when a search key is pressed (for Quick Actions navigation).
+    /// </summary>
+    public event EventHandler<SearchKeyAction>? SearchKeyPressed;
+
+    /// <summary>
+    /// Raises the SearchKeyPressed event.
+    /// </summary>
+    public void OnSearchKeyPressed(SearchKeyAction action)
+    {
+        SearchKeyPressed?.Invoke(this, action);
     }
 
     #endregion
@@ -489,4 +637,30 @@ public enum NotificationType
     /// System/update notification.
     /// </summary>
     System
+}
+
+/// <summary>
+/// Keyboard actions for search navigation.
+/// </summary>
+public enum SearchKeyAction
+{
+    /// <summary>
+    /// Escape key pressed - close panel.
+    /// </summary>
+    Escape,
+
+    /// <summary>
+    /// Up arrow key pressed - move selection up.
+    /// </summary>
+    Up,
+
+    /// <summary>
+    /// Down arrow key pressed - move selection down.
+    /// </summary>
+    Down,
+
+    /// <summary>
+    /// Enter key pressed - execute selection.
+    /// </summary>
+    Enter
 }

@@ -1,7 +1,9 @@
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
+using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Controls;
 
@@ -345,5 +347,52 @@ public partial class Header : UserControl
     public Header()
     {
         InitializeComponent();
+    }
+
+    /// <summary>
+    /// Opens the quick actions panel when the search input receives focus.
+    /// </summary>
+    private void SearchInput_GotFocus(object? sender, GotFocusEventArgs e)
+    {
+        if (DataContext is HeaderViewModel vm)
+        {
+            vm.OpenQuickActionsCommand.Execute(null);
+        }
+    }
+
+    /// <summary>
+    /// Handles keyboard navigation in the search input for Quick Actions panel.
+    /// </summary>
+    private void SearchInput_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is HeaderViewModel vm)
+        {
+            switch (e.Key)
+            {
+                case Key.Escape:
+                    vm.OnSearchKeyPressed(SearchKeyAction.Escape);
+                    // Clear focus from the search box
+                    if (sender is TextBox textBox)
+                    {
+                        textBox.Text = string.Empty;
+                        // Move focus away
+                        this.Focus();
+                    }
+                    e.Handled = true;
+                    break;
+                case Key.Up:
+                    vm.OnSearchKeyPressed(SearchKeyAction.Up);
+                    e.Handled = true;
+                    break;
+                case Key.Down:
+                    vm.OnSearchKeyPressed(SearchKeyAction.Down);
+                    e.Handled = true;
+                    break;
+                case Key.Enter:
+                    vm.OnSearchKeyPressed(SearchKeyAction.Enter);
+                    e.Handled = true;
+                    break;
+            }
+        }
     }
 }

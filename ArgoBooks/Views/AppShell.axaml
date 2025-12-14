@@ -4,38 +4,101 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:panels="using:ArgoBooks.Panels"
+             xmlns:modals="using:ArgoBooks.Modals"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.AppShell"
              x:DataType="vm:AppShellViewModel"
-             Background="{DynamicResource BackgroundBrush}">
+             Background="{DynamicResource BackgroundBrush}"
+             Focusable="True">
 
     <Design.DataContext>
         <vm:AppShellViewModel />
     </Design.DataContext>
 
-    <Grid ColumnDefinitions="Auto,*">
-        <!-- Sidebar -->
-        <controls:Sidebar Grid.Column="0"
-                          DataContext="{Binding SidebarViewModel}"
-                          Width="{Binding Width}" />
+    <Panel>
+        <!-- Main Layout -->
+        <Grid ColumnDefinitions="Auto,*">
+            <!-- Sidebar with smooth width transition -->
+            <controls:Sidebar Grid.Column="0"
+                              DataContext="{Binding SidebarViewModel}"
+                              Width="{Binding Width}">
+                <controls:Sidebar.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    </Transitions>
+                </controls:Sidebar.Transitions>
+            </controls:Sidebar>
 
-        <!-- Main Content Area -->
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+            <!-- Main Content Area -->
+            <Panel Grid.Column="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <controls:Header Grid.Row="0"
-                             DataContext="{Binding HeaderViewModel}" />
+                    <!-- Header -->
+                    <controls:Header Grid.Row="0"
+                                     DataContext="{Binding HeaderViewModel}" />
 
-            <!-- Page Content -->
-            <Border Grid.Row="1"
-                    Background="{DynamicResource BackgroundSecondaryBrush}">
-                <ContentControl Content="{Binding CurrentPage}"
-                                Margin="24" />
-            </Border>
+                    <!-- Page Content (from mockup: padding 30px, background #f5f7fa) -->
+                    <Border Grid.Row="1"
+                            Background="{DynamicResource BackgroundSecondaryBrush}">
+                        <ContentControl Content="{Binding CurrentPage}"
+                                        Margin="30" />
+                    </Border>
+                </Grid>
+
+                <!-- Panels centered in main content area -->
+
+                <!-- Quick Actions Panel -->
+                <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
+
+                <!-- File Menu Panel -->
+                <panels:FileMenuPanel DataContext="{Binding FileMenuPanelViewModel}" />
+
+                <!-- Notification Panel -->
+                <panels:NotificationPanel DataContext="{Binding NotificationPanelViewModel}" />
+
+                <!-- User Panel -->
+                <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
+
+                <!-- Help Panel -->
+                <panels:HelpPanel DataContext="{Binding HelpPanelViewModel}" />
+            </Panel>
         </Grid>
-    </Grid>
+
+        <!-- Panels/Modals at root level (need full window coverage) -->
+
+        <!-- Company Switcher Panel (positioned relative to sidebar) -->
+        <panels:CompanySwitcherPanel DataContext="{Binding CompanySwitcherPanelViewModel}" />
+
+        <!-- Profile Modal -->
+        <modals:ProfileModal DataContext="{Binding ProfileModalViewModel}" />
+
+        <!-- Upgrade Modal -->
+        <modals:UpgradeModal DataContext="{Binding UpgradeModalViewModel}" />
+
+        <!-- Create Company Wizard -->
+        <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}" />
+
+        <!-- Settings Modal -->
+        <modals:SettingsModal DataContext="{Binding SettingsModalViewModel}" />
+
+        <!-- Check for Update Modal -->
+        <modals:CheckForUpdateModal DataContext="{Binding CheckForUpdateModalViewModel}" />
+
+        <!-- Import Modal -->
+        <modals:ImportModal DataContext="{Binding ImportModalViewModel}" />
+
+        <!-- Export As Modal -->
+        <modals:ExportAsModal DataContext="{Binding ExportAsModalViewModel}" />
+
+        <!-- Switch Account Modal -->
+        <modals:SwitchAccountModal DataContext="{Binding SwitchAccountModalViewModel}" />
+
+        <!-- Login Modal -->
+        <modals:LoginModal DataContext="{Binding LoginModalViewModel}" />
+    </Panel>
 </UserControl>

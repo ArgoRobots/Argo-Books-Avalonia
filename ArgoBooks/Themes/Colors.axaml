@@ -6,33 +6,34 @@
         These colors are used throughout the application for consistent theming.
     -->
 
-    <!-- Primary Brand Colors -->
-    <Color x:Key="PrimaryColor">#2563EB</Color>
-    <Color x:Key="PrimaryLightColor">#3B82F6</Color>
+    <!-- Primary Brand Colors (Blue accent - can be changed in Settings) -->
+    <Color x:Key="PrimaryColor">#3B82F6</Color>
+    <Color x:Key="PrimaryLightColor">#DBEAFE</Color>
     <Color x:Key="PrimaryDarkColor">#1D4ED8</Color>
+    <Color x:Key="PrimaryHoverColor">#2563EB</Color>
 
-    <!-- Secondary/Accent Colors -->
-    <Color x:Key="AccentColor">#8B5CF6</Color>
+    <!-- Secondary/Accent Colors (from mockup: #5c6ac4) -->
+    <Color x:Key="AccentColor">#5C6AC4</Color>
     <Color x:Key="AccentLightColor">#A78BFA</Color>
     <Color x:Key="AccentDarkColor">#7C3AED</Color>
 
-    <!-- Semantic Colors - Success -->
-    <Color x:Key="SuccessColor">#10B981</Color>
+    <!-- Semantic Colors - Success (from mockup: #28a745) -->
+    <Color x:Key="SuccessColor">#28A745</Color>
     <Color x:Key="SuccessLightColor">#34D399</Color>
     <Color x:Key="SuccessDarkColor">#059669</Color>
 
-    <!-- Semantic Colors - Warning -->
-    <Color x:Key="WarningColor">#F59E0B</Color>
+    <!-- Semantic Colors - Warning (from mockup: #ffc107) -->
+    <Color x:Key="WarningColor">#FFC107</Color>
     <Color x:Key="WarningLightColor">#FBBF24</Color>
     <Color x:Key="WarningDarkColor">#D97706</Color>
 
-    <!-- Semantic Colors - Error/Danger -->
-    <Color x:Key="ErrorColor">#EF4444</Color>
+    <!-- Semantic Colors - Error/Danger (from mockup: #dc3545) -->
+    <Color x:Key="ErrorColor">#DC3545</Color>
     <Color x:Key="ErrorLightColor">#F87171</Color>
     <Color x:Key="ErrorDarkColor">#DC2626</Color>
 
-    <!-- Semantic Colors - Info -->
-    <Color x:Key="InfoColor">#06B6D4</Color>
+    <!-- Semantic Colors - Info (from mockup: #17a2b8) -->
+    <Color x:Key="InfoColor">#17A2B8</Color>
     <Color x:Key="InfoLightColor">#22D3EE</Color>
     <Color x:Key="InfoDarkColor">#0891B2</Color>
 
@@ -50,6 +51,7 @@
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}" />
     <SolidColorBrush x:Key="PrimaryLightBrush" Color="{StaticResource PrimaryLightColor}" />
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDarkColor}" />
+    <SolidColorBrush x:Key="PrimaryHoverBrush" Color="{StaticResource PrimaryHoverColor}" />
 
     <!-- Solid Color Brushes - Accent -->
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />

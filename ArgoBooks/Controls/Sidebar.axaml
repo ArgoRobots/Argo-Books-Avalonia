@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:vm="using:ArgoBooks.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="240" d:DesignHeight="800"
+             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="800"
              x:Class="ArgoBooks.Controls.Sidebar"
              x:DataType="vm:SidebarViewModel"
              Background="{DynamicResource SidebarBackgroundBrush}">
@@ -13,149 +13,170 @@
         <vm:SidebarViewModel />
     </Design.DataContext>
 
-    <Border BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="0,0,1,0">
-        <DockPanel>
-            <!-- Header -->
-            <Border DockPanel.Dock="Top"
-                    Padding="12"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="0,0,0,1">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <!-- Logo/Company -->
-                    <StackPanel Grid.Column="0"
-                                Orientation="Horizontal"
-                                Spacing="12"
-                                IsVisible="{Binding !IsCollapsed}">
-                        <Border Width="36" Height="36"
-                                CornerRadius="{StaticResource RadiusSm}"
-                                Background="{DynamicResource PrimaryBrush}"
+    <DockPanel>
+        <!-- Header: Logo and Company Name -->
+        <Border DockPanel.Dock="Top"
+                Padding="15"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,0">
+            <Panel>
+                <!-- Expanded Header with Button -->
+                <Button Classes="sidebar-header"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        IsVisible="{Binding !IsCollapsed}"
+                        Command="{Binding OpenCompanySwitcherCommand}">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Logo (40px square with gradient) -->
+                        <Border Grid.Column="0"
+                                Width="40" Height="40"
+                                CornerRadius="8"
                                 ClipToBounds="True">
-                            <!-- Company Logo or Default -->
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                                    <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
                             <Panel>
                                 <Image Source="{Binding CompanyLogo}"
                                        Stretch="UniformToFill"
                                        IsVisible="{Binding HasCompanyLogo}" />
                                 <TextBlock Text="{Binding CompanyInitial}"
-                                           FontSize="{StaticResource FontSizeLg}"
+                                           FontSize="18"
                                            FontWeight="Bold"
-                                           Foreground="{DynamicResource TextInverseBrush}"
+                                           Foreground="White"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
                                            IsVisible="{Binding !HasCompanyLogo}" />
                             </Panel>
                         </Border>
-                        <StackPanel VerticalAlignment="Center" Spacing="2">
-                            <TextBlock Text="{Binding CompanyName}"
-                                       FontSize="{StaticResource FontSizeSm}"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource SidebarTextBrush}"
-                                       MaxWidth="130"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding UserRole}"
-                                       FontSize="{StaticResource FontSizeXs}"
-                                       Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                       IsVisible="{Binding UserRole, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                        </StackPanel>
-                    </StackPanel>
 
-                    <!-- Collapsed Logo -->
-                    <Border Grid.Column="0"
-                            Width="36" Height="36"
-                            CornerRadius="{StaticResource RadiusSm}"
-                            Background="{DynamicResource PrimaryBrush}"
-                            IsVisible="{Binding IsCollapsed}"
-                            ToolTip.Tip="{Binding CompanyName}">
-                        <TextBlock Text="{Binding CompanyInitial}"
-                                   FontSize="{StaticResource FontSizeLg}"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource TextInverseBrush}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" />
-                    </Border>
+                        <!-- Brand Name -->
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding CompanyName}"
+                                   FontSize="15"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SidebarTextBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0,0,0"
+                                   MaxWidth="140"
+                                   TextTrimming="CharacterEllipsis" />
 
-                    <!-- Spacer -->
-                    <Border Grid.Column="1" />
+                        <!-- Chevron Down Icon -->
+                        <PathIcon Grid.Column="2"
+                                  Data="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                  VerticalAlignment="Center"
+                                  Margin="8,0,0,0" />
+                    </Grid>
+                </Button>
 
-                    <!-- Collapse Toggle -->
-                    <Button Grid.Column="2"
-                            Classes="icon"
-                            Width="28" Height="28"
-                            Command="{Binding ToggleCollapseCommand}"
-                            ToolTip.Tip="{Binding CollapseTooltip}">
+                <!-- Collapsed Logo Only - Clickable to open company switcher -->
+                <Button Classes="sidebar-header-collapsed"
+                        IsVisible="{Binding IsCollapsed}"
+                        Command="{Binding OpenCompanySwitcherCommand}"
+                        ToolTip.Tip="{Binding CompanyName}"
+                        HorizontalAlignment="Center">
+                    <Border Width="40" Height="40"
+                            CornerRadius="8"
+                            ClipToBounds="True">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                                <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
                         <Panel>
-                            <!-- Expanded icon (left arrow) -->
-                            <PathIcon Width="16" Height="16"
-                                      Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                      Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
-                                      IsVisible="{Binding !IsCollapsed}" />
-                            <!-- Collapsed icon (right arrow) -->
-                            <PathIcon Width="16" Height="16"
-                                      Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                      Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
-                                      IsVisible="{Binding IsCollapsed}" />
+                            <Image Source="{Binding CompanyLogo}"
+                                   Stretch="UniformToFill"
+                                   IsVisible="{Binding HasCompanyLogo}" />
+                            <TextBlock Text="{Binding CompanyInitial}"
+                                       FontSize="18"
+                                       FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding !HasCompanyLogo}" />
                         </Panel>
-                    </Button>
-                </Grid>
-            </Border>
+                    </Border>
+                </Button>
+            </Panel>
+        </Border>
 
-            <!-- Footer -->
-            <Border DockPanel.Dock="Bottom"
-                    Padding="8"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="0,1,0,0">
-                <StackPanel Spacing="2">
-                    <!-- Settings -->
-                    <controls:SidebarItem Text="Settings"
-                                          IconData="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
-                                          PageName="Settings"
-                                          IsCollapsed="{Binding IsCollapsed}"
-                                          Command="{Binding NavigateCommand}"
-                                          CommandParameter="Settings" />
+        <!-- Navigation Sections -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="0" Margin="0,15,0,0">
+                <!-- Main Section -->
+                <controls:SidebarSection Title="MAIN"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         Items="{Binding MainItems}" />
 
-                    <!-- Help -->
-                    <controls:SidebarItem Text="Help"
-                                          IconData="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
-                                          PageName="Help"
-                                          IsCollapsed="{Binding IsCollapsed}"
-                                          Command="{Binding NavigateCommand}"
-                                          CommandParameter="Help" />
-                </StackPanel>
-            </Border>
+                <!-- Transactions Section -->
+                <controls:SidebarSection Title="TRANSACTIONS"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         Items="{Binding TransactionItems}"
+                                         IsVisible="{Binding ShowTransactions}" />
 
-            <!-- Navigation Sections -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Spacing="8" Margin="0,8">
-                    <!-- Main Section -->
-                    <controls:SidebarSection Title="Main"
-                                             IsCollapsed="{Binding IsCollapsed}"
-                                             Items="{Binding MainItems}" />
+                <!-- Rentals Section -->
+                <controls:SidebarSection Title="RENTALS"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         Items="{Binding RentalItems}"
+                                         IsVisible="{Binding ShowRentals}" />
 
-                    <!-- Transactions Section -->
-                    <controls:SidebarSection Title="Transactions"
-                                             IsCollapsed="{Binding IsCollapsed}"
-                                             Items="{Binding TransactionItems}"
-                                             IsVisible="{Binding ShowTransactions}" />
+                <!-- Management Section -->
+                <controls:SidebarSection Title="MANAGEMENT"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         Items="{Binding ManagementItems}" />
 
-                    <!-- Inventory Section -->
-                    <controls:SidebarSection Title="Inventory"
-                                             IsCollapsed="{Binding IsCollapsed}"
-                                             Items="{Binding InventoryItems}"
-                                             IsVisible="{Binding ShowInventory}" />
+                <!-- Inventory Section -->
+                <controls:SidebarSection Title="INVENTORY"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         Items="{Binding InventoryItems}"
+                                         IsVisible="{Binding ShowInventory}" />
 
-                    <!-- Contacts Section -->
-                    <controls:SidebarSection Title="Contacts"
-                                             IsCollapsed="{Binding IsCollapsed}"
-                                             Items="{Binding ContactItems}" />
+                <!-- Team Section -->
+                <controls:SidebarSection Title="TEAM"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         Items="{Binding TeamItems}" />
 
-                    <!-- Rentals Section -->
-                    <controls:SidebarSection Title="Rentals"
-                                             IsCollapsed="{Binding IsCollapsed}"
-                                             Items="{Binding RentalItems}"
-                                             IsVisible="{Binding ShowRentals}" />
-                </StackPanel>
-            </ScrollViewer>
-        </DockPanel>
-    </Border>
+                <!-- Tracking Section -->
+                <controls:SidebarSection Title="TRACKING"
+                                         IsCollapsed="{Binding IsCollapsed}"
+                                         Items="{Binding TrackingItems}" />
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+
+    <UserControl.Styles>
+        <!-- Sidebar Header Button Style -->
+        <Style Selector="Button.sidebar-header">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.sidebar-header /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.sidebar-header:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Collapsed Sidebar Header Button Style -->
+        <Style Selector="Button.sidebar-header-collapsed">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.sidebar-header-collapsed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.sidebar-header-collapsed:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </UserControl.Styles>
 </UserControl>

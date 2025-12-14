@@ -1,0 +1,126 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="320" d:DesignHeight="350"
+             x:Class="ArgoBooks.Controls.UndoRedoHistoryPanel"
+             x:DataType="vm:UndoRedoHistoryPanelViewModel">
+
+    <Design.DataContext>
+        <vm:UndoRedoHistoryPanelViewModel />
+    </Design.DataContext>
+
+    <Panel IsVisible="{Binding IsOpen}">
+        <!-- Transparent backdrop for click-away -->
+        <Border Background="Transparent"
+                PointerPressed="Backdrop_PointerPressed" />
+
+        <!-- Dropdown Panel -->
+        <Border x:Name="DropdownBorder"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Width="320"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="{Binding DropdownMargin}"
+                BoxShadow="0 4 16 0 #26000000"
+                Padding="5"
+                Opacity="0"
+                RenderTransformOrigin="0.5,0">
+            <Border.RenderTransform>
+                <TranslateTransform Y="-4" />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
+
+            <Grid RowDefinitions="*,Auto">
+                <!-- History Items -->
+                <ScrollViewer Grid.Row="0"
+                              MaxHeight="300"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding HistoryItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Classes="history-item"
+                                        Classes.highlighted="{Binding IsHighlighted}"
+                                        Command="{Binding $parent[ItemsControl].((vm:UndoRedoHistoryPanelViewModel)DataContext).SelectItemCommand}"
+                                        CommandParameter="{Binding}"
+                                        PointerEntered="HistoryItem_PointerEntered">
+                                    <TextBlock Text="{Binding Description}"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" />
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Action Label -->
+                <Border Grid.Row="1"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0"
+                        Padding="10,8"
+                        Margin="0,5,0,0"
+                        IsVisible="{Binding HasItems}">
+                    <TextBlock Text="{Binding ActionLabel}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                </Border>
+
+                <!-- Empty State -->
+                <TextBlock Grid.Row="0"
+                           Text="No history"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Padding="20"
+                           IsVisible="{Binding !HasItems}" />
+            </Grid>
+        </Border>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- History Item Button -->
+        <Style Selector="Button.history-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.history-item /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.history-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Highlighted State (item and all above it) -->
+        <Style Selector="Button.history-item.highlighted /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.history-item.highlighted">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

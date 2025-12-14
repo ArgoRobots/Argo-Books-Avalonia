@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
-             mc:Ignorable="d" d:DesignWidth="240" d:DesignHeight="40"
+             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="42"
              x:Class="ArgoBooks.Controls.SidebarItem"
              x:DataType="controls:SidebarItem">
 
@@ -17,18 +17,16 @@
             HorizontalAlignment="Stretch">
         <Grid ColumnDefinitions="Auto,*,Auto">
             <!-- Icon -->
-            <Border Grid.Column="0"
-                    Width="36" Height="36"
-                    CornerRadius="{StaticResource RadiusSm}">
-                <PathIcon Data="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
-                          Width="18" Height="18" />
-            </Border>
+            <PathIcon Grid.Column="0"
+                      Data="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+                      Width="20" Height="20"
+                      VerticalAlignment="Center" />
 
             <!-- Text -->
             <TextBlock Grid.Column="1"
                        Text="{Binding Text, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
                        VerticalAlignment="Center"
-                       Margin="8,0,0,0"
+                       Margin="12,0,0,0"
                        IsVisible="{Binding !IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}" />
 
             <!-- Badge -->
@@ -40,22 +38,23 @@
                     VerticalAlignment="Center"
                     IsVisible="{Binding ShowBadge, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}">
                 <TextBlock Text="{Binding BadgeText, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
-                           FontSize="{StaticResource FontSizeXs}"
+                           FontSize="10"
                            FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextInverseBrush}" />
+                           Foreground="White" />
             </Border>
         </Grid>
     </Button>
 
     <UserControl.Styles>
-        <!-- Sidebar Item Base Style -->
+        <!-- Sidebar Item Base Style (from mockup: padding 10px 15px, rounded 8px) -->
         <Style Selector="Button.sidebar-item">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource SidebarTextMutedBrush}" />
-            <Setter Property="Padding" Value="6" />
+            <Setter Property="Padding" Value="15,10" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
 
         <Style Selector="Button.sidebar-item /template/ ContentPresenter#PART_ContentPresenter">
@@ -76,15 +75,15 @@
         </Style>
 
         <Style Selector="Button.sidebar-item.active">
-            <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}" />
+            <Setter Property="Foreground" Value="White" />
         </Style>
 
         <Style Selector="Button.sidebar-item.active PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}" />
+            <Setter Property="Foreground" Value="White" />
         </Style>
 
         <Style Selector="Button.sidebar-item.active TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource TextInverseBrush}" />
+            <Setter Property="Foreground" Value="White" />
         </Style>
 
         <!-- Default Icon/Text colors -->
@@ -93,13 +92,14 @@
         </Style>
 
         <Style Selector="Button.sidebar-item TextBlock">
-            <Setter Property="FontSize" Value="{StaticResource FontSizeSm}" />
+            <Setter Property="FontSize" Value="14" />
             <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
         </Style>
 
         <!-- Collapsed State -->
         <Style Selector="Button.sidebar-item.collapsed">
             <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="10" />
         </Style>
     </UserControl.Styles>
 </UserControl>

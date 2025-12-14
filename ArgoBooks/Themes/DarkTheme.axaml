@@ -29,12 +29,12 @@
     <Color x:Key="TextDisabledColor">#6B7280</Color>
     <Color x:Key="TextInverseColor">#111827</Color>
 
-    <!-- Sidebar Colors -->
+    <!-- Sidebar Colors (using primary blue for active) -->
     <Color x:Key="SidebarBackgroundColor">#0F172A</Color>
-    <Color x:Key="SidebarTextColor">#F9FAFB</Color>
-    <Color x:Key="SidebarTextMutedColor">#9CA3AF</Color>
+    <Color x:Key="SidebarTextColor">#FFFFFF</Color>
+    <Color x:Key="SidebarTextMutedColor">#A8B2C1</Color>
     <Color x:Key="SidebarHoverColor">#1E293B</Color>
-    <Color x:Key="SidebarActiveColor">#3B82F6</Color>
+    <Color x:Key="SidebarActiveColor">#0075FF</Color>
 
     <!-- Header Colors -->
     <Color x:Key="HeaderBackgroundColor">#1F2937</Color>
@@ -43,7 +43,7 @@
     <!-- Input Colors -->
     <Color x:Key="InputBackgroundColor">#1F2937</Color>
     <Color x:Key="InputBorderColor">#4B5563</Color>
-    <Color x:Key="InputFocusBorderColor">#3B82F6</Color>
+    <Color x:Key="InputFocusBorderColor">#0075FF</Color>
     <Color x:Key="InputPlaceholderColor">#6B7280</Color>
 
     <!-- Table/DataGrid Colors -->

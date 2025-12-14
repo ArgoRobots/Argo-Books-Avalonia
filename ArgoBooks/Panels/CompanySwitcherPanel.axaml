@@ -1,0 +1,276 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="400"
+             x:Class="ArgoBooks.Panels.CompanySwitcherPanel"
+             x:DataType="vm:CompanySwitcherPanelViewModel">
+
+    <Design.DataContext>
+        <vm:CompanySwitcherPanelViewModel />
+    </Design.DataContext>
+
+    <Panel IsVisible="{Binding IsOpen}">
+        <!-- Transparent backdrop for click-away -->
+        <Border Background="Transparent"
+                PointerPressed="Backdrop_PointerPressed" />
+
+        <!-- Company Switcher Panel with slide-in animation -->
+        <Border x:Name="SwitcherBorder"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="280"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Margin="15,70,0,0"
+                BoxShadow="0 8 32 0 #40000000"
+                Focusable="True"
+                KeyDown="Panel_KeyDown"
+                Opacity="0"
+                RenderTransformOrigin="0,0">
+            <Border.RenderTransform>
+                <TranslateTransform Y="-8" />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
+
+            <StackPanel>
+                <!-- Header -->
+                <Border Padding="16,16,16,12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <TextBlock Text="Switch Company"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                </Border>
+
+                <!-- Current Company -->
+                <Border Padding="8,8,8,0">
+                    <Button Classes="company-item current"
+                            IsEnabled="False">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <!-- Company Logo/Initial -->
+                            <Border Grid.Column="0"
+                                    Width="40" Height="40"
+                                    CornerRadius="8"
+                                    ClipToBounds="True"
+                                    Margin="0,0,12,0">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                                        <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Panel>
+                                    <Image Source="{Binding CurrentCompanyLogo}"
+                                           Stretch="UniformToFill"
+                                           IsVisible="{Binding HasCurrentCompanyLogo}" />
+                                    <TextBlock Text="{Binding CurrentCompanyInitial}"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding !HasCurrentCompanyLogo}" />
+                                </Panel>
+                            </Border>
+
+                            <!-- Company Name -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="{Binding CurrentCompanyName}"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="Current"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
+
+                            <!-- Checkmark -->
+                            <Border Grid.Column="2"
+                                    Width="24" Height="24"
+                                    CornerRadius="12"
+                                    Background="{DynamicResource SuccessBrush}"
+                                    VerticalAlignment="Center">
+                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                          Width="14" Height="14"
+                                          Foreground="White" />
+                            </Border>
+                        </Grid>
+                    </Button>
+                </Border>
+
+                <!-- Recent Companies Section -->
+                <StackPanel IsVisible="{Binding RecentCompanies.Count}">
+                    <Border Padding="16,16,16,8">
+                        <TextBlock Text="Recent"
+                                   FontSize="12"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding RecentCompanies}"
+                                  Margin="8,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:CompanyItem">
+                                <Button Classes="company-item"
+                                        Command="{Binding $parent[ItemsControl].((vm:CompanySwitcherPanelViewModel)DataContext).SwitchCompanyCommand}"
+                                        CommandParameter="{Binding}">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <!-- Company Initial -->
+                                        <Border Grid.Column="0"
+                                                Width="36" Height="36"
+                                                CornerRadius="8"
+                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                Margin="0,0,12,0">
+                                            <Panel>
+                                                <Image Source="{Binding Logo}"
+                                                       Stretch="UniformToFill"
+                                                       IsVisible="{Binding HasLogo}" />
+                                                <TextBlock Text="{Binding Initial}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           IsVisible="{Binding !HasLogo}" />
+                                            </Panel>
+                                        </Border>
+
+                                        <!-- Company Name -->
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Name}"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Divider -->
+                <Border Height="1"
+                        Background="{DynamicResource BorderBrush}"
+                        Margin="16,12" />
+
+                <!-- Actions -->
+                <StackPanel Margin="8,0,8,8" Spacing="4">
+                    <!-- Create New Company -->
+                    <Button Classes="action-item"
+                            Command="{Binding CreateNewCompanyCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Grid.Column="0"
+                                    Width="36" Height="36"
+                                    CornerRadius="8"
+                                    Background="{DynamicResource PrimaryBrush}"
+                                    Margin="0,0,12,0">
+                                <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                          Width="18" Height="18"
+                                          Foreground="White" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="Create New Company"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="Start fresh with a new company file"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+
+                    <!-- Open Company -->
+                    <Button Classes="action-item"
+                            Command="{Binding OpenCompanyCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Grid.Column="0"
+                                    Width="36" Height="36"
+                                    CornerRadius="8"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    Margin="0,0,12,0">
+                                <PathIcon Data="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
+                                          Width="18" Height="18"
+                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock Text="Open Company..."
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="Browse for a company file"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Company Item Style -->
+        <Style Selector="Button.company-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.company-item /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.company-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.company-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+
+        <!-- Current Company Item (disabled but styled) -->
+        <Style Selector="Button.company-item.current">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Button.company-item.current /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.company-item.current:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+
+        <!-- Action Item Style -->
+        <Style Selector="Button.action-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.action-item /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.action-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.action-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

@@ -1,0 +1,1054 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:local="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
+             x:Class="ArgoBooks.Modals.SettingsModal"
+             x:DataType="vm:SettingsModalViewModel">
+
+    <Design.DataContext>
+        <vm:SettingsModalViewModel />
+    </Design.DataContext>
+
+    <Panel IsVisible="{Binding IsOpen}">
+        <!-- Modal Backdrop -->
+        <Border Background="#80000000"
+                PointerPressed="Backdrop_PointerPressed">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                </Transitions>
+            </Border.Transitions>
+        </Border>
+
+        <!-- Modal Container -->
+        <Border x:Name="ModalBorder"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="600"
+                Height="550"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000"
+                Focusable="True"
+                KeyDown="Modal_KeyDown"
+                Opacity="0"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="Settings"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <Button Grid.Column="1"
+                                Classes="icon-button"
+                                Command="{Binding CloseCommand}">
+                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                      Width="20" Height="20" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Body with Tabs -->
+                <TabControl Grid.Row="1"
+                            SelectedIndex="{Binding SelectedTabIndex}"
+                            Margin="0">
+                    <!-- General Tab -->
+                    <TabItem Header="General">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                            <StackPanel Spacing="20">
+                                <!-- Language -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Language"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding Languages}"
+                                              SelectedItem="{Binding SelectedLanguage}"
+                                              Classes="form-combobox" />
+                                </StackPanel>
+
+                                <!-- Currency -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Currency"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding Currencies}"
+                                              SelectedItem="{Binding SelectedCurrency}"
+                                              Classes="form-combobox" />
+                                </StackPanel>
+
+                                <!-- Date Format -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Date Format"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding DateFormats}"
+                                              SelectedItem="{Binding SelectedDateFormat}"
+                                              Classes="form-combobox" />
+                                </StackPanel>
+
+                                <!-- Time Zone -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Time Zone"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding TimeZones}"
+                                              SelectedItem="{Binding SelectedTimeZone}"
+                                              Classes="form-combobox" />
+                                </StackPanel>
+
+                                <!-- Privacy -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="0,8,0,0">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Anonymous Data Collection"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Help improve Argo Books by sharing anonymous usage data"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding AnonymousDataCollection}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Features Tab -->
+                    <TabItem Header="Features">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Enable or disable modules"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           Margin="0,0,0,16" />
+
+                                <!-- Invoices -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Border Grid.Column="0"
+                                                Width="40" Height="40"
+                                                CornerRadius="8"
+                                                Background="{DynamicResource PrimaryIconBgBrush}"
+                                                Margin="0,0,16,0">
+                                            <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z"
+                                                      Width="20" Height="20"
+                                                      Foreground="{DynamicResource PrimaryBrush}" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="Invoices"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Create and manage invoices"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="2"
+                                                      IsChecked="{Binding InvoicesEnabled}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Payments -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Border Grid.Column="0"
+                                                Width="40" Height="40"
+                                                CornerRadius="8"
+                                                Background="{DynamicResource SuccessIconBgBrush}"
+                                                Margin="0,0,16,0">
+                                            <PathIcon Data="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+                                                      Width="20" Height="20"
+                                                      Foreground="{DynamicResource SuccessBrush}" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="Payments"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Track payment records"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="2"
+                                                      IsChecked="{Binding PaymentsEnabled}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Inventory -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Border Grid.Column="0"
+                                                Width="40" Height="40"
+                                                CornerRadius="8"
+                                                Background="{DynamicResource WarningIconBgBrush}"
+                                                Margin="0,0,16,0">
+                                            <PathIcon Data="M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2z"
+                                                      Width="20" Height="20"
+                                                      Foreground="{DynamicResource WarningBrush}" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="Inventory"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Stock levels and adjustments"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="2"
+                                                      IsChecked="{Binding InventoryEnabled}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Employees -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Border Grid.Column="0"
+                                                Width="40" Height="40"
+                                                CornerRadius="8"
+                                                Background="{DynamicResource AccentIconBgBrush}"
+                                                Margin="0,0,16,0">
+                                            <PathIcon Data="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3z"
+                                                      Width="20" Height="20"
+                                                      Foreground="{DynamicResource AccentBrush}" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="Employees"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Team and payroll management"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="2"
+                                                      IsChecked="{Binding EmployeesEnabled}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Rentals -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Border Grid.Column="0"
+                                                Width="40" Height="40"
+                                                CornerRadius="8"
+                                                Background="{DynamicResource DangerIconBgBrush}"
+                                                Margin="0,0,16,0">
+                                            <PathIcon Data="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zM7 4V3h10v1H7zm0 14V6h10v12H7zm0 3v-1h10v1H7z"
+                                                      Width="20" Height="20"
+                                                      Foreground="{DynamicResource DangerBrush}" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="Rentals"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Rental inventory and records"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="2"
+                                                      IsChecked="{Binding RentalsEnabled}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Notifications Tab -->
+                    <TabItem Header="Notifications">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Configure notification preferences"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           Margin="0,0,0,16" />
+
+                                <!-- Low Stock Alert -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="Low Stock Alert"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Get notified when inventory is running low"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding LowStockAlert}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Invoice Overdue -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="Invoice Overdue"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Alert when invoices become overdue"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding InvoiceOverdue}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Payment Received -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="Payment Received"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Notify when payments are received"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding PaymentReceived}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Large Transaction Alert -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="Large Transaction Alert"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Alert for transactions above threshold"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding LargeTransactionAlert}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Appearance Tab -->
+                    <TabItem Header="Appearance">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                            <StackPanel Spacing="24">
+                                <!-- Theme -->
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="Theme"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="16">
+                                        <!-- Light Theme -->
+                                        <Button Classes="theme-selector"
+                                                Command="{Binding SelectThemeCommand}"
+                                                CommandParameter="Light">
+                                            <Grid RowDefinitions="Auto,Auto">
+                                                <Border Grid.Row="0"
+                                                        Width="100" Height="60"
+                                                        Background="#FFFFFF"
+                                                        CornerRadius="6"
+                                                        ClipToBounds="True">
+                                                    <Border.BorderThickness>
+                                                        <Binding Path="SelectedTheme">
+                                                            <Binding.Converter>
+                                                                <local:StringEqualsConverter CompareValue="Light" TrueValue="2" FalseValue="1" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </Border.BorderThickness>
+                                                    <Border.BorderBrush>
+                                                        <Binding Path="SelectedTheme">
+                                                            <Binding.Converter>
+                                                                <local:ThemeBorderBrushConverter CompareValue="Light" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </Border.BorderBrush>
+                                                    <StackPanel Margin="10" Spacing="6">
+                                                        <Border Height="10" Background="#E5E7EB" CornerRadius="2" />
+                                                        <Border Height="8" Width="50" Background="#E5E7EB" CornerRadius="2" HorizontalAlignment="Left" />
+                                                    </StackPanel>
+                                                </Border>
+                                                <TextBlock Grid.Row="1"
+                                                           Text="Light"
+                                                           FontSize="12"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,8,0,0"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </Grid>
+                                        </Button>
+
+                                        <!-- Dark Theme -->
+                                        <Button Classes="theme-selector"
+                                                Command="{Binding SelectThemeCommand}"
+                                                CommandParameter="Dark">
+                                            <Grid RowDefinitions="Auto,Auto">
+                                                <Border Grid.Row="0"
+                                                        Width="100" Height="60"
+                                                        Background="#1F2937"
+                                                        CornerRadius="6"
+                                                        ClipToBounds="True">
+                                                    <Border.BorderThickness>
+                                                        <Binding Path="SelectedTheme">
+                                                            <Binding.Converter>
+                                                                <local:StringEqualsConverter CompareValue="Dark" TrueValue="2" FalseValue="1" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </Border.BorderThickness>
+                                                    <Border.BorderBrush>
+                                                        <Binding Path="SelectedTheme">
+                                                            <Binding.Converter>
+                                                                <local:ThemeBorderBrushConverter CompareValue="Dark" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </Border.BorderBrush>
+                                                    <StackPanel Margin="10" Spacing="6">
+                                                        <Border Height="10" Background="#374151" CornerRadius="2" />
+                                                        <Border Height="8" Width="50" Background="#374151" CornerRadius="2" HorizontalAlignment="Left" />
+                                                    </StackPanel>
+                                                </Border>
+                                                <TextBlock Grid.Row="1"
+                                                           Text="Dark"
+                                                           FontSize="12"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,8,0,0"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </Grid>
+                                        </Button>
+
+                                        <!-- System Theme -->
+                                        <Button Classes="theme-selector"
+                                                Command="{Binding SelectThemeCommand}"
+                                                CommandParameter="System">
+                                            <Grid RowDefinitions="Auto,Auto">
+                                                <Border Grid.Row="0"
+                                                        Width="100" Height="60"
+                                                        CornerRadius="6"
+                                                        ClipToBounds="True">
+                                                    <Border.BorderThickness>
+                                                        <Binding Path="SelectedTheme">
+                                                            <Binding.Converter>
+                                                                <local:StringEqualsConverter CompareValue="System" TrueValue="2" FalseValue="1" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </Border.BorderThickness>
+                                                    <Border.BorderBrush>
+                                                        <Binding Path="SelectedTheme">
+                                                            <Binding.Converter>
+                                                                <local:ThemeBorderBrushConverter CompareValue="System" />
+                                                            </Binding.Converter>
+                                                        </Binding>
+                                                    </Border.BorderBrush>
+                                                    <Grid>
+                                                        <Border Background="#FFFFFF" CornerRadius="6,0,0,6" HorizontalAlignment="Left" Width="50" />
+                                                        <Border Background="#1F2937" CornerRadius="0,6,6,0" HorizontalAlignment="Right" Width="50" />
+                                                    </Grid>
+                                                </Border>
+                                                <TextBlock Grid.Row="1"
+                                                           Text="System"
+                                                           FontSize="12"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,8,0,0"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </Grid>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Accent Color -->
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="Accent Color"
+                                               FontSize="14"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <!-- Blue -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Blue">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#3B82F6">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Blue" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Green -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Green">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#10B981">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Green" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Purple -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Purple">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#8B5CF6">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Purple" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Pink -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Pink">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#EC4899">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Pink" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Orange -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Orange">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#F97316">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Orange" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                        <!-- Teal -->
+                                        <Button Classes="color-button"
+                                                Command="{Binding SelectAccentColorCommand}"
+                                                CommandParameter="Teal">
+                                            <Grid>
+                                                <Border Width="48" Height="48" CornerRadius="24" Background="#14B8A6">
+                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                              Width="20" Height="20" Foreground="White">
+                                                        <PathIcon.IsVisible>
+                                                            <Binding Path="SelectedAccentColor">
+                                                                <Binding.Converter>
+                                                                    <local:StringEqualsConverter CompareValue="Teal" />
+                                                                </Binding.Converter>
+                                                            </Binding>
+                                                        </PathIcon.IsVisible>
+                                                    </PathIcon>
+                                                </Border>
+                                            </Grid>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Security Tab -->
+                    <TabItem Header="Security">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                            <StackPanel Spacing="16">
+                                <!-- Password - No password set -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        IsVisible="{Binding !HasPassword}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="Password"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Add a password to protect your company file"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1"
+                                                Classes="primary-button"
+                                                Content="Add Password"
+                                                Command="{Binding OpenAddPasswordCommand}"
+                                                VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Password - Has password set -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        IsVisible="{Binding HasPassword}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="Password"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Your company file is password protected"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                            <Button Classes="secondary-button"
+                                                    Content="Change"
+                                                    Command="{Binding OpenChangePasswordCommand}"
+                                                    VerticalAlignment="Center" />
+                                            <Button Classes="danger-button"
+                                                    Content="Remove"
+                                                    Command="{Binding OpenRemovePasswordCommand}"
+                                                    VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Windows Hello -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="Windows Hello"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Use fingerprint or face recognition to unlock"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding WindowsHelloEnabled}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- File Encryption -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="File Encryption"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="Encrypt company files with AES-256"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding FileEncryptionEnabled}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Auto-Lock -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Auto-Lock"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding AutoLockOptions}"
+                                              SelectedItem="{Binding SelectedAutoLock}"
+                                              Classes="form-combobox" />
+                                    <TextBlock Text="Automatically lock the application after inactivity"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="12">
+                        <Button Classes="secondary-button"
+                                Content="Cancel"
+                                Command="{Binding CloseCommand}" />
+                        <Button Classes="primary-button"
+                                Content="Save Changes"
+                                Command="{Binding SaveCommand}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Add Password Modal -->
+        <Panel IsVisible="{Binding IsAddPasswordModalOpen}">
+            <Border Background="#80000000" PointerPressed="PasswordBackdrop_PointerPressed" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Add Password" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                    <StackPanel Margin="20" Spacing="16">
+                        <TextBlock Text="Create a password to protect your company file. You'll need this password to open the file."
+                                   FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding NewPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Confirm Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding ConfirmPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
+                                   IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding ClosePasswordModalCommand}" />
+                            <Button Classes="primary-button" Content="Add Password" Command="{Binding ConfirmAddPasswordCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Change Password Modal -->
+        <Panel IsVisible="{Binding IsChangePasswordModalOpen}">
+            <Border Background="#80000000" PointerPressed="PasswordBackdrop_PointerPressed" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Change Password" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                    <StackPanel Margin="20" Spacing="16">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Current Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding CurrentPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding NewPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Confirm New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding ConfirmPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
+                                   IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding ClosePasswordModalCommand}" />
+                            <Button Classes="primary-button" Content="Change Password" Command="{Binding ConfirmChangePasswordCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Remove Password Modal -->
+        <Panel IsVisible="{Binding IsRemovePasswordModalOpen}">
+            <Border Background="#80000000" PointerPressed="PasswordBackdrop_PointerPressed" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Remove Password" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                    <StackPanel Margin="20" Spacing="16">
+                        <TextBlock Text="Are you sure you want to remove password protection? Your company file will no longer be protected."
+                                   FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Current Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox PasswordChar="•" Text="{Binding CurrentPassword}" Classes="form-input" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
+                                   IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+                    <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding ClosePasswordModalCommand}" />
+                            <Button Classes="danger-button" Content="Remove Password" Command="{Binding ConfirmRemovePasswordCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Icon Button -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Form ComboBox -->
+        <Style Selector="ComboBox.form-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+
+        <!-- Primary Button -->
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+
+        <!-- Secondary Button -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Danger Button -->
+        <Style Selector="Button.danger-button">
+            <Setter Property="Background" Value="#dc2626" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#dc2626" />
+        </Style>
+        <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#b91c1c" />
+        </Style>
+
+        <!-- Form Input -->
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBox.form-input /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Color Button -->
+        <Style Selector="Button.color-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.color-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.color-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Theme Selector Button -->
+        <Style Selector="Button.theme-selector">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.theme-selector /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.theme-selector:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Tab Item Styling -->
+        <Style Selector="TabItem">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="TabItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- TabStrip Item for underline indicator -->
+        <Style Selector="TabControl > TabItem /template/ Border#PART_LayoutRoot">
+            <Setter Property="BorderThickness" Value="0,0,0,2" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Margin" Value="0,0,0,-1" />
+        </Style>
+        <Style Selector="TabControl > TabItem:selected /template/ Border#PART_LayoutRoot">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

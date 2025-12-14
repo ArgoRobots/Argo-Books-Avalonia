@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
 
@@ -22,6 +23,81 @@ public partial class AppShellViewModel : ViewModelBase
     /// Gets the header view model.
     /// </summary>
     public HeaderViewModel HeaderViewModel { get; }
+
+    /// <summary>
+    /// Gets the quick actions view model.
+    /// </summary>
+    public QuickActionsViewModel QuickActionsViewModel { get; }
+
+    /// <summary>
+    /// Gets the notification panel view model.
+    /// </summary>
+    public NotificationPanelViewModel NotificationPanelViewModel { get; }
+
+    /// <summary>
+    /// Gets the user panel view model.
+    /// </summary>
+    public UserPanelViewModel UserPanelViewModel { get; }
+
+    /// <summary>
+    /// Gets the file menu panel view model.
+    /// </summary>
+    public FileMenuPanelViewModel FileMenuPanelViewModel { get; }
+
+    /// <summary>
+    /// Gets the profile modal view model.
+    /// </summary>
+    public ProfileModalViewModel ProfileModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the help panel view model.
+    /// </summary>
+    public HelpPanelViewModel HelpPanelViewModel { get; }
+
+    /// <summary>
+    /// Gets the upgrade modal view model.
+    /// </summary>
+    public UpgradeModalViewModel UpgradeModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the create company wizard view model.
+    /// </summary>
+    public CreateCompanyViewModel CreateCompanyViewModel { get; }
+
+    /// <summary>
+    /// Gets the company switcher panel view model.
+    /// </summary>
+    public CompanySwitcherPanelViewModel CompanySwitcherPanelViewModel { get; }
+
+    /// <summary>
+    /// Gets the settings modal view model.
+    /// </summary>
+    public SettingsModalViewModel SettingsModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the check for update modal view model.
+    /// </summary>
+    public CheckForUpdateModalViewModel CheckForUpdateModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the import modal view model.
+    /// </summary>
+    public ImportModalViewModel ImportModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the export as modal view model.
+    /// </summary>
+    public ExportAsModalViewModel ExportAsModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the switch account modal view model.
+    /// </summary>
+    public SwitchAccountModalViewModel SwitchAccountModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the login modal view model.
+    /// </summary>
+    public LoginModalViewModel LoginModalViewModel { get; }
 
     #endregion
 
@@ -56,6 +132,164 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create header with navigation service
         HeaderViewModel = new HeaderViewModel(navigationService);
+
+        // Create quick actions panel with navigation service and link to sidebar
+        QuickActionsViewModel = new QuickActionsViewModel(navigationService);
+        QuickActionsViewModel.SetSidebarViewModel(SidebarViewModel);
+
+        // Create notification panel with header view model (shares notifications)
+        NotificationPanelViewModel = new NotificationPanelViewModel(HeaderViewModel);
+
+        // Create user panel with navigation service and header view model
+        UserPanelViewModel = new UserPanelViewModel(navigationService, HeaderViewModel);
+
+        // Create file menu panel with navigation service
+        FileMenuPanelViewModel = new FileMenuPanelViewModel(navigationService);
+
+        // Create profile modal with navigation service and header view model
+        ProfileModalViewModel = new ProfileModalViewModel(navigationService, HeaderViewModel);
+
+        // Create help panel with navigation service
+        HelpPanelViewModel = new HelpPanelViewModel(navigationService);
+
+        // Create upgrade modal
+        UpgradeModalViewModel = new UpgradeModalViewModel();
+
+        // Create company creation wizard
+        CreateCompanyViewModel = new CreateCompanyViewModel();
+
+        // Create company switcher panel
+        CompanySwitcherPanelViewModel = new CompanySwitcherPanelViewModel();
+
+        // Create settings modal
+        SettingsModalViewModel = new SettingsModalViewModel();
+
+        // Create check for update modal
+        CheckForUpdateModalViewModel = new CheckForUpdateModalViewModel();
+
+        // Create import modal
+        ImportModalViewModel = new ImportModalViewModel();
+
+        // Create export as modal
+        ExportAsModalViewModel = new ExportAsModalViewModel();
+
+        // Create switch account modal
+        SwitchAccountModalViewModel = new SwitchAccountModalViewModel();
+
+        // Create login modal
+        LoginModalViewModel = new LoginModalViewModel();
+
+        // Wire up switch account modal's account selected to open login modal
+        SwitchAccountModalViewModel.AccountSelected += (_, account) => LoginModalViewModel.OpenForAccount(account);
+
+        // Wire up switch account modal's create account to open company wizard
+        SwitchAccountModalViewModel.CreateAccountRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
+
+        // Wire up hamburger menu to toggle sidebar
+        HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
+
+        // Wire up header's quick actions button to open the panel in dropdown mode
+        HeaderViewModel.OpenQuickActionsRequested += (_, _) => QuickActionsViewModel.OpenDropdownCommand.Execute(null);
+
+        // Wire up header's notification button to toggle the notification panel
+        HeaderViewModel.OpenNotificationsRequested += (_, _) => NotificationPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up header's user menu button to toggle the user panel
+        HeaderViewModel.OpenUserMenuRequested += (_, _) => UserPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up header's file menu button to toggle the file menu panel
+        HeaderViewModel.OpenFileMenuRequested += (_, _) => FileMenuPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up user panel's open profile to open profile modal
+        UserPanelViewModel.OpenProfileRequested += (_, _) => ProfileModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up user panel's open help to open help panel
+        UserPanelViewModel.OpenHelpRequested += (_, _) => HelpPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up user panel's open settings to open settings modal
+        UserPanelViewModel.OpenSettingsRequested += (_, _) => SettingsModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up user panel's switch account to open switch account modal
+        UserPanelViewModel.SwitchAccountRequested += (_, _) => SwitchAccountModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up header's help button to toggle help panel
+        HeaderViewModel.OpenHelpRequested += (_, _) => HelpPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up header's upgrade button to open upgrade modal
+        HeaderViewModel.OpenUpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up file menu's create new company to open the wizard
+        FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
+
+        // Wire up sidebar's company header click to open the company switcher
+        SidebarViewModel.OpenCompanySwitcherRequested += (_, _) => CompanySwitcherPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up company switcher's create new company to open the wizard
+        CompanySwitcherPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
+
+        // Wire up help panel's check for updates to open the check for update modal
+        HelpPanelViewModel.CheckForUpdatesRequested += (_, _) => CheckForUpdateModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up file menu's import to open the import modal
+        FileMenuPanelViewModel.ImportRequested += (_, _) => ImportModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up file menu's export as to open the export as modal
+        FileMenuPanelViewModel.ExportAsRequested += (_, _) => ExportAsModalViewModel.OpenCommand.Execute(null);
+
+        // Sync search query between header and quick actions
+        HeaderViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(HeaderViewModel.SearchQuery))
+            {
+                QuickActionsViewModel.SearchQuery = HeaderViewModel.SearchQuery;
+            }
+        };
+
+        // Wire up header search key events to quick actions panel
+        HeaderViewModel.SearchKeyPressed += (_, action) =>
+        {
+            switch (action)
+            {
+                case SearchKeyAction.Escape:
+                    QuickActionsViewModel.CloseCommand.Execute(null);
+                    HeaderViewModel.SearchQuery = null;
+                    break;
+                case SearchKeyAction.Up:
+                    QuickActionsViewModel.MoveUpCommand.Execute(null);
+                    break;
+                case SearchKeyAction.Down:
+                    QuickActionsViewModel.MoveDownCommand.Execute(null);
+                    break;
+                case SearchKeyAction.Enter:
+                    QuickActionsViewModel.ExecuteSelectedCommand.Execute(null);
+                    break;
+            }
+        };
+
+        // Subscribe to navigation events to update UI state
+        if (_navigationService != null)
+        {
+            _navigationService.Navigated += OnNavigated;
+        }
+    }
+
+    /// <summary>
+    /// Opens the quick actions panel in modal mode (Ctrl+K).
+    /// </summary>
+    [RelayCommand]
+    private void OpenQuickActions()
+    {
+        QuickActionsViewModel.OpenModalCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// Handles navigation events to update UI state.
+    /// </summary>
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        CurrentPageName = e.PageName;
+        SidebarViewModel.SetActivePage(e.PageName);
+        HeaderViewModel.SetPageTitle(e.PageName);
     }
 
     /// <summary>

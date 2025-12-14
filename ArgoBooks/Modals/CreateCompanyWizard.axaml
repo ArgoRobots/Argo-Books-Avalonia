@@ -1,0 +1,552 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="600"
+             x:Class="ArgoBooks.Modals.CreateCompanyWizard"
+             x:DataType="vm:CreateCompanyViewModel">
+
+    <Design.DataContext>
+        <vm:CreateCompanyViewModel />
+    </Design.DataContext>
+
+    <Panel IsVisible="{Binding IsOpen}">
+        <!-- Modal Backdrop with fade animation -->
+        <Border Background="#80000000"
+                PointerPressed="Backdrop_PointerPressed">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                </Transitions>
+            </Border.Transitions>
+        </Border>
+
+        <!-- Wizard Container with scale animation -->
+        <Border x:Name="WizardBorder"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="560"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000"
+                Focusable="True"
+                KeyDown="Wizard_KeyDown"
+                Opacity="0"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
+
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Create New Company"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{Binding CurrentStep, StringFormat='Step {0} of 3'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Classes="icon-button"
+                                Command="{Binding CloseCommand}">
+                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                      Width="20" Height="20" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Step Indicators -->
+                <StackPanel Grid.Row="0"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Bottom"
+                            Margin="0,0,0,-16"
+                            Spacing="8">
+                    <!-- Step 1 -->
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource PrimaryBrush}"
+                            IsVisible="{Binding IsStep1}">
+                        <TextBlock Text="1" Foreground="White" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            IsVisible="{Binding !IsStep1}">
+                        <TextBlock Text="1" Foreground="{DynamicResource TextTertiaryBrush}" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <Border Width="40" Height="2" Background="{DynamicResource BorderBrush}" VerticalAlignment="Center" />
+
+                    <!-- Step 2 -->
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource PrimaryBrush}"
+                            IsVisible="{Binding IsStep2}">
+                        <TextBlock Text="2" Foreground="White" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            IsVisible="{Binding !IsStep2}">
+                        <TextBlock Text="2" Foreground="{DynamicResource TextTertiaryBrush}" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <Border Width="40" Height="2" Background="{DynamicResource BorderBrush}" VerticalAlignment="Center" />
+
+                    <!-- Step 3 -->
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource PrimaryBrush}"
+                            IsVisible="{Binding IsStep3}">
+                        <TextBlock Text="3" Foreground="White" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Border Width="32" Height="32" CornerRadius="16"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            IsVisible="{Binding !IsStep3}">
+                        <TextBlock Text="3" Foreground="{DynamicResource TextTertiaryBrush}" FontWeight="Medium"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Body -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="24,32,24,24">
+                        <!-- Step 1: Company Info -->
+                        <StackPanel IsVisible="{Binding IsStep1}" Spacing="20">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Company Information"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="Enter your company's basic information"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
+
+                            <!-- Company Name -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Company Name *"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding CompanyName, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         Watermark="Enter company name" />
+                            </StackPanel>
+
+                            <!-- Business Type -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Business Type"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding BusinessTypes}"
+                                          SelectedItem="{Binding BusinessType}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="Select business type" />
+                            </StackPanel>
+
+                            <!-- Industry -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Industry"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding Industries}"
+                                          SelectedItem="{Binding Industry}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="Select industry" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Step 2: Contact Information -->
+                        <StackPanel IsVisible="{Binding IsStep2}" Spacing="20">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Contact Information"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="Add your business contact details (optional)"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
+
+                            <!-- Street Address -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Street Address"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding StreetAddress, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         Watermark="123 Main Street" />
+                            </StackPanel>
+
+                            <!-- City & State -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="City"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding City, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="City" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="State/Province"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding StateProvince, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="State" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Postal Code & Country -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Postal Code"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding PostalCode, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="12345" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Country"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding Country, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="Country" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Phone & Email -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Phone Number"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding PhoneNumber, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="(555) 123-4567" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Email"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding Email, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="contact@company.com" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Website -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Website"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding Website, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         Watermark="https://www.company.com" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Step 3: Security & Logo -->
+                        <StackPanel IsVisible="{Binding IsStep3}" Spacing="20">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Security &amp; Branding"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="Protect your data and add your company logo"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
+
+                            <!-- Logo Upload -->
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="Company Logo"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <!-- Logo Preview -->
+                                    <Border Grid.Column="0"
+                                            Width="100" Height="100"
+                                            CornerRadius="8"
+                                            Background="{DynamicResource SurfaceAltBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            ClipToBounds="True"
+                                            Margin="0,0,16,0">
+                                        <Panel>
+                                            <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H5v-4h4v4zm0-6H5V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4zm4 6h-4v-4h4v4zm0-6h-4V7h4v4z"
+                                                      Width="40" Height="40"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      IsVisible="{Binding !HasLogo}" />
+                                            <Image Source="{Binding LogoSource}"
+                                                   Stretch="Uniform"
+                                                   IsVisible="{Binding HasLogo}" />
+                                        </Panel>
+                                    </Border>
+
+                                    <!-- Upload Buttons -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
+                                        <Button Classes="secondary-button"
+                                                Command="{Binding BrowseLogoCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <PathIcon Data="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"
+                                                          Width="16" Height="16" />
+                                                <TextBlock Text="Upload Logo" />
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Classes="text-button"
+                                                Command="{Binding RemoveLogoCommand}"
+                                                IsVisible="{Binding HasLogo}">
+                                            <TextBlock Text="Remove" Foreground="{DynamicResource DangerBrush}" />
+                                        </Button>
+                                        <TextBlock Text="PNG, JPG up to 5MB"
+                                                   FontSize="11"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Password Protection -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16">
+                                <StackPanel Spacing="16">
+                                    <CheckBox IsChecked="{Binding EnablePassword}"
+                                              Content="Password protect this company file" />
+
+                                    <StackPanel IsVisible="{Binding EnablePassword}" Spacing="16">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="Password"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding Password, Mode=TwoWay}"
+                                                     Classes="form-input"
+                                                     PasswordChar="*"
+                                                     Watermark="Enter password" />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="Confirm Password"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
+                                                     Classes="form-input"
+                                                     PasswordChar="*"
+                                                     Watermark="Confirm password" />
+                                            <TextBlock Text="Passwords do not match"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource DangerBrush}"
+                                                       IsVisible="{Binding ShowPasswordError}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Back Button -->
+                        <Button Grid.Column="0"
+                                Classes="secondary-button"
+                                Command="{Binding PreviousStepCommand}"
+                                IsVisible="{Binding CanGoBack}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+                                          Width="16" Height="16" />
+                                <TextBlock Text="Back" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Cancel (only on first step) -->
+                        <Button Grid.Column="0"
+                                Classes="secondary-button"
+                                Command="{Binding CloseCommand}"
+                                IsVisible="{Binding !CanGoBack}"
+                                Content="Cancel" />
+
+                        <!-- Next / Create Button -->
+                        <Button Grid.Column="2"
+                                Classes="primary-button"
+                                Command="{Binding NextStepCommand}"
+                                IsVisible="{Binding CanGoNext}"
+                                IsEnabled="{Binding IsStep1Valid}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Next" />
+                                <PathIcon Data="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"
+                                          Width="16" Height="16" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="2"
+                                Classes="primary-button"
+                                Command="{Binding CreateCompanyCommand}"
+                                IsVisible="{Binding IsLastStep}"
+                                IsEnabled="{Binding CanCreate}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                          Width="16" Height="16" />
+                                <TextBlock Text="Create Company" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Icon Button -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Form Input -->
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBox.form-input /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBox.form-input:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderHoverBrush}" />
+        </Style>
+
+        <!-- Form ComboBox -->
+        <Style Selector="ComboBox.form-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+
+        <!-- Primary Button -->
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+        <Style Selector="Button.primary-button PathIcon">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- Secondary Button -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Text Button -->
+        <Style Selector="Button.text-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.text-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.text-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

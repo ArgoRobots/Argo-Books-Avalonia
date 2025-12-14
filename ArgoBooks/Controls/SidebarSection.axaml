@@ -3,35 +3,36 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
-             mc:Ignorable="d" d:DesignWidth="240" d:DesignHeight="200"
+             mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="200"
              x:Class="ArgoBooks.Controls.SidebarSection"
              x:DataType="controls:SidebarSection">
 
-    <StackPanel Spacing="2">
-        <!-- Section Header -->
-        <Border Padding="12,8,12,4"
+    <StackPanel Spacing="0">
+        <!-- Section Header (from mockup: padding 15px, uppercase, 11px) -->
+        <Border Padding="15,15,15,10"
                 IsVisible="{Binding ShowHeader, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
             <Grid ColumnDefinitions="*,Auto">
                 <!-- Title (hidden when collapsed) -->
                 <TextBlock Grid.Column="0"
                            Text="{Binding Title, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
-                           FontSize="{StaticResource FontSizeXs}"
+                           FontSize="11"
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource SidebarTextMutedBrush}"
+                           LetterSpacing="0.5"
                            IsVisible="{Binding !IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
 
                 <!-- Divider line when collapsed -->
                 <Border Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Height="1"
-                        Background="{DynamicResource BorderBrush}"
-                        Margin="4,8"
+                        Background="{DynamicResource SidebarHoverBrush}"
+                        Margin="10,5"
                         HorizontalAlignment="Stretch"
                         IsVisible="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
 
                 <!-- Collapse/Expand button (optional) -->
                 <Button Grid.Column="1"
-                        Classes="icon"
+                        Classes="section-toggle"
                         Width="20" Height="20"
                         Command="{Binding ToggleExpandedCommand, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
                         IsVisible="{Binding IsCollapsible, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
@@ -54,7 +55,7 @@
         <!-- Section Items -->
         <ItemsControl ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
                       IsVisible="{Binding IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
-                      Padding="4,0">
+                      Padding="10,0">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <controls:SidebarItem Text="{Binding Text}"
@@ -68,9 +69,25 @@
                                           ShowBadge="{Binding ShowBadge}"
                                           TooltipText="{Binding Text}"
                                           IsVisible="{Binding IsVisible}"
-                                          Margin="0,1" />
+                                          Margin="0,2" />
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
     </StackPanel>
+
+    <UserControl.Styles>
+        <!-- Section Toggle Button Style -->
+        <Style Selector="Button.section-toggle">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.section-toggle /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.section-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </UserControl.Styles>
 </UserControl>
