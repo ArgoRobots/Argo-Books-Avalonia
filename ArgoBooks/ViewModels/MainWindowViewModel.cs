@@ -58,6 +58,18 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private CreateCompanyViewModel? _createCompanyViewModel;
 
+    /// <summary>
+    /// Gets or sets the WelcomeScreenViewModel for the full-screen welcome overlay.
+    /// </summary>
+    [ObservableProperty]
+    private WelcomeScreenViewModel? _welcomeScreenViewModel;
+
+    /// <summary>
+    /// Whether to show the welcome screen (when no company is open).
+    /// </summary>
+    [ObservableProperty]
+    private bool _showWelcomeScreen = true;
+
     #endregion
 
     /// <summary>
@@ -183,6 +195,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public void OpenCompany(string companyName)
     {
         CurrentCompanyName = companyName;
+        ShowWelcomeScreen = false;
     }
 
     /// <summary>
@@ -191,7 +204,6 @@ public partial class MainWindowViewModel : ViewModelBase
     public void CloseCompany()
     {
         CurrentCompanyName = null;
-        // Don't reset CurrentView - keep showing the AppShell
-        // The navigation will handle showing the appropriate page
+        ShowWelcomeScreen = true;
     }
 }

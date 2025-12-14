@@ -94,8 +94,8 @@ public partial class App : Application
             // Share CreateCompanyViewModel with MainWindow for full-screen overlay
             _mainWindowViewModel.CreateCompanyViewModel = _appShellViewModel.CreateCompanyViewModel;
 
-            // Navigate to Welcome screen on startup (no company open)
-            NavigationService.NavigateTo("Welcome");
+            // Share WelcomeScreenViewModel with MainWindow for full-screen overlay
+            _mainWindowViewModel.WelcomeScreenViewModel = _welcomeScreenViewModel;
 
             desktop.MainWindow = new MainWindow
             {

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -33,9 +34,15 @@ public partial class CompanySwitcherPanelViewModel : ViewModelBase
     #endregion
 
     /// <summary>
-    /// Recent companies for quick switching.
+    /// Recent companies for quick switching (includes all).
     /// </summary>
     public ObservableCollection<CompanyItem> RecentCompanies { get; } = [];
+
+    /// <summary>
+    /// Recent companies excluding the currently open company.
+    /// </summary>
+    public IEnumerable<CompanyItem> FilteredRecentCompanies =>
+        RecentCompanies.Where(c => c.FilePath != CurrentCompanyPath);
 
     /// <summary>
     /// Default constructor for design-time.
@@ -180,6 +187,14 @@ public partial class CompanySwitcherPanelViewModel : ViewModelBase
     private void ClearRecent()
     {
         RecentCompanies.Clear();
+    }
+
+    /// <summary>
+    /// Updates filtered list when current company path changes.
+    /// </summary>
+    partial void OnCurrentCompanyPathChanged(string? value)
+    {
+        OnPropertyChanged(nameof(FilteredRecentCompanies));
     }
 }
 

@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="using:ArgoBooks.Controls"
         xmlns:modals="using:ArgoBooks.Modals"
+        xmlns:views="using:ArgoBooks.Views"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="ArgoBooks.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -88,6 +89,11 @@
             <!-- Main Content Area -->
             <ContentControl x:Name="MainContent" Content="{Binding CurrentView}" />
         </DockPanel>
+
+        <!-- Welcome Screen (full-screen overlay when no company is open) -->
+        <views:WelcomeScreen DataContext="{Binding WelcomeScreenViewModel}"
+                             IsVisible="{Binding ShowWelcomeScreen}"
+                             ZIndex="150" />
 
         <!-- Create Company Wizard (full-screen overlay above everything) -->
         <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}"
