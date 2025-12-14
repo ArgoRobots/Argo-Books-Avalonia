@@ -28,7 +28,7 @@
                     MaxHeight="500"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"
-                    Margin="125,100,0,0"
+                    Margin="160,100,0,0"
                     BoxShadow="0 8 32 0 #40000000"
                     Opacity="0"
                     RenderTransformOrigin="0.5,0.5">
