@@ -69,6 +69,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public CompanySwitcherPanelViewModel CompanySwitcherPanelViewModel { get; }
 
+    /// <summary>
+    /// Gets the settings modal view model.
+    /// </summary>
+    public SettingsModalViewModel SettingsModalViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -131,6 +136,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Create company switcher panel
         CompanySwitcherPanelViewModel = new CompanySwitcherPanelViewModel();
 
+        // Create settings modal
+        SettingsModalViewModel = new SettingsModalViewModel();
+
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
@@ -151,6 +159,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Wire up user panel's open help to open help panel
         UserPanelViewModel.OpenHelpRequested += (_, _) => HelpPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up user panel's open settings to open settings modal
+        UserPanelViewModel.OpenSettingsRequested += (_, _) => SettingsModalViewModel.OpenCommand.Execute(null);
 
         // Wire up header's help button to toggle help panel
         HeaderViewModel.OpenHelpRequested += (_, _) => HelpPanelViewModel.ToggleCommand.Execute(null);

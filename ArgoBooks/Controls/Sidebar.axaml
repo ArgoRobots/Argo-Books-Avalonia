@@ -73,26 +73,35 @@
                     </Grid>
                 </Button>
 
-                <!-- Collapsed Logo Only -->
-                <Border Width="40" Height="40"
-                        CornerRadius="8"
-                        ClipToBounds="True"
+                <!-- Collapsed Logo Only - Clickable to open company switcher -->
+                <Button Classes="sidebar-header-collapsed"
                         IsVisible="{Binding IsCollapsed}"
+                        Command="{Binding OpenCompanySwitcherCommand}"
                         ToolTip.Tip="{Binding CompanyName}"
                         HorizontalAlignment="Center">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                            <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
-                            <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <TextBlock Text="{Binding CompanyInitial}"
-                               FontSize="18"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Border>
+                    <Border Width="40" Height="40"
+                            CornerRadius="8"
+                            ClipToBounds="True">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                                <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Panel>
+                            <Image Source="{Binding CompanyLogo}"
+                                   Stretch="UniformToFill"
+                                   IsVisible="{Binding HasCompanyLogo}" />
+                            <TextBlock Text="{Binding CompanyInitial}"
+                                       FontSize="18"
+                                       FontWeight="Bold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding !HasCompanyLogo}" />
+                        </Panel>
+                    </Border>
+                </Button>
             </Panel>
         </Border>
 
@@ -153,6 +162,20 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Button.sidebar-header:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Collapsed Sidebar Header Button Style -->
+        <Style Selector="Button.sidebar-header-collapsed">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.sidebar-header-collapsed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.sidebar-header-collapsed:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
         </Style>
     </UserControl.Styles>

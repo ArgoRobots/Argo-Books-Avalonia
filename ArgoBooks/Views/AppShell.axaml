@@ -82,5 +82,8 @@
 
         <!-- Create Company Wizard -->
         <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}" />
+
+        <!-- Settings Modal -->
+        <modals:SettingsModal DataContext="{Binding SettingsModalViewModel}" />
     </Panel>
 </UserControl>
