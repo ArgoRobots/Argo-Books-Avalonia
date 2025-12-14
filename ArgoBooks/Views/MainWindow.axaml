@@ -92,7 +92,7 @@
 
         <!-- Welcome Screen (full-screen overlay when no company is open) -->
         <views:WelcomeScreen DataContext="{Binding WelcomeScreenViewModel}"
-                             IsVisible="{Binding $parent[Window].DataContext.ShowWelcomeScreen}"
+                             IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowWelcomeScreen}"
                              ZIndex="150" />
 
         <!-- Create Company Wizard (full-screen overlay above everything) -->
