@@ -44,6 +44,21 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public FileMenuPanelViewModel FileMenuPanelViewModel { get; }
 
+    /// <summary>
+    /// Gets the profile modal view model.
+    /// </summary>
+    public ProfileModalViewModel ProfileModalViewModel { get; }
+
+    /// <summary>
+    /// Gets the help panel view model.
+    /// </summary>
+    public HelpPanelViewModel HelpPanelViewModel { get; }
+
+    /// <summary>
+    /// Gets the upgrade modal view model.
+    /// </summary>
+    public UpgradeModalViewModel UpgradeModalViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -90,6 +105,15 @@ public partial class AppShellViewModel : ViewModelBase
         // Create file menu panel with navigation service
         FileMenuPanelViewModel = new FileMenuPanelViewModel(navigationService);
 
+        // Create profile modal with navigation service and header view model
+        ProfileModalViewModel = new ProfileModalViewModel(navigationService, HeaderViewModel);
+
+        // Create help panel with navigation service
+        HelpPanelViewModel = new HelpPanelViewModel(navigationService);
+
+        // Create upgrade modal
+        UpgradeModalViewModel = new UpgradeModalViewModel();
+
         // Wire up hamburger menu to toggle sidebar
         HeaderViewModel.ToggleSidebarRequested += (_, _) => SidebarViewModel.IsCollapsed = !SidebarViewModel.IsCollapsed;
 
@@ -104,6 +128,18 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Wire up header's file menu button to toggle the file menu panel
         HeaderViewModel.OpenFileMenuRequested += (_, _) => FileMenuPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up user panel's open profile to open profile modal
+        UserPanelViewModel.OpenProfileRequested += (_, _) => ProfileModalViewModel.OpenCommand.Execute(null);
+
+        // Wire up user panel's open help to open help panel
+        UserPanelViewModel.OpenHelpRequested += (_, _) => HelpPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up header's help button to toggle help panel
+        HeaderViewModel.OpenHelpRequested += (_, _) => HelpPanelViewModel.ToggleCommand.Execute(null);
+
+        // Wire up header's upgrade button to open upgrade modal
+        HeaderViewModel.OpenUpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
 
         // Subscribe to navigation events to update UI state
         if (_navigationService != null)

@@ -1,0 +1,454 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+             x:Class="ArgoBooks.Modals.UpgradeModal"
+             x:DataType="vm:UpgradeModalViewModel">
+
+    <Design.DataContext>
+        <vm:UpgradeModalViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- Upgrade Modal -->
+        <Panel IsVisible="{Binding IsOpen}">
+            <Border Background="#80000000"
+                    PointerPressed="Backdrop_PointerPressed" />
+
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="600"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Upgrade Your Plan"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Body -->
+                    <ScrollViewer Grid.Row="1" Padding="24">
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                            <!-- Premium Plan -->
+                            <Border Grid.Column="0" Classes="plan-card">
+                                <StackPanel Spacing="16">
+                                    <!-- Plan Header -->
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border Width="48" Height="48"
+                                                CornerRadius="8"
+                                                ClipToBounds="True">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                                    <GradientStop Color="#fbbf24" Offset="0" />
+                                                    <GradientStop Color="#f59e0b" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <PathIcon Data="M12 1l3.09 6.26L22 8.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 1z"
+                                                      Width="24" Height="24"
+                                                      Foreground="White" />
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Premium"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="$20 CAD"
+                                                           FontSize="20"
+                                                           FontWeight="Bold"
+                                                           Foreground="{DynamicResource PrimaryBrush}" />
+                                                <TextBlock Text=" one-time"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           VerticalAlignment="Bottom"
+                                                           Margin="0,0,0,2" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Features -->
+                                    <StackPanel Spacing="0">
+                                        <Border Classes="feature-item">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="14" Height="14"
+                                                          Foreground="#22C55E"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="Unlimited Products" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Classes="feature-item">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="14" Height="14"
+                                                          Foreground="#22C55E"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="Windows Hello Security" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Classes="feature-item">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="14" Height="14"
+                                                          Foreground="#22C55E"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="Priority Support" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Classes="feature-item" BorderThickness="0">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="14" Height="14"
+                                                          Foreground="#22C55E"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="Lifetime Updates" />
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <Button Classes="primary-button"
+                                            HorizontalAlignment="Stretch"
+                                            Command="{Binding SelectPremiumCommand}">
+                                        Select Premium
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- AI Plan -->
+                            <Border Grid.Column="1" Classes="plan-card">
+                                <StackPanel Spacing="16">
+                                    <!-- Plan Header -->
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Border Width="48" Height="48"
+                                                CornerRadius="8"
+                                                ClipToBounds="True">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                                    <GradientStop Color="#8b5cf6" Offset="0" />
+                                                    <GradientStop Color="#6366f1" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <PathIcon Data="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"
+                                                      Width="24" Height="24"
+                                                      Foreground="White" />
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="AI Subscription"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="$5 CAD"
+                                                           FontSize="20"
+                                                           FontWeight="Bold"
+                                                           Foreground="{DynamicResource PrimaryBrush}" />
+                                                <TextBlock Text="/month"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           VerticalAlignment="Bottom"
+                                                           Margin="0,0,0,2" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Features -->
+                                    <StackPanel Spacing="0">
+                                        <Border Classes="feature-item">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="14" Height="14"
+                                                          Foreground="#22C55E"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="Everything in Premium" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Classes="feature-item">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="14" Height="14"
+                                                          Foreground="#22C55E"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="AI Receipt Scanning" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Classes="feature-item">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="14" Height="14"
+                                                          Foreground="#22C55E"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="Predictive Sales Analysis" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Classes="feature-item" BorderThickness="0">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="14" Height="14"
+                                                          Foreground="#22C55E"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="AI Business Insights" />
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <Button Classes="primary-button"
+                                            HorizontalAlignment="Stretch"
+                                            Command="{Binding SelectAIPlanCommand}">
+                                        Select AI Plan
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Button Classes="outline-button"
+                                HorizontalAlignment="Left"
+                                Command="{Binding OpenEnterKeyCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
+                                          Width="16" Height="16" />
+                                <TextBlock Text="Enter a Key" />
+                            </StackPanel>
+                        </Button>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Enter Key Modal -->
+        <Panel IsVisible="{Binding IsEnterKeyModalOpen}">
+            <Border Background="#80000000"
+                    PointerPressed="EnterKeyBackdrop_PointerPressed" />
+
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="420"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Enter License Key"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseEnterKeyCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Body -->
+                    <StackPanel Grid.Row="1" Margin="24" Spacing="16">
+                        <TextBlock Text="Enter your license key to activate your premium features."
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="License Key"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox Text="{Binding LicenseKey}"
+                                     Watermark="XXXX-XXXX-XXXX-XXXX"
+                                     Classes="form-input license-key" />
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding VerificationError}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource DangerBrush}"
+                                   IsVisible="{Binding VerificationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    Spacing="12">
+                            <Button Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding CloseEnterKeyCommand}" />
+                            <Button Classes="primary-button"
+                                    Command="{Binding VerifyKeyCommand}"
+                                    IsEnabled="{Binding !IsVerifying}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                              Width="16" Height="16"
+                                              IsVisible="{Binding !IsVerifying}" />
+                                    <TextBlock Text="{Binding IsVerifying, Converter={x:Static BoolConverters.Or}, ConverterParameter='Verifying...|Verify Key'}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Icon Button -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Plan Card -->
+        <Style Selector="Border.plan-card">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="20" />
+        </Style>
+
+        <!-- Feature Item -->
+        <Style Selector="Border.feature-item">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="0,8" />
+        </Style>
+        <Style Selector="Border.feature-item TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Primary Button -->
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+
+        <!-- Secondary Button -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Outline Button -->
+        <Style Selector="Button.outline-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.outline-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.outline-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.outline-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Form Input -->
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBox.license-key">
+            <Setter Property="FontFamily" Value="Consolas, monospace" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="LetterSpacing" Value="2" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

@@ -1,0 +1,147 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="350"
+             x:Class="ArgoBooks.Panels.HelpPanel"
+             x:DataType="vm:HelpPanelViewModel">
+
+    <Design.DataContext>
+        <vm:HelpPanelViewModel />
+    </Design.DataContext>
+
+    <Panel IsVisible="{Binding IsOpen}">
+        <!-- Transparent backdrop for click-away -->
+        <Border Background="Transparent"
+                PointerPressed="Backdrop_PointerPressed" />
+
+        <!-- Help Panel -->
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Width="280"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Margin="0,60,20,0"
+                BoxShadow="0 4 20 0 #26000000">
+            <StackPanel>
+                <!-- Header -->
+                <Border Padding="20,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <TextBlock Text="Help &amp; Resources"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </Border>
+
+                <!-- Menu Items -->
+                <StackPanel Margin="0,8">
+                    <!-- What's New -->
+                    <Button Classes="menu-item"
+                            Command="{Binding OpenWhatsNewCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <PathIcon Grid.Column="0"
+                                      Data="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource PrimaryBrush}"
+                                      Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="What's New" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+
+                    <!-- Documentation -->
+                    <Button Classes="menu-item"
+                            Command="{Binding OpenDocumentationCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <PathIcon Grid.Column="0"
+                                      Data="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource PrimaryBrush}"
+                                      Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="Documentation" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+
+                    <!-- Community -->
+                    <Button Classes="menu-item"
+                            Command="{Binding OpenCommunityCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <PathIcon Grid.Column="0"
+                                      Data="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource PrimaryBrush}"
+                                      Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="Argo Community" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+
+                    <!-- Support -->
+                    <Button Classes="menu-item"
+                            Command="{Binding OpenSupportCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <PathIcon Grid.Column="0"
+                                      Data="M20 15.5c-1.25 0-2.45-.2-3.57-.57-.35-.11-.74-.03-1.02.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.21c.28-.26.36-.65.25-1C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1zM19 12h2c0-4.97-4.03-9-9-9v2c3.87 0 7 3.13 7 7zm-4 0h2c0-2.76-2.24-5-5-5v2c1.66 0 3 1.34 3 3z"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource PrimaryBrush}"
+                                      Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="Support" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+
+                    <!-- Divider -->
+                    <Border Height="1"
+                            Background="{DynamicResource BorderBrush}"
+                            Margin="0,8" />
+
+                    <!-- Check for Updates -->
+                    <Button Classes="menu-item"
+                            Command="{Binding CheckForUpdatesCommand}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <PathIcon Grid.Column="0"
+                                      Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource PrimaryBrush}"
+                                      Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="1" Text="Check for Updates" VerticalAlignment="Center" />
+                            <Border Grid.Column="2"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="4"
+                                    Padding="8,4">
+                                <TextBlock Text="{Binding AppVersion, StringFormat='v{0}'}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Border>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Menu Item Style -->
+        <Style Selector="Button.menu-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="20,12" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.menu-item /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.menu-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.menu-item:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

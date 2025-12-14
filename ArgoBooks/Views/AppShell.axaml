@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:panels="using:ArgoBooks.Panels"
+             xmlns:modals="using:ArgoBooks.Modals"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.AppShell"
              x:DataType="vm:AppShellViewModel"
@@ -52,6 +53,15 @@
 
             <!-- File Menu Panel (overlay within content area) -->
             <panels:FileMenuPanel DataContext="{Binding FileMenuPanelViewModel}" />
+
+            <!-- Help Panel (overlay within content area) -->
+            <panels:HelpPanel DataContext="{Binding HelpPanelViewModel}" />
+
+            <!-- Profile Modal (overlay within content area) -->
+            <modals:ProfileModal DataContext="{Binding ProfileModalViewModel}" />
+
+            <!-- Upgrade Modal (overlay within content area) -->
+            <modals:UpgradeModal DataContext="{Binding UpgradeModalViewModel}" />
         </Panel>
     </Grid>
 </UserControl>

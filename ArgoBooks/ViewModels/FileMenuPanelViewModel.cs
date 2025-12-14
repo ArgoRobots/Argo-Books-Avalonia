@@ -15,6 +15,9 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isOpen;
 
+    [ObservableProperty]
+    private bool _isRecentSubmenuOpen;
+
     /// <summary>
     /// Recent companies for quick access.
     /// </summary>

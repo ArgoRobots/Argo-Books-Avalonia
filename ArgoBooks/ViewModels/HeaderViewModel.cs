@@ -201,8 +201,7 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenHelp()
     {
-        // TODO: Show help modal or navigate to help page
-        _navigationService?.NavigateTo("Help");
+        OpenHelpRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -284,7 +283,7 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void OpenUpgrade()
     {
-        // TODO: Show upgrade modal
+        OpenUpgradeRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -311,6 +310,16 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when file menu should be opened.
     /// </summary>
     public event EventHandler? OpenFileMenuRequested;
+
+    /// <summary>
+    /// Event raised when help panel should be opened.
+    /// </summary>
+    public event EventHandler? OpenHelpRequested;
+
+    /// <summary>
+    /// Event raised when upgrade modal should be opened.
+    /// </summary>
+    public event EventHandler? OpenUpgradeRequested;
 
     #endregion
 

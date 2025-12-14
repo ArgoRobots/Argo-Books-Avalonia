@@ -133,7 +133,7 @@ public partial class UserPanelViewModel : ViewModelBase
     private void OpenProfile()
     {
         Close();
-        _navigationService?.NavigateTo("Profile");
+        OpenProfileRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -143,7 +143,7 @@ public partial class UserPanelViewModel : ViewModelBase
     private void OpenSettings()
     {
         Close();
-        _navigationService?.NavigateTo("Settings");
+        OpenSettingsRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public partial class UserPanelViewModel : ViewModelBase
     private void OpenHelp()
     {
         Close();
-        _navigationService?.NavigateTo("Help");
+        OpenHelpRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -173,7 +173,7 @@ public partial class UserPanelViewModel : ViewModelBase
     private void SwitchAccount()
     {
         Close();
-        // TODO: Show account switcher modal
+        SwitchAccountRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -183,8 +183,18 @@ public partial class UserPanelViewModel : ViewModelBase
     private void SignOut()
     {
         Close();
-        // TODO: Implement sign out logic
+        SignOutRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    #endregion
+
+    #region Events
+
+    public event EventHandler? OpenProfileRequested;
+    public event EventHandler? OpenSettingsRequested;
+    public event EventHandler? OpenHelpRequested;
+    public event EventHandler? SwitchAccountRequested;
+    public event EventHandler? SignOutRequested;
 
     #endregion
 }
