@@ -191,7 +191,7 @@ public partial class QuickActionsViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasToolsItems));
         OnPropertyChanged(nameof(HasResults));
 
-        SelectedIndex = 0;
+        SelectedIndex = -1;
     }
 
     #region Commands
