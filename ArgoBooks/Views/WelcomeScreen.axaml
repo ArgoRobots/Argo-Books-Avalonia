@@ -18,7 +18,8 @@
                 Opacity="0.5" />
 
         <!-- Main Content -->
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+        <ScrollViewer x:Name="MainScrollViewer"
+                      HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
             <StackPanel HorizontalAlignment="Center"
                         VerticalAlignment="Center"

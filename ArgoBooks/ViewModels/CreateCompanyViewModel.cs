@@ -18,11 +18,10 @@ public partial class CreateCompanyViewModel : ViewModelBase
     [ObservableProperty]
     private int _currentStep = 1;
 
-    private const int TotalSteps = 3;
+    private const int TotalSteps = 2;
 
     public bool IsStep1 => CurrentStep == 1;
     public bool IsStep2 => CurrentStep == 2;
-    public bool IsStep3 => CurrentStep == 3;
 
     public bool CanGoBack => CurrentStep > 1;
     public bool CanGoNext => CurrentStep < TotalSteps;
@@ -125,11 +124,9 @@ public partial class CreateCompanyViewModel : ViewModelBase
 
     public bool IsStep1Valid => !string.IsNullOrWhiteSpace(CompanyName);
 
-    public bool IsStep2Valid => true; // Contact info is optional
+    public bool IsStep2Valid => !EnablePassword || (PasswordsMatch && !string.IsNullOrWhiteSpace(Password));
 
-    public bool IsStep3Valid => !EnablePassword || (PasswordsMatch && !string.IsNullOrWhiteSpace(Password));
-
-    public bool CanCreate => IsStep1Valid && IsStep2Valid && IsStep3Valid;
+    public bool CanCreate => IsStep1Valid && IsStep2Valid;
 
     #endregion
 
@@ -273,7 +270,6 @@ public partial class CreateCompanyViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsStep1));
         OnPropertyChanged(nameof(IsStep2));
-        OnPropertyChanged(nameof(IsStep3));
         OnPropertyChanged(nameof(CanGoBack));
         OnPropertyChanged(nameof(CanGoNext));
         OnPropertyChanged(nameof(IsLastStep));
@@ -289,7 +285,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(PasswordsMatch));
         OnPropertyChanged(nameof(ShowPasswordError));
-        OnPropertyChanged(nameof(IsStep3Valid));
+        OnPropertyChanged(nameof(IsStep2Valid));
         OnPropertyChanged(nameof(CanCreate));
     }
 
@@ -297,13 +293,13 @@ public partial class CreateCompanyViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(PasswordsMatch));
         OnPropertyChanged(nameof(ShowPasswordError));
-        OnPropertyChanged(nameof(IsStep3Valid));
+        OnPropertyChanged(nameof(IsStep2Valid));
         OnPropertyChanged(nameof(CanCreate));
     }
 
     partial void OnEnablePasswordChanged(bool value)
     {
-        OnPropertyChanged(nameof(IsStep3Valid));
+        OnPropertyChanged(nameof(IsStep2Valid));
         OnPropertyChanged(nameof(CanCreate));
     }
 }

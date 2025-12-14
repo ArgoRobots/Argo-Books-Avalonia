@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -107,7 +108,18 @@ public partial class CheckForUpdateModalViewModel : ViewModelBase
     [RelayCommand]
     private void ViewReleaseNotes()
     {
-        // TODO: Open release notes URL in browser
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://argorobots.com/whats-new/",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // Ignore errors opening URL
+        }
         ViewReleaseNotesRequested?.Invoke(this, EventArgs.Empty);
     }
 

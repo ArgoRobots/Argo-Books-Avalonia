@@ -118,7 +118,7 @@
                                    Foreground="{DynamicResource TextTertiaryBrush}" />
                     </Border>
 
-                    <ItemsControl ItemsSource="{Binding RecentCompanies}"
+                    <ItemsControl ItemsSource="{Binding FilteredRecentCompanies}"
                                   Margin="8,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:CompanyItem">

@@ -4,6 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="using:ArgoBooks.Controls"
+        xmlns:modals="using:ArgoBooks.Modals"
+        xmlns:views="using:ArgoBooks.Views"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="ArgoBooks.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -85,7 +87,16 @@
             </Border>
 
             <!-- Main Content Area -->
-            <ContentControl Content="{Binding CurrentView}" />
+            <ContentControl x:Name="MainContent" Content="{Binding CurrentView}" />
         </DockPanel>
+
+        <!-- Welcome Screen (full-screen overlay when no company is open) -->
+        <views:WelcomeScreen DataContext="{Binding WelcomeScreenViewModel}"
+                             IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowWelcomeScreen}"
+                             ZIndex="150" />
+
+        <!-- Create Company Wizard (full-screen overlay above everything) -->
+        <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}"
+                                    ZIndex="200" />
     </Panel>
 </Window>

@@ -52,6 +52,24 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string? _loadingMessage;
 
+    /// <summary>
+    /// Gets or sets the CreateCompanyViewModel for the full-screen wizard.
+    /// </summary>
+    [ObservableProperty]
+    private CreateCompanyViewModel? _createCompanyViewModel;
+
+    /// <summary>
+    /// Gets or sets the WelcomeScreenViewModel for the full-screen welcome overlay.
+    /// </summary>
+    [ObservableProperty]
+    private WelcomeScreenViewModel? _welcomeScreenViewModel;
+
+    /// <summary>
+    /// Whether to show the welcome screen (when no company is open).
+    /// </summary>
+    [ObservableProperty]
+    private bool _showWelcomeScreen = true;
+
     #endregion
 
     /// <summary>
@@ -177,6 +195,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public void OpenCompany(string companyName)
     {
         CurrentCompanyName = companyName;
+        ShowWelcomeScreen = false;
     }
 
     /// <summary>
@@ -185,6 +204,6 @@ public partial class MainWindowViewModel : ViewModelBase
     public void CloseCompany()
     {
         CurrentCompanyName = null;
-        CurrentView = null;
+        ShowWelcomeScreen = true;
     }
 }

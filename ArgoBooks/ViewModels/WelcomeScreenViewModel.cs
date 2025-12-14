@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -59,7 +60,9 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     public WelcomeScreenViewModel(INavigationService? navigationService)
     {
         _navigationService = navigationService;
-        HasRecentCompanies = RecentCompanies.Count > 0;
+        // Real data will be populated by LoadRecentCompaniesAsync
+        // Start with no recent companies
+        HasRecentCompanies = false;
     }
 
     #region Commands
@@ -130,6 +133,18 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     [RelayCommand]
     private void OpenHelp()
     {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://argorobots.com/contact-us/",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // Ignore errors opening URL
+        }
         OpenHelpRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -139,6 +154,18 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     [RelayCommand]
     private void OpenWhatsNew()
     {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://argorobots.com/whats-new/",
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // Ignore errors opening URL
+        }
         OpenWhatsNewRequested?.Invoke(this, EventArgs.Empty);
     }
 

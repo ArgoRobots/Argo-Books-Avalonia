@@ -58,7 +58,7 @@
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="{Binding CurrentStep, StringFormat='Step {0} of 3'}"
+                            <TextBlock Text="{Binding CurrentStep, StringFormat='Step {0} of 2'}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                         </StackPanel>
@@ -105,22 +105,6 @@
                             Background="{DynamicResource SurfaceAltBrush}"
                             IsVisible="{Binding !IsStep2}">
                         <TextBlock Text="2" Foreground="{DynamicResource TextTertiaryBrush}" FontWeight="Medium"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-
-                    <Border Width="40" Height="2" Background="{DynamicResource BorderBrush}" VerticalAlignment="Center" />
-
-                    <!-- Step 3 -->
-                    <Border Width="32" Height="32" CornerRadius="16"
-                            Background="{DynamicResource PrimaryBrush}"
-                            IsVisible="{Binding IsStep3}">
-                        <TextBlock Text="3" Foreground="White" FontWeight="Medium"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <Border Width="32" Height="32" CornerRadius="16"
-                            Background="{DynamicResource SurfaceAltBrush}"
-                            IsVisible="{Binding !IsStep3}">
-                        <TextBlock Text="3" Foreground="{DynamicResource TextTertiaryBrush}" FontWeight="Medium"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                 </StackPanel>
@@ -176,109 +160,8 @@
                             </StackPanel>
                         </StackPanel>
 
-                        <!-- Step 2: Contact Information -->
+                        <!-- Step 2: Security & Logo -->
                         <StackPanel IsVisible="{Binding IsStep2}" Spacing="20">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="Contact Information"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Add your business contact details (optional)"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                            </StackPanel>
-
-                            <!-- Street Address -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Street Address"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding StreetAddress, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         Watermark="123 Main Street" />
-                            </StackPanel>
-
-                            <!-- City & State -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="City"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding City, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="City" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="State/Province"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding StateProvince, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="State" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Postal Code & Country -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Postal Code"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding PostalCode, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="12345" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Country"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding Country, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="Country" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Phone & Email -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Phone Number"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding PhoneNumber, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="(555) 123-4567" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Email"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding Email, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="contact@company.com" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Website -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Website"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding Website, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         Watermark="https://www.company.com" />
-                            </StackPanel>
-                        </StackPanel>
-
-                        <!-- Step 3: Security & Logo -->
-                        <StackPanel IsVisible="{Binding IsStep3}" Spacing="20">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Security &amp; Branding"
                                            FontSize="16"

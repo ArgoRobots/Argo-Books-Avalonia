@@ -188,60 +188,41 @@
             </StackPanel>
         </Border>
 
-        <!-- Recent Companies Submenu (positioned absolutely outside main menu) -->
+        <!-- Recent Companies Submenu (positioned to right of main menu: 56 + 240 = 296) -->
         <Border x:Name="RecentSubmenu"
                 IsVisible="{Binding IsRecentSubmenuOpen}"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
-                Width="220"
+                MinWidth="200"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="315,140,0,0"
+                Margin="296,140,0,0"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
                 KeyDown="FileMenu_KeyDown"
                 PointerEntered="RecentSubmenu_PointerEntered"
                 PointerExited="RecentSubmenu_PointerExited">
             <StackPanel Margin="0,8">
-                <!-- Recent Company Items -->
-                <Button x:Name="SubmenuItem0"
-                        Classes="menu-item"
-                        Command="{Binding OpenRecentCompanyCommand}"
-                        CommandParameter="{Binding RecentCompanies[0]}">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <PathIcon Grid.Column="0"
-                                  Data="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"
-                                  Width="16" Height="16"
-                                  Margin="0,0,12,0" />
-                        <TextBlock Grid.Column="1" Text="My Company Inc." VerticalAlignment="Center" />
-                    </Grid>
-                </Button>
-                <Button x:Name="SubmenuItem1"
-                        Classes="menu-item"
-                        Command="{Binding OpenRecentCompanyCommand}"
-                        CommandParameter="{Binding RecentCompanies[1]}">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <PathIcon Grid.Column="0"
-                                  Data="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"
-                                  Width="16" Height="16"
-                                  Margin="0,0,12,0" />
-                        <TextBlock Grid.Column="1" Text="Side Business LLC" VerticalAlignment="Center" />
-                    </Grid>
-                </Button>
-                <Button x:Name="SubmenuItem2"
-                        Classes="menu-item"
-                        Command="{Binding OpenRecentCompanyCommand}"
-                        CommandParameter="{Binding RecentCompanies[2]}">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <PathIcon Grid.Column="0"
-                                  Data="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"
-                                  Width="16" Height="16"
-                                  Margin="0,0,12,0" />
-                        <TextBlock Grid.Column="1" Text="Consulting Services" VerticalAlignment="Center" />
-                    </Grid>
-                </Button>
+                <!-- Recent Company Items - dynamically bound -->
+                <ItemsControl ItemsSource="{Binding RecentCompanies}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RecentCompanyItem">
+                            <Button Classes="menu-item"
+                                    Command="{Binding $parent[ItemsControl].((vm:FileMenuPanelViewModel)DataContext).OpenRecentCompanyCommand}"
+                                    CommandParameter="{Binding}">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"
+                                              Width="16" Height="16"
+                                              Margin="0,0,12,0" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
                 <!-- Divider -->
                 <Border Height="1"
