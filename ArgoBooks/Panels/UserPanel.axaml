@@ -22,7 +22,7 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
-                Width="260"
+                Width="240"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,60,20,0"
@@ -72,12 +72,12 @@
                         <!-- User Info -->
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Text="{Binding UserDisplayName}"
-                                       FontSize="14"
+                                       FontSize="13"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        TextTrimming="CharacterEllipsis" />
                             <TextBlock Text="{Binding UserEmail}"
-                                       FontSize="12"
+                                       FontSize="11"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        TextTrimming="CharacterEllipsis"
                                        IsVisible="{Binding UserEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -153,11 +153,11 @@
         <Style Selector="Button.menu-item">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="Padding" Value="16,8" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="CornerRadius" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>

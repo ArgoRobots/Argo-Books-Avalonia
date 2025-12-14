@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
@@ -185,6 +186,20 @@ public class CompanyData
     /// </summary>
     [JsonPropertyName("reportTemplates")]
     public List<ReportTemplate> ReportTemplates { get; init; } = [];
+
+    #endregion
+
+    #region State Tracking
+
+    /// <summary>
+    /// Gets or sets whether there are unsaved changes.
+    /// </summary>
+    [JsonIgnore]
+    public bool ChangesMade
+    {
+        get => Settings.ChangesMade;
+        set => Settings.ChangesMade = value;
+    }
 
     #endregion
 

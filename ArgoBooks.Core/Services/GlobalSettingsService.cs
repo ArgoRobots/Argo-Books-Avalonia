@@ -7,7 +7,7 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Service for managing global and company settings.
 /// </summary>
-public class GlobalSettingsService : ISettingsService
+public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
 {
     private const string GlobalSettingsFileName = "settings.json";
     private const string CompanySettingsFileName = "settings.json";
@@ -255,4 +255,35 @@ public class GlobalSettingsService : ISettingsService
     {
         return _platformService.CombinePaths(_platformService.GetAppDataPath(), GlobalSettingsFileName);
     }
+
+    #region IGlobalSettingsService Implementation
+
+    /// <inheritdoc />
+    GlobalSettings? IGlobalSettingsService.GetSettings() => _globalSettings;
+
+    /// <inheritdoc />
+    void IGlobalSettingsService.SaveSettings(GlobalSettings settings)
+    {
+        _globalSettings = settings ?? throw new ArgumentNullException(nameof(settings));
+        _ = SaveGlobalSettingsAsync();
+    }
+
+    /// <inheritdoc />
+    async Task<GlobalSettings> IGlobalSettingsService.LoadAsync()
+    {
+        await LoadGlobalSettingsAsync();
+        return _globalSettings;
+    }
+
+    /// <inheritdoc />
+    Task IGlobalSettingsService.SaveAsync(GlobalSettings settings)
+    {
+        _globalSettings = settings ?? throw new ArgumentNullException(nameof(settings));
+        return SaveGlobalSettingsAsync();
+    }
+
+    /// <inheritdoc />
+    IReadOnlyList<string> IGlobalSettingsService.GetRecentCompanies() => GetValidRecentCompanies();
+
+    #endregion
 }

@@ -108,7 +108,7 @@
         <!-- Navigation Sections -->
         <ScrollViewer VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Spacing="0" Margin="0,15,0,0">
+            <StackPanel Spacing="0" Margin="0,15,0,20">
                 <!-- Main Section -->
                 <controls:SidebarSection Title="MAIN"
                                          IsCollapsed="{Binding IsCollapsed}"

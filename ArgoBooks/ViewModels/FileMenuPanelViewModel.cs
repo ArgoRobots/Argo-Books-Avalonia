@@ -101,7 +101,7 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     {
         if (company == null) return;
         Close();
-        // TODO: Load the company file
+        OpenRecentCompanyRequested?.Invoke(this, company);
     }
 
     /// <summary>
@@ -180,6 +180,7 @@ public partial class FileMenuPanelViewModel : ViewModelBase
 
     public event EventHandler? CreateNewCompanyRequested;
     public event EventHandler? OpenCompanyRequested;
+    public event EventHandler<RecentCompanyItem>? OpenRecentCompanyRequested;
     public event EventHandler? SaveRequested;
     public event EventHandler? SaveAsRequested;
     public event EventHandler? CloseCompanyRequested;
