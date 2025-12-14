@@ -4,6 +4,7 @@ using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
@@ -500,7 +501,8 @@ public partial class App : Application
             if (CompanyManager?.IsCompanyOpen != true || _appShellViewModel == null) return;
 
             var settings = CompanyManager.CurrentCompanySettings;
-            var logo = CompanyManager.CurrentCompanyLogo;
+            var logoPath = CompanyManager.CurrentCompanyLogoPath;
+            var logo = LoadBitmapFromPath(logoPath);
             _appShellViewModel.EditCompanyModalViewModel.Open(
                 settings?.Company.Name ?? "",
                 settings?.Company.Email,
@@ -544,7 +546,7 @@ public partial class App : Application
                     {
                         await CompanyManager.SetCompanyLogoAsync(args.LogoPath);
                     }
-                    else if (args.LogoSource == null && CompanyManager.CurrentCompanyLogo != null)
+                    else if (args.LogoSource == null && CompanyManager.CurrentCompanyLogoPath != null)
                     {
                         // Logo was removed
                         await CompanyManager.RemoveCompanyLogoAsync();
@@ -559,7 +561,7 @@ public partial class App : Application
                     _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
                         args.CompanyName,
                         CompanyManager.CurrentFilePath,
-                        CompanyManager.CurrentCompanyLogo);
+                        LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath));
                 }
 
                 _appShellViewModel?.AddNotification("Updated", "Company information updated.", NotificationType.Success);
@@ -835,6 +837,24 @@ public partial class App : Application
         {
             DataContext = new PlaceholderPageViewModel(title, description)
         };
+    }
+
+    /// <summary>
+    /// Loads a Bitmap from a file path.
+    /// </summary>
+    private static Bitmap? LoadBitmapFromPath(string? path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        try
+        {
+            return new Bitmap(path);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private void DisableAvaloniaDataAnnotationValidation()
