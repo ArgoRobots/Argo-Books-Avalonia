@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -56,28 +58,28 @@ public partial class HelpPanelViewModel : ViewModelBase
     private void OpenWhatsNew()
     {
         Close();
-        WhatsNewRequested?.Invoke(this, EventArgs.Empty);
+        OpenUrl("https://argorobots.com/whats-new/");
     }
 
     [RelayCommand]
     private void OpenDocumentation()
     {
         Close();
-        DocumentationRequested?.Invoke(this, EventArgs.Empty);
+        OpenUrl("https://argorobots.com/documentation/");
     }
 
     [RelayCommand]
     private void OpenCommunity()
     {
         Close();
-        CommunityRequested?.Invoke(this, EventArgs.Empty);
+        OpenUrl("https://argorobots.com/community/");
     }
 
     [RelayCommand]
     private void OpenSupport()
     {
         Close();
-        SupportRequested?.Invoke(this, EventArgs.Empty);
+        OpenUrl("https://argorobots.com/contact-us/");
     }
 
     [RelayCommand]
@@ -87,14 +89,37 @@ public partial class HelpPanelViewModel : ViewModelBase
         CheckForUpdatesRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Opens a URL in the default browser.
+    /// </summary>
+    private static void OpenUrl(string url)
+    {
+        try
+        {
+            // Cross-platform URL opening
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Process.Start("xdg-open", url);
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Process.Start("open", url);
+            }
+        }
+        catch
+        {
+            // Silently fail if browser cannot be opened
+        }
+    }
+
     #endregion
 
     #region Events
 
-    public event EventHandler? WhatsNewRequested;
-    public event EventHandler? DocumentationRequested;
-    public event EventHandler? CommunityRequested;
-    public event EventHandler? SupportRequested;
     public event EventHandler? CheckForUpdatesRequested;
 
     #endregion

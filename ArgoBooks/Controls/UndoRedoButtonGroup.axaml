@@ -1,0 +1,141 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="50"
+             x:Class="ArgoBooks.Controls.UndoRedoButtonGroup"
+             x:DataType="vm:UndoRedoButtonGroupViewModel">
+
+    <Design.DataContext>
+        <vm:UndoRedoButtonGroupViewModel />
+    </Design.DataContext>
+
+    <StackPanel Orientation="Horizontal" Spacing="8">
+        <!-- Undo Button Group -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Undo Button -->
+            <Button x:Name="UndoButton"
+                    Grid.Column="0"
+                    Classes="undo-redo-main"
+                    Classes.left="True"
+                    ToolTip.Tip="{Binding UndoTooltip}"
+                    Command="{Binding UndoCommand}"
+                    IsEnabled="{Binding CanUndo}">
+                <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                          Width="18" Height="18" />
+            </Button>
+
+            <!-- Undo Dropdown Button -->
+            <Button x:Name="UndoDropdownButton"
+                    Grid.Column="1"
+                    Classes="undo-redo-dropdown"
+                    Classes.right="True"
+                    Command="{Binding ToggleUndoDropdownCommand}"
+                    IsEnabled="{Binding CanUndo}">
+                <PathIcon Data="M7 10l5 5 5-5z"
+                          Width="12" Height="12" />
+            </Button>
+        </Grid>
+
+        <!-- Redo Button Group -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Redo Button -->
+            <Button x:Name="RedoButton"
+                    Grid.Column="0"
+                    Classes="undo-redo-main"
+                    Classes.left="True"
+                    ToolTip.Tip="{Binding RedoTooltip}"
+                    Command="{Binding RedoCommand}"
+                    IsEnabled="{Binding CanRedo}">
+                <PathIcon Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
+                          Width="18" Height="18" />
+            </Button>
+
+            <!-- Redo Dropdown Button -->
+            <Button x:Name="RedoDropdownButton"
+                    Grid.Column="1"
+                    Classes="undo-redo-dropdown"
+                    Classes.right="True"
+                    Command="{Binding ToggleRedoDropdownCommand}"
+                    IsEnabled="{Binding CanRedo}">
+                <PathIcon Data="M7 10l5 5 5-5z"
+                          Width="12" Height="12" />
+            </Button>
+        </Grid>
+    </StackPanel>
+
+    <UserControl.Styles>
+        <!-- Main Undo/Redo Button -->
+        <Style Selector="Button.undo-redo-main">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Width" Value="42" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="4,0,0,4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.undo-redo-main /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="4,0,0,4" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:disabled PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        </Style>
+
+        <!-- Dropdown Button -->
+        <Style Selector="Button.undo-redo-dropdown">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,1,1,1" />
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0,4,4,0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="0,4,4,0" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:disabled PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>
