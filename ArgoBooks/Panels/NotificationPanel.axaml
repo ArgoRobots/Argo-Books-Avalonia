@@ -257,7 +257,7 @@
         <Style Selector="Button.notification-item /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}" />
         </Style>
         <Style Selector="Button.notification-item.last /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="BorderThickness" Value="0" />
@@ -266,12 +266,12 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
 
-        <!-- Unread Notification Style -->
+        <!-- Unread Notification Style (subtle blue tint) -->
         <Style Selector="Button.notification-item.unread /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
         </Style>
         <Style Selector="Button.notification-item.unread:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
         </Style>
 
         <!-- Small Icon Button Style -->
