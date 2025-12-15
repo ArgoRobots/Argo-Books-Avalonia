@@ -147,7 +147,8 @@
             <StackPanel HorizontalAlignment="Right"
                         Orientation="Horizontal"
                         VerticalAlignment="Center"
-                        Spacing="0">
+                        Spacing="4"
+                        Margin="0,0,8,0">
 
                 <!-- Upgrade Button (blue circle with up arrow) -->
                 <Button Classes="header-icon"
@@ -195,44 +196,29 @@
                               Width="20" Height="20" />
                 </Button>
 
-                <!-- User Menu -->
-                <Button Classes="user-menu"
+                <!-- User Menu (avatar only, square button) -->
+                <Button Classes="header-icon"
                         Command="{Binding OpenUserMenuCommand}"
-                        ToolTip.Tip="Account">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <!-- User Avatar -->
-                        <Border Width="32" Height="32"
-                                CornerRadius="16"
-                                Background="{DynamicResource PrimaryBrush}"
-                                ClipToBounds="True">
-                            <Panel>
-                                <!-- User Initials -->
-                                <TextBlock Text="{Binding UserInitials}"
-                                           FontSize="12"
-                                           FontWeight="SemiBold"
-                                           Foreground="White"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           IsVisible="{Binding !HasUserAvatar}" />
-                                <!-- User Avatar Image -->
-                                <Image Source="{Binding UserAvatarSource}"
-                                       Stretch="UniformToFill"
-                                       IsVisible="{Binding HasUserAvatar}" />
-                            </Panel>
-                        </Border>
-
-                        <!-- User Info -->
-                        <StackPanel VerticalAlignment="Center" Spacing="0">
-                            <TextBlock Text="{Binding UserDisplayName}"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="{Binding UserRole}"
-                                       FontSize="11"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       IsVisible="{Binding UserRole, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                        </StackPanel>
-                    </StackPanel>
+                        ToolTip.Tip="{Binding UserDisplayName}">
+                    <Border Width="32" Height="32"
+                            CornerRadius="16"
+                            Background="{DynamicResource PrimaryBrush}"
+                            ClipToBounds="True">
+                        <Panel>
+                            <!-- User Initials -->
+                            <TextBlock Text="{Binding UserInitials}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding !HasUserAvatar}" />
+                            <!-- User Avatar Image -->
+                            <Image Source="{Binding UserAvatarSource}"
+                                   Stretch="UniformToFill"
+                                   IsVisible="{Binding HasUserAvatar}" />
+                        </Panel>
+                    </Border>
                 </Button>
             </StackPanel>
         </Panel>
@@ -281,22 +267,6 @@
         <Style Selector="TextBox.header-search:focus /template/ Border#PART_BorderElement">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <!-- User Menu Button Style -->
-        <Style Selector="Button.user-menu">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="8" />
-            <Setter Property="Margin" Value="8,0,0,0" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.user-menu /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.user-menu:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>
