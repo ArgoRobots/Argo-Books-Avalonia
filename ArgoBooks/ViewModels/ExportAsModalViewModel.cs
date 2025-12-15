@@ -28,10 +28,23 @@ public partial class ExportAsModalViewModel : ViewModelBase
     private bool _isOpen;
 
     [ObservableProperty]
-    private bool _isBackupSelected = true;
+    private int _selectedTabIndex;
 
-    [ObservableProperty]
-    private bool _isSpreadsheetSelected;
+    /// <summary>
+    /// Gets whether backup tab is selected.
+    /// </summary>
+    public bool IsBackupSelected => SelectedTabIndex == 0;
+
+    /// <summary>
+    /// Gets whether spreadsheet tab is selected.
+    /// </summary>
+    public bool IsSpreadsheetSelected => SelectedTabIndex == 1;
+
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsBackupSelected));
+        OnPropertyChanged(nameof(IsSpreadsheetSelected));
+    }
 
     [ObservableProperty]
     private string _selectedFileFormat = "xlsx";
@@ -92,8 +105,7 @@ public partial class ExportAsModalViewModel : ViewModelBase
     [RelayCommand]
     private void Open()
     {
-        IsBackupSelected = true;
-        IsSpreadsheetSelected = false;
+        SelectedTabIndex = 0;
         IsOpen = true;
     }
 
@@ -104,26 +116,6 @@ public partial class ExportAsModalViewModel : ViewModelBase
     private void Close()
     {
         IsOpen = false;
-    }
-
-    /// <summary>
-    /// Selects backup export type.
-    /// </summary>
-    [RelayCommand]
-    private void SelectBackup()
-    {
-        IsBackupSelected = true;
-        IsSpreadsheetSelected = false;
-    }
-
-    /// <summary>
-    /// Selects spreadsheet export type.
-    /// </summary>
-    [RelayCommand]
-    private void SelectSpreadsheet()
-    {
-        IsBackupSelected = false;
-        IsSpreadsheetSelected = true;
     }
 
     /// <summary>
