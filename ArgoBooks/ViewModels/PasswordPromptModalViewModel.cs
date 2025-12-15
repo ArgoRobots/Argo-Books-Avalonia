@@ -36,6 +36,15 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     private TaskCompletionSource<string?>? _completionSource;
 
     /// <summary>
+    /// Gets the task that completes when the user submits a password.
+    /// Use this to wait for password retries after calling ShowError.
+    /// </summary>
+    public Task<string?> WaitForPasswordAsync()
+    {
+        return _completionSource?.Task ?? Task.FromResult<string?>(null);
+    }
+
+    /// <summary>
     /// Icon for password visibility toggle.
     /// </summary>
     public string PasswordVisibilityIcon => IsPasswordVisible
@@ -76,7 +85,7 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Shows an error message (e.g., wrong password).
+    /// Shows an error message (e.g., wrong password) and keeps modal open for retry.
     /// </summary>
     public void ShowError(string message)
     {
@@ -84,6 +93,23 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         HasError = true;
         IsLoading = false;
         Password = string.Empty;
+        IsOpen = true; // Ensure modal stays/reopens
+
+        // Create a new completion source for the retry
+        _completionSource = new TaskCompletionSource<string?>();
+    }
+
+    /// <summary>
+    /// Closes the modal after successful password entry.
+    /// Call this when the password was accepted.
+    /// </summary>
+    public void Close()
+    {
+        IsOpen = false;
+        IsLoading = false;
+        Password = string.Empty;
+        ErrorMessage = string.Empty;
+        HasError = false;
     }
 
     #region Commands
@@ -113,10 +139,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         HasError = false;
         IsLoading = true;
 
-        // Complete with the password
-        IsOpen = false;
+        // Complete with the password but keep modal open
+        // The caller will close it on success or call ShowError on failure
         _completionSource?.TrySetResult(Password);
-        Password = string.Empty;
     }
 
     /// <summary>

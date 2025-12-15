@@ -296,32 +296,7 @@ public partial class App : Application
         fileMenu.OpenRecentCompanyRequested += async (_, company) =>
         {
             if (string.IsNullOrEmpty(company.FilePath)) return;
-
-            _mainWindowViewModel?.ShowLoading("Opening company...");
-            try
-            {
-                var success = await CompanyManager!.OpenCompanyAsync(company.FilePath);
-                if (success)
-                {
-                    await LoadRecentCompaniesAsync();
-                }
-                else
-                {
-                    _mainWindowViewModel?.HideLoading();
-                }
-            }
-            catch (FileNotFoundException)
-            {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("File Not Found", "The company file no longer exists.", NotificationType.Error);
-                SettingsService?.RemoveRecentCompany(company.FilePath);
-                await LoadRecentCompaniesAsync();
-            }
-            catch (Exception ex)
-            {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
-            }
+            await OpenCompanyWithRetryAsync(company.FilePath);
         };
     }
 
@@ -424,32 +399,7 @@ public partial class App : Application
         _welcomeScreenViewModel.OpenRecentCompanyRequested += async (_, company) =>
         {
             if (string.IsNullOrEmpty(company.FilePath)) return;
-
-            _mainWindowViewModel?.ShowLoading("Opening company...");
-            try
-            {
-                var success = await CompanyManager!.OpenCompanyAsync(company.FilePath);
-                if (success)
-                {
-                    await LoadRecentCompaniesAsync();
-                }
-                else
-                {
-                    _mainWindowViewModel?.HideLoading();
-                }
-            }
-            catch (FileNotFoundException)
-            {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("File Not Found", "The company file no longer exists.", NotificationType.Error);
-                SettingsService?.RemoveRecentCompany(company.FilePath);
-                await LoadRecentCompaniesAsync();
-            }
-            catch (Exception ex)
-            {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
-            }
+            await OpenCompanyWithRetryAsync(company.FilePath);
         };
     }
 
@@ -467,32 +417,7 @@ public partial class App : Application
         companySwitcher.SwitchCompanyRequested += async (_, company) =>
         {
             if (string.IsNullOrEmpty(company.FilePath)) return;
-
-            _mainWindowViewModel?.ShowLoading("Opening company...");
-            try
-            {
-                var success = await CompanyManager!.OpenCompanyAsync(company.FilePath);
-                if (success)
-                {
-                    await LoadRecentCompaniesAsync();
-                }
-                else
-                {
-                    _mainWindowViewModel?.HideLoading();
-                }
-            }
-            catch (FileNotFoundException)
-            {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("File Not Found", "The company file no longer exists.", NotificationType.Error);
-                SettingsService?.RemoveRecentCompany(company.FilePath);
-                await LoadRecentCompaniesAsync();
-            }
-            catch (Exception ex)
-            {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
-            }
+            await OpenCompanyWithRetryAsync(company.FilePath);
         };
 
         // Open company from file dialog
@@ -733,30 +658,141 @@ public partial class App : Application
         if (files.Count > 0)
         {
             var filePath = files[0].Path.LocalPath;
-            _mainWindowViewModel?.ShowLoading("Opening company...");
+            await OpenCompanyWithRetryAsync(filePath);
+        }
+    }
 
-            try
+    /// <summary>
+    /// Opens a company file with password retry support.
+    /// Shows password modal on encrypted files and retries on wrong password.
+    /// </summary>
+    private static async Task<bool> OpenCompanyWithRetryAsync(string filePath)
+    {
+        if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null)
+            return false;
+
+        var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
+
+        _mainWindowViewModel.ShowLoading("Opening company...");
+
+        try
+        {
+            var success = await CompanyManager.OpenCompanyAsync(filePath);
+            if (success)
             {
-                var success = await CompanyManager!.OpenCompanyAsync(filePath);
-                if (success)
+                // Close the password modal if it was open
+                passwordModal?.Close();
+                await LoadRecentCompaniesAsync();
+                return true;
+            }
+            else
+            {
+                // User cancelled password prompt
+                _mainWindowViewModel.HideLoading();
+                return false;
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Wrong password - show error and retry
+            _mainWindowViewModel.HideLoading();
+
+            if (passwordModal != null)
+            {
+                passwordModal.ShowError("Invalid password. Please try again.");
+
+                // Wait for the user to retry
+                var newPassword = await passwordModal.WaitForPasswordAsync();
+
+                if (string.IsNullOrEmpty(newPassword))
                 {
-                    await LoadRecentCompaniesAsync();
+                    // User cancelled
+                    passwordModal.Close();
+                    return false;
                 }
-                else
+
+                // Retry with the new password
+                return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
+            }
+
+            return false;
+        }
+        catch (FileNotFoundException)
+        {
+            _mainWindowViewModel.HideLoading();
+            passwordModal?.Close();
+            _appShellViewModel.AddNotification("File Not Found", "The company file no longer exists.", NotificationType.Error);
+            SettingsService?.RemoveRecentCompany(filePath);
+            await LoadRecentCompaniesAsync();
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel.HideLoading();
+            passwordModal?.Close();
+            _appShellViewModel.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Retries opening a company file with a specific password.
+    /// </summary>
+    private static async Task<bool> OpenCompanyWithPasswordRetryAsync(string filePath, string password)
+    {
+        if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null)
+            return false;
+
+        var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
+
+        _mainWindowViewModel.ShowLoading("Opening company...");
+
+        try
+        {
+            var success = await CompanyManager.OpenCompanyAsync(filePath, password);
+            if (success)
+            {
+                passwordModal?.Close();
+                await LoadRecentCompaniesAsync();
+                return true;
+            }
+            else
+            {
+                _mainWindowViewModel.HideLoading();
+                return false;
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Wrong password again - show error and retry
+            _mainWindowViewModel.HideLoading();
+
+            if (passwordModal != null)
+            {
+                passwordModal.ShowError("Invalid password. Please try again.");
+
+                // Wait for the user to retry
+                var newPassword = await passwordModal.WaitForPasswordAsync();
+
+                if (string.IsNullOrEmpty(newPassword))
                 {
-                    _mainWindowViewModel?.HideLoading();
+                    // User cancelled
+                    passwordModal.Close();
+                    return false;
                 }
+
+                // Retry recursively
+                return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
             }
-            catch (UnauthorizedAccessException)
-            {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.PasswordPromptModalViewModel?.ShowError("Invalid password. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
-            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel.HideLoading();
+            passwordModal?.Close();
+            _appShellViewModel.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
+            return false;
         }
     }
 
