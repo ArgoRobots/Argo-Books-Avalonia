@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Services;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -104,9 +106,6 @@ public partial class CategoriesPageViewModel : ViewModelBase
     private IconOption? _modalSelectedIconOption;
 
     [ObservableProperty]
-    private ColorOption? _modalSelectedColorOption;
-
-    [ObservableProperty]
     private string? _modalError;
 
     /// <summary>
@@ -154,18 +153,6 @@ public partial class CategoriesPageViewModel : ViewModelBase
         new("💵", "Dollar")
     ];
 
-    /// <summary>
-    /// Available colors for dropdown.
-    /// </summary>
-    public ObservableCollection<ColorOption> AvailableColors { get; } =
-    [
-        new("#4A90D9", "Blue"),
-        new("#10B981", "Green"),
-        new("#F59E0B", "Orange"),
-        new("#8B5CF6", "Purple"),
-        new("#EF4444", "Red")
-    ];
-
     #endregion
 
     #region Constructor
@@ -177,7 +164,6 @@ public partial class CategoriesPageViewModel : ViewModelBase
     {
         // Set default selections
         _modalSelectedIconOption = AvailableIcons.FirstOrDefault();
-        _modalSelectedColorOption = AvailableColors.FirstOrDefault();
         LoadCategories();
     }
 
@@ -226,13 +212,19 @@ public partial class CategoriesPageViewModel : ViewModelBase
             .Where(c => c.Type == targetType)
             .ToList();
 
-        // Apply search filter
+        // Apply search filter using Levenshtein distance
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
-            var query = SearchQuery.ToLowerInvariant();
             categories = categories
-                .Where(c => c.Name.ToLowerInvariant().Contains(query) ||
-                           (c.Description?.ToLowerInvariant().Contains(query) ?? false))
+                .Select(c => new
+                {
+                    Category = c,
+                    NameScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, c.Name),
+                    DescScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, c.Description ?? string.Empty)
+                })
+                .Where(x => x.NameScore >= 0 || x.DescScore >= 0)
+                .OrderByDescending(x => Math.Max(x.NameScore, x.DescScore))
+                .Select(x => x.Category)
                 .ToList();
         }
 
@@ -379,13 +371,31 @@ public partial class CategoriesPageViewModel : ViewModelBase
             ParentId = ModalParentCategory?.Id != string.Empty ? ModalParentCategory?.Id : null,
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
             ItemType = ModalItemType,
-            Color = ModalSelectedColorOption?.Hex ?? "#4A90D9",
+            Color = "#4A90D9",
             Icon = ModalSelectedIconOption?.Icon ?? "📦",
             CreatedAt = DateTime.UtcNow
         };
 
         companyData.Categories.Add(newCategory);
         companyData.MarkAsModified();
+
+        // Record undo action
+        var categoryToUndo = newCategory;
+        App.UndoRedoManager?.RecordAction(new CategoryAddAction(
+            $"Add category '{newCategory.Name}'",
+            categoryToUndo,
+            () =>
+            {
+                companyData.Categories.Remove(categoryToUndo);
+                companyData.MarkAsModified();
+                LoadCategories();
+            },
+            () =>
+            {
+                companyData.Categories.Add(categoryToUndo);
+                companyData.MarkAsModified();
+                LoadCategories();
+            }));
 
         // Reload and close
         LoadCategories();
@@ -416,7 +426,6 @@ public partial class CategoriesPageViewModel : ViewModelBase
         ModalCategoryName = category.Name;
         ModalDescription = category.Description ?? string.Empty;
         ModalItemType = category.ItemType;
-        ModalSelectedColorOption = AvailableColors.FirstOrDefault(c => c.Hex == category.Color) ?? AvailableColors.First();
         ModalSelectedIconOption = AvailableIcons.FirstOrDefault(i => i.Icon == category.Icon) ?? AvailableIcons.First();
 
         // Set parent
@@ -457,15 +466,54 @@ public partial class CategoriesPageViewModel : ViewModelBase
         if (companyData == null)
             return;
 
+        // Store old values for undo
+        var oldName = _editingCategory.Name;
+        var oldParentId = _editingCategory.ParentId;
+        var oldDescription = _editingCategory.Description;
+        var oldItemType = _editingCategory.ItemType;
+        var oldIcon = _editingCategory.Icon;
+
+        // Store new values
+        var newName = ModalCategoryName.Trim();
+        var newParentId = ModalParentCategory?.Id != string.Empty ? ModalParentCategory?.Id : null;
+        var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim();
+        var newItemType = ModalItemType;
+        var newIcon = ModalSelectedIconOption?.Icon ?? "📦";
+
         // Update the category
-        _editingCategory.Name = ModalCategoryName.Trim();
-        _editingCategory.ParentId = ModalParentCategory?.Id != string.Empty ? ModalParentCategory?.Id : null;
-        _editingCategory.Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim();
-        _editingCategory.ItemType = ModalItemType;
-        _editingCategory.Color = ModalSelectedColorOption?.Hex ?? "#4A90D9";
-        _editingCategory.Icon = ModalSelectedIconOption?.Icon ?? "📦";
+        var categoryToEdit = _editingCategory;
+        categoryToEdit.Name = newName;
+        categoryToEdit.ParentId = newParentId;
+        categoryToEdit.Description = newDescription;
+        categoryToEdit.ItemType = newItemType;
+        categoryToEdit.Icon = newIcon;
 
         companyData.MarkAsModified();
+
+        // Record undo action
+        App.UndoRedoManager?.RecordAction(new CategoryEditAction(
+            $"Edit category '{newName}'",
+            categoryToEdit,
+            () =>
+            {
+                categoryToEdit.Name = oldName;
+                categoryToEdit.ParentId = oldParentId;
+                categoryToEdit.Description = oldDescription;
+                categoryToEdit.ItemType = oldItemType;
+                categoryToEdit.Icon = oldIcon;
+                companyData.MarkAsModified();
+                LoadCategories();
+            },
+            () =>
+            {
+                categoryToEdit.Name = newName;
+                categoryToEdit.ParentId = newParentId;
+                categoryToEdit.Description = newDescription;
+                categoryToEdit.ItemType = newItemType;
+                categoryToEdit.Icon = newIcon;
+                companyData.MarkAsModified();
+                LoadCategories();
+            }));
 
         // Reload and close
         LoadCategories();
@@ -516,16 +564,54 @@ public partial class CategoriesPageViewModel : ViewModelBase
         var category = companyData.Categories.FirstOrDefault(c => c.Id == _deletingCategory.Id);
         if (category != null)
         {
-            // Remove any child categories first
+            // Store child parent IDs for undo
             var children = companyData.Categories.Where(c => c.ParentId == category.Id).ToList();
+            var childOriginalParents = children.ToDictionary(c => c.Id, c => c.ParentId);
+
+            // Clear parent reference instead of deleting children
             foreach (var child in children)
             {
-                // Clear parent reference instead of deleting children
                 child.ParentId = null;
             }
 
+            var deletedCategory = category;
             companyData.Categories.Remove(category);
             companyData.MarkAsModified();
+
+            // Record undo action
+            App.UndoRedoManager?.RecordAction(new CategoryDeleteAction(
+                $"Delete category '{deletedCategory.Name}'",
+                deletedCategory,
+                () =>
+                {
+                    // Undo: restore category and child parent references
+                    companyData.Categories.Add(deletedCategory);
+                    foreach (var kvp in childOriginalParents)
+                    {
+                        var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                        if (child != null)
+                        {
+                            child.ParentId = kvp.Value;
+                        }
+                    }
+                    companyData.MarkAsModified();
+                    LoadCategories();
+                },
+                () =>
+                {
+                    // Redo: delete again
+                    foreach (var kvp in childOriginalParents)
+                    {
+                        var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                        if (child != null)
+                        {
+                            child.ParentId = null;
+                        }
+                    }
+                    companyData.Categories.Remove(deletedCategory);
+                    companyData.MarkAsModified();
+                    LoadCategories();
+                }));
         }
 
         LoadCategories();
@@ -548,7 +634,6 @@ public partial class CategoriesPageViewModel : ViewModelBase
         ModalDescription = string.Empty;
         ModalItemType = "Product";
         ModalSelectedIconOption = AvailableIcons.FirstOrDefault();
-        ModalSelectedColorOption = AvailableColors.FirstOrDefault();
         ModalError = null;
     }
 
@@ -645,16 +730,70 @@ public class IconOption
 }
 
 /// <summary>
-/// Represents a color option for dropdown.
+/// Undoable action for adding a category.
 /// </summary>
-public class ColorOption
+public class CategoryAddAction : IUndoableAction
 {
-    public string Hex { get; }
-    public string Name { get; }
+    private readonly Category _category;
+    private readonly Action _undoAction;
+    private readonly Action _redoAction;
 
-    public ColorOption(string hex, string name)
+    public string Description { get; }
+
+    public CategoryAddAction(string description, Category category, Action undoAction, Action redoAction)
     {
-        Hex = hex;
-        Name = name;
+        Description = description;
+        _category = category;
+        _undoAction = undoAction;
+        _redoAction = redoAction;
     }
+
+    public void Undo() => _undoAction();
+    public void Redo() => _redoAction();
+}
+
+/// <summary>
+/// Undoable action for editing a category.
+/// </summary>
+public class CategoryEditAction : IUndoableAction
+{
+    private readonly Category _category;
+    private readonly Action _undoAction;
+    private readonly Action _redoAction;
+
+    public string Description { get; }
+
+    public CategoryEditAction(string description, Category category, Action undoAction, Action redoAction)
+    {
+        Description = description;
+        _category = category;
+        _undoAction = undoAction;
+        _redoAction = redoAction;
+    }
+
+    public void Undo() => _undoAction();
+    public void Redo() => _redoAction();
+}
+
+/// <summary>
+/// Undoable action for deleting a category.
+/// </summary>
+public class CategoryDeleteAction : IUndoableAction
+{
+    private readonly Category _category;
+    private readonly Action _undoAction;
+    private readonly Action _redoAction;
+
+    public string Description { get; }
+
+    public CategoryDeleteAction(string description, Category category, Action undoAction, Action redoAction)
+    {
+        Description = description;
+        _category = category;
+        _undoAction = undoAction;
+        _redoAction = redoAction;
+    }
+
+    public void Undo() => _undoAction();
+    public void Redo() => _redoAction();
 }

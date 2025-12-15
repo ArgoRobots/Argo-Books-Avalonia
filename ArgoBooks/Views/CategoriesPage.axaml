@@ -83,11 +83,6 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- Divider -->
-                                <Border Width="1"
-                                        Background="{DynamicResource BorderBrush}"
-                                        Margin="0,4" />
-
                                 <!-- Add Category Button -->
                                 <Button Classes="primary-button"
                                         Command="{Binding OpenAddModalCommand}">
@@ -150,8 +145,7 @@
                                 <DataTemplate DataType="vm:CategoryDisplayItem">
                                     <Border Padding="24,16"
                                             BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="0,0,0,1"
-                                            Background="{Binding IsChild, Converter={x:Static local:BoolConverters.ToChildRowBackground}}">
+                                            BorderThickness="0,0,0,1">
                                         <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,100">
                                             <!-- Category Name with Icon -->
                                             <StackPanel Grid.Column="0"
@@ -160,7 +154,7 @@
                                                         Margin="{Binding IsChild, Converter={x:Static local:BoolConverters.ToChildIndent}}">
                                                 <Border Width="36" Height="36"
                                                         CornerRadius="8"
-                                                        Background="{Binding Color, Converter={StaticResource StringToBrushConverter}, ConverterParameter=0.15}">
+                                                        Background="{DynamicResource SurfaceAltBrush}">
                                                     <TextBlock Text="{Binding Icon}"
                                                                FontSize="18"
                                                                HorizontalAlignment="Center"
@@ -386,29 +380,6 @@
                                 </ComboBox>
                             </StackPanel>
 
-                            <!-- Icon Color -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Icon Color"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding AvailableColors}"
-                                          SelectedItem="{Binding ModalSelectedColorOption}"
-                                          Classes="form-combobox"
-                                          PlaceholderText="Select color">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate DataType="vm:ColorOption">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Border Width="16" Height="16"
-                                                        CornerRadius="3"
-                                                        Background="{Binding Hex, Converter={StaticResource StringToBrushConverter}}" />
-                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </StackPanel>
-
                             <!-- Error Message -->
                             <TextBlock Text="{Binding ModalError}"
                                        FontSize="12"
@@ -545,29 +516,6 @@
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate DataType="vm:IconOption">
                                             <TextBlock Text="{Binding DisplayName}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </StackPanel>
-
-                            <!-- Icon Color -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Icon Color"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding AvailableColors}"
-                                          SelectedItem="{Binding ModalSelectedColorOption}"
-                                          Classes="form-combobox"
-                                          PlaceholderText="Select color">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate DataType="vm:ColorOption">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Border Width="16" Height="16"
-                                                        CornerRadius="3"
-                                                        Background="{Binding Hex, Converter={StaticResource StringToBrushConverter}}" />
-                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                            </StackPanel>
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>

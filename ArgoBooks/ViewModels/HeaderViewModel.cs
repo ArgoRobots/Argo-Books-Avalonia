@@ -174,42 +174,6 @@ public partial class HeaderViewModel : ViewModelBase
 
         // Initialize undo/redo with the shared manager
         UndoRedoViewModel.SetUndoRedoManager(SharedUndoRedoManager);
-
-        // Add test data for undo/redo testing
-        AddTestUndoRedoData();
-    }
-
-    /// <summary>
-    /// Adds test data to the undo/redo stacks for testing purposes.
-    /// </summary>
-    private void AddTestUndoRedoData()
-    {
-        // Add some test actions to the undo stack
-        SharedUndoRedoManager.RecordAction(new TestAction("Create Invoice #1001"));
-        SharedUndoRedoManager.RecordAction(new TestAction("Add Customer: John Smith"));
-        SharedUndoRedoManager.RecordAction(new TestAction("Edit Product Price"));
-        SharedUndoRedoManager.RecordAction(new TestAction("Delete Payment Record"));
-        SharedUndoRedoManager.RecordAction(new TestAction("Update Tax Rate"));
-
-        // Undo a couple to have items in the redo stack
-        SharedUndoRedoManager.Undo();
-        SharedUndoRedoManager.Undo();
-    }
-
-    /// <summary>
-    /// Simple test action for undo/redo testing.
-    /// </summary>
-    private class TestAction : Services.IUndoableAction
-    {
-        public string Description { get; }
-
-        public TestAction(string description)
-        {
-            Description = description;
-        }
-
-        public void Undo() { /* Test action - no actual operation */ }
-        public void Redo() { /* Test action - no actual operation */ }
     }
 
     #region Commands

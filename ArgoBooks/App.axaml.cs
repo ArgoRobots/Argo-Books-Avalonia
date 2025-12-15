@@ -32,6 +32,11 @@ public partial class App : Application
     /// </summary>
     public static GlobalSettingsService? SettingsService { get; private set; }
 
+    /// <summary>
+    /// Gets the shared undo/redo manager instance.
+    /// </summary>
+    public static Services.UndoRedoManager? UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
