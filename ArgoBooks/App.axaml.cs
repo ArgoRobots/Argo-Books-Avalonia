@@ -604,30 +604,47 @@ public partial class App : Application
         {
             if (CompanyManager?.IsCompanyOpen != true || args.NewPassword == null) return;
 
+            // Verify the current password before changing
+            if (!CompanyManager.VerifyCurrentPassword(args.CurrentPassword))
+            {
+                settings.OnPasswordVerificationFailed();
+                return;
+            }
+
             try
             {
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
+                settings.OnPasswordChanged();
                 _appShellViewModel?.AddNotification("Success", "Password has been changed.", NotificationType.Success);
             }
             catch (Exception ex)
             {
+                settings.OnPasswordVerificationFailed();
                 _appShellViewModel?.AddNotification("Error", $"Failed to change password: {ex.Message}", NotificationType.Error);
             }
         };
 
         // Remove password
-        settings.RemovePasswordRequested += async (_, _) =>
+        settings.RemovePasswordRequested += async (_, args) =>
         {
             if (CompanyManager?.IsCompanyOpen != true) return;
+
+            // Verify the current password before removing
+            if (!CompanyManager.VerifyCurrentPassword(args.CurrentPassword))
+            {
+                settings.OnPasswordVerificationFailed();
+                return;
+            }
 
             try
             {
                 await CompanyManager.ChangePasswordAsync(null);
+                settings.OnPasswordRemoved();
                 _appShellViewModel?.AddNotification("Success", "Password has been removed.", NotificationType.Success);
             }
             catch (Exception ex)
             {
-                settings.HasPassword = true;
+                settings.OnPasswordVerificationFailed();
                 _appShellViewModel?.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
             }
         };

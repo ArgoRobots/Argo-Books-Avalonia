@@ -394,8 +394,16 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        // Raise event to change password
+        // Raise event to change password - handler will verify and call back
         ChangePasswordRequested?.Invoke(this, new PasswordChangeEventArgs(NewPassword, CurrentPassword));
+        // Note: Don't close immediately - handler will call OnPasswordChanged or OnPasswordVerificationFailed
+    }
+
+    /// <summary>
+    /// Called when password change succeeds.
+    /// </summary>
+    public void OnPasswordChanged()
+    {
         ClosePasswordModal();
     }
 
@@ -411,10 +419,27 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        // Raise event to remove password
+        // Raise event to remove password - handler will verify and call back
         RemovePasswordRequested?.Invoke(this, new PasswordChangeEventArgs(null, CurrentPassword));
+        // Note: Don't close immediately - handler will call OnPasswordRemoved or OnPasswordError
+    }
+
+    /// <summary>
+    /// Called when password removal succeeds.
+    /// </summary>
+    public void OnPasswordRemoved()
+    {
         HasPassword = false;
         ClosePasswordModal();
+    }
+
+    /// <summary>
+    /// Called when password verification fails during removal.
+    /// </summary>
+    public void OnPasswordVerificationFailed()
+    {
+        PasswordError = "Incorrect password";
+        CurrentPassword = string.Empty;
     }
 
     private void ClearPasswordFields()

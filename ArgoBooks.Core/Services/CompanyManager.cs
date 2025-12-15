@@ -51,6 +51,18 @@ public class CompanyManager : IDisposable
     public bool IsEncrypted => !string.IsNullOrEmpty(_currentPassword);
 
     /// <summary>
+    /// Verifies if the provided password matches the current company's password.
+    /// </summary>
+    /// <param name="password">The password to verify.</param>
+    /// <returns>True if the password matches, false otherwise.</returns>
+    public bool VerifyCurrentPassword(string? password)
+    {
+        if (!IsCompanyOpen) return false;
+        if (!IsEncrypted) return string.IsNullOrEmpty(password);
+        return _currentPassword == password;
+    }
+
+    /// <summary>
     /// Gets the current company settings.
     /// </summary>
     public CompanySettings? CurrentCompanySettings => _companyData?.Settings;
