@@ -11,6 +11,8 @@ namespace ArgoBooks.Modals;
 
 public partial class CreateCompanyWizard : UserControl
 {
+    private bool _eventsSubscribed;
+
     public CreateCompanyWizard()
     {
         InitializeComponent();
@@ -20,8 +22,9 @@ public partial class CreateCompanyWizard : UserControl
     {
         base.OnLoaded(e);
 
-        if (DataContext is CreateCompanyViewModel vm)
+        if (DataContext is CreateCompanyViewModel vm && !_eventsSubscribed)
         {
+            _eventsSubscribed = true;
             vm.BrowseLogoRequested += async (_, _) => await BrowseLogoAsync();
 
             vm.PropertyChanged += (_, args) =>

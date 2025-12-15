@@ -16,13 +16,10 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     private string _companyName = "";
 
     [ObservableProperty]
-    private string? _email;
+    private string? _businessType;
 
     [ObservableProperty]
-    private string? _phone;
-
-    [ObservableProperty]
-    private string? _address;
+    private string? _industry;
 
     [ObservableProperty]
     private Bitmap? _logoSource;
@@ -33,11 +30,40 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     [ObservableProperty]
     private string? _logoPath;
 
+    /// <summary>
+    /// Available business types (shared data source).
+    /// </summary>
+    public static string[] BusinessTypes { get; } =
+    [
+        "Sole Proprietorship",
+        "Partnership",
+        "Corporation",
+        "LLC",
+        "Non-Profit",
+        "Other"
+    ];
+
+    /// <summary>
+    /// Available industries (shared data source).
+    /// </summary>
+    public static string[] Industries { get; } =
+    [
+        "Retail",
+        "Services",
+        "Manufacturing",
+        "Technology",
+        "Healthcare",
+        "Food & Beverage",
+        "Construction",
+        "Transportation",
+        "Real Estate",
+        "Other"
+    ];
+
     // Store original values for detecting changes
     private string _originalCompanyName = "";
-    private string? _originalEmail;
-    private string? _originalPhone;
-    private string? _originalAddress;
+    private string? _originalBusinessType;
+    private string? _originalIndustry;
     private Bitmap? _originalLogo;
 
     /// <summary>
@@ -45,9 +71,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// </summary>
     public bool HasChanges =>
         CompanyName != _originalCompanyName ||
-        Email != _originalEmail ||
-        Phone != _originalPhone ||
-        Address != _originalAddress ||
+        BusinessType != _originalBusinessType ||
+        Industry != _originalIndustry ||
         LogoSource != _originalLogo;
 
     /// <summary>
@@ -65,18 +90,16 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// <summary>
     /// Opens the modal with the current company info.
     /// </summary>
-    public void Open(string companyName, string? email = null, string? phone = null, string? address = null, Bitmap? logo = null)
+    public void Open(string companyName, string? businessType = null, string? industry = null, Bitmap? logo = null)
     {
         _originalCompanyName = companyName;
-        _originalEmail = email;
-        _originalPhone = phone;
-        _originalAddress = address;
+        _originalBusinessType = businessType;
+        _originalIndustry = industry;
         _originalLogo = logo;
 
         CompanyName = companyName;
-        Email = email;
-        Phone = phone;
-        Address = address;
+        BusinessType = businessType;
+        Industry = industry;
         LogoSource = logo;
         HasLogo = logo != null;
         LogoPath = null;
@@ -113,9 +136,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         CompanySaved?.Invoke(this, new CompanyEditedEventArgs
         {
             CompanyName = CompanyName,
-            Email = Email,
-            Phone = Phone,
-            Address = Address,
+            BusinessType = BusinessType,
+            Industry = Industry,
             LogoSource = LogoSource,
             LogoPath = LogoPath
         });
@@ -161,9 +183,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasChanges));
     }
 
-    partial void OnEmailChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
-    partial void OnPhoneChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
-    partial void OnAddressChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnBusinessTypeChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
+    partial void OnIndustryChanged(string? value) => OnPropertyChanged(nameof(HasChanges));
 
     /// <summary>
     /// Event raised when the company is saved.
@@ -182,9 +203,8 @@ public partial class EditCompanyModalViewModel : ViewModelBase
 public class CompanyEditedEventArgs : EventArgs
 {
     public string CompanyName { get; set; } = "";
-    public string? Email { get; set; }
-    public string? Phone { get; set; }
-    public string? Address { get; set; }
+    public string? BusinessType { get; set; }
+    public string? Industry { get; set; }
     public Bitmap? LogoSource { get; set; }
     public string? LogoPath { get; set; }
 }
