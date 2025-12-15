@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -17,7 +18,7 @@ public partial class HelpPanelViewModel : ViewModelBase
     private bool _isOpen;
 
     [ObservableProperty]
-    private string _appVersion = "2.4.1";
+    private string _appVersion = AppInfo.Version;
 
     /// <summary>
     /// Default constructor for design-time.

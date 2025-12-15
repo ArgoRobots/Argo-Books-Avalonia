@@ -92,7 +92,7 @@
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                    HorizontalAlignment="Center" />
-                        <TextBlock Text="{Binding CurrentVersion, StringFormat='Version {0}'}"
+                        <TextBlock Text="{Binding CurrentVersion}"
                                    FontSize="13"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    HorizontalAlignment="Center" />
@@ -164,7 +164,7 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                HorizontalAlignment="Center" />
-                                    <TextBlock Text="{Binding NewVersion, StringFormat='Version {0} is now available'}"
+                                    <TextBlock Text="{Binding NewVersion, StringFormat='{0} is now available'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                HorizontalAlignment="Center" />

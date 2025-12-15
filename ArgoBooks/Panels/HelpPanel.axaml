@@ -129,7 +129,7 @@
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="4"
                                     Padding="8,4">
-                                <TextBlock Text="{Binding AppVersion, StringFormat='v{0}'}"
+                                <TextBlock Text="{Binding AppVersion}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Border>

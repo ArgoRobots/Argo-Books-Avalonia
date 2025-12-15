@@ -257,7 +257,7 @@
                 </StackPanel>
 
                 <!-- Version -->
-                <TextBlock Text="{Binding AppVersion, StringFormat='Version {0}'}"
+                <TextBlock Text="{Binding AppVersion}"
                            FontSize="12"
                            Foreground="{DynamicResource TextTertiaryBrush}"
                            HorizontalAlignment="Center"

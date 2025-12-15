@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -13,10 +14,10 @@ public partial class CheckForUpdateModalViewModel : ViewModelBase
     private bool _isOpen;
 
     [ObservableProperty]
-    private string _currentVersion = "2.4.1";
+    private string _currentVersion = AppInfo.Version;
 
     [ObservableProperty]
-    private string _newVersion = "2.5.0";
+    private string _newVersion = "V.1.1.0";
 
     [ObservableProperty]
     private string _lastChecked = "Just now";
