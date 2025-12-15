@@ -120,6 +120,9 @@ public partial class App : Application
             // Share WelcomeScreenViewModel with MainWindow for full-screen overlay
             _mainWindowViewModel.WelcomeScreenViewModel = _welcomeScreenViewModel;
 
+            // Share PasswordPromptModalViewModel with MainWindow for password dialog overlay
+            _mainWindowViewModel.PasswordPromptModalViewModel = _appShellViewModel.PasswordPromptModalViewModel;
+
             desktop.MainWindow = new MainWindow
             {
                 DataContext = _mainWindowViewModel

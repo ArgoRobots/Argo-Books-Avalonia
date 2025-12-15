@@ -95,6 +95,10 @@
                              IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowWelcomeScreen}"
                              ZIndex="150" />
 
+        <!-- Password Prompt Modal (above WelcomeScreen so it can be shown when opening encrypted files) -->
+        <modals:PasswordPromptModal DataContext="{Binding PasswordPromptModalViewModel}"
+                                    ZIndex="175" />
+
         <!-- Create Company Wizard (full-screen overlay above everything) -->
         <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}"
                                     ZIndex="200" />
