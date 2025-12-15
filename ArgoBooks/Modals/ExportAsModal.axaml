@@ -358,10 +358,18 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="MonthFormat" Value="MMM" />
-            <Setter Property="MinWidth" Value="180" />
-            <Setter Property="MaxWidth" Value="200" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <!-- Constrain DatePicker month text width -->
+        <Style Selector="DatePicker.form-date /template/ TextBlock#PART_MonthTextBlock">
+            <Setter Property="MaxWidth" Value="75" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+        <Style Selector="DatePicker.form-date /template/ TextBlock#PART_DayTextBlock">
+            <Setter Property="MinWidth" Value="28" />
+        </Style>
+        <Style Selector="DatePicker.form-date /template/ TextBlock#PART_YearTextBlock">
+            <Setter Property="MinWidth" Value="40" />
         </Style>
 
         <!-- Data Item hover -->
