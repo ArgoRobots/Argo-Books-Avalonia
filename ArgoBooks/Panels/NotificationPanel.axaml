@@ -104,6 +104,7 @@
                                 <DataTemplate x:DataType="vm:NotificationItem">
                                     <Button Classes="notification-item"
                                             Classes.unread="{Binding !IsRead}"
+                                            Classes.last="{Binding IsLast}"
                                             Command="{Binding $parent[UserControl].((vm:NotificationPanelViewModel)DataContext).NotificationClickedCommand}"
                                             CommandParameter="{Binding}">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
@@ -253,6 +254,9 @@
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="CornerRadius" Value="0" />
+        </Style>
+        <Style Selector="Button.notification-item.last">
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
         <Style Selector="Button.notification-item /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
