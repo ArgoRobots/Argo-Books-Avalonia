@@ -151,21 +151,31 @@
                                 </StackPanel>
 
                                 <!-- Date Range -->
-                                <StackPanel Spacing="8">
+                                <StackPanel Spacing="12">
                                     <TextBlock Text="Date Range"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <DatePicker SelectedDate="{Binding StartDate}"
-                                                    Classes="form-date" />
-                                        <TextBlock Text="to"
+                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                                        <TextBlock Grid.Row="0" Grid.Column="0"
+                                                   Text="From:"
                                                    FontSize="13"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    VerticalAlignment="Center" />
-                                        <DatePicker SelectedDate="{Binding EndDate}"
+                                        <DatePicker Grid.Row="0" Grid.Column="1"
+                                                    SelectedDate="{Binding StartDate}"
+                                                    HorizontalAlignment="Stretch"
                                                     Classes="form-date" />
-                                    </StackPanel>
+                                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                                   Text="To:"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <DatePicker Grid.Row="1" Grid.Column="1"
+                                                    SelectedDate="{Binding EndDate}"
+                                                    HorizontalAlignment="Stretch"
+                                                    Classes="form-date" />
+                                    </Grid>
                                 </StackPanel>
 
                                 <!-- Select Data to Export -->
@@ -358,18 +368,7 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="FontSize" Value="13" />
-        </Style>
-        <!-- Constrain DatePicker month text width -->
-        <Style Selector="DatePicker.form-date /template/ TextBlock#PART_MonthTextBlock">
-            <Setter Property="MaxWidth" Value="75" />
-            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-        </Style>
-        <Style Selector="DatePicker.form-date /template/ TextBlock#PART_DayTextBlock">
-            <Setter Property="MinWidth" Value="28" />
-        </Style>
-        <Style Selector="DatePicker.form-date /template/ TextBlock#PART_YearTextBlock">
-            <Setter Property="MinWidth" Value="40" />
+            <Setter Property="FontSize" Value="14" />
         </Style>
 
         <!-- Data Item hover -->
