@@ -1,9 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Platform.Storage;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using ArgoBooks.ViewModels;
 
@@ -12,7 +10,6 @@ namespace ArgoBooks.Modals;
 public partial class CreateCompanyWizard : UserControl
 {
     private bool _eventsSubscribed;
-    private bool _isFilePickerOpen;
 
     public CreateCompanyWizard()
     {
@@ -26,7 +23,6 @@ public partial class CreateCompanyWizard : UserControl
         if (DataContext is CreateCompanyViewModel vm && !_eventsSubscribed)
         {
             _eventsSubscribed = true;
-            vm.BrowseLogoRequested += async (_, _) => await BrowseLogoAsync();
 
             vm.PropertyChanged += (_, args) =>
             {
@@ -91,53 +87,6 @@ public partial class CreateCompanyWizard : UserControl
                 }
                 e.Handled = true;
                 break;
-        }
-    }
-
-    private async Task BrowseLogoAsync()
-    {
-        if (_isFilePickerOpen) return;
-        if (DataContext is not CreateCompanyViewModel vm) return;
-
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
-
-        try
-        {
-            _isFilePickerOpen = true;
-
-            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-            {
-                Title = "Select Company Logo",
-                AllowMultiple = false,
-                FileTypeFilter = new[]
-                {
-                    new FilePickerFileType("Image Files")
-                    {
-                        Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.bmp" },
-                        MimeTypes = new[] { "image/png", "image/jpeg", "image/bmp" }
-                    }
-                }
-            });
-
-            if (files.Count == 1)
-            {
-                var file = files[0];
-                try
-                {
-                    await using var stream = await file.OpenReadAsync();
-                    var bitmap = new Bitmap(stream);
-                    vm.SetLogo(file.Path.LocalPath, bitmap);
-                }
-                catch
-                {
-                    // Handle error silently or show message
-                }
-            }
-        }
-        finally
-        {
-            _isFilePickerOpen = false;
         }
     }
 }
