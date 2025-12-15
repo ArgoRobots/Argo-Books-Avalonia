@@ -117,6 +117,19 @@ public partial class HeaderViewModel : ViewModelBase
 
     #endregion
 
+    #region Save State
+
+    [ObservableProperty]
+    private bool _hasUnsavedChanges;
+
+    [ObservableProperty]
+    private bool _showSavedIndicator;
+
+    [ObservableProperty]
+    private double _savedIndicatorOpacity;
+
+    #endregion
+
     #region Undo/Redo
 
     /// <summary>
@@ -327,7 +340,7 @@ public partial class HeaderViewModel : ViewModelBase
     [RelayCommand]
     private void Save()
     {
-        // TODO: Implement save logic
+        SaveRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -373,6 +386,11 @@ public partial class HeaderViewModel : ViewModelBase
     /// Event raised when upgrade modal should be opened.
     /// </summary>
     public event EventHandler? OpenUpgradeRequested;
+
+    /// <summary>
+    /// Event raised when save is requested.
+    /// </summary>
+    public event EventHandler? SaveRequested;
 
     /// <summary>
     /// Event raised when a search key is pressed (for Quick Actions navigation).
@@ -468,6 +486,27 @@ public partial class HeaderViewModel : ViewModelBase
         Notifications.Clear();
         UnreadNotificationCount = 0;
         HasUnreadNotifications = false;
+    }
+
+    /// <summary>
+    /// Shows the saved indicator and hides it after 3 seconds.
+    /// </summary>
+    public async void ShowSavedFeedback()
+    {
+        HasUnsavedChanges = false;
+        ShowSavedIndicator = true;
+        SavedIndicatorOpacity = 1.0;
+
+        // Wait 3 seconds then fade out
+        await Task.Delay(3000);
+
+        // Fade out by setting opacity to 0 (animation handled in XAML)
+        SavedIndicatorOpacity = 0;
+
+        // Wait for fade animation
+        await Task.Delay(300);
+
+        ShowSavedIndicator = false;
     }
 
     #endregion

@@ -10,7 +10,7 @@
         x:Class="ArgoBooks.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding WindowTitle}"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/argo-logo.ico"
         MinWidth="1024"
         MinHeight="680"
         Width="{Binding WindowWidth, Mode=TwoWay}"
@@ -49,7 +49,7 @@
                                 Margin="12,0,0,0"
                                 VerticalAlignment="Center"
                                 IsHitTestVisible="False">
-                        <Image Source="/Assets/avalonia-logo.ico"
+                        <Image Source="/Assets/argo-logo.ico"
                                Width="20" Height="20"
                                VerticalAlignment="Center" />
                         <TextBlock Text="Argo Books"

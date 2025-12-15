@@ -19,6 +19,8 @@ public class CompanySettings
 public class CompanyInfo
 {
     public string Name { get; set; } = string.Empty;
+    public string? BusinessType { get; set; }
+    public string? Industry { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? Address { get; set; }

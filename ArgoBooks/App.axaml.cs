@@ -4,10 +4,12 @@ using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using ArgoBooks.Views;
 
@@ -91,6 +93,24 @@ public partial class App : Application
             // Wire up company switcher events
             WireCompanySwitcherEvents(desktop);
 
+            // Wire up header save request
+            _appShellViewModel.HeaderViewModel.SaveRequested += async (_, _) =>
+            {
+                if (CompanyManager?.IsCompanyOpen == true)
+                {
+                    _mainWindowViewModel?.ShowLoading("Saving...");
+                    try
+                    {
+                        await CompanyManager.SaveCompanyAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _mainWindowViewModel?.HideLoading();
+                        _appShellViewModel?.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
+                    }
+                }
+            };
+
             // Share CreateCompanyViewModel with MainWindow for full-screen overlay
             _mainWindowViewModel.CreateCompanyViewModel = _appShellViewModel.CreateCompanyViewModel;
 
@@ -127,6 +147,10 @@ public partial class App : Application
             if (SettingsService != null)
             {
                 await SettingsService.LoadGlobalSettingsAsync();
+
+                // Initialize theme service with settings
+                ThemeService.Instance.SetGlobalSettingsService(SettingsService);
+                ThemeService.Instance.Initialize();
             }
 
             // Load and display recent companies
@@ -150,8 +174,10 @@ public partial class App : Application
         CompanyManager.CompanyOpened += (_, args) =>
         {
             _mainWindowViewModel.OpenCompany(args.CompanyName);
-            _appShellViewModel.SetCompanyInfo(args.CompanyName);
-            _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(args.CompanyName, args.FilePath);
+            var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
+            _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
+            _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(args.CompanyName, args.FilePath, logo);
+            _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(args.FilePath);
             _mainWindowViewModel.HideLoading();
 
             // Navigate to Dashboard when company is opened
@@ -162,6 +188,8 @@ public partial class App : Application
         {
             _mainWindowViewModel.CloseCompany();
             _appShellViewModel.SetCompanyInfo(null);
+            _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("", null);
+            _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(null);
             _mainWindowViewModel.HideLoading();
 
             // Navigate back to Welcome screen when company is closed
@@ -171,7 +199,14 @@ public partial class App : Application
         CompanyManager.CompanySaved += (_, _) =>
         {
             _mainWindowViewModel.HideLoading();
-            _appShellViewModel.AddNotification("Saved", "Company saved successfully.", NotificationType.Success);
+            _mainWindowViewModel.HasUnsavedChanges = false;
+            _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
+        };
+
+        CompanyManager.CompanyDataChanged += (_, _) =>
+        {
+            _mainWindowViewModel.HasUnsavedChanges = true;
+            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
         };
 
         CompanyManager.PasswordRequired += async (_, args) =>
@@ -460,6 +495,137 @@ public partial class App : Application
         {
             await OpenCompanyFileDialogAsync(desktop);
         };
+
+        // Edit current company
+        companySwitcher.EditCompanyRequested += (_, _) =>
+        {
+            if (CompanyManager?.IsCompanyOpen != true || _appShellViewModel == null) return;
+
+            var settings = CompanyManager.CurrentCompanySettings;
+            var logoPath = CompanyManager.CurrentCompanyLogoPath;
+            var logo = LoadBitmapFromPath(logoPath);
+            _appShellViewModel.EditCompanyModalViewModel.Open(
+                settings?.Company.Name ?? "",
+                settings?.Company.BusinessType,
+                settings?.Company.Industry,
+                logo);
+        };
+
+        // Wire up edit company modal events
+        WireEditCompanyEvents(desktop);
+    }
+
+    /// <summary>
+    /// Wires up edit company modal events.
+    /// </summary>
+    private static void WireEditCompanyEvents(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        if (_appShellViewModel == null)
+            return;
+
+        var editCompany = _appShellViewModel.EditCompanyModalViewModel;
+
+        // Save company changes
+        editCompany.CompanySaved += async (_, args) =>
+        {
+            if (CompanyManager?.IsCompanyOpen != true) return;
+
+            try
+            {
+                // Update company settings
+                var settings = CompanyManager.CurrentCompanySettings;
+                if (settings != null)
+                {
+                    var oldName = settings.Company.Name;
+                    var nameChanged = oldName != args.CompanyName;
+
+                    settings.Company.Name = args.CompanyName;
+                    settings.Company.BusinessType = args.BusinessType;
+                    settings.Company.Industry = args.Industry;
+
+                    // Handle logo update if a new one was uploaded
+                    if (!string.IsNullOrEmpty(args.LogoPath))
+                    {
+                        await CompanyManager.SetCompanyLogoAsync(args.LogoPath);
+                    }
+                    else if (args.LogoSource == null && CompanyManager.CurrentCompanyLogoPath != null)
+                    {
+                        // Logo was removed
+                        await CompanyManager.RemoveCompanyLogoAsync();
+                    }
+
+                    // Mark settings as changed
+                    settings.ChangesMade = true;
+
+                    // If company name changed, save and rename file
+                    if (nameChanged && CompanyManager.CurrentFilePath != null)
+                    {
+                        // Save first to persist the new name in the file
+                        await CompanyManager.SaveCompanyAsync();
+
+                        // Rename the file
+                        var currentPath = CompanyManager.CurrentFilePath;
+                        var directory = Path.GetDirectoryName(currentPath);
+                        var newFileName = args.CompanyName + ".argo";
+                        var newPath = Path.Combine(directory!, newFileName);
+
+                        if (currentPath != newPath && !File.Exists(newPath))
+                        {
+                            File.Move(currentPath, newPath);
+                            CompanyManager.UpdateFilePath(newPath);
+                        }
+
+                        _appShellViewModel?.HeaderViewModel.ShowSavedFeedback();
+                    }
+
+                    // Update UI
+                    _mainWindowViewModel?.OpenCompany(args.CompanyName);
+                    var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
+                    _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
+                    _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
+                        args.CompanyName,
+                        CompanyManager.CurrentFilePath,
+                        logo);
+                }
+
+                _appShellViewModel?.AddNotification("Updated", "Company information updated.", NotificationType.Success);
+            }
+            catch (Exception ex)
+            {
+                _appShellViewModel?.AddNotification("Error", $"Failed to update company: {ex.Message}", NotificationType.Error);
+            }
+        };
+
+        // Browse logo
+        editCompany.BrowseLogoRequested += async (_, _) =>
+        {
+            var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Select Company Logo",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Images")
+                    {
+                        Patterns = new[] { "*.png", "*.jpg", "*.jpeg" }
+                    }
+                }
+            });
+
+            if (files.Count > 0)
+            {
+                var path = files[0].Path.LocalPath;
+                try
+                {
+                    var bitmap = new Avalonia.Media.Imaging.Bitmap(path);
+                    editCompany.SetLogo(path, bitmap);
+                }
+                catch
+                {
+                    // Invalid image
+                }
+            }
+        };
     }
 
     /// <summary>
@@ -695,6 +861,24 @@ public partial class App : Application
         {
             DataContext = new PlaceholderPageViewModel(title, description)
         };
+    }
+
+    /// <summary>
+    /// Loads a Bitmap from a file path.
+    /// </summary>
+    private static Bitmap? LoadBitmapFromPath(string? path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        try
+        {
+            return new Bitmap(path);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private void DisableAvaloniaDataAnnotationValidation()

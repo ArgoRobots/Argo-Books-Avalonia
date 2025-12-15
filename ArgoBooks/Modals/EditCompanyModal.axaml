@@ -1,0 +1,272 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:ArgoBooks.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="500"
+             x:Class="ArgoBooks.Modals.EditCompanyModal"
+             x:DataType="vm:EditCompanyModalViewModel"
+             IsVisible="{Binding IsOpen}">
+
+    <Panel>
+        <!-- Backdrop -->
+        <Border Background="#80000000"
+                IsVisible="{Binding IsOpen}">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                </Transitions>
+            </Border.Transitions>
+        </Border>
+
+        <!-- Modal -->
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                BoxShadow="0 8 32 0 #40000000"
+                Width="480"
+                MaxHeight="600"
+                IsVisible="{Binding IsOpen}">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="12,12,0,0"
+                        Padding="24,16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="Edit Company"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="Update your company information"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Classes="icon-button"
+                                Command="{Binding CloseCommand}">
+                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                      Width="20" Height="20" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Body -->
+                <ScrollViewer Grid.Row="1" Padding="24,16">
+                    <StackPanel Spacing="16">
+                        <!-- Company Name -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Company Name *"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox Classes="form-input"
+                                     Text="{Binding CompanyName, Mode=TwoWay}"
+                                     Watermark="Enter company name" />
+                        </StackPanel>
+
+                        <!-- Business Type -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Business Type"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding BusinessTypes}"
+                                      SelectedItem="{Binding BusinessType}"
+                                      Classes="form-combobox"
+                                      PlaceholderText="Select business type"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- Industry -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Industry"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding Industries}"
+                                      SelectedItem="{Binding Industry}"
+                                      Classes="form-combobox"
+                                      PlaceholderText="Select industry"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- Logo Section -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Company Logo"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                            <Grid ColumnDefinitions="Auto,*">
+                                <!-- Logo Preview -->
+                                <Border Grid.Column="0"
+                                        Width="80" Height="80"
+                                        CornerRadius="8"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        ClipToBounds="True"
+                                        Margin="0,0,16,0">
+                                    <Panel>
+                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H5v-4h4v4zm0-6H5V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4zm4 6h-4v-4h4v4zm0-6h-4V7h4v4z"
+                                                  Width="32" Height="32"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                  IsVisible="{Binding !HasLogo}" />
+                                        <Image Source="{Binding LogoSource}"
+                                               Stretch="Uniform"
+                                               IsVisible="{Binding HasLogo}" />
+                                    </Panel>
+                                </Border>
+
+                                <!-- Upload Buttons -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
+                                    <Button Classes="secondary-button"
+                                            Command="{Binding BrowseLogoCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"
+                                                      Width="16" Height="16" />
+                                            <TextBlock Text="Upload Logo" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="text-button"
+                                            Command="{Binding RemoveLogoCommand}"
+                                            IsVisible="{Binding HasLogo}">
+                                        <TextBlock Text="Remove" Foreground="{DynamicResource DangerBrush}" />
+                                    </Button>
+                                    <TextBlock Text="PNG, JPG up to 5MB"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="0,0,12,12"
+                        Padding="24,16">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <Button Grid.Column="1"
+                                Classes="secondary-button"
+                                Command="{Binding CloseCommand}"
+                                Margin="0,0,8,0">
+                            <TextBlock Text="Cancel" />
+                        </Button>
+                        <Button Grid.Column="2"
+                                Classes="primary-button"
+                                Command="{Binding SaveCommand}"
+                                IsEnabled="{Binding CanSave}">
+                            <TextBlock Text="Save Changes" />
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Icon Button Style -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Primary Button Style -->
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:disabled">
+            <Setter Property="Opacity" Value="0.5" />
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontWeight" Value="Medium" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Text Button Style -->
+        <Style Selector="Button.text-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.text-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.text-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Form Input Style -->
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style Selector="TextBox.form-input /template/ Border#PART_BorderElement">
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+        <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Form ComboBox Style -->
+        <Style Selector="ComboBox.form-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="MinHeight" Value="40" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

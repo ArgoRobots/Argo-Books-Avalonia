@@ -31,6 +31,8 @@ public class UpdateSettings
 public class UiSettings
 {
     public bool SidebarCollapsed { get; set; } = false;
+    public string Theme { get; set; } = "Dark";
+    public string AccentColor { get; set; } = "Blue";
 }
 
 public class LicenseSettings

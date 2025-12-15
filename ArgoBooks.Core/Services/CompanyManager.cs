@@ -51,6 +51,34 @@ public class CompanyManager : IDisposable
     public bool IsEncrypted => !string.IsNullOrEmpty(_currentPassword);
 
     /// <summary>
+    /// Gets the current company settings.
+    /// </summary>
+    public CompanySettings? CurrentCompanySettings => _companyData?.Settings;
+
+    /// <summary>
+    /// Gets the current company logo file path, if one exists.
+    /// </summary>
+    public string? CurrentCompanyLogoPath
+    {
+        get
+        {
+            if (_companyData?.Settings.Company.LogoFileName == null || _currentTempDirectory == null)
+                return null;
+
+            var logoPath = Path.Combine(_currentTempDirectory, _companyData.Settings.Company.LogoFileName);
+            return File.Exists(logoPath) ? logoPath : null;
+        }
+    }
+
+    /// <summary>
+    /// Updates the current file path after a file rename.
+    /// </summary>
+    public void UpdateFilePath(string newPath)
+    {
+        _currentFilePath = newPath;
+    }
+
+    /// <summary>
     /// Event raised when a company is opened.
     /// </summary>
     public event EventHandler<CompanyOpenedEventArgs>? CompanyOpened;
@@ -338,6 +366,60 @@ public class CompanyManager : IDisposable
 
         // Raise event
         CompanyClosed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Sets the company logo from a file path.
+    /// </summary>
+    /// <param name="logoPath">Path to the logo image file.</param>
+    public async Task SetCompanyLogoAsync(string logoPath)
+    {
+        if (_companyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        if (!File.Exists(logoPath))
+            throw new FileNotFoundException("Logo file not found.", logoPath);
+
+        // Generate a unique filename for the logo
+        var extension = Path.GetExtension(logoPath);
+        var logoFileName = $"logo{extension}";
+        var destPath = Path.Combine(_currentTempDirectory, logoFileName);
+
+        // Copy the logo file to the temp directory
+        await Task.Run(() => File.Copy(logoPath, destPath, overwrite: true));
+
+        // Update settings
+        _companyData.Settings.Company.LogoFileName = logoFileName;
+        _companyData.ChangesMade = true;
+
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Removes the current company logo.
+    /// </summary>
+    public async Task RemoveCompanyLogoAsync()
+    {
+        if (_companyData == null || _currentTempDirectory == null)
+            throw new InvalidOperationException("No company is currently open.");
+
+        var logoFileName = _companyData.Settings.Company.LogoFileName;
+        if (string.IsNullOrEmpty(logoFileName))
+            return;
+
+        var logoPath = Path.Combine(_currentTempDirectory, logoFileName);
+
+        // Delete the logo file if it exists
+        if (File.Exists(logoPath))
+        {
+            await Task.Run(() => File.Delete(logoPath));
+        }
+
+        // Update settings
+        _companyData.Settings.Company.LogoFileName = null;
+        _companyData.ChangesMade = true;
+
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

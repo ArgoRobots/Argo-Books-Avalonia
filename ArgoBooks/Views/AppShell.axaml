@@ -102,5 +102,8 @@
 
         <!-- Password Prompt Modal -->
         <modals:PasswordPromptModal DataContext="{Binding PasswordPromptModalViewModel}" />
+
+        <!-- Edit Company Modal -->
+        <modals:EditCompanyModal DataContext="{Binding EditCompanyModalViewModel}" />
     </Panel>
 </UserControl>

@@ -343,8 +343,25 @@ public class FileService : IFileService
         return tempPath;
     }
 
-    private static string GetCompanyNameFromDirectory(string tempDirectory)
+    private string GetCompanyNameFromDirectory(string tempDirectory)
     {
+        // First try to read the company name from settings (in case it was renamed)
+        try
+        {
+            var settingsPath = FindFileInDirectory(tempDirectory, "appSettings.json");
+            if (settingsPath != null && File.Exists(settingsPath))
+            {
+                var json = File.ReadAllText(settingsPath);
+                var settings = JsonSerializer.Deserialize<CompanySettings>(json, JsonOptions);
+                if (!string.IsNullOrEmpty(settings?.Company.Name))
+                    return settings.Company.Name;
+            }
+        }
+        catch
+        {
+            // Fall back to directory name
+        }
+
         // Look for company subdirectory
         var subdirs = Directory.GetDirectories(tempDirectory);
         if (subdirs.Length > 0)

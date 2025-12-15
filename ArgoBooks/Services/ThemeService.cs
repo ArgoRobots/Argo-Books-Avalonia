@@ -11,6 +11,7 @@ namespace ArgoBooks.Services;
 public class ThemeService : IThemeService
 {
     private static ThemeService? _instance;
+    private IGlobalSettingsService? _globalSettingsService;
 
     /// <summary>
     /// Gets the singleton instance of the ThemeService.
@@ -123,6 +124,7 @@ public class ThemeService : IThemeService
 
         _currentTheme = theme;
         ApplyTheme();
+        SaveToSettings();
         ThemeChanged?.Invoke(this, theme);
     }
 
@@ -140,6 +142,56 @@ public class ThemeService : IThemeService
             _ => ThemeMode.System
         };
         SetTheme(theme);
+    }
+
+    /// <summary>
+    /// Sets the global settings service for theme persistence.
+    /// </summary>
+    /// <param name="settingsService">The global settings service.</param>
+    public void SetGlobalSettingsService(IGlobalSettingsService? settingsService)
+    {
+        _globalSettingsService = settingsService;
+    }
+
+    /// <summary>
+    /// Loads theme and accent color from global settings.
+    /// </summary>
+    public void LoadFromSettings()
+    {
+        if (_globalSettingsService == null)
+            return;
+
+        var settings = _globalSettingsService.GetSettings();
+        if (settings?.Ui != null)
+        {
+            _currentTheme = settings.Ui.Theme switch
+            {
+                "Light" => ThemeMode.Light,
+                "Dark" => ThemeMode.Dark,
+                "System" => ThemeMode.System,
+                _ => ThemeMode.Dark
+            };
+            _currentAccentColor = AccentColors.ContainsKey(settings.Ui.AccentColor)
+                ? settings.Ui.AccentColor
+                : "Blue";
+        }
+    }
+
+    /// <summary>
+    /// Saves current theme and accent color to global settings.
+    /// </summary>
+    private void SaveToSettings()
+    {
+        if (_globalSettingsService == null)
+            return;
+
+        var settings = _globalSettingsService.GetSettings();
+        if (settings != null)
+        {
+            settings.Ui.Theme = CurrentThemeName;
+            settings.Ui.AccentColor = _currentAccentColor;
+            _globalSettingsService.SaveSettings(settings);
+        }
     }
 
     /// <summary>
@@ -169,6 +221,7 @@ public class ThemeService : IThemeService
 
         _currentAccentColor = colorName;
         ApplyAccentColor();
+        SaveToSettings();
     }
 
     private void ApplyAccentColor()
@@ -218,7 +271,12 @@ public class ThemeService : IThemeService
             // Subscribe to system theme changes
             app.ActualThemeVariantChanged += OnSystemThemeChanged;
         }
+
+        // Load saved settings if available
+        LoadFromSettings();
+
         ApplyTheme();
+        ApplyAccentColor();
     }
 
     private void ApplyTheme()

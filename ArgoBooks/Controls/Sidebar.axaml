@@ -27,28 +27,32 @@
                         IsVisible="{Binding !IsCollapsed}"
                         Command="{Binding OpenCompanySwitcherCommand}">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <!-- Logo (40px square with gradient) -->
+                        <!-- Logo (40px square) -->
                         <Border Grid.Column="0"
                                 Width="40" Height="40"
                                 CornerRadius="8"
-                                ClipToBounds="True">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                    <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
-                                    <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
-                                </LinearGradientBrush>
-                            </Border.Background>
+                                ClipToBounds="True"
+                                Background="{DynamicResource SurfaceAltBrush}">
                             <Panel>
                                 <Image Source="{Binding CompanyLogo}"
                                        Stretch="UniformToFill"
                                        IsVisible="{Binding HasCompanyLogo}" />
-                                <TextBlock Text="{Binding CompanyInitial}"
-                                           FontSize="18"
-                                           FontWeight="Bold"
-                                           Foreground="White"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           IsVisible="{Binding !HasCompanyLogo}" />
+                                <!-- Gradient background for initial only -->
+                                <Border CornerRadius="8"
+                                        IsVisible="{Binding !HasCompanyLogo}">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                            <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                                            <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <TextBlock Text="{Binding CompanyInitial}"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Border>
                             </Panel>
                         </Border>
 
@@ -81,24 +85,28 @@
                         HorizontalAlignment="Center">
                     <Border Width="40" Height="40"
                             CornerRadius="8"
-                            ClipToBounds="True">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
-                                <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
-                            </LinearGradientBrush>
-                        </Border.Background>
+                            ClipToBounds="True"
+                            Background="{DynamicResource SurfaceAltBrush}">
                         <Panel>
                             <Image Source="{Binding CompanyLogo}"
                                    Stretch="UniformToFill"
                                    IsVisible="{Binding HasCompanyLogo}" />
-                            <TextBlock Text="{Binding CompanyInitial}"
-                                       FontSize="18"
-                                       FontWeight="Bold"
-                                       Foreground="White"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       IsVisible="{Binding !HasCompanyLogo}" />
+                            <!-- Gradient background for initial only -->
+                            <Border CornerRadius="8"
+                                    IsVisible="{Binding !HasCompanyLogo}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                                        <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <TextBlock Text="{Binding CompanyInitial}"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                            </Border>
                         </Panel>
                     </Border>
                 </Button>

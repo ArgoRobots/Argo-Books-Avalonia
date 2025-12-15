@@ -70,6 +70,24 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showWelcomeScreen = true;
 
+    /// <summary>
+    /// Whether the current company has unsaved changes.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasUnsavedChanges;
+
+    /// <summary>
+    /// Whether to show the "Saved" indicator.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showSavedIndicator;
+
+    /// <summary>
+    /// Opacity for the saved indicator (for fade animation).
+    /// </summary>
+    [ObservableProperty]
+    private double _savedIndicatorOpacity;
+
     #endregion
 
     /// <summary>
@@ -94,9 +112,60 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnCurrentCompanyNameChanged(string? value)
     {
         HasCompanyOpen = !string.IsNullOrEmpty(value);
-        WindowTitle = string.IsNullOrEmpty(value)
-            ? "Argo Books"
-            : $"{value} - Argo Books";
+        UpdateWindowTitle();
+    }
+
+    /// <summary>
+    /// Updates the window title when unsaved changes status changes.
+    /// </summary>
+    partial void OnHasUnsavedChangesChanged(bool value)
+    {
+        UpdateWindowTitle();
+    }
+
+    /// <summary>
+    /// Updates the window title based on company name and unsaved changes.
+    /// </summary>
+    private void UpdateWindowTitle()
+    {
+        if (string.IsNullOrEmpty(CurrentCompanyName))
+        {
+            WindowTitle = "Argo Books";
+        }
+        else
+        {
+            var asterisk = HasUnsavedChanges ? "*" : "";
+            WindowTitle = $"{asterisk}{CurrentCompanyName} - Argo Books";
+        }
+    }
+
+    /// <summary>
+    /// Marks that there are unsaved changes.
+    /// </summary>
+    public void MarkUnsavedChanges()
+    {
+        HasUnsavedChanges = true;
+    }
+
+    /// <summary>
+    /// Shows the saved indicator and hides it after 3 seconds.
+    /// </summary>
+    public async void ShowSavedFeedback()
+    {
+        HasUnsavedChanges = false;
+        ShowSavedIndicator = true;
+        SavedIndicatorOpacity = 1.0;
+
+        // Wait 3 seconds then fade out
+        await Task.Delay(3000);
+
+        // Fade out by setting opacity to 0 (animation handled in XAML)
+        SavedIndicatorOpacity = 0;
+
+        // Wait for fade animation
+        await Task.Delay(300);
+
+        ShowSavedIndicator = false;
     }
 
     /// <summary>

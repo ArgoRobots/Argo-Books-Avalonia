@@ -18,10 +18,19 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isRecentSubmenuOpen;
 
+    [ObservableProperty]
+    private string? _currentCompanyPath;
+
     /// <summary>
     /// Recent companies for quick access.
     /// </summary>
     public ObservableCollection<RecentCompanyItem> RecentCompanies { get; } = [];
+
+    /// <summary>
+    /// Recent companies excluding the currently open company.
+    /// </summary>
+    public IEnumerable<RecentCompanyItem> FilteredRecentCompanies =>
+        RecentCompanies.Where(c => c.FilePath != CurrentCompanyPath);
 
     /// <summary>
     /// Default constructor for design-time.
@@ -189,6 +198,22 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     public event EventHandler? ShowInFolderRequested;
 
     #endregion
+
+    /// <summary>
+    /// Sets the current company path for filtering recent companies.
+    /// </summary>
+    public void SetCurrentCompany(string? filePath)
+    {
+        CurrentCompanyPath = filePath;
+    }
+
+    /// <summary>
+    /// Updates filtered list when current company path changes.
+    /// </summary>
+    partial void OnCurrentCompanyPathChanged(string? value)
+    {
+        OnPropertyChanged(nameof(FilteredRecentCompanies));
+    }
 }
 
 /// <summary>

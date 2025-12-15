@@ -205,8 +205,8 @@
                 PointerEntered="RecentSubmenu_PointerEntered"
                 PointerExited="RecentSubmenu_PointerExited">
             <StackPanel Margin="0,8">
-                <!-- Recent Company Items - dynamically bound -->
-                <ItemsControl ItemsSource="{Binding RecentCompanies}">
+                <!-- Recent Company Items - dynamically bound (filtered to exclude current company) -->
+                <ItemsControl ItemsSource="{Binding FilteredRecentCompanies}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:RecentCompanyItem">
                             <Button Classes="menu-item"
