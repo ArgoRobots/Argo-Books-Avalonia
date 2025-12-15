@@ -399,16 +399,18 @@
 
         <!-- Secondary Button -->
         <Style Selector="Button.secondary-button">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="16,10" />
             <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         </Style>
         <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />

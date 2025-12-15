@@ -174,6 +174,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public event EventHandler<PasswordChangeEventArgs>? RemovePasswordRequested;
 
+    /// <summary>
+    /// Event raised when a password textbox should be focused (e.g., after error).
+    /// </summary>
+    public event EventHandler? FocusPasswordRequested;
+
     [ObservableProperty]
     private bool _isChangePasswordModalOpen;
 
@@ -192,6 +197,40 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private string? _passwordError;
 
+    [ObservableProperty]
+    private bool _isNewPasswordVisible;
+
+    [ObservableProperty]
+    private bool _isConfirmPasswordVisible;
+
+    [ObservableProperty]
+    private bool _isCurrentPasswordVisible;
+
+    /// <summary>
+    /// Icon for new password visibility toggle.
+    /// </summary>
+    public string NewPasswordVisibilityIcon => IsNewPasswordVisible
+        ? "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"
+        : "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
+
+    /// <summary>
+    /// Icon for confirm password visibility toggle.
+    /// </summary>
+    public string ConfirmPasswordVisibilityIcon => IsConfirmPasswordVisible
+        ? "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"
+        : "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
+
+    /// <summary>
+    /// Icon for current password visibility toggle.
+    /// </summary>
+    public string CurrentPasswordVisibilityIcon => IsCurrentPasswordVisible
+        ? "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"
+        : "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z";
+
+    partial void OnIsNewPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(NewPasswordVisibilityIcon));
+    partial void OnIsConfirmPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(ConfirmPasswordVisibilityIcon));
+    partial void OnIsCurrentPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(CurrentPasswordVisibilityIcon));
+
     public ObservableCollection<string> AutoLockOptions { get; } = new()
     {
         "Never",
@@ -202,6 +241,13 @@ public partial class SettingsModalViewModel : ViewModelBase
     };
 
     #endregion
+
+    /// <summary>
+    /// Whether there are unsaved changes in the settings.
+    /// </summary>
+    public bool HasUnsavedChanges =>
+        SelectedTheme != _originalTheme ||
+        SelectedAccentColor != _originalAccentColor;
 
     /// <summary>
     /// Default constructor.
@@ -231,12 +277,53 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Closes the settings modal and reverts unsaved changes.
+    /// Closes the settings modal, prompting to save if there are unsaved changes.
     /// </summary>
     [RelayCommand]
-    private void Close()
+    private async Task CloseAsync()
     {
-        // Revert to original values
+        if (HasUnsavedChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Unsaved Changes",
+                    Message = "You have unsaved changes. Do you want to save them before closing?",
+                    PrimaryButtonText = "Save",
+                    SecondaryButtonText = "Don't Save",
+                    CancelButtonText = "Cancel"
+                });
+
+                switch (result)
+                {
+                    case ConfirmationResult.Primary:
+                        // Save and close
+                        SaveCommand.Execute(null);
+                        return;
+                    case ConfirmationResult.Secondary:
+                        // Don't save, revert and close
+                        RevertChanges();
+                        IsOpen = false;
+                        return;
+                    case ConfirmationResult.Cancel:
+                    case ConfirmationResult.None:
+                        // Stay open
+                        return;
+                }
+            }
+        }
+
+        // No unsaved changes or dialog not available
+        IsOpen = false;
+    }
+
+    /// <summary>
+    /// Reverts changes to original values.
+    /// </summary>
+    private void RevertChanges()
+    {
         if (SelectedTheme != _originalTheme)
         {
             SelectedTheme = _originalTheme;
@@ -247,7 +334,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             SelectedAccentColor = _originalAccentColor;
             ApplyAccentColor(_originalAccentColor);
         }
-        IsOpen = false;
     }
 
     /// <summary>
@@ -360,8 +446,16 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        // Raise event to change password
+        // Raise event to change password - handler will verify and call back
         ChangePasswordRequested?.Invoke(this, new PasswordChangeEventArgs(NewPassword, CurrentPassword));
+        // Note: Don't close immediately - handler will call OnPasswordChanged or OnPasswordVerificationFailed
+    }
+
+    /// <summary>
+    /// Called when password change succeeds.
+    /// </summary>
+    public void OnPasswordChanged()
+    {
         ClosePasswordModal();
     }
 
@@ -377,10 +471,30 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        // Raise event to remove password
+        // Raise event to remove password - handler will verify and call back
         RemovePasswordRequested?.Invoke(this, new PasswordChangeEventArgs(null, CurrentPassword));
+        // Note: Don't close immediately - handler will call OnPasswordRemoved or OnPasswordError
+    }
+
+    /// <summary>
+    /// Called when password removal succeeds.
+    /// </summary>
+    public void OnPasswordRemoved()
+    {
         HasPassword = false;
         ClosePasswordModal();
+    }
+
+    /// <summary>
+    /// Called when password verification fails during removal.
+    /// </summary>
+    public void OnPasswordVerificationFailed()
+    {
+        PasswordError = "Incorrect password";
+        CurrentPassword = string.Empty;
+
+        // Request focus on the current password textbox
+        FocusPasswordRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void ClearPasswordFields()
@@ -389,6 +503,36 @@ public partial class SettingsModalViewModel : ViewModelBase
         ConfirmPassword = string.Empty;
         CurrentPassword = string.Empty;
         PasswordError = null;
+        IsNewPasswordVisible = false;
+        IsConfirmPasswordVisible = false;
+        IsCurrentPasswordVisible = false;
+    }
+
+    /// <summary>
+    /// Toggles new password visibility.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleNewPasswordVisibility()
+    {
+        IsNewPasswordVisible = !IsNewPasswordVisible;
+    }
+
+    /// <summary>
+    /// Toggles confirm password visibility.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleConfirmPasswordVisibility()
+    {
+        IsConfirmPasswordVisible = !IsConfirmPasswordVisible;
+    }
+
+    /// <summary>
+    /// Toggles current password visibility.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleCurrentPasswordVisibility()
+    {
+        IsCurrentPasswordVisible = !IsCurrentPasswordVisible;
     }
 
     /// <summary>

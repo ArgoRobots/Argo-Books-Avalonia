@@ -100,8 +100,7 @@
         <!-- Login Modal -->
         <modals:LoginModal DataContext="{Binding LoginModalViewModel}" />
 
-        <!-- Password Prompt Modal -->
-        <modals:PasswordPromptModal DataContext="{Binding PasswordPromptModalViewModel}" />
+        <!-- Note: PasswordPromptModal is now at MainWindow level to appear above WelcomeScreen -->
 
         <!-- Edit Company Modal -->
         <modals:EditCompanyModal DataContext="{Binding EditCompanyModalViewModel}" />

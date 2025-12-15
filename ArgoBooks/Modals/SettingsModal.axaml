@@ -800,11 +800,41 @@
                                    FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                         <StackPanel Spacing="6">
                             <TextBlock Text="New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox PasswordChar="•" Text="{Binding NewPassword}" Classes="form-input" />
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding NewPassword}"
+                                             RevealPassword="{Binding IsNewPasswordVisible}"
+                                             Classes="password-field" />
+                                    <Button Grid.Column="1"
+                                            Classes="eye-toggle"
+                                            Command="{Binding ToggleNewPasswordVisibilityCommand}">
+                                        <PathIcon Data="{Binding NewPasswordVisibilityIcon}" Width="16" Height="16" />
+                                    </Button>
+                                </Grid>
+                            </Border>
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="Confirm Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox PasswordChar="•" Text="{Binding ConfirmPassword}" Classes="form-input" />
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding ConfirmPassword}"
+                                             RevealPassword="{Binding IsConfirmPasswordVisible}"
+                                             Classes="password-field" />
+                                    <Button Grid.Column="1"
+                                            Classes="eye-toggle"
+                                            Command="{Binding ToggleConfirmPasswordVisibilityCommand}">
+                                        <PathIcon Data="{Binding ConfirmPasswordVisibilityIcon}" Width="16" Height="16" />
+                                    </Button>
+                                </Grid>
+                            </Border>
                         </StackPanel>
                         <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -837,15 +867,61 @@
                     <StackPanel Margin="20" Spacing="16">
                         <StackPanel Spacing="6">
                             <TextBlock Text="Current Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox PasswordChar="•" Text="{Binding CurrentPassword}" Classes="form-input" />
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0"
+                                             x:Name="ChangeCurrentPasswordTextBox"
+                                             Text="{Binding CurrentPassword}"
+                                             RevealPassword="{Binding IsCurrentPasswordVisible}"
+                                             Classes="password-field" />
+                                    <Button Grid.Column="1"
+                                            Classes="eye-toggle"
+                                            Command="{Binding ToggleCurrentPasswordVisibilityCommand}">
+                                        <PathIcon Data="{Binding CurrentPasswordVisibilityIcon}" Width="16" Height="16" />
+                                    </Button>
+                                </Grid>
+                            </Border>
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox PasswordChar="•" Text="{Binding NewPassword}" Classes="form-input" />
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding NewPassword}"
+                                             RevealPassword="{Binding IsNewPasswordVisible}"
+                                             Classes="password-field" />
+                                    <Button Grid.Column="1"
+                                            Classes="eye-toggle"
+                                            Command="{Binding ToggleNewPasswordVisibilityCommand}">
+                                        <PathIcon Data="{Binding NewPasswordVisibilityIcon}" Width="16" Height="16" />
+                                    </Button>
+                                </Grid>
+                            </Border>
                         </StackPanel>
                         <StackPanel Spacing="6">
                             <TextBlock Text="Confirm New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox PasswordChar="•" Text="{Binding ConfirmPassword}" Classes="form-input" />
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding ConfirmPassword}"
+                                             RevealPassword="{Binding IsConfirmPasswordVisible}"
+                                             Classes="password-field" />
+                                    <Button Grid.Column="1"
+                                            Classes="eye-toggle"
+                                            Command="{Binding ToggleConfirmPasswordVisibilityCommand}">
+                                        <PathIcon Data="{Binding ConfirmPasswordVisibilityIcon}" Width="16" Height="16" />
+                                    </Button>
+                                </Grid>
+                            </Border>
                         </StackPanel>
                         <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -880,7 +956,23 @@
                                    FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                         <StackPanel Spacing="6">
                             <TextBlock Text="Current Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox PasswordChar="•" Text="{Binding CurrentPassword}" Classes="form-input" />
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBox Grid.Column="0"
+                                             x:Name="RemoveCurrentPasswordTextBox"
+                                             Text="{Binding CurrentPassword}"
+                                             RevealPassword="{Binding IsCurrentPasswordVisible}"
+                                             Classes="password-field" />
+                                    <Button Grid.Column="1"
+                                            Classes="eye-toggle"
+                                            Command="{Binding ToggleCurrentPasswordVisibilityCommand}">
+                                        <PathIcon Data="{Binding CurrentPasswordVisibilityIcon}" Width="16" Height="16" />
+                                    </Button>
+                                </Grid>
+                            </Border>
                         </StackPanel>
                         <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="#dc2626"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -997,6 +1089,41 @@
         </Style>
         <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Password Field (borderless, for use inside bordered container) -->
+        <Style Selector="TextBox.password-field">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="PasswordChar" Value="*" />
+        </Style>
+        <Style Selector="TextBox.password-field /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <!-- Eye Toggle Button (for password visibility) -->
+        <Style Selector="Button.eye-toggle">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0,6,6,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+        <Style Selector="Button.eye-toggle /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.eye-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.eye-toggle PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
 
         <!-- Color Button -->

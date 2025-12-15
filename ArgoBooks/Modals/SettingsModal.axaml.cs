@@ -9,6 +9,8 @@ namespace ArgoBooks.Modals;
 
 public partial class SettingsModal : UserControl
 {
+    private bool _eventsSubscribed;
+
     public SettingsModal()
     {
         InitializeComponent();
@@ -18,8 +20,12 @@ public partial class SettingsModal : UserControl
     {
         base.OnLoaded(e);
 
-        if (DataContext is SettingsModalViewModel vm)
+        if (DataContext is SettingsModalViewModel vm && !_eventsSubscribed)
         {
+            _eventsSubscribed = true;
+
+            vm.FocusPasswordRequested += OnFocusPasswordRequested;
+
             vm.PropertyChanged += (_, args) =>
             {
                 if (args.PropertyName == nameof(SettingsModalViewModel.IsOpen))
@@ -52,6 +58,31 @@ public partial class SettingsModal : UserControl
                 }
             };
         }
+    }
+
+    private void OnFocusPasswordRequested(object? sender, EventArgs e)
+    {
+        if (DataContext is not SettingsModalViewModel vm) return;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            TextBox? targetTextBox = null;
+
+            if (vm.IsChangePasswordModalOpen)
+            {
+                targetTextBox = ChangeCurrentPasswordTextBox;
+            }
+            else if (vm.IsRemovePasswordModalOpen)
+            {
+                targetTextBox = RemoveCurrentPasswordTextBox;
+            }
+
+            if (targetTextBox != null)
+            {
+                targetTextBox.Focus();
+                targetTextBox.SelectAll();
+            }
+        }, DispatcherPriority.Background);
     }
 
     private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)

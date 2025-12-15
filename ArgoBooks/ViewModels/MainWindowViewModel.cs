@@ -65,6 +65,18 @@ public partial class MainWindowViewModel : ViewModelBase
     private WelcomeScreenViewModel? _welcomeScreenViewModel;
 
     /// <summary>
+    /// Gets or sets the PasswordPromptModalViewModel for the password prompt overlay.
+    /// </summary>
+    [ObservableProperty]
+    private PasswordPromptModalViewModel? _passwordPromptModalViewModel;
+
+    /// <summary>
+    /// Gets or sets the ConfirmationDialogViewModel for showing confirmation dialogs.
+    /// </summary>
+    [ObservableProperty]
+    private ConfirmationDialogViewModel? _confirmationDialogViewModel;
+
+    /// <summary>
     /// Whether to show the welcome screen (when no company is open).
     /// </summary>
     [ObservableProperty]
