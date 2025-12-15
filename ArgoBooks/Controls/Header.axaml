@@ -65,23 +65,20 @@
                     </Button>
 
                     <!-- Saved Indicator -->
-                    <Border Background="{DynamicResource SuccessLightBrush}"
-                            CornerRadius="4"
-                            Padding="8,4"
-                            Margin="4,0,0,0"
-                            VerticalAlignment="Center"
-                            IsVisible="{Binding ShowSavedIndicator}"
-                            Opacity="{Binding SavedIndicatorOpacity}">
-                        <Border.Transitions>
+                    <TextBlock Text="Saved"
+                               FontSize="12"
+                               FontWeight="Medium"
+                               Foreground="{DynamicResource SuccessBrush}"
+                               Margin="8,0,0,0"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding ShowSavedIndicator}"
+                               Opacity="{Binding SavedIndicatorOpacity}">
+                        <TextBlock.Transitions>
                             <Transitions>
                                 <DoubleTransition Property="Opacity" Duration="0:0:0.3" />
                             </Transitions>
-                        </Border.Transitions>
-                        <TextBlock Text="Saved"
-                                   FontSize="12"
-                                   FontWeight="Medium"
-                                   Foreground="{DynamicResource SuccessBrush}" />
-                    </Border>
+                        </TextBlock.Transitions>
+                    </TextBlock>
                 </StackPanel>
             </StackPanel>
 

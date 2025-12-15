@@ -55,63 +55,6 @@
                 <!-- Body -->
                 <ScrollViewer Grid.Row="1" Padding="24">
                     <StackPanel Spacing="20">
-                        <!-- Logo Section -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Company Logo"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <Grid ColumnDefinitions="Auto,*">
-                                <!-- Logo Preview -->
-                                <Border Grid.Column="0"
-                                        Width="80" Height="80"
-                                        CornerRadius="12"
-                                        ClipToBounds="True"
-                                        Margin="0,0,16,0">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                            <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
-                                            <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                    <Panel>
-                                        <Image Source="{Binding LogoSource}"
-                                               Stretch="UniformToFill"
-                                               IsVisible="{Binding HasLogo}" />
-                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6c-.55 0-1-.45-1-1V6c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v12c0 .55-.45 1-1 1zm-4.44-6.19l-2.35 3.02-1.56-1.88c-.2-.25-.58-.24-.78.01l-1.74 2.23c-.26.33-.02.81.39.81h8.98c.41 0 .65-.47.4-.8l-2.55-3.39c-.19-.26-.59-.26-.79 0z"
-                                                  Width="32" Height="32"
-                                                  Foreground="White"
-                                                  HorizontalAlignment="Center"
-                                                  VerticalAlignment="Center"
-                                                  IsVisible="{Binding !HasLogo}" />
-                                    </Panel>
-                                </Border>
-
-                                <!-- Logo Actions -->
-                                <StackPanel Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Spacing="8">
-                                    <Button Classes="secondary-button"
-                                            Command="{Binding BrowseLogoCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <PathIcon Data="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"
-                                                      Width="16" Height="16" />
-                                            <TextBlock Text="Upload Logo" />
-                                        </StackPanel>
-                                    </Button>
-                                    <Button Classes="text-button"
-                                            Command="{Binding RemoveLogoCommand}"
-                                            IsVisible="{Binding HasLogo}">
-                                        <TextBlock Text="Remove"
-                                                   Foreground="{DynamicResource ErrorBrush}" />
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-
-                        <!-- Divider -->
-                        <Border Height="1" Background="{DynamicResource BorderBrush}" />
-
                         <!-- Company Name -->
                         <StackPanel Spacing="8">
                             <TextBlock Text="Company Name *"
@@ -123,40 +66,54 @@
                                      Watermark="Enter company name" />
                         </StackPanel>
 
-                        <!-- Email -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Email"
+                        <!-- Logo Section -->
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Company Logo"
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox Classes="form-input"
-                                     Text="{Binding Email, Mode=TwoWay}"
-                                     Watermark="company@example.com" />
-                        </StackPanel>
 
-                        <!-- Phone -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Phone"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox Classes="form-input"
-                                     Text="{Binding Phone, Mode=TwoWay}"
-                                     Watermark="+1 (555) 123-4567" />
-                        </StackPanel>
+                            <Grid ColumnDefinitions="Auto,*">
+                                <!-- Logo Preview -->
+                                <Border Grid.Column="0"
+                                        Width="100" Height="100"
+                                        CornerRadius="8"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        ClipToBounds="True"
+                                        Margin="0,0,16,0">
+                                    <Panel>
+                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H5v-4h4v4zm0-6H5V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4zm4 6h-4v-4h4v4zm0-6h-4V7h4v4z"
+                                                  Width="40" Height="40"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                  IsVisible="{Binding !HasLogo}" />
+                                        <Image Source="{Binding LogoSource}"
+                                               Stretch="Uniform"
+                                               IsVisible="{Binding HasLogo}" />
+                                    </Panel>
+                                </Border>
 
-                        <!-- Address -->
-                        <StackPanel Spacing="8">
-                            <TextBlock Text="Address"
-                                       FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox Classes="form-input"
-                                     Text="{Binding Address, Mode=TwoWay}"
-                                     Watermark="Enter address"
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     MinHeight="60" />
+                                <!-- Upload Buttons -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
+                                    <Button Classes="secondary-button"
+                                            Command="{Binding BrowseLogoCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"
+                                                      Width="16" Height="16" />
+                                            <TextBlock Text="Upload Logo" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="text-button"
+                                            Command="{Binding RemoveLogoCommand}"
+                                            IsVisible="{Binding HasLogo}">
+                                        <TextBlock Text="Remove" Foreground="{DynamicResource DangerBrush}" />
+                                    </Button>
+                                    <TextBlock Text="PNG, JPG up to 5MB"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

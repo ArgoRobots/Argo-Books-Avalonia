@@ -174,8 +174,9 @@ public partial class App : Application
         CompanyManager.CompanyOpened += (_, args) =>
         {
             _mainWindowViewModel.OpenCompany(args.CompanyName);
-            _appShellViewModel.SetCompanyInfo(args.CompanyName);
-            _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(args.CompanyName, args.FilePath);
+            var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
+            _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
+            _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(args.CompanyName, args.FilePath, logo);
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(args.FilePath);
             _mainWindowViewModel.HideLoading();
 

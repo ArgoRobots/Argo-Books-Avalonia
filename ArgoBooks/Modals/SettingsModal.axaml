@@ -1027,6 +1027,17 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
 
+        <!-- TabControl - remove default underline -->
+        <Style Selector="TabControl">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="TabControl /template/ ItemsPresenter#PART_ItemsPresenter">
+            <Setter Property="Margin" Value="24,0" />
+        </Style>
+        <Style Selector="TabControl /template/ Border#PART_InnerBorder">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
         <!-- Tab Item Styling -->
         <Style Selector="TabItem">
             <Setter Property="FontSize" Value="14" />
@@ -1042,6 +1053,9 @@
         <Style Selector="TabItem:selected">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
+            <Setter Property="IsVisible" Value="False" />
         </Style>
     </UserControl.Styles>
 </UserControl>

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -311,9 +312,9 @@ public partial class AppShellViewModel : ViewModelBase
     /// <summary>
     /// Sets the company information on the sidebar.
     /// </summary>
-    public void SetCompanyInfo(string? companyName, string? userRole = null)
+    public void SetCompanyInfo(string? companyName, Bitmap? logo = null, string? userRole = null)
     {
-        SidebarViewModel.SetCompanyInfo(companyName, null, userRole);
+        SidebarViewModel.SetCompanyInfo(companyName, logo, userRole);
     }
 
     /// <summary>
