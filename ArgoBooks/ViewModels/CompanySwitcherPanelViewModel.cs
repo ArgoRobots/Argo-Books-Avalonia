@@ -45,6 +45,12 @@ public partial class CompanySwitcherPanelViewModel : ViewModelBase
         RecentCompanies.Where(c => c.FilePath != CurrentCompanyPath);
 
     /// <summary>
+    /// Whether there are any filtered recent companies to display.
+    /// </summary>
+    public bool HasFilteredRecentCompanies =>
+        FilteredRecentCompanies.Any();
+
+    /// <summary>
     /// Default constructor for design-time.
     /// </summary>
     public CompanySwitcherPanelViewModel()
@@ -189,6 +195,8 @@ public partial class CompanySwitcherPanelViewModel : ViewModelBase
         {
             RecentCompanies.RemoveAt(RecentCompanies.Count - 1);
         }
+
+        RefreshFilteredRecent();
     }
 
     /// <summary>
@@ -198,6 +206,7 @@ public partial class CompanySwitcherPanelViewModel : ViewModelBase
     private void ClearRecent()
     {
         RecentCompanies.Clear();
+        RefreshFilteredRecent();
     }
 
     /// <summary>
@@ -206,6 +215,16 @@ public partial class CompanySwitcherPanelViewModel : ViewModelBase
     partial void OnCurrentCompanyPathChanged(string? value)
     {
         OnPropertyChanged(nameof(FilteredRecentCompanies));
+        OnPropertyChanged(nameof(HasFilteredRecentCompanies));
+    }
+
+    /// <summary>
+    /// Refreshes the filtered recent companies properties.
+    /// </summary>
+    public void RefreshFilteredRecent()
+    {
+        OnPropertyChanged(nameof(FilteredRecentCompanies));
+        OnPropertyChanged(nameof(HasFilteredRecentCompanies));
     }
 }
 

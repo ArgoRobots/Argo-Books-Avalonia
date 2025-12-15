@@ -205,8 +205,16 @@
                 PointerEntered="RecentSubmenu_PointerEntered"
                 PointerExited="RecentSubmenu_PointerExited">
             <StackPanel Margin="0,8">
+                <!-- Empty state -->
+                <TextBlock Text="No recently opened companies"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           Margin="14,8"
+                           IsVisible="{Binding !HasFilteredRecentCompanies}" />
+
                 <!-- Recent Company Items - dynamically bound (filtered to exclude current company) -->
-                <ItemsControl ItemsSource="{Binding FilteredRecentCompanies}">
+                <ItemsControl ItemsSource="{Binding FilteredRecentCompanies}"
+                              IsVisible="{Binding HasFilteredRecentCompanies}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:RecentCompanyItem">
                             <Button Classes="menu-item"
@@ -227,12 +235,14 @@
                 <!-- Divider -->
                 <Border Height="1"
                         Background="{DynamicResource BorderBrush}"
-                        Margin="0,8" />
+                        Margin="0,8"
+                        IsVisible="{Binding HasFilteredRecentCompanies}" />
 
                 <!-- Clear Recent -->
                 <Button x:Name="SubmenuItem3"
                         Classes="menu-item"
-                        Command="{Binding ClearRecentCommand}">
+                        Command="{Binding ClearRecentCommand}"
+                        IsVisible="{Binding HasFilteredRecentCompanies}">
                     <Grid ColumnDefinitions="Auto,*">
                         <PathIcon Grid.Column="0"
                                   Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"

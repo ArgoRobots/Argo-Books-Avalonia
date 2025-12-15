@@ -126,7 +126,7 @@
                 </Border>
 
                 <!-- Recent Companies Section -->
-                <StackPanel>
+                <StackPanel IsVisible="{Binding HasFilteredRecentCompanies}">
                     <Border Padding="16,16,16,8">
                         <TextBlock Text="Recent"
                                    FontSize="12"
@@ -134,16 +134,8 @@
                                    Foreground="{DynamicResource TextTertiaryBrush}" />
                     </Border>
 
-                    <!-- Empty state -->
-                    <TextBlock Text="No recently opened companies"
-                               FontSize="13"
-                               Foreground="{DynamicResource TextTertiaryBrush}"
-                               Margin="16,8,16,16"
-                               IsVisible="{Binding !RecentCompanies.Count}" />
-
                     <ItemsControl ItemsSource="{Binding FilteredRecentCompanies}"
-                                  Margin="8,0"
-                                  IsVisible="{Binding RecentCompanies.Count}">
+                                  Margin="8,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:CompanyItem">
                                 <Button Classes="company-item"

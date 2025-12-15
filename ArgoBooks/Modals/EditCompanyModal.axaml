@@ -26,7 +26,8 @@
                 CornerRadius="12"
                 BoxShadow="0 8 32 0 #40000000"
                 Width="480"
-                MaxHeight="600"
+                MaxHeight="550"
+                ClipToBounds="True"
                 IsVisible="{Binding IsOpen}">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
@@ -54,8 +55,10 @@
                 </Border>
 
                 <!-- Body -->
-                <ScrollViewer Grid.Row="1" Padding="24,16">
-                    <StackPanel Spacing="16">
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="16" Margin="24,16">
                         <!-- Company Name -->
                         <StackPanel Spacing="6">
                             <TextBlock Text="Company Name *"

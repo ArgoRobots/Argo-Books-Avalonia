@@ -128,6 +128,12 @@ public partial class HeaderViewModel : ViewModelBase
     [ObservableProperty]
     private double _savedIndicatorOpacity;
 
+    [ObservableProperty]
+    private bool _showNoChangesIndicator;
+
+    [ObservableProperty]
+    private double _noChangesIndicatorOpacity;
+
     #endregion
 
     #region Undo/Redo
@@ -489,24 +495,46 @@ public partial class HeaderViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Shows the saved indicator and hides it after 3 seconds.
+    /// Shows the appropriate feedback when save is clicked.
+    /// Shows "Saved" if there were changes, or "No changes found" if there were none.
     /// </summary>
     public async void ShowSavedFeedback()
     {
-        HasUnsavedChanges = false;
-        ShowSavedIndicator = true;
-        SavedIndicatorOpacity = 1.0;
+        if (HasUnsavedChanges)
+        {
+            // There were changes - show "Saved"
+            HasUnsavedChanges = false;
+            ShowSavedIndicator = true;
+            SavedIndicatorOpacity = 1.0;
 
-        // Wait 3 seconds then fade out
-        await Task.Delay(3000);
+            // Wait 3 seconds then fade out
+            await Task.Delay(3000);
 
-        // Fade out by setting opacity to 0 (animation handled in XAML)
-        SavedIndicatorOpacity = 0;
+            // Fade out by setting opacity to 0 (animation handled in XAML)
+            SavedIndicatorOpacity = 0;
 
-        // Wait for fade animation
-        await Task.Delay(300);
+            // Wait for fade animation
+            await Task.Delay(300);
 
-        ShowSavedIndicator = false;
+            ShowSavedIndicator = false;
+        }
+        else
+        {
+            // No changes - show "No changes found"
+            ShowNoChangesIndicator = true;
+            NoChangesIndicatorOpacity = 1.0;
+
+            // Wait 3 seconds then fade out
+            await Task.Delay(3000);
+
+            // Fade out
+            NoChangesIndicatorOpacity = 0;
+
+            // Wait for fade animation
+            await Task.Delay(300);
+
+            ShowNoChangesIndicator = false;
+        }
     }
 
     #endregion

@@ -159,6 +159,21 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isAddPasswordModalOpen;
 
+    /// <summary>
+    /// Event raised when a password should be added to the company file.
+    /// </summary>
+    public event EventHandler<PasswordChangeEventArgs>? AddPasswordRequested;
+
+    /// <summary>
+    /// Event raised when the password should be changed.
+    /// </summary>
+    public event EventHandler<PasswordChangeEventArgs>? ChangePasswordRequested;
+
+    /// <summary>
+    /// Event raised when the password should be removed.
+    /// </summary>
+    public event EventHandler<PasswordChangeEventArgs>? RemovePasswordRequested;
+
     [ObservableProperty]
     private bool _isChangePasswordModalOpen;
 
@@ -312,7 +327,8 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        // TODO: Actually set the password
+        // Raise event to add password
+        AddPasswordRequested?.Invoke(this, new PasswordChangeEventArgs(NewPassword));
         HasPassword = true;
         ClosePasswordModal();
     }
@@ -344,7 +360,8 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        // TODO: Actually verify and change the password
+        // Raise event to change password
+        ChangePasswordRequested?.Invoke(this, new PasswordChangeEventArgs(NewPassword, CurrentPassword));
         ClosePasswordModal();
     }
 
@@ -360,7 +377,8 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
-        // TODO: Actually verify and remove the password
+        // Raise event to remove password
+        RemovePasswordRequested?.Invoke(this, new PasswordChangeEventArgs(null, CurrentPassword));
         HasPassword = false;
         ClosePasswordModal();
     }
@@ -426,5 +444,27 @@ public class AccentColorItem
     {
         Name = name;
         ColorHex = colorHex;
+    }
+}
+
+/// <summary>
+/// Event args for password change operations.
+/// </summary>
+public class PasswordChangeEventArgs : EventArgs
+{
+    /// <summary>
+    /// The new password (null to remove password).
+    /// </summary>
+    public string? NewPassword { get; }
+
+    /// <summary>
+    /// The current password (for verification when changing/removing).
+    /// </summary>
+    public string? CurrentPassword { get; }
+
+    public PasswordChangeEventArgs(string? newPassword, string? currentPassword = null)
+    {
+        NewPassword = newPassword;
+        CurrentPassword = currentPassword;
     }
 }

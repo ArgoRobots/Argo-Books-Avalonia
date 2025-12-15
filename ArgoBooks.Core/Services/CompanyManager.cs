@@ -104,6 +104,11 @@ public class CompanyManager : IDisposable
     public event EventHandler<PasswordRequiredEventArgs>? PasswordRequired;
 
     /// <summary>
+    /// Async callback for requesting password from UI. Set this to enable async password prompts.
+    /// </summary>
+    public Func<string, Task<string?>>? PasswordRequestCallback { get; set; }
+
+    /// <summary>
     /// Creates a new CompanyManager instance.
     /// </summary>
     public CompanyManager(
@@ -223,16 +228,28 @@ public class CompanyManager : IDisposable
 
         if (isEncrypted && string.IsNullOrEmpty(password))
         {
-            // Request password from UI
-            var args = new PasswordRequiredEventArgs(filePath);
-            PasswordRequired?.Invoke(this, args);
-
-            if (args.IsCancelled || string.IsNullOrEmpty(args.Password))
+            // Try async callback first (preferred)
+            if (PasswordRequestCallback != null)
             {
-                return false;
+                password = await PasswordRequestCallback(filePath);
+                if (string.IsNullOrEmpty(password))
+                {
+                    return false;
+                }
             }
+            else
+            {
+                // Fall back to synchronous event (for backwards compatibility)
+                var args = new PasswordRequiredEventArgs(filePath);
+                PasswordRequired?.Invoke(this, args);
 
-            password = args.Password;
+                if (args.IsCancelled || string.IsNullOrEmpty(args.Password))
+                {
+                    return false;
+                }
+
+                password = args.Password;
+            }
         }
 
         try
