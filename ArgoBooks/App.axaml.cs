@@ -641,6 +641,8 @@ public partial class App : Application
 
             try
             {
+                // Mark as having changes so SavedFeedback shows "Saved" not "No changes found"
+                _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
                 _appShellViewModel?.AddNotification("Success", "Password has been set.", NotificationType.Success);
             }
@@ -665,6 +667,8 @@ public partial class App : Application
 
             try
             {
+                // Mark as having changes so SavedFeedback shows "Saved" not "No changes found"
+                _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
                 settings.OnPasswordChanged();
                 _appShellViewModel?.AddNotification("Success", "Password has been changed.", NotificationType.Success);
@@ -690,6 +694,8 @@ public partial class App : Application
 
             try
             {
+                // Mark as having changes so SavedFeedback shows "Saved" not "No changes found"
+                _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(null);
                 settings.OnPasswordRemoved();
                 _appShellViewModel?.AddNotification("Success", "Password has been removed.", NotificationType.Success);

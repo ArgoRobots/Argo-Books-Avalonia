@@ -78,7 +78,7 @@
                             Margin="0">
                     <!-- Backup File Tab -->
                     <TabItem Header="Backup File">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
                                 <!-- Backup Info -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -112,19 +112,13 @@
                                         </CheckBox>
                                     </StackPanel>
                                 </Border>
-
-                                <!-- Additional backup info -->
-                                <TextBlock Text="Includes all data, settings, and attachments. Backup files can be restored later to recover your data."
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextWrapping="Wrap" />
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
 
                     <!-- Spreadsheet Tab -->
                     <TabItem Header="Spreadsheet">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
                                 <!-- File Format -->
                                 <StackPanel Spacing="8">
@@ -202,22 +196,22 @@
                                             <ItemsControl ItemsSource="{Binding DataItems}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate x:DataType="vm:ExportDataItem">
-                                                        <Border Padding="14,12"
+                                                        <Border Padding="10,8"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                                 BorderThickness="0,0,0,1"
                                                                 Classes="data-item">
                                                             <Grid ColumnDefinitions="Auto,*,Auto">
                                                                 <CheckBox Grid.Column="0"
                                                                           IsChecked="{Binding IsSelected}"
-                                                                          Margin="0,0,12,0" />
+                                                                          Margin="0,0,10,0" />
                                                                 <TextBlock Grid.Column="1"
                                                                            Text="{Binding Name}"
-                                                                           FontSize="14"
+                                                                           FontSize="13"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            VerticalAlignment="Center" />
                                                                 <TextBlock Grid.Column="2"
                                                                            Text="{Binding RecordCount, StringFormat='({0:N0} records)'}"
-                                                                           FontSize="12"
+                                                                           FontSize="11"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                                            VerticalAlignment="Center" />
                                                             </Grid>
@@ -293,16 +287,28 @@
         <!-- Tab Item Styling -->
         <Style Selector="TabItem">
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="4,12,4,10" />
-            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Padding" Value="8,12,8,10" />
+            <Setter Property="Margin" Value="4,0" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="TabItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+        <Style Selector="TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="TabItem:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
         <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
         <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
@@ -369,10 +375,47 @@
             <Setter Property="FontSize" Value="14" />
             <Setter Property="MinHeight" Value="36" />
         </Style>
+        <Style Selector="DatePicker.form-date /template/ Grid#PART_FlyoutButtonContentGrid">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="DatePicker.form-date /template/ TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="DatePicker.form-date /template/ Border#PART_BorderElement">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
 
         <!-- Data Item hover -->
         <Style Selector="Border.data-item:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Animated Checkbox -->
+        <Style Selector="CheckBox">
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="CheckBox /template/ Border#NormalRectangle">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="CheckBox /template/ Path#CheckGlyph">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.5)" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        </Style>
+        <Style Selector="CheckBox:checked /template/ Path#CheckGlyph">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1)" />
         </Style>
     </UserControl.Styles>
 </UserControl>

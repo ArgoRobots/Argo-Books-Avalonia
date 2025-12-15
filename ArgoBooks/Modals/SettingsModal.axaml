@@ -29,8 +29,8 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
-                Width="600"
-                Height="550"
+                Width="650"
+                Height="600"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 BoxShadow="0 8 32 0 #40000000"
@@ -75,7 +75,7 @@
                             Margin="0">
                     <!-- General Tab -->
                     <TabItem Header="General">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="20">
                                 <!-- Language -->
                                 <StackPanel Spacing="6">
@@ -148,7 +148,7 @@
 
                     <!-- Features Tab -->
                     <TabItem Header="Features">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Enable or disable modules"
                                            FontSize="13"
@@ -305,7 +305,7 @@
 
                     <!-- Notifications Tab -->
                     <TabItem Header="Notifications">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Configure notification preferences"
                                            FontSize="13"
@@ -316,8 +316,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="Low Stock Alert"
                                                        FontSize="14"
                                                        FontWeight="Medium"
@@ -336,8 +336,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="Invoice Overdue"
                                                        FontSize="14"
                                                        FontWeight="Medium"
@@ -356,8 +356,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="Payment Received"
                                                        FontSize="14"
                                                        FontWeight="Medium"
@@ -376,8 +376,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="Large Transaction Alert"
                                                        FontSize="14"
                                                        FontWeight="Medium"
@@ -397,8 +397,8 @@
 
                     <!-- Appearance Tab -->
                     <TabItem Header="Appearance">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
-                            <StackPanel Spacing="24">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                            <StackPanel Spacing="24" HorizontalAlignment="Center">
                                 <!-- Theme -->
                                 <StackPanel Spacing="12">
                                     <TextBlock Text="Theme"
@@ -650,7 +650,7 @@
 
                     <!-- Security Tab -->
                     <TabItem Header="Security">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
                                 <!-- Password - No password set -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1168,16 +1168,28 @@
         <!-- Tab Item Styling -->
         <Style Selector="TabItem">
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="4,12,4,10" />
-            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Padding" Value="8,12,8,10" />
+            <Setter Property="Margin" Value="4,0" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="TabItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+        <Style Selector="TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="TabItem:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
         <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
         <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
@@ -1187,6 +1199,34 @@
             <Setter Property="VerticalAlignment" Value="Bottom" />
             <Setter Property="Margin" Value="0,0,0,0" />
             <Setter Property="CornerRadius" Value="1" />
+        </Style>
+
+        <!-- Animated Checkbox -->
+        <Style Selector="CheckBox">
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="CheckBox /template/ Border#NormalRectangle">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="CheckBox /template/ Path#CheckGlyph">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.5)" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        </Style>
+        <Style Selector="CheckBox:checked /template/ Path#CheckGlyph">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1)" />
         </Style>
     </UserControl.Styles>
 </UserControl>
