@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.CategoriesPage"
              x:DataType="vm:CategoriesPageViewModel">
@@ -318,22 +319,12 @@
                             </StackPanel>
 
                             <!-- Parent Category -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Parent Category"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding AvailableParentCategories}"
-                                          SelectedItem="{Binding ModalParentCategory}"
-                                          Classes="form-combobox"
-                                          PlaceholderText="Select parent category">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate DataType="vm:CategoryDisplayItem">
-                                            <TextBlock Text="{Binding Name}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </StackPanel>
+                            <controls:SearchableDropdown
+                                ItemsSource="{Binding AvailableParentCategories}"
+                                SelectedItem="{Binding ModalParentCategory}"
+                                DisplayMemberPath="Name"
+                                Placeholder="Search or select parent category..."
+                                SelectionChanged="ParentCategory_SelectionChanged" />
 
                             <!-- Description -->
                             <StackPanel Spacing="6">
@@ -459,22 +450,12 @@
                             </StackPanel>
 
                             <!-- Parent Category -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Parent Category"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding AvailableParentCategories}"
-                                          SelectedItem="{Binding ModalParentCategory}"
-                                          Classes="form-combobox"
-                                          PlaceholderText="Select parent category">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate DataType="vm:CategoryDisplayItem">
-                                            <TextBlock Text="{Binding Name}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </StackPanel>
+                            <controls:SearchableDropdown
+                                ItemsSource="{Binding AvailableParentCategories}"
+                                SelectedItem="{Binding ModalParentCategory}"
+                                DisplayMemberPath="Name"
+                                Placeholder="Search or select parent category..."
+                                SelectionChanged="ParentCategory_SelectionChanged" />
 
                             <!-- Description -->
                             <StackPanel Spacing="6">

@@ -62,4 +62,15 @@ public partial class CategoriesPage : UserControl
     {
         ViewModel?.CloseDeleteConfirmCommand.Execute(null);
     }
+
+    /// <summary>
+    /// Handles parent category selection from the searchable dropdown.
+    /// </summary>
+    private void ParentCategory_SelectionChanged(object? sender, object? e)
+    {
+        if (ViewModel != null && e is CategoryDisplayItem selectedCategory)
+        {
+            ViewModel.ModalParentCategory = selectedCategory;
+        }
+    }
 }
