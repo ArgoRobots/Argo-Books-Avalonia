@@ -103,8 +103,12 @@
         <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}"
                                     ZIndex="200" />
 
-        <!-- Confirmation Dialog (highest level, can appear over any modal) -->
+        <!-- Confirmation Dialog (high level, can appear over any modal) -->
         <modals:ConfirmationDialog DataContext="{Binding ConfirmationDialogViewModel}"
                                    ZIndex="250" />
+
+        <!-- Unsaved Changes Dialog (highest level, critical for data safety) -->
+        <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}"
+                                     ZIndex="275" />
     </Panel>
 </Window>

@@ -77,6 +77,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private ConfirmationDialogViewModel? _confirmationDialogViewModel;
 
     /// <summary>
+    /// Gets or sets the UnsavedChangesDialogViewModel for showing unsaved changes dialogs.
+    /// </summary>
+    [ObservableProperty]
+    private UnsavedChangesDialogViewModel? _unsavedChangesDialogViewModel;
+
+    /// <summary>
     /// Whether to show the welcome screen (when no company is open).
     /// </summary>
     [ObservableProperty]

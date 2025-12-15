@@ -37,11 +37,23 @@ public partial class App : Application
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static ConfirmationDialogViewModel? _confirmationDialogViewModel;
+    private static UnsavedChangesDialogViewModel? _unsavedChangesDialogViewModel;
+    private static ChangeTrackingService? _changeTrackingService;
 
     /// <summary>
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
     /// </summary>
     public static ConfirmationDialogViewModel? ConfirmationDialog => _confirmationDialogViewModel;
+
+    /// <summary>
+    /// Gets the unsaved changes dialog ViewModel for showing save prompts with change lists.
+    /// </summary>
+    public static UnsavedChangesDialogViewModel? UnsavedChangesDialog => _unsavedChangesDialogViewModel;
+
+    /// <summary>
+    /// Gets the change tracking service for aggregating changes from all sources.
+    /// </summary>
+    public static ChangeTrackingService? ChangeTrackingService => _changeTrackingService;
 
     public override void Initialize()
     {
@@ -68,6 +80,8 @@ public partial class App : Application
 
             _mainWindowViewModel = new MainWindowViewModel();
             _confirmationDialogViewModel = new ConfirmationDialogViewModel();
+            _unsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
+            _changeTrackingService = new ChangeTrackingService();
 
             // Create app shell with navigation service
             _appShellViewModel = new AppShellViewModel(NavigationService, SettingsService);
@@ -132,6 +146,9 @@ public partial class App : Application
 
             // Share ConfirmationDialogViewModel with MainWindow for confirmation dialogs
             _mainWindowViewModel.ConfirmationDialogViewModel = _confirmationDialogViewModel;
+
+            // Share UnsavedChangesDialogViewModel with MainWindow for unsaved changes dialogs
+            _mainWindowViewModel.UnsavedChangesDialogViewModel = _unsavedChangesDialogViewModel;
 
             desktop.MainWindow = new MainWindow
             {
@@ -207,6 +224,11 @@ public partial class App : Application
             _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("", null);
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(null);
             _mainWindowViewModel.HideLoading();
+            _mainWindowViewModel.HasUnsavedChanges = false;
+            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+
+            // Clear tracked changes when company is closed
+            _changeTrackingService?.ClearAllChanges();
 
             // Navigate back to Welcome screen when company is closed
             NavigationService?.NavigateTo("Welcome");
@@ -216,7 +238,11 @@ public partial class App : Application
         {
             _mainWindowViewModel.HideLoading();
             _mainWindowViewModel.HasUnsavedChanges = false;
+            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
+
+            // Clear tracked changes after saving
+            _changeTrackingService?.ClearAllChanges();
         };
 
         CompanyManager.CompanyDataChanged += (_, _) =>
@@ -288,11 +314,27 @@ public partial class App : Application
             {
                 if (CompanyManager.HasUnsavedChanges)
                 {
-                    // TODO: Show save prompt dialog
-                    // For now, just save and close
-                    await CompanyManager.SaveCompanyAsync();
+                    var result = await ShowUnsavedChangesDialogAsync();
+                    switch (result)
+                    {
+                        case UnsavedChangesResult.Save:
+                            _mainWindowViewModel?.ShowLoading("Saving...");
+                            await CompanyManager.SaveCompanyAsync();
+                            await CompanyManager.CloseCompanyAsync();
+                            break;
+                        case UnsavedChangesResult.DontSave:
+                            await CompanyManager.CloseCompanyAsync();
+                            break;
+                        case UnsavedChangesResult.Cancel:
+                        case UnsavedChangesResult.None:
+                            // User cancelled, do nothing
+                            return;
+                    }
                 }
-                await CompanyManager.CloseCompanyAsync();
+                else
+                {
+                    await CompanyManager.CloseCompanyAsync();
+                }
             }
         };
 
@@ -921,6 +963,21 @@ public partial class App : Application
         {
             // Ignore errors loading recent companies
         }
+    }
+
+    /// <summary>
+    /// Shows the unsaved changes dialog with a list of all changes.
+    /// </summary>
+    /// <returns>The user's choice.</returns>
+    private static async Task<UnsavedChangesResult> ShowUnsavedChangesDialogAsync()
+    {
+        if (_unsavedChangesDialogViewModel == null)
+            return UnsavedChangesResult.Cancel;
+
+        // Get changes from the change tracking service if available
+        var categories = _changeTrackingService?.GetAllChangeCategories();
+
+        return await _unsavedChangesDialogViewModel.ShowAsync(categories);
     }
 
     /// <summary>
