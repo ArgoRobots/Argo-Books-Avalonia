@@ -29,8 +29,8 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
-                Width="600"
-                Height="550"
+                Width="650"
+                Height="600"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 BoxShadow="0 8 32 0 #40000000"
@@ -316,8 +316,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="Low Stock Alert"
                                                        FontSize="14"
                                                        FontWeight="Medium"
@@ -336,8 +336,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="Invoice Overdue"
                                                        FontSize="14"
                                                        FontWeight="Medium"
@@ -356,8 +356,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="Payment Received"
                                                        FontSize="14"
                                                        FontWeight="Medium"
@@ -376,8 +376,8 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         Padding="16">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="Large Transaction Alert"
                                                        FontSize="14"
                                                        FontWeight="Medium"
@@ -1168,14 +1168,17 @@
         <!-- Tab Item Styling -->
         <Style Selector="TabItem">
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="4,12,4,10" />
-            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Padding" Value="8,12,8,10" />
+            <Setter Property="Margin" Value="4,0" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="TabItem:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="TabItem:selected">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />

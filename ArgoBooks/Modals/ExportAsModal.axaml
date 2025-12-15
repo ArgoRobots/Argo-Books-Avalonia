@@ -112,12 +112,6 @@
                                         </CheckBox>
                                     </StackPanel>
                                 </Border>
-
-                                <!-- Additional backup info -->
-                                <TextBlock Text="Includes all data, settings, and attachments. Backup files can be restored later to recover your data."
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextWrapping="Wrap" />
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
@@ -293,14 +287,17 @@
         <!-- Tab Item Styling -->
         <Style Selector="TabItem">
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="Padding" Value="4,12,4,10" />
-            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Padding" Value="8,12,8,10" />
+            <Setter Property="Margin" Value="4,0" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="TabItem:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="TabItem:selected">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
