@@ -78,7 +78,7 @@
                             Margin="0">
                     <!-- Backup File Tab -->
                     <TabItem Header="Backup File">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
                                 <!-- Backup Info -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -118,7 +118,7 @@
 
                     <!-- Spreadsheet Tab -->
                     <TabItem Header="Spreadsheet">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
                                 <!-- File Format -->
                                 <StackPanel Spacing="8">
@@ -292,14 +292,23 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="TabItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+        <Style Selector="TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="TabItem:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
         <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">

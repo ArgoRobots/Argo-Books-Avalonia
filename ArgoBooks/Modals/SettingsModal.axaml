@@ -75,7 +75,7 @@
                             Margin="0">
                     <!-- General Tab -->
                     <TabItem Header="General">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="20">
                                 <!-- Language -->
                                 <StackPanel Spacing="6">
@@ -148,7 +148,7 @@
 
                     <!-- Features Tab -->
                     <TabItem Header="Features">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Enable or disable modules"
                                            FontSize="13"
@@ -305,7 +305,7 @@
 
                     <!-- Notifications Tab -->
                     <TabItem Header="Notifications">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Configure notification preferences"
                                            FontSize="13"
@@ -397,8 +397,8 @@
 
                     <!-- Appearance Tab -->
                     <TabItem Header="Appearance">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
-                            <StackPanel Spacing="24">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
+                            <StackPanel Spacing="24" HorizontalAlignment="Center">
                                 <!-- Theme -->
                                 <StackPanel Spacing="12">
                                     <TextBlock Text="Theme"
@@ -650,7 +650,7 @@
 
                     <!-- Security Tab -->
                     <TabItem Header="Security">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
                                 <!-- Password - No password set -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1173,14 +1173,23 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="TabItem /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,4" />
+        </Style>
+        <Style Selector="TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="TabItem:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
         <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
