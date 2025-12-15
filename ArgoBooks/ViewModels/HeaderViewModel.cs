@@ -128,6 +128,11 @@ public partial class HeaderViewModel : ViewModelBase
     [ObservableProperty]
     private double _savedIndicatorOpacity;
 
+    /// <summary>
+    /// Whether to show the "No changes found" indicator.
+    /// </summary>
+    public bool ShowNoChangesIndicator => !HasUnsavedChanges && !ShowSavedIndicator;
+
     #endregion
 
     #region Undo/Redo
@@ -515,6 +520,16 @@ public partial class HeaderViewModel : ViewModelBase
     {
         // Update search suggestions as user types
         UpdateSearchSuggestions(value);
+    }
+
+    partial void OnHasUnsavedChangesChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowNoChangesIndicator));
+    }
+
+    partial void OnShowSavedIndicatorChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowNoChangesIndicator));
     }
 
     private void UpdateSearchSuggestions(string? query)
