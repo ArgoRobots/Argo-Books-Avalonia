@@ -156,7 +156,7 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                                    <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="8">
                                         <TextBlock Grid.Row="0" Grid.Column="0"
                                                    Text="From:"
                                                    FontSize="13"
@@ -164,7 +164,6 @@
                                                    VerticalAlignment="Center" />
                                         <DatePicker Grid.Row="0" Grid.Column="1"
                                                     SelectedDate="{Binding StartDate}"
-                                                    HorizontalAlignment="Stretch"
                                                     Classes="form-date" />
                                         <TextBlock Grid.Row="1" Grid.Column="0"
                                                    Text="To:"
@@ -173,7 +172,6 @@
                                                    VerticalAlignment="Center" />
                                         <DatePicker Grid.Row="1" Grid.Column="1"
                                                     SelectedDate="{Binding EndDate}"
-                                                    HorizontalAlignment="Stretch"
                                                     Classes="form-date" />
                                     </Grid>
                                 </StackPanel>
@@ -369,6 +367,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="FontSize" Value="14" />
+            <Setter Property="MinHeight" Value="36" />
         </Style>
 
         <!-- Data Item hover -->

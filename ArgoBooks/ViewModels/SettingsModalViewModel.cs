@@ -269,6 +269,10 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void Open()
     {
+        // Sync with current ThemeService values
+        SelectedTheme = ThemeService.Instance.CurrentThemeName;
+        SelectedAccentColor = ThemeService.Instance.CurrentAccentColor;
+
         // Store original values for potential revert
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
