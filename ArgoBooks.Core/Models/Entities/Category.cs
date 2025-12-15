@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ArgoBooks.Core.Enums;
 
 namespace ArgoBooks.Core.Models.Entities;
