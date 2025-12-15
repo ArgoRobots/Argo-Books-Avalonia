@@ -194,7 +194,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
         ExpenseCategories.Clear();
         RevenueCategories.Clear();
 
-        var companyData = App.CompanyManager?.CurrentCompanyData;
+        var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Categories == null)
             return;
 
@@ -271,7 +271,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
     private CategoryDisplayItem CreateDisplayItem(Category category, string? parentName, int childCount, bool isChild = false)
     {
         // Count products using this category
-        var productCount = App.CompanyManager?.CurrentCompanyData?.Products
+        var productCount = App.CompanyManager?.CompanyData?.Products
             .Count(p => p.CategoryId == category.Id) ?? 0;
 
         return new CategoryDisplayItem
@@ -368,7 +368,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
         if (!ValidateModal())
             return;
 
-        var companyData = App.CompanyManager?.CurrentCompanyData;
+        var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
@@ -457,7 +457,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
         if (!ValidateModal() || _editingCategory == null)
             return;
 
-        var companyData = App.CompanyManager?.CurrentCompanyData;
+        var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
@@ -511,7 +511,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
         if (_deletingCategory == null)
             return;
 
-        var companyData = App.CompanyManager?.CurrentCompanyData;
+        var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
