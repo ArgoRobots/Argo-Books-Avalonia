@@ -36,6 +36,11 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     private TaskCompletionSource<string?>? _completionSource;
 
     /// <summary>
+    /// Event raised when the password textbox should be focused.
+    /// </summary>
+    public event EventHandler? FocusPasswordRequested;
+
+    /// <summary>
     /// Gets the task that completes when the user submits a password.
     /// Use this to wait for password retries after calling ShowError.
     /// </summary>
@@ -97,6 +102,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
 
         // Create a new completion source for the retry
         _completionSource = new TaskCompletionSource<string?>();
+
+        // Request focus on the password textbox
+        FocusPasswordRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

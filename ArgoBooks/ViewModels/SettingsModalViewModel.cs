@@ -174,6 +174,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public event EventHandler<PasswordChangeEventArgs>? RemovePasswordRequested;
 
+    /// <summary>
+    /// Event raised when a password textbox should be focused (e.g., after error).
+    /// </summary>
+    public event EventHandler? FocusPasswordRequested;
+
     [ObservableProperty]
     private bool _isChangePasswordModalOpen;
 
@@ -238,6 +243,13 @@ public partial class SettingsModalViewModel : ViewModelBase
     #endregion
 
     /// <summary>
+    /// Whether there are unsaved changes in the settings.
+    /// </summary>
+    public bool HasUnsavedChanges =>
+        SelectedTheme != _originalTheme ||
+        SelectedAccentColor != _originalAccentColor;
+
+    /// <summary>
     /// Default constructor.
     /// </summary>
     public SettingsModalViewModel()
@@ -265,12 +277,53 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Closes the settings modal and reverts unsaved changes.
+    /// Closes the settings modal, prompting to save if there are unsaved changes.
     /// </summary>
     [RelayCommand]
-    private void Close()
+    private async Task CloseAsync()
     {
-        // Revert to original values
+        if (HasUnsavedChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Unsaved Changes",
+                    Message = "You have unsaved changes. Do you want to save them before closing?",
+                    PrimaryButtonText = "Save",
+                    SecondaryButtonText = "Don't Save",
+                    CancelButtonText = "Cancel"
+                });
+
+                switch (result)
+                {
+                    case ConfirmationResult.Primary:
+                        // Save and close
+                        SaveCommand.Execute(null);
+                        return;
+                    case ConfirmationResult.Secondary:
+                        // Don't save, revert and close
+                        RevertChanges();
+                        IsOpen = false;
+                        return;
+                    case ConfirmationResult.Cancel:
+                    case ConfirmationResult.None:
+                        // Stay open
+                        return;
+                }
+            }
+        }
+
+        // No unsaved changes or dialog not available
+        IsOpen = false;
+    }
+
+    /// <summary>
+    /// Reverts changes to original values.
+    /// </summary>
+    private void RevertChanges()
+    {
         if (SelectedTheme != _originalTheme)
         {
             SelectedTheme = _originalTheme;
@@ -281,7 +334,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             SelectedAccentColor = _originalAccentColor;
             ApplyAccentColor(_originalAccentColor);
         }
-        IsOpen = false;
     }
 
     /// <summary>
@@ -440,6 +492,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         PasswordError = "Incorrect password";
         CurrentPassword = string.Empty;
+
+        // Request focus on the current password textbox
+        FocusPasswordRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void ClearPasswordFields()

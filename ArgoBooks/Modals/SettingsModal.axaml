@@ -873,6 +873,7 @@
                                     CornerRadius="6">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBox Grid.Column="0"
+                                             x:Name="ChangeCurrentPasswordTextBox"
                                              Text="{Binding CurrentPassword}"
                                              RevealPassword="{Binding IsCurrentPasswordVisible}"
                                              Classes="password-field" />
@@ -961,6 +962,7 @@
                                     CornerRadius="6">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBox Grid.Column="0"
+                                             x:Name="RemoveCurrentPasswordTextBox"
                                              Text="{Binding CurrentPassword}"
                                              RevealPassword="{Binding IsCurrentPasswordVisible}"
                                              Classes="password-field" />

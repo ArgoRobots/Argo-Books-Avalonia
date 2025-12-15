@@ -36,6 +36,12 @@ public partial class App : Application
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
+    private static ConfirmationDialogViewModel? _confirmationDialogViewModel;
+
+    /// <summary>
+    /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
+    /// </summary>
+    public static ConfirmationDialogViewModel? ConfirmationDialog => _confirmationDialogViewModel;
 
     public override void Initialize()
     {
@@ -61,6 +67,7 @@ public partial class App : Application
             NavigationService = new NavigationService();
 
             _mainWindowViewModel = new MainWindowViewModel();
+            _confirmationDialogViewModel = new ConfirmationDialogViewModel();
 
             // Create app shell with navigation service
             _appShellViewModel = new AppShellViewModel(NavigationService, SettingsService);
@@ -122,6 +129,9 @@ public partial class App : Application
 
             // Share PasswordPromptModalViewModel with MainWindow for password dialog overlay
             _mainWindowViewModel.PasswordPromptModalViewModel = _appShellViewModel.PasswordPromptModalViewModel;
+
+            // Share ConfirmationDialogViewModel with MainWindow for confirmation dialogs
+            _mainWindowViewModel.ConfirmationDialogViewModel = _confirmationDialogViewModel;
 
             desktop.MainWindow = new MainWindow
             {
