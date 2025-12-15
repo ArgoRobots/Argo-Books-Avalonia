@@ -247,19 +247,20 @@
         <!-- Notification Item Style -->
         <Style Selector="Button.notification-item">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0,0,0,1" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="16,12" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="CornerRadius" Value="0" />
         </Style>
-        <Style Selector="Button.notification-item.last">
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
         <Style Selector="Button.notification-item /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="Button.notification-item.last /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
         <Style Selector="Button.notification-item:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />

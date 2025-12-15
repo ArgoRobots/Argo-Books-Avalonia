@@ -244,6 +244,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up sidebar's company header click to open the company switcher
         SidebarViewModel.OpenCompanySwitcherRequested += (_, _) => CompanySwitcherPanelViewModel.ToggleCommand.Execute(null);
 
+        // Wire up sidebar navigation to close all panels
+        SidebarViewModel.NavigationRequested += (_, _) => CloseAllPanels();
+
         // Wire up company switcher's create new company to open the wizard
         CompanySwitcherPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
 
@@ -345,6 +348,19 @@ public partial class AppShellViewModel : ViewModelBase
         HeaderViewModel.SetPageTitle(pageName);
         CurrentPageName = pageName;
         _navigationService?.NavigateTo(pageName);
+    }
+
+    /// <summary>
+    /// Closes all open panels.
+    /// </summary>
+    private void CloseAllPanels()
+    {
+        NotificationPanelViewModel.CloseCommand.Execute(null);
+        UserPanelViewModel.CloseCommand.Execute(null);
+        FileMenuPanelViewModel.CloseCommand.Execute(null);
+        HelpPanelViewModel.CloseCommand.Execute(null);
+        QuickActionsViewModel.CloseCommand.Execute(null);
+        CompanySwitcherPanelViewModel.CloseCommand.Execute(null);
     }
 
     /// <summary>
