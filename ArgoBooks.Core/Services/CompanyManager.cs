@@ -71,6 +71,14 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Updates the current file path after a file rename.
+    /// </summary>
+    public void UpdateFilePath(string newPath)
+    {
+        _currentFilePath = newPath;
+    }
+
+    /// <summary>
     /// Event raised when a company is opened.
     /// </summary>
     public event EventHandler<CompanyOpenedEventArgs>? CompanyOpened;

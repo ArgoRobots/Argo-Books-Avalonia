@@ -26,15 +26,16 @@
                 CornerRadius="12"
                 BoxShadow="0 8 32 0 #40000000"
                 Width="480"
+                MaxHeight="600"
                 IsVisible="{Binding IsOpen}">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0"
                         Background="{DynamicResource SurfaceAltBrush}"
                         CornerRadius="12,12,0,0"
-                        Padding="24,20">
+                        Padding="24,16">
                     <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Spacing="4">
+                        <StackPanel Grid.Column="0" Spacing="2">
                             <TextBlock Text="Edit Company"
                                        FontSize="18"
                                        FontWeight="SemiBold"
@@ -53,10 +54,10 @@
                 </Border>
 
                 <!-- Body -->
-                <ScrollViewer Grid.Row="1" Padding="24">
-                    <StackPanel Spacing="20">
+                <ScrollViewer Grid.Row="1" Padding="24,16">
+                    <StackPanel Spacing="16">
                         <!-- Company Name -->
-                        <StackPanel Spacing="8">
+                        <StackPanel Spacing="6">
                             <TextBlock Text="Company Name *"
                                        FontSize="13"
                                        FontWeight="Medium"
@@ -66,8 +67,34 @@
                                      Watermark="Enter company name" />
                         </StackPanel>
 
+                        <!-- Business Type -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Business Type"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding BusinessTypes}"
+                                      SelectedItem="{Binding BusinessType}"
+                                      Classes="form-combobox"
+                                      PlaceholderText="Select business type"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- Industry -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Industry"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding Industries}"
+                                      SelectedItem="{Binding Industry}"
+                                      Classes="form-combobox"
+                                      PlaceholderText="Select industry"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
                         <!-- Logo Section -->
-                        <StackPanel Spacing="12">
+                        <StackPanel Spacing="8">
                             <TextBlock Text="Company Logo"
                                        FontSize="13"
                                        FontWeight="Medium"
@@ -76,7 +103,7 @@
                             <Grid ColumnDefinitions="Auto,*">
                                 <!-- Logo Preview -->
                                 <Border Grid.Column="0"
-                                        Width="100" Height="100"
+                                        Width="80" Height="80"
                                         CornerRadius="8"
                                         Background="{DynamicResource SurfaceAltBrush}"
                                         BorderBrush="{DynamicResource BorderBrush}"
@@ -85,7 +112,7 @@
                                         Margin="0,0,16,0">
                                     <Panel>
                                         <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H5v-4h4v4zm0-6H5V7h4v4zm6 6h-4v-4h4v4zm0-6h-4V7h4v4zm4 6h-4v-4h4v4zm0-6h-4V7h4v4z"
-                                                  Width="40" Height="40"
+                                                  Width="32" Height="32"
                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                   IsVisible="{Binding !HasLogo}" />
                                         <Image Source="{Binding LogoSource}"
@@ -95,7 +122,7 @@
                                 </Border>
 
                                 <!-- Upload Buttons -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="6">
                                     <Button Classes="secondary-button"
                                             Command="{Binding BrowseLogoCommand}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -229,6 +256,17 @@
         </Style>
         <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Form ComboBox Style -->
+        <Style Selector="ComboBox.form-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="MinHeight" Value="40" />
         </Style>
     </UserControl.Styles>
 </UserControl>

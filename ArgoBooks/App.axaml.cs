@@ -506,9 +506,8 @@ public partial class App : Application
             var logo = LoadBitmapFromPath(logoPath);
             _appShellViewModel.EditCompanyModalViewModel.Open(
                 settings?.Company.Name ?? "",
-                settings?.Company.Email,
-                settings?.Company.Phone,
-                settings?.Company.Address,
+                settings?.Company.BusinessType,
+                settings?.Company.Industry,
                 logo);
         };
 
@@ -537,10 +536,12 @@ public partial class App : Application
                 var settings = CompanyManager.CurrentCompanySettings;
                 if (settings != null)
                 {
+                    var oldName = settings.Company.Name;
+                    var nameChanged = oldName != args.CompanyName;
+
                     settings.Company.Name = args.CompanyName;
-                    settings.Company.Email = args.Email;
-                    settings.Company.Phone = args.Phone;
-                    settings.Company.Address = args.Address;
+                    settings.Company.BusinessType = args.BusinessType;
+                    settings.Company.Industry = args.Industry;
 
                     // Handle logo update if a new one was uploaded
                     if (!string.IsNullOrEmpty(args.LogoPath))
@@ -556,13 +557,35 @@ public partial class App : Application
                     // Mark settings as changed
                     settings.ChangesMade = true;
 
+                    // If company name changed, save and rename file
+                    if (nameChanged && CompanyManager.CurrentFilePath != null)
+                    {
+                        // Save first to persist the new name in the file
+                        await CompanyManager.SaveCompanyAsync();
+
+                        // Rename the file
+                        var currentPath = CompanyManager.CurrentFilePath;
+                        var directory = Path.GetDirectoryName(currentPath);
+                        var newFileName = args.CompanyName + ".argo";
+                        var newPath = Path.Combine(directory!, newFileName);
+
+                        if (currentPath != newPath && !File.Exists(newPath))
+                        {
+                            File.Move(currentPath, newPath);
+                            CompanyManager.UpdateFilePath(newPath);
+                        }
+
+                        _appShellViewModel?.HeaderViewModel.ShowSavedFeedback();
+                    }
+
                     // Update UI
                     _mainWindowViewModel?.OpenCompany(args.CompanyName);
-                    _appShellViewModel.SetCompanyInfo(args.CompanyName);
+                    var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
+                    _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
                     _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
                         args.CompanyName,
                         CompanyManager.CurrentFilePath,
-                        LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath));
+                        logo);
                 }
 
                 _appShellViewModel?.AddNotification("Updated", "Company information updated.", NotificationType.Success);
