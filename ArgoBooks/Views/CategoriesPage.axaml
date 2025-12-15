@@ -48,12 +48,12 @@
                     BorderThickness="1">
 
                 <Grid RowDefinitions="Auto,*">
-                    <!-- Header with Search and Add Button -->
+                    <!-- Header with Title, Search and Add Button -->
                     <Border Grid.Row="0"
                             Padding="24,20"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Grid ColumnDefinitions="*,Auto">
                             <!-- Title -->
                             <TextBlock Grid.Column="0"
                                        Text="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpensesOrRevenue}}"
@@ -62,37 +62,43 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        VerticalAlignment="Center" />
 
-                            <!-- Search Box -->
-                            <Border Grid.Column="1"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="6"
-                                    Margin="24,0"
-                                    MaxWidth="300"
-                                    HorizontalAlignment="Left">
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <PathIcon Grid.Column="0"
-                                              Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                                              Width="16" Height="16"
-                                              Foreground="{DynamicResource TextTertiaryBrush}"
-                                              Margin="12,0,8,0" />
-                                    <TextBox Grid.Column="1"
-                                             Text="{Binding SearchQuery, Mode=TwoWay}"
-                                             Watermark="Search categories..."
-                                             Classes="search-input" />
-                                </Grid>
-                            </Border>
+                            <!-- Search + Divider + Add Button (Right aligned) -->
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Spacing="16">
+                                <!-- Search Box -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="6"
+                                        Width="250">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <PathIcon Grid.Column="0"
+                                                  Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                                                  Width="16" Height="16"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                  Margin="12,0,8,0" />
+                                        <TextBox Grid.Column="1"
+                                                 Text="{Binding SearchQuery, Mode=TwoWay}"
+                                                 Watermark="Search categories..."
+                                                 Classes="search-input" />
+                                    </Grid>
+                                </Border>
 
-                            <!-- Add Category Button -->
-                            <Button Grid.Column="2"
-                                    Classes="primary-button"
-                                    Command="{Binding OpenAddModalCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-                                              Width="16" Height="16"
-                                              Foreground="White" />
-                                    <TextBlock Text="Add Category" />
-                                </StackPanel>
-                            </Button>
+                                <!-- Divider -->
+                                <Border Width="1"
+                                        Background="{DynamicResource BorderBrush}"
+                                        Margin="0,4" />
+
+                                <!-- Add Category Button -->
+                                <Button Classes="primary-button"
+                                        Command="{Binding OpenAddModalCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                  Width="16" Height="16"
+                                                  Foreground="White" />
+                                        <TextBlock Text="Add Category" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </Grid>
                     </Border>
 
@@ -102,7 +108,7 @@
                         <Border Grid.Row="0"
                                 Background="{DynamicResource SurfaceAltBrush}"
                                 Padding="24,12">
-                            <Grid ColumnDefinitions="2*,*,*,*,100">
+                            <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,100">
                                 <TextBlock Grid.Column="0"
                                            Text="Category Name"
                                            FontSize="12"
@@ -114,16 +120,21 @@
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                 <TextBlock Grid.Column="2"
-                                           Text="Tax Rate"
+                                           Text="Description"
                                            FontSize="12"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                 <TextBlock Grid.Column="3"
-                                           Text="Items"
+                                           Text="Type"
                                            FontSize="12"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                 <TextBlock Grid.Column="4"
+                                           Text="Products/Services"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Grid.Column="5"
                                            Text="Actions"
                                            FontSize="12"
                                            FontWeight="SemiBold"
@@ -141,29 +152,25 @@
                                             BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="0,0,0,1"
                                             Background="{Binding IsChild, Converter={x:Static local:BoolConverters.ToChildRowBackground}}">
-                                        <Grid ColumnDefinitions="2*,*,*,*,100">
+                                        <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,100">
                                             <!-- Category Name with Icon -->
                                             <StackPanel Grid.Column="0"
                                                         Orientation="Horizontal"
                                                         Spacing="12"
                                                         Margin="{Binding IsChild, Converter={x:Static local:BoolConverters.ToChildIndent}}">
-                                                <Border Width="32" Height="32"
-                                                        CornerRadius="6"
+                                                <Border Width="36" Height="36"
+                                                        CornerRadius="8"
                                                         Background="{Binding Color, Converter={StaticResource StringToBrushConverter}, ConverterParameter=0.15}">
-                                                    <PathIcon Data="{Binding IconPath}"
-                                                              Width="16" Height="16"
-                                                              Foreground="{Binding Color, Converter={StaticResource StringToBrushConverter}}" />
+                                                    <TextBlock Text="{Binding Icon}"
+                                                               FontSize="18"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
                                                 </Border>
-                                                <StackPanel VerticalAlignment="Center" Spacing="2">
-                                                    <TextBlock Text="{Binding Name}"
-                                                               FontSize="14"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <TextBlock Text="{Binding ChildCount, StringFormat='{}{0} subcategories'}"
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                                               IsVisible="{Binding ChildCount, Converter={x:Static local:IntConverters.IsGreaterThanZero}}" />
-                                                </StackPanel>
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center" />
                                             </StackPanel>
 
                                             <!-- Parent Category -->
@@ -173,22 +180,30 @@
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        VerticalAlignment="Center" />
 
-                                            <!-- Tax Rate -->
+                                            <!-- Description -->
                                             <TextBlock Grid.Column="2"
-                                                       Text="{Binding DefaultTaxRate, StringFormat='{}{0:P0}'}"
+                                                       Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
+                                                       FontSize="14"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Type (Product/Service) -->
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding ItemType}"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        VerticalAlignment="Center" />
 
-                                            <!-- Items Count -->
-                                            <TextBlock Grid.Column="3"
-                                                       Text="{Binding ProductCountDisplay}"
+                                            <!-- Products/Services Count -->
+                                            <TextBlock Grid.Column="4"
+                                                       Text="{Binding ProductCount}"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        VerticalAlignment="Center" />
 
                                             <!-- Actions -->
-                                            <StackPanel Grid.Column="4"
+                                            <StackPanel Grid.Column="5"
                                                         Orientation="Horizontal"
                                                         HorizontalAlignment="Right"
                                                         Spacing="4">
@@ -224,9 +239,10 @@
                                         CornerRadius="32"
                                         Background="{DynamicResource SurfaceAltBrush}"
                                         HorizontalAlignment="Center">
-                                    <PathIcon Data="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"
-                                              Width="28" Height="28"
-                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="📦"
+                                               FontSize="28"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
                                 </Border>
                                 <TextBlock Text="No categories found"
                                            FontSize="16"
@@ -294,7 +310,7 @@
                     <!-- Form Content -->
                     <ScrollViewer Grid.Row="1"
                                   VerticalScrollBarVisibility="Auto"
-                                  MaxHeight="400">
+                                  MaxHeight="450">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Category Name -->
                             <StackPanel Spacing="6">
@@ -316,126 +332,81 @@
                                 <ComboBox ItemsSource="{Binding AvailableParentCategories}"
                                           SelectedItem="{Binding ModalParentCategory}"
                                           Classes="form-combobox"
-                                          PlaceholderText="Select parent category (optional)">
+                                          PlaceholderText="Select parent category">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate DataType="vm:CategoryDisplayItem">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Border Width="20" Height="20"
-                                                        CornerRadius="4"
-                                                        Background="{Binding Color, Converter={StaticResource StringToBrushConverter}, ConverterParameter=0.15}"
-                                                        IsVisible="{Binding Id, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                    <PathIcon Data="{Binding IconPath}"
-                                                              Width="12" Height="12"
-                                                              Foreground="{Binding Color, Converter={StaticResource StringToBrushConverter}}" />
-                                                </Border>
-                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                            </StackPanel>
+                                            <TextBlock Text="{Binding Name}" />
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>
                             </StackPanel>
 
-                            <!-- Default Tax Rate -->
+                            <!-- Description -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Default Tax Rate (%)"
+                                <TextBlock Text="Description"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <NumericUpDown Value="{Binding ModalDefaultTaxRate}"
-                                               Minimum="0"
-                                               Maximum="1"
-                                               Increment="0.01"
-                                               FormatString="P0"
-                                               Classes="form-input" />
+                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         Watermark="Enter description (optional)"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="80"
+                                         MaxHeight="120" />
                             </StackPanel>
 
-                            <!-- Icon Selection -->
+                            <!-- Category Type (Product/Service) -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Category Type"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding ItemTypes}"
+                                          SelectedItem="{Binding ModalItemType}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="Select type" />
+                            </StackPanel>
+
+                            <!-- Icon -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Icon"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ItemsControl ItemsSource="{Binding AvailableIcons}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
+                                <ComboBox ItemsSource="{Binding AvailableIcons}"
+                                          SelectedItem="{Binding ModalSelectedIconOption}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="Select icon">
+                                    <ComboBox.ItemTemplate>
                                         <DataTemplate DataType="vm:IconOption">
-                                            <Button Classes="icon-selector"
-                                                    Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).SelectIconCommand}"
-                                                    CommandParameter="{Binding Name}"
-                                                    Margin="0,0,8,8">
-                                                <Border Width="40" Height="40"
-                                                        CornerRadius="6"
-                                                        Background="{DynamicResource SurfaceAltBrush}">
-                                                    <Border.BorderBrush>
-                                                        <MultiBinding Converter="{x:Static local:MultiConverters.ColorSelectionBorder}">
-                                                            <Binding Path="Name" />
-                                                            <Binding Path="$parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ModalSelectedIcon" />
-                                                        </MultiBinding>
-                                                    </Border.BorderBrush>
-                                                    <Border.BorderThickness>
-                                                        <MultiBinding Converter="{x:Static local:MultiConverters.SelectionBorderThickness}">
-                                                            <Binding Path="Name" />
-                                                            <Binding Path="$parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ModalSelectedIcon" />
-                                                        </MultiBinding>
-                                                    </Border.BorderThickness>
-                                                    <PathIcon Data="{Binding Path}"
-                                                              Width="20" Height="20"
-                                                              Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                </Border>
-                                            </Button>
+                                            <TextBlock Text="{Binding DisplayName}" />
                                         </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                             </StackPanel>
 
-                            <!-- Color Selection -->
+                            <!-- Icon Color -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Color"
+                                <TextBlock Text="Icon Color"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ItemsControl ItemsSource="{Binding AvailableColors}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
+                                <ComboBox ItemsSource="{Binding AvailableColors}"
+                                          SelectedItem="{Binding ModalSelectedColorOption}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="Select color">
+                                    <ComboBox.ItemTemplate>
                                         <DataTemplate DataType="vm:ColorOption">
-                                            <Button Classes="color-selector"
-                                                    Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).SelectColorCommand}"
-                                                    CommandParameter="{Binding Hex}"
-                                                    Margin="0,0,8,8"
-                                                    ToolTip.Tip="{Binding Name}">
-                                                <Border Width="36" Height="36"
-                                                        CornerRadius="18"
-                                                        Background="{Binding Hex, Converter={StaticResource StringToBrushConverter}}"
-                                                        BorderThickness="2">
-                                                    <Border.BorderBrush>
-                                                        <MultiBinding Converter="{x:Static local:MultiConverters.ColorSelectionBorder}">
-                                                            <Binding Path="Hex" />
-                                                            <Binding Path="$parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ModalSelectedColor" />
-                                                        </MultiBinding>
-                                                    </Border.BorderBrush>
-                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                                                              Width="16" Height="16"
-                                                              Foreground="White">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{x:Static local:MultiConverters.StringEquals}">
-                                                                <Binding Path="Hex" />
-                                                                <Binding Path="$parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ModalSelectedColor" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Border>
-                                            </Button>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Border Width="16" Height="16"
+                                                        CornerRadius="3"
+                                                        Background="{Binding Hex, Converter={StaticResource StringToBrushConverter}}" />
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                            </StackPanel>
                                         </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                             </StackPanel>
 
                             <!-- Error Message -->
@@ -500,10 +471,10 @@
                         </Grid>
                     </Border>
 
-                    <!-- Form Content (same as Add modal) -->
+                    <!-- Form Content -->
                     <ScrollViewer Grid.Row="1"
                                   VerticalScrollBarVisibility="Auto"
-                                  MaxHeight="400">
+                                  MaxHeight="450">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Category Name -->
                             <StackPanel Spacing="6">
@@ -525,126 +496,81 @@
                                 <ComboBox ItemsSource="{Binding AvailableParentCategories}"
                                           SelectedItem="{Binding ModalParentCategory}"
                                           Classes="form-combobox"
-                                          PlaceholderText="Select parent category (optional)">
+                                          PlaceholderText="Select parent category">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate DataType="vm:CategoryDisplayItem">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Border Width="20" Height="20"
-                                                        CornerRadius="4"
-                                                        Background="{Binding Color, Converter={StaticResource StringToBrushConverter}, ConverterParameter=0.15}"
-                                                        IsVisible="{Binding Id, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                                    <PathIcon Data="{Binding IconPath}"
-                                                              Width="12" Height="12"
-                                                              Foreground="{Binding Color, Converter={StaticResource StringToBrushConverter}}" />
-                                                </Border>
-                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                            </StackPanel>
+                                            <TextBlock Text="{Binding Name}" />
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>
                             </StackPanel>
 
-                            <!-- Default Tax Rate -->
+                            <!-- Description -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Default Tax Rate (%)"
+                                <TextBlock Text="Description"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <NumericUpDown Value="{Binding ModalDefaultTaxRate}"
-                                               Minimum="0"
-                                               Maximum="1"
-                                               Increment="0.01"
-                                               FormatString="P0"
-                                               Classes="form-input" />
+                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         Watermark="Enter description (optional)"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="80"
+                                         MaxHeight="120" />
                             </StackPanel>
 
-                            <!-- Icon Selection -->
+                            <!-- Category Type (Product/Service) -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Category Type"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding ItemTypes}"
+                                          SelectedItem="{Binding ModalItemType}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="Select type" />
+                            </StackPanel>
+
+                            <!-- Icon -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Icon"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ItemsControl ItemsSource="{Binding AvailableIcons}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
+                                <ComboBox ItemsSource="{Binding AvailableIcons}"
+                                          SelectedItem="{Binding ModalSelectedIconOption}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="Select icon">
+                                    <ComboBox.ItemTemplate>
                                         <DataTemplate DataType="vm:IconOption">
-                                            <Button Classes="icon-selector"
-                                                    Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).SelectIconCommand}"
-                                                    CommandParameter="{Binding Name}"
-                                                    Margin="0,0,8,8">
-                                                <Border Width="40" Height="40"
-                                                        CornerRadius="6"
-                                                        Background="{DynamicResource SurfaceAltBrush}">
-                                                    <Border.BorderBrush>
-                                                        <MultiBinding Converter="{x:Static local:MultiConverters.ColorSelectionBorder}">
-                                                            <Binding Path="Name" />
-                                                            <Binding Path="$parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ModalSelectedIcon" />
-                                                        </MultiBinding>
-                                                    </Border.BorderBrush>
-                                                    <Border.BorderThickness>
-                                                        <MultiBinding Converter="{x:Static local:MultiConverters.SelectionBorderThickness}">
-                                                            <Binding Path="Name" />
-                                                            <Binding Path="$parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ModalSelectedIcon" />
-                                                        </MultiBinding>
-                                                    </Border.BorderThickness>
-                                                    <PathIcon Data="{Binding Path}"
-                                                              Width="20" Height="20"
-                                                              Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                </Border>
-                                            </Button>
+                                            <TextBlock Text="{Binding DisplayName}" />
                                         </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                             </StackPanel>
 
-                            <!-- Color Selection -->
+                            <!-- Icon Color -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Color"
+                                <TextBlock Text="Icon Color"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ItemsControl ItemsSource="{Binding AvailableColors}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
+                                <ComboBox ItemsSource="{Binding AvailableColors}"
+                                          SelectedItem="{Binding ModalSelectedColorOption}"
+                                          Classes="form-combobox"
+                                          PlaceholderText="Select color">
+                                    <ComboBox.ItemTemplate>
                                         <DataTemplate DataType="vm:ColorOption">
-                                            <Button Classes="color-selector"
-                                                    Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).SelectColorCommand}"
-                                                    CommandParameter="{Binding Hex}"
-                                                    Margin="0,0,8,8"
-                                                    ToolTip.Tip="{Binding Name}">
-                                                <Border Width="36" Height="36"
-                                                        CornerRadius="18"
-                                                        Background="{Binding Hex, Converter={StaticResource StringToBrushConverter}}"
-                                                        BorderThickness="2">
-                                                    <Border.BorderBrush>
-                                                        <MultiBinding Converter="{x:Static local:MultiConverters.ColorSelectionBorder}">
-                                                            <Binding Path="Hex" />
-                                                            <Binding Path="$parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ModalSelectedColor" />
-                                                        </MultiBinding>
-                                                    </Border.BorderBrush>
-                                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                                                              Width="16" Height="16"
-                                                              Foreground="White">
-                                                        <PathIcon.IsVisible>
-                                                            <MultiBinding Converter="{x:Static local:MultiConverters.StringEquals}">
-                                                                <Binding Path="Hex" />
-                                                                <Binding Path="$parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ModalSelectedColor" />
-                                                            </MultiBinding>
-                                                        </PathIcon.IsVisible>
-                                                    </PathIcon>
-                                                </Border>
-                                            </Button>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Border Width="16" Height="16"
+                                                        CornerRadius="3"
+                                                        Background="{Binding Hex, Converter={StaticResource StringToBrushConverter}}" />
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                            </StackPanel>
                                         </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                             </StackPanel>
 
                             <!-- Error Message -->
@@ -781,7 +707,7 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0,10,12,10" />
             <Setter Property="FontSize" Value="14" />
-            <Setter Property="MinWidth" Value="200" />
+            <Setter Property="MinWidth" Value="180" />
         </Style>
         <Style Selector="TextBox.search-input /template/ Border#PART_BorderElement">
             <Setter Property="Background" Value="Transparent" />
@@ -894,42 +820,6 @@
             <Setter Property="Padding" Value="12,10" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
-        </Style>
-
-        <!-- NumericUpDown Form Style -->
-        <Style Selector="NumericUpDown.form-input">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-        </Style>
-
-        <!-- Icon Selector Button -->
-        <Style Selector="Button.icon-selector">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.icon-selector /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.icon-selector:pointerover Border">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-
-        <!-- Color Selector Button -->
-        <Style Selector="Button.color-selector">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.color-selector /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
         </Style>
     </UserControl.Styles>
 </UserControl>

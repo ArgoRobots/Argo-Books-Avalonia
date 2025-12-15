@@ -95,16 +95,16 @@ public partial class CategoriesPageViewModel : ViewModelBase
     private CategoryDisplayItem? _modalParentCategory;
 
     [ObservableProperty]
-    private string _modalCategoryType = "Product";
+    private string _modalDescription = string.Empty;
 
     [ObservableProperty]
-    private string _modalSelectedIcon = "box";
+    private string _modalItemType = "Product";
 
     [ObservableProperty]
-    private string _modalSelectedColor = "#4A90D9";
+    private IconOption? _modalSelectedIconOption;
 
     [ObservableProperty]
-    private decimal _modalDefaultTaxRate;
+    private ColorOption? _modalSelectedColorOption;
 
     [ObservableProperty]
     private string? _modalError;
@@ -129,33 +129,33 @@ public partial class CategoriesPageViewModel : ViewModelBase
     public ObservableCollection<CategoryDisplayItem> AvailableParentCategories { get; } = [];
 
     /// <summary>
-    /// Category types (Product/Service).
+    /// Item types (Product/Service).
     /// </summary>
-    public ObservableCollection<string> CategoryTypes { get; } = ["Product", "Service"];
+    public ObservableCollection<string> ItemTypes { get; } = ["Product", "Service"];
 
     /// <summary>
-    /// Available icons.
+    /// Available icons for dropdown.
     /// </summary>
     public ObservableCollection<IconOption> AvailableIcons { get; } =
     [
-        new("box", "M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z"),
-        new("tag", "M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"),
-        new("folder", "M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"),
-        new("shopping-cart", "M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"),
-        new("truck", "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"),
-        new("tools", "M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"),
-        new("home", "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"),
-        new("computer", "M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"),
-        new("phone", "M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"),
-        new("lightbulb", "M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"),
-        new("settings", "M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"),
-        new("star", "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"),
-        new("heart", "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"),
-        new("dollar", "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z")
+        new("📦", "Box"),
+        new("🏷️", "Tag"),
+        new("📁", "Folder"),
+        new("🛒", "Shopping Cart"),
+        new("🚚", "Truck"),
+        new("🔧", "Tools"),
+        new("🏠", "Home"),
+        new("💻", "Computer"),
+        new("📱", "Phone"),
+        new("💡", "Light Bulb"),
+        new("⚙️", "Settings"),
+        new("⭐", "Star"),
+        new("❤️", "Heart"),
+        new("💵", "Dollar")
     ];
 
     /// <summary>
-    /// Available colors.
+    /// Available colors for dropdown.
     /// </summary>
     public ObservableCollection<ColorOption> AvailableColors { get; } =
     [
@@ -163,10 +163,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
         new("#10B981", "Green"),
         new("#F59E0B", "Orange"),
         new("#8B5CF6", "Purple"),
-        new("#EF4444", "Red"),
-        new("#EC4899", "Pink"),
-        new("#14B8A6", "Teal"),
-        new("#6B7280", "Gray")
+        new("#EF4444", "Red")
     ];
 
     #endregion
@@ -178,6 +175,9 @@ public partial class CategoriesPageViewModel : ViewModelBase
     /// </summary>
     public CategoriesPageViewModel()
     {
+        // Set default selections
+        _modalSelectedIconOption = AvailableIcons.FirstOrDefault();
+        _modalSelectedColorOption = AvailableColors.FirstOrDefault();
         LoadCategories();
     }
 
@@ -231,7 +231,8 @@ public partial class CategoriesPageViewModel : ViewModelBase
         {
             var query = SearchQuery.ToLowerInvariant();
             categories = categories
-                .Where(c => c.Name.ToLowerInvariant().Contains(query))
+                .Where(c => c.Name.ToLowerInvariant().Contains(query) ||
+                           (c.Description?.ToLowerInvariant().Contains(query) ?? false))
                 .ToList();
         }
 
@@ -280,10 +281,10 @@ public partial class CategoriesPageViewModel : ViewModelBase
             Name = category.Name,
             ParentId = category.ParentId,
             ParentName = parentName ?? string.Empty,
+            Description = category.Description ?? string.Empty,
+            ItemType = category.ItemType,
             Color = category.Color,
             Icon = category.Icon,
-            IconPath = GetIconPath(category.Icon),
-            DefaultTaxRate = category.DefaultTaxRate,
             ProductCount = productCount,
             ChildCount = childCount,
             IsChild = isChild,
@@ -321,16 +322,9 @@ public partial class CategoriesPageViewModel : ViewModelBase
                 Id = cat.Id,
                 Name = cat.Name,
                 Color = cat.Color,
-                Icon = cat.Icon,
-                IconPath = GetIconPath(cat.Icon)
+                Icon = cat.Icon
             });
         }
-    }
-
-    private string GetIconPath(string iconName)
-    {
-        return AvailableIcons.FirstOrDefault(i => i.Name == iconName)?.Path
-            ?? AvailableIcons.First().Path;
     }
 
     #endregion
@@ -383,9 +377,10 @@ public partial class CategoriesPageViewModel : ViewModelBase
             Name = ModalCategoryName.Trim(),
             Type = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales,
             ParentId = ModalParentCategory?.Id != string.Empty ? ModalParentCategory?.Id : null,
-            Color = ModalSelectedColor,
-            Icon = ModalSelectedIcon,
-            DefaultTaxRate = ModalDefaultTaxRate,
+            Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
+            ItemType = ModalItemType,
+            Color = ModalSelectedColorOption?.Hex ?? "#4A90D9",
+            Icon = ModalSelectedIconOption?.Icon ?? "📦",
             CreatedAt = DateTime.UtcNow
         };
 
@@ -419,9 +414,10 @@ public partial class CategoriesPageViewModel : ViewModelBase
 
         // Populate fields
         ModalCategoryName = category.Name;
-        ModalSelectedColor = category.Color;
-        ModalSelectedIcon = category.Icon;
-        ModalDefaultTaxRate = category.DefaultTaxRate;
+        ModalDescription = category.Description ?? string.Empty;
+        ModalItemType = category.ItemType;
+        ModalSelectedColorOption = AvailableColors.FirstOrDefault(c => c.Hex == category.Color) ?? AvailableColors.First();
+        ModalSelectedIconOption = AvailableIcons.FirstOrDefault(i => i.Icon == category.Icon) ?? AvailableIcons.First();
 
         // Set parent
         if (!string.IsNullOrEmpty(category.ParentId))
@@ -464,9 +460,10 @@ public partial class CategoriesPageViewModel : ViewModelBase
         // Update the category
         _editingCategory.Name = ModalCategoryName.Trim();
         _editingCategory.ParentId = ModalParentCategory?.Id != string.Empty ? ModalParentCategory?.Id : null;
-        _editingCategory.Color = ModalSelectedColor;
-        _editingCategory.Icon = ModalSelectedIcon;
-        _editingCategory.DefaultTaxRate = ModalDefaultTaxRate;
+        _editingCategory.Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim();
+        _editingCategory.ItemType = ModalItemType;
+        _editingCategory.Color = ModalSelectedColorOption?.Hex ?? "#4A90D9";
+        _editingCategory.Icon = ModalSelectedIconOption?.Icon ?? "📦";
 
         companyData.MarkAsModified();
 
@@ -489,6 +486,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
             return;
 
         _deletingCategory = item;
+        OnPropertyChanged(nameof(DeletingCategoryName));
         IsDeleteConfirmOpen = true;
     }
 
@@ -547,10 +545,10 @@ public partial class CategoriesPageViewModel : ViewModelBase
     {
         ModalCategoryName = string.Empty;
         ModalParentCategory = AvailableParentCategories.FirstOrDefault(c => c.Id == string.Empty);
-        ModalCategoryType = "Product";
-        ModalSelectedIcon = "box";
-        ModalSelectedColor = "#4A90D9";
-        ModalDefaultTaxRate = 0;
+        ModalDescription = string.Empty;
+        ModalItemType = "Product";
+        ModalSelectedIconOption = AvailableIcons.FirstOrDefault();
+        ModalSelectedColorOption = AvailableColors.FirstOrDefault();
         ModalError = null;
     }
 
@@ -580,30 +578,6 @@ public partial class CategoriesPageViewModel : ViewModelBase
         return true;
     }
 
-    /// <summary>
-    /// Selects an icon for the category.
-    /// </summary>
-    [RelayCommand]
-    private void SelectIcon(string? iconName)
-    {
-        if (!string.IsNullOrEmpty(iconName))
-        {
-            ModalSelectedIcon = iconName;
-        }
-    }
-
-    /// <summary>
-    /// Selects a color for the category.
-    /// </summary>
-    [RelayCommand]
-    private void SelectColor(string? colorHex)
-    {
-        if (!string.IsNullOrEmpty(colorHex))
-        {
-            ModalSelectedColor = colorHex;
-        }
-    }
-
     #endregion
 }
 
@@ -625,16 +599,16 @@ public partial class CategoryDisplayItem : ObservableObject
     private string _parentName = string.Empty;
 
     [ObservableProperty]
+    private string _description = string.Empty;
+
+    [ObservableProperty]
+    private string _itemType = "Product";
+
+    [ObservableProperty]
     private string _color = "#4A90D9";
 
     [ObservableProperty]
-    private string _icon = "box";
-
-    [ObservableProperty]
-    private string _iconPath = string.Empty;
-
-    [ObservableProperty]
-    private decimal _defaultTaxRate;
+    private string _icon = "📦";
 
     [ObservableProperty]
     private int _productCount;
@@ -655,22 +629,23 @@ public partial class CategoryDisplayItem : ObservableObject
 }
 
 /// <summary>
-/// Represents an icon option.
+/// Represents an icon option for dropdown.
 /// </summary>
 public class IconOption
 {
+    public string Icon { get; }
     public string Name { get; }
-    public string Path { get; }
+    public string DisplayName => $"{Icon} {Name}";
 
-    public IconOption(string name, string path)
+    public IconOption(string icon, string name)
     {
+        Icon = icon;
         Name = name;
-        Path = path;
     }
 }
 
 /// <summary>
-/// Represents a color option.
+/// Represents a color option for dropdown.
 /// </summary>
 public class ColorOption
 {
