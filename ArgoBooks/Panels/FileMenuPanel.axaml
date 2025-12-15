@@ -198,7 +198,7 @@
                 MinWidth="200"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="296,140,0,0"
+                Margin="296,129,0,0"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
                 KeyDown="FileMenu_KeyDown"
