@@ -72,205 +72,162 @@
                     </Grid>
                 </Border>
 
-                <!-- Content -->
-                <ScrollViewer Grid.Row="1"
-                              VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Margin="24,20" Spacing="16">
-                        <!-- Export Type Selection -->
-                        <StackPanel Spacing="12">
-                            <!-- Backup File Option -->
-                            <Button Classes="export-type-card"
-                                    Classes.selected="{Binding IsBackupSelected}"
-                                    Command="{Binding SelectBackupCommand}">
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <Border Grid.Column="0"
-                                            Width="48" Height="48"
-                                            CornerRadius="8"
-                                            Background="{DynamicResource PrimaryIconBgBrush}"
-                                            Margin="0,0,16,0">
-                                        <PathIcon Data="M20 13H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1v-6c0-.55-.45-1-1-1zM7 19c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM20 3H4c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM7 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
-                                                  Width="24" Height="24"
-                                                  Foreground="{DynamicResource PrimaryBrush}" />
-                                    </Border>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                        <TextBlock Text="Backup File"
-                                                   FontSize="14"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Text="Save a complete backup of all your data (.argobk)"
-                                                   FontSize="13"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Grid>
-                            </Button>
-
-                            <!-- Spreadsheet Option -->
-                            <Button Classes="export-type-card"
-                                    Classes.selected="{Binding IsSpreadsheetSelected}"
-                                    Command="{Binding SelectSpreadsheetCommand}">
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <Border Grid.Column="0"
-                                            Width="48" Height="48"
-                                            CornerRadius="8"
-                                            Background="{DynamicResource SuccessIconBgBrush}"
-                                            Margin="0,0,16,0">
-                                        <PathIcon Data="M21 5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
-                                                  Width="24" Height="24"
-                                                  Foreground="{DynamicResource SuccessBrush}" />
-                                    </Border>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                        <TextBlock Text="Spreadsheet"
-                                                   FontSize="14"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Text="Export selected data as Excel or CSV file"
-                                                   FontSize="13"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </Grid>
-                            </Button>
-                        </StackPanel>
-
-                        <!-- Backup Options (shown when backup is selected) -->
-                        <Border IsVisible="{Binding IsBackupSelected}"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
-                                Padding="16">
-                            <StackPanel Spacing="12">
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <PathIcon Grid.Column="0"
-                                              Data="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"
-                                              Width="28" Height="28"
-                                              Foreground="{DynamicResource PrimaryBrush}"
-                                              Margin="0,0,14,0"
-                                              VerticalAlignment="Center" />
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                        <TextBlock Text="Complete Backup"
-                                                   FontSize="14"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Text="Includes all data, settings, and attachments"
-                                                   FontSize="13"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    </StackPanel>
-                                </Grid>
-                                <CheckBox IsChecked="{Binding IncludeAttachments}"
-                                          Margin="0,4,0,0">
-                                    <TextBlock Text="Include file attachments"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                </CheckBox>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Spreadsheet Options (shown when spreadsheet is selected) -->
-                        <StackPanel IsVisible="{Binding IsSpreadsheetSelected}" Spacing="16">
-                            <!-- File Format -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="File Format"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <ComboBox ItemsSource="{Binding FileFormats}"
-                                          SelectedItem="{Binding SelectedFileFormat}"
-                                          HorizontalAlignment="Stretch"
-                                          Classes="form-select">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock>
-                                                <TextBlock.Text>
-                                                    <MultiBinding StringFormat="{}{0}">
-                                                        <Binding Path="." />
-                                                    </MultiBinding>
-                                                </TextBlock.Text>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </StackPanel>
-
-                            <!-- Date Range -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Date Range"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <Grid ColumnDefinitions="*,Auto,*">
-                                    <DatePicker Grid.Column="0"
-                                                SelectedDate="{Binding StartDate}"
-                                                Classes="form-date" />
-                                    <TextBlock Grid.Column="1"
-                                               Text="to"
-                                               FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               VerticalAlignment="Center"
-                                               Margin="12,0" />
-                                    <DatePicker Grid.Column="2"
-                                                SelectedDate="{Binding EndDate}"
-                                                Classes="form-date" />
-                                </Grid>
-                            </StackPanel>
-
-                            <!-- Select Data to Export -->
-                            <StackPanel Spacing="8">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0"
-                                               Text="Select Data to Export"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <CheckBox Grid.Column="1"
-                                              IsChecked="{Binding SelectAllData}">
-                                        <TextBlock Text="Select All"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    </CheckBox>
-                                </Grid>
-                                <Border Background="{DynamicResource SurfaceBrush}"
+                <!-- Content with Tabs -->
+                <TabControl Grid.Row="1"
+                            SelectedIndex="{Binding SelectedTabIndex}"
+                            Margin="0">
+                    <!-- Backup File Tab -->
+                    <TabItem Header="Backup File">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                            <StackPanel Spacing="16">
+                                <!-- Backup Info -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="8"
-                                        MaxHeight="200"
-                                        ClipToBounds="True">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                                  HorizontalScrollBarVisibility="Disabled">
-                                        <ItemsControl ItemsSource="{Binding DataItems}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="vm:ExportDataItem">
-                                                    <Border Padding="14,12"
-                                                            BorderBrush="{DynamicResource BorderBrush}"
-                                                            BorderThickness="0,0,0,1"
-                                                            Classes="data-item">
-                                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                                            <CheckBox Grid.Column="0"
-                                                                      IsChecked="{Binding IsSelected}"
-                                                                      Margin="0,0,12,0" />
-                                                            <TextBlock Grid.Column="1"
-                                                                       Text="{Binding Name}"
-                                                                       FontSize="14"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center" />
-                                                            <TextBlock Grid.Column="2"
-                                                                       Text="{Binding RecordCount, StringFormat='({0:N0} records)'}"
-                                                                       FontSize="12"
-                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                       VerticalAlignment="Center" />
-                                                        </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </ScrollViewer>
+                                        Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <PathIcon Grid.Column="0"
+                                                      Data="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"
+                                                      Width="28" Height="28"
+                                                      Foreground="{DynamicResource PrimaryBrush}"
+                                                      Margin="0,0,14,0"
+                                                      VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                <TextBlock Text="Complete Backup"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="Save a complete backup of all your data (.argobk)"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <CheckBox IsChecked="{Binding IncludeAttachments}"
+                                                  Margin="0,4,0,0">
+                                            <TextBlock Text="Include file attachments"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </CheckBox>
+                                    </StackPanel>
                                 </Border>
+
+                                <!-- Additional backup info -->
+                                <TextBlock Text="Includes all data, settings, and attachments. Backup files can be restored later to recover your data."
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextWrapping="Wrap" />
                             </StackPanel>
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- Spreadsheet Tab -->
+                    <TabItem Header="Spreadsheet">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20">
+                            <StackPanel Spacing="16">
+                                <!-- File Format -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="File Format"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding FileFormats}"
+                                              SelectedItem="{Binding SelectedFileFormat}"
+                                              HorizontalAlignment="Stretch"
+                                              Classes="form-select">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock>
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="{}{0}">
+                                                            <Binding Path="." />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <!-- Date Range -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Date Range"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <Grid ColumnDefinitions="*,Auto,*">
+                                        <DatePicker Grid.Column="0"
+                                                    SelectedDate="{Binding StartDate}"
+                                                    Classes="form-date" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="to"
+                                                   FontSize="13"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="12,0" />
+                                        <DatePicker Grid.Column="2"
+                                                    SelectedDate="{Binding EndDate}"
+                                                    Classes="form-date" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- Select Data to Export -->
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Select Data to Export"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <CheckBox Grid.Column="1"
+                                                  IsChecked="{Binding SelectAllData}">
+                                            <TextBlock Text="Select All"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </CheckBox>
+                                    </Grid>
+                                    <Border Background="{DynamicResource SurfaceBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="8"
+                                            MaxHeight="200"
+                                            ClipToBounds="True">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Disabled">
+                                            <ItemsControl ItemsSource="{Binding DataItems}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:ExportDataItem">
+                                                        <Border Padding="14,12"
+                                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                                BorderThickness="0,0,0,1"
+                                                                Classes="data-item">
+                                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                                <CheckBox Grid.Column="0"
+                                                                          IsChecked="{Binding IsSelected}"
+                                                                          Margin="0,0,12,0" />
+                                                                <TextBlock Grid.Column="1"
+                                                                           Text="{Binding Name}"
+                                                                           FontSize="14"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                           VerticalAlignment="Center" />
+                                                                <TextBlock Grid.Column="2"
+                                                                           Text="{Binding RecordCount, StringFormat='({0:N0} records)'}"
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                           VerticalAlignment="Center" />
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
 
                 <!-- Footer -->
                 <Border Grid.Row="2"
@@ -318,31 +275,39 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
 
-        <!-- Export Type Card Button -->
-        <Style Selector="Button.export-type-card">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Padding" Value="16" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.export-type-card /template/ ContentPresenter#PART_ContentPresenter">
+        <!-- TabControl - remove default underline -->
+        <Style Selector="TabControl">
             <Setter Property="Background" Value="Transparent" />
         </Style>
-        <Style Selector="Button.export-type-card:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        <Style Selector="TabControl /template/ ItemsPresenter#PART_ItemsPresenter">
+            <Setter Property="Margin" Value="24,0" />
         </Style>
-        <Style Selector="Button.export-type-card:pointerover">
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        <Style Selector="TabControl /template/ Border#PART_InnerBorder">
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
-        <Style Selector="Button.export-type-card.selected">
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+
+        <!-- Tab Item Styling -->
+        <Style Selector="TabItem">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="4,12,4,10" />
+            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
-        <Style Selector="Button.export-type-card.selected /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
+        <Style Selector="TabItem:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
+            <Setter Property="IsVisible" Value="True" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Height" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Margin" Value="0,0,0,0" />
+            <Setter Property="CornerRadius" Value="1" />
         </Style>
 
         <!-- Secondary Button -->
@@ -399,6 +364,21 @@
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="MonthFormat" Value="MMM" />
+        </Style>
+        <!-- DatePicker month column width fix -->
+        <Style Selector="DatePicker.form-date /template/ DatePickerPresenter#PART_PickerPresenter">
+            <Setter Property="Margin" Value="6,4" />
+        </Style>
+        <Style Selector="DatePicker.form-date /template/ Panel#PART_MonthHost">
+            <Setter Property="MinWidth" Value="50" />
+            <Setter Property="MaxWidth" Value="60" />
+        </Style>
+        <Style Selector="DatePicker.form-date /template/ Panel#PART_DayHost">
+            <Setter Property="MinWidth" Value="32" />
+        </Style>
+        <Style Selector="DatePicker.form-date /template/ Panel#PART_YearHost">
+            <Setter Property="MinWidth" Value="50" />
         </Style>
 
         <!-- Data Item hover -->
