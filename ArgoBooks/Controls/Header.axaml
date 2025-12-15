@@ -67,14 +67,21 @@
                     <!-- Status Indicator Container - fixed width to prevent layout shift -->
                     <Border Width="105" VerticalAlignment="Center" Margin="4,0,0,0">
                         <Panel>
-                            <!-- "No changes found" indicator -->
+                            <!-- "No changes found" indicator (temporary, shows when save clicked with no changes) -->
                             <TextBlock Text="No changes found"
                                        FontSize="12"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        VerticalAlignment="Center"
-                                       IsVisible="{Binding ShowNoChangesIndicator}" />
+                                       IsVisible="{Binding ShowNoChangesIndicator}"
+                                       Opacity="{Binding NoChangesIndicatorOpacity}">
+                                <TextBlock.Transitions>
+                                    <Transitions>
+                                        <DoubleTransition Property="Opacity" Duration="0:0:0.3" />
+                                    </Transitions>
+                                </TextBlock.Transitions>
+                            </TextBlock>
 
-                            <!-- "Saved" indicator (temporary) -->
+                            <!-- "Saved" indicator (temporary, shows when save clicked with changes) -->
                             <TextBlock Text="Saved"
                                        FontSize="12"
                                        FontWeight="Medium"

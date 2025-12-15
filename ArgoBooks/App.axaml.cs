@@ -93,6 +93,9 @@ public partial class App : Application
             // Wire up company switcher events
             WireCompanySwitcherEvents(desktop);
 
+            // Wire up settings modal events
+            WireSettingsModalEvents();
+
             // Wire up header save request
             _appShellViewModel.HeaderViewModel.SaveRequested += async (_, _) =>
             {
@@ -209,17 +212,16 @@ public partial class App : Application
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
         };
 
-        CompanyManager.PasswordRequired += async (_, args) =>
+        // Use async callback for password requests (allows proper awaiting)
+        CompanyManager.PasswordRequestCallback = async (filePath) =>
         {
-            if (_appShellViewModel?.PasswordPromptModalViewModel == null) return;
+            if (_appShellViewModel?.PasswordPromptModalViewModel == null) return null;
 
             // Get company name from footer if possible
-            var footer = await CompanyManager.GetFileInfoAsync(args.FilePath);
-            var companyName = footer?.CompanyName ?? Path.GetFileNameWithoutExtension(args.FilePath);
+            var footer = await CompanyManager.GetFileInfoAsync(filePath);
+            var companyName = footer?.CompanyName ?? Path.GetFileNameWithoutExtension(filePath);
 
-            var password = await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(companyName, args.FilePath);
-            args.Password = password;
-            args.IsCancelled = password == null;
+            return await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(companyName, filePath);
         };
     }
 
@@ -624,6 +626,81 @@ public partial class App : Application
                 {
                     // Invalid image
                 }
+            }
+        };
+    }
+
+    /// <summary>
+    /// Wires up settings modal events for password management.
+    /// </summary>
+    private static void WireSettingsModalEvents()
+    {
+        if (_appShellViewModel == null)
+            return;
+
+        var settings = _appShellViewModel.SettingsModalViewModel;
+
+        // Initialize HasPassword based on current company
+        if (CompanyManager != null)
+        {
+            CompanyManager.CompanyOpened += (_, args) =>
+            {
+                settings.HasPassword = args.IsEncrypted;
+            };
+
+            CompanyManager.CompanyClosed += (_, _) =>
+            {
+                settings.HasPassword = false;
+            };
+        }
+
+        // Add password
+        settings.AddPasswordRequested += async (_, args) =>
+        {
+            if (CompanyManager?.IsCompanyOpen != true || args.NewPassword == null) return;
+
+            try
+            {
+                await CompanyManager.ChangePasswordAsync(args.NewPassword);
+                _appShellViewModel?.AddNotification("Success", "Password has been set.", NotificationType.Success);
+            }
+            catch (Exception ex)
+            {
+                settings.HasPassword = false;
+                _appShellViewModel?.AddNotification("Error", $"Failed to set password: {ex.Message}", NotificationType.Error);
+            }
+        };
+
+        // Change password
+        settings.ChangePasswordRequested += async (_, args) =>
+        {
+            if (CompanyManager?.IsCompanyOpen != true || args.NewPassword == null) return;
+
+            try
+            {
+                await CompanyManager.ChangePasswordAsync(args.NewPassword);
+                _appShellViewModel?.AddNotification("Success", "Password has been changed.", NotificationType.Success);
+            }
+            catch (Exception ex)
+            {
+                _appShellViewModel?.AddNotification("Error", $"Failed to change password: {ex.Message}", NotificationType.Error);
+            }
+        };
+
+        // Remove password
+        settings.RemovePasswordRequested += async (_, _) =>
+        {
+            if (CompanyManager?.IsCompanyOpen != true) return;
+
+            try
+            {
+                await CompanyManager.ChangePasswordAsync(null);
+                _appShellViewModel?.AddNotification("Success", "Password has been removed.", NotificationType.Success);
+            }
+            catch (Exception ex)
+            {
+                settings.HasPassword = true;
+                _appShellViewModel?.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
             }
         };
     }
