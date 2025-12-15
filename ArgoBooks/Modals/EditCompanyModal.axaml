@@ -11,7 +11,8 @@
     <Panel>
         <!-- Backdrop -->
         <Border Background="#80000000"
-                IsVisible="{Binding IsOpen}">
+                IsVisible="{Binding IsOpen}"
+                PointerPressed="Backdrop_PointerPressed">
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
