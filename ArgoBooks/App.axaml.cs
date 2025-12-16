@@ -568,8 +568,8 @@ public partial class App : Application
                     // Update UI
                     _mainWindowViewModel?.OpenCompany(args.CompanyName);
                     var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
-                    _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
-                    _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
+                    _appShellViewModel?.SetCompanyInfo(args.CompanyName, logo);
+                    _appShellViewModel?.CompanySwitcherPanelViewModel.SetCurrentCompany(
                         args.CompanyName,
                         CompanyManager.CurrentFilePath,
                         logo);

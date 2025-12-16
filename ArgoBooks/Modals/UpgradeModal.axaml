@@ -398,7 +398,7 @@
                                     </LinearGradientBrush>
                                 </Border.Background>
                                 <Border.RenderTransform>
-                                    <ScaleTransform x:Name="SuccessCircleScale" ScaleX="0" ScaleY="0" />
+                                    <ScaleTransform ScaleX="0" ScaleY="0" />
                                 </Border.RenderTransform>
                                 <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                           Width="48" Height="48"
