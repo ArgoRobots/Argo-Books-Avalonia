@@ -26,9 +26,6 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     private bool _isUpdatingText;
     private bool _isFormattingPhone;
 
-    // Maximum number of extension digits allowed
-    private const int MaxExtensionDigits = 5;
-
     protected void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -181,205 +178,205 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     #region Static Data
 
     /// <summary>
-    /// Complete list of country dial codes.
+    /// Complete list of country dial codes with phone format patterns.
     /// </summary>
     public static readonly List<CountryDialCode> AllDialCodes =
     [
-        new("AF", "Afghanistan", "+93", "Afghanistan"),
-        new("AL", "Albania", "+355", "Albania"),
-        new("DZ", "Algeria", "+213", "Algeria"),
-        new("AD", "Andorra", "+376", "Andorra"),
-        new("AO", "Angola", "+244", "Angola"),
-        new("AG", "Antigua and Barbuda", "+1", "Antigua and Barbuda"),
-        new("AR", "Argentina", "+54", "Argentina"),
-        new("AM", "Armenia", "+374", "Armenia"),
-        new("AU", "Australia", "+61", "Australia"),
-        new("AT", "Austria", "+43", "Austria"),
-        new("AZ", "Azerbaijan", "+994", "Azerbaijan"),
-        new("BS", "Bahamas", "+1", "Bahamas"),
-        new("BH", "Bahrain", "+973", "Bahrain"),
-        new("BD", "Bangladesh", "+880", "Bangladesh"),
-        new("BB", "Barbados", "+1", "Barbados"),
-        new("BY", "Belarus", "+375", "Belarus"),
-        new("BE", "Belgium", "+32", "Belgium"),
-        new("BZ", "Belize", "+501", "Belize"),
-        new("BJ", "Benin", "+229", "Benin"),
-        new("BT", "Bhutan", "+975", "Bhutan"),
-        new("BO", "Bolivia", "+591", "Bolivia"),
-        new("BA", "Bosnia and Herzegovina", "+387", "Bosnia and Herzegovina"),
-        new("BW", "Botswana", "+267", "Botswana"),
-        new("BR", "Brazil", "+55", "Brazil"),
-        new("BN", "Brunei", "+673", "Brunei"),
-        new("BG", "Bulgaria", "+359", "Bulgaria"),
-        new("BF", "Burkina Faso", "+226", "Burkina Faso"),
-        new("BI", "Burundi", "+257", "Burundi"),
-        new("CV", "Cabo Verde", "+238", "Cabo Verde"),
-        new("KH", "Cambodia", "+855", "Cambodia"),
-        new("CM", "Cameroon", "+237", "Cameroon"),
-        new("CA", "Canada", "+1", "Canada"),
-        new("CF", "Central African Republic", "+236", "Central African Republic"),
-        new("TD", "Chad", "+235", "Chad"),
-        new("CL", "Chile", "+56", "Chile"),
-        new("CN", "China", "+86", "China"),
-        new("CO", "Colombia", "+57", "Colombia"),
-        new("KM", "Comoros", "+269", "Comoros"),
-        new("CR", "Costa Rica", "+506", "Costa Rica"),
-        new("HR", "Croatia", "+385", "Croatia"),
-        new("CU", "Cuba", "+53", "Cuba"),
-        new("CY", "Cyprus", "+357", "Cyprus"),
-        new("CZ", "Czechia", "+420", "Czechia"),
-        new("DK", "Denmark", "+45", "Denmark"),
-        new("DJ", "Djibouti", "+253", "Djibouti"),
-        new("DM", "Dominica", "+1", "Dominica"),
-        new("DO", "Dominican Republic", "+1", "Dominican Republic"),
-        new("EC", "Ecuador", "+593", "Ecuador"),
-        new("EG", "Egypt", "+20", "Egypt"),
-        new("SV", "El Salvador", "+503", "El Salvador"),
-        new("GQ", "Equatorial Guinea", "+240", "Equatorial Guinea"),
-        new("ER", "Eritrea", "+291", "Eritrea"),
-        new("EE", "Estonia", "+372", "Estonia"),
-        new("SZ", "Eswatini", "+268", "Eswatini"),
-        new("ET", "Ethiopia", "+251", "Ethiopia"),
-        new("FJ", "Fiji", "+679", "Fiji"),
-        new("FI", "Finland", "+358", "Finland"),
-        new("FR", "France", "+33", "France"),
-        new("GA", "Gabon", "+241", "Gabon"),
-        new("GM", "Gambia", "+220", "Gambia"),
-        new("GE", "Georgia", "+995", "Georgia"),
-        new("DE", "Germany", "+49", "Germany"),
-        new("GH", "Ghana", "+233", "Ghana"),
-        new("GR", "Greece", "+30", "Greece"),
-        new("GD", "Grenada", "+1", "Grenada"),
-        new("GT", "Guatemala", "+502", "Guatemala"),
-        new("GN", "Guinea", "+224", "Guinea"),
-        new("GW", "Guinea-Bissau", "+245", "Guinea-Bissau"),
-        new("GY", "Guyana", "+592", "Guyana"),
-        new("HT", "Haiti", "+509", "Haiti"),
-        new("HN", "Honduras", "+504", "Honduras"),
-        new("HU", "Hungary", "+36", "Hungary"),
-        new("IS", "Iceland", "+354", "Iceland"),
-        new("IN", "India", "+91", "India"),
-        new("ID", "Indonesia", "+62", "Indonesia"),
-        new("IR", "Iran", "+98", "Iran"),
-        new("IQ", "Iraq", "+964", "Iraq"),
-        new("IE", "Ireland", "+353", "Ireland"),
-        new("IL", "Israel", "+972", "Israel"),
-        new("IT", "Italy", "+39", "Italy"),
-        new("CI", "Ivory Coast", "+225", "Ivory Coast"),
-        new("JM", "Jamaica", "+1", "Jamaica"),
-        new("JP", "Japan", "+81", "Japan"),
-        new("JO", "Jordan", "+962", "Jordan"),
-        new("KZ", "Kazakhstan", "+7", "Kazakhstan"),
-        new("KE", "Kenya", "+254", "Kenya"),
-        new("KI", "Kiribati", "+686", "Kiribati"),
-        new("KW", "Kuwait", "+965", "Kuwait"),
-        new("KG", "Kyrgyzstan", "+996", "Kyrgyzstan"),
-        new("LA", "Lao", "+856", "Lao"),
-        new("LV", "Latvia", "+371", "Latvia"),
-        new("LB", "Lebanon", "+961", "Lebanon"),
-        new("LS", "Lesotho", "+266", "Lesotho"),
-        new("LR", "Liberia", "+231", "Liberia"),
-        new("LY", "Libya", "+218", "Libya"),
-        new("LI", "Liechtenstein", "+423", "Liechtenstein"),
-        new("LT", "Lithuania", "+370", "Lithuania"),
-        new("LU", "Luxembourg", "+352", "Luxembourg"),
-        new("MG", "Madagascar", "+261", "Madagascar"),
-        new("MW", "Malawi", "+265", "Malawi"),
-        new("MY", "Malaysia", "+60", "Malaysia"),
-        new("MV", "Maldives", "+960", "Maldives"),
-        new("ML", "Mali", "+223", "Mali"),
-        new("MT", "Malta", "+356", "Malta"),
-        new("MH", "Marshall Islands", "+692", "Marshall Islands"),
-        new("MR", "Mauritania", "+222", "Mauritania"),
-        new("MU", "Mauritius", "+230", "Mauritius"),
-        new("MX", "Mexico", "+52", "Mexico"),
-        new("FM", "Micronesia", "+691", "Micronesia"),
-        new("MD", "Moldova", "+373", "Moldova"),
-        new("MC", "Monaco", "+377", "Monaco"),
-        new("MN", "Mongolia", "+976", "Mongolia"),
-        new("ME", "Montenegro", "+382", "Montenegro"),
-        new("MA", "Morocco", "+212", "Morocco"),
-        new("MZ", "Mozambique", "+258", "Mozambique"),
-        new("MM", "Myanmar", "+95", "Myanmar"),
-        new("NA", "Namibia", "+264", "Namibia"),
-        new("NR", "Nauru", "+674", "Nauru"),
-        new("NP", "Nepal", "+977", "Nepal"),
-        new("NL", "Netherlands", "+31", "Netherlands"),
-        new("NZ", "New Zealand", "+64", "New Zealand"),
-        new("NI", "Nicaragua", "+505", "Nicaragua"),
-        new("NE", "Niger", "+227", "Niger"),
-        new("NG", "Nigeria", "+234", "Nigeria"),
-        new("KP", "North Korea", "+850", "North Korea"),
-        new("MK", "North Macedonia", "+389", "North Macedonia"),
-        new("NO", "Norway", "+47", "Norway"),
-        new("OM", "Oman", "+968", "Oman"),
-        new("PK", "Pakistan", "+92", "Pakistan"),
-        new("PW", "Palau", "+680", "Palau"),
-        new("PA", "Panama", "+507", "Panama"),
-        new("PG", "Papua New Guinea", "+675", "Papua New Guinea"),
-        new("PY", "Paraguay", "+595", "Paraguay"),
-        new("PE", "Peru", "+51", "Peru"),
-        new("PH", "Philippines", "+63", "Philippines"),
-        new("PL", "Poland", "+48", "Poland"),
-        new("PT", "Portugal", "+351", "Portugal"),
-        new("QA", "Qatar", "+974", "Qatar"),
-        new("RO", "Romania", "+40", "Romania"),
-        new("RU", "Russia", "+7", "Russia"),
-        new("RW", "Rwanda", "+250", "Rwanda"),
-        new("KN", "Saint Kitts and Nevis", "+1", "Saint Kitts and Nevis"),
-        new("LC", "Saint Lucia", "+1", "Saint Lucia"),
-        new("VC", "Saint Vincent and the Grenadines", "+1", "Saint Vincent and the Grenadines"),
-        new("WS", "Samoa", "+685", "Samoa"),
-        new("SM", "San Marino", "+378", "San Marino"),
-        new("ST", "Sao Tome and Principe", "+239", "Sao Tome and Principe"),
-        new("SA", "Saudi Arabia", "+966", "Saudi Arabia"),
-        new("SN", "Senegal", "+221", "Senegal"),
-        new("RS", "Serbia", "+381", "Serbia"),
-        new("SC", "Seychelles", "+248", "Seychelles"),
-        new("SL", "Sierra Leone", "+232", "Sierra Leone"),
-        new("SG", "Singapore", "+65", "Singapore"),
-        new("SK", "Slovakia", "+421", "Slovakia"),
-        new("SI", "Slovenia", "+386", "Slovenia"),
-        new("SB", "Solomon Islands", "+677", "Solomon Islands"),
-        new("SO", "Somalia", "+252", "Somalia"),
-        new("ZA", "South Africa", "+27", "South Africa"),
-        new("KR", "South Korea", "+82", "South Korea"),
-        new("SS", "South Sudan", "+211", "South Sudan"),
-        new("ES", "Spain", "+34", "Spain"),
-        new("LK", "Sri Lanka", "+94", "Sri Lanka"),
-        new("SD", "Sudan", "+249", "Sudan"),
-        new("SR", "Suriname", "+597", "Suriname"),
-        new("SE", "Sweden", "+46", "Sweden"),
-        new("CH", "Switzerland", "+41", "Switzerland"),
-        new("SY", "Syria", "+963", "Syria"),
-        new("TW", "Taiwan", "+886", "Taiwan"),
-        new("TJ", "Tajikistan", "+992", "Tajikistan"),
-        new("TZ", "Tanzania", "+255", "Tanzania"),
-        new("TH", "Thailand", "+66", "Thailand"),
-        new("CD", "The Democratic Republic of the Congo", "+243", "The Democratic Republic of the Congo"),
-        new("CG", "The Republic of the Congo", "+242", "The Republic of the Congo"),
-        new("TL", "Timor-Leste", "+670", "Timor-Leste"),
-        new("TG", "Togo", "+228", "Togo"),
-        new("TO", "Tonga", "+676", "Tonga"),
-        new("TT", "Trinidad and Tobago", "+1", "Trinidad and Tobago"),
-        new("TN", "Tunisia", "+216", "Tunisia"),
-        new("TR", "Turkey", "+90", "Turkey"),
-        new("TM", "Turkmenistan", "+993", "Turkmenistan"),
-        new("TV", "Tuvalu", "+688", "Tuvalu"),
-        new("UG", "Uganda", "+256", "Uganda"),
-        new("UA", "Ukraine", "+380", "Ukraine"),
-        new("AE", "United Arab Emirates", "+971", "United Arab Emirates"),
-        new("GB", "United Kingdom", "+44", "United Kingdom of Great Britain and Northern Ireland"),
-        new("US", "United States", "+1", "United States of America"),
-        new("UY", "Uruguay", "+598", "Uruguay"),
-        new("UZ", "Uzbekistan", "+998", "Uzbekistan"),
-        new("VU", "Vanuatu", "+678", "Vanuatu"),
-        new("VE", "Venezuela", "+58", "Venezuela"),
-        new("VN", "Vietnam", "+84", "Vietnam"),
-        new("EH", "Western Sahara", "+212", "Western Sahara"),
-        new("YE", "Yemen", "+967", "Yemen"),
-        new("ZM", "Zambia", "+260", "Zambia"),
-        new("ZW", "Zimbabwe", "+263", "Zimbabwe")
+        new("AF", "Afghanistan", "+93", "XX XXX XXXX", "Afghanistan"),
+        new("AL", "Albania", "+355", "XX XXX XXXX", "Albania"),
+        new("DZ", "Algeria", "+213", "XXX XX XX XX", "Algeria"),
+        new("AD", "Andorra", "+376", "XXX XXX", "Andorra"),
+        new("AO", "Angola", "+244", "XXX XXX XXX", "Angola"),
+        new("AG", "Antigua and Barbuda", "+1", "XXX-XXXX", "Antigua and Barbuda"),
+        new("AR", "Argentina", "+54", "XX XXXX-XXXX", "Argentina"),
+        new("AM", "Armenia", "+374", "XX XXX XXX", "Armenia"),
+        new("AU", "Australia", "+61", "XXXX XXX XXX", "Australia"),
+        new("AT", "Austria", "+43", "XXX XXXXXXX", "Austria"),
+        new("AZ", "Azerbaijan", "+994", "XX XXX XX XX", "Azerbaijan"),
+        new("BS", "Bahamas", "+1", "XXX-XXXX", "Bahamas"),
+        new("BH", "Bahrain", "+973", "XXXX XXXX", "Bahrain"),
+        new("BD", "Bangladesh", "+880", "XXXX-XXXXXX", "Bangladesh"),
+        new("BB", "Barbados", "+1", "XXX-XXXX", "Barbados"),
+        new("BY", "Belarus", "+375", "XX XXX-XX-XX", "Belarus"),
+        new("BE", "Belgium", "+32", "XXX XX XX XX", "Belgium"),
+        new("BZ", "Belize", "+501", "XXX-XXXX", "Belize"),
+        new("BJ", "Benin", "+229", "XX XX XX XX", "Benin"),
+        new("BT", "Bhutan", "+975", "XX XXX XXX", "Bhutan"),
+        new("BO", "Bolivia", "+591", "X XXX XXXX", "Bolivia"),
+        new("BA", "Bosnia and Herzegovina", "+387", "XX XXX-XXX", "Bosnia and Herzegovina"),
+        new("BW", "Botswana", "+267", "XX XXX XXX", "Botswana"),
+        new("BR", "Brazil", "+55", "(XX) XXXXX-XXXX", "Brazil"),
+        new("BN", "Brunei", "+673", "XXX XXXX", "Brunei"),
+        new("BG", "Bulgaria", "+359", "XX XXX XXXX", "Bulgaria"),
+        new("BF", "Burkina Faso", "+226", "XX XX XX XX", "Burkina Faso"),
+        new("BI", "Burundi", "+257", "XX XX XXXX", "Burundi"),
+        new("CV", "Cabo Verde", "+238", "XXX XX XX", "Cabo Verde"),
+        new("KH", "Cambodia", "+855", "XX XXX XXX", "Cambodia"),
+        new("CM", "Cameroon", "+237", "X XX XX XX XX", "Cameroon"),
+        new("CA", "Canada", "+1", "(XXX) XXX-XXXX", "Canada"),
+        new("CF", "Central African Republic", "+236", "XX XX XX XX", "Central African Republic"),
+        new("TD", "Chad", "+235", "XX XX XX XX", "Chad"),
+        new("CL", "Chile", "+56", "X XXXX XXXX", "Chile"),
+        new("CN", "China", "+86", "XXX XXXX XXXX", "China"),
+        new("CO", "Colombia", "+57", "XXX XXX XXXX", "Colombia"),
+        new("KM", "Comoros", "+269", "XXX XX XX", "Comoros"),
+        new("CR", "Costa Rica", "+506", "XXXX XXXX", "Costa Rica"),
+        new("HR", "Croatia", "+385", "XX XXX XXXX", "Croatia"),
+        new("CU", "Cuba", "+53", "X XXX XXXX", "Cuba"),
+        new("CY", "Cyprus", "+357", "XX XXXXXX", "Cyprus"),
+        new("CZ", "Czechia", "+420", "XXX XXX XXX", "Czechia"),
+        new("DK", "Denmark", "+45", "XX XX XX XX", "Denmark"),
+        new("DJ", "Djibouti", "+253", "XX XX XX XX", "Djibouti"),
+        new("DM", "Dominica", "+1", "XXX-XXXX", "Dominica"),
+        new("DO", "Dominican Republic", "+1", "XXX-XXXX", "Dominican Republic"),
+        new("EC", "Ecuador", "+593", "XX XXX XXXX", "Ecuador"),
+        new("EG", "Egypt", "+20", "XXX XXX XXXX", "Egypt"),
+        new("SV", "El Salvador", "+503", "XXXX XXXX", "El Salvador"),
+        new("GQ", "Equatorial Guinea", "+240", "XXX XXX XXX", "Equatorial Guinea"),
+        new("ER", "Eritrea", "+291", "X XXX XXX", "Eritrea"),
+        new("EE", "Estonia", "+372", "XXXX XXXX", "Estonia"),
+        new("SZ", "Eswatini", "+268", "XXXX XXXX", "Eswatini"),
+        new("ET", "Ethiopia", "+251", "XX XXX XXXX", "Ethiopia"),
+        new("FJ", "Fiji", "+679", "XXX XXXX", "Fiji"),
+        new("FI", "Finland", "+358", "XX XXX XXXX", "Finland"),
+        new("FR", "France", "+33", "X XX XX XX XX", "France"),
+        new("GA", "Gabon", "+241", "X XX XX XX", "Gabon"),
+        new("GM", "Gambia", "+220", "XXX XXXX", "Gambia"),
+        new("GE", "Georgia", "+995", "XXX XXX XXX", "Georgia"),
+        new("DE", "Germany", "+49", "XXX XXXXXXXX", "Germany"),
+        new("GH", "Ghana", "+233", "XX XXX XXXX", "Ghana"),
+        new("GR", "Greece", "+30", "XXX XXX XXXX", "Greece"),
+        new("GD", "Grenada", "+1", "XXX-XXXX", "Grenada"),
+        new("GT", "Guatemala", "+502", "XXXX XXXX", "Guatemala"),
+        new("GN", "Guinea", "+224", "XXX XX XX XX", "Guinea"),
+        new("GW", "Guinea-Bissau", "+245", "XXX XXXX", "Guinea-Bissau"),
+        new("GY", "Guyana", "+592", "XXX XXXX", "Guyana"),
+        new("HT", "Haiti", "+509", "XXXX XXXX", "Haiti"),
+        new("HN", "Honduras", "+504", "XXXX XXXX", "Honduras"),
+        new("HU", "Hungary", "+36", "XX XXX XXXX", "Hungary"),
+        new("IS", "Iceland", "+354", "XXX XXXX", "Iceland"),
+        new("IN", "India", "+91", "XXXXX XXXXX", "India"),
+        new("ID", "Indonesia", "+62", "XXX XXXX XXXX", "Indonesia"),
+        new("IR", "Iran", "+98", "XXX XXX XXXX", "Iran"),
+        new("IQ", "Iraq", "+964", "XXX XXX XXXX", "Iraq"),
+        new("IE", "Ireland", "+353", "XX XXX XXXX", "Ireland"),
+        new("IL", "Israel", "+972", "XX XXX XXXX", "Israel"),
+        new("IT", "Italy", "+39", "XXX XXX XXXX", "Italy"),
+        new("CI", "Ivory Coast", "+225", "XX XX XX XXXX", "Ivory Coast"),
+        new("JM", "Jamaica", "+1", "XXX-XXXX", "Jamaica"),
+        new("JP", "Japan", "+81", "XX XXXX XXXX", "Japan"),
+        new("JO", "Jordan", "+962", "X XXXX XXXX", "Jordan"),
+        new("KZ", "Kazakhstan", "+7", "XXX XXX XX XX", "Kazakhstan"),
+        new("KE", "Kenya", "+254", "XXX XXXXXX", "Kenya"),
+        new("KI", "Kiribati", "+686", "XXXX XXXX", "Kiribati"),
+        new("KW", "Kuwait", "+965", "XXXX XXXX", "Kuwait"),
+        new("KG", "Kyrgyzstan", "+996", "XXX XXXXXX", "Kyrgyzstan"),
+        new("LA", "Lao", "+856", "XX XX XXX XXX", "Lao"),
+        new("LV", "Latvia", "+371", "XX XXX XXX", "Latvia"),
+        new("LB", "Lebanon", "+961", "XX XXX XXX", "Lebanon"),
+        new("LS", "Lesotho", "+266", "XX XXX XXX", "Lesotho"),
+        new("LR", "Liberia", "+231", "XX XXX XXXX", "Liberia"),
+        new("LY", "Libya", "+218", "XX XXX XXXX", "Libya"),
+        new("LI", "Liechtenstein", "+423", "XXX XXXX", "Liechtenstein"),
+        new("LT", "Lithuania", "+370", "XXX XXXXX", "Lithuania"),
+        new("LU", "Luxembourg", "+352", "XXX XXX XXX", "Luxembourg"),
+        new("MG", "Madagascar", "+261", "XX XX XXX XX", "Madagascar"),
+        new("MW", "Malawi", "+265", "X XXXX XXXX", "Malawi"),
+        new("MY", "Malaysia", "+60", "XX XXXX XXXX", "Malaysia"),
+        new("MV", "Maldives", "+960", "XXX XXXX", "Maldives"),
+        new("ML", "Mali", "+223", "XX XX XX XX", "Mali"),
+        new("MT", "Malta", "+356", "XXXX XXXX", "Malta"),
+        new("MH", "Marshall Islands", "+692", "XXX-XXXX", "Marshall Islands"),
+        new("MR", "Mauritania", "+222", "XX XX XX XX", "Mauritania"),
+        new("MU", "Mauritius", "+230", "XXXX XXXX", "Mauritius"),
+        new("MX", "Mexico", "+52", "XXX XXX XXXX", "Mexico"),
+        new("FM", "Micronesia", "+691", "XXX XXXX", "Micronesia"),
+        new("MD", "Moldova", "+373", "XX XXX XXX", "Moldova"),
+        new("MC", "Monaco", "+377", "XX XX XX XX", "Monaco"),
+        new("MN", "Mongolia", "+976", "XX XX XXXX", "Mongolia"),
+        new("ME", "Montenegro", "+382", "XX XXX XXX", "Montenegro"),
+        new("MA", "Morocco", "+212", "XX XXX XXXX", "Morocco"),
+        new("MZ", "Mozambique", "+258", "XX XXX XXXX", "Mozambique"),
+        new("MM", "Myanmar", "+95", "XX XXX XXXX", "Myanmar"),
+        new("NA", "Namibia", "+264", "XX XXX XXXX", "Namibia"),
+        new("NR", "Nauru", "+674", "XXX XXXX", "Nauru"),
+        new("NP", "Nepal", "+977", "XX XXX XXXX", "Nepal"),
+        new("NL", "Netherlands", "+31", "XX XXXXXXXX", "Netherlands"),
+        new("NZ", "New Zealand", "+64", "XX XXX XXXX", "New Zealand"),
+        new("NI", "Nicaragua", "+505", "XXXX XXXX", "Nicaragua"),
+        new("NE", "Niger", "+227", "XX XX XX XX", "Niger"),
+        new("NG", "Nigeria", "+234", "XXX XXX XXXX", "Nigeria"),
+        new("KP", "North Korea", "+850", "XXX XXXX XXXX", "North Korea"),
+        new("MK", "North Macedonia", "+389", "XX XXX XXX", "North Macedonia"),
+        new("NO", "Norway", "+47", "XXX XX XXX", "Norway"),
+        new("OM", "Oman", "+968", "XXXX XXXX", "Oman"),
+        new("PK", "Pakistan", "+92", "XXX XXX XXXX", "Pakistan"),
+        new("PW", "Palau", "+680", "XXX XXXX", "Palau"),
+        new("PA", "Panama", "+507", "XXXX XXXX", "Panama"),
+        new("PG", "Papua New Guinea", "+675", "XXX XXXX", "Papua New Guinea"),
+        new("PY", "Paraguay", "+595", "XXX XXX XXX", "Paraguay"),
+        new("PE", "Peru", "+51", "XXX XXX XXX", "Peru"),
+        new("PH", "Philippines", "+63", "XXX XXX XXXX", "Philippines"),
+        new("PL", "Poland", "+48", "XXX XXX XXX", "Poland"),
+        new("PT", "Portugal", "+351", "XXX XXX XXX", "Portugal"),
+        new("QA", "Qatar", "+974", "XXXX XXXX", "Qatar"),
+        new("RO", "Romania", "+40", "XXX XXX XXX", "Romania"),
+        new("RU", "Russia", "+7", "XXX XXX-XX-XX", "Russia"),
+        new("RW", "Rwanda", "+250", "XXX XXX XXX", "Rwanda"),
+        new("KN", "Saint Kitts and Nevis", "+1", "XXX-XXXX", "Saint Kitts and Nevis"),
+        new("LC", "Saint Lucia", "+1", "XXX-XXXX", "Saint Lucia"),
+        new("VC", "Saint Vincent and the Grenadines", "+1", "XXX-XXXX", "Saint Vincent and the Grenadines"),
+        new("WS", "Samoa", "+685", "XX XXXX", "Samoa"),
+        new("SM", "San Marino", "+378", "XXXX XXXXXX", "San Marino"),
+        new("ST", "Sao Tome and Principe", "+239", "XXX XXXX", "Sao Tome and Principe"),
+        new("SA", "Saudi Arabia", "+966", "XX XXX XXXX", "Saudi Arabia"),
+        new("SN", "Senegal", "+221", "XX XXX XX XX", "Senegal"),
+        new("RS", "Serbia", "+381", "XX XXX XXXX", "Serbia"),
+        new("SC", "Seychelles", "+248", "X XXX XXX", "Seychelles"),
+        new("SL", "Sierra Leone", "+232", "XX XXXXXX", "Sierra Leone"),
+        new("SG", "Singapore", "+65", "XXXX XXXX", "Singapore"),
+        new("SK", "Slovakia", "+421", "XXX XXX XXX", "Slovakia"),
+        new("SI", "Slovenia", "+386", "XX XXX XXX", "Slovenia"),
+        new("SB", "Solomon Islands", "+677", "XXXXX", "Solomon Islands"),
+        new("SO", "Somalia", "+252", "XX XXX XXX", "Somalia"),
+        new("ZA", "South Africa", "+27", "XX XXX XXXX", "South Africa"),
+        new("KR", "South Korea", "+82", "XX XXXX XXXX", "South Korea"),
+        new("SS", "South Sudan", "+211", "XX XXX XXXX", "South Sudan"),
+        new("ES", "Spain", "+34", "XXX XXX XXX", "Spain"),
+        new("LK", "Sri Lanka", "+94", "XX XXX XXXX", "Sri Lanka"),
+        new("SD", "Sudan", "+249", "XX XXX XXXX", "Sudan"),
+        new("SR", "Suriname", "+597", "XXX XXXX", "Suriname"),
+        new("SE", "Sweden", "+46", "XX XXX XX XX", "Sweden"),
+        new("CH", "Switzerland", "+41", "XX XXX XX XX", "Switzerland"),
+        new("SY", "Syria", "+963", "XX XXXX XXXX", "Syria"),
+        new("TW", "Taiwan", "+886", "XXXX XXXX", "Taiwan"),
+        new("TJ", "Tajikistan", "+992", "XX XXX XXXX", "Tajikistan"),
+        new("TZ", "Tanzania", "+255", "XXX XXX XXX", "Tanzania"),
+        new("TH", "Thailand", "+66", "XX XXX XXXX", "Thailand"),
+        new("CD", "The Democratic Republic of the Congo", "+243", "XXX XXX XXX", "The Democratic Republic of the Congo"),
+        new("CG", "The Republic of the Congo", "+242", "XX XXX XXXX", "The Republic of the Congo"),
+        new("TL", "Timor-Leste", "+670", "XXX XXXX", "Timor-Leste"),
+        new("TG", "Togo", "+228", "XX XX XX XX", "Togo"),
+        new("TO", "Tonga", "+676", "XXXXX", "Tonga"),
+        new("TT", "Trinidad and Tobago", "+1", "XXX-XXXX", "Trinidad and Tobago"),
+        new("TN", "Tunisia", "+216", "XX XXX XXX", "Tunisia"),
+        new("TR", "Turkey", "+90", "XXX XXX XX XX", "Turkey"),
+        new("TM", "Turkmenistan", "+993", "XX XXXXXX", "Turkmenistan"),
+        new("TV", "Tuvalu", "+688", "XXXXX", "Tuvalu"),
+        new("UG", "Uganda", "+256", "XXX XXXXXX", "Uganda"),
+        new("UA", "Ukraine", "+380", "XX XXX XX XX", "Ukraine"),
+        new("AE", "United Arab Emirates", "+971", "XX XXX XXXX", "United Arab Emirates"),
+        new("GB", "United Kingdom", "+44", "XXXX XXX XXXX", "United Kingdom of Great Britain and Northern Ireland"),
+        new("US", "United States", "+1", "(XXX) XXX-XXXX", "United States of America"),
+        new("UY", "Uruguay", "+598", "X XXX XXXX", "Uruguay"),
+        new("UZ", "Uzbekistan", "+998", "XX XXX XX XX", "Uzbekistan"),
+        new("VU", "Vanuatu", "+678", "XXXXX", "Vanuatu"),
+        new("VE", "Venezuela", "+58", "XXX XXX XXXX", "Venezuela"),
+        new("VN", "Vietnam", "+84", "XX XXXX XXXX", "Vietnam"),
+        new("EH", "Western Sahara", "+212", "XX XXX XXXX", "Western Sahara"),
+        new("YE", "Yemen", "+967", "XXX XXX XXX", "Yemen"),
+        new("ZM", "Zambia", "+260", "XX XXX XXXX", "Zambia"),
+        new("ZW", "Zimbabwe", "+263", "XX XXX XXXX", "Zimbabwe")
     ];
 
     #endregion
@@ -465,11 +462,13 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         var currentText = _phoneNumberBox.Text ?? string.Empty;
         var caretIndex = _phoneNumberBox.CaretIndex;
 
-        // Extract digits and limit to max allowed (10 phone + 5 extension)
+        // Extract digits and limit to max allowed by country format
         var rawDigits = ExtractDigits(currentText);
-        if (rawDigits.Length > 10 + MaxExtensionDigits)
+        var country = SelectedCountry ?? AllDialCodes.FirstOrDefault(c => c.Code == "US");
+        var maxDigits = country?.PhoneFormat.Count(c => c == 'X') ?? 10;
+        if (rawDigits.Length > maxDigits)
         {
-            rawDigits = rawDigits[..(10 + MaxExtensionDigits)];
+            rawDigits = rawDigits[..maxDigits];
         }
         var formatted = FormatPhoneNumber(rawDigits);
 
@@ -639,32 +638,21 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Formats a phone number with parentheses and dashes: (XXX) XXX-XXXX
+    /// Formats a phone number using the selected country's format pattern.
     /// </summary>
-    private static string FormatPhoneNumber(string digits)
+    private string FormatPhoneNumber(string digits)
     {
         if (string.IsNullOrEmpty(digits))
             return string.Empty;
 
-        var sb = new StringBuilder();
+        var country = SelectedCountry ?? AllDialCodes.FirstOrDefault(c => c.Code == "US");
+        if (country == null)
+            return digits;
 
-        for (int i = 0; i < digits.Length && i < 10; i++)
-        {
-            if (i == 0) sb.Append('(');
-            sb.Append(digits[i]);
-            if (i == 2) sb.Append(") ");
-            if (i == 5) sb.Append('-');
-        }
+        var maxDigits = country.PhoneFormat.Count(c => c == 'X');
+        var limitedDigits = digits.Length > maxDigits ? digits[..maxDigits] : digits;
 
-        // Handle numbers longer than 10 digits (extensions with limit)
-        if (digits.Length > 10)
-        {
-            sb.Append(" x");
-            var extensionEnd = Math.Min(digits.Length, 10 + MaxExtensionDigits);
-            sb.Append(digits[10..extensionEnd]);
-        }
-
-        return sb.ToString();
+        return country.FormatPhoneNumber(limitedDigits);
     }
 
     /// <summary>
@@ -700,6 +688,11 @@ public class CountryDialCode
     /// Phone dial code (e.g., +1, +44).
     /// </summary>
     public string DialCode { get; }
+
+    /// <summary>
+    /// Phone number format pattern using X for digits (e.g., "(XXX) XXX-XXXX").
+    /// </summary>
+    public string PhoneFormat { get; }
 
     /// <summary>
     /// Flag file name (matches the PNG file in Assets/CountryFlags).
@@ -745,12 +738,54 @@ public class CountryDialCode
     /// </summary>
     public string ShortDisplay => DialCode;
 
-    public CountryDialCode(string code, string name, string dialCode, string flagFileName)
+    public CountryDialCode(string code, string name, string dialCode, string phoneFormat, string flagFileName)
     {
         Code = code;
         Name = name;
         DialCode = dialCode;
+        PhoneFormat = phoneFormat;
         FlagFileName = flagFileName;
+    }
+
+    /// <summary>
+    /// Formats a phone number according to this country's format pattern.
+    /// </summary>
+    public string FormatPhoneNumber(string digits)
+    {
+        if (string.IsNullOrEmpty(digits))
+            return string.Empty;
+
+        var sb = new StringBuilder();
+        var digitIndex = 0;
+        var maxDigits = PhoneFormat.Count(c => c == 'X');
+
+        foreach (var ch in PhoneFormat)
+        {
+            if (digitIndex >= digits.Length)
+                break;
+
+            if (ch == 'X')
+            {
+                sb.Append(digits[digitIndex]);
+                digitIndex++;
+            }
+            else
+            {
+                sb.Append(ch);
+            }
+        }
+
+        // If there are remaining digits beyond the format, append them
+        if (digitIndex < digits.Length && digitIndex >= maxDigits)
+        {
+            // Remaining digits go beyond the format pattern
+            for (int i = digitIndex; i < digits.Length; i++)
+            {
+                sb.Append(digits[i]);
+            }
+        }
+
+        return sb.ToString();
     }
 
     public override string ToString() => DisplayName;
