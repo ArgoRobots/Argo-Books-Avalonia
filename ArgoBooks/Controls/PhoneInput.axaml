@@ -140,7 +140,6 @@
         <!-- Phone Number TextBox with auto-formatting -->
         <TextBox Grid.Column="2"
                  x:Name="PhoneNumberBox"
-                 Watermark="(555) 123-4567"
                  Background="{DynamicResource SurfaceBrush}"
                  BorderBrush="{DynamicResource BorderBrush}"
                  BorderThickness="1"

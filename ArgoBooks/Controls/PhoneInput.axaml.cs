@@ -404,6 +404,8 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         if (change.Property == SelectedCountryProperty)
         {
             UpdateCountrySearchText();
+            ReformatPhoneNumberForNewCountry();
+            UpdatePhoneNumberPlaceholder();
             UpdateFullPhoneNumber();
         }
         else if (change.Property == PhoneNumberProperty && !_isUpdatingText)
@@ -430,6 +432,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         if (_phoneNumberBox != null)
         {
             _phoneNumberBox.TextChanged += OnPhoneNumberTextChanged;
+            UpdatePhoneNumberPlaceholder();
         }
 
         if (_countrySearchBox != null)
@@ -450,6 +453,68 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     {
         // Mark event as handled to prevent it from bubbling up to parent scroll viewers
         e.Handled = true;
+    }
+
+    private void ReformatPhoneNumberForNewCountry()
+    {
+        if (_phoneNumberBox == null || _isFormattingPhone)
+            return;
+
+        _isFormattingPhone = true;
+
+        // Get current digits and reformat with new country's format
+        var currentText = _phoneNumberBox.Text ?? string.Empty;
+        var rawDigits = ExtractDigits(currentText);
+
+        if (!string.IsNullOrEmpty(rawDigits))
+        {
+            var country = SelectedCountry ?? AllDialCodes.FirstOrDefault(c => c.Code == "US");
+            var maxDigits = country?.PhoneFormat.Count(c => c == 'X') ?? 10;
+
+            // Limit digits to new format's max
+            if (rawDigits.Length > maxDigits)
+            {
+                rawDigits = rawDigits[..maxDigits];
+            }
+
+            var formatted = FormatPhoneNumber(rawDigits);
+            _formattedPhoneNumber = formatted;
+            _phoneNumberBox.Text = formatted;
+            PhoneNumber = rawDigits;
+            RaisePropertyChanged(nameof(FormattedPhoneNumber));
+        }
+
+        _isFormattingPhone = false;
+    }
+
+    private void UpdatePhoneNumberPlaceholder()
+    {
+        if (_phoneNumberBox == null)
+            return;
+
+        var country = SelectedCountry ?? AllDialCodes.FirstOrDefault(c => c.Code == "US");
+        if (country != null)
+        {
+            // Generate example placeholder by replacing X with sample digits
+            var placeholder = country.PhoneFormat;
+            var digitIndex = 1;
+            var result = new StringBuilder();
+
+            foreach (var ch in placeholder)
+            {
+                if (ch == 'X')
+                {
+                    result.Append((digitIndex % 10).ToString());
+                    digitIndex++;
+                }
+                else
+                {
+                    result.Append(ch);
+                }
+            }
+
+            _phoneNumberBox.Watermark = result.ToString();
+        }
     }
 
     private void OnPhoneNumberTextChanged(object? sender, TextChangedEventArgs e)
