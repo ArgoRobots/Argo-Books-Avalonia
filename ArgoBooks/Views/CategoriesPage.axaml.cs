@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Views;
@@ -16,28 +15,6 @@ public partial class CategoriesPage : UserControl
     }
 
     private CategoriesPageViewModel? ViewModel => DataContext as CategoriesPageViewModel;
-
-    /// <summary>
-    /// Handles the Expenses tab click.
-    /// </summary>
-    private void ExpensesTab_Click(object? sender, RoutedEventArgs e)
-    {
-        if (ViewModel != null)
-        {
-            ViewModel.SelectedTabIndex = 0;
-        }
-    }
-
-    /// <summary>
-    /// Handles the Revenue tab click.
-    /// </summary>
-    private void RevenueTab_Click(object? sender, RoutedEventArgs e)
-    {
-        if (ViewModel != null)
-        {
-            ViewModel.SelectedTabIndex = 1;
-        }
-    }
 
     /// <summary>
     /// Closes the Add modal when backdrop is clicked.

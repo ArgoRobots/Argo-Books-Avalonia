@@ -354,8 +354,8 @@ public partial class CategoriesPageViewModel : ViewModelBase
             return;
 
         _editingCategory = null;
-        _addingSubCategoryParent = parent;
         ClearModalFields();
+        _addingSubCategoryParent = parent;  // Set AFTER ClearModalFields to avoid being reset
         OnPropertyChanged(nameof(IsAddingSubCategory));
         OnPropertyChanged(nameof(AddingSubCategoryParentName));
         IsAddModalOpen = true;
