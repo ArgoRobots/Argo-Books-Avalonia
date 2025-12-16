@@ -1,3 +1,7 @@
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -8,6 +12,9 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class UpgradeModalViewModel : ViewModelBase
 {
+    private static readonly HttpClient _httpClient = new();
+    private const string LicenseValidationUrl = "https://argorobots.com/validate_license.php";
+
     [ObservableProperty]
     private bool _isOpen;
 
@@ -15,13 +22,69 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private bool _isEnterKeyModalOpen;
 
     [ObservableProperty]
-    private string? _licenseKey;
-
-    [ObservableProperty]
     private bool _isVerifying;
 
     [ObservableProperty]
     private string? _verificationError;
+
+    [ObservableProperty]
+    private bool _isVerificationSuccess;
+
+    [ObservableProperty]
+    private string? _successMessage;
+
+    private string _licenseKey = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the license key with auto-formatting.
+    /// </summary>
+    public string LicenseKey
+    {
+        get => _licenseKey;
+        set
+        {
+            var formatted = FormatLicenseKey(value);
+            if (SetProperty(ref _licenseKey, formatted))
+            {
+                OnPropertyChanged(nameof(LicenseKey));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Formats a license key with dashes (XXXX-XXXX-XXXX-XXXX format).
+    /// </summary>
+    private static string FormatLicenseKey(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+
+        // Remove all non-alphanumeric characters and convert to uppercase
+        var digitsOnly = new string(input.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
+
+        // Limit to 16 characters
+        if (digitsOnly.Length > 16)
+            digitsOnly = digitsOnly[..16];
+
+        // Insert dashes every 4 characters
+        var result = new StringBuilder();
+        for (int i = 0; i < digitsOnly.Length; i++)
+        {
+            if (i > 0 && i % 4 == 0)
+                result.Append('-');
+            result.Append(digitsOnly[i]);
+        }
+
+        return result.ToString();
+    }
+
+    /// <summary>
+    /// Gets the raw license key without dashes for API calls.
+    /// </summary>
+    private string GetRawLicenseKey()
+    {
+        return new string(_licenseKey.Where(char.IsLetterOrDigit).ToArray());
+    }
 
     /// <summary>
     /// Default constructor.
@@ -43,8 +106,10 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         IsOpen = false;
         IsEnterKeyModalOpen = false;
-        LicenseKey = null;
+        IsVerificationSuccess = false;
+        LicenseKey = string.Empty;
         VerificationError = null;
+        SuccessMessage = null;
     }
 
     [RelayCommand]
@@ -66,48 +131,94 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         IsOpen = false;
         IsEnterKeyModalOpen = true;
-        LicenseKey = null;
+        IsVerificationSuccess = false;
+        LicenseKey = string.Empty;
         VerificationError = null;
+        SuccessMessage = null;
     }
 
     [RelayCommand]
     private void CloseEnterKey()
     {
         IsEnterKeyModalOpen = false;
-        LicenseKey = null;
+        IsVerificationSuccess = false;
+        LicenseKey = string.Empty;
         VerificationError = null;
+        SuccessMessage = null;
     }
 
     [RelayCommand]
     private async Task VerifyKey()
     {
-        if (string.IsNullOrWhiteSpace(LicenseKey))
+        var rawKey = GetRawLicenseKey();
+
+        if (string.IsNullOrWhiteSpace(rawKey))
         {
             VerificationError = "Please enter a license key";
             return;
         }
 
+        if (rawKey.Length != 16)
+        {
+            VerificationError = "License key must be 16 characters";
+            return;
+        }
+
         IsVerifying = true;
         VerificationError = null;
+        IsVerificationSuccess = false;
 
         try
         {
-            // Simulate verification delay
-            await Task.Delay(1000);
+            var response = await ValidateLicenseAsync(rawKey);
 
-            // TODO: Implement actual key verification
-            // For now, just close the modal
-            IsEnterKeyModalOpen = false;
-            KeyVerified?.Invoke(this, LicenseKey);
+            if (response?.Success == true)
+            {
+                IsVerificationSuccess = true;
+                SuccessMessage = response.Message ?? "License activated successfully!";
+
+                // Wait for animation then close
+                await Task.Delay(2000);
+                IsEnterKeyModalOpen = false;
+                KeyVerified?.Invoke(this, _licenseKey);
+            }
+            else
+            {
+                VerificationError = response?.Message ?? "Invalid license key";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            VerificationError = "Unable to connect to the server. Please check your internet connection.";
+        }
+        catch (TaskCanceledException)
+        {
+            VerificationError = "Request timed out. Please try again.";
         }
         catch (Exception ex)
         {
-            VerificationError = ex.Message;
+            VerificationError = $"Verification failed: {ex.Message}";
         }
         finally
         {
             IsVerifying = false;
         }
+    }
+
+    /// <summary>
+    /// Validates a license key against the server.
+    /// </summary>
+    private async Task<LicenseResponse?> ValidateLicenseAsync(string licenseKey)
+    {
+        var requestBody = new { license_key = licenseKey };
+        var json = JsonSerializer.Serialize(requestBody);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var response = await _httpClient.PostAsync(LicenseValidationUrl, content, cts.Token);
+
+        var responseJson = await response.Content.ReadAsStringAsync(cts.Token);
+        return JsonSerializer.Deserialize<LicenseResponse>(responseJson);
     }
 
     #endregion
@@ -117,6 +228,25 @@ public partial class UpgradeModalViewModel : ViewModelBase
     public event EventHandler? PremiumSelected;
     public event EventHandler? AIPlanSelected;
     public event EventHandler<string>? KeyVerified;
+
+    #endregion
+
+    #region Response Models
+
+    private class LicenseResponse
+    {
+        [JsonPropertyName("Success")]
+        public bool Success { get; set; }
+
+        [JsonPropertyName("Activated")]
+        public bool Activated { get; set; }
+
+        [JsonPropertyName("Message")]
+        public string? Message { get; set; }
+
+        [JsonPropertyName("ActivationDate")]
+        public string? ActivationDate { get; set; }
+    }
 
     #endregion
 }
