@@ -132,6 +132,12 @@ public partial class SuppliersPageViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalError;
 
+    [ObservableProperty]
+    private string? _modalSupplierNameError;
+
+    [ObservableProperty]
+    private string? _modalEmailError;
+
     /// <summary>
     /// The supplier being edited (null for add).
     /// </summary>
@@ -773,38 +779,48 @@ public partial class SuppliersPageViewModel : ViewModelBase
         ModalNotes = string.Empty;
         ModalIsActive = true;
         ModalError = null;
+        ModalSupplierNameError = null;
+        ModalEmailError = null;
     }
 
     private bool ValidateModal()
     {
+        // Clear all errors first
         ModalError = null;
+        ModalSupplierNameError = null;
+        ModalEmailError = null;
 
+        var isValid = true;
+
+        // Validate supplier name (required)
         if (string.IsNullOrWhiteSpace(ModalSupplierName))
         {
-            ModalError = "Supplier name is required.";
-            return false;
+            ModalSupplierNameError = "Supplier name is required.";
+            isValid = false;
         }
-
-        // Check for duplicate names
-        var existingWithSameName = _allSuppliers.Any(s =>
-            s.Name.Equals(ModalSupplierName.Trim(), StringComparison.OrdinalIgnoreCase) &&
-            (_editingSupplier == null || s.Id != _editingSupplier.Id));
-
-        if (existingWithSameName)
+        else
         {
-            ModalError = "A supplier with this name already exists.";
-            return false;
+            // Check for duplicate names
+            var existingWithSameName = _allSuppliers.Any(s =>
+                s.Name.Equals(ModalSupplierName.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                (_editingSupplier == null || s.Id != _editingSupplier.Id));
+
+            if (existingWithSameName)
+            {
+                ModalSupplierNameError = "A supplier with this name already exists.";
+                isValid = false;
+            }
         }
 
         // Validate email format if provided
         if (!string.IsNullOrWhiteSpace(ModalEmail) &&
-            !ModalEmail.Contains('@'))
+            !System.Text.RegularExpressions.Regex.IsMatch(ModalEmail.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
         {
-            ModalError = "Please enter a valid email address.";
-            return false;
+            ModalEmailError = "Please enter a valid email address.";
+            isValid = false;
         }
 
-        return true;
+        return isValid;
     }
 
     #endregion

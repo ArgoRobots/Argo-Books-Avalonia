@@ -108,6 +108,9 @@ public partial class CategoriesPageViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalError;
 
+    [ObservableProperty]
+    private string? _modalCategoryNameError;
+
     /// <summary>
     /// The category being edited (null for add).
     /// </summary>
@@ -774,33 +777,41 @@ public partial class CategoriesPageViewModel : ViewModelBase
         ModalItemType = "Product";
         ModalSelectedIconOption = AvailableIcons.FirstOrDefault();
         ModalError = null;
+        ModalCategoryNameError = null;
         _addingSubCategoryParent = null;
     }
 
     private bool ValidateModal()
     {
+        // Clear all errors first
         ModalError = null;
+        ModalCategoryNameError = null;
 
+        var isValid = true;
+
+        // Validate category name (required)
         if (string.IsNullOrWhiteSpace(ModalCategoryName))
         {
-            ModalError = "Category name is required.";
-            return false;
+            ModalCategoryNameError = "Category name is required.";
+            isValid = false;
         }
-
-        // Check for duplicate names within the same type
-        var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
-        var existingWithSameName = _allCategories.Any(c =>
-            c.Type == targetType &&
-            c.Name.Equals(ModalCategoryName.Trim(), StringComparison.OrdinalIgnoreCase) &&
-            (_editingCategory == null || c.Id != _editingCategory.Id));
-
-        if (existingWithSameName)
+        else
         {
-            ModalError = "A category with this name already exists.";
-            return false;
+            // Check for duplicate names within the same type
+            var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
+            var existingWithSameName = _allCategories.Any(c =>
+                c.Type == targetType &&
+                c.Name.Equals(ModalCategoryName.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                (_editingCategory == null || c.Id != _editingCategory.Id));
+
+            if (existingWithSameName)
+            {
+                ModalCategoryNameError = "A category with this name already exists.";
+                isValid = false;
+            }
         }
 
-        return true;
+        return isValid;
     }
 
     #endregion
