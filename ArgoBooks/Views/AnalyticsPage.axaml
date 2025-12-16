@@ -1682,7 +1682,7 @@
         <!-- Chart Toggle Switch -->
         <Style Selector="ToggleSwitch.chart-toggle">
             <Setter Property="Width" Value="44" />
-            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="Height" Value="24" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="ClipToBounds" Value="False" />
         </Style>
@@ -1692,7 +1692,6 @@
         <Style Selector="ToggleSwitch.chart-toggle /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
             <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Height" Value="24" />
         </Style>
         <Style Selector="ToggleSwitch.chart-toggle:checked /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
