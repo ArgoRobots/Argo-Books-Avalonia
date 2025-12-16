@@ -17,7 +17,7 @@
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 MinWidth="120"
-                Classes.focused="{Binding IsCountryDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}">
+                Classes.focused="{Binding IsCountryDropdownOpen}">
             <Border.Styles>
                 <Style Selector="Border.focused">
                     <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
@@ -31,7 +31,7 @@
                 <!-- Search/Display TextBox -->
                 <TextBox x:Name="CountrySearchBox"
                          Grid.Column="0"
-                         Text="{Binding CountrySearchText, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}, Mode=TwoWay}"
+                         Text="{Binding CountrySearchText, Mode=TwoWay}"
                          Watermark="+1"
                          Background="Transparent"
                          BorderThickness="0"
@@ -48,7 +48,7 @@
                         Padding="0"
                         CornerRadius="4"
                         Cursor="Hand"
-                        Command="{Binding ToggleCountryDropdownCommand, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}">
+                        Command="{Binding ToggleCountryDropdownCommand}">
                     <PathIcon Data="M7 10l5 5 5-5z"
                               Width="14" Height="14"
                               Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -58,7 +58,7 @@
 
         <!-- Country Dropdown Popup -->
         <Popup x:Name="CountryDropdownPopup"
-               IsOpen="{Binding IsCountryDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}, Mode=TwoWay}"
+               IsOpen="{Binding IsCountryDropdownOpen, Mode=TwoWay}"
                PlacementTarget="{Binding #CountryDropdownBorder}"
                Placement="Bottom"
                PlacementGravity="BottomLeft"
@@ -69,7 +69,7 @@
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="6"
-                    Width="280"
+                    Width="320"
                     MaxHeight="300"
                     Margin="0,4,0,0"
                     BoxShadow="0 4 12 0 #20000000">
@@ -83,33 +83,46 @@
                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                    Padding="12,16"
                                    HorizontalAlignment="Center"
-                                   IsVisible="{Binding !HasFilteredCountries, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}" />
+                                   IsVisible="{Binding !HasFilteredCountries}" />
 
                         <!-- Filtered Items -->
-                        <ItemsControl ItemsSource="{Binding FilteredDialCodes, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}">
+                        <ItemsControl ItemsSource="{Binding FilteredDialCodes}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="controls:CountryDialCode">
                                     <Button Background="Transparent"
                                             BorderThickness="0"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Left"
-                                            Padding="12,10"
+                                            Padding="12,8"
                                             CornerRadius="0"
                                             Cursor="Hand"
-                                            Command="{Binding SelectCountryCommand, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}"
+                                            Command="{Binding $parent[controls:PhoneInput].SelectCountryCommand}"
                                             CommandParameter="{Binding}">
                                         <Button.Styles>
                                             <Style Selector="Button:pointerover /template/ ContentPresenter">
                                                 <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
                                             </Style>
                                         </Button.Styles>
-                                        <Grid ColumnDefinitions="50,*">
-                                            <TextBlock Grid.Column="0"
+                                        <Grid ColumnDefinitions="28,50,*">
+                                            <!-- Flag Image -->
+                                            <Image Grid.Column="0"
+                                                   Source="{Binding FlagPath}"
+                                                   Width="22" Height="16"
+                                                   Stretch="UniformToFill"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,6,0" />
+                                            <!-- Dial Code -->
+                                            <TextBlock Grid.Column="1"
                                                        Text="{Binding DialCode}"
                                                        FontWeight="Medium"
+                                                       FontSize="13"
+                                                       VerticalAlignment="Center"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Grid.Column="1"
+                                            <!-- Country Name -->
+                                            <TextBlock Grid.Column="2"
                                                        Text="{Binding Name}"
+                                                       FontSize="13"
+                                                       VerticalAlignment="Center"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        TextTrimming="CharacterEllipsis" />
                                         </Grid>
@@ -125,7 +138,7 @@
         <!-- Phone Number TextBox with auto-formatting -->
         <TextBox Grid.Column="2"
                  x:Name="PhoneNumberBox"
-                 Text="{Binding FormattedPhoneNumber, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}, Mode=TwoWay}"
+                 Text="{Binding FormattedPhoneNumber, Mode=TwoWay}"
                  Watermark="(555) 123-4567"
                  Background="{DynamicResource SurfaceBrush}"
                  BorderBrush="{DynamicResource BorderBrush}"
