@@ -145,6 +145,22 @@ public partial class DepartmentsPageViewModel : ViewModelBase
         _modalSelectedIcon = AvailableIcons.FirstOrDefault();
         _modalSelectedColor = AvailableColors.FirstOrDefault();
         LoadDepartments();
+
+        // Subscribe to undo/redo state changes to refresh UI
+        // This is necessary because a new ViewModel instance is created on each navigation,
+        // but undo/redo actions capture the old ViewModel instance
+        if (App.UndoRedoManager != null)
+        {
+            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        }
+    }
+
+    /// <summary>
+    /// Handles undo/redo state changes by refreshing the departments.
+    /// </summary>
+    private void OnUndoRedoStateChanged(object? sender, EventArgs e)
+    {
+        LoadDepartments();
     }
 
     #endregion
