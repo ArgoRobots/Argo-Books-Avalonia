@@ -461,6 +461,10 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                             <controls:PhoneInput FullPhoneNumber="{Binding ModalFullPhone, Mode=TwoWay}" />
+                            <TextBlock Text="{Binding ModalPhoneError}"
+                                       FontSize="12"
+                                       Foreground="#dc2626"
+                                       IsVisible="{Binding ModalPhoneError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
 
                         <!-- Address Section -->
@@ -519,10 +523,7 @@
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding CountryOptions}"
-                                          SelectedItem="{Binding ModalCountry}"
-                                          Classes="form-combobox"
-                                          PlaceholderText="Select country" />
+                                <controls:CountryInput SelectedCountryName="{Binding ModalCountry, Mode=TwoWay}" />
                             </StackPanel>
                         </Grid>
 
@@ -674,6 +675,10 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                             <controls:PhoneInput FullPhoneNumber="{Binding ModalFullPhone, Mode=TwoWay}" />
+                            <TextBlock Text="{Binding ModalPhoneError}"
+                                       FontSize="12"
+                                       Foreground="#dc2626"
+                                       IsVisible="{Binding ModalPhoneError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
 
                         <!-- Address Section -->
@@ -732,10 +737,7 @@
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding CountryOptions}"
-                                          SelectedItem="{Binding ModalCountry}"
-                                          Classes="form-combobox"
-                                          PlaceholderText="Select country" />
+                                <controls:CountryInput SelectedCountryName="{Binding ModalCountry, Mode=TwoWay}" />
                             </StackPanel>
                         </Grid>
 

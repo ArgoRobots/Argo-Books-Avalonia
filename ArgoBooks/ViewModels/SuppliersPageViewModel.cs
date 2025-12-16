@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Data;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -139,6 +140,9 @@ public partial class SuppliersPageViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalEmailError;
 
+    [ObservableProperty]
+    private string? _modalPhoneError;
+
     /// <summary>
     /// The supplier being edited (null for add).
     /// </summary>
@@ -167,27 +171,9 @@ public partial class SuppliersPageViewModel : ViewModelBase
     ];
 
     /// <summary>
-    /// Common countries for dropdown.
+    /// All countries for dropdown (from shared Countries data).
     /// </summary>
-    public ObservableCollection<string> CountryOptions { get; } =
-    [
-        "United States",
-        "Canada",
-        "United Kingdom",
-        "Germany",
-        "France",
-        "Australia",
-        "Japan",
-        "China",
-        "India",
-        "Mexico",
-        "Brazil",
-        "Italy",
-        "Spain",
-        "Netherlands",
-        "South Korea",
-        "Singapore"
-    ];
+    public IReadOnlyList<string> CountryOptions { get; } = Countries.Names;
 
     #endregion
 
@@ -782,6 +768,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
         ModalError = null;
         ModalSupplierNameError = null;
         ModalEmailError = null;
+        ModalPhoneError = null;
     }
 
     private bool ValidateModal()
@@ -790,6 +777,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
         ModalError = null;
         ModalSupplierNameError = null;
         ModalEmailError = null;
+        ModalPhoneError = null;
 
         var isValid = true;
 
@@ -819,6 +807,17 @@ public partial class SuppliersPageViewModel : ViewModelBase
         {
             ModalEmailError = "Please enter a valid email address.";
             isValid = false;
+        }
+
+        // Validate phone number if provided
+        if (!string.IsNullOrWhiteSpace(ModalFullPhone))
+        {
+            var digits = new string(ModalFullPhone.Where(char.IsDigit).ToArray());
+            if (digits.Length < 7)
+            {
+                ModalPhoneError = "Please enter a valid phone number.";
+                isValid = false;
+            }
         }
 
         return isValid;
