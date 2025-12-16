@@ -753,11 +753,6 @@
                                 <Run Text="{Binding DeletingDepartmentEmployeeCount}" FontWeight="SemiBold" />
                                 <Run Text=" employee(s). They will be unassigned." />
                             </TextBlock>
-
-                            <TextBlock Text="This action cannot be undone."
-                                      TextAlignment="Center"
-                                      Foreground="#ef4444"
-                                      FontSize="13" />
                         </StackPanel>
                     </Border>
 

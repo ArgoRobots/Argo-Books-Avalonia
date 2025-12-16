@@ -119,6 +119,12 @@ public partial class CategoriesPageViewModel : ViewModelBase
     private CategoryDisplayItem? _deletingCategory;
 
     /// <summary>
+    /// Whether to also delete subcategories when deleting a parent category.
+    /// </summary>
+    [ObservableProperty]
+    private bool _deleteSubcategories;
+
+    /// <summary>
     /// The parent category when adding a sub-category.
     /// </summary>
     private CategoryDisplayItem? _addingSubCategoryParent;
@@ -547,7 +553,9 @@ public partial class CategoriesPageViewModel : ViewModelBase
             return;
 
         _deletingCategory = item;
+        DeleteSubcategories = false;
         OnPropertyChanged(nameof(DeletingCategoryName));
+        OnPropertyChanged(nameof(DeletingCategoryHasChildren));
         IsDeleteConfirmOpen = true;
     }
 
@@ -577,14 +585,28 @@ public partial class CategoriesPageViewModel : ViewModelBase
         var category = companyData.Categories.FirstOrDefault(c => c.Id == _deletingCategory.Id);
         if (category != null)
         {
-            // Store child parent IDs for undo
+            // Store child categories for undo
             var children = companyData.Categories.Where(c => c.ParentId == category.Id).ToList();
             var childOriginalParents = children.ToDictionary(c => c.Id, c => c.ParentId);
+            var deletedChildren = new List<Category>();
+            var shouldDeleteSubcategories = DeleteSubcategories;
 
-            // Clear parent reference instead of deleting children
-            foreach (var child in children)
+            if (shouldDeleteSubcategories)
             {
-                child.ParentId = null;
+                // Delete subcategories
+                deletedChildren.AddRange(children);
+                foreach (var child in children)
+                {
+                    companyData.Categories.Remove(child);
+                }
+            }
+            else
+            {
+                // Clear parent reference - subcategories become top-level
+                foreach (var child in children)
+                {
+                    child.ParentId = null;
+                }
             }
 
             var deletedCategory = category;
@@ -597,14 +619,27 @@ public partial class CategoriesPageViewModel : ViewModelBase
                 deletedCategory,
                 () =>
                 {
-                    // Undo: restore category and child parent references
+                    // Undo: restore category
                     companyData.Categories.Add(deletedCategory);
-                    foreach (var kvp in childOriginalParents)
+
+                    if (shouldDeleteSubcategories)
                     {
-                        var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
-                        if (child != null)
+                        // Restore deleted children
+                        foreach (var child in deletedChildren)
                         {
-                            child.ParentId = kvp.Value;
+                            companyData.Categories.Add(child);
+                        }
+                    }
+                    else
+                    {
+                        // Restore child parent references
+                        foreach (var kvp in childOriginalParents)
+                        {
+                            var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                            if (child != null)
+                            {
+                                child.ParentId = kvp.Value;
+                            }
                         }
                     }
                     companyData.MarkAsModified();
@@ -613,12 +648,22 @@ public partial class CategoriesPageViewModel : ViewModelBase
                 () =>
                 {
                     // Redo: delete again
-                    foreach (var kvp in childOriginalParents)
+                    if (shouldDeleteSubcategories)
                     {
-                        var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
-                        if (child != null)
+                        foreach (var child in deletedChildren)
                         {
-                            child.ParentId = null;
+                            companyData.Categories.Remove(child);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var kvp in childOriginalParents)
+                        {
+                            var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                            if (child != null)
+                            {
+                                child.ParentId = null;
+                            }
                         }
                     }
                     companyData.Categories.Remove(deletedCategory);
@@ -635,6 +680,24 @@ public partial class CategoriesPageViewModel : ViewModelBase
     /// Gets the name of the category being deleted (for display in confirmation).
     /// </summary>
     public string DeletingCategoryName => _deletingCategory?.Name ?? string.Empty;
+
+    /// <summary>
+    /// Gets whether the category being deleted has child categories.
+    /// </summary>
+    public bool DeletingCategoryHasChildren
+    {
+        get
+        {
+            if (_deletingCategory == null)
+                return false;
+
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null)
+                return false;
+
+            return companyData.Categories.Any(c => c.ParentId == _deletingCategory.Id);
+        }
+    }
 
     #endregion
 
