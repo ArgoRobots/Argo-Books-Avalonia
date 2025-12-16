@@ -22,8 +22,12 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     public new event PropertyChangedEventHandler? PropertyChanged;
     private TextBox? _phoneNumberBox;
     private TextBox? _countrySearchBox;
+    private ScrollViewer? _countryScrollViewer;
     private bool _isUpdatingText;
     private bool _isFormattingPhone;
+
+    // Maximum number of extension digits allowed
+    private const int MaxExtensionDigits = 5;
 
     protected void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
     {
@@ -388,6 +392,19 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
             _countrySearchBox.GotFocus += OnCountrySearchBoxGotFocus;
             _countrySearchBox.KeyDown += OnCountrySearchBoxKeyDown;
         }
+
+        _countryScrollViewer = this.FindControl<ScrollViewer>("CountryScrollViewer");
+        if (_countryScrollViewer != null)
+        {
+            // Prevent scroll events from bubbling up to parent (modal)
+            _countryScrollViewer.PointerWheelChanged += OnCountryScrollViewerPointerWheelChanged;
+        }
+    }
+
+    private void OnCountryScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        // Mark event as handled to prevent it from bubbling up to parent scroll viewers
+        e.Handled = true;
     }
 
     private void OnPhoneNumberTextChanged(object? sender, TextChangedEventArgs e)
@@ -400,8 +417,12 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         var currentText = _phoneNumberBox.Text ?? string.Empty;
         var caretIndex = _phoneNumberBox.CaretIndex;
 
-        // Extract digits and format
+        // Extract digits and limit to max allowed (10 phone + 5 extension)
         var rawDigits = ExtractDigits(currentText);
+        if (rawDigits.Length > 10 + MaxExtensionDigits)
+        {
+            rawDigits = rawDigits[..(10 + MaxExtensionDigits)];
+        }
         var formatted = FormatPhoneNumber(rawDigits);
 
         // Only update if different
@@ -587,11 +608,12 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
             if (i == 5) sb.Append('-');
         }
 
-        // Handle numbers longer than 10 digits (extensions, etc.)
+        // Handle numbers longer than 10 digits (extensions with limit)
         if (digits.Length > 10)
         {
             sb.Append(" x");
-            sb.Append(digits[10..]);
+            var extensionEnd = Math.Min(digits.Length, 10 + MaxExtensionDigits);
+            sb.Append(digits[10..extensionEnd]);
         }
 
         return sb.ToString();

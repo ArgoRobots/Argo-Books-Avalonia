@@ -70,12 +70,13 @@
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="6"
-                    Width="280"
+                    Width="220"
                     MaxHeight="300"
                     Margin="0,4,0,0"
                     BoxShadow="0 4 12 0 #20000000">
 
-                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                <ScrollViewer x:Name="CountryScrollViewer"
+                              HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <!-- No Results Message -->
