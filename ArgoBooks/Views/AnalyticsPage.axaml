@@ -17,8 +17,9 @@
         <Border Grid.Row="0"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,0,0,1">
-            <Grid RowDefinitions="Auto,Auto">
+                BorderThickness="0,0,0,1"
+                ClipToBounds="False">
+            <Grid RowDefinitions="Auto,Auto" ClipToBounds="False">
                 <!-- Top Row: Date Range Selector -->
                 <Border Grid.Row="0"
                         Padding="24,16"
@@ -83,7 +84,7 @@
                 </Border>
 
                 <!-- Tab Bar with Chart Type Toggle -->
-                <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ClipToBounds="False">
                     <!-- Analytics Tabs -->
                     <TabControl Grid.Column="0"
                                 SelectedIndex="{Binding SelectedTabIndex}"
