@@ -461,41 +461,7 @@
                         </Border>
                     </Grid>
 
-                    <!-- Row 2: World Map (Full Width) -->
-                    <Border Background="{DynamicResource SurfaceBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="12"
-                            Height="400">
-                        <Grid RowDefinitions="Auto,*">
-                            <Border Grid.Row="0"
-                                    Padding="20,16"
-                                    BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="0,0,0,1">
-                                <TextBlock Text="World Map Overview"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                            </Border>
-                            <Border Grid.Row="1" Padding="20">
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8">
-                                    <StackPanel HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="12">
-                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
-                                                  Width="64" Height="64"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Text="Interactive world map will appear here"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </StackPanel>
-                                </Border>
-                            </Border>
-                        </Grid>
-                    </Border>
-
-                    <!-- Row 3: Countries/Companies of Destination -->
+                    <!-- Row 2: Countries/Companies of Destination -->
                     <Grid ColumnDefinitions="*,*" Height="300">
                         <!-- Countries of Destination Chart -->
                         <Border Grid.Column="0"
@@ -567,6 +533,60 @@
                             </Grid>
                         </Border>
                     </Grid>
+
+                    <!-- Row 3: World Map (Full Width) -->
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Height="400">
+                        <Grid RowDefinitions="Auto,*">
+                            <Border Grid.Row="0"
+                                    Padding="20,16"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0"
+                                               Text="World Map Overview"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <!-- Origin/Destination Toggle -->
+                                    <Border Grid.Column="1"
+                                            Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="6"
+                                            Padding="4">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <RadioButton Content="Origin"
+                                                         GroupName="MapMode"
+                                                         IsChecked="{Binding IsMapModeOrigin}"
+                                                         Classes="segmented-button" />
+                                            <RadioButton Content="Destination"
+                                                         GroupName="MapMode"
+                                                         IsChecked="{Binding IsMapModeDestination}"
+                                                         Classes="segmented-button" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <Border Grid.Row="1" Padding="20">
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8">
+                                    <StackPanel HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Spacing="12">
+                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+                                                  Width="64" Height="64"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="Interactive world map will appear here"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
+                                </Border>
+                            </Border>
+                        </Grid>
+                    </Border>
                 </StackPanel>
 
                 <!-- Operational Tab Content -->
@@ -1730,6 +1750,36 @@
         </Style>
         <Style Selector="ToggleSwitch.chart-toggle:checked /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Segmented Button (RadioButton) -->
+        <Style Selector="RadioButton.segmented-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="RadioButton.segmented-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="RadioButton.segmented-button:checked">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

@@ -163,6 +163,33 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Map Mode Toggle
+
+    [ObservableProperty]
+    private bool _isMapModeOrigin = true;
+
+    /// <summary>
+    /// Gets or sets whether the map mode is Destination.
+    /// </summary>
+    public bool IsMapModeDestination
+    {
+        get => !IsMapModeOrigin;
+        set
+        {
+            if (value != !IsMapModeOrigin)
+            {
+                IsMapModeOrigin = !value;
+            }
+        }
+    }
+
+    partial void OnIsMapModeOriginChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsMapModeDestination));
+    }
+
+    #endregion
+
     #region Constructor
 
     /// <summary>
