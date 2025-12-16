@@ -42,7 +42,7 @@ public class StringToBrushConverter : IValueConverter
 }
 
 /// <summary>
-/// Bool converters for the Categories page.
+/// Bool converters for the Categories page and general use.
 /// </summary>
 public static class BoolConverters
 {
@@ -75,6 +75,22 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToChildIndent =
         new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(24, 0, 0, 0) : new Thickness(0));
+
+    /// <summary>
+    /// Converts bool (isActive) to status badge background color.
+    /// Active = green (#DCFCE7), Inactive = gray (#F3F4F6).
+    /// </summary>
+    public static readonly IValueConverter ToStatusBackground =
+        new FuncValueConverter<bool, IBrush>(value =>
+            new SolidColorBrush(Color.Parse(value ? "#DCFCE7" : "#F3F4F6")));
+
+    /// <summary>
+    /// Converts bool (isActive) to status badge foreground color.
+    /// Active = green (#166534), Inactive = gray (#4B5563).
+    /// </summary>
+    public static readonly IValueConverter ToStatusForeground =
+        new FuncValueConverter<bool, IBrush>(value =>
+            new SolidColorBrush(Color.Parse(value ? "#166534" : "#4B5563")));
 }
 
 /// <summary>

@@ -1041,7 +1041,7 @@ public partial class App : Application
 
         // Contacts Section
         navigationService.RegisterPage("Customers", _ => CreatePlaceholderPage("Customers", "Manage customer information"));
-        navigationService.RegisterPage("Suppliers", _ => CreatePlaceholderPage("Suppliers", "Manage supplier information"));
+        navigationService.RegisterPage("Suppliers", _ => new SuppliersPage { DataContext = new SuppliersPageViewModel() });
         navigationService.RegisterPage("Employees", _ => CreatePlaceholderPage("Employees", "Manage employee records"));
         navigationService.RegisterPage("Accountants", _ => CreatePlaceholderPage("Accountants", "Manage accountant information"));
 
