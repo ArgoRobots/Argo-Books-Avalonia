@@ -1,0 +1,137 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="60"
+             x:Class="ArgoBooks.Controls.PhoneInput"
+             x:DataType="controls:PhoneInput"
+             Focusable="True">
+
+    <Grid ColumnDefinitions="Auto,8,*">
+        <!-- Country Code Dropdown -->
+        <Border Grid.Column="0"
+                x:Name="CountryDropdownBorder"
+                CornerRadius="6"
+                BorderThickness="1"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                MinWidth="120"
+                Classes.focused="{Binding IsCountryDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}">
+            <Border.Styles>
+                <Style Selector="Border.focused">
+                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                </Style>
+                <Style Selector="Border:pointerover:not(.focused)">
+                    <Setter Property="BorderBrush" Value="{DynamicResource BorderHoverBrush}" />
+                </Style>
+            </Border.Styles>
+
+            <Grid ColumnDefinitions="*,Auto">
+                <!-- Search/Display TextBox -->
+                <TextBox x:Name="CountrySearchBox"
+                         Grid.Column="0"
+                         Text="{Binding CountrySearchText, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}, Mode=TwoWay}"
+                         Watermark="+1"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="10,8"
+                         FontSize="14"
+                         VerticalAlignment="Center" />
+
+                <!-- Dropdown Arrow -->
+                <Button Grid.Column="1"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Width="28" Height="28"
+                        Margin="0,0,4,0"
+                        Padding="0"
+                        CornerRadius="4"
+                        Cursor="Hand"
+                        Command="{Binding ToggleCountryDropdownCommand, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}">
+                    <PathIcon Data="M7 10l5 5 5-5z"
+                              Width="14" Height="14"
+                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Country Dropdown Popup -->
+        <Popup x:Name="CountryDropdownPopup"
+               IsOpen="{Binding IsCountryDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}, Mode=TwoWay}"
+               PlacementTarget="{Binding #CountryDropdownBorder}"
+               Placement="Bottom"
+               PlacementGravity="BottomLeft"
+               IsLightDismissEnabled="True"
+               WindowManagerAddShadowHint="True">
+
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Width="280"
+                    MaxHeight="300"
+                    Margin="0,4,0,0"
+                    BoxShadow="0 4 12 0 #20000000">
+
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- No Results Message -->
+                        <TextBlock Text="No countries found"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   Padding="12,16"
+                                   HorizontalAlignment="Center"
+                                   IsVisible="{Binding !HasFilteredCountries, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}" />
+
+                        <!-- Filtered Items -->
+                        <ItemsControl ItemsSource="{Binding FilteredDialCodes, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="controls:CountryDialCode">
+                                    <Button Background="Transparent"
+                                            BorderThickness="0"
+                                            HorizontalAlignment="Stretch"
+                                            HorizontalContentAlignment="Left"
+                                            Padding="12,10"
+                                            CornerRadius="0"
+                                            Cursor="Hand"
+                                            Command="{Binding SelectCountryCommand, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Styles>
+                                            <Style Selector="Button:pointerover /template/ ContentPresenter">
+                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                            </Style>
+                                        </Button.Styles>
+                                        <Grid ColumnDefinitions="50,*">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding DialCode}"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Name}"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Popup>
+
+        <!-- Phone Number TextBox with auto-formatting -->
+        <TextBox Grid.Column="2"
+                 x:Name="PhoneNumberBox"
+                 Text="{Binding FormattedPhoneNumber, RelativeSource={RelativeSource AncestorType=controls:PhoneInput}, Mode=TwoWay}"
+                 Watermark="(555) 123-4567"
+                 Background="{DynamicResource SurfaceBrush}"
+                 BorderBrush="{DynamicResource BorderBrush}"
+                 BorderThickness="1"
+                 CornerRadius="6"
+                 Padding="12,10"
+                 FontSize="14" />
+    </Grid>
+</UserControl>

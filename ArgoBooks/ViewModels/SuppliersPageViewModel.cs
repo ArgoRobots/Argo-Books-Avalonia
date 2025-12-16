@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
@@ -100,10 +101,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
     private string _modalEmail = string.Empty;
 
     [ObservableProperty]
-    private CountryDialCode? _modalPhoneCountryCode;
-
-    [ObservableProperty]
-    private string _modalPhone = string.Empty;
+    private string _modalFullPhone = string.Empty;
 
     [ObservableProperty]
     private string _modalStreet = string.Empty;
@@ -189,63 +187,6 @@ public partial class SuppliersPageViewModel : ViewModelBase
         "Netherlands",
         "South Korea",
         "Singapore"
-    ];
-
-    /// <summary>
-    /// Country dial codes for phone input.
-    /// </summary>
-    public ObservableCollection<CountryDialCode> DialCodes { get; } =
-    [
-        new("US", "United States", "+1"),
-        new("CA", "Canada", "+1"),
-        new("GB", "United Kingdom", "+44"),
-        new("DE", "Germany", "+49"),
-        new("FR", "France", "+33"),
-        new("AU", "Australia", "+61"),
-        new("JP", "Japan", "+81"),
-        new("CN", "China", "+86"),
-        new("IN", "India", "+91"),
-        new("MX", "Mexico", "+52"),
-        new("BR", "Brazil", "+55"),
-        new("IT", "Italy", "+39"),
-        new("ES", "Spain", "+34"),
-        new("NL", "Netherlands", "+31"),
-        new("KR", "South Korea", "+82"),
-        new("SG", "Singapore", "+65"),
-        new("RU", "Russia", "+7"),
-        new("SA", "Saudi Arabia", "+966"),
-        new("AE", "UAE", "+971"),
-        new("CH", "Switzerland", "+41"),
-        new("SE", "Sweden", "+46"),
-        new("NO", "Norway", "+47"),
-        new("DK", "Denmark", "+45"),
-        new("FI", "Finland", "+358"),
-        new("PL", "Poland", "+48"),
-        new("AT", "Austria", "+43"),
-        new("BE", "Belgium", "+32"),
-        new("IE", "Ireland", "+353"),
-        new("PT", "Portugal", "+351"),
-        new("NZ", "New Zealand", "+64"),
-        new("ZA", "South Africa", "+27"),
-        new("IL", "Israel", "+972"),
-        new("TH", "Thailand", "+66"),
-        new("MY", "Malaysia", "+60"),
-        new("PH", "Philippines", "+63"),
-        new("ID", "Indonesia", "+62"),
-        new("VN", "Vietnam", "+84"),
-        new("TW", "Taiwan", "+886"),
-        new("HK", "Hong Kong", "+852"),
-        new("AR", "Argentina", "+54"),
-        new("CL", "Chile", "+56"),
-        new("CO", "Colombia", "+57"),
-        new("PE", "Peru", "+51"),
-        new("EG", "Egypt", "+20"),
-        new("NG", "Nigeria", "+234"),
-        new("KE", "Kenya", "+254"),
-        new("TR", "Turkey", "+90"),
-        new("GR", "Greece", "+30"),
-        new("CZ", "Czech Republic", "+420"),
-        new("HU", "Hungary", "+36")
     ];
 
     #endregion
@@ -470,18 +411,13 @@ public partial class SuppliersPageViewModel : ViewModelBase
         companyData.IdCounters.Supplier++;
         var newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
 
-        // Combine country code with phone number
-        var fullPhone = string.IsNullOrWhiteSpace(ModalPhone)
-            ? string.Empty
-            : $"{ModalPhoneCountryCode?.DialCode ?? ""} {ModalPhone.Trim()}".Trim();
-
         var newSupplier = new Supplier
         {
             Id = newId,
             Name = ModalSupplierName.Trim(),
             ContactPerson = ModalContactPerson.Trim(),
             Email = ModalEmail.Trim(),
-            Phone = fullPhone,
+            Phone = ModalFullPhone.Trim(),
             Address = new Address
             {
                 Street = ModalStreet.Trim(),
@@ -546,10 +482,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
         ModalSupplierName = supplier.Name;
         ModalContactPerson = supplier.ContactPerson;
         ModalEmail = supplier.Email;
-
-        // Parse phone number to extract country code
-        ParsePhoneNumber(supplier.Phone);
-
+        ModalFullPhone = supplier.Phone;
         ModalStreet = supplier.Address.Street;
         ModalCity = supplier.Address.City;
         ModalState = supplier.Address.State;
@@ -608,9 +541,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
         var newName = ModalSupplierName.Trim();
         var newContactPerson = ModalContactPerson.Trim();
         var newEmail = ModalEmail.Trim();
-        var newPhone = string.IsNullOrWhiteSpace(ModalPhone)
-            ? string.Empty
-            : $"{ModalPhoneCountryCode?.DialCode ?? ""} {ModalPhone.Trim()}".Trim();
+        var newPhone = ModalFullPhone.Trim();
         var newAddress = new Address
         {
             Street = ModalStreet.Trim(),
@@ -838,8 +769,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
         ModalSupplierName = string.Empty;
         ModalContactPerson = string.Empty;
         ModalEmail = string.Empty;
-        ModalPhoneCountryCode = DialCodes.FirstOrDefault(c => c.Code == "US");
-        ModalPhone = string.Empty;
+        ModalFullPhone = string.Empty;
         ModalStreet = string.Empty;
         ModalCity = string.Empty;
         ModalState = string.Empty;
@@ -852,36 +782,6 @@ public partial class SuppliersPageViewModel : ViewModelBase
         ModalError = null;
         ModalSupplierNameError = null;
         ModalEmailError = null;
-    }
-
-    /// <summary>
-    /// Parses a phone number string to extract country code and local number.
-    /// </summary>
-    private void ParsePhoneNumber(string phone)
-    {
-        if (string.IsNullOrWhiteSpace(phone))
-        {
-            ModalPhoneCountryCode = DialCodes.FirstOrDefault(c => c.Code == "US");
-            ModalPhone = string.Empty;
-            return;
-        }
-
-        // Try to match against known dial codes (longest match first)
-        var sortedDialCodes = DialCodes.OrderByDescending(d => d.DialCode.Length).ToList();
-
-        foreach (var dialCode in sortedDialCodes)
-        {
-            if (phone.StartsWith(dialCode.DialCode))
-            {
-                ModalPhoneCountryCode = dialCode;
-                ModalPhone = phone[dialCode.DialCode.Length..].Trim();
-                return;
-            }
-        }
-
-        // No matching dial code found, use default and keep original number
-        ModalPhoneCountryCode = DialCodes.FirstOrDefault(c => c.Code == "US");
-        ModalPhone = phone;
     }
 
     private bool ValidateModal()
@@ -1026,42 +926,4 @@ public class SupplierDeleteAction : IUndoableAction
 
     public void Undo() => _undoAction();
     public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Represents a country with its dial code for phone input.
-/// </summary>
-public class CountryDialCode
-{
-    /// <summary>
-    /// ISO country code (e.g., US, GB).
-    /// </summary>
-    public string Code { get; }
-
-    /// <summary>
-    /// Country name.
-    /// </summary>
-    public string Name { get; }
-
-    /// <summary>
-    /// Phone dial code (e.g., +1, +44).
-    /// </summary>
-    public string DialCode { get; }
-
-    /// <summary>
-    /// Display format for the dropdown.
-    /// </summary>
-    public string DisplayName => $"{DialCode} {Name}";
-
-    /// <summary>
-    /// Short display for the selected item.
-    /// </summary>
-    public string ShortDisplay => $"{DialCode}";
-
-    public CountryDialCode(string code, string name, string dialCode)
-    {
-        Code = code;
-        Name = name;
-        DialCode = dialCode;
-    }
 }

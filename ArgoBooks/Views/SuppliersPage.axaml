@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.SuppliersPage"
              x:DataType="vm:SuppliersPageViewModel">
@@ -459,24 +460,7 @@
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <Grid ColumnDefinitions="Auto,8,*">
-                                <ComboBox Grid.Column="0"
-                                          ItemsSource="{Binding DialCodes}"
-                                          SelectedItem="{Binding ModalPhoneCountryCode}"
-                                          Classes="form-combobox"
-                                          Width="110"
-                                          PlaceholderText="+1">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate DataType="vm:CountryDialCode">
-                                            <TextBlock Text="{Binding DisplayName}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                                <TextBox Grid.Column="2"
-                                         Text="{Binding ModalPhone, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         Watermark="(555) 123-4567" />
-                            </Grid>
+                            <controls:PhoneInput FullPhoneNumber="{Binding ModalFullPhone, Mode=TwoWay}" />
                         </StackPanel>
 
                         <!-- Address Section -->
@@ -689,24 +673,7 @@
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <Grid ColumnDefinitions="Auto,8,*">
-                                <ComboBox Grid.Column="0"
-                                          ItemsSource="{Binding DialCodes}"
-                                          SelectedItem="{Binding ModalPhoneCountryCode}"
-                                          Classes="form-combobox"
-                                          Width="110"
-                                          PlaceholderText="+1">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate DataType="vm:CountryDialCode">
-                                            <TextBlock Text="{Binding DisplayName}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                                <TextBox Grid.Column="2"
-                                         Text="{Binding ModalPhone, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         Watermark="(555) 123-4567" />
-                            </Grid>
+                            <controls:PhoneInput FullPhoneNumber="{Binding ModalFullPhone, Mode=TwoWay}" />
                         </StackPanel>
 
                         <!-- Address Section -->
