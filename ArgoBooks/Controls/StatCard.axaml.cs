@@ -1,8 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Data.Converters;
 using Avalonia.Media;
-using System.Globalization;
 
 namespace ArgoBooks.Controls;
 
@@ -67,6 +65,79 @@ public partial class StatCard : UserControl
 
     public static readonly StyledProperty<bool> ShowChangeProperty =
         AvaloniaProperty.Register<StatCard, bool>(nameof(ShowChange));
+
+    #endregion
+
+    #region Computed Properties for Class Binding
+
+    // Icon Color Classes
+    public static readonly DirectProperty<StatCard, bool> IsPrimaryColorProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsPrimaryColor), o => o.IsPrimaryColor);
+
+    public static readonly DirectProperty<StatCard, bool> IsSuccessColorProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsSuccessColor), o => o.IsSuccessColor);
+
+    public static readonly DirectProperty<StatCard, bool> IsDangerColorProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsDangerColor), o => o.IsDangerColor);
+
+    public static readonly DirectProperty<StatCard, bool> IsWarningColorProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsWarningColor), o => o.IsWarningColor);
+
+    public static readonly DirectProperty<StatCard, bool> IsInfoColorProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsInfoColor), o => o.IsInfoColor);
+
+    // Trend Classes
+    public static readonly DirectProperty<StatCard, bool> IsPositiveTrendProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsPositiveTrend), o => o.IsPositiveTrend);
+
+    public static readonly DirectProperty<StatCard, bool> IsNegativeTrendProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsNegativeTrend), o => o.IsNegativeTrend);
+
+    public static readonly DirectProperty<StatCard, bool> IsNeutralTrendProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsNeutralTrend), o => o.IsNeutralTrend);
+
+    // Trend Arrow Classes
+    public static readonly DirectProperty<StatCard, bool> IsTrendUpProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsTrendUp), o => o.IsTrendUp);
+
+    public static readonly DirectProperty<StatCard, bool> IsTrendDownProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsTrendDown), o => o.IsTrendDown);
+
+    public static readonly DirectProperty<StatCard, bool> IsTrendFlatProperty =
+        AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsTrendFlat), o => o.IsTrendFlat);
+
+    /// <summary>Gets whether icon color is Primary.</summary>
+    public bool IsPrimaryColor => IconColor == StatCardColor.Primary;
+
+    /// <summary>Gets whether icon color is Success.</summary>
+    public bool IsSuccessColor => IconColor == StatCardColor.Success;
+
+    /// <summary>Gets whether icon color is Danger.</summary>
+    public bool IsDangerColor => IconColor == StatCardColor.Danger;
+
+    /// <summary>Gets whether icon color is Warning.</summary>
+    public bool IsWarningColor => IconColor == StatCardColor.Warning;
+
+    /// <summary>Gets whether icon color is Info.</summary>
+    public bool IsInfoColor => IconColor == StatCardColor.Info;
+
+    /// <summary>Gets whether trend is positive (value > 0).</summary>
+    public bool IsPositiveTrend => ChangeValue.HasValue && ChangeValue.Value > 0;
+
+    /// <summary>Gets whether trend is negative (value < 0).</summary>
+    public bool IsNegativeTrend => ChangeValue.HasValue && ChangeValue.Value < 0;
+
+    /// <summary>Gets whether trend is neutral (value == 0 or null).</summary>
+    public bool IsNeutralTrend => !ChangeValue.HasValue || ChangeValue.Value == 0;
+
+    /// <summary>Gets whether trend arrow should point up.</summary>
+    public bool IsTrendUp => ChangeValue.HasValue && ChangeValue.Value > 0;
+
+    /// <summary>Gets whether trend arrow should point down.</summary>
+    public bool IsTrendDown => ChangeValue.HasValue && ChangeValue.Value < 0;
+
+    /// <summary>Gets whether trend arrow should be flat.</summary>
+    public bool IsTrendFlat => !ChangeValue.HasValue || ChangeValue.Value == 0;
 
     #endregion
 
@@ -146,82 +217,6 @@ public partial class StatCard : UserControl
 
     #endregion
 
-    #region Converters
-
-    /// <summary>
-    /// Converter to get CSS class for icon color.
-    /// </summary>
-    public static readonly IMultiValueConverter IconColorClassConverter = new IconColorToClassConverter();
-
-    /// <summary>
-    /// Converter to get CSS class for trend (positive/negative/neutral).
-    /// </summary>
-    public static readonly IMultiValueConverter TrendClassConverter = new TrendToClassConverter();
-
-    /// <summary>
-    /// Converter to get CSS class for trend arrow direction.
-    /// </summary>
-    public static readonly IMultiValueConverter TrendArrowClassConverter = new TrendArrowToClassConverter();
-
-    private class IconColorToClassConverter : IMultiValueConverter
-    {
-        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (values.Count == 0 || values[0] is not StatCardColor color)
-                return new Classes("primary");
-
-            var className = color switch
-            {
-                StatCardColor.Primary => "primary",
-                StatCardColor.Success => "success",
-                StatCardColor.Danger => "danger",
-                StatCardColor.Warning => "warning",
-                StatCardColor.Info => "info",
-                _ => "primary"
-            };
-
-            return new Classes(className);
-        }
-    }
-
-    private class TrendToClassConverter : IMultiValueConverter
-    {
-        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (values.Count == 0 || values[0] is not double changeValue)
-                return new Classes("neutral");
-
-            var className = changeValue switch
-            {
-                > 0 => "positive",
-                < 0 => "negative",
-                _ => "neutral"
-            };
-
-            return new Classes(className);
-        }
-    }
-
-    private class TrendArrowToClassConverter : IMultiValueConverter
-    {
-        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (values.Count == 0 || values[0] is not double changeValue)
-                return new Classes("flat");
-
-            var className = changeValue switch
-            {
-                > 0 => "up",
-                < 0 => "down",
-                _ => "flat"
-            };
-
-            return new Classes(className);
-        }
-    }
-
-    #endregion
-
     public StatCard()
     {
         InitializeComponent();
@@ -230,6 +225,16 @@ public partial class StatCard : UserControl
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
+
+        // Update icon color computed properties
+        if (change.Property == IconColorProperty)
+        {
+            RaisePropertyChanged(IsPrimaryColorProperty, !IsPrimaryColor, IsPrimaryColor);
+            RaisePropertyChanged(IsSuccessColorProperty, !IsSuccessColor, IsSuccessColor);
+            RaisePropertyChanged(IsDangerColorProperty, !IsDangerColor, IsDangerColor);
+            RaisePropertyChanged(IsWarningColorProperty, !IsWarningColor, IsWarningColor);
+            RaisePropertyChanged(IsInfoColorProperty, !IsInfoColor, IsInfoColor);
+        }
 
         // Auto-show change indicator when ChangeValue or ChangeText is set
         if (change.Property == ChangeValueProperty || change.Property == ChangeTextProperty)
@@ -242,6 +247,14 @@ public partial class StatCard : UserControl
                 var prefix = ChangeValue.Value >= 0 ? "+" : "";
                 ChangeText = $"{prefix}{ChangeValue.Value:N1}%";
             }
+
+            // Update trend computed properties
+            RaisePropertyChanged(IsPositiveTrendProperty, !IsPositiveTrend, IsPositiveTrend);
+            RaisePropertyChanged(IsNegativeTrendProperty, !IsNegativeTrend, IsNegativeTrend);
+            RaisePropertyChanged(IsNeutralTrendProperty, !IsNeutralTrend, IsNeutralTrend);
+            RaisePropertyChanged(IsTrendUpProperty, !IsTrendUp, IsTrendUp);
+            RaisePropertyChanged(IsTrendDownProperty, !IsTrendDown, IsTrendDown);
+            RaisePropertyChanged(IsTrendFlatProperty, !IsTrendFlat, IsTrendFlat);
         }
     }
 }
