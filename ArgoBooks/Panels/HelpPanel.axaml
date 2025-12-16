@@ -129,7 +129,7 @@
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="4"
                                     Padding="8,4">
-                                <TextBlock Text="{Binding AppVersion, StringFormat='v{0}'}"
+                                <TextBlock Text="{Binding AppVersion}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Border>
@@ -145,7 +145,7 @@
         <Style Selector="Button.menu-item">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="Padding" Value="16,8" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
@@ -166,8 +166,11 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="Button.menu-item:focus">
-            <Setter Property="BorderBrush" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="BorderThickness" Value="2,0,0,0" />
+        </Style>
+        <Style Selector="Button.menu-item PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

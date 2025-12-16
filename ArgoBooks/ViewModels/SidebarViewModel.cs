@@ -89,6 +89,11 @@ public partial class SidebarViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? OpenCompanySwitcherRequested;
 
+    /// <summary>
+    /// Event raised when navigating to a page (so panels can be closed).
+    /// </summary>
+    public event EventHandler? NavigationRequested;
+
     #endregion
 
     /// <summary>
@@ -256,6 +261,9 @@ public partial class SidebarViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(pageName))
             return;
+
+        // Raise event so panels can be closed
+        NavigationRequested?.Invoke(this, EventArgs.Empty);
 
         SetActivePage(pageName);
         _navigationService?.NavigateTo(pageName);

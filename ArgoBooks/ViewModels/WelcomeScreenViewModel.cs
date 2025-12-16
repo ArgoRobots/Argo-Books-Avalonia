@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -22,7 +23,7 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     private bool _hasRecentCompanies;
 
     [ObservableProperty]
-    private string _appVersion = "1.0.0";
+    private string _appVersion = AppInfo.Version;
 
     /// <summary>
     /// Default constructor for design-time.

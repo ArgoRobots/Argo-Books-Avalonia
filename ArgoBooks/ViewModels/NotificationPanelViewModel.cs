@@ -73,13 +73,28 @@ public partial class NotificationPanelViewModel : ViewModelBase
         _headerViewModel = headerViewModel;
         Notifications = headerViewModel.Notifications;
 
-        // Subscribe to collection changes to update HasNotifications
+        // Subscribe to collection changes to update HasNotifications and IsLast
         Notifications.CollectionChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(HasNotifications));
             OnPropertyChanged(nameof(HasUnreadNotifications));
             OnPropertyChanged(nameof(UnreadCount));
+            UpdateIsLast();
         };
+
+        // Initialize IsLast for existing items
+        UpdateIsLast();
+    }
+
+    /// <summary>
+    /// Updates the IsLast property on all notification items.
+    /// </summary>
+    private void UpdateIsLast()
+    {
+        for (var i = 0; i < Notifications.Count; i++)
+        {
+            Notifications[i].IsLast = i == Notifications.Count - 1;
+        }
     }
 
     /// <summary>
@@ -178,8 +193,13 @@ public partial class NotificationPanelViewModel : ViewModelBase
     private void OpenSettings()
     {
         Close();
-        // TODO: Navigate to notification settings
+        OpenNotificationSettingsRequested?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>
+    /// Event raised when notification settings should be opened.
+    /// </summary>
+    public event EventHandler? OpenNotificationSettingsRequested;
 
     /// <summary>
     /// Handles clicking on a notification (navigate to related item).

@@ -269,6 +269,15 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void Open()
     {
+        OpenWithTab(0);
+    }
+
+    /// <summary>
+    /// Opens the settings modal with a specific tab selected.
+    /// </summary>
+    /// <param name="tabIndex">The tab index to select (0=General, 1=Features, 2=Notifications, 3=Appearance, 4=Security).</param>
+    public void OpenWithTab(int tabIndex)
+    {
         // Sync with current ThemeService values
         SelectedTheme = ThemeService.Instance.CurrentThemeName;
         SelectedAccentColor = ThemeService.Instance.CurrentAccentColor;
@@ -276,7 +285,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Store original values for potential revert
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
-        SelectedTabIndex = 0;
+        SelectedTabIndex = tabIndex;
         IsOpen = true;
     }
 

@@ -1,3 +1,4 @@
+using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -120,8 +121,56 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// Closes the modal without saving.
     /// </summary>
     [RelayCommand]
-    private void Close()
+    private async Task CloseAsync()
     {
+        await RequestCloseAsync();
+    }
+
+    /// <summary>
+    /// Requests to close the modal, showing unsaved changes dialog if needed.
+    /// </summary>
+    public async void RequestClose()
+    {
+        await RequestCloseAsync();
+    }
+
+    /// <summary>
+    /// Requests to close the modal, showing unsaved changes dialog if needed.
+    /// </summary>
+    private async Task RequestCloseAsync()
+    {
+        if (HasChanges)
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Unsaved Changes",
+                    Message = "You have unsaved changes. Do you want to save them before closing?",
+                    PrimaryButtonText = "Save",
+                    SecondaryButtonText = "Don't Save",
+                    CancelButtonText = "Cancel"
+                });
+
+                switch (result)
+                {
+                    case ConfirmationResult.Primary:
+                        // Save and close
+                        Save();
+                        return;
+                    case ConfirmationResult.Secondary:
+                        // Don't save, just close
+                        IsOpen = false;
+                        return;
+                    case ConfirmationResult.Cancel:
+                    case ConfirmationResult.None:
+                        // Stay open
+                        return;
+                }
+            }
+        }
+
         IsOpen = false;
     }
 
