@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 
 namespace ArgoBooks.Core.Models.Entities;
 
@@ -17,6 +18,24 @@ public class Department
     /// </summary>
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Department description.
+    /// </summary>
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Icon emoji or identifier for the department.
+    /// </summary>
+    [JsonPropertyName("icon")]
+    public string Icon { get; set; } = "🏢";
+
+    /// <summary>
+    /// Icon background color (e.g., "blue", "green", "purple").
+    /// </summary>
+    [JsonPropertyName("iconColor")]
+    public string IconColor { get; set; } = "blue";
 
     /// <summary>
     /// Employee ID of the department head.

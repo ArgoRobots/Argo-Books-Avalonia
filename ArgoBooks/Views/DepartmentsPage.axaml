@@ -1,0 +1,671 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:converters="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.DepartmentsPage"
+             x:DataType="vm:DepartmentsPageViewModel">
+
+    <Design.DataContext>
+        <vm:DepartmentsPageViewModel />
+    </Design.DataContext>
+
+    <UserControl.Resources>
+        <converters:DepartmentColorToBrushConverter x:Key="DepartmentColorToBrushConverter" />
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- Stat Card Styles -->
+        <Style Selector="Border.stat-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="BoxShadow" Value="0 1 3 0 #1a000000" />
+        </Style>
+
+        <Style Selector="Border.stat-icon">
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="48" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+
+        <Style Selector="Border.stat-icon.blue">
+            <Setter Property="Background" Value="#dbeafe" />
+        </Style>
+        <Style Selector="TextBlock.stat-icon-text.blue">
+            <Setter Property="Foreground" Value="#3b82f6" />
+        </Style>
+
+        <Style Selector="Border.stat-icon.green">
+            <Setter Property="Background" Value="#dcfce7" />
+        </Style>
+        <Style Selector="TextBlock.stat-icon-text.green">
+            <Setter Property="Foreground" Value="#22c55e" />
+        </Style>
+
+        <Style Selector="Border.stat-icon.purple">
+            <Setter Property="Background" Value="#f3e8ff" />
+        </Style>
+        <Style Selector="TextBlock.stat-icon-text.purple">
+            <Setter Property="Foreground" Value="#a855f7" />
+        </Style>
+
+        <Style Selector="TextBlock.stat-value">
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.stat-label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Table Styles -->
+        <Style Selector="Border.table-container">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BoxShadow" Value="0 1 3 0 #1a000000" />
+        </Style>
+
+        <Style Selector="Border.table-header">
+            <Setter Property="Background" Value="{DynamicResource BackgroundSecondaryBrush}" />
+            <Setter Property="Padding" Value="16 12" />
+        </Style>
+
+        <Style Selector="TextBlock.table-header-text">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <Style Selector="Border.table-row">
+            <Setter Property="Padding" Value="16 12" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0 0 0 1" />
+        </Style>
+
+        <Style Selector="Border.table-row:pointerover">
+            <Setter Property="Background" Value="{DynamicResource BackgroundSecondaryBrush}" />
+        </Style>
+
+        <!-- Badge Styles -->
+        <Style Selector="Border.badge">
+            <Setter Property="Padding" Value="8 4" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+
+        <Style Selector="Border.badge-info">
+            <Setter Property="Background" Value="#dbeafe" />
+        </Style>
+
+        <Style Selector="TextBlock.badge-info-text">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="#3b82f6" />
+        </Style>
+
+        <!-- Modal Styles -->
+        <Style Selector="Border.modal-backdrop">
+            <Setter Property="Background" Value="#80000000" />
+        </Style>
+
+        <Style Selector="Border.modal">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="BoxShadow" Value="0 20 25 -5 #3f000000" />
+            <Setter Property="Width" Value="480" />
+        </Style>
+
+        <Style Selector="Border.modal-header">
+            <Setter Property="Padding" Value="24 20" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0 0 0 1" />
+        </Style>
+
+        <Style Selector="TextBlock.modal-title">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+
+        <Style Selector="Border.modal-body">
+            <Setter Property="Padding" Value="24" />
+        </Style>
+
+        <Style Selector="Border.modal-footer">
+            <Setter Property="Padding" Value="16 20" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0 1 0 0" />
+            <Setter Property="Background" Value="{DynamicResource BackgroundSecondaryBrush}" />
+        </Style>
+
+        <!-- Form Styles -->
+        <Style Selector="TextBlock.form-label">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Margin" Value="0 0 0 8" />
+        </Style>
+
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        </Style>
+
+        <Style Selector="ComboBox.form-select">
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+
+        <!-- Button Styles -->
+        <Style Selector="Button.btn-primary">
+            <Setter Property="Background" Value="#3b82f6" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="16 10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style Selector="Button.btn-primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2563eb" />
+        </Style>
+
+        <Style Selector="Button.btn-secondary">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Padding" Value="16 10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style Selector="Button.btn-secondary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource BackgroundSecondaryBrush}" />
+        </Style>
+
+        <Style Selector="Button.btn-danger">
+            <Setter Property="Background" Value="#ef4444" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="16 10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style Selector="Button.btn-danger:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#dc2626" />
+        </Style>
+
+        <Style Selector="Button.btn-icon">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+
+        <Style Selector="Button.btn-icon:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource BackgroundSecondaryBrush}" />
+        </Style>
+
+        <!-- Search Box Style -->
+        <Style Selector="TextBox.search-box">
+            <Setter Property="Padding" Value="12 10 12 10" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Width" Value="300" />
+        </Style>
+
+        <!-- Error Text -->
+        <Style Selector="TextBlock.error-text">
+            <Setter Property="Foreground" Value="#ef4444" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+        <!-- Main Content -->
+        <ScrollViewer>
+            <StackPanel Spacing="24">
+                <!-- Stats Grid -->
+                <Grid ColumnDefinitions="*,*,*" Margin="0 0 0 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Total Departments -->
+                    <Border Grid.Column="0" Classes="stat-card" Margin="0 0 12 0">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Classes="stat-icon blue" VerticalAlignment="Center">
+                                <TextBlock Text="🏢" FontSize="20" Classes="stat-icon-text blue"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="16 0 0 0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TotalDepartments}" Classes="stat-value" />
+                                <TextBlock Text="Total Departments" Classes="stat-label" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Total Employees -->
+                    <Border Grid.Column="1" Classes="stat-card" Margin="6 0">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Classes="stat-icon green" VerticalAlignment="Center">
+                                <TextBlock Text="👥" FontSize="20" Classes="stat-icon-text green"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="16 0 0 0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TotalEmployees}" Classes="stat-value" />
+                                <TextBlock Text="Total Employees" Classes="stat-label" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- New This Month -->
+                    <Border Grid.Column="2" Classes="stat-card" Margin="12 0 0 0">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Classes="stat-icon purple" VerticalAlignment="Center">
+                                <TextBlock Text="➕" FontSize="20" Classes="stat-icon-text purple"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="16 0 0 0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding NewThisMonth}" Classes="stat-value" />
+                                <TextBlock Text="New This Month" Classes="stat-label" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Table Section -->
+                <Border Classes="table-container">
+                    <StackPanel>
+                        <!-- Table Header with Search and Add Button -->
+                        <Border Padding="20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0 0 0 1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <!-- Search Box -->
+                                <TextBox Classes="search-box"
+                                        Watermark="Search departments..."
+                                        Text="{Binding SearchQuery, Mode=TwoWay}" />
+
+                                <!-- Add Button -->
+                                <Button Grid.Column="1" Classes="btn-primary"
+                                       Command="{Binding OpenAddModalCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="+" FontSize="16" FontWeight="Bold" />
+                                        <TextBlock Text="Add Department" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Table Header -->
+                        <Border Classes="table-header" CornerRadius="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="100" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Classes="table-header-text" Text="DEPARTMENT NAME" />
+                                <TextBlock Grid.Column="1" Classes="table-header-text" Text="DESCRIPTION" />
+                                <TextBlock Grid.Column="2" Classes="table-header-text" Text="EMPLOYEES" />
+                                <TextBlock Grid.Column="3" Classes="table-header-text" Text="ACTIONS" HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Table Body -->
+                        <ItemsControl ItemsSource="{Binding Departments}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:DepartmentDisplayItem">
+                                    <Border Classes="table-row">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="2*" />
+                                                <ColumnDefinition Width="3*" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="100" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Department Name with Icon -->
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                                <Border Width="36" Height="36" CornerRadius="8"
+                                                       Background="{Binding IconColor, Converter={StaticResource DepartmentColorToBrushConverter}}">
+                                                    <TextBlock Text="{Binding Icon}" FontSize="16"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                                          VerticalAlignment="Center" />
+                                            </StackPanel>
+
+                                            <!-- Description -->
+                                            <TextBlock Grid.Column="1" Text="{Binding Description}"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}"
+                                                      VerticalAlignment="Center"
+                                                      TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Employees Badge -->
+                                            <Border Grid.Column="2" Classes="badge badge-info"
+                                                   HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding EmployeeCountDisplay}" Classes="badge-info-text" />
+                                            </Border>
+
+                                            <!-- Actions -->
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8"
+                                                       HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                <Button Classes="btn-icon"
+                                                       Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).OpenEditModalCommand}"
+                                                       CommandParameter="{Binding}">
+                                                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                             Width="16" Height="16"
+                                                             Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                </Button>
+                                                <Button Classes="btn-icon"
+                                                       Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                       CommandParameter="{Binding}">
+                                                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                             Width="16" Height="16"
+                                                             Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty State -->
+                        <Border IsVisible="{Binding !Departments.Count}" Padding="40">
+                            <StackPanel HorizontalAlignment="Center" Spacing="8">
+                                <TextBlock Text="🏢" FontSize="48" HorizontalAlignment="Center" Opacity="0.5" />
+                                <TextBlock Text="No departments found"
+                                          FontSize="16" FontWeight="SemiBold"
+                                          Foreground="{DynamicResource TextSecondaryBrush}"
+                                          HorizontalAlignment="Center" />
+                                <TextBlock Text="Add a department to get started."
+                                          FontSize="14"
+                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                          HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Add Department Modal -->
+        <Border Classes="modal-backdrop" IsVisible="{Binding IsAddModalOpen}"
+               PointerPressed="Backdrop_PointerPressed">
+            <Border Classes="modal" VerticalAlignment="Center" HorizontalAlignment="Center"
+                   PointerPressed="Modal_PointerPressed">
+                <StackPanel>
+                    <!-- Modal Header -->
+                    <Border Classes="modal-header" CornerRadius="16 16 0 0">
+                        <Grid>
+                            <TextBlock Classes="modal-title" Text="Add New Department" />
+                            <Button HorizontalAlignment="Right" Classes="btn-icon"
+                                   Command="{Binding CloseAddModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                         Width="16" Height="16"
+                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Modal Body -->
+                    <Border Classes="modal-body">
+                        <StackPanel Spacing="16">
+                            <!-- Department Name -->
+                            <StackPanel Spacing="0">
+                                <TextBlock Classes="form-label" Text="Department Name" />
+                                <TextBox Classes="form-input"
+                                        Watermark="Enter department name"
+                                        Text="{Binding ModalDepartmentName, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <!-- Description -->
+                            <StackPanel Spacing="0">
+                                <TextBlock Classes="form-label" Text="Description" />
+                                <TextBox Classes="form-input"
+                                        Watermark="Enter department description"
+                                        TextWrapping="Wrap"
+                                        AcceptsReturn="True"
+                                        MinHeight="80"
+                                        Text="{Binding ModalDescription, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <!-- Icon and Color Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <!-- Icon -->
+                                <StackPanel Grid.Column="0" Spacing="0">
+                                    <TextBlock Classes="form-label" Text="Icon" />
+                                    <ComboBox Classes="form-select"
+                                             ItemsSource="{Binding AvailableIcons}"
+                                             SelectedItem="{Binding ModalSelectedIcon}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:DepartmentIconOption">
+                                                <TextBlock Text="{Binding DisplayName}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <!-- Icon Color -->
+                                <StackPanel Grid.Column="2" Spacing="0">
+                                    <TextBlock Classes="form-label" Text="Icon Color" />
+                                    <ComboBox Classes="form-select"
+                                             ItemsSource="{Binding AvailableColors}"
+                                             SelectedItem="{Binding ModalSelectedColor}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:DepartmentColorOption">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <Border Width="16" Height="16" CornerRadius="4"
+                                                           Background="{Binding HexColor}" />
+                                                    <TextBlock Text="{Binding Name}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Error Message -->
+                            <TextBlock Classes="error-text"
+                                      Text="{Binding ModalError}"
+                                      IsVisible="{Binding ModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Modal Footer -->
+                    <Border Classes="modal-footer" CornerRadius="0 0 16 16">
+                        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                            <Button Classes="btn-secondary" Content="Cancel"
+                                   Command="{Binding CloseAddModalCommand}" />
+                            <Button Classes="btn-primary" Content="Add Department"
+                                   Command="{Binding SaveNewDepartmentCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Edit Department Modal -->
+        <Border Classes="modal-backdrop" IsVisible="{Binding IsEditModalOpen}"
+               PointerPressed="EditBackdrop_PointerPressed">
+            <Border Classes="modal" VerticalAlignment="Center" HorizontalAlignment="Center"
+                   PointerPressed="Modal_PointerPressed">
+                <StackPanel>
+                    <!-- Modal Header -->
+                    <Border Classes="modal-header" CornerRadius="16 16 0 0">
+                        <Grid>
+                            <TextBlock Classes="modal-title" Text="Edit Department" />
+                            <Button HorizontalAlignment="Right" Classes="btn-icon"
+                                   Command="{Binding CloseEditModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                         Width="16" Height="16"
+                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Modal Body -->
+                    <Border Classes="modal-body">
+                        <StackPanel Spacing="16">
+                            <!-- Department Name -->
+                            <StackPanel Spacing="0">
+                                <TextBlock Classes="form-label" Text="Department Name" />
+                                <TextBox Classes="form-input"
+                                        Watermark="Enter department name"
+                                        Text="{Binding ModalDepartmentName, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <!-- Description -->
+                            <StackPanel Spacing="0">
+                                <TextBlock Classes="form-label" Text="Description" />
+                                <TextBox Classes="form-input"
+                                        Watermark="Enter department description"
+                                        TextWrapping="Wrap"
+                                        AcceptsReturn="True"
+                                        MinHeight="80"
+                                        Text="{Binding ModalDescription, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <!-- Icon and Color Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <!-- Icon -->
+                                <StackPanel Grid.Column="0" Spacing="0">
+                                    <TextBlock Classes="form-label" Text="Icon" />
+                                    <ComboBox Classes="form-select"
+                                             ItemsSource="{Binding AvailableIcons}"
+                                             SelectedItem="{Binding ModalSelectedIcon}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:DepartmentIconOption">
+                                                <TextBlock Text="{Binding DisplayName}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <!-- Icon Color -->
+                                <StackPanel Grid.Column="2" Spacing="0">
+                                    <TextBlock Classes="form-label" Text="Icon Color" />
+                                    <ComboBox Classes="form-select"
+                                             ItemsSource="{Binding AvailableColors}"
+                                             SelectedItem="{Binding ModalSelectedColor}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:DepartmentColorOption">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <Border Width="16" Height="16" CornerRadius="4"
+                                                           Background="{Binding HexColor}" />
+                                                    <TextBlock Text="{Binding Name}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Error Message -->
+                            <TextBlock Classes="error-text"
+                                      Text="{Binding ModalError}"
+                                      IsVisible="{Binding ModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Modal Footer -->
+                    <Border Classes="modal-footer" CornerRadius="0 0 16 16">
+                        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                            <Button Classes="btn-secondary" Content="Cancel"
+                                   Command="{Binding CloseEditModalCommand}" />
+                            <Button Classes="btn-primary" Content="Save Changes"
+                                   Command="{Binding SaveEditedDepartmentCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- Delete Confirmation Modal -->
+        <Border Classes="modal-backdrop" IsVisible="{Binding IsDeleteConfirmOpen}"
+               PointerPressed="DeleteBackdrop_PointerPressed">
+            <Border Classes="modal" VerticalAlignment="Center" HorizontalAlignment="Center"
+                   Width="400"
+                   PointerPressed="Modal_PointerPressed">
+                <StackPanel>
+                    <!-- Modal Header -->
+                    <Border Classes="modal-header" CornerRadius="16 16 0 0">
+                        <Grid>
+                            <TextBlock Classes="modal-title" Text="Delete Department" />
+                            <Button HorizontalAlignment="Right" Classes="btn-icon"
+                                   Command="{Binding CloseDeleteConfirmCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                         Width="16" Height="16"
+                                         Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Modal Body -->
+                    <Border Classes="modal-body">
+                        <StackPanel Spacing="16">
+                            <!-- Warning Icon -->
+                            <Border Width="64" Height="64" CornerRadius="32"
+                                   Background="#fee2e2" HorizontalAlignment="Center">
+                                <TextBlock Text="⚠️" FontSize="28"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+
+                            <TextBlock TextWrapping="Wrap" TextAlignment="Center"
+                                      Foreground="{DynamicResource TextSecondaryBrush}">
+                                <Run Text="Are you sure you want to delete " />
+                                <Run Text="{Binding DeletingDepartmentName}" FontWeight="SemiBold"
+                                    Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Run Text="?" />
+                            </TextBlock>
+
+                            <TextBlock TextWrapping="Wrap" TextAlignment="Center"
+                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                      FontSize="13"
+                                      IsVisible="{Binding DeletingDepartmentEmployeeCount}">
+                                <Run Text="This department has " />
+                                <Run Text="{Binding DeletingDepartmentEmployeeCount}" FontWeight="SemiBold" />
+                                <Run Text=" employee(s). They will be unassigned." />
+                            </TextBlock>
+
+                            <TextBlock Text="This action cannot be undone."
+                                      TextAlignment="Center"
+                                      Foreground="#ef4444"
+                                      FontSize="13" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Modal Footer -->
+                    <Border Classes="modal-footer" CornerRadius="0 0 16 16">
+                        <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                            <Button Classes="btn-secondary" Content="Cancel"
+                                   Command="{Binding CloseDeleteConfirmCommand}" />
+                            <Button Classes="btn-danger" Content="Delete"
+                                   Command="{Binding ConfirmDeleteCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Panel>
+</UserControl>
