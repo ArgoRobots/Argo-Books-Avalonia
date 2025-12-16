@@ -646,7 +646,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenMoveModal(CategoryDisplayItem? item)
     {
-        if (item == null || !item.IsChild)
+        if (item == null)
             return;
 
         _movingCategory = item;

@@ -203,13 +203,12 @@
                                                     <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                               Width="16" Height="16" />
                                                 </Button>
-                                                <!-- Move (only for sub-categories) -->
+                                                <!-- Move to different parent/make sub-category -->
                                                 <Button Classes="icon-button"
                                                         ToolTip.Tip="Move to different category"
-                                                        IsVisible="{Binding IsChild}"
                                                         Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenMoveModalCommand}"
                                                         CommandParameter="{Binding}">
-                                                    <PathIcon Data="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"
+                                                    <PathIcon Data="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
                                                               Width="16" Height="16" />
                                                 </Button>
                                                 <Button Classes="icon-button"
@@ -732,9 +731,10 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="TabControl.page-tabs TabItem:pointerover">
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
         <Style Selector="TabControl.page-tabs TabItem:selected">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
