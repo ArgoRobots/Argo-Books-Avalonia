@@ -12,8 +12,9 @@
         <vm:SuppliersPageViewModel />
     </Design.DataContext>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled">
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="24" Spacing="24">
             <!-- Statistics Cards -->
             <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto">
@@ -951,6 +952,7 @@
             </Grid>
         </Border>
     </Panel>
+    </Grid>
 
     <UserControl.Styles>
         <!-- Search Input -->
