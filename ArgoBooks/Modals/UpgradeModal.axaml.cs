@@ -264,9 +264,9 @@ public partial class UpgradeModal : UserControl
             // Remove all non-alphanumeric characters and convert to uppercase
             var digitsOnly = new string(text.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
 
-            // Limit to 16 characters
-            if (digitsOnly.Length > 16)
-                digitsOnly = digitsOnly[..16];
+            // Limit to 20 characters
+            if (digitsOnly.Length > 20)
+                digitsOnly = digitsOnly[..20];
 
             // Insert dashes every 4 characters
             var formatted = new System.Text.StringBuilder();

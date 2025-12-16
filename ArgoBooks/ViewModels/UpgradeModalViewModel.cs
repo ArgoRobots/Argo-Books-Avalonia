@@ -135,9 +135,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
             return;
         }
 
-        if (rawKey.Length != 16)
+        if (rawKey.Length != 20)
         {
-            VerificationError = "License key must be 16 characters";
+            VerificationError = "License key must be 20 characters";
             return;
         }
 
