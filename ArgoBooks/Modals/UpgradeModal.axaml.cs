@@ -244,4 +244,62 @@ public partial class UpgradeModal : UserControl
             vm.CloseEnterKeyCommand.Execute(null);
         }
     }
+
+    private bool _isFormatting;
+
+    private void LicenseKeyTextBox_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (_isFormatting || sender is not TextBox textBox)
+            return;
+
+        _isFormatting = true;
+        try
+        {
+            var text = textBox.Text ?? string.Empty;
+            var caretIndex = textBox.CaretIndex;
+
+            // Count digits before cursor in original text
+            var digitsBeforeCaret = text.Take(caretIndex).Count(char.IsLetterOrDigit);
+
+            // Remove all non-alphanumeric characters and convert to uppercase
+            var digitsOnly = new string(text.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
+
+            // Limit to 16 characters
+            if (digitsOnly.Length > 16)
+                digitsOnly = digitsOnly[..16];
+
+            // Insert dashes every 4 characters
+            var formatted = new System.Text.StringBuilder();
+            for (int i = 0; i < digitsOnly.Length; i++)
+            {
+                if (i > 0 && i % 4 == 0)
+                    formatted.Append('-');
+                formatted.Append(digitsOnly[i]);
+            }
+
+            var formattedText = formatted.ToString();
+
+            // Only update if different to avoid infinite loop
+            if (text != formattedText)
+            {
+                textBox.Text = formattedText;
+
+                // Calculate new caret position based on digits before caret
+                var newCaretIndex = 0;
+                var digitCount = 0;
+                for (int i = 0; i < formattedText.Length && digitCount < digitsBeforeCaret; i++)
+                {
+                    newCaretIndex = i + 1;
+                    if (char.IsLetterOrDigit(formattedText[i]))
+                        digitCount++;
+                }
+
+                textBox.CaretIndex = Math.Min(newCaretIndex, formattedText.Length);
+            }
+        }
+        finally
+        {
+            _isFormatting = false;
+        }
+    }
 }

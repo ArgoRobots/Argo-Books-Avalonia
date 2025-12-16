@@ -33,50 +33,8 @@ public partial class UpgradeModalViewModel : ViewModelBase
     [ObservableProperty]
     private string? _successMessage;
 
+    [ObservableProperty]
     private string _licenseKey = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the license key with auto-formatting.
-    /// </summary>
-    public string LicenseKey
-    {
-        get => _licenseKey;
-        set
-        {
-            var formatted = FormatLicenseKey(value);
-            if (SetProperty(ref _licenseKey, formatted))
-            {
-                OnPropertyChanged(nameof(LicenseKey));
-            }
-        }
-    }
-
-    /// <summary>
-    /// Formats a license key with dashes (XXXX-XXXX-XXXX-XXXX format).
-    /// </summary>
-    private static string FormatLicenseKey(string? input)
-    {
-        if (string.IsNullOrEmpty(input))
-            return string.Empty;
-
-        // Remove all non-alphanumeric characters and convert to uppercase
-        var digitsOnly = new string(input.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
-
-        // Limit to 16 characters
-        if (digitsOnly.Length > 16)
-            digitsOnly = digitsOnly[..16];
-
-        // Insert dashes every 4 characters
-        var result = new StringBuilder();
-        for (int i = 0; i < digitsOnly.Length; i++)
-        {
-            if (i > 0 && i % 4 == 0)
-                result.Append('-');
-            result.Append(digitsOnly[i]);
-        }
-
-        return result.ToString();
-    }
 
     /// <summary>
     /// Gets the raw license key without dashes for API calls.

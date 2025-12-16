@@ -320,9 +320,11 @@
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding LicenseKey, Mode=TwoWay}"
+                                <TextBox x:Name="LicenseKeyTextBox"
+                                         Text="{Binding LicenseKey, Mode=TwoWay}"
                                          Watermark="XXXX-XXXX-XXXX-XXXX"
                                          MaxLength="19"
+                                         TextChanged="LicenseKeyTextBox_TextChanged"
                                          Classes="form-input license-key" />
                             </StackPanel>
 
