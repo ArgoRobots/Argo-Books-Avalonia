@@ -22,7 +22,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     public new event PropertyChangedEventHandler? PropertyChanged;
     private TextBox? _phoneNumberBox;
     private TextBox? _countrySearchBox;
-    private ScrollViewer? _countryScrollViewer;
+    private ListBox? _countryListBox;
     private bool _isUpdatingText;
     private bool _isFormattingPhone;
 
@@ -138,6 +138,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
                 // Refresh the list when opening
                 if (value)
                 {
+                    SelectedIndex = 0;
                     UpdateFilteredCountries();
                 }
             }
@@ -157,6 +158,24 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
             {
                 _hasFilteredCountries = value;
                 RaisePropertyChanged();
+            }
+        }
+    }
+
+    private int _selectedIndex = -1;
+    /// <summary>
+    /// Gets or sets the currently highlighted index in the dropdown.
+    /// </summary>
+    public int SelectedIndex
+    {
+        get => _selectedIndex;
+        set
+        {
+            if (_selectedIndex != value)
+            {
+                _selectedIndex = value;
+                RaisePropertyChanged();
+                ScrollToSelectedItem();
             }
         }
     }
@@ -246,18 +265,33 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
             _countrySearchBox.KeyDown += OnCountrySearchBoxKeyDown;
         }
 
-        _countryScrollViewer = this.FindControl<ScrollViewer>("CountryScrollViewer");
-        if (_countryScrollViewer != null)
+        _countryListBox = this.FindControl<ListBox>("CountryListBox");
+        if (_countryListBox != null)
         {
-            // Prevent scroll events from bubbling up to parent (modal)
-            _countryScrollViewer.PointerWheelChanged += OnCountryScrollViewerPointerWheelChanged;
+            _countryListBox.PointerWheelChanged += OnCountryListBoxPointerWheelChanged;
+            _countryListBox.PointerReleased += OnCountryListBoxPointerReleased;
         }
     }
 
-    private void OnCountryScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    private void OnCountryListBoxPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        // Mark event as handled to prevent it from bubbling up to parent scroll viewers
         e.Handled = true;
+    }
+
+    private void OnCountryListBoxPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (_countryListBox?.SelectedItem is CountryDialCode country)
+        {
+            SelectCountry(country);
+        }
+    }
+
+    private void ScrollToSelectedItem()
+    {
+        if (_countryListBox == null || SelectedIndex < 0 || SelectedIndex >= FilteredDialCodes.Count)
+            return;
+
+        _countryListBox.ScrollIntoView(FilteredDialCodes[SelectedIndex]);
     }
 
     private void ReformatPhoneNumberForNewCountry()
@@ -382,7 +416,22 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         switch (e.Key)
         {
             case Key.Down:
-                IsCountryDropdownOpen = true;
+                if (!IsCountryDropdownOpen)
+                {
+                    IsCountryDropdownOpen = true;
+                    SelectedIndex = 0;
+                }
+                else if (SelectedIndex < FilteredDialCodes.Count - 1)
+                {
+                    SelectedIndex++;
+                }
+                e.Handled = true;
+                break;
+            case Key.Up:
+                if (IsCountryDropdownOpen && SelectedIndex > 0)
+                {
+                    SelectedIndex--;
+                }
                 e.Handled = true;
                 break;
             case Key.Escape:
@@ -391,11 +440,17 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
                 e.Handled = true;
                 break;
             case Key.Enter:
-                if (FilteredDialCodes.Count > 0)
+            case Key.Tab:
+                if (IsCountryDropdownOpen && SelectedIndex >= 0 && SelectedIndex < FilteredDialCodes.Count)
+                {
+                    SelectCountry(FilteredDialCodes[SelectedIndex]);
+                }
+                else if (FilteredDialCodes.Count > 0)
                 {
                     SelectCountry(FilteredDialCodes[0]);
                 }
-                e.Handled = true;
+                if (e.Key == Key.Enter)
+                    e.Handled = true;
                 break;
         }
     }

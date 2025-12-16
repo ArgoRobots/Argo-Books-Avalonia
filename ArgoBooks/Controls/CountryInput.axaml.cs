@@ -18,7 +18,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 {
     public new event PropertyChangedEventHandler? PropertyChanged;
     private TextBox? _countrySearchBox;
-    private ScrollViewer? _countryScrollViewer;
+    private ListBox? _countryListBox;
     private bool _isUpdatingText;
 
     protected void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
@@ -108,6 +108,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
                 if (value)
                 {
+                    SelectedIndex = 0;
                     UpdateFilteredCountries();
                 }
             }
@@ -127,6 +128,24 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
             {
                 _hasFilteredCountries = value;
                 RaisePropertyChanged();
+            }
+        }
+    }
+
+    private int _selectedIndex = -1;
+    /// <summary>
+    /// Gets or sets the currently highlighted index in the dropdown.
+    /// </summary>
+    public int SelectedIndex
+    {
+        get => _selectedIndex;
+        set
+        {
+            if (_selectedIndex != value)
+            {
+                _selectedIndex = value;
+                RaisePropertyChanged();
+                ScrollToSelectedItem();
             }
         }
     }
@@ -183,16 +202,34 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
             _countrySearchBox.KeyDown += OnCountrySearchBoxKeyDown;
         }
 
-        _countryScrollViewer = this.FindControl<ScrollViewer>("CountryScrollViewer");
-        if (_countryScrollViewer != null)
+        _countryListBox = this.FindControl<ListBox>("CountryListBox");
+        if (_countryListBox != null)
         {
-            _countryScrollViewer.PointerWheelChanged += OnCountryScrollViewerPointerWheelChanged;
+            _countryListBox.DoubleTapped += OnCountryListBoxDoubleTapped;
+            _countryListBox.PointerWheelChanged += OnCountryListBoxPointerWheelChanged;
+            _countryListBox.PointerReleased += OnCountryListBoxPointerReleased;
         }
     }
 
-    private void OnCountryScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    private void OnCountryListBoxPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         e.Handled = true;
+    }
+
+    private void OnCountryListBoxDoubleTapped(object? sender, Avalonia.Input.TappedEventArgs e)
+    {
+        if (_countryListBox?.SelectedItem is CountryDialCode country)
+        {
+            SelectCountry(country);
+        }
+    }
+
+    private void OnCountryListBoxPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (_countryListBox?.SelectedItem is CountryDialCode country)
+        {
+            SelectCountry(country);
+        }
     }
 
     private void OnCountrySearchBoxGotFocus(object? sender, GotFocusEventArgs e)
@@ -206,7 +243,22 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         switch (e.Key)
         {
             case Key.Down:
-                IsDropdownOpen = true;
+                if (!IsDropdownOpen)
+                {
+                    IsDropdownOpen = true;
+                    SelectedIndex = 0;
+                }
+                else if (SelectedIndex < FilteredCountries.Count - 1)
+                {
+                    SelectedIndex++;
+                }
+                e.Handled = true;
+                break;
+            case Key.Up:
+                if (IsDropdownOpen && SelectedIndex > 0)
+                {
+                    SelectedIndex--;
+                }
                 e.Handled = true;
                 break;
             case Key.Escape:
@@ -215,13 +267,27 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
                 e.Handled = true;
                 break;
             case Key.Enter:
-                if (FilteredCountries.Count > 0)
+            case Key.Tab:
+                if (IsDropdownOpen && SelectedIndex >= 0 && SelectedIndex < FilteredCountries.Count)
+                {
+                    SelectCountry(FilteredCountries[SelectedIndex]);
+                }
+                else if (FilteredCountries.Count > 0)
                 {
                     SelectCountry(FilteredCountries[0]);
                 }
-                e.Handled = true;
+                if (e.Key == Key.Enter)
+                    e.Handled = true;
                 break;
         }
+    }
+
+    private void ScrollToSelectedItem()
+    {
+        if (_countryListBox == null || SelectedIndex < 0 || SelectedIndex >= FilteredCountries.Count)
+            return;
+
+        _countryListBox.ScrollIntoView(FilteredCountries[SelectedIndex]);
     }
 
     private void ToggleDropdown()

@@ -75,65 +75,67 @@
                     Margin="0,4,0,0"
                     BoxShadow="0 4 12 0 #20000000">
 
-                <ScrollViewer x:Name="CountryScrollViewer"
-                              HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <!-- No Results Message -->
-                        <TextBlock Text="No countries found"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   Padding="12,16"
-                                   HorizontalAlignment="Center"
-                                   IsVisible="{Binding !HasFilteredCountries}" />
+                <Grid RowDefinitions="Auto,*">
+                    <!-- No Results Message -->
+                    <TextBlock Grid.Row="0"
+                               Text="No countries found"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextTertiaryBrush}"
+                               Padding="12,16"
+                               HorizontalAlignment="Center"
+                               IsVisible="{Binding !HasFilteredCountries}" />
 
-                        <!-- Filtered Items -->
-                        <ItemsControl ItemsSource="{Binding FilteredDialCodes}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="controls:CountryDialCode">
-                                    <Button Background="Transparent"
-                                            BorderThickness="0"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Left"
-                                            Padding="10,6"
-                                            CornerRadius="0"
-                                            Cursor="Hand"
-                                            Command="{Binding $parent[controls:PhoneInput].SelectCountryCommand}"
-                                            CommandParameter="{Binding}">
-                                        <Button.Styles>
-                                            <Style Selector="Button:pointerover /template/ ContentPresenter">
-                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-                                            </Style>
-                                        </Button.Styles>
-                                        <Grid ColumnDefinitions="26,46,*">
-                                            <!-- Flag Image -->
-                                            <Image Grid.Column="0"
-                                                   Source="{Binding FlagImage}"
-                                                   Width="20" Height="14"
-                                                   Stretch="UniformToFill"
-                                                   VerticalAlignment="Center"
-                                                   Margin="0,0,4,0" />
-                                            <!-- Dial Code -->
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding DialCode}"
-                                                       FontWeight="Medium"
-                                                       FontSize="13"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <!-- Country Name -->
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{Binding Name}"
-                                                       FontSize="13"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       TextTrimming="CharacterEllipsis" />
-                                        </Grid>
-                                    </Button>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </ScrollViewer>
+                    <!-- Filtered Items -->
+                    <ListBox Grid.Row="1"
+                             x:Name="CountryListBox"
+                             ItemsSource="{Binding FilteredDialCodes}"
+                             SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             IsVisible="{Binding HasFilteredCountries}">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="Padding" Value="10,6" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                            <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                            </Style>
+                            <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="controls:CountryDialCode">
+                                <Grid ColumnDefinitions="26,46,*">
+                                    <!-- Flag Image -->
+                                    <Image Grid.Column="0"
+                                           Source="{Binding FlagImage}"
+                                           Width="20" Height="14"
+                                           Stretch="UniformToFill"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,4,0" />
+                                    <!-- Dial Code -->
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding DialCode}"
+                                               FontWeight="Medium"
+                                               FontSize="13"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <!-- Country Name -->
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Name}"
+                                               FontSize="13"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
             </Border>
         </Popup>
 
