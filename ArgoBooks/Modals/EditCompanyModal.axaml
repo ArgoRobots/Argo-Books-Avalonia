@@ -62,10 +62,12 @@
                     <StackPanel Spacing="16" Margin="24,16">
                         <!-- Company Name -->
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Company Name *"
-                                       FontSize="13"
+                            <TextBlock FontSize="13"
                                        FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                       Foreground="{DynamicResource TextSecondaryBrush}">
+                                <Run Text="Company Name" />
+                                <Run Text="*" Foreground="#dc2626" />
+                            </TextBlock>
                             <TextBox Classes="form-input"
                                      Text="{Binding CompanyName, Mode=TwoWay}"
                                      Watermark="Enter company name" />

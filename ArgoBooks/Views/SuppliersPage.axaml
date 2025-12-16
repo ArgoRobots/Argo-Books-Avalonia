@@ -438,31 +438,46 @@
                                      Watermark="Enter contact person name" />
                         </StackPanel>
 
-                        <!-- Email and Phone Row -->
-                        <Grid ColumnDefinitions="*,16,*">
-                            <StackPanel Grid.Column="0" Spacing="6">
-                                <TextBlock Text="Email"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalEmail, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         Watermark="email@example.com" />
-                                <TextBlock Text="{Binding ModalEmailError}"
-                                           FontSize="12"
-                                           Foreground="#dc2626"
-                                           IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Spacing="6">
-                                <TextBlock Text="Phone"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalPhone, Mode=TwoWay}"
+                        <!-- Email -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Email"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox Text="{Binding ModalEmail, Mode=TwoWay}"
+                                     Classes="form-input"
+                                     Watermark="email@example.com" />
+                            <TextBlock Text="{Binding ModalEmailError}"
+                                       FontSize="12"
+                                       Foreground="#dc2626"
+                                       IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+
+                        <!-- Phone with Country Code -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Phone"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <Grid ColumnDefinitions="Auto,8,*">
+                                <ComboBox Grid.Column="0"
+                                          ItemsSource="{Binding DialCodes}"
+                                          SelectedItem="{Binding ModalPhoneCountryCode}"
+                                          Classes="form-combobox"
+                                          Width="110"
+                                          PlaceholderText="+1">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate DataType="vm:CountryDialCode">
+                                            <TextBlock Text="{Binding DisplayName}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBox Grid.Column="2"
+                                         Text="{Binding ModalPhone, Mode=TwoWay}"
                                          Classes="form-input"
                                          Watermark="(555) 123-4567" />
-                            </StackPanel>
-                        </Grid>
+                            </Grid>
+                        </StackPanel>
 
                         <!-- Address Section -->
                         <TextBlock Text="Address"
@@ -653,31 +668,46 @@
                                      Watermark="Enter contact person name" />
                         </StackPanel>
 
-                        <!-- Email and Phone Row -->
-                        <Grid ColumnDefinitions="*,16,*">
-                            <StackPanel Grid.Column="0" Spacing="6">
-                                <TextBlock Text="Email"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalEmail, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         Watermark="email@example.com" />
-                                <TextBlock Text="{Binding ModalEmailError}"
-                                           FontSize="12"
-                                           Foreground="#dc2626"
-                                           IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Spacing="6">
-                                <TextBlock Text="Phone"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalPhone, Mode=TwoWay}"
+                        <!-- Email -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Email"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox Text="{Binding ModalEmail, Mode=TwoWay}"
+                                     Classes="form-input"
+                                     Watermark="email@example.com" />
+                            <TextBlock Text="{Binding ModalEmailError}"
+                                       FontSize="12"
+                                       Foreground="#dc2626"
+                                       IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+
+                        <!-- Phone with Country Code -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Phone"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <Grid ColumnDefinitions="Auto,8,*">
+                                <ComboBox Grid.Column="0"
+                                          ItemsSource="{Binding DialCodes}"
+                                          SelectedItem="{Binding ModalPhoneCountryCode}"
+                                          Classes="form-combobox"
+                                          Width="110"
+                                          PlaceholderText="+1">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate DataType="vm:CountryDialCode">
+                                            <TextBlock Text="{Binding DisplayName}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBox Grid.Column="2"
+                                         Text="{Binding ModalPhone, Mode=TwoWay}"
                                          Classes="form-input"
                                          Watermark="(555) 123-4567" />
-                            </StackPanel>
-                        </Grid>
+                            </Grid>
+                        </StackPanel>
 
                         <!-- Address Section -->
                         <TextBlock Text="Address"
