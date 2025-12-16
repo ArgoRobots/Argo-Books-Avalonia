@@ -32,6 +32,11 @@ public partial class App : Application
     /// </summary>
     public static GlobalSettingsService? SettingsService { get; private set; }
 
+    /// <summary>
+    /// Gets the shared undo/redo manager instance.
+    /// </summary>
+    public static Services.UndoRedoManager? UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
@@ -1032,7 +1037,7 @@ public partial class App : Application
         navigationService.RegisterPage("Products", _ => CreatePlaceholderPage("Products", "Manage products and services"));
         navigationService.RegisterPage("StockLevels", _ => CreatePlaceholderPage("Stock Levels", "Monitor inventory levels"));
         navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
-        navigationService.RegisterPage("Categories", _ => CreatePlaceholderPage("Categories", "Organize items by category"));
+        navigationService.RegisterPage("Categories", _ => new CategoriesPage { DataContext = new CategoriesPageViewModel() });
 
         // Contacts Section
         navigationService.RegisterPage("Customers", _ => CreatePlaceholderPage("Customers", "Manage customer information"));

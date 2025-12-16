@@ -74,6 +74,26 @@
         <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
     </Style>
 
+    <!-- Global Hand Cursor for Clickable Controls -->
+    <Style Selector="Button">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="TabItem">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="RadioButton">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="CheckBox">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ToggleButton">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ToggleSwitch">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
     <!-- Global TextBox Styling - Fix hover state -->
     <Style Selector="TextBox">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
@@ -97,6 +117,7 @@
 
     <!-- Global ComboBox Styling - Fix hover state -->
     <Style Selector="ComboBox">
+        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />

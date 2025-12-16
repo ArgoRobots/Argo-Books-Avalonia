@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ArgoBooks.Core.Enums;
 
 namespace ArgoBooks.Core.Models.Entities;
@@ -30,6 +31,18 @@ public class Category
     /// </summary>
     [JsonPropertyName("parentId")]
     public string? ParentId { get; set; }
+
+    /// <summary>
+    /// Description of the category.
+    /// </summary>
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Whether this category is for Products or Services.
+    /// </summary>
+    [JsonPropertyName("itemType")]
+    public string ItemType { get; set; } = "Product";
 
     /// <summary>
     /// Color code for UI display (hex format).

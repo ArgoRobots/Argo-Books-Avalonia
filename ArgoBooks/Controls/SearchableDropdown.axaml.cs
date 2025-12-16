@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Input;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -258,6 +259,23 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         {
             OnSearchTextChanged();
         }
+        else if (change.Property == SelectedItemProperty)
+        {
+            // Sync SearchText when SelectedItem is set programmatically
+            OnSelectedItemChanged(change.NewValue);
+        }
+    }
+
+    private void OnSelectedItemChanged(object? newValue)
+    {
+        if (newValue != null)
+        {
+            SearchText = GetDisplayText(newValue);
+        }
+        else
+        {
+            SearchText = string.Empty;
+        }
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
@@ -383,16 +401,40 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         if (ItemsSource == null)
             return;
 
-        var searchText = SearchText?.ToLowerInvariant() ?? string.Empty;
+        var searchText = SearchText ?? string.Empty;
 
-        foreach (var item in ItemsSource)
+        if (string.IsNullOrEmpty(searchText))
         {
-            if (item == null)
-                continue;
+            // No search - show all items
+            foreach (var item in ItemsSource)
+            {
+                if (item != null)
+                {
+                    FilteredItems.Add(item);
+                }
+            }
+        }
+        else
+        {
+            // Use Levenshtein distance for fuzzy matching
+            var scoredItems = new List<(object Item, double Score)>();
 
-            var displayText = GetDisplayText(item).ToLowerInvariant();
+            foreach (var item in ItemsSource)
+            {
+                if (item == null)
+                    continue;
 
-            if (string.IsNullOrEmpty(searchText) || displayText.Contains(searchText))
+                var displayText = GetDisplayText(item);
+                var score = LevenshteinDistance.ComputeSearchScore(searchText, displayText);
+
+                if (score >= 0)
+                {
+                    scoredItems.Add((item, score));
+                }
+            }
+
+            // Sort by score descending and add to filtered items
+            foreach (var (item, _) in scoredItems.OrderByDescending(x => x.Score))
             {
                 FilteredItems.Add(item);
             }

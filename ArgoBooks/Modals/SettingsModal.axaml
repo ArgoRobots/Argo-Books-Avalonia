@@ -1186,8 +1186,14 @@
         <Style Selector="TabItem:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
+        <Style Selector="TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
         <Style Selector="TabItem:selected">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
         <Style Selector="TabItem:selected:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
