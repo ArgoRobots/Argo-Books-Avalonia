@@ -86,15 +86,15 @@ public partial class CategoriesPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDeleteConfirmOpen;
 
+    [ObservableProperty]
+    private bool _isMoveModalOpen;
+
     #endregion
 
     #region Modal Form Fields
 
     [ObservableProperty]
     private string _modalCategoryName = string.Empty;
-
-    [ObservableProperty]
-    private CategoryDisplayItem? _modalParentCategory;
 
     [ObservableProperty]
     private string _modalDescription = string.Empty;
@@ -118,14 +118,53 @@ public partial class CategoriesPageViewModel : ViewModelBase
     /// </summary>
     private CategoryDisplayItem? _deletingCategory;
 
+    /// <summary>
+    /// The parent category when adding a sub-category.
+    /// </summary>
+    private CategoryDisplayItem? _addingSubCategoryParent;
+
+    /// <summary>
+    /// The category being moved.
+    /// </summary>
+    private CategoryDisplayItem? _movingCategory;
+
+    #endregion
+
+    #region Sub-Category Add Properties
+
+    /// <summary>
+    /// Gets whether we're adding a sub-category (vs top-level category).
+    /// </summary>
+    public bool IsAddingSubCategory => _addingSubCategoryParent != null;
+
+    /// <summary>
+    /// Gets the name of the parent category when adding a sub-category.
+    /// </summary>
+    public string AddingSubCategoryParentName => _addingSubCategoryParent?.Name ?? string.Empty;
+
+    #endregion
+
+    #region Move Modal Properties
+
+    [ObservableProperty]
+    private CategoryDisplayItem? _moveTargetCategory;
+
+    [ObservableProperty]
+    private string? _moveError;
+
+    /// <summary>
+    /// Available target categories for moving.
+    /// </summary>
+    public ObservableCollection<CategoryDisplayItem> MoveTargetCategories { get; } = [];
+
+    /// <summary>
+    /// Gets the name of the category being moved.
+    /// </summary>
+    public string MovingCategoryName => _movingCategory?.Name ?? string.Empty;
+
     #endregion
 
     #region Dropdown Options
-
-    /// <summary>
-    /// Available parent categories for the current tab.
-    /// </summary>
-    public ObservableCollection<CategoryDisplayItem> AvailableParentCategories { get; } = [];
 
     /// <summary>
     /// Item types (Product/Service).
@@ -256,8 +295,6 @@ public partial class CategoriesPageViewModel : ViewModelBase
             targetCollection.Add(CreateDisplayItem(orphan, "Unknown", childCount));
         }
 
-        // Update available parent categories for modal
-        UpdateAvailableParentCategories();
         OnPropertyChanged(nameof(CurrentCategories));
     }
 
@@ -289,49 +326,38 @@ public partial class CategoriesPageViewModel : ViewModelBase
         return _allCategories.Count(c => c.ParentId == parentId);
     }
 
-    private void UpdateAvailableParentCategories()
-    {
-        AvailableParentCategories.Clear();
-
-        // Add empty option for no parent
-        AvailableParentCategories.Add(new CategoryDisplayItem { Id = string.Empty, Name = "None (Top Level)" });
-
-        var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
-
-        // Only include top-level categories as potential parents
-        var topLevelCategories = _allCategories
-            .Where(c => c.Type == targetType && string.IsNullOrEmpty(c.ParentId))
-            .OrderBy(c => c.Name);
-
-        foreach (var cat in topLevelCategories)
-        {
-            // Don't allow a category to be its own parent
-            if (_editingCategory != null && cat.Id == _editingCategory.Id)
-                continue;
-
-            AvailableParentCategories.Add(new CategoryDisplayItem
-            {
-                Id = cat.Id,
-                Name = cat.Name,
-                Color = cat.Color,
-                Icon = cat.Icon
-            });
-        }
-    }
-
     #endregion
 
     #region Add Category
 
     /// <summary>
-    /// Opens the Add Category modal.
+    /// Opens the Add Category modal (for top-level category).
     /// </summary>
     [RelayCommand]
     private void OpenAddModal()
     {
         _editingCategory = null;
+        _addingSubCategoryParent = null;
         ClearModalFields();
-        UpdateAvailableParentCategories();
+        OnPropertyChanged(nameof(IsAddingSubCategory));
+        OnPropertyChanged(nameof(AddingSubCategoryParentName));
+        IsAddModalOpen = true;
+    }
+
+    /// <summary>
+    /// Opens the Add Category modal for adding a sub-category under a parent.
+    /// </summary>
+    [RelayCommand]
+    private void OpenAddSubCategoryModal(CategoryDisplayItem? parent)
+    {
+        if (parent == null)
+            return;
+
+        _editingCategory = null;
+        _addingSubCategoryParent = parent;
+        ClearModalFields();
+        OnPropertyChanged(nameof(IsAddingSubCategory));
+        OnPropertyChanged(nameof(AddingSubCategoryParentName));
         IsAddModalOpen = true;
     }
 
@@ -363,12 +389,15 @@ public partial class CategoriesPageViewModel : ViewModelBase
         var typePrefix = IsExpensesTabSelected ? "PUR" : "SAL";
         var newId = $"CAT-{typePrefix}-{companyData.IdCounters.Category:D3}";
 
+        // Use the sub-category parent if adding a sub-category
+        var parentId = IsAddingSubCategory ? _addingSubCategoryParent?.Id : null;
+
         var newCategory = new Category
         {
             Id = newId,
             Name = ModalCategoryName.Trim(),
             Type = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales,
-            ParentId = ModalParentCategory?.Id != string.Empty ? ModalParentCategory?.Id : null,
+            ParentId = parentId,
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
             ItemType = ModalItemType,
             Color = "#4A90D9",
@@ -420,23 +449,12 @@ public partial class CategoriesPageViewModel : ViewModelBase
             return;
 
         _editingCategory = category;
-        UpdateAvailableParentCategories();
 
         // Populate fields
         ModalCategoryName = category.Name;
         ModalDescription = category.Description ?? string.Empty;
         ModalItemType = category.ItemType;
         ModalSelectedIconOption = AvailableIcons.FirstOrDefault(i => i.Icon == category.Icon) ?? AvailableIcons.First();
-
-        // Set parent
-        if (!string.IsNullOrEmpty(category.ParentId))
-        {
-            ModalParentCategory = AvailableParentCategories.FirstOrDefault(c => c.Id == category.ParentId);
-        }
-        else
-        {
-            ModalParentCategory = AvailableParentCategories.FirstOrDefault(c => c.Id == string.Empty);
-        }
 
         ModalError = null;
         IsEditModalOpen = true;
@@ -468,22 +486,19 @@ public partial class CategoriesPageViewModel : ViewModelBase
 
         // Store old values for undo
         var oldName = _editingCategory.Name;
-        var oldParentId = _editingCategory.ParentId;
         var oldDescription = _editingCategory.Description;
         var oldItemType = _editingCategory.ItemType;
         var oldIcon = _editingCategory.Icon;
 
-        // Store new values
+        // Store new values (parent is changed via Move, not Edit)
         var newName = ModalCategoryName.Trim();
-        var newParentId = ModalParentCategory?.Id != string.Empty ? ModalParentCategory?.Id : null;
         var newDescription = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim();
         var newItemType = ModalItemType;
         var newIcon = ModalSelectedIconOption?.Icon ?? "📦";
 
-        // Update the category
+        // Update the category (keep parent unchanged)
         var categoryToEdit = _editingCategory;
         categoryToEdit.Name = newName;
-        categoryToEdit.ParentId = newParentId;
         categoryToEdit.Description = newDescription;
         categoryToEdit.ItemType = newItemType;
         categoryToEdit.Icon = newIcon;
@@ -497,7 +512,6 @@ public partial class CategoriesPageViewModel : ViewModelBase
             () =>
             {
                 categoryToEdit.Name = oldName;
-                categoryToEdit.ParentId = oldParentId;
                 categoryToEdit.Description = oldDescription;
                 categoryToEdit.ItemType = oldItemType;
                 categoryToEdit.Icon = oldIcon;
@@ -507,7 +521,6 @@ public partial class CategoriesPageViewModel : ViewModelBase
             () =>
             {
                 categoryToEdit.Name = newName;
-                categoryToEdit.ParentId = newParentId;
                 categoryToEdit.Description = newDescription;
                 categoryToEdit.ItemType = newItemType;
                 categoryToEdit.Icon = newIcon;
@@ -625,16 +638,143 @@ public partial class CategoriesPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Move Category
+
+    /// <summary>
+    /// Opens the Move Category modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenMoveModal(CategoryDisplayItem? item)
+    {
+        if (item == null || !item.IsChild)
+            return;
+
+        _movingCategory = item;
+        MoveError = null;
+        UpdateMoveTargetCategories();
+        OnPropertyChanged(nameof(MovingCategoryName));
+        IsMoveModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the Move modal.
+    /// </summary>
+    [RelayCommand]
+    private void CloseMoveModal()
+    {
+        IsMoveModalOpen = false;
+        _movingCategory = null;
+        MoveTargetCategory = null;
+        MoveError = null;
+    }
+
+    /// <summary>
+    /// Confirms and moves the category to the new parent.
+    /// </summary>
+    [RelayCommand]
+    private void ConfirmMove()
+    {
+        if (_movingCategory == null || MoveTargetCategory == null)
+        {
+            MoveError = "Please select a target category.";
+            return;
+        }
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+            return;
+
+        var category = companyData.Categories.FirstOrDefault(c => c.Id == _movingCategory.Id);
+        if (category == null)
+            return;
+
+        // Store old parent for undo
+        var oldParentId = category.ParentId;
+        var newParentId = string.IsNullOrEmpty(MoveTargetCategory.Id) ? null : MoveTargetCategory.Id;
+
+        // Don't move if same parent
+        if (oldParentId == newParentId)
+        {
+            MoveError = "Category is already under this parent.";
+            return;
+        }
+
+        // Update parent
+        category.ParentId = newParentId;
+        companyData.MarkAsModified();
+
+        // Record undo action
+        var categoryToMove = category;
+        App.UndoRedoManager?.RecordAction(new CategoryMoveAction(
+            $"Move category '{category.Name}'",
+            categoryToMove,
+            () =>
+            {
+                categoryToMove.ParentId = oldParentId;
+                companyData.MarkAsModified();
+                LoadCategories();
+            },
+            () =>
+            {
+                categoryToMove.ParentId = newParentId;
+                companyData.MarkAsModified();
+                LoadCategories();
+            }));
+
+        LoadCategories();
+        CloseMoveModal();
+    }
+
+    /// <summary>
+    /// Updates the available target categories for moving.
+    /// </summary>
+    private void UpdateMoveTargetCategories()
+    {
+        MoveTargetCategories.Clear();
+
+        // Add "None" option to make it a top-level category
+        MoveTargetCategories.Add(new CategoryDisplayItem { Id = string.Empty, Name = "None (Make Top-Level)" });
+
+        var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
+
+        // Only include top-level categories (that are not the current category's parent)
+        var topLevelCategories = _allCategories
+            .Where(c => c.Type == targetType && string.IsNullOrEmpty(c.ParentId))
+            .OrderBy(c => c.Name);
+
+        foreach (var cat in topLevelCategories)
+        {
+            // Don't include the category itself as a target
+            if (_movingCategory != null && cat.Id == _movingCategory.Id)
+                continue;
+
+            MoveTargetCategories.Add(new CategoryDisplayItem
+            {
+                Id = cat.Id,
+                Name = cat.Name,
+                Icon = cat.Icon
+            });
+        }
+
+        // Pre-select current parent if it exists
+        if (_movingCategory?.ParentId != null)
+        {
+            MoveTargetCategory = MoveTargetCategories.FirstOrDefault(c => c.Id == _movingCategory.ParentId);
+        }
+    }
+
+    #endregion
+
     #region Modal Helpers
 
     private void ClearModalFields()
     {
         ModalCategoryName = string.Empty;
-        ModalParentCategory = AvailableParentCategories.FirstOrDefault(c => c.Id == string.Empty);
         ModalDescription = string.Empty;
         ModalItemType = "Product";
         ModalSelectedIconOption = AvailableIcons.FirstOrDefault();
         ModalError = null;
+        _addingSubCategoryParent = null;
     }
 
     private bool ValidateModal()
@@ -787,6 +927,29 @@ public class CategoryDeleteAction : IUndoableAction
     public string Description { get; }
 
     public CategoryDeleteAction(string description, Category category, Action undoAction, Action redoAction)
+    {
+        Description = description;
+        _category = category;
+        _undoAction = undoAction;
+        _redoAction = redoAction;
+    }
+
+    public void Undo() => _undoAction();
+    public void Redo() => _redoAction();
+}
+
+/// <summary>
+/// Undoable action for moving a category.
+/// </summary>
+public class CategoryMoveAction : IUndoableAction
+{
+    private readonly Category _category;
+    private readonly Action _undoAction;
+    private readonly Action _redoAction;
+
+    public string Description { get; }
+
+    public CategoryMoveAction(string description, Category category, Action undoAction, Action redoAction)
     {
         Description = description;
         _category = category;

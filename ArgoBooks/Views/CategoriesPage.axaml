@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
-             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.CategoriesPage"
              x:DataType="vm:CategoriesPageViewModel">
@@ -104,7 +103,7 @@
                         <Border Grid.Row="0"
                                 Background="{DynamicResource SurfaceAltBrush}"
                                 Padding="24,12">
-                            <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,100">
+                            <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,140">
                                 <TextBlock Grid.Column="0"
                                            Text="Category Name"
                                            FontSize="12"
@@ -147,7 +146,7 @@
                                     <Border Padding="24,16"
                                             BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="0,0,0,1">
-                                        <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,100">
+                                        <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,140">
                                             <!-- Category Name with Icon -->
                                             <StackPanel Grid.Column="0"
                                                         Orientation="Horizontal"
@@ -202,6 +201,24 @@
                                                         Orientation="Horizontal"
                                                         HorizontalAlignment="Right"
                                                         Spacing="4">
+                                                <!-- Add Sub-category (only for parent categories) -->
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="Add Sub-category"
+                                                        IsVisible="{Binding !IsChild}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenAddSubCategoryModalCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                              Width="16" Height="16" />
+                                                </Button>
+                                                <!-- Move (only for sub-categories) -->
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="Move to different category"
+                                                        IsVisible="{Binding IsChild}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenMoveModalCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"
+                                                              Width="16" Height="16" />
+                                                </Button>
                                                 <Button Classes="icon-button"
                                                         ToolTip.Tip="Edit"
                                                         Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenEditModalCommand}"
@@ -318,13 +335,21 @@
                                          Watermark="Enter category name" />
                             </StackPanel>
 
-                            <!-- Parent Category -->
-                            <controls:SearchableDropdown
-                                ItemsSource="{Binding AvailableParentCategories}"
-                                SelectedItem="{Binding ModalParentCategory}"
-                                DisplayMemberPath="Name"
-                                Placeholder="Search or select parent category..."
-                                SelectionChanged="ParentCategory_SelectionChanged" />
+                            <!-- Parent Category (shown only when adding sub-category) -->
+                            <StackPanel Spacing="6"
+                                        IsVisible="{Binding IsAddingSubCategory}">
+                                <TextBlock Text="Parent Category"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,10">
+                                    <TextBlock Text="{Binding AddingSubCategoryParentName}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </Border>
+                            </StackPanel>
 
                             <!-- Description -->
                             <StackPanel Spacing="6">
@@ -448,14 +473,6 @@
                                          Classes="form-input"
                                          Watermark="Enter category name" />
                             </StackPanel>
-
-                            <!-- Parent Category -->
-                            <controls:SearchableDropdown
-                                ItemsSource="{Binding AvailableParentCategories}"
-                                SelectedItem="{Binding ModalParentCategory}"
-                                DisplayMemberPath="Name"
-                                Placeholder="Search or select parent category..."
-                                SelectionChanged="ParentCategory_SelectionChanged" />
 
                             <!-- Description -->
                             <StackPanel Spacing="6">
@@ -597,6 +614,103 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Move Category Modal -->
+        <Panel Grid.RowSpan="2"
+               IsVisible="{Binding IsMoveModalOpen}">
+            <Border Background="#80000000"
+                    PointerPressed="MoveBackdrop_PointerPressed" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="450"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Move Category"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseMoveModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Form Content -->
+                    <StackPanel Grid.Row="1" Margin="24" Spacing="20">
+                        <!-- Current Category -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Moving"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="6"
+                                    Padding="12,10">
+                                <TextBlock Text="{Binding MovingCategoryName}"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                            </Border>
+                        </StackPanel>
+
+                        <!-- New Parent Category -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Move to"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding MoveTargetCategories}"
+                                      SelectedItem="{Binding MoveTargetCategory}"
+                                      Classes="form-combobox"
+                                      PlaceholderText="Select new parent category">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate DataType="vm:CategoryDisplayItem">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <!-- Error Message -->
+                        <TextBlock Text="{Binding MoveError}"
+                                   FontSize="12"
+                                   Foreground="#dc2626"
+                                   IsVisible="{Binding MoveError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    Spacing="12">
+                            <Button Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding CloseMoveModalCommand}" />
+                            <Button Classes="primary-button"
+                                    Content="Move"
+                                    Command="{Binding ConfirmMoveCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </Border>
         </Panel>
     </Grid>

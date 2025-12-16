@@ -64,13 +64,10 @@ public partial class CategoriesPage : UserControl
     }
 
     /// <summary>
-    /// Handles parent category selection from the searchable dropdown.
+    /// Closes the Move modal when backdrop is clicked.
     /// </summary>
-    private void ParentCategory_SelectionChanged(object? sender, object? e)
+    private void MoveBackdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (ViewModel != null && e is CategoryDisplayItem selectedCategory)
-        {
-            ViewModel.ModalParentCategory = selectedCategory;
-        }
+        ViewModel?.CloseMoveModalCommand.Execute(null);
     }
 }
