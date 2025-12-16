@@ -853,16 +853,14 @@ public partial class SupplierDisplayItem : ObservableObject
 /// </summary>
 public class SupplierAddAction : IUndoableAction
 {
-    private readonly Supplier _supplier;
     private readonly Action _undoAction;
     private readonly Action _redoAction;
 
     public string Description { get; }
 
-    public SupplierAddAction(string description, Supplier supplier, Action undoAction, Action redoAction)
+    public SupplierAddAction(string description, Supplier _, Action undoAction, Action redoAction)
     {
         Description = description;
-        _supplier = supplier;
         _undoAction = undoAction;
         _redoAction = redoAction;
     }
@@ -876,16 +874,14 @@ public class SupplierAddAction : IUndoableAction
 /// </summary>
 public class SupplierEditAction : IUndoableAction
 {
-    private readonly Supplier _supplier;
     private readonly Action _undoAction;
     private readonly Action _redoAction;
 
     public string Description { get; }
 
-    public SupplierEditAction(string description, Supplier supplier, Action undoAction, Action redoAction)
+    public SupplierEditAction(string description, Supplier _, Action undoAction, Action redoAction)
     {
         Description = description;
-        _supplier = supplier;
         _undoAction = undoAction;
         _redoAction = redoAction;
     }
@@ -899,16 +895,14 @@ public class SupplierEditAction : IUndoableAction
 /// </summary>
 public class SupplierDeleteAction : IUndoableAction
 {
-    private readonly Supplier _supplier;
     private readonly Action _undoAction;
     private readonly Action _redoAction;
 
     public string Description { get; }
 
-    public SupplierDeleteAction(string description, Supplier supplier, Action undoAction, Action redoAction)
+    public SupplierDeleteAction(string description, Supplier _, Action undoAction, Action redoAction)
     {
         Description = description;
-        _supplier = supplier;
         _undoAction = undoAction;
         _redoAction = redoAction;
     }
