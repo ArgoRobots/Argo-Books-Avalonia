@@ -15,7 +15,7 @@
     <Grid>
         <ScrollViewer VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="24" Spacing="24">
+            <StackPanel Margin="24" Spacing="24">
             <!-- Statistics Cards -->
             <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto">
                 <Grid.Styles>
