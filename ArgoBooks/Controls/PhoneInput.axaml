@@ -16,7 +16,7 @@
                 BorderThickness="1"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
-                MinWidth="120"
+                MinWidth="80"
                 Classes.focused="{Binding IsCountryDropdownOpen}">
             <Border.Styles>
                 <Style Selector="Border.focused">
@@ -35,22 +35,23 @@
                          Watermark="+1"
                          Background="Transparent"
                          BorderThickness="0"
-                         Padding="10,8"
+                         Padding="8,8"
                          FontSize="14"
+                         MinWidth="50"
                          VerticalAlignment="Center" />
 
                 <!-- Dropdown Arrow -->
                 <Button Grid.Column="1"
                         Background="Transparent"
                         BorderThickness="0"
-                        Width="28" Height="28"
+                        Width="24" Height="24"
                         Margin="0,0,4,0"
                         Padding="0"
                         CornerRadius="4"
                         Cursor="Hand"
                         Command="{Binding ToggleCountryDropdownCommand}">
                     <PathIcon Data="M7 10l5 5 5-5z"
-                              Width="14" Height="14"
+                              Width="12" Height="12"
                               Foreground="{DynamicResource TextTertiaryBrush}" />
                 </Button>
             </Grid>
@@ -69,7 +70,7 @@
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="6"
-                    Width="320"
+                    Width="280"
                     MaxHeight="300"
                     Margin="0,4,0,0"
                     BoxShadow="0 4 12 0 #20000000">
@@ -93,7 +94,7 @@
                                             BorderThickness="0"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Left"
-                                            Padding="12,8"
+                                            Padding="10,6"
                                             CornerRadius="0"
                                             Cursor="Hand"
                                             Command="{Binding $parent[controls:PhoneInput].SelectCountryCommand}"
@@ -103,14 +104,14 @@
                                                 <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
                                             </Style>
                                         </Button.Styles>
-                                        <Grid ColumnDefinitions="28,50,*">
+                                        <Grid ColumnDefinitions="26,46,*">
                                             <!-- Flag Image -->
                                             <Image Grid.Column="0"
-                                                   Source="{Binding FlagPath}"
-                                                   Width="22" Height="16"
+                                                   Source="{Binding FlagImage}"
+                                                   Width="20" Height="14"
                                                    Stretch="UniformToFill"
                                                    VerticalAlignment="Center"
-                                                   Margin="0,0,6,0" />
+                                                   Margin="0,0,4,0" />
                                             <!-- Dial Code -->
                                             <TextBlock Grid.Column="1"
                                                        Text="{Binding DialCode}"
@@ -138,7 +139,6 @@
         <!-- Phone Number TextBox with auto-formatting -->
         <TextBox Grid.Column="2"
                  x:Name="PhoneNumberBox"
-                 Text="{Binding FormattedPhoneNumber, Mode=TwoWay}"
                  Watermark="(555) 123-4567"
                  Background="{DynamicResource SurfaceBrush}"
                  BorderBrush="{DynamicResource BorderBrush}"

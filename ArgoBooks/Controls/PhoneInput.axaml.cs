@@ -7,6 +7,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
@@ -22,6 +23,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     private TextBox? _phoneNumberBox;
     private TextBox? _countrySearchBox;
     private bool _isUpdatingText;
+    private bool _isFormattingPhone;
 
     protected void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
     {
@@ -104,16 +106,16 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         get => _formattedPhoneNumber;
         set
         {
-            if (_formattedPhoneNumber != value && !_isUpdatingText)
+            if (_formattedPhoneNumber != value && !_isFormattingPhone)
             {
-                _isUpdatingText = true;
+                _isFormattingPhone = true;
                 var rawDigits = ExtractDigits(value);
                 var formatted = FormatPhoneNumber(rawDigits);
                 _formattedPhoneNumber = formatted;
                 PhoneNumber = rawDigits;
                 UpdateFullPhoneNumber();
                 RaisePropertyChanged();
-                _isUpdatingText = false;
+                _isFormattingPhone = false;
             }
         }
     }
@@ -379,7 +381,6 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         if (_phoneNumberBox != null)
         {
             _phoneNumberBox.TextChanged += OnPhoneNumberTextChanged;
-            _phoneNumberBox.KeyDown += OnPhoneNumberKeyDown;
         }
 
         if (_countrySearchBox != null)
@@ -391,31 +392,45 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 
     private void OnPhoneNumberTextChanged(object? sender, TextChangedEventArgs e)
     {
-        if (_isUpdatingText || _phoneNumberBox == null)
+        if (_isFormattingPhone || _phoneNumberBox == null)
             return;
-    }
 
-    private void OnPhoneNumberKeyDown(object? sender, KeyEventArgs e)
-    {
-        // Allow navigation and deletion keys
-        if (e.Key == Key.Left || e.Key == Key.Right || e.Key == Key.Home ||
-            e.Key == Key.End || e.Key == Key.Delete || e.Key == Key.Back ||
-            e.Key == Key.Tab)
+        _isFormattingPhone = true;
+
+        var currentText = _phoneNumberBox.Text ?? string.Empty;
+        var caretIndex = _phoneNumberBox.CaretIndex;
+
+        // Extract digits and format
+        var rawDigits = ExtractDigits(currentText);
+        var formatted = FormatPhoneNumber(rawDigits);
+
+        // Only update if different
+        if (formatted != currentText)
         {
-            return;
+            // Calculate new caret position
+            var digitsBeforeCaret = ExtractDigits(currentText[..Math.Min(caretIndex, currentText.Length)]).Length;
+
+            _formattedPhoneNumber = formatted;
+            _phoneNumberBox.Text = formatted;
+
+            // Find position in formatted string that corresponds to same number of digits
+            var newCaretPos = 0;
+            var digitCount = 0;
+            for (int i = 0; i < formatted.Length && digitCount < digitsBeforeCaret; i++)
+            {
+                if (char.IsDigit(formatted[i]))
+                    digitCount++;
+                newCaretPos = i + 1;
+            }
+
+            _phoneNumberBox.CaretIndex = Math.Min(newCaretPos, formatted.Length);
         }
 
-        // Only allow digits
-        if (!IsDigitKey(e.Key))
-        {
-            e.Handled = true;
-        }
-    }
+        PhoneNumber = rawDigits;
+        UpdateFullPhoneNumber();
+        RaisePropertyChanged(nameof(FormattedPhoneNumber));
 
-    private bool IsDigitKey(Key key)
-    {
-        return key >= Key.D0 && key <= Key.D9 ||
-               key >= Key.NumPad0 && key <= Key.NumPad9;
+        _isFormattingPhone = false;
     }
 
     private void OnCountrySearchBoxGotFocus(object? sender, GotFocusEventArgs e)
@@ -599,6 +614,8 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 /// </summary>
 public class CountryDialCode
 {
+    private IImage? _flagImage;
+
     /// <summary>
     /// ISO country code (e.g., US, GB).
     /// </summary>
@@ -623,6 +640,30 @@ public class CountryDialCode
     /// Path to the flag image asset.
     /// </summary>
     public string FlagPath => $"avares://ArgoBooks/Assets/CountryFlags/{FlagFileName}.png";
+
+    /// <summary>
+    /// Gets the flag image loaded from resources.
+    /// </summary>
+    public IImage? FlagImage
+    {
+        get
+        {
+            if (_flagImage == null)
+            {
+                try
+                {
+                    var uri = new Uri(FlagPath);
+                    var assets = Avalonia.Platform.AssetLoader.Open(uri);
+                    _flagImage = new Bitmap(assets);
+                }
+                catch
+                {
+                    // Flag not found, return null
+                }
+            }
+            return _flagImage;
+        }
+    }
 
     /// <summary>
     /// Display format for the dropdown.
