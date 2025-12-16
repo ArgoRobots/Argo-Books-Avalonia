@@ -9,7 +9,6 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -628,11 +627,11 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     {
         FilteredDialCodes.Clear();
 
-        var searchText = _countrySearchText?.Trim().ToLowerInvariant() ?? string.Empty;
+        var searchText = _countrySearchText.Trim().ToLowerInvariant();
 
         IEnumerable<CountryDialCode> filtered;
 
-        if (string.IsNullOrEmpty(searchText) || searchText.StartsWith("+"))
+        if (string.IsNullOrEmpty(searchText) || searchText.StartsWith('+'))
         {
             // Show all when empty or when showing dial code
             filtered = AllDialCodes;
