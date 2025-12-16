@@ -164,7 +164,7 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                HorizontalAlignment="Center" />
-                                    <TextBlock Text="{Binding NewVersion, StringFormat='{0} is now available'}"
+                                    <TextBlock Text="{Binding NewVersion, StringFormat=' is now available'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                HorizontalAlignment="Center" />
