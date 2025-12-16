@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -14,6 +15,8 @@ public partial class UpgradeModalViewModel : ViewModelBase
 {
     private static readonly HttpClient _httpClient = new();
     private const string LicenseValidationUrl = "https://argorobots.com/validate_license.php";
+    private const string StandardUpgradeUrl = "http://localhost/argo-books-website/upgrade/standard/";
+    private const string PremiumUpgradeUrl = "http://localhost/argo-books-website/upgrade/premium/";
 
     [ObservableProperty]
     private bool _isOpen;
@@ -71,17 +74,33 @@ public partial class UpgradeModalViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void SelectPremium()
+    private void SelectStandard()
     {
+        OpenUrl(StandardUpgradeUrl);
         Close();
-        PremiumSelected?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
-    private void SelectAIPlan()
+    private void SelectPremium()
     {
+        OpenUrl(PremiumUpgradeUrl);
         Close();
-        AIPlanSelected?.Invoke(this, EventArgs.Empty);
+    }
+
+    private static void OpenUrl(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // Ignore errors opening URL
+        }
     }
 
     [RelayCommand]
@@ -183,8 +202,6 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     #region Events
 
-    public event EventHandler? PremiumSelected;
-    public event EventHandler? AIPlanSelected;
     public event EventHandler<string>? KeyVerified;
 
     #endregion

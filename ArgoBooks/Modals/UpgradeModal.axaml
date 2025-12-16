@@ -70,7 +70,7 @@
                     <!-- Body -->
                     <ScrollViewer Grid.Row="1">
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16" Margin="24">
-                            <!-- Premium Plan -->
+                            <!-- Standard Plan -->
                             <Border Grid.Column="0" Classes="plan-card">
                                 <StackPanel Spacing="16">
                                     <!-- Plan Header -->
@@ -89,7 +89,7 @@
                                                       Foreground="White" />
                                         </Border>
                                         <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="Premium"
+                                            <TextBlock Text="Standard"
                                                        FontSize="16"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -153,13 +153,13 @@
 
                                     <Button Classes="primary-button"
                                             HorizontalAlignment="Stretch"
-                                            Command="{Binding SelectPremiumCommand}">
-                                        Select Premium
+                                            Command="{Binding SelectStandardCommand}">
+                                        Select Standard
                                     </Button>
                                 </StackPanel>
                             </Border>
 
-                            <!-- AI Plan -->
+                            <!-- Premium Plan -->
                             <Border Grid.Column="1" Classes="plan-card">
                                 <StackPanel Spacing="16">
                                     <!-- Plan Header -->
@@ -178,7 +178,7 @@
                                                       Foreground="White" />
                                         </Border>
                                         <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="AI Subscription"
+                                            <TextBlock Text="Premium"
                                                        FontSize="16"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -205,7 +205,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Everything in Premium" />
+                                                <TextBlock Grid.Column="1" Text="Everything in Standard" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">
@@ -242,8 +242,8 @@
 
                                     <Button Classes="primary-button"
                                             HorizontalAlignment="Stretch"
-                                            Command="{Binding SelectAIPlanCommand}">
-                                        Select AI Plan
+                                            Command="{Binding SelectPremiumCommand}">
+                                        Select Premium
                                     </Button>
                                 </StackPanel>
                             </Border>
