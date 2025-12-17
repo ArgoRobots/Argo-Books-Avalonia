@@ -299,6 +299,9 @@ public partial class ProductsPageViewModel : ViewModelBase
     [ObservableProperty]
     private string? _modalProductNameError;
 
+    [ObservableProperty]
+    private string? _modalCategoryError;
+
     /// <summary>
     /// The product being edited (null for add).
     /// </summary>
@@ -1087,6 +1090,7 @@ public partial class ProductsPageViewModel : ViewModelBase
         ModalSku = string.Empty;
         ModalError = null;
         ModalProductNameError = null;
+        ModalCategoryError = null;
     }
 
     private bool ValidateModal()
@@ -1094,6 +1098,7 @@ public partial class ProductsPageViewModel : ViewModelBase
         // Clear all errors first
         ModalError = null;
         ModalProductNameError = null;
+        ModalCategoryError = null;
 
         var isValid = true;
 
@@ -1115,6 +1120,13 @@ public partial class ProductsPageViewModel : ViewModelBase
                 ModalProductNameError = "A product with this name already exists.";
                 isValid = false;
             }
+        }
+
+        // Validate category (required when categories exist)
+        if (HasCategories && string.IsNullOrEmpty(ModalCategoryId))
+        {
+            ModalCategoryError = "Category is required.";
+            isValid = false;
         }
 
         return isValid;

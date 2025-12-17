@@ -921,6 +921,10 @@
                                     <controls:CategoryInput Categories="{Binding CategoryItems}"
                                                             SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
                                                             OpenCategoriesPageCommand="{Binding OpenCategoriesWithAddModalCommand}" />
+                                    <TextBlock Text="{Binding ModalCategoryError}"
+                                               FontSize="12"
+                                               Foreground="#dc2626"
+                                               IsVisible="{Binding ModalCategoryError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
 
@@ -1109,6 +1113,10 @@
                                     <controls:CategoryInput Categories="{Binding CategoryItems}"
                                                             SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
                                                             OpenCategoriesPageCommand="{Binding OpenCategoriesWithAddModalCommand}" />
+                                    <TextBlock Text="{Binding ModalCategoryError}"
+                                               FontSize="12"
+                                               Foreground="#dc2626"
+                                               IsVisible="{Binding ModalCategoryError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
 
