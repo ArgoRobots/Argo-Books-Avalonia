@@ -70,7 +70,7 @@
                     <!-- Body -->
                     <ScrollViewer Grid.Row="1">
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16" Margin="24">
-                            <!-- Premium Plan -->
+                            <!-- Standard Plan -->
                             <Border Grid.Column="0" Classes="plan-card">
                                 <StackPanel Spacing="16">
                                     <!-- Plan Header -->
@@ -89,7 +89,7 @@
                                                       Foreground="White" />
                                         </Border>
                                         <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="Premium"
+                                            <TextBlock Text="Standard"
                                                        FontSize="16"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -153,13 +153,13 @@
 
                                     <Button Classes="primary-button"
                                             HorizontalAlignment="Stretch"
-                                            Command="{Binding SelectPremiumCommand}">
-                                        Select Premium
+                                            Command="{Binding SelectStandardCommand}">
+                                        Select Standard
                                     </Button>
                                 </StackPanel>
                             </Border>
 
-                            <!-- AI Plan -->
+                            <!-- Premium Plan -->
                             <Border Grid.Column="1" Classes="plan-card">
                                 <StackPanel Spacing="16">
                                     <!-- Plan Header -->
@@ -178,7 +178,7 @@
                                                       Foreground="White" />
                                         </Border>
                                         <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="AI Subscription"
+                                            <TextBlock Text="Premium"
                                                        FontSize="16"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -205,7 +205,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Everything in Premium" />
+                                                <TextBlock Grid.Column="1" Text="Everything in Standard" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">
@@ -242,8 +242,8 @@
 
                                     <Button Classes="primary-button"
                                             HorizontalAlignment="Stretch"
-                                            Command="{Binding SelectAIPlanCommand}">
-                                        Select AI Plan
+                                            Command="{Binding SelectPremiumCommand}">
+                                        Select Premium
                                     </Button>
                                 </StackPanel>
                             </Border>
@@ -274,7 +274,8 @@
             <Border Background="#80000000"
                     PointerPressed="EnterKeyBackdrop_PointerPressed" />
 
-            <Border Background="{DynamicResource SurfaceBrush}"
+            <Border x:Name="EnterKeyModalBorder"
+                    Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
@@ -283,75 +284,152 @@
                     VerticalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
 
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <!-- Header -->
-                    <Border Grid.Row="0"
-                            Padding="24,20"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0"
-                                       Text="Enter License Key"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <Button Grid.Column="1"
-                                    Classes="icon-button"
-                                    Command="{Binding CloseEnterKeyCommand}">
-                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                                          Width="20" Height="20" />
-                            </Button>
-                        </Grid>
-                    </Border>
+                <Panel>
+                    <!-- Normal Entry View -->
+                    <Grid RowDefinitions="Auto,*,Auto"
+                          IsVisible="{Binding !IsVerificationSuccess}">
+                        <!-- Header -->
+                        <Border Grid.Row="0"
+                                Padding="24,20"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="Enter License Key"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="1"
+                                        Classes="icon-button"
+                                        Command="{Binding CloseEnterKeyCommand}">
+                                    <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                              Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
 
-                    <!-- Body -->
-                    <StackPanel Grid.Row="1" Margin="24" Spacing="16">
-                        <TextBlock Text="Enter your license key to activate your premium features."
-                                   FontSize="14"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   TextWrapping="Wrap" />
+                        <!-- Body -->
+                        <StackPanel Grid.Row="1" Margin="24" Spacing="16">
+                            <TextBlock Text="Enter your license key to activate your premium features."
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap" />
 
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="License Key"
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="License Key"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox x:Name="LicenseKeyTextBox"
+                                         Text="{Binding LicenseKey, Mode=TwoWay}"
+                                         Watermark="XXXX-XXXX-XXXX-XXXX-XXXX"
+                                         MaxLength="24"
+                                         TextChanged="LicenseKeyTextBox_TextChanged"
+                                         Classes="form-input license-key" />
+                            </StackPanel>
+
+                            <TextBlock Text="{Binding VerificationError}"
                                        FontSize="13"
-                                       FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox Text="{Binding LicenseKey}"
-                                     Watermark="XXXX-XXXX-XXXX-XXXX"
-                                     Classes="form-input license-key" />
+                                       Foreground="{DynamicResource DangerBrush}"
+                                       IsVisible="{Binding VerificationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
 
-                        <TextBlock Text="{Binding VerificationError}"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource DangerBrush}"
-                                   IsVisible="{Binding VerificationError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        <!-- Footer -->
+                        <Border Grid.Row="2"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Spacing="12">
+                                <Button Classes="secondary-button"
+                                        Content="Cancel"
+                                        Command="{Binding CloseEnterKeyCommand}" />
+                                <Button Classes="primary-button"
+                                        Command="{Binding VerifyKeyCommand}"
+                                        IsEnabled="{Binding !IsVerifying}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                  Width="16" Height="16"
+                                                  IsVisible="{Binding !IsVerifying}" />
+                                        <TextBlock Text="Verify Key" IsVisible="{Binding !IsVerifying}" />
+                                        <TextBlock Text="Verifying..." IsVisible="{Binding IsVerifying}" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Success Animation View -->
+                    <StackPanel IsVisible="{Binding IsVerificationSuccess}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Spacing="24"
+                                Margin="48">
+                        <!-- Animated Success Circle with Glow -->
+                        <Panel HorizontalAlignment="Center">
+                            <!-- Glow effect behind the circle -->
+                            <Border x:Name="SuccessGlow"
+                                    Width="120" Height="120"
+                                    CornerRadius="60"
+                                    Opacity="0.4"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                                <Border.Background>
+                                    <RadialGradientBrush>
+                                        <GradientStop Color="#22C55E" Offset="0" />
+                                        <GradientStop Color="Transparent" Offset="1" />
+                                    </RadialGradientBrush>
+                                </Border.Background>
+                                <Border.RenderTransform>
+                                    <ScaleTransform ScaleX="0" ScaleY="0" />
+                                </Border.RenderTransform>
+                            </Border>
+                            <!-- Main circle -->
+                            <Border x:Name="SuccessCircle"
+                                    Width="100" Height="100"
+                                    CornerRadius="50"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    ClipToBounds="True"
+                                    BoxShadow="0 4 20 0 #4022C55E">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="#22C55E" Offset="0" />
+                                        <GradientStop Color="#16A34A" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.RenderTransform>
+                                    <ScaleTransform ScaleX="0" ScaleY="0" />
+                                </Border.RenderTransform>
+                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                          Width="48" Height="48"
+                                          Foreground="White"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center" />
+                            </Border>
+                        </Panel>
+
+                        <!-- Success Text -->
+                        <StackPanel x:Name="SuccessTextPanel" Spacing="8" HorizontalAlignment="Center" Opacity="0">
+                            <StackPanel.RenderTransform>
+                                <TranslateTransform Y="20" />
+                            </StackPanel.RenderTransform>
+                            <TextBlock Text="License Activated!"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="#22C55E"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding SuccessMessage}"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       MaxWidth="300" />
+                        </StackPanel>
                     </StackPanel>
-
-                    <!-- Footer -->
-                    <Border Grid.Row="2"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
-                        <StackPanel Orientation="Horizontal"
-                                    HorizontalAlignment="Right"
-                                    Spacing="12">
-                            <Button Classes="secondary-button"
-                                    Content="Cancel"
-                                    Command="{Binding CloseEnterKeyCommand}" />
-                            <Button Classes="primary-button"
-                                    Command="{Binding VerifyKeyCommand}"
-                                    IsEnabled="{Binding !IsVerifying}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                                              Width="16" Height="16"
-                                              IsVisible="{Binding !IsVerifying}" />
-                                    <TextBlock Text="Verify Key" IsVisible="{Binding !IsVerifying}" />
-                                    <TextBlock Text="Verifying..." IsVisible="{Binding IsVerifying}" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Border>
-                </Grid>
+                </Panel>
             </Border>
         </Panel>
     </Panel>
