@@ -44,6 +44,7 @@ public partial class App : Application
     private static ConfirmationDialogViewModel? _confirmationDialogViewModel;
     private static UnsavedChangesDialogViewModel? _unsavedChangesDialogViewModel;
     private static ChangeTrackingService? _changeTrackingService;
+    private static IdleDetectionService? _idleDetectionService;
 
     /// <summary>
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
@@ -87,6 +88,7 @@ public partial class App : Application
             _confirmationDialogViewModel = new ConfirmationDialogViewModel();
             _unsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
             _changeTrackingService = new ChangeTrackingService();
+            _idleDetectionService = new IdleDetectionService();
 
             // Create app shell with navigation service
             _appShellViewModel = new AppShellViewModel(NavigationService, SettingsService);
@@ -159,6 +161,9 @@ public partial class App : Application
             {
                 DataContext = _mainWindowViewModel
             };
+
+            // Wire up idle detection for auto-logout (needs MainWindow to exist)
+            WireIdleDetection(desktop);
 
             // Load settings and recent companies asynchronously after window is shown
             _ = InitializeAsync();
@@ -711,6 +716,110 @@ public partial class App : Application
                 _appShellViewModel?.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
             }
         };
+
+        // Auto-lock settings changed
+        settings.AutoLockSettingsChanged += (_, args) =>
+        {
+            if (_idleDetectionService != null)
+            {
+                var enabled = args.TimeoutMinutes > 0;
+                _idleDetectionService.Configure(enabled, args.TimeoutMinutes);
+            }
+
+            // Save to company settings
+            if (CompanyManager?.CurrentCompanySettings != null)
+            {
+                CompanyManager.CurrentCompanySettings.Security.AutoLockEnabled = args.TimeoutMinutes > 0;
+                CompanyManager.CurrentCompanySettings.Security.AutoLockMinutes = args.TimeoutMinutes;
+                CompanyManager.MarkAsChanged();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Wires up idle detection for auto-logout functionality.
+    /// </summary>
+    private static void WireIdleDetection(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        if (_idleDetectionService == null || CompanyManager == null || _appShellViewModel == null)
+            return;
+
+        // Handle idle timeout - close the company
+        _idleDetectionService.IdleTimeoutReached += async (_, _) =>
+        {
+            // Must run on UI thread
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                if (CompanyManager?.IsCompanyOpen != true) return;
+
+                // Check for unsaved changes
+                if (CompanyManager.HasUnsavedChanges)
+                {
+                    // Auto-save before locking
+                    try
+                    {
+                        _mainWindowViewModel?.ShowLoading("Auto-saving before lock...");
+                        await CompanyManager.SaveCompanyAsync();
+                        _mainWindowViewModel?.HideLoading();
+                    }
+                    catch
+                    {
+                        _mainWindowViewModel?.HideLoading();
+                        // Continue to close even if save fails - user can reopen
+                    }
+                }
+
+                // Close the company - this will trigger navigation back to welcome screen
+                var filePath = CompanyManager.CurrentFilePath;
+                await CompanyManager.CloseCompanyAsync();
+
+                // Show notification
+                _appShellViewModel?.AddNotification(
+                    "Session Locked",
+                    "Your session was locked due to inactivity. Please reopen your company file.",
+                    NotificationType.Warning);
+
+                // Re-enable idle detection for next session
+                _idleDetectionService?.ResetIdleTimer();
+            });
+        };
+
+        // Configure based on current company settings when company opens
+        CompanyManager.CompanyOpened += (_, _) =>
+        {
+            var companySettings = CompanyManager.CurrentCompanySettings;
+            if (companySettings != null && _idleDetectionService != null)
+            {
+                var security = companySettings.Security;
+                _idleDetectionService.Configure(security.AutoLockEnabled, security.AutoLockMinutes);
+
+                // Sync the UI with company settings
+                var timeoutString = security.AutoLockMinutes switch
+                {
+                    0 => "Never",
+                    60 => "1 hour",
+                    _ => $"{security.AutoLockMinutes} minutes"
+                };
+                if (_appShellViewModel?.SettingsModalViewModel != null)
+                {
+                    _appShellViewModel.SettingsModalViewModel.SelectedAutoLock = timeoutString;
+                }
+            }
+        };
+
+        // Disable idle detection when company closes
+        CompanyManager.CompanyClosed += (_, _) =>
+        {
+            _idleDetectionService?.Configure(false, 0);
+        };
+
+        // Record activity on main window pointer/key events
+        if (desktop.MainWindow != null)
+        {
+            desktop.MainWindow.PointerMoved += (_, _) => _idleDetectionService?.RecordActivity();
+            desktop.MainWindow.KeyDown += (_, _) => _idleDetectionService?.RecordActivity();
+            desktop.MainWindow.PointerPressed += (_, _) => _idleDetectionService?.RecordActivity();
+        }
     }
 
     /// <summary>
@@ -1025,6 +1134,7 @@ public partial class App : Application
         // Main Section
         navigationService.RegisterPage("Dashboard", _ => CreatePlaceholderPage("Dashboard", "Welcome to the Dashboard"));
         navigationService.RegisterPage("Analytics", _ => new AnalyticsPage { DataContext = new AnalyticsPageViewModel() });
+        navigationService.RegisterPage("Insights", _ => CreatePlaceholderPage("Insights", "AI-powered business insights"));
         navigationService.RegisterPage("Reports", _ => CreatePlaceholderPage("Reports", "Generate and view reports"));
 
         // Transactions Section
