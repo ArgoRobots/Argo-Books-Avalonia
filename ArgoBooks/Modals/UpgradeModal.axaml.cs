@@ -99,7 +99,7 @@ public partial class UpgradeModal : UserControl
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
             // Animate the glow first
-            if (SuccessGlow?.RenderTransform is ScaleTransform glowScale)
+            if (SuccessGlow != null)
             {
                 var glowAnimation = new Animation
                 {
@@ -128,11 +128,11 @@ public partial class UpgradeModal : UserControl
                         }
                     }
                 };
-                _ = glowAnimation.RunAsync(glowScale);
+                _ = glowAnimation.RunAsync(SuccessGlow);
             }
 
             // Animate the success circle with elastic bounce
-            if (SuccessCircle?.RenderTransform is ScaleTransform scaleTransform)
+            if (SuccessCircle != null)
             {
                 var circleAnimation = new Animation
                 {
@@ -162,13 +162,12 @@ public partial class UpgradeModal : UserControl
                     }
                 };
 
-                await circleAnimation.RunAsync(scaleTransform);
+                await circleAnimation.RunAsync(SuccessCircle);  // Run on control
             }
 
             // Animate text panel after circle
             if (SuccessTextPanel != null)
             {
-                // Fade in and slide up
                 var textFadeAnimation = new Animation
                 {
                     Duration = TimeSpan.FromMilliseconds(400),
@@ -196,35 +195,32 @@ public partial class UpgradeModal : UserControl
                 };
                 _ = textFadeAnimation.RunAsync(SuccessTextPanel);
 
-                if (SuccessTextPanel.RenderTransform is TranslateTransform textTranslate)
+                var textSlideAnimation = new Animation
                 {
-                    var textSlideAnimation = new Animation
+                    Duration = TimeSpan.FromMilliseconds(400),
+                    Easing = new CubicEaseOut(),
+                    FillMode = FillMode.Forward,
+                    Children =
                     {
-                        Duration = TimeSpan.FromMilliseconds(400),
-                        Easing = new CubicEaseOut(),
-                        FillMode = FillMode.Forward,
-                        Children =
+                        new KeyFrame
                         {
-                            new KeyFrame
+                            Cue = new Cue(0),
+                            Setters =
                             {
-                                Cue = new Cue(0),
-                                Setters =
-                                {
-                                    new Setter(TranslateTransform.YProperty, 20.0)
-                                }
-                            },
-                            new KeyFrame
+                                new Setter(TranslateTransform.YProperty, 20.0)
+                            }
+                        },
+                        new KeyFrame
+                        {
+                            Cue = new Cue(1),
+                            Setters =
                             {
-                                Cue = new Cue(1),
-                                Setters =
-                                {
-                                    new Setter(TranslateTransform.YProperty, 0.0)
-                                }
+                                new Setter(TranslateTransform.YProperty, 0.0)
                             }
                         }
-                    };
-                    await textSlideAnimation.RunAsync(textTranslate);
-                }
+                    }
+                };
+                      await textSlideAnimation.RunAsync(SuccessTextPanel);  // Run on control
             }
         });
     }

@@ -40,11 +40,11 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private string _licenseKey = string.Empty;
 
     /// <summary>
-    /// Gets the raw license key without dashes for API calls.
+    /// Gets the formatted license key for API calls (keeps dashes).
     /// </summary>
-    private string GetRawLicenseKey()
+    private string GetFormattedLicenseKey()
     {
-        return new string(_licenseKey.Where(char.IsLetterOrDigit).ToArray());
+        return _licenseKey.Trim().ToUpperInvariant();
     }
 
     /// <summary>
@@ -127,17 +127,18 @@ public partial class UpgradeModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task VerifyKey()
     {
-        var rawKey = GetRawLicenseKey();
+        var key = GetFormattedLicenseKey();
 
-        if (string.IsNullOrWhiteSpace(rawKey))
+        if (string.IsNullOrWhiteSpace(key))
         {
             VerificationError = "Please enter a license key";
             return;
         }
 
-        if (rawKey.Length != 20)
+        // Format: XXXX-XXXX-XXXX-XXXX-XXXX (24 chars with dashes)
+        if (key.Length != 24)
         {
-            VerificationError = "License key must be 20 characters";
+            VerificationError = "License key must be in format XXXX-XXXX-XXXX-XXXX-XXXX";
             return;
         }
 
@@ -147,7 +148,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
         try
         {
-            var response = await ValidateLicenseAsync(rawKey);
+            var response = await ValidateLicenseAsync(key);
 
             if (response?.Success == true)
             {
@@ -210,17 +211,23 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     private class LicenseResponse
     {
-        [JsonPropertyName("Success")]
+        [JsonPropertyName("success")]
         public bool Success { get; set; }
 
-        [JsonPropertyName("Activated")]
-        public bool Activated { get; set; }
+        [JsonPropertyName("type")]
+        public string? Type { get; set; }
 
-        [JsonPropertyName("Message")]
+        [JsonPropertyName("status")]
+        public string? Status { get; set; }
+
+        [JsonPropertyName("message")]
         public string? Message { get; set; }
 
-        [JsonPropertyName("ActivationDate")]
+        [JsonPropertyName("activation_date")]
         public string? ActivationDate { get; set; }
+
+        [JsonPropertyName("key")]
+        public string? Key { get; set; }
     }
 
     #endregion
