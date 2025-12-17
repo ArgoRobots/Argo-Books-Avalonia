@@ -1048,9 +1048,12 @@
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.pagination-button /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
         <Style Selector="Button.pagination-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
@@ -1067,6 +1070,7 @@
         </Style>
         <Style Selector="Button.pagination-button.active /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
 
         <!-- Primary Button -->

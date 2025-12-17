@@ -1355,9 +1355,11 @@
         </Style>
         <Style Selector="Button.pagination-button.active /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
         <Style Selector="Button.pagination-button.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
 
         <!-- Page Size ComboBox -->
