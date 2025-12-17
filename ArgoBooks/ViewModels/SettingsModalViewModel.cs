@@ -231,6 +231,51 @@ public partial class SettingsModalViewModel : ViewModelBase
     partial void OnIsConfirmPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(ConfirmPasswordVisibilityIcon));
     partial void OnIsCurrentPasswordVisibleChanged(bool value) => OnPropertyChanged(nameof(CurrentPasswordVisibilityIcon));
 
+    // Flag to prevent recursive updates when syncing FileEncryptionEnabled with HasPassword
+    private bool _isUpdatingEncryption;
+
+    /// <summary>
+    /// Called when FileEncryptionEnabled changes - opens appropriate password modal.
+    /// </summary>
+    partial void OnFileEncryptionEnabledChanged(bool value)
+    {
+        if (_isUpdatingEncryption) return;
+
+        if (value && !HasPassword)
+        {
+            // User wants to enable encryption but no password set - open Add Password modal
+            OpenAddPasswordCommand.Execute(null);
+        }
+        else if (!value && HasPassword)
+        {
+            // User wants to disable encryption but has password - open Remove Password modal
+            OpenRemovePasswordCommand.Execute(null);
+        }
+    }
+
+    /// <summary>
+    /// Called when HasPassword changes - sync with FileEncryptionEnabled.
+    /// </summary>
+    partial void OnHasPasswordChanged(bool value)
+    {
+        _isUpdatingEncryption = true;
+        FileEncryptionEnabled = value;
+        _isUpdatingEncryption = false;
+    }
+
+    /// <summary>
+    /// Called when auto-lock setting changes.
+    /// </summary>
+    partial void OnSelectedAutoLockChanged(string value)
+    {
+        AutoLockSettingsChanged?.Invoke(this, new AutoLockSettingsEventArgs(value));
+    }
+
+    /// <summary>
+    /// Event raised when auto-lock settings change.
+    /// </summary>
+    public event EventHandler<AutoLockSettingsEventArgs>? AutoLockSettingsChanged;
+
     public ObservableCollection<string> AutoLockOptions { get; } = new()
     {
         "Never",
@@ -398,6 +443,21 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void ClosePasswordModal()
     {
+        // If user was adding password but cancelled, revert the toggle
+        if (IsAddPasswordModalOpen && !HasPassword)
+        {
+            _isUpdatingEncryption = true;
+            FileEncryptionEnabled = false;
+            _isUpdatingEncryption = false;
+        }
+        // If user was removing password but cancelled, revert the toggle
+        else if (IsRemovePasswordModalOpen && HasPassword)
+        {
+            _isUpdatingEncryption = true;
+            FileEncryptionEnabled = true;
+            _isUpdatingEncryption = false;
+        }
+
         IsAddPasswordModalOpen = false;
         IsChangePasswordModalOpen = false;
         IsRemovePasswordModalOpen = false;
@@ -623,5 +683,42 @@ public class PasswordChangeEventArgs : EventArgs
     {
         NewPassword = newPassword;
         CurrentPassword = currentPassword;
+    }
+}
+
+/// <summary>
+/// Event args for auto-lock settings change.
+/// </summary>
+public class AutoLockSettingsEventArgs : EventArgs
+{
+    /// <summary>
+    /// The selected auto-lock timeout string (e.g., "5 minutes", "Never").
+    /// </summary>
+    public string TimeoutString { get; }
+
+    /// <summary>
+    /// The timeout in minutes (0 for "Never").
+    /// </summary>
+    public int TimeoutMinutes { get; }
+
+    public AutoLockSettingsEventArgs(string timeoutString)
+    {
+        TimeoutString = timeoutString;
+        TimeoutMinutes = ParseTimeoutMinutes(timeoutString);
+    }
+
+    private static int ParseTimeoutMinutes(string? timeoutString)
+    {
+        if (string.IsNullOrEmpty(timeoutString) || timeoutString == "Never")
+            return 0;
+
+        if (timeoutString.Contains("hour"))
+            return 60;
+
+        var parts = timeoutString.Split(' ');
+        if (parts.Length >= 1 && int.TryParse(parts[0], out var minutes))
+            return minutes;
+
+        return 0;
     }
 }
