@@ -202,8 +202,69 @@ public class PageEqualsConverter : IMultiValueConverter
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count < 2)
-            return "";
+            return false;
 
-        return Equals(values[0], values[1]) ? "active" : "";
+        return Equals(values[0], values[1]);
+    }
+}
+
+/// <summary>
+/// Converter that returns primary background color if page equals current page, else transparent.
+/// </summary>
+public class PageActiveBackgroundConverter : IMultiValueConverter
+{
+    public static readonly PageActiveBackgroundConverter Instance = new();
+
+    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2)
+            return Brushes.Transparent;
+
+        var isActive = Equals(values[0], values[1]);
+        if (isActive)
+        {
+            if (Application.Current?.Resources != null &&
+                Application.Current.Resources.TryGetResource("PrimaryBrush", Application.Current.ActualThemeVariant, out var resource) &&
+                resource is IBrush brush)
+            {
+                return brush;
+            }
+            return new SolidColorBrush(Color.Parse("#3B82F6"));
+        }
+        return Brushes.Transparent;
+    }
+}
+
+/// <summary>
+/// Converter that returns white foreground if page equals current page, else default text color.
+/// </summary>
+public class PageActiveForegroundConverter : IMultiValueConverter
+{
+    public static readonly PageActiveForegroundConverter Instance = new();
+
+    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2)
+        {
+            return GetDefaultTextBrush();
+        }
+
+        var isActive = Equals(values[0], values[1]);
+        if (isActive)
+        {
+            return Brushes.White;
+        }
+        return GetDefaultTextBrush();
+    }
+
+    private static IBrush GetDefaultTextBrush()
+    {
+        if (Application.Current?.Resources != null &&
+            Application.Current.Resources.TryGetResource("TextPrimaryBrush", Application.Current.ActualThemeVariant, out var resource) &&
+            resource is IBrush brush)
+        {
+            return brush;
+        }
+        return new SolidColorBrush(Color.Parse("#374151"));
     }
 }
