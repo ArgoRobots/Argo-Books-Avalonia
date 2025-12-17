@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
@@ -46,6 +47,7 @@ public partial class ProductsPageViewModel : ViewModelBase
 
     partial void OnSearchQueryChanged(string? value)
     {
+        CurrentPage = 1;
         FilterProducts();
     }
 
@@ -60,6 +62,40 @@ public partial class ProductsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _filterCountry;
+
+    #endregion
+
+    #region Sorting
+
+    [ObservableProperty]
+    private string _sortColumn = "Name";
+
+    [ObservableProperty]
+    private SortDirection _sortDirection = SortDirection.None;
+
+    /// <summary>
+    /// Sorts the products list by the specified column.
+    /// </summary>
+    [RelayCommand]
+    private void SortBy(string column)
+    {
+        if (SortColumn == column)
+        {
+            SortDirection = SortDirection switch
+            {
+                SortDirection.None => SortDirection.Ascending,
+                SortDirection.Ascending => SortDirection.Descending,
+                SortDirection.Descending => SortDirection.None,
+                _ => SortDirection.Ascending
+            };
+        }
+        else
+        {
+            SortColumn = column;
+            SortDirection = SortDirection.Ascending;
+        }
+        FilterProducts();
+    }
 
     #endregion
 
@@ -484,27 +520,13 @@ public partial class ProductsPageViewModel : ViewModelBase
             filtered = filtered.Where(p => !string.IsNullOrEmpty(p.SupplierId) && supplierIdsInCountry.Contains(p.SupplierId)).ToList();
         }
 
-        // Calculate pagination
-        var totalCount = filtered.Count;
-        TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
-        if (CurrentPage > TotalPages)
-            CurrentPage = TotalPages;
-
-        UpdatePageNumbers();
-        UpdatePaginationText(totalCount);
-
-        // Apply pagination
-        var pagedProducts = filtered
-            .Skip((CurrentPage - 1) * PageSize)
-            .Take(PageSize);
-
         // Create display items
-        foreach (var product in pagedProducts)
+        var displayItems = filtered.Select(product =>
         {
             var category = companyData.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
             var supplier = companyData.Suppliers.FirstOrDefault(s => s.Id == product.SupplierId);
 
-            targetCollection.Add(new ProductDisplayItem
+            return new ProductDisplayItem
             {
                 Id = product.Id,
                 Name = product.Name,
@@ -514,12 +536,66 @@ public partial class ProductsPageViewModel : ViewModelBase
                 CategoryName = category?.Name ?? "-",
                 SupplierName = supplier?.Name ?? "-",
                 CountryOfOrigin = supplier?.Address.Country ?? "-",
-                ReorderPoint = product.TrackInventory ? "10" : "-", // Placeholder - model doesn't have this
-                OverstockThreshold = product.TrackInventory ? "100" : "-", // Placeholder - model doesn't have this
+                ReorderPoint = product.TrackInventory ? "10" : "-",
+                OverstockThreshold = product.TrackInventory ? "100" : "-",
                 UnitPrice = product.UnitPrice,
                 CostPrice = product.CostPrice,
                 TrackInventory = product.TrackInventory
-            });
+            };
+        }).ToList();
+
+        // Apply sorting (only if not searching, since search has its own relevance sorting)
+        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
+        {
+            if (SortDirection != SortDirection.None)
+            {
+                displayItems = SortColumn switch
+                {
+                    "Name" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(p => p.Name).ToList()
+                        : displayItems.OrderByDescending(p => p.Name).ToList(),
+                    "Type" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(p => p.ItemType).ToList()
+                        : displayItems.OrderByDescending(p => p.ItemType).ToList(),
+                    "Description" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(p => p.Description).ToList()
+                        : displayItems.OrderByDescending(p => p.Description).ToList(),
+                    "Category" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(p => p.CategoryName).ToList()
+                        : displayItems.OrderByDescending(p => p.CategoryName).ToList(),
+                    "Supplier" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(p => p.SupplierName).ToList()
+                        : displayItems.OrderByDescending(p => p.SupplierName).ToList(),
+                    "Country" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(p => p.CountryOfOrigin).ToList()
+                        : displayItems.OrderByDescending(p => p.CountryOfOrigin).ToList(),
+                    _ => displayItems.OrderBy(p => p.Name).ToList()
+                };
+            }
+            else if (string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                // Default sort by name when not searching
+                displayItems = displayItems.OrderBy(p => p.Name).ToList();
+            }
+        }
+
+        // Calculate pagination
+        var totalCount = displayItems.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        UpdatePageNumbers();
+        UpdatePaginationText(totalCount);
+
+        // Apply pagination and add to collection
+        var pagedProducts = displayItems
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize);
+
+        foreach (var item in pagedProducts)
+        {
+            targetCollection.Add(item);
         }
 
         OnPropertyChanged(nameof(CurrentProducts));
