@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.CategoriesPage"
              x:DataType="vm:CategoriesPageViewModel">
@@ -14,6 +15,8 @@
 
     <UserControl.Resources>
         <local:StringToBrushConverter x:Key="StringToBrushConverter" />
+        <local:SortIndicatorConverter x:Key="SortIndicatorConverter" />
+        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
     </UserControl.Resources>
 
     <Grid RowDefinitions="Auto,*">
@@ -91,43 +94,196 @@
                     </Border>
 
                     <!-- Categories Table -->
-                    <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                    <Grid Grid.Row="1" RowDefinitions="Auto,*,Auto">
                         <!-- Table Header -->
                         <Border Grid.Row="0"
                                 Background="{DynamicResource SurfaceAltBrush}"
-                                Padding="24,12">
+                                Padding="24,0">
                             <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,140">
-                                <TextBlock Grid.Column="0"
-                                           Text="Category Name"
-                                           FontSize="12"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Grid.Column="1"
-                                           Text="Parent Category"
-                                           FontSize="12"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Grid.Column="2"
-                                           Text="Description"
-                                           FontSize="12"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Grid.Column="3"
-                                           Text="Type"
-                                           FontSize="12"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Grid.Column="4"
-                                           Text="Products/Services"
-                                           FontSize="12"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <!-- Category Name Header -->
+                                <Button Grid.Column="0"
+                                        Classes="column-header"
+                                        Command="{Binding SortByCommand}"
+                                        CommandParameter="Name">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="Category Name"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <Panel Width="12" Height="12">
+                                            <PathIcon Data="M7 14l5-5 5 5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Name:Ascending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                            <PathIcon Data="M7 10l5 5 5-5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Name:Descending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                        </Panel>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Parent Category Header -->
+                                <Button Grid.Column="1"
+                                        Classes="column-header"
+                                        Command="{Binding SortByCommand}"
+                                        CommandParameter="Parent">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="Parent Category"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <Panel Width="12" Height="12">
+                                            <PathIcon Data="M7 14l5-5 5 5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Parent:Ascending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                            <PathIcon Data="M7 10l5 5 5-5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Parent:Descending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                        </Panel>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Description Header -->
+                                <Button Grid.Column="2"
+                                        Classes="column-header"
+                                        Command="{Binding SortByCommand}"
+                                        CommandParameter="Description">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="Description"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <Panel Width="12" Height="12">
+                                            <PathIcon Data="M7 14l5-5 5 5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Description:Ascending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                            <PathIcon Data="M7 10l5 5 5-5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Description:Descending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                        </Panel>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Type Header -->
+                                <Button Grid.Column="3"
+                                        Classes="column-header"
+                                        Command="{Binding SortByCommand}"
+                                        CommandParameter="Type">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="Type"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <Panel Width="12" Height="12">
+                                            <PathIcon Data="M7 14l5-5 5 5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Type:Ascending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                            <PathIcon Data="M7 10l5 5 5-5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Type:Descending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                        </Panel>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Products/Services Header -->
+                                <Button Grid.Column="4"
+                                        Classes="column-header"
+                                        Command="{Binding SortByCommand}"
+                                        CommandParameter="ProductCount">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <TextBlock Text="Products/Services"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <Panel Width="12" Height="12">
+                                            <PathIcon Data="M7 14l5-5 5 5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="ProductCount:Ascending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                            <PathIcon Data="M7 10l5 5 5-5z"
+                                                      Width="12" Height="12"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}">
+                                                <PathIcon.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="ProductCount:Descending">
+                                                        <Binding Path="SortColumn" />
+                                                        <Binding Path="SortDirection" />
+                                                    </MultiBinding>
+                                                </PathIcon.IsVisible>
+                                            </PathIcon>
+                                        </Panel>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Actions Header (not sortable) -->
                                 <TextBlock Grid.Column="5"
                                            Text="Actions"
                                            FontSize="12"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Right" />
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Margin="0,12" />
                             </Grid>
                         </Border>
 
@@ -271,6 +427,69 @@
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
+                        </Border>
+
+                        <!-- Pagination Footer -->
+                        <Border Grid.Row="2"
+                                Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0"
+                                IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
+                            <Grid ColumnDefinitions="*,Auto,*">
+                                <!-- Pagination Text (left) -->
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding PaginationText}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           VerticalAlignment="Center" />
+
+                                <!-- Page Numbers (center) -->
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            Spacing="4">
+                                    <!-- Previous Button -->
+                                    <Button Classes="pagination-button"
+                                            Command="{Binding GoToPreviousPageCommand}"
+                                            IsEnabled="{Binding CanGoToPreviousPage}"
+                                            ToolTip.Tip="Previous page">
+                                        <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                                  Width="16" Height="16" />
+                                    </Button>
+
+                                    <!-- Page Numbers -->
+                                    <ItemsControl ItemsSource="{Binding PageNumbers}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="4" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Classes="pagination-button"
+                                                        Content="{Binding}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).GoToPageCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <Button.Classes>
+                                                        <MultiBinding Converter="{StaticResource PageEqualsConverter}">
+                                                            <Binding />
+                                                            <Binding Path="$parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).CurrentPage" />
+                                                        </MultiBinding>
+                                                    </Button.Classes>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Next Button -->
+                                    <Button Classes="pagination-button"
+                                            Command="{Binding GoToNextPageCommand}"
+                                            IsEnabled="{Binding CanGoToNextPage}"
+                                            ToolTip.Tip="Next page">
+                                        <PathIcon Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                                  Width="16" Height="16" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Grid>
@@ -797,6 +1016,57 @@
         </Style>
         <Style Selector="Button.icon-button.danger:pointerover PathIcon">
             <Setter Property="Foreground" Value="#DC2626" />
+        </Style>
+
+        <!-- Column Header Button -->
+        <Style Selector="Button.column-header">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0,12" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        </Style>
+        <Style Selector="Button.column-header /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.column-header:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.column-header:pointerover TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Pagination Button -->
+        <Style Selector="Button.pagination-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinWidth" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.pagination-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.pagination-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.pagination-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.pagination-button:disabled">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+        <Style Selector="Button.pagination-button.active">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.pagination-button.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         </Style>
 
         <!-- Primary Button -->
