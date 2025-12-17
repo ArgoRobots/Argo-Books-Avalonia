@@ -1144,7 +1144,7 @@ public partial class App : Application
         navigationService.RegisterPage("Payments", _ => CreatePlaceholderPage("Payments", "Record payments"));
 
         // Inventory Section
-        navigationService.RegisterPage("Products", _ => CreatePlaceholderPage("Products", "Manage products and services"));
+        navigationService.RegisterPage("Products", _ => new ProductsPage { DataContext = new ProductsPageViewModel() });
         navigationService.RegisterPage("StockLevels", _ => CreatePlaceholderPage("Stock Levels", "Monitor inventory levels"));
         navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
         navigationService.RegisterPage("Categories", _ => new CategoriesPage { DataContext = new CategoriesPageViewModel() });
