@@ -428,6 +428,13 @@
                                        TextAlignment="Center"
                                        MaxWidth="300" />
                         </StackPanel>
+
+                        <!-- Continue Button -->
+                        <Button Classes="primary-button"
+                                Content="Continue"
+                                Command="{Binding ContinueAfterSuccessCommand}"
+                                HorizontalAlignment="Center"
+                                Padding="32,12" />
                     </StackPanel>
                 </Panel>
             </Border>

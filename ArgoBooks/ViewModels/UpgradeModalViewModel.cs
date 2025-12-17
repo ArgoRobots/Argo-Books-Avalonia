@@ -125,6 +125,16 @@ public partial class UpgradeModalViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void ContinueAfterSuccess()
+    {
+        IsEnterKeyModalOpen = false;
+        KeyVerified?.Invoke(this, LicenseKey);
+        IsVerificationSuccess = false;
+        LicenseKey = string.Empty;
+        SuccessMessage = null;
+    }
+
+    [RelayCommand]
     private async Task VerifyKey()
     {
         var key = GetFormattedLicenseKey();
@@ -154,11 +164,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
             {
                 IsVerificationSuccess = true;
                 SuccessMessage = response.Message ?? "License activated successfully!";
-
-                // Wait for animation then close
-                await Task.Delay(2000);
-                IsEnterKeyModalOpen = false;
-                KeyVerified?.Invoke(this, LicenseKey);
+                // User will click Continue button to close
             }
             else
             {
