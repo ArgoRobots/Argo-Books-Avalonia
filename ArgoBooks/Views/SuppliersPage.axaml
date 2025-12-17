@@ -532,29 +532,17 @@
                                     <!-- Page Number Buttons -->
                                     <ItemsControl ItemsSource="{Binding PageNumbers}">
                                         <ItemsControl.ItemsPanel>
-                                            <ItemTemplate>
+                                            <ItemsPanelTemplate>
                                                 <StackPanel Orientation="Horizontal" Spacing="4" />
-                                            </ItemTemplate>
+                                            </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Button Classes="pagination-button"
                                                         Content="{Binding}"
                                                         Command="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).GoToPageCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <Button.Classes>
-                                                        <MultiBinding Converter="{x:Static local:BoolConverters.ToExpensesOrRevenue}">
-                                                            <Binding />
-                                                            <Binding Path="$parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).CurrentPage" />
-                                                        </MultiBinding>
-                                                    </Button.Classes>
-                                                    <Button.Background>
-                                                        <MultiBinding Converter="{StaticResource PageEqualsConverter}">
-                                                            <Binding />
-                                                            <Binding Path="$parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).CurrentPage" />
-                                                        </MultiBinding>
-                                                    </Button.Background>
-                                                </Button>
+                                                        CommandParameter="{Binding}"
+                                                        Classes.active="{Binding $self.Content, Converter={x:Static local:IntConverters.EqualsCurrentPage}, ConverterParameter={Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).CurrentPage}}" />
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
