@@ -149,7 +149,10 @@ public partial class MainWindow : Window
                 {
                     case UnsavedChangesResult.Save:
                         // Save and close
-                        App.CompanyManager?.Save();
+                        if (App.CompanyManager != null)
+                        {
+                            await App.CompanyManager.SaveCompanyAsync();
+                        }
                         _isClosingConfirmed = true;
                         Close();
                         break;
