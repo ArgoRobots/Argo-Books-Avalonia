@@ -80,6 +80,19 @@ public partial class SuppliersPageViewModel : ViewModelBase
     [ObservableProperty]
     private int _pageSize = 10;
 
+    /// <summary>
+    /// Available page size options for the dropdown.
+    /// </summary>
+    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
+
+    partial void OnPageSizeChanged(int value)
+    {
+        CurrentPage = 1;
+        FilterSuppliers();
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+    }
+
     [ObservableProperty]
     private string _paginationText = "0 suppliers";
 
