@@ -80,25 +80,6 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #endregion
 
-    #region Feature Toggles
-
-    [ObservableProperty]
-    private bool _invoicesEnabled = true;
-
-    [ObservableProperty]
-    private bool _paymentsEnabled = true;
-
-    [ObservableProperty]
-    private bool _inventoryEnabled = true;
-
-    [ObservableProperty]
-    private bool _employeesEnabled = true;
-
-    [ObservableProperty]
-    private bool _rentalsEnabled = true;
-
-    #endregion
-
     #region Notification Settings
 
     [ObservableProperty]
@@ -320,7 +301,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <summary>
     /// Opens the settings modal with a specific tab selected.
     /// </summary>
-    /// <param name="tabIndex">The tab index to select (0=General, 1=Features, 2=Notifications, 3=Appearance, 4=Security).</param>
+    /// <param name="tabIndex">The tab index to select (0=General, 1=Notifications, 2=Appearance, 3=Security).</param>
     public void OpenWithTab(int tabIndex)
     {
         // Sync with current ThemeService values
