@@ -24,7 +24,7 @@
                            VerticalAlignment="Center" />
                 <Button Classes="link-button"
                         Content="Create one"
-                        Command="{Binding #Root.OpenCategoriesPageCommand}"
+                        Click="OnCreateCategoryClick"
                         VerticalAlignment="Center" />
             </StackPanel>
         </Border>

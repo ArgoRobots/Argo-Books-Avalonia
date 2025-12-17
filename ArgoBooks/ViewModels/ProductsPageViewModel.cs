@@ -704,7 +704,9 @@ public partial class ProductsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenCategoriesWithAddModal()
     {
+        // Close any open modal
         IsAddModalOpen = false;
+        IsEditModalOpen = false;
         App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
     }
 

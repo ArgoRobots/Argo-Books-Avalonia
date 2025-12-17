@@ -432,4 +432,12 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
         RaisePropertyChanged(nameof(SearchText));
         _isUpdatingText = false;
     }
+
+    /// <summary>
+    /// Handles the click event for the "Create one" button.
+    /// </summary>
+    private void OnCreateCategoryClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        OpenCategoriesPageCommand?.Execute(null);
+    }
 }
