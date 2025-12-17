@@ -739,7 +739,7 @@
                                             CornerRadius="32"
                                             Background="{DynamicResource SurfaceAltBrush}"
                                             HorizontalAlignment="Center">
-                                        <PathIcon Data="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z"
+                                        <PathIcon Data="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.37v6.71l6-3.38z"
                                                   Width="28" Height="28"
                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
                                     </Border>
@@ -752,6 +752,7 @@
                                                FontSize="14"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                HorizontalAlignment="Center"
+                                               TextAlignment="Center"
                                                TextWrapping="Wrap"
                                                MaxWidth="300" />
                                     <Button Classes="primary-button"
@@ -1583,7 +1584,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.pagination-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{TemplateBinding Background}" />
             <Setter Property="CornerRadius" Value="6" />
         </Style>
         <Style Selector="Button.pagination-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">

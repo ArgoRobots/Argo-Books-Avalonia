@@ -55,10 +55,10 @@ public static class BoolConverters
         new FuncValueConverter<bool, string>(value => value ? "Expenses" : "Revenue");
 
     /// <summary>
-    /// Converts bool (isExpensesTabSelected) to "Purchased Products/Services" (true) or "Products/Services for Sale" (false).
+    /// Converts bool (isExpensesTabSelected) to "Expenses" (true) or "Revenue" (false).
     /// </summary>
     public static readonly IValueConverter ToExpensesOrRevenueProducts =
-        new FuncValueConverter<bool, string>(value => value ? "Purchased Products/Services" : "Products/Services for Sale");
+        new FuncValueConverter<bool, string>(value => value ? "Expenses" : "Revenue");
 
     /// <summary>
     /// Converts bool (isChild) to background color for child rows.

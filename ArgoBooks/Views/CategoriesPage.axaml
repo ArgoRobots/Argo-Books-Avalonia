@@ -401,10 +401,9 @@
                                         CornerRadius="32"
                                         Background="{DynamicResource SurfaceAltBrush}"
                                         HorizontalAlignment="Center">
-                                    <TextBlock Text="📦"
-                                               FontSize="28"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center" />
+                                    <PathIcon Data="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"
+                                              Width="28" Height="28"
+                                              Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
                                 <TextBlock Text="No categories found"
                                            FontSize="16"
@@ -415,6 +414,7 @@
                                            FontSize="14"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Center"
+                                           TextAlignment="Center"
                                            TextWrapping="Wrap"
                                            MaxWidth="300" />
                                 <Button Classes="primary-button"
@@ -1075,7 +1075,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.pagination-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{TemplateBinding Background}" />
             <Setter Property="CornerRadius" Value="6" />
         </Style>
         <Style Selector="Button.pagination-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
