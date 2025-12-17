@@ -185,12 +185,12 @@
 
                         <!-- Products Table -->
                         <Grid Grid.Row="1" RowDefinitions="Auto,*">
-                            <!-- Table Header - Expenses Tab (8 columns) -->
+                            <!-- Table Header - Expenses Tab (9 columns) -->
                             <Border Grid.Row="0"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     Padding="24,12"
                                     IsVisible="{Binding IsExpensesTabSelected}">
-                                <Grid ColumnDefinitions="1.5*,0.7*,*,*,*,0.7*,0.7*,120">
+                                <Grid ColumnDefinitions="1.2*,0.6*,1.2*,0.8*,0.8*,0.8*,0.6*,0.6*,100">
                                     <TextBlock Grid.Column="0"
                                                Text="Product Name"
                                                FontSize="12"
@@ -202,31 +202,36 @@
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Grid.Column="2"
-                                               Text="Category"
+                                               Text="Description"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Grid.Column="3"
-                                               Text="Supplier"
+                                               Text="Category"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Grid.Column="4"
-                                               Text="Country of Origin"
+                                               Text="Supplier"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Grid.Column="5"
-                                               Text="Reorder Point"
+                                               Text="Country of Origin"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Grid.Column="6"
-                                               Text="Overstock"
+                                               Text="Reorder Point"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Grid.Column="7"
+                                               Text="Overstock"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Grid.Column="8"
                                                Text="Actions"
                                                FontSize="12"
                                                FontWeight="SemiBold"
@@ -240,19 +245,19 @@
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     Padding="24,12"
                                     IsVisible="{Binding IsRevenueTabSelected}">
-                                <Grid ColumnDefinitions="1.5*,2*,0.8*,*,120">
+                                <Grid ColumnDefinitions="1.5*,0.8*,2*,*,120">
                                     <TextBlock Grid.Column="0"
                                                Text="Product Name"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Grid.Column="1"
-                                               Text="Description"
+                                               Text="Type"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBlock Grid.Column="2"
-                                               Text="Type"
+                                               Text="Description"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -279,7 +284,7 @@
                                         <Border Padding="24,16"
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1">
-                                            <Grid ColumnDefinitions="1.5*,0.7*,*,*,*,0.7*,0.7*,120">
+                                            <Grid ColumnDefinitions="1.2*,0.6*,1.2*,0.8*,0.8*,0.8*,0.6*,0.6*,100">
                                                 <!-- Product Name with ID -->
                                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding Name}"
@@ -304,8 +309,16 @@
                                                                Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
                                                 </Border>
 
-                                                <!-- Category -->
+                                                <!-- Description -->
                                                 <TextBlock Grid.Column="2"
+                                                           Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
+                                                           FontSize="14"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis" />
+
+                                                <!-- Category -->
+                                                <TextBlock Grid.Column="3"
                                                            Text="{Binding CategoryName}"
                                                            FontSize="14"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
@@ -313,7 +326,7 @@
                                                            TextTrimming="CharacterEllipsis" />
 
                                                 <!-- Supplier -->
-                                                <TextBlock Grid.Column="3"
+                                                <TextBlock Grid.Column="4"
                                                            Text="{Binding SupplierName}"
                                                            FontSize="14"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
@@ -321,28 +334,28 @@
                                                            TextTrimming="CharacterEllipsis" />
 
                                                 <!-- Country of Origin -->
-                                                <TextBlock Grid.Column="4"
+                                                <TextBlock Grid.Column="5"
                                                            Text="{Binding CountryOfOrigin}"
                                                            FontSize="14"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            VerticalAlignment="Center" />
 
                                                 <!-- Reorder Point -->
-                                                <TextBlock Grid.Column="5"
+                                                <TextBlock Grid.Column="6"
                                                            Text="{Binding ReorderPoint}"
                                                            FontSize="14"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            VerticalAlignment="Center" />
 
                                                 <!-- Overstock -->
-                                                <TextBlock Grid.Column="6"
+                                                <TextBlock Grid.Column="7"
                                                            Text="{Binding OverstockThreshold}"
                                                            FontSize="14"
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            VerticalAlignment="Center" />
 
                                                 <!-- Actions -->
-                                                <StackPanel Grid.Column="7"
+                                                <StackPanel Grid.Column="8"
                                                             Orientation="Horizontal"
                                                             HorizontalAlignment="Right"
                                                             Spacing="4">
@@ -376,7 +389,7 @@
                                         <Border Padding="24,16"
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1">
-                                            <Grid ColumnDefinitions="1.5*,2*,0.8*,*,120">
+                                            <Grid ColumnDefinitions="1.5*,0.8*,2*,*,120">
                                                 <!-- Product Name with ID -->
                                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding Name}"
@@ -388,16 +401,8 @@
                                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 </StackPanel>
 
-                                                <!-- Description -->
-                                                <TextBlock Grid.Column="1"
-                                                           Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
-                                                           FontSize="14"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           VerticalAlignment="Center"
-                                                           TextTrimming="CharacterEllipsis" />
-
                                                 <!-- Type Badge -->
-                                                <Border Grid.Column="2"
+                                                <Border Grid.Column="1"
                                                         VerticalAlignment="Center"
                                                         HorizontalAlignment="Left"
                                                         Padding="8,4"
@@ -408,6 +413,14 @@
                                                                FontWeight="Medium"
                                                                Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
                                                 </Border>
+
+                                                <!-- Description -->
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
+                                                           FontSize="14"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis" />
 
                                                 <!-- Category -->
                                                 <TextBlock Grid.Column="3"
@@ -675,8 +688,9 @@
                                 <controls:CountryInput SelectedCountryName="{Binding ModalCountryOfOrigin, Mode=TwoWay}" />
                             </StackPanel>
 
-                            <!-- Reorder Point and Overstock Row -->
-                            <Grid ColumnDefinitions="*,16,*">
+                            <!-- Reorder Point and Overstock Row (hidden for Services) -->
+                            <Grid ColumnDefinitions="*,16,*"
+                                  IsVisible="{Binding IsProductSelected}">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="Reorder Point"
                                                FontSize="13"
@@ -714,12 +728,6 @@
                                     </Grid>
                                 </StackPanel>
                             </Grid>
-
-                            <!-- Note about inventory thresholds -->
-                            <TextBlock Text="Set inventory thresholds for alerts. Leave empty for services."
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                       FontStyle="Italic" />
                         </StackPanel>
                     </ScrollViewer>
 
@@ -875,8 +883,9 @@
                                 <controls:CountryInput SelectedCountryName="{Binding ModalCountryOfOrigin, Mode=TwoWay}" />
                             </StackPanel>
 
-                            <!-- Reorder Point and Overstock Row -->
-                            <Grid ColumnDefinitions="*,16,*">
+                            <!-- Reorder Point and Overstock Row (hidden for Services) -->
+                            <Grid ColumnDefinitions="*,16,*"
+                                  IsVisible="{Binding IsProductSelected}">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="Reorder Point"
                                                FontSize="13"
@@ -914,12 +923,6 @@
                                     </Grid>
                                 </StackPanel>
                             </Grid>
-
-                            <!-- Note about inventory thresholds -->
-                            <TextBlock Text="Set inventory thresholds for alerts. Leave empty for services."
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                       FontStyle="Italic" />
                         </StackPanel>
                     </ScrollViewer>
 

@@ -197,6 +197,16 @@ public partial class ProductsPageViewModel : ViewModelBase
     [ObservableProperty]
     private string _modalItemType = "Product";
 
+    /// <summary>
+    /// Gets whether a Product is selected (not Service) - used for showing threshold inputs.
+    /// </summary>
+    public bool IsProductSelected => ModalItemType == "Product";
+
+    partial void OnModalItemTypeChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsProductSelected));
+    }
+
     [ObservableProperty]
     private CategoryOption? _modalCategory;
 
