@@ -13,7 +13,7 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class UpgradeModalViewModel : ViewModelBase
 {
-    private static readonly HttpClient _httpClient = new();
+    private static readonly HttpClient HttpClient = new();
     private const string LicenseValidationUrl = "https://argorobots.com/validate_license.php";
     private const string StandardUpgradeUrl = "http://localhost/argo-books-website/upgrade/standard/";
     private const string PremiumUpgradeUrl = "http://localhost/argo-books-website/upgrade/premium/";
@@ -44,7 +44,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
     /// </summary>
     private string GetFormattedLicenseKey()
     {
-        return _licenseKey.Trim().ToUpperInvariant();
+        return LicenseKey.Trim().ToUpperInvariant();
     }
 
     /// <summary>
@@ -158,7 +158,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
                 // Wait for animation then close
                 await Task.Delay(2000);
                 IsEnterKeyModalOpen = false;
-                KeyVerified?.Invoke(this, _licenseKey);
+                KeyVerified?.Invoke(this, LicenseKey);
             }
             else
             {
@@ -193,7 +193,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        var response = await _httpClient.PostAsync(LicenseValidationUrl, content, cts.Token);
+        var response = await HttpClient.PostAsync(LicenseValidationUrl, content, cts.Token);
 
         var responseJson = await response.Content.ReadAsStringAsync(cts.Token);
         return JsonSerializer.Deserialize<LicenseResponse>(responseJson);
@@ -212,22 +212,22 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private class LicenseResponse
     {
         [JsonPropertyName("success")]
-        public bool Success { get; set; }
+        public bool Success { get; init; }
 
         [JsonPropertyName("type")]
-        public string? Type { get; set; }
+        public string? Type { get; init; }
 
         [JsonPropertyName("status")]
-        public string? Status { get; set; }
+        public string? Status { get; init; }
 
         [JsonPropertyName("message")]
-        public string? Message { get; set; }
+        public string? Message { get; init; }
 
         [JsonPropertyName("activation_date")]
-        public string? ActivationDate { get; set; }
+        public string? ActivationDate { get; init; }
 
         [JsonPropertyName("key")]
-        public string? Key { get; set; }
+        public string? Key { get; init; }
     }
 
     #endregion
