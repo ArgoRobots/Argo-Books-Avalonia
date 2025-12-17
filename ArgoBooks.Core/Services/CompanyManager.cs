@@ -179,11 +179,12 @@ public class CompanyManager : IDisposable
                 _companyData.Settings.Company = companyInfo;
             }
 
-            // Create receipts subdirectory
-            Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
-
-            // Save all data to temp directory
+            // Save all data to temp directory first (before creating receipts subdirectory,
+            // otherwise GetCompanyDirectory will incorrectly find receipts/ as the company dir)
             await _fileService.SaveCompanyDataAsync(companyDir, _companyData, cancellationToken);
+
+            // Create receipts subdirectory after saving data files
+            Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
 
             // Save to file
             await _fileService.SaveCompanyAsync(filePath, _currentTempDirectory, password, cancellationToken);
