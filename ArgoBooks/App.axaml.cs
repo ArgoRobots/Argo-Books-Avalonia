@@ -1025,6 +1025,7 @@ public partial class App : Application
         // Main Section
         navigationService.RegisterPage("Dashboard", _ => CreatePlaceholderPage("Dashboard", "Welcome to the Dashboard"));
         navigationService.RegisterPage("Analytics", _ => new AnalyticsPage { DataContext = new AnalyticsPageViewModel() });
+        navigationService.RegisterPage("Insights", _ => CreatePlaceholderPage("Insights", "AI-powered business insights"));
         navigationService.RegisterPage("Reports", _ => CreatePlaceholderPage("Reports", "Generate and view reports"));
 
         // Transactions Section

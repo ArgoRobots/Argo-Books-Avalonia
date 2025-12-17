@@ -122,8 +122,8 @@ public partial class UpgradeModal : UserControl
                             Cue = new Cue(1),
                             Setters =
                             {
-                                new Setter(ScaleTransform.ScaleXProperty, 1.5),
-                                new Setter(ScaleTransform.ScaleYProperty, 1.5)
+                                new Setter(ScaleTransform.ScaleXProperty, 1.15),
+                                new Setter(ScaleTransform.ScaleYProperty, 1.15)
                             }
                         }
                     }
