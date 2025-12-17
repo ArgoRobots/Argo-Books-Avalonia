@@ -1147,7 +1147,16 @@ public partial class App : Application
         navigationService.RegisterPage("Products", _ => new ProductsPage { DataContext = new ProductsPageViewModel() });
         navigationService.RegisterPage("StockLevels", _ => CreatePlaceholderPage("Stock Levels", "Monitor inventory levels"));
         navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
-        navigationService.RegisterPage("Categories", _ => new CategoriesPage { DataContext = new CategoriesPageViewModel() });
+        navigationService.RegisterPage("Categories", param =>
+        {
+            var viewModel = new CategoriesPageViewModel();
+            // Check if we should open the add modal
+            if (param is Dictionary<string, object?> dict && dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
+            {
+                viewModel.IsAddModalOpen = true;
+            }
+            return new CategoriesPage { DataContext = viewModel };
+        });
 
         // Contacts Section
         navigationService.RegisterPage("Customers", _ => CreatePlaceholderPage("Customers", "Manage customer information"));

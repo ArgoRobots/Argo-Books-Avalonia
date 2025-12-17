@@ -918,16 +918,9 @@
                                         <Run Text="Category" />
                                         <Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <ComboBox ItemsSource="{Binding AvailableCategories}"
-                                              SelectedItem="{Binding ModalCategory}"
-                                              Classes="form-combobox"
-                                              PlaceholderText="Select category">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate DataType="vm:CategoryOption">
-                                                <TextBlock Text="{Binding Name}" />
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <controls:CategoryInput Categories="{Binding CategoryItems}"
+                                                            SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
+                                                            OpenCategoriesPageCommand="{Binding OpenCategoriesWithAddModalCommand}" />
                                 </StackPanel>
                             </Grid>
 
@@ -1113,16 +1106,9 @@
                                         <Run Text="Category" />
                                         <Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <ComboBox ItemsSource="{Binding AvailableCategories}"
-                                              SelectedItem="{Binding ModalCategory}"
-                                              Classes="form-combobox"
-                                              PlaceholderText="Select category">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate DataType="vm:CategoryOption">
-                                                <TextBlock Text="{Binding Name}" />
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <controls:CategoryInput Categories="{Binding CategoryItems}"
+                                                            SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
+                                                            OpenCategoriesPageCommand="{Binding OpenCategoriesWithAddModalCommand}" />
                                 </StackPanel>
                             </Grid>
 
@@ -1259,10 +1245,6 @@
                                    FontSize="16"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
-                                   TextAlignment="Center" />
-                        <TextBlock Text="This action cannot be undone."
-                                   FontSize="12"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                    TextAlignment="Center" />
                     </StackPanel>
 

@@ -141,6 +141,16 @@ public partial class ProductsPageViewModel : ViewModelBase
     public ObservableCollection<CategoryOption> AvailableCategories { get; } = [];
 
     /// <summary>
+    /// Category items for the searchable category input (excludes "All Categories").
+    /// </summary>
+    public ObservableCollection<Controls.CategoryItem> CategoryItems { get; } = [];
+
+    /// <summary>
+    /// Gets whether there are any categories available.
+    /// </summary>
+    public bool HasCategories => CategoryItems.Count > 0;
+
+    /// <summary>
     /// Available suppliers for filter/modal dropdown.
     /// </summary>
     public ObservableCollection<SupplierOption> AvailableSuppliers { get; } = [];
@@ -245,6 +255,22 @@ public partial class ProductsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private CategoryOption? _modalCategory;
+
+    [ObservableProperty]
+    private string? _modalCategoryId;
+
+    partial void OnModalCategoryIdChanged(string? value)
+    {
+        // Update ModalCategory when CategoryId changes
+        if (value != null)
+        {
+            ModalCategory = AvailableCategories.FirstOrDefault(c => c.Id == value);
+        }
+        else
+        {
+            ModalCategory = null;
+        }
+    }
 
     [ObservableProperty]
     private SupplierOption? _modalSupplier;
@@ -399,6 +425,14 @@ public partial class ProductsPageViewModel : ViewModelBase
         {
             AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name, ItemType = cat.ItemType });
         }
+
+        // Update CategoryItems for the searchable input (excludes "All Categories")
+        CategoryItems.Clear();
+        foreach (var cat in categories)
+        {
+            CategoryItems.Add(new Controls.CategoryItem { Id = cat.Id, Name = cat.Name });
+        }
+        OnPropertyChanged(nameof(HasCategories));
 
         // Update suppliers
         AvailableSuppliers.Clear();
@@ -654,6 +688,16 @@ public partial class ProductsPageViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Navigates to the Categories page and opens the Add Category modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenCategoriesWithAddModal()
+    {
+        IsAddModalOpen = false;
+        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
+    /// <summary>
     /// Saves a new product.
     /// </summary>
     [RelayCommand]
@@ -748,6 +792,7 @@ public partial class ProductsPageViewModel : ViewModelBase
             {
                 ModalItemType = category.ItemType;
                 ModalCategory = AvailableCategories.FirstOrDefault(c => c.Id == category.Id);
+                ModalCategoryId = category.Id;
             }
 
             // Find supplier
@@ -1010,6 +1055,14 @@ public partial class ProductsPageViewModel : ViewModelBase
             AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name, ItemType = cat.ItemType });
         }
 
+        // Update CategoryItems for the searchable input
+        CategoryItems.Clear();
+        foreach (var cat in categories)
+        {
+            CategoryItems.Add(new Controls.CategoryItem { Id = cat.Id, Name = cat.Name });
+        }
+        OnPropertyChanged(nameof(HasCategories));
+
         // Reset suppliers
         AvailableSuppliers.Clear();
         foreach (var supplier in companyData.Suppliers.OrderBy(s => s.Name))
@@ -1024,6 +1077,7 @@ public partial class ProductsPageViewModel : ViewModelBase
         ModalDescription = string.Empty;
         ModalItemType = "Product";
         ModalCategory = null;
+        ModalCategoryId = null;
         ModalSupplier = null;
         ModalCountryOfOrigin = string.Empty;
         ModalReorderPoint = string.Empty;
