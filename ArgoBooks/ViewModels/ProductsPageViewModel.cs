@@ -178,6 +178,14 @@ public partial class ProductsPageViewModel : ViewModelBase
     [ObservableProperty]
     private int _pageSize = 10;
 
+    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
+
+    partial void OnPageSizeChanged(int value)
+    {
+        CurrentPage = 1;
+        FilterProducts();
+    }
+
     [ObservableProperty]
     private string _paginationText = "0 products";
 

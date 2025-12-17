@@ -11,6 +11,8 @@
 
     <UserControl.Resources>
         <local:SortIndicatorConverter x:Key="SortIndicatorConverter" />
+        <local:PageActiveBackgroundConverter x:Key="PageActiveBackgroundConverter" />
+        <local:PageActiveForegroundConverter x:Key="PageActiveForegroundConverter" />
     </UserControl.Resources>
 
     <Design.DataContext>
@@ -767,20 +769,39 @@
                             </Border>
                         </Grid>
 
-                        <!-- Pagination -->
+                        <!-- Pagination Footer -->
                         <Border Grid.Row="2"
-                                Padding="24,16"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                Padding="24,12"
                                 BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,1,0,0"
-                                IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
-                            <Grid ColumnDefinitions="*,Auto,*">
-                                <TextBlock Grid.Column="0"
-                                           Text="{Binding PaginationText}"
-                                           FontSize="14"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           VerticalAlignment="Center" />
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <!-- Rows per page selector -->
+                                <StackPanel Grid.Column="0"
+                                            Orientation="Horizontal"
+                                            Spacing="8"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding PaginationText}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="|"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="8,0" />
+                                    <TextBlock Text="Rows per page:"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <ComboBox ItemsSource="{Binding PageSizeOptions}"
+                                              SelectedItem="{Binding PageSize}"
+                                              Classes="page-size-combobox"
+                                              Width="70" />
+                                </StackPanel>
 
-                                <StackPanel Grid.Column="1"
+                                <!-- Page Numbers -->
+                                <StackPanel Grid.Column="2"
                                             Orientation="Horizontal"
                                             Spacing="4">
                                     <!-- Previous Button -->
@@ -791,7 +812,7 @@
                                                   Width="16" Height="16" />
                                     </Button>
 
-                                    <!-- Page Numbers -->
+                                    <!-- Page Number Buttons -->
                                     <ItemsControl ItemsSource="{Binding PageNumbers}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
@@ -800,11 +821,23 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Button Content="{Binding}"
+                                                <Button Classes="pagination-button"
+                                                        Content="{Binding}"
                                                         Command="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).GoToPageCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        Classes="pagination-button"
-                                                        Classes.active="{Binding $self.Content, Converter={x:Static local:IntConverters.EqualsCurrentPage}, ConverterParameter={Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).CurrentPage}}" />
+                                                        CommandParameter="{Binding}">
+                                                    <Button.Background>
+                                                        <MultiBinding Converter="{StaticResource PageActiveBackgroundConverter}">
+                                                            <Binding />
+                                                            <Binding Path="$parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).CurrentPage" />
+                                                        </MultiBinding>
+                                                    </Button.Background>
+                                                    <Button.Foreground>
+                                                        <MultiBinding Converter="{StaticResource PageActiveForegroundConverter}">
+                                                            <Binding />
+                                                            <Binding Path="$parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).CurrentPage" />
+                                                        </MultiBinding>
+                                                    </Button.Foreground>
+                                                </Button>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -813,12 +846,10 @@
                                     <Button Classes="pagination-button"
                                             Command="{Binding GoToNextPageCommand}"
                                             IsEnabled="{Binding CanGoToNextPage}">
-                                        <PathIcon Data="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"
+                                        <PathIcon Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
                                                   Width="16" Height="16" />
                                     </Button>
                                 </StackPanel>
-
-                                <Panel Grid.Column="2" />
                             </Grid>
                         </Border>
                     </Grid>
@@ -1568,6 +1599,17 @@
         </Style>
         <Style Selector="Button.pagination-button:disabled">
             <Setter Property="Opacity" Value="0.5" />
+        </Style>
+
+        <!-- Page Size ComboBox -->
+        <Style Selector="ComboBox.page-size-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="MinHeight" Value="28" />
         </Style>
 
         <!-- Form Input -->
