@@ -593,7 +593,7 @@
             </Border>
 
     <!-- Add Supplier Modal -->
-    <Panel IsVisible="{Binding IsAddModalOpen}">
+    <Panel Grid.RowSpan="2" IsVisible="{Binding IsAddModalOpen}">
         <Border Background="#80000000"
                 PointerPressed="Backdrop_PointerPressed" />
         <Border Background="{DynamicResource SurfaceBrush}"
@@ -807,7 +807,7 @@
     </Panel>
 
     <!-- Edit Supplier Modal -->
-    <Panel IsVisible="{Binding IsEditModalOpen}">
+    <Panel Grid.RowSpan="2" IsVisible="{Binding IsEditModalOpen}">
         <Border Background="#80000000"
                 PointerPressed="EditBackdrop_PointerPressed" />
         <Border Background="{DynamicResource SurfaceBrush}"
@@ -1021,7 +1021,7 @@
     </Panel>
 
     <!-- Delete Confirmation Modal -->
-    <Panel IsVisible="{Binding IsDeleteConfirmOpen}">
+    <Panel Grid.RowSpan="2" IsVisible="{Binding IsDeleteConfirmOpen}">
         <Border Background="#80000000"
                 PointerPressed="DeleteBackdrop_PointerPressed" />
         <Border Background="{DynamicResource SurfaceBrush}"
@@ -1095,7 +1095,7 @@
     </Panel>
 
     <!-- Filter Modal -->
-    <Panel IsVisible="{Binding IsFilterModalOpen}">
+    <Panel Grid.RowSpan="2" IsVisible="{Binding IsFilterModalOpen}">
         <Border Background="#80000000"
                 PointerPressed="FilterBackdrop_PointerPressed" />
         <Border Background="{DynamicResource SurfaceBrush}"
@@ -1332,9 +1332,12 @@
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.pagination-button /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{TemplateBinding Background}" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
         <Style Selector="Button.pagination-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
