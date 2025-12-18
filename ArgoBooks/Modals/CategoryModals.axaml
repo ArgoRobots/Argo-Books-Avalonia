@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:converters="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.CategoryModals"
              x:DataType="vm:CategoryModalsViewModel">
@@ -20,7 +21,7 @@
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="{Binding IsAddingSubCategory, Converter={x:Static BoolConverters.ToString}, ConverterParameter='Add Sub-Category;Add Category'}"
+                                <TextBlock Text="{Binding IsAddingSubCategory, Converter={x:Static converters:BoolConverters.ToString}, ConverterParameter='Add Sub-Category;Add Category'}"
                                            FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <TextBlock Text="{Binding AddingSubCategoryParentName, StringFormat='Under: {0}'}"
                                            FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"

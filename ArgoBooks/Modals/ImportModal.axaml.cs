@@ -37,14 +37,6 @@ public partial class ImportModal : UserControl
         }
     }
 
-    private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (DataContext is ImportModalViewModel vm)
-        {
-            vm.CloseCommand.Execute(null);
-        }
-    }
-
     private void Modal_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && DataContext is ImportModalViewModel vm)

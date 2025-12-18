@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -147,7 +147,6 @@ public partial class SupplierModalsViewModel : ObservableObject
                 Country = string.IsNullOrWhiteSpace(ModalCountry) ? string.Empty : ModalCountry.Trim()
             },
             Notes = string.IsNullOrWhiteSpace(ModalNotes) ? string.Empty : ModalNotes.Trim(),
-            Status = EntityStatus.Active,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -182,7 +181,7 @@ public partial class SupplierModalsViewModel : ObservableObject
         ModalSupplierName = supplier.Name;
         ModalEmail = supplier.Email;
         ModalPhone = supplier.Phone;
-        ModalWebsite = supplier.Website;
+        ModalWebsite = supplier.Website ?? string.Empty;
         ModalStreetAddress = supplier.Address.Street;
         ModalCity = supplier.Address.City;
         ModalStateProvince = supplier.Address.State;

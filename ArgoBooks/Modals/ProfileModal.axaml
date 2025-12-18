@@ -13,8 +13,7 @@
 
     <Panel IsVisible="{Binding IsOpen}">
         <!-- Modal Backdrop with fade animation -->
-        <Border Background="#80000000"
-                PointerPressed="Backdrop_PointerPressed">
+        <Border Background="#80000000">
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2" />

@@ -37,14 +37,6 @@ public partial class ExportAsModal : UserControl
         }
     }
 
-    private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (DataContext is ExportAsModalViewModel vm)
-        {
-            vm.CloseCommand.Execute(null);
-        }
-    }
-
     private void Modal_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && DataContext is ExportAsModalViewModel vm)

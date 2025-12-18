@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -90,7 +89,6 @@ public partial class DepartmentModalsViewModel : ObservableObject
             Id = newId,
             Name = ModalDepartmentName.Trim(),
             Description = string.IsNullOrWhiteSpace(ModalDescription) ? null : ModalDescription.Trim(),
-            Status = EntityStatus.Active,
             CreatedAt = DateTime.UtcNow
         };
 

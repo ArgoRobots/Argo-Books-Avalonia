@@ -49,6 +49,12 @@ public class StringToBrushConverter : IValueConverter
 public static class BoolConverters
 {
     /// <summary>
+    /// Converts bool to one of two strings based on the parameter.
+    /// Parameter format: "TrueValue;FalseValue"
+    /// </summary>
+    public static new readonly IValueConverter ToString = new BoolToStringConverter();
+
+    /// <summary>
     /// Converts bool to "Expenses" (true) or "Revenue" (false).
     /// </summary>
     public static readonly IValueConverter ToExpensesOrRevenue =
@@ -59,24 +65,6 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToExpensesOrRevenueProducts =
         new FuncValueConverter<bool, string>(value => value ? "Expenses" : "Revenue");
-
-    /// <summary>
-    /// Converts bool (isChild) to background color for child rows.
-    /// </summary>
-    public static readonly IValueConverter ToChildRowBackground =
-        new FuncValueConverter<bool, IBrush?>(value =>
-        {
-            if (!value) return null;
-
-            if (Application.Current?.Resources != null &&
-                Application.Current.Resources.TryGetResource("SurfaceAltBrush", Application.Current.ActualThemeVariant, out var resource) &&
-                resource is IBrush brush)
-            {
-                return brush;
-            }
-
-            return new SolidColorBrush(Color.Parse("#F9FAFB"));
-        });
 
     /// <summary>
     /// Converts bool (isChild) to left margin indent for child rows.
@@ -107,29 +95,10 @@ public static class BoolConverters
 public static class IntConverters
 {
     /// <summary>
-    /// Returns true if the integer is greater than zero.
-    /// </summary>
-    public static readonly IValueConverter IsGreaterThanZero =
-        new FuncValueConverter<int, bool>(value => value > 0);
-
-    /// <summary>
     /// Returns true if the integer is zero.
     /// </summary>
     public static readonly IValueConverter IsZero =
         new FuncValueConverter<int, bool>(value => value == 0);
-
-    /// <summary>
-    /// Returns true if the integer is greater than one (for pagination visibility).
-    /// </summary>
-    public static readonly IValueConverter IsGreaterThanOne =
-        new FuncValueConverter<int, bool>(value => value > 1);
-
-    /// <summary>
-    /// Checks if the value equals the current page (for pagination active state).
-    /// This is a placeholder - actual comparison happens differently.
-    /// </summary>
-    public static readonly IValueConverter EqualsCurrentPage =
-        new FuncValueConverter<int, bool>(value => false);
 }
 
 /// <summary>
@@ -372,5 +341,29 @@ public class PageActiveForegroundConverter : IMultiValueConverter
             return brush;
         }
         return new SolidColorBrush(Color.Parse("#374151"));
+    }
+}
+
+/// <summary>
+/// Converter that converts a bool to one of two strings based on the parameter.
+/// Parameter format: "TrueValue;FalseValue"
+/// </summary>
+public class BoolToStringConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not bool boolValue || parameter is not string paramString)
+            return string.Empty;
+
+        var parts = paramString.Split(';');
+        if (parts.Length != 2)
+            return string.Empty;
+
+        return boolValue ? parts[0] : parts[1];
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
     }
 }
