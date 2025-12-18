@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Controls;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -45,7 +46,146 @@ public partial class CategoriesPageViewModel : ViewModelBase
 
     partial void OnSearchQueryChanged(string? value)
     {
+        CurrentPage = 1;
         FilterCategories();
+    }
+
+    #endregion
+
+    #region Sorting
+
+    [ObservableProperty]
+    private string _sortColumn = "Name";
+
+    [ObservableProperty]
+    private SortDirection _sortDirection = SortDirection.None;
+
+    /// <summary>
+    /// Sorts the categories by the specified column.
+    /// </summary>
+    [RelayCommand]
+    private void SortBy(string column)
+    {
+        if (SortColumn == column)
+        {
+            // Toggle sort direction
+            SortDirection = SortDirection switch
+            {
+                SortDirection.None => SortDirection.Ascending,
+                SortDirection.Ascending => SortDirection.Descending,
+                SortDirection.Descending => SortDirection.None,
+                _ => SortDirection.Ascending
+            };
+        }
+        else
+        {
+            // New column, start with ascending
+            SortColumn = column;
+            SortDirection = SortDirection.Ascending;
+        }
+
+        FilterCategories();
+    }
+
+    /// <summary>
+    /// Gets whether the specified column is sorted ascending.
+    /// </summary>
+    public bool IsSortedAscending(string column) => SortColumn == column && SortDirection == SortDirection.Ascending;
+
+    /// <summary>
+    /// Gets whether the specified column is sorted descending.
+    /// </summary>
+    public bool IsSortedDescending(string column) => SortColumn == column && SortDirection == SortDirection.Descending;
+
+    #endregion
+
+    #region Pagination
+
+    [ObservableProperty]
+    private int _currentPage = 1;
+
+    [ObservableProperty]
+    private int _totalPages = 1;
+
+    [ObservableProperty]
+    private int _pageSize = 10;
+
+    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
+
+    partial void OnPageSizeChanged(int value)
+    {
+        CurrentPage = 1;
+        FilterCategories();
+    }
+
+    [ObservableProperty]
+    private string _paginationText = "0 categories";
+
+    public ObservableCollection<int> PageNumbers { get; } = [];
+
+    public bool CanGoToPreviousPage => CurrentPage > 1;
+    public bool CanGoToNextPage => CurrentPage < TotalPages;
+
+    partial void OnCurrentPageChanged(int value)
+    {
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        FilterCategories();
+    }
+
+    [RelayCommand]
+    private void GoToPreviousPage()
+    {
+        if (CanGoToPreviousPage)
+            CurrentPage--;
+    }
+
+    [RelayCommand]
+    private void GoToNextPage()
+    {
+        if (CanGoToNextPage)
+            CurrentPage++;
+    }
+
+    [RelayCommand]
+    private void GoToPage(int page)
+    {
+        if (page >= 1 && page <= TotalPages)
+            CurrentPage = page;
+    }
+
+    private void UpdatePageNumbers()
+    {
+        PageNumbers.Clear();
+        var startPage = Math.Max(1, CurrentPage - 2);
+        var endPage = Math.Min(TotalPages, startPage + 4);
+        startPage = Math.Max(1, endPage - 4);
+
+        for (var i = startPage; i <= endPage; i++)
+        {
+            PageNumbers.Add(i);
+        }
+    }
+
+    private void UpdatePaginationText(int totalCount)
+    {
+        if (totalCount == 0)
+        {
+            PaginationText = "0 categories";
+            return;
+        }
+
+        // For single page, just show count; for multiple pages, show range
+        if (TotalPages <= 1)
+        {
+            PaginationText = totalCount == 1 ? "1 category" : $"{totalCount} categories";
+        }
+        else
+        {
+            var start = (CurrentPage - 1) * PageSize + 1;
+            var end = Math.Min(CurrentPage * PageSize, totalCount);
+            PaginationText = $"{start}-{end} of {totalCount} categories";
+        }
     }
 
     #endregion
@@ -262,7 +402,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Filters and organizes categories based on current tab and search.
+    /// Filters and organizes categories based on current tab, search, sorting, and pagination.
     /// </summary>
     private void FilterCategories()
     {
@@ -292,20 +432,23 @@ public partial class CategoriesPageViewModel : ViewModelBase
                 .ToList();
         }
 
+        // Build display items list (flat, with parent-child info)
+        var displayItems = new List<CategoryDisplayItem>();
+
         // Build hierarchy - parent categories first, then children
         var parentCategories = categories.Where(c => string.IsNullOrEmpty(c.ParentId)).ToList();
 
-        foreach (var parent in parentCategories.OrderBy(c => c.Name))
+        foreach (var parent in parentCategories)
         {
             var childCount = CountChildren(parent.Id);
-            targetCollection.Add(CreateDisplayItem(parent, null, childCount));
+            displayItems.Add(CreateDisplayItem(parent, null, childCount));
 
             // Add children
-            var children = categories.Where(c => c.ParentId == parent.Id).OrderBy(c => c.Name);
+            var children = categories.Where(c => c.ParentId == parent.Id);
             foreach (var child in children)
             {
                 var grandchildCount = CountChildren(child.Id);
-                targetCollection.Add(CreateDisplayItem(child, parent.Name, grandchildCount, isChild: true));
+                displayItems.Add(CreateDisplayItem(child, parent.Name, grandchildCount, isChild: true));
             }
         }
 
@@ -314,10 +457,53 @@ public partial class CategoriesPageViewModel : ViewModelBase
             !string.IsNullOrEmpty(c.ParentId) &&
             !categories.Any(p => p.Id == c.ParentId));
 
-        foreach (var orphan in orphans.OrderBy(c => c.Name))
+        foreach (var orphan in orphans)
         {
             var childCount = CountChildren(orphan.Id);
-            targetCollection.Add(CreateDisplayItem(orphan, "Unknown", childCount));
+            displayItems.Add(CreateDisplayItem(orphan, "Unknown", childCount));
+        }
+
+        // Apply sorting
+        if (SortDirection != SortDirection.None)
+        {
+            displayItems = SortColumn switch
+            {
+                "Name" => SortDirection == SortDirection.Ascending
+                    ? displayItems.OrderBy(x => x.Name).ToList()
+                    : displayItems.OrderByDescending(x => x.Name).ToList(),
+                "Parent" => SortDirection == SortDirection.Ascending
+                    ? displayItems.OrderBy(x => x.ParentName).ToList()
+                    : displayItems.OrderByDescending(x => x.ParentName).ToList(),
+                "Description" => SortDirection == SortDirection.Ascending
+                    ? displayItems.OrderBy(x => x.Description).ToList()
+                    : displayItems.OrderByDescending(x => x.Description).ToList(),
+                "Type" => SortDirection == SortDirection.Ascending
+                    ? displayItems.OrderBy(x => x.ItemType).ToList()
+                    : displayItems.OrderByDescending(x => x.ItemType).ToList(),
+                "ProductCount" => SortDirection == SortDirection.Ascending
+                    ? displayItems.OrderBy(x => x.ProductCount).ToList()
+                    : displayItems.OrderByDescending(x => x.ProductCount).ToList(),
+                _ => displayItems
+            };
+        }
+
+        // Calculate pagination
+        var totalCount = displayItems.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        UpdatePageNumbers();
+        UpdatePaginationText(totalCount);
+
+        // Apply pagination
+        var pagedItems = displayItems
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize);
+
+        foreach (var item in pagedItems)
+        {
+            targetCollection.Add(item);
         }
 
         OnPropertyChanged(nameof(CurrentCategories));

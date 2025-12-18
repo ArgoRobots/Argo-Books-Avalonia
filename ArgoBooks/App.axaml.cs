@@ -223,6 +223,9 @@ public partial class App : Application
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(args.FilePath);
             _mainWindowViewModel.HideLoading();
 
+            // Clear undo/redo history for fresh start with new company
+            UndoRedoManager?.Clear();
+
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
         };
@@ -237,6 +240,9 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
+            // Clear undo/redo history when company is closed
+            UndoRedoManager?.Clear();
+
             // Clear tracked changes when company is closed
             _changeTrackingService?.ClearAllChanges();
 
@@ -250,6 +256,9 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
+
+            // Mark undo/redo state as saved so IsAtSavedState returns true
+            UndoRedoManager?.MarkSaved();
 
             // Clear tracked changes after saving
             _changeTrackingService?.ClearAllChanges();
@@ -322,7 +331,8 @@ public partial class App : Application
         {
             if (CompanyManager?.IsCompanyOpen == true)
             {
-                if (CompanyManager.HasUnsavedChanges)
+                // Use UndoRedoManager's saved state which correctly handles undo back to original
+                if (UndoRedoManager?.IsAtSavedState == false)
                 {
                     var result = await ShowUnsavedChangesDialogAsync();
                     switch (result)
@@ -1144,10 +1154,19 @@ public partial class App : Application
         navigationService.RegisterPage("Payments", _ => CreatePlaceholderPage("Payments", "Record payments"));
 
         // Inventory Section
-        navigationService.RegisterPage("Products", _ => CreatePlaceholderPage("Products", "Manage products and services"));
+        navigationService.RegisterPage("Products", _ => new ProductsPage { DataContext = new ProductsPageViewModel() });
         navigationService.RegisterPage("StockLevels", _ => CreatePlaceholderPage("Stock Levels", "Monitor inventory levels"));
         navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
-        navigationService.RegisterPage("Categories", _ => new CategoriesPage { DataContext = new CategoriesPageViewModel() });
+        navigationService.RegisterPage("Categories", param =>
+        {
+            var viewModel = new CategoriesPageViewModel();
+            // Check if we should open the add modal
+            if (param is Dictionary<string, object?> dict && dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
+            {
+                viewModel.IsAddModalOpen = true;
+            }
+            return new CategoriesPage { DataContext = viewModel };
+        });
 
         // Contacts Section
         navigationService.RegisterPage("Customers", _ => CreatePlaceholderPage("Customers", "Manage customer information"));

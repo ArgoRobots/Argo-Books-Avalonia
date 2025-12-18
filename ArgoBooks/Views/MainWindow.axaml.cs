@@ -120,9 +120,66 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+    private bool _isClosingConfirmed = false;
+
+    private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {
-        // Save window state before closing
+        // If we've already confirmed closing, just save window state and close
+        if (_isClosingConfirmed)
+        {
+            SaveWindowState();
+            return;
+        }
+
+        // Check for unsaved changes - use UndoRedoManager's saved state tracking
+        // which correctly handles undo back to original state
+        var hasUnsavedChanges = App.UndoRedoManager?.IsAtSavedState == false;
+        if (hasUnsavedChanges)
+        {
+            // Cancel the close event to show dialog
+            e.Cancel = true;
+
+            // Show unsaved changes dialog
+            if (DataContext is MainWindowViewModel viewModel && viewModel.UnsavedChangesDialogViewModel != null)
+            {
+                var result = await viewModel.UnsavedChangesDialogViewModel.ShowSimpleAsync(
+                    "Unsaved Changes",
+                    "You have unsaved changes. Would you like to save them before closing?");
+
+                switch (result)
+                {
+                    case UnsavedChangesResult.Save:
+                        // Save and close
+                        if (App.CompanyManager != null)
+                        {
+                            await App.CompanyManager.SaveCompanyAsync();
+                        }
+                        _isClosingConfirmed = true;
+                        Close();
+                        break;
+
+                    case UnsavedChangesResult.DontSave:
+                        // Close without saving
+                        _isClosingConfirmed = true;
+                        Close();
+                        break;
+
+                    case UnsavedChangesResult.Cancel:
+                    case UnsavedChangesResult.None:
+                        // Don't close
+                        break;
+                }
+            }
+        }
+        else
+        {
+            // No unsaved changes, just save window state
+            SaveWindowState();
+        }
+    }
+
+    private void SaveWindowState()
+    {
         if (DataContext is MainWindowViewModel viewModel)
         {
             // Only save position if not maximized

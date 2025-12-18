@@ -23,6 +23,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
 
     partial void OnSearchQueryChanged(string? value)
     {
+        CurrentPage = 1;
         FilterSuppliers();
     }
 
@@ -31,6 +32,149 @@ public partial class SuppliersPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _filterCountry;
+
+    #endregion
+
+    #region Sorting
+
+    [ObservableProperty]
+    private string _sortColumn = "Name";
+
+    [ObservableProperty]
+    private SortDirection _sortDirection = SortDirection.None;
+
+    /// <summary>
+    /// Sorts the suppliers list by the specified column.
+    /// </summary>
+    [RelayCommand]
+    private void SortBy(string column)
+    {
+        if (SortColumn == column)
+        {
+            SortDirection = SortDirection switch
+            {
+                SortDirection.None => SortDirection.Ascending,
+                SortDirection.Ascending => SortDirection.Descending,
+                SortDirection.Descending => SortDirection.None,
+                _ => SortDirection.Ascending
+            };
+        }
+        else
+        {
+            SortColumn = column;
+            SortDirection = SortDirection.Ascending;
+        }
+        FilterSuppliers();
+    }
+
+    #endregion
+
+    #region Pagination
+
+    [ObservableProperty]
+    private int _currentPage = 1;
+
+    [ObservableProperty]
+    private int _totalPages = 1;
+
+    [ObservableProperty]
+    private int _pageSize = 10;
+
+    /// <summary>
+    /// Available page size options for the dropdown.
+    /// </summary>
+    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
+
+    partial void OnPageSizeChanged(int value)
+    {
+        CurrentPage = 1;
+        FilterSuppliers();
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+    }
+
+    [ObservableProperty]
+    private string _paginationText = "0 suppliers";
+
+    /// <summary>
+    /// Page numbers for pagination display.
+    /// </summary>
+    public ObservableCollection<int> PageNumbers { get; } = [];
+
+    /// <summary>
+    /// Gets whether we can navigate to the previous page.
+    /// </summary>
+    public bool CanGoToPreviousPage => CurrentPage > 1;
+
+    /// <summary>
+    /// Gets whether we can navigate to the next page.
+    /// </summary>
+    public bool CanGoToNextPage => CurrentPage < TotalPages;
+
+    /// <summary>
+    /// Navigates to the previous page.
+    /// </summary>
+    [RelayCommand]
+    private void GoToPreviousPage()
+    {
+        if (CurrentPage > 1)
+        {
+            CurrentPage--;
+            FilterSuppliers();
+            OnPropertyChanged(nameof(CanGoToPreviousPage));
+            OnPropertyChanged(nameof(CanGoToNextPage));
+        }
+    }
+
+    /// <summary>
+    /// Navigates to the next page.
+    /// </summary>
+    [RelayCommand]
+    private void GoToNextPage()
+    {
+        if (CurrentPage < TotalPages)
+        {
+            CurrentPage++;
+            FilterSuppliers();
+            OnPropertyChanged(nameof(CanGoToPreviousPage));
+            OnPropertyChanged(nameof(CanGoToNextPage));
+        }
+    }
+
+    /// <summary>
+    /// Navigates to a specific page.
+    /// </summary>
+    [RelayCommand]
+    private void GoToPage(int page)
+    {
+        if (page >= 1 && page <= TotalPages && page != CurrentPage)
+        {
+            CurrentPage = page;
+            FilterSuppliers();
+            OnPropertyChanged(nameof(CanGoToPreviousPage));
+            OnPropertyChanged(nameof(CanGoToNextPage));
+        }
+    }
+
+    /// <summary>
+    /// Updates the page numbers collection for pagination display.
+    /// </summary>
+    private void UpdatePageNumbers()
+    {
+        PageNumbers.Clear();
+        for (int i = 1; i <= TotalPages; i++)
+        {
+            PageNumbers.Add(i);
+        }
+    }
+
+    /// <summary>
+    /// Updates the pagination text to display item count.
+    /// </summary>
+    private void UpdatePaginationText(int totalItems)
+    {
+        PaginationText = totalItems == 1 ? "1 supplier" : $"{totalItems} suppliers";
+    }
 
     #endregion
 
@@ -336,13 +480,13 @@ public partial class SuppliersPageViewModel : ViewModelBase
                 : filtered.Where(s => !suppliersWithProducts.Contains(s.Id));
         }
 
-        // Create display items
-        foreach (var supplier in filtered.OrderBy(s => s.Name))
+        // Convert to a list and create display items with additional computed properties
+        var displayItems = filtered.Select(supplier =>
         {
             var productCount = companyData.Products.Count(p => p.SupplierId == supplier.Id);
             var isActive = productCount > 0;
 
-            Suppliers.Add(new SupplierDisplayItem
+            return new SupplierDisplayItem
             {
                 Id = supplier.Id,
                 Name = supplier.Name,
@@ -353,7 +497,65 @@ public partial class SuppliersPageViewModel : ViewModelBase
                 ProductCount = productCount,
                 IsActive = isActive,
                 Initials = GetInitials(supplier.Name)
-            });
+            };
+        }).ToList();
+
+        // Apply sorting (only if not searching, since search has its own relevance sorting)
+        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
+        {
+            if (SortDirection != SortDirection.None)
+            {
+                displayItems = SortColumn switch
+                {
+                    "Name" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(s => s.Name).ToList()
+                        : displayItems.OrderByDescending(s => s.Name).ToList(),
+                    "Contact" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(s => s.ContactPerson).ToList()
+                        : displayItems.OrderByDescending(s => s.ContactPerson).ToList(),
+                    "Country" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(s => s.Country).ToList()
+                        : displayItems.OrderByDescending(s => s.Country).ToList(),
+                    "Products" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(s => s.ProductCount).ToList()
+                        : displayItems.OrderByDescending(s => s.ProductCount).ToList(),
+                    "Status" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(s => s.IsActive).ToList()
+                        : displayItems.OrderByDescending(s => s.IsActive).ToList(),
+                    _ => displayItems.OrderBy(s => s.Name).ToList()
+                };
+            }
+            else if (string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                // Default sort by name when not searching
+                displayItems = displayItems.OrderBy(s => s.Name).ToList();
+            }
+        }
+
+        // Calculate pagination
+        var totalItems = displayItems.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)PageSize));
+
+        // Ensure current page is valid
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+        if (CurrentPage < 1)
+            CurrentPage = 1;
+
+        UpdatePageNumbers();
+        UpdatePaginationText(totalItems);
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+
+        // Apply pagination
+        var pagedItems = displayItems
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize);
+
+        // Add paginated items to collection
+        foreach (var item in pagedItems)
+        {
+            Suppliers.Add(item);
         }
     }
 
