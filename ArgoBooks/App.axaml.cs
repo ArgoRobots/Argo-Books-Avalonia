@@ -291,9 +291,10 @@ public partial class App : Application
         CompanyManager.CompanySaved += (_, _) =>
         {
             _mainWindowViewModel.HideLoading();
-            _mainWindowViewModel.HasUnsavedChanges = false;
-            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+            // Call ShowSavedFeedback FIRST - it checks HasUnsavedChanges before clearing it
             _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
+            // Then clear the main window's flag (ShowSavedFeedback handles the header's flag)
+            _mainWindowViewModel.HasUnsavedChanges = false;
 
             // Mark undo/redo state as saved so IsAtSavedState returns true
             UndoRedoManager?.MarkSaved();
