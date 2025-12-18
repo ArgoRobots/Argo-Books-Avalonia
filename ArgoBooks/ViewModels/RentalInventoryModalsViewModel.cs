@@ -370,6 +370,24 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         var newNotes = ModalNotes.Trim();
         var newAvailableQuantity = Math.Max(0, oldAvailableQuantity + qtyDiff);
 
+        // Check if anything actually changed
+        var hasChanges = oldName != newName ||
+                         oldSupplierId != newSupplierId ||
+                         oldTotalQuantity != newTotalQty ||
+                         oldDailyRate != newDailyRate ||
+                         oldWeeklyRate != newWeeklyRate ||
+                         oldMonthlyRate != newMonthlyRate ||
+                         oldSecurityDeposit != newSecurityDeposit ||
+                         oldStatus != newStatus ||
+                         oldNotes != newNotes;
+
+        // If nothing changed, just close the modal without recording an action
+        if (!hasChanges)
+        {
+            CloseEditModal();
+            return;
+        }
+
         var itemToEdit = _editingItem;
         itemToEdit.Name = newName;
         itemToEdit.SupplierId = newSupplierId;

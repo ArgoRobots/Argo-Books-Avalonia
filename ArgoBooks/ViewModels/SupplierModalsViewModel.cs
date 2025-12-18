@@ -236,6 +236,25 @@ public partial class SupplierModalsViewModel : ObservableObject
         };
         var newNotes = string.IsNullOrWhiteSpace(ModalNotes) ? string.Empty : ModalNotes.Trim();
 
+        // Check if anything actually changed
+        var hasChanges = oldName != newName ||
+                         oldEmail != newEmail ||
+                         oldPhone != newPhone ||
+                         oldWebsite != newWebsite ||
+                         oldAddress.Street != newAddress.Street ||
+                         oldAddress.City != newAddress.City ||
+                         oldAddress.State != newAddress.State ||
+                         oldAddress.ZipCode != newAddress.ZipCode ||
+                         oldAddress.Country != newAddress.Country ||
+                         oldNotes != newNotes;
+
+        // If nothing changed, just close the modal without recording an action
+        if (!hasChanges)
+        {
+            CloseEditModal();
+            return;
+        }
+
         var supplierToEdit = _editingSupplier;
         supplierToEdit.Name = newName;
         supplierToEdit.Email = newEmail;
