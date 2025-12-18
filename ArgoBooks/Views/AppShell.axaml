@@ -119,5 +119,11 @@
 
         <!-- Supplier Modals -->
         <modals:SupplierModals DataContext="{Binding SupplierModalsViewModel}" />
+
+        <!-- Rental Inventory Modals -->
+        <modals:RentalInventoryModals DataContext="{Binding RentalInventoryModalsViewModel}" />
+
+        <!-- Rental Records Modals -->
+        <modals:RentalRecordsModals DataContext="{Binding RentalRecordsModalsViewModel}" />
     </Panel>
 </UserControl>

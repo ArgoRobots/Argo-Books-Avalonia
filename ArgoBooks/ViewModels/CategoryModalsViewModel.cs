@@ -259,6 +259,19 @@ public partial class CategoryModalsViewModel : ObservableObject
         var newItemType = ModalItemType;
         var newIcon = ModalSelectedIconOption?.Icon ?? "📦";
 
+        // Check if anything actually changed
+        var hasChanges = oldName != newName ||
+                         oldDescription != newDescription ||
+                         oldItemType != newItemType ||
+                         oldIcon != newIcon;
+
+        // If nothing changed, just close the modal without recording an action
+        if (!hasChanges)
+        {
+            CloseEditModal();
+            return;
+        }
+
         var categoryToEdit = _editingCategory;
         categoryToEdit.Name = newName;
         categoryToEdit.Description = newDescription;

@@ -464,6 +464,10 @@ public partial class HeaderViewModel : ViewModelBase
     /// </summary>
     public async void ShowSavedFeedback()
     {
+        // If already showing feedback, ignore this request
+        if (ShowSavedIndicator || ShowNoChangesIndicator)
+            return;
+
         if (HasUnsavedChanges)
         {
             // There were changes - show "Saved"

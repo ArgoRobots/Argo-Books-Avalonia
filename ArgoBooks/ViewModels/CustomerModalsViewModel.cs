@@ -344,6 +344,25 @@ public partial class CustomerModalsViewModel : ObservableObject
             _ => EntityStatus.Active
         };
 
+        // Check if anything actually changed
+        var hasChanges = oldName != newName ||
+                         oldEmail != newEmail ||
+                         oldPhone != newPhone ||
+                         oldAddress.Street != newAddress.Street ||
+                         oldAddress.City != newAddress.City ||
+                         oldAddress.State != newAddress.State ||
+                         oldAddress.ZipCode != newAddress.ZipCode ||
+                         oldAddress.Country != newAddress.Country ||
+                         oldNotes != newNotes ||
+                         oldStatus != newStatus;
+
+        // If nothing changed, just close the modal without recording an action
+        if (!hasChanges)
+        {
+            CloseEditModal();
+            return;
+        }
+
         var customerToEdit = _editingCustomer;
         customerToEdit.Name = newName;
         customerToEdit.Email = newEmail;

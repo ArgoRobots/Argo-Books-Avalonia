@@ -99,6 +99,12 @@ public static class IntConverters
     /// </summary>
     public static readonly IValueConverter IsZero =
         new FuncValueConverter<int, bool>(value => value == 0);
+
+    /// <summary>
+    /// Returns true if the integer is positive (greater than zero).
+    /// </summary>
+    public static readonly IValueConverter IsPositive =
+        new FuncValueConverter<int, bool>(value => value > 0);
 }
 
 /// <summary>
@@ -229,6 +235,76 @@ public static class StringConverters
                 "Pending" => "#92400E",
                 "Overdue" => "#DC2626",
                 "Refunded" => "#4F46E5",
+                _ => "#4B5563"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts rental record status to badge background color.
+    /// Active = green (#DCFCE7), Returned = blue (#DBEAFE), Overdue = red (#FEE2E2), Cancelled = gray (#F3F4F6).
+    /// </summary>
+    public static readonly IValueConverter ToRentalStatusBackground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Active" => "#DCFCE7",
+                "Returned" => "#DBEAFE",
+                "Overdue" => "#FEE2E2",
+                "Cancelled" => "#F3F4F6",
+                _ => "#F3F4F6"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts rental record status to badge foreground color.
+    /// Active = green (#166534), Returned = blue (#1E40AF), Overdue = red (#DC2626), Cancelled = gray (#4B5563).
+    /// </summary>
+    public static readonly IValueConverter ToRentalStatusForeground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Active" => "#166534",
+                "Returned" => "#1E40AF",
+                "Overdue" => "#DC2626",
+                "Cancelled" => "#4B5563",
+                _ => "#4B5563"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts rental item status to badge background color.
+    /// Available = green (#DCFCE7), In Maintenance = yellow (#FEF3C7), All Rented = purple (#F3E8FF).
+    /// </summary>
+    public static readonly IValueConverter ToRentalItemStatusBackground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Available" => "#DCFCE7",
+                "In Maintenance" => "#FEF3C7",
+                "All Rented" => "#F3E8FF",
+                _ => "#F3F4F6"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts rental item status to badge foreground color.
+    /// Available = green (#166534), In Maintenance = yellow (#92400E), All Rented = purple (#7C3AED).
+    /// </summary>
+    public static readonly IValueConverter ToRentalItemStatusForeground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Available" => "#166534",
+                "In Maintenance" => "#92400E",
+                "All Rented" => "#7C3AED",
                 _ => "#4B5563"
             };
             return new SolidColorBrush(Color.Parse(color));

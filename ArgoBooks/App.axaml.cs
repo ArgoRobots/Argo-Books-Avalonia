@@ -62,6 +62,16 @@ public partial class App : Application
     /// </summary>
     public static SupplierModalsViewModel? SupplierModalsViewModel => _appShellViewModel?.SupplierModalsViewModel;
 
+    /// <summary>
+    /// Gets the rental inventory modals view model for shared access.
+    /// </summary>
+    public static RentalInventoryModalsViewModel? RentalInventoryModalsViewModel => _appShellViewModel?.RentalInventoryModalsViewModel;
+
+    /// <summary>
+    /// Gets the rental records modals view model for shared access.
+    /// </summary>
+    public static RentalRecordsModalsViewModel? RentalRecordsModalsViewModel => _appShellViewModel?.RentalRecordsModalsViewModel;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
@@ -133,6 +143,9 @@ public partial class App : Application
 
             // Wire up company manager events
             WireCompanyManagerEvents();
+
+            // Wire up modal change events (separate from company manager)
+            WireModalChangeEvents();
 
             // Wire up file menu events
             WireFileMenuEvents(desktop);
@@ -278,9 +291,10 @@ public partial class App : Application
         CompanyManager.CompanySaved += (_, _) =>
         {
             _mainWindowViewModel.HideLoading();
-            _mainWindowViewModel.HasUnsavedChanges = false;
-            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+            // Call ShowSavedFeedback FIRST - it checks HasUnsavedChanges before clearing it
             _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
+            // Then clear the main window's flag (ShowSavedFeedback handles the header's flag)
+            _mainWindowViewModel.HasUnsavedChanges = false;
 
             // Mark undo/redo state as saved so IsAtSavedState returns true
             UndoRedoManager?.MarkSaved();
@@ -306,6 +320,52 @@ public partial class App : Application
 
             return await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(companyName, filePath);
         };
+    }
+
+    /// <summary>
+    /// Wires up modal save/delete events to update HasUnsavedChanges.
+    /// This is separate from WireCompanyManagerEvents because it doesn't depend on CompanyManager.
+    /// </summary>
+    private static void WireModalChangeEvents()
+    {
+        if (_mainWindowViewModel == null || _appShellViewModel == null)
+            return;
+
+        void MarkUnsavedChanges(object? sender, EventArgs e)
+        {
+            _mainWindowViewModel.HasUnsavedChanges = true;
+            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
+        }
+
+        // Customer modals
+        _appShellViewModel.CustomerModalsViewModel.CustomerSaved += MarkUnsavedChanges;
+        _appShellViewModel.CustomerModalsViewModel.CustomerDeleted += MarkUnsavedChanges;
+
+        // Product modals
+        _appShellViewModel.ProductModalsViewModel.ProductSaved += MarkUnsavedChanges;
+        _appShellViewModel.ProductModalsViewModel.ProductDeleted += MarkUnsavedChanges;
+
+        // Category modals
+        _appShellViewModel.CategoryModalsViewModel.CategorySaved += MarkUnsavedChanges;
+        _appShellViewModel.CategoryModalsViewModel.CategoryDeleted += MarkUnsavedChanges;
+
+        // Department modals
+        _appShellViewModel.DepartmentModalsViewModel.DepartmentSaved += MarkUnsavedChanges;
+        _appShellViewModel.DepartmentModalsViewModel.DepartmentDeleted += MarkUnsavedChanges;
+
+        // Supplier modals
+        _appShellViewModel.SupplierModalsViewModel.SupplierSaved += MarkUnsavedChanges;
+        _appShellViewModel.SupplierModalsViewModel.SupplierDeleted += MarkUnsavedChanges;
+
+        // Rental inventory modals
+        _appShellViewModel.RentalInventoryModalsViewModel.ItemSaved += MarkUnsavedChanges;
+        _appShellViewModel.RentalInventoryModalsViewModel.ItemDeleted += MarkUnsavedChanges;
+        _appShellViewModel.RentalInventoryModalsViewModel.RentalCreated += MarkUnsavedChanges;
+
+        // Rental records modals
+        _appShellViewModel.RentalRecordsModalsViewModel.RecordSaved += MarkUnsavedChanges;
+        _appShellViewModel.RentalRecordsModalsViewModel.RecordDeleted += MarkUnsavedChanges;
+        _appShellViewModel.RentalRecordsModalsViewModel.RecordReturned += MarkUnsavedChanges;
     }
 
     /// <summary>
@@ -1222,8 +1282,8 @@ public partial class App : Application
         navigationService.RegisterPage("Accountants", _ => CreatePlaceholderPage("Accountants", "Manage accountant information"));
 
         // Rentals Section
-        navigationService.RegisterPage("RentalInventory", _ => CreatePlaceholderPage("Rental Inventory", "Manage rental items"));
-        navigationService.RegisterPage("RentalRecords", _ => CreatePlaceholderPage("Rental Records", "Track rental transactions"));
+        navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = new RentalInventoryPageViewModel() });
+        navigationService.RegisterPage("RentalRecords", _ => new RentalRecordsPage { DataContext = new RentalRecordsPageViewModel() });
 
         // Settings and Help
         navigationService.RegisterPage("Settings", _ => CreatePlaceholderPage("Settings", "Configure application settings"));

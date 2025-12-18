@@ -330,6 +330,23 @@ public partial class ProductModalsViewModel : ObservableObject
         var newCostPrice = decimal.TryParse(ModalCostPrice, out var costPrice) ? costPrice : 0;
         var newTrackInventory = ModalItemType == "Product" && !string.IsNullOrWhiteSpace(ModalReorderPoint);
 
+        // Check if anything actually changed
+        var hasChanges = oldName != newName ||
+                         oldDescription != newDescription ||
+                         oldSku != newSku ||
+                         oldCategoryId != newCategoryId ||
+                         oldSupplierId != newSupplierId ||
+                         oldUnitPrice != newUnitPrice ||
+                         oldCostPrice != newCostPrice ||
+                         oldTrackInventory != newTrackInventory;
+
+        // If nothing changed, just close the modal without recording an action
+        if (!hasChanges)
+        {
+            CloseEditModal();
+            return;
+        }
+
         var productToEdit = _editingProduct;
         productToEdit.Name = newName;
         productToEdit.Description = newDescription;

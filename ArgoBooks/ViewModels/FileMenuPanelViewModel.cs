@@ -127,7 +127,7 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     {
         RecentCompanies.Clear();
         RefreshFilteredRecent();
-        Close();
+        // Don't close the panel - let user see that the list is empty
     }
 
     /// <summary>

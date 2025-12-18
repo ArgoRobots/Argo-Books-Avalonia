@@ -120,11 +120,11 @@ public partial class QuickActionsViewModel : ViewModelBase
             new QuickActionItem("New Invoice", "Create a new invoice", "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z", QuickActionType.QuickAction, "Invoices"),
             new QuickActionItem("New Expense", "Record a new expense", "M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z", QuickActionType.QuickAction, "Expenses"),
             new QuickActionItem("Scan Receipt", "Scan and import a receipt", "M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z", QuickActionType.QuickAction, "Receipts"),
-            new QuickActionItem("New Customer", "Add a new customer", "M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z", QuickActionType.QuickAction, "Customers"),
-            new QuickActionItem("New Product", "Add a new product or service", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z", QuickActionType.QuickAction, "Products"),
-            new QuickActionItem("New Supplier", "Add a new supplier", "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z", QuickActionType.QuickAction, "Suppliers"),
+            new QuickActionItem("New Customer", "Add a new customer", "M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z", QuickActionType.QuickAction, "Customers", "OpenAddModal"),
+            new QuickActionItem("New Product", "Add a new product or service", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z", QuickActionType.QuickAction, "Products", "OpenAddModal"),
+            new QuickActionItem("New Supplier", "Add a new supplier", "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z", QuickActionType.QuickAction, "Suppliers", "OpenAddModal"),
             new QuickActionItem("Record Payment", "Record a payment received", "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z", QuickActionType.QuickAction, "Payments"),
-            new QuickActionItem("New Rental", "Create a new rental record", "M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zM7 4V3h10v1H7zm0 14V6h10v12H7zm0 3v-1h10v1H7z", QuickActionType.QuickAction, "RentalInventory"),
+            new QuickActionItem("New Rental Item", "Add a new rental item", "M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zM7 4V3h10v1H7zm0 14V6h10v12H7zm0 3v-1h10v1H7z", QuickActionType.QuickAction, "RentalInventory", "OpenAddModal"),
         ]);
 
         // Navigation - Go to pages
@@ -226,14 +226,15 @@ public partial class QuickActionsViewModel : ViewModelBase
 
     /// <summary>
     /// Opens the Quick Actions panel in dropdown mode (below search box).
+    /// Preserves any existing search query.
     /// </summary>
     [RelayCommand]
     private void OpenDropdown()
     {
         IsDropdownMode = true;
         IsOpen = true;
-        SearchQuery = null;
-        FilterActions(null);
+        // Don't clear SearchQuery - it may already be set from the header
+        FilterActions(SearchQuery);
     }
 
     /// <summary>
@@ -283,8 +284,17 @@ public partial class QuickActionsViewModel : ViewModelBase
             _navigationService?.NavigateTo(action.NavigationTarget);
         }
 
-        // TODO: Handle other action types (modals, etc.)
+        // Execute action after navigation if specified
+        if (!string.IsNullOrEmpty(action.ActionName))
+        {
+            ActionRequested?.Invoke(this, new QuickActionEventArgs(action.NavigationTarget, action.ActionName));
+        }
     }
+
+    /// <summary>
+    /// Event raised when an action needs to be executed after navigation.
+    /// </summary>
+    public event EventHandler<QuickActionEventArgs>? ActionRequested;
 
     /// <summary>
     /// Moves selection up.
@@ -355,15 +365,21 @@ public class QuickActionItem
     public string? NavigationTarget { get; }
 
     /// <summary>
+    /// Action name to execute after navigation (e.g., "OpenAddModal").
+    /// </summary>
+    public string? ActionName { get; }
+
+    /// <summary>
     /// Creates a new QuickActionItem.
     /// </summary>
-    public QuickActionItem(string title, string description, string iconData, QuickActionType type, string? navigationTarget = null)
+    public QuickActionItem(string title, string description, string iconData, QuickActionType type, string? navigationTarget = null, string? actionName = null)
     {
         Title = title;
         Description = description;
         IconData = iconData;
         Type = type;
         NavigationTarget = navigationTarget;
+        ActionName = actionName;
     }
 }
 
@@ -386,4 +402,29 @@ public enum QuickActionType
     /// Tools and settings.
     /// </summary>
     Tools
+}
+
+/// <summary>
+/// Event args for quick action execution.
+/// </summary>
+public class QuickActionEventArgs : EventArgs
+{
+    /// <summary>
+    /// The navigation target page name.
+    /// </summary>
+    public string? NavigationTarget { get; }
+
+    /// <summary>
+    /// The action to execute after navigation.
+    /// </summary>
+    public string ActionName { get; }
+
+    /// <summary>
+    /// Creates a new QuickActionEventArgs.
+    /// </summary>
+    public QuickActionEventArgs(string? navigationTarget, string actionName)
+    {
+        NavigationTarget = navigationTarget;
+        ActionName = actionName;
+    }
 }

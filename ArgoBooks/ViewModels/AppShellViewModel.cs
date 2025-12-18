@@ -135,6 +135,16 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public SupplierModalsViewModel SupplierModalsViewModel { get; }
 
+    /// <summary>
+    /// Gets the rental inventory modals view model.
+    /// </summary>
+    public RentalInventoryModalsViewModel RentalInventoryModalsViewModel { get; }
+
+    /// <summary>
+    /// Gets the rental records modals view model.
+    /// </summary>
+    public RentalRecordsModalsViewModel RentalRecordsModalsViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -236,6 +246,12 @@ public partial class AppShellViewModel : ViewModelBase
         // Create supplier modals
         SupplierModalsViewModel = new SupplierModalsViewModel();
 
+        // Create rental inventory modals
+        RentalInventoryModalsViewModel = new RentalInventoryModalsViewModel();
+
+        // Create rental records modals
+        RentalRecordsModalsViewModel = new RentalRecordsModalsViewModel();
+
         // Wire up switch account modal's account selected to open login modal
         SwitchAccountModalViewModel.AccountSelected += (_, account) => LoginModalViewModel.OpenForAccount(account);
 
@@ -326,6 +342,30 @@ public partial class AppShellViewModel : ViewModelBase
                 case SearchKeyAction.Enter:
                     QuickActionsViewModel.ExecuteSelectedCommand.Execute(null);
                     break;
+            }
+        };
+
+        // Wire up quick action execution for modals
+        QuickActionsViewModel.ActionRequested += (_, e) =>
+        {
+            // Handle actions that open modals after navigation
+            if (e.ActionName == "OpenAddModal")
+            {
+                switch (e.NavigationTarget)
+                {
+                    case "RentalInventory":
+                        RentalInventoryModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Customers":
+                        CustomerModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Products":
+                        ProductModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Suppliers":
+                        SupplierModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                }
             }
         };
 
