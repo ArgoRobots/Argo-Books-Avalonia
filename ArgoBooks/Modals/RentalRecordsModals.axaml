@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:conv="using:ArgoBooks.Converters"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.RentalRecordsModals"
              x:DataType="vm:RentalRecordsModalsViewModel">
@@ -136,7 +137,8 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <TextBlock Text="Quantity *" FontWeight="Medium" Foreground="#374151" />
-                                    <TextBox Text="{Binding ModalQuantity}" Watermark="1" />
+                                    <TextBox Text="{Binding ModalQuantity}" Watermark="1"
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                     <TextBlock Text="{Binding ModalQuantityError}" Foreground="#dc2626" FontSize="12"
                                                IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
@@ -152,13 +154,15 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <TextBlock Text="Rate Amount *" FontWeight="Medium" Foreground="#374151" />
-                                    <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                     <TextBlock Text="{Binding ModalRateError}" Foreground="#dc2626" FontSize="12"
                                                IsVisible="{Binding ModalRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="4">
                                     <TextBlock Text="Security Deposit" FontWeight="Medium" Foreground="#374151" />
-                                    <TextBox Text="{Binding ModalSecurityDeposit}" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalSecurityDeposit}" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                             </Grid>
 
@@ -253,7 +257,8 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <TextBlock Text="Quantity *" FontWeight="Medium" Foreground="#374151" />
-                                    <TextBox Text="{Binding ModalQuantity}" Watermark="1" />
+                                    <TextBox Text="{Binding ModalQuantity}" Watermark="1"
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                     <TextBlock Text="{Binding ModalQuantityError}" Foreground="#dc2626" FontSize="12"
                                                IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
@@ -269,13 +274,15 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <TextBlock Text="Rate Amount *" FontWeight="Medium" Foreground="#374151" />
-                                    <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                     <TextBlock Text="{Binding ModalRateError}" Foreground="#dc2626" FontSize="12"
                                                IsVisible="{Binding ModalRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="4">
                                     <TextBlock Text="Security Deposit" FontWeight="Medium" Foreground="#374151" />
-                                    <TextBox Text="{Binding ModalSecurityDeposit}" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalSecurityDeposit}" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                             </Grid>
 

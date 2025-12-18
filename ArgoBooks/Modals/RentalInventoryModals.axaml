@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.RentalInventoryModals"
              x:DataType="vm:RentalInventoryModalsViewModel">
@@ -60,7 +61,8 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Total Quantity" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <TextBox Text="{Binding ModalTotalQuantity, Mode=TwoWay}" Classes="form-input" Watermark="Enter quantity" />
+                                <TextBox Text="{Binding ModalTotalQuantity, Mode=TwoWay}" Classes="form-input" Watermark="Enter quantity"
+                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                 <TextBlock Text="{Binding ModalQuantityError}" FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -74,13 +76,15 @@
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="Daily Rate" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                     <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="#dc2626"
                                                IsVisible="{Binding ModalDailyRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="Weekly Rate" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                             </Grid>
 
@@ -88,11 +92,13 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="Monthly Rate" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="Security Deposit" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                             </Grid>
 
@@ -164,7 +170,8 @@
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="Total Quantity" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <TextBox Text="{Binding ModalTotalQuantity, Mode=TwoWay}" Classes="form-input" Watermark="Enter quantity" />
+                                    <TextBox Text="{Binding ModalTotalQuantity, Mode=TwoWay}" Classes="form-input" Watermark="Enter quantity"
+                                         behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                     <TextBlock Text="{Binding ModalQuantityError}" FontSize="12" Foreground="#dc2626"
                                                IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
@@ -183,13 +190,15 @@
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="Daily Rate" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                     <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="#dc2626"
                                                IsVisible="{Binding ModalDailyRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="Weekly Rate" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalWeeklyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                             </Grid>
 
@@ -197,11 +206,13 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="Monthly Rate" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalMonthlyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="Security Deposit" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" Watermark="0.00" />
+                                    <TextBox Text="{Binding ModalSecurityDeposit, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                 </StackPanel>
                             </Grid>
 
@@ -376,7 +387,8 @@
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="Quantity" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <TextBox Text="{Binding RentOutQuantity, Mode=TwoWay}" Classes="form-input" />
+                                    <TextBox Text="{Binding RentOutQuantity, Mode=TwoWay}" Classes="form-input"
+                                             behaviors:NumericInputBehavior.IsIntegerOnly="True" />
                                     <TextBlock Text="{Binding RentOutQuantityError}" FontSize="12" Foreground="#dc2626"
                                                IsVisible="{Binding RentOutQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
