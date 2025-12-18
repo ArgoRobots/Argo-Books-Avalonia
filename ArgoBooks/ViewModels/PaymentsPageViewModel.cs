@@ -663,17 +663,6 @@ public partial class PaymentDisplayItem : ObservableObject
 }
 
 /// <summary>
-/// Customer option for dropdown.
-/// </summary>
-public class CustomerOption
-{
-    public string? Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-
-    public override string ToString() => Name;
-}
-
-/// <summary>
 /// Invoice option for dropdown.
 /// </summary>
 public class InvoiceOption
