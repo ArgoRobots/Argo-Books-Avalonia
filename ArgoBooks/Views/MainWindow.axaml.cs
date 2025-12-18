@@ -131,9 +131,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Check for unsaved changes
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Settings.ChangesMade == true)
+        // Check for unsaved changes - use UndoRedoManager's saved state tracking
+        // which correctly handles undo back to original state
+        var hasUnsavedChanges = App.UndoRedoManager?.IsAtSavedState == false;
+        if (hasUnsavedChanges)
         {
             // Cancel the close event to show dialog
             e.Cancel = true;

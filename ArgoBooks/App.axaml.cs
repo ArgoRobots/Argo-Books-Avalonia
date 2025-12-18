@@ -223,6 +223,9 @@ public partial class App : Application
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(args.FilePath);
             _mainWindowViewModel.HideLoading();
 
+            // Clear undo/redo history for fresh start with new company
+            UndoRedoManager?.Clear();
+
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
         };
@@ -237,6 +240,9 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
+            // Clear undo/redo history when company is closed
+            UndoRedoManager?.Clear();
+
             // Clear tracked changes when company is closed
             _changeTrackingService?.ClearAllChanges();
 
@@ -250,6 +256,9 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
+
+            // Mark undo/redo state as saved so IsAtSavedState returns true
+            UndoRedoManager?.MarkSaved();
 
             // Clear tracked changes after saving
             _changeTrackingService?.ClearAllChanges();
@@ -322,7 +331,8 @@ public partial class App : Application
         {
             if (CompanyManager?.IsCompanyOpen == true)
             {
-                if (CompanyManager.HasUnsavedChanges)
+                // Use UndoRedoManager's saved state which correctly handles undo back to original
+                if (UndoRedoManager?.IsAtSavedState == false)
                 {
                     var result = await ShowUnsavedChangesDialogAsync();
                     switch (result)
