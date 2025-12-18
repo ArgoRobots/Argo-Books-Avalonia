@@ -15,8 +15,7 @@
         <!-- Upgrade Modal -->
         <Panel IsVisible="{Binding IsOpen}">
             <!-- Backdrop with fade animation -->
-            <Border Background="#80000000"
-                    PointerPressed="Backdrop_PointerPressed">
+            <Border Background="#80000000">
                 <Border.Transitions>
                     <Transitions>
                         <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
@@ -271,8 +270,7 @@
 
         <!-- Enter Key Modal -->
         <Panel IsVisible="{Binding IsEnterKeyModalOpen}">
-            <Border Background="#80000000"
-                    PointerPressed="EnterKeyBackdrop_PointerPressed" />
+            <Border Background="#80000000" />
 
             <Border x:Name="EnterKeyModalBorder"
                     Background="{DynamicResource SurfaceBrush}"

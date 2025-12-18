@@ -58,14 +58,6 @@ public partial class CreateCompanyWizard : UserControl
         }
     }
 
-    private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (DataContext is CreateCompanyViewModel vm)
-        {
-            vm.CloseCommand.Execute(null);
-        }
-    }
-
     private void Wizard_KeyDown(object? sender, KeyEventArgs e)
     {
         if (DataContext is not CreateCompanyViewModel vm) return;

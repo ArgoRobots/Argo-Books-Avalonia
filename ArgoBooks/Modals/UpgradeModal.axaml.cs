@@ -225,22 +225,6 @@ public partial class UpgradeModal : UserControl
         });
     }
 
-    private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (DataContext is UpgradeModalViewModel vm)
-        {
-            vm.CloseCommand.Execute(null);
-        }
-    }
-
-    private void EnterKeyBackdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (DataContext is UpgradeModalViewModel vm)
-        {
-            vm.CloseEnterKeyCommand.Execute(null);
-        }
-    }
-
     private bool _isFormatting;
 
     private void LicenseKeyTextBox_TextChanged(object? sender, TextChangedEventArgs e)

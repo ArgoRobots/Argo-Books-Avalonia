@@ -85,22 +85,6 @@ public partial class SettingsModal : UserControl
         }, DispatcherPriority.Background);
     }
 
-    private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (DataContext is SettingsModalViewModel vm)
-        {
-            vm.CloseCommand.Execute(null);
-        }
-    }
-
-    private void PasswordBackdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (DataContext is SettingsModalViewModel vm)
-        {
-            vm.ClosePasswordModalCommand.Execute(null);
-        }
-    }
-
     private void Modal_KeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && DataContext is SettingsModalViewModel vm)

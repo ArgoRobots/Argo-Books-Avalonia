@@ -14,8 +14,7 @@
 
     <Panel IsVisible="{Binding IsOpen}">
         <!-- Modal Backdrop -->
-        <Border Background="#80000000"
-                PointerPressed="Backdrop_PointerPressed">
+        <Border Background="#80000000">
             <Border.Transitions>
                 <Transitions>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
@@ -625,7 +624,7 @@
 
         <!-- Add Password Modal -->
         <Panel IsVisible="{Binding IsAddPasswordModalOpen}">
-            <Border Background="#80000000" PointerPressed="PasswordBackdrop_PointerPressed" />
+            <Border Background="#80000000" />
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -694,7 +693,7 @@
 
         <!-- Change Password Modal -->
         <Panel IsVisible="{Binding IsChangePasswordModalOpen}">
-            <Border Background="#80000000" PointerPressed="PasswordBackdrop_PointerPressed" />
+            <Border Background="#80000000" />
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -781,7 +780,7 @@
 
         <!-- Remove Password Modal -->
         <Panel IsVisible="{Binding IsRemovePasswordModalOpen}">
-            <Border Background="#80000000" PointerPressed="PasswordBackdrop_PointerPressed" />
+            <Border Background="#80000000" />
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"

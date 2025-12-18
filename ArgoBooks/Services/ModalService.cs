@@ -24,7 +24,6 @@ public class ModalService : IModalService
         if (_overlay != null)
         {
             _overlay.Closed -= OnOverlayClosed;
-            _overlay.Closing -= OnOverlayClosing;
         }
 
         _overlay = overlay;
@@ -32,7 +31,6 @@ public class ModalService : IModalService
         if (_overlay != null)
         {
             _overlay.Closed += OnOverlayClosed;
-            _overlay.Closing += OnOverlayClosing;
         }
     }
 
@@ -207,11 +205,6 @@ public class ModalService : IModalService
         // If modal was closed externally (backdrop click, escape), set result
         _resultTcs?.TrySetResult(ModalResult.Cancel);
         _valueResultTcs?.TrySetResult(null);
-    }
-
-    private void OnOverlayClosing(object? sender, ModalClosingEventArgs e)
-    {
-        // Can be used to prevent closing in certain cases
     }
 
     private static ModalSize ParseSize(string size)

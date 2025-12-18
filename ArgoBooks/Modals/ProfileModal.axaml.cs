@@ -51,17 +51,6 @@ public partial class ProfileModal : UserControl
     }
 
     /// <summary>
-    /// Closes the modal when clicking on the backdrop.
-    /// </summary>
-    private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (DataContext is ProfileModalViewModel vm)
-        {
-            vm.CloseCommand.Execute(null);
-        }
-    }
-
-    /// <summary>
     /// Handles keyboard input for the modal.
     /// </summary>
     private void Modal_KeyDown(object? sender, KeyEventArgs e)
