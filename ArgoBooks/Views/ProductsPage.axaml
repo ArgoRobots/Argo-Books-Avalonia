@@ -774,6 +774,7 @@
                         <Border Grid.Row="2"
                                 Background="{DynamicResource SurfaceAltBrush}"
                                 Padding="24,12"
+                                CornerRadius="0,0,11,11"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,1,0,0">
                             <Grid ColumnDefinitions="Auto,*,Auto">
@@ -1588,6 +1589,9 @@
         </Style>
         <Style Selector="Button.pagination-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.pagination-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
         <Style Selector="Button.pagination-button.active">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />

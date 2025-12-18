@@ -435,6 +435,7 @@
                         <Border Grid.Row="2"
                                 Background="{DynamicResource SurfaceAltBrush}"
                                 Padding="24,12"
+                                CornerRadius="0,0,11,11"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,1,0,0">
                             <Grid ColumnDefinitions="Auto,*,Auto">
