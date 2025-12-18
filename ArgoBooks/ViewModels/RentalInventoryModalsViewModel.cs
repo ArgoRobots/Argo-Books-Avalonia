@@ -104,10 +104,10 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     private decimal _rentOutDeposit;
 
     [ObservableProperty]
-    private DateTime _rentOutStartDate = DateTime.Today;
+    private DateTimeOffset? _rentOutStartDate = DateTimeOffset.Now;
 
     [ObservableProperty]
-    private DateTime _rentOutDueDate = DateTime.Today.AddDays(1);
+    private DateTimeOffset? _rentOutDueDate = DateTimeOffset.Now.AddDays(1);
 
     [ObservableProperty]
     private string _rentOutNotes = string.Empty;
@@ -127,7 +127,10 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
             if (!int.TryParse(RentOutQuantity, out var qty) || qty <= 0)
                 return "$0.00";
 
-            var days = (RentOutDueDate - RentOutStartDate).Days;
+            if (RentOutStartDate == null || RentOutDueDate == null)
+                return "$0.00";
+
+            var days = (RentOutDueDate.Value - RentOutStartDate.Value).Days;
             if (days <= 0) days = 1;
 
             var total = RentOutRateType switch
@@ -153,12 +156,12 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         OnPropertyChanged(nameof(RentOutEstimatedTotal));
     }
 
-    partial void OnRentOutStartDateChanged(DateTime value)
+    partial void OnRentOutStartDateChanged(DateTimeOffset? value)
     {
         OnPropertyChanged(nameof(RentOutEstimatedTotal));
     }
 
-    partial void OnRentOutDueDateChanged(DateTime value)
+    partial void OnRentOutDueDateChanged(DateTimeOffset? value)
     {
         OnPropertyChanged(nameof(RentOutEstimatedTotal));
     }
@@ -543,8 +546,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         RentOutRateType = "Daily";
         RentOutRateAmount = rentalItem.DailyRate;
         RentOutDeposit = rentalItem.SecurityDeposit;
-        RentOutStartDate = DateTime.Today;
-        RentOutDueDate = DateTime.Today.AddDays(1);
+        RentOutStartDate = DateTimeOffset.Now;
+        RentOutDueDate = DateTimeOffset.Now.AddDays(1);
         RentOutNotes = string.Empty;
 
         ClearRentOutErrors();
@@ -589,8 +592,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
             },
             RateAmount = RentOutRateAmount,
             SecurityDeposit = RentOutDeposit,
-            StartDate = RentOutStartDate,
-            DueDate = RentOutDueDate,
+            StartDate = RentOutStartDate?.DateTime ?? DateTime.Today,
+            DueDate = RentOutDueDate?.DateTime ?? DateTime.Today.AddDays(1),
             Status = RentalStatus.Active,
             Notes = RentOutNotes.Trim(),
             CreatedAt = DateTime.UtcNow,

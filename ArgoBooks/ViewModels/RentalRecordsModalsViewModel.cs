@@ -58,10 +58,10 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     private string _modalSecurityDeposit = string.Empty;
 
     [ObservableProperty]
-    private DateTime _modalStartDate = DateTime.Today;
+    private DateTimeOffset? _modalStartDate = DateTimeOffset.Now;
 
     [ObservableProperty]
-    private DateTime _modalDueDate = DateTime.Today.AddDays(1);
+    private DateTimeOffset? _modalDueDate = DateTimeOffset.Now.AddDays(1);
 
     [ObservableProperty]
     private string _modalNotes = string.Empty;
@@ -135,7 +135,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     private int _returnQuantity;
 
     [ObservableProperty]
-    private DateTime _returnDate = DateTime.Today;
+    private DateTimeOffset? _returnDate = DateTimeOffset.Now;
 
     [ObservableProperty]
     private decimal _returnTotalCost;
@@ -228,16 +228,16 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     private string? _filterItem;
 
     [ObservableProperty]
-    private DateTime? _filterStartDateFrom;
+    private DateTimeOffset? _filterStartDateFrom;
 
     [ObservableProperty]
-    private DateTime? _filterStartDateTo;
+    private DateTimeOffset? _filterStartDateTo;
 
     [ObservableProperty]
-    private DateTime? _filterDueDateFrom;
+    private DateTimeOffset? _filterDueDateFrom;
 
     [ObservableProperty]
-    private DateTime? _filterDueDateTo;
+    private DateTimeOffset? _filterDueDateTo;
 
     #endregion
 
@@ -317,8 +317,8 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
             },
             RateAmount = decimal.TryParse(ModalRateAmount, out var rate) ? rate : 0,
             SecurityDeposit = decimal.TryParse(ModalSecurityDeposit, out var deposit) ? deposit : 0,
-            StartDate = ModalStartDate,
-            DueDate = ModalDueDate,
+            StartDate = ModalStartDate?.DateTime ?? DateTime.Today,
+            DueDate = ModalDueDate?.DateTime ?? DateTime.Today.AddDays(1),
             Status = RentalStatus.Active,
             Notes = ModalNotes.Trim(),
             CreatedAt = DateTime.UtcNow,
@@ -385,8 +385,8 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         ModalRateType = rentalRecord.RateType.ToString();
         ModalRateAmount = rentalRecord.RateAmount.ToString("0.00");
         ModalSecurityDeposit = rentalRecord.SecurityDeposit.ToString("0.00");
-        ModalStartDate = rentalRecord.StartDate;
-        ModalDueDate = rentalRecord.DueDate;
+        ModalStartDate = new DateTimeOffset(rentalRecord.StartDate);
+        ModalDueDate = new DateTimeOffset(rentalRecord.DueDate);
         ModalNotes = rentalRecord.Notes;
 
         ClearModalErrors();
@@ -451,8 +451,8 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         recordToEdit.RateType = newRateType;
         recordToEdit.RateAmount = decimal.TryParse(ModalRateAmount, out var rate) ? rate : 0;
         recordToEdit.SecurityDeposit = decimal.TryParse(ModalSecurityDeposit, out var deposit) ? deposit : 0;
-        recordToEdit.StartDate = ModalStartDate;
-        recordToEdit.DueDate = ModalDueDate;
+        recordToEdit.StartDate = ModalStartDate?.DateTime ?? DateTime.Today;
+        recordToEdit.DueDate = ModalDueDate?.DateTime ?? DateTime.Today.AddDays(1);
         recordToEdit.Notes = ModalNotes.Trim();
         recordToEdit.UpdatedAt = DateTime.UtcNow;
 
@@ -507,8 +507,8 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
                 recordToEdit.RateType = newRateType;
                 recordToEdit.RateAmount = decimal.TryParse(ModalRateAmount, out var r) ? r : 0;
                 recordToEdit.SecurityDeposit = decimal.TryParse(ModalSecurityDeposit, out var d) ? d : 0;
-                recordToEdit.StartDate = ModalStartDate;
-                recordToEdit.DueDate = ModalDueDate;
+                recordToEdit.StartDate = ModalStartDate?.DateTime ?? DateTime.Today;
+                recordToEdit.DueDate = ModalDueDate?.DateTime ?? DateTime.Today.AddDays(1);
                 recordToEdit.Notes = ModalNotes.Trim();
 
                 if (qtyDiff != 0)
@@ -638,13 +638,13 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         ReturnItemName = record.ItemName;
         ReturnCustomerName = record.CustomerName;
         ReturnQuantity = rentalRecord.Quantity;
-        ReturnDate = DateTime.Today;
+        ReturnDate = DateTimeOffset.Now;
         ReturnDeposit = rentalRecord.SecurityDeposit;
         ReturnRefundDeposit = true;
         ReturnNotes = string.Empty;
 
         // Calculate total cost
-        var days = (ReturnDate - rentalRecord.StartDate).Days;
+        var days = ((ReturnDate?.DateTime ?? DateTime.Today) - rentalRecord.StartDate).Days;
         if (days < 1) days = 1;
         ReturnTotalCost = rentalRecord.RateType switch
         {
@@ -684,7 +684,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
         // Update rental record
         _returningRecord.Status = RentalStatus.Returned;
-        _returningRecord.ReturnDate = ReturnDate;
+        _returningRecord.ReturnDate = ReturnDate?.DateTime;
         _returningRecord.TotalCost = ReturnTotalCost;
         _returningRecord.DepositRefunded = ReturnRefundDeposit ? _returningRecord.SecurityDeposit : 0;
         if (!string.IsNullOrWhiteSpace(ReturnNotes))
@@ -734,7 +734,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
             () =>
             {
                 recordToReturn.Status = RentalStatus.Returned;
-                recordToReturn.ReturnDate = ReturnDate;
+                recordToReturn.ReturnDate = ReturnDate?.DateTime;
                 recordToReturn.TotalCost = ReturnTotalCost;
                 recordToReturn.DepositRefunded = ReturnRefundDeposit ? recordToReturn.SecurityDeposit : 0;
                 recordToReturn.Notes = newNotes;
@@ -884,8 +884,8 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         ModalRateType = "Daily";
         ModalRateAmount = string.Empty;
         ModalSecurityDeposit = string.Empty;
-        ModalStartDate = DateTime.Today;
-        ModalDueDate = DateTime.Today.AddDays(1);
+        ModalStartDate = DateTimeOffset.Now;
+        ModalDueDate = DateTimeOffset.Now.AddDays(1);
         ModalNotes = string.Empty;
         ClearModalErrors();
     }
