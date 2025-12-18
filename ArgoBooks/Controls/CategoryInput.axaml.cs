@@ -211,8 +211,6 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
         ToggleDropdownCommand = new RelayCommand(ToggleDropdown);
 
         InitializeComponent();
-
-        DataContext = this;
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)

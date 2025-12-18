@@ -34,12 +34,9 @@
         </Border>
 
         <!-- Main Content -->
-        <ScrollViewer Grid.Row="1"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="24" Spacing="24">
-                <!-- Statistics Cards -->
-                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto">
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24">
+            <!-- Statistics Cards (Row 0) -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
                     <Grid.Styles>
                         <Style Selector="Border.stat-card">
                             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -121,10 +118,11 @@
                             </StackPanel>
                         </Grid>
                     </Border>
-                </Grid>
+            </Grid>
 
-                <!-- Main Content Card -->
-                <Border Background="{DynamicResource SurfaceBrush}"
+            <!-- Main Content Card (Row 1) -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1">
@@ -547,10 +545,12 @@
                                 </Grid>
                             </Border>
 
-                            <!-- Table Content - Expenses Tab -->
-                            <ItemsControl Grid.Row="1"
-                                          ItemsSource="{Binding ExpenseProducts}"
-                                          IsVisible="{Binding IsExpensesTabSelected}">
+                            <!-- Table Content (scrollable) -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <Panel>
+                                    <!-- Expenses Tab Products -->
+                                    <ItemsControl ItemsSource="{Binding ExpenseProducts}"
+                                                  IsVisible="{Binding IsExpensesTabSelected}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="vm:ProductDisplayItem">
                                         <Border Padding="24,16"
@@ -650,12 +650,11 @@
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                    </ItemsControl>
 
-                            <!-- Table Content - Revenue Tab -->
-                            <ItemsControl Grid.Row="1"
-                                          ItemsSource="{Binding RevenueProducts}"
-                                          IsVisible="{Binding IsRevenueTabSelected}">
+                                    <!-- Revenue Tab Products -->
+                                    <ItemsControl ItemsSource="{Binding RevenueProducts}"
+                                                  IsVisible="{Binding IsRevenueTabSelected}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="vm:ProductDisplayItem">
                                         <Border Padding="24,16"
@@ -726,7 +725,9 @@
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                    </ItemsControl>
+                                </Panel>
+                            </ScrollViewer>
 
                             <!-- Empty State -->
                             <Border Grid.Row="1"
@@ -855,8 +856,7 @@
                         </Border>
                     </Grid>
                 </Border>
-            </StackPanel>
-        </ScrollViewer>
+        </Grid>
 
         <!-- Add Product Modal -->
         <Panel Grid.RowSpan="2"

@@ -11,7 +11,7 @@
 
     <Grid>
         <!-- No Categories Message -->
-        <Border IsVisible="{Binding !HasCategories}"
+        <Border IsVisible="{Binding #Root.HasCategories, Converter={x:Static BoolConverters.Not}}"
                 CornerRadius="6"
                 BorderThickness="1"
                 Background="{DynamicResource SurfaceAltBrush}"
@@ -31,12 +31,12 @@
 
         <!-- Category Dropdown (shown when categories exist) -->
         <Border x:Name="CategoryDropdownBorder"
-                IsVisible="{Binding HasCategories}"
+                IsVisible="{Binding #Root.HasCategories}"
                 CornerRadius="6"
                 BorderThickness="1"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
-                Classes.focused="{Binding IsDropdownOpen}">
+                Classes.focused="{Binding #Root.IsDropdownOpen}">
             <Border.Styles>
                 <Style Selector="Border.focused">
                     <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
@@ -50,7 +50,7 @@
                 <!-- Search/Display TextBox -->
                 <TextBox x:Name="CategorySearchBox"
                          Grid.Column="0"
-                         Text="{Binding SearchText, Mode=TwoWay}"
+                         Text="{Binding #Root.SearchText, Mode=TwoWay}"
                          Watermark="Search categories..."
                          Background="Transparent"
                          BorderThickness="0"
@@ -67,7 +67,7 @@
                         Padding="0"
                         CornerRadius="4"
                         Cursor="Hand"
-                        Command="{Binding ToggleDropdownCommand}">
+                        Command="{Binding #Root.ToggleDropdownCommand}">
                     <PathIcon Data="M7 10l5 5 5-5z"
                               Width="12" Height="12"
                               Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -77,7 +77,7 @@
 
         <!-- Category Dropdown Popup -->
         <Popup x:Name="CategoryDropdownPopup"
-               IsOpen="{Binding IsDropdownOpen, Mode=TwoWay}"
+               IsOpen="{Binding #Root.IsDropdownOpen, Mode=TwoWay}"
                PlacementTarget="{Binding #CategoryDropdownBorder}"
                Placement="Bottom"
                PlacementGravity="BottomLeft"
@@ -101,17 +101,17 @@
                                Foreground="{DynamicResource TextTertiaryBrush}"
                                Padding="12,16"
                                HorizontalAlignment="Center"
-                               IsVisible="{Binding !HasFilteredCategories}" />
+                               IsVisible="{Binding #Root.HasFilteredCategories, Converter={x:Static BoolConverters.Not}}" />
 
                     <!-- Filtered Items -->
                     <ListBox Grid.Row="1"
                              x:Name="CategoryListBox"
-                             ItemsSource="{Binding FilteredCategories}"
-                             SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                             ItemsSource="{Binding #Root.FilteredCategories}"
+                             SelectedIndex="{Binding #Root.SelectedIndex, Mode=TwoWay}"
                              Background="Transparent"
                              BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             IsVisible="{Binding HasFilteredCategories}">
+                             IsVisible="{Binding #Root.HasFilteredCategories}">
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
                                 <Setter Property="Padding" Value="12,10" />
