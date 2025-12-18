@@ -144,6 +144,9 @@ public partial class App : Application
             // Wire up company manager events
             WireCompanyManagerEvents();
 
+            // Wire up modal change events (separate from company manager)
+            WireModalChangeEvents();
+
             // Wire up file menu events
             WireFileMenuEvents(desktop);
 
@@ -305,8 +308,28 @@ public partial class App : Application
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
         };
 
-        // Wire up modal save/delete events to update HasUnsavedChanges
-        // This is needed because modals call companyData.MarkAsModified() which doesn't raise CompanyDataChanged
+        // Use async callback for password requests (allows proper awaiting)
+        CompanyManager.PasswordRequestCallback = async (filePath) =>
+        {
+            if (_appShellViewModel?.PasswordPromptModalViewModel == null) return null;
+
+            // Get company name from footer if possible
+            var footer = await CompanyManager.GetFileInfoAsync(filePath);
+            var companyName = footer?.CompanyName ?? Path.GetFileNameWithoutExtension(filePath);
+
+            return await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(companyName, filePath);
+        };
+    }
+
+    /// <summary>
+    /// Wires up modal save/delete events to update HasUnsavedChanges.
+    /// This is separate from WireCompanyManagerEvents because it doesn't depend on CompanyManager.
+    /// </summary>
+    private static void WireModalChangeEvents()
+    {
+        if (_mainWindowViewModel == null || _appShellViewModel == null)
+            return;
+
         void MarkUnsavedChanges(object? sender, EventArgs e)
         {
             _mainWindowViewModel.HasUnsavedChanges = true;
@@ -342,18 +365,6 @@ public partial class App : Application
         _appShellViewModel.RentalRecordsModalsViewModel.RecordSaved += MarkUnsavedChanges;
         _appShellViewModel.RentalRecordsModalsViewModel.RecordDeleted += MarkUnsavedChanges;
         _appShellViewModel.RentalRecordsModalsViewModel.RecordReturned += MarkUnsavedChanges;
-
-        // Use async callback for password requests (allows proper awaiting)
-        CompanyManager.PasswordRequestCallback = async (filePath) =>
-        {
-            if (_appShellViewModel?.PasswordPromptModalViewModel == null) return null;
-
-            // Get company name from footer if possible
-            var footer = await CompanyManager.GetFileInfoAsync(filePath);
-            var companyName = footer?.CompanyName ?? Path.GetFileNameWithoutExtension(filePath);
-
-            return await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(companyName, filePath);
-        };
     }
 
     /// <summary>
