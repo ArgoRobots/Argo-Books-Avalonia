@@ -13,7 +13,7 @@
             Classes.collapsed="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
             Command="{Binding Command, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
             CommandParameter="{Binding CommandParameter, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
-            ToolTip.Tip="{Binding TooltipText, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+            ToolTip.Tip="{Binding EffectiveTooltipText, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
             HorizontalAlignment="Stretch">
         <Grid ColumnDefinitions="Auto,*,Auto">
             <!-- Icon -->

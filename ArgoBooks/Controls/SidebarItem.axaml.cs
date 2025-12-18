@@ -45,6 +45,11 @@ public partial class SidebarItem : UserControl
     public static readonly StyledProperty<string?> PageNameProperty =
         AvaloniaProperty.Register<SidebarItem, string?>(nameof(PageName));
 
+    public static readonly DirectProperty<SidebarItem, string?> EffectiveTooltipTextProperty =
+        AvaloniaProperty.RegisterDirect<SidebarItem, string?>(
+            nameof(EffectiveTooltipText),
+            o => o.EffectiveTooltipText);
+
     #endregion
 
     #region Properties
@@ -148,6 +153,11 @@ public partial class SidebarItem : UserControl
         set => SetValue(PageNameProperty, value);
     }
 
+    /// <summary>
+    /// Gets the effective tooltip text (only shown when sidebar is collapsed).
+    /// </summary>
+    public string? EffectiveTooltipText => IsCollapsed ? TooltipText : null;
+
     #endregion
 
     public SidebarItem()
@@ -182,6 +192,12 @@ public partial class SidebarItem : UserControl
             {
                 // Invalid path data - ignore
             }
+        }
+
+        // Update EffectiveTooltipText when IsCollapsed or TooltipText changes
+        if (change.Property == IsCollapsedProperty || change.Property == TooltipTextProperty)
+        {
+            RaisePropertyChanged(EffectiveTooltipTextProperty, null, EffectiveTooltipText);
         }
     }
 }
