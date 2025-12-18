@@ -726,49 +726,48 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                                     </ItemsControl>
+
+                                <!-- Empty State -->
+                                <Border Padding="40"
+                                        IsVisible="{Binding CurrentProducts.Count, Converter={x:Static local:IntConverters.IsZero}}">
+                                    <StackPanel HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Spacing="16">
+                                        <Border Width="64" Height="64"
+                                                CornerRadius="32"
+                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                HorizontalAlignment="Center">
+                                            <PathIcon Data="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.37v6.71l6-3.38z"
+                                                      Width="28" Height="28"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </Border>
+                                        <TextBlock Text="No products found"
+                                                   FontSize="16"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="Add your first product to start tracking your inventory."
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   TextAlignment="Center"
+                                                   TextWrapping="Wrap"
+                                                   MaxWidth="300" />
+                                        <Button Classes="primary-button"
+                                                HorizontalAlignment="Center"
+                                                Margin="0,8,0,0"
+                                                Command="{Binding OpenAddModalCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                          Width="16" Height="16"
+                                                          Foreground="White" />
+                                                <TextBlock Text="Add Product" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
                                 </Panel>
                             </ScrollViewer>
-
-                            <!-- Empty State -->
-                            <Border Grid.Row="1"
-                                    Padding="40"
-                                    IsVisible="{Binding CurrentProducts.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                <StackPanel HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            Spacing="16">
-                                    <Border Width="64" Height="64"
-                                            CornerRadius="32"
-                                            Background="{DynamicResource SurfaceAltBrush}"
-                                            HorizontalAlignment="Center">
-                                        <PathIcon Data="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.37v6.71l6-3.38z"
-                                                  Width="28" Height="28"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </Border>
-                                    <TextBlock Text="No products found"
-                                               FontSize="16"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               HorizontalAlignment="Center" />
-                                    <TextBlock Text="Add your first product to start tracking your inventory."
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               HorizontalAlignment="Center"
-                                               TextAlignment="Center"
-                                               TextWrapping="Wrap"
-                                               MaxWidth="300" />
-                                    <Button Classes="primary-button"
-                                            HorizontalAlignment="Center"
-                                            Margin="0,8,0,0"
-                                            Command="{Binding OpenAddModalCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-                                                      Width="16" Height="16"
-                                                      Foreground="White" />
-                                            <TextBlock Text="Add Product" />
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Border>
                         </Grid>
 
                         <!-- Pagination Footer -->
