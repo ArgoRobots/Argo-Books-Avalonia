@@ -517,7 +517,7 @@ public partial class PaymentModalsViewModel : ObservableObject
         if (companyData?.Invoices == null)
             return;
 
-        foreach (var invoice in companyData.Invoices.OrderByDescending(i => i.Date))
+        foreach (var invoice in companyData.Invoices.OrderByDescending(i => i.IssueDate))
         {
             var customer = companyData.GetCustomer(invoice.CustomerId);
             var customerName = customer?.Name ?? "Unknown";
@@ -538,7 +538,7 @@ public partial class PaymentModalsViewModel : ObservableObject
     private void LoadCustomerOptionsForFilter()
     {
         CustomerOptions.Clear();
-        CustomerOptions.Add(new CustomerOption { Id = null, Name = "All Customers" });
+        CustomerOptions.Add(new CustomerOption { Id = string.Empty, Name = "All Customers" });
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Customers == null)

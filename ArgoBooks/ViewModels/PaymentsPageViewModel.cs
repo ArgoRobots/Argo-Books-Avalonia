@@ -299,7 +299,7 @@ public partial class PaymentsPageViewModel : ViewModelBase
     private void LoadCustomerOptions()
     {
         CustomerOptions.Clear();
-        CustomerOptions.Add(new CustomerOption { Id = null, Name = "All Customers" });
+        CustomerOptions.Add(new CustomerOption { Id = string.Empty, Name = "All Customers" });
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Customers == null)

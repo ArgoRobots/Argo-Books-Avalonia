@@ -336,10 +336,13 @@ public partial class App : Application
         if (_mainWindowViewModel == null || _appShellViewModel == null)
             return;
 
+        var mainWindowVm = _mainWindowViewModel;
+        var appShellVm = _appShellViewModel;
+
         void MarkUnsavedChanges(object? sender, EventArgs e)
         {
-            _mainWindowViewModel.HasUnsavedChanges = true;
-            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
+            mainWindowVm.HasUnsavedChanges = true;
+            appShellVm.HeaderViewModel.HasUnsavedChanges = true;
         }
 
         // Customer modals
