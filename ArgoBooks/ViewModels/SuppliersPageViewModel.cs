@@ -337,6 +337,47 @@ public partial class SuppliersPageViewModel : ViewModelBase
         {
             App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         }
+
+        // Subscribe to shared modal events to refresh data
+        if (App.SupplierModalsViewModel != null)
+        {
+            App.SupplierModalsViewModel.SupplierSaved += OnSupplierModalClosed;
+            App.SupplierModalsViewModel.SupplierDeleted += OnSupplierModalClosed;
+            App.SupplierModalsViewModel.FiltersApplied += OnFiltersApplied;
+            App.SupplierModalsViewModel.FiltersCleared += OnFiltersCleared;
+        }
+    }
+
+    /// <summary>
+    /// Handles supplier modal closed events by refreshing the suppliers.
+    /// </summary>
+    private void OnSupplierModalClosed(object? sender, EventArgs e)
+    {
+        LoadSuppliers();
+    }
+
+    /// <summary>
+    /// Handles filters applied event from shared modal.
+    /// </summary>
+    private void OnFiltersApplied(object? sender, EventArgs e)
+    {
+        if (App.SupplierModalsViewModel != null)
+        {
+            FilterCountry = App.SupplierModalsViewModel.FilterCountry == "All" ? null : App.SupplierModalsViewModel.FilterCountry;
+            FilterStatus = App.SupplierModalsViewModel.FilterStatus;
+        }
+        FilterSuppliers();
+    }
+
+    /// <summary>
+    /// Handles filters cleared event from shared modal.
+    /// </summary>
+    private void OnFiltersCleared(object? sender, EventArgs e)
+    {
+        FilterCountry = null;
+        FilterStatus = "All";
+        SearchQuery = null;
+        FilterSuppliers();
     }
 
     /// <summary>
@@ -583,9 +624,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAddModal()
     {
-        _editingSupplier = null;
-        ClearModalFields();
-        IsAddModalOpen = true;
+        App.SupplierModalsViewModel?.OpenAddModal();
     }
 
     /// <summary>
@@ -673,31 +712,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenEditModal(SupplierDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        var supplier = _allSuppliers.FirstOrDefault(s => s.Id == item.Id);
-        if (supplier == null)
-            return;
-
-        _editingSupplier = supplier;
-
-        // Populate fields
-        ModalSupplierName = supplier.Name;
-        ModalContactPerson = supplier.ContactPerson;
-        ModalEmail = supplier.Email;
-        ModalFullPhone = supplier.Phone;
-        ModalStreet = supplier.Address.Street;
-        ModalCity = supplier.Address.City;
-        ModalState = supplier.Address.State;
-        ModalZipCode = supplier.Address.ZipCode;
-        ModalCountry = supplier.Address.Country;
-        ModalWebsite = supplier.Website ?? string.Empty;
-        ModalPaymentTerms = supplier.PaymentTerms;
-        ModalNotes = supplier.Notes;
-
-        ModalError = null;
-        IsEditModalOpen = true;
+        App.SupplierModalsViewModel?.OpenEditModal(item);
     }
 
     /// <summary>
@@ -818,13 +833,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenDeleteConfirm(SupplierDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        _deletingSupplier = item;
-        OnPropertyChanged(nameof(DeletingSupplierName));
-        OnPropertyChanged(nameof(DeletingSupplierProductCount));
-        IsDeleteConfirmOpen = true;
+        App.SupplierModalsViewModel?.OpenDeleteConfirm(item);
     }
 
     /// <summary>
@@ -929,7 +938,7 @@ public partial class SuppliersPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenFilterModal()
     {
-        IsFilterModalOpen = true;
+        App.SupplierModalsViewModel?.OpenFilterModal();
     }
 
     /// <summary>

@@ -47,6 +47,21 @@ public partial class App : Application
     /// </summary>
     public static ProductModalsViewModel? ProductModalsViewModel => _appShellViewModel?.ProductModalsViewModel;
 
+    /// <summary>
+    /// Gets the category modals view model for shared access.
+    /// </summary>
+    public static CategoryModalsViewModel? CategoryModalsViewModel => _appShellViewModel?.CategoryModalsViewModel;
+
+    /// <summary>
+    /// Gets the department modals view model for shared access.
+    /// </summary>
+    public static DepartmentModalsViewModel? DepartmentModalsViewModel => _appShellViewModel?.DepartmentModalsViewModel;
+
+    /// <summary>
+    /// Gets the supplier modals view model for shared access.
+    /// </summary>
+    public static SupplierModalsViewModel? SupplierModalsViewModel => _appShellViewModel?.SupplierModalsViewModel;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;

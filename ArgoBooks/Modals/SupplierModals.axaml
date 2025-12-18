@@ -1,0 +1,314 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             x:Class="ArgoBooks.Modals.SupplierModals"
+             x:DataType="vm:SupplierModalsViewModel">
+    <Panel>
+        <!-- Add Supplier Modal -->
+        <Panel IsVisible="{Binding IsAddModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12" Width="550" MaxHeight="700" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Add Supplier" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseAddModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="16">
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Supplier Name" /><Run Text="*" Foreground="#dc2626" />
+                                </TextBlock>
+                                <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="Enter supplier name" />
+                                <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Email" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="supplier@email.com" />
+                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalPhone, Mode=TwoWay}" Classes="form-input" Watermark="Phone number" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Website" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalWebsite, Mode=TwoWay}" Classes="form-input" Watermark="https://www.example.com" />
+                            </StackPanel>
+                            <TextBlock Text="Address" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Street Address" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="Street address" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="City" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="City" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="State/Province" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="State" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Postal Code" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="Postal code" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Country" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <controls:CountryInput SelectedCountryName="{Binding ModalCountry, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Notes (optional)" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddModalCommand}" />
+                            <Button Classes="primary-button" Content="Add Supplier" Command="{Binding SaveNewSupplierCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Edit Supplier Modal -->
+        <Panel IsVisible="{Binding IsEditModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12" Width="550" MaxHeight="700" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Edit Supplier" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseEditModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="16">
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Supplier Name" /><Run Text="*" Foreground="#dc2626" />
+                                </TextBlock>
+                                <TextBox Text="{Binding ModalSupplierName, Mode=TwoWay}" Classes="form-input" Watermark="Enter supplier name" />
+                                <TextBlock Text="{Binding ModalSupplierNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalSupplierNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Email" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="supplier@email.com" />
+                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalPhone, Mode=TwoWay}" Classes="form-input" Watermark="Phone number" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Website" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalWebsite, Mode=TwoWay}" Classes="form-input" Watermark="https://www.example.com" />
+                            </StackPanel>
+                            <TextBlock Text="Address" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Street Address" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="Street address" />
+                            </StackPanel>
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="City" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="City" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="State/Province" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="State" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Postal Code" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="Postal code" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Country" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <controls:CountryInput SelectedCountryName="{Binding ModalCountry, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Notes (optional)" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseEditModalCommand}" />
+                            <Button Classes="primary-button" Content="Save Changes" Command="{Binding SaveEditedSupplierCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Delete Confirmation Modal -->
+        <Panel IsVisible="{Binding IsDeleteConfirmOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12" Width="400" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <Border Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Delete Supplier" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                    <StackPanel Margin="24" Spacing="16">
+                        <Border Width="48" Height="48" CornerRadius="24" Background="#FEE2E2" HorizontalAlignment="Center">
+                            <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" Width="24" Height="24" Foreground="#DC2626" />
+                        </Border>
+                        <TextBlock Text="Are you sure you want to delete this supplier?" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" TextAlignment="Center" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding DeletingSupplierName}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextAlignment="Center" />
+                    </StackPanel>
+                    <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseDeleteConfirmCommand}" />
+                            <Button Classes="danger-button" Content="Delete" Command="{Binding ConfirmDeleteCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Filter Modal -->
+        <Panel IsVisible="{Binding IsFilterModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12" Width="400" HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Filter Suppliers" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseFilterModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+                    <StackPanel Grid.Row="1" Margin="24" Spacing="20">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Country" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding CountryOptions}" SelectedItem="{Binding FilterCountry}" Classes="form-combobox" />
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding FilterStatus}" Classes="form-combobox" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Button Grid.Column="0" Classes="secondary-button" Content="Clear Filters" Command="{Binding ClearFiltersCommand}" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseFilterModalCommand}" />
+                                <Button Classes="primary-button" Content="Apply" Command="{Binding ApplyFiltersCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+    </Panel>
+
+    <UserControl.Styles>
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.danger-button">
+            <Setter Property="Background" Value="#DC2626" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#DC2626" />
+        </Style>
+        <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#B91C1C" />
+        </Style>
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style Selector="ComboBox.form-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>
