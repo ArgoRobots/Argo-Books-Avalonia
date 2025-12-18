@@ -135,6 +135,16 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public SupplierModalsViewModel SupplierModalsViewModel { get; }
 
+    /// <summary>
+    /// Gets the rental inventory modals view model.
+    /// </summary>
+    public RentalInventoryModalsViewModel RentalInventoryModalsViewModel { get; }
+
+    /// <summary>
+    /// Gets the rental records modals view model.
+    /// </summary>
+    public RentalRecordsModalsViewModel RentalRecordsModalsViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -235,6 +245,12 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create supplier modals
         SupplierModalsViewModel = new SupplierModalsViewModel();
+
+        // Create rental inventory modals
+        RentalInventoryModalsViewModel = new RentalInventoryModalsViewModel();
+
+        // Create rental records modals
+        RentalRecordsModalsViewModel = new RentalRecordsModalsViewModel();
 
         // Wire up switch account modal's account selected to open login modal
         SwitchAccountModalViewModel.AccountSelected += (_, account) => LoginModalViewModel.OpenForAccount(account);

@@ -62,6 +62,16 @@ public partial class App : Application
     /// </summary>
     public static SupplierModalsViewModel? SupplierModalsViewModel => _appShellViewModel?.SupplierModalsViewModel;
 
+    /// <summary>
+    /// Gets the rental inventory modals view model for shared access.
+    /// </summary>
+    public static RentalInventoryModalsViewModel? RentalInventoryModalsViewModel => _appShellViewModel?.RentalInventoryModalsViewModel;
+
+    /// <summary>
+    /// Gets the rental records modals view model for shared access.
+    /// </summary>
+    public static RentalRecordsModalsViewModel? RentalRecordsModalsViewModel => _appShellViewModel?.RentalRecordsModalsViewModel;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
@@ -1222,8 +1232,8 @@ public partial class App : Application
         navigationService.RegisterPage("Accountants", _ => CreatePlaceholderPage("Accountants", "Manage accountant information"));
 
         // Rentals Section
-        navigationService.RegisterPage("RentalInventory", _ => CreatePlaceholderPage("Rental Inventory", "Manage rental items"));
-        navigationService.RegisterPage("RentalRecords", _ => CreatePlaceholderPage("Rental Records", "Track rental transactions"));
+        navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = new RentalInventoryPageViewModel() });
+        navigationService.RegisterPage("RentalRecords", _ => new RentalRecordsPage { DataContext = new RentalRecordsPageViewModel() });
 
         // Settings and Help
         navigationService.RegisterPage("Settings", _ => CreatePlaceholderPage("Settings", "Configure application settings"));

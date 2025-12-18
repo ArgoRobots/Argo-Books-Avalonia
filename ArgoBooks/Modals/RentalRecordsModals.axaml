@@ -1,0 +1,676 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:conv="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ArgoBooks.Modals.RentalRecordsModals"
+             x:DataType="vm:RentalRecordsModalsViewModel">
+
+    <UserControl.Styles>
+        <!-- Icon Button Style -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover">
+            <Setter Property="Background" Value="#10000000" />
+        </Style>
+
+        <!-- Primary Button Style -->
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="#1d4ed8" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover">
+            <Setter Property="Background" Value="#1e40af" />
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="BorderBrush" Value="#d1d5db" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover">
+            <Setter Property="Background" Value="#f9fafb" />
+        </Style>
+
+        <!-- Danger Button Style -->
+        <Style Selector="Button.danger-button">
+            <Setter Property="Background" Value="#dc2626" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.danger-button:pointerover">
+            <Setter Property="Background" Value="#b91c1c" />
+        </Style>
+
+        <!-- Success Button Style -->
+        <Style Selector="Button.success-button">
+            <Setter Property="Background" Value="#16a34a" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.success-button:pointerover">
+            <Setter Property="Background" Value="#15803d" />
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+        <!-- Add Record Modal -->
+        <Panel IsVisible="{Binding IsAddModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="White"
+                    CornerRadius="12"
+                    Width="550"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 25 50 -12 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="#e5e7eb" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="New Rental Record" FontSize="18" FontWeight="SemiBold" Foreground="#111827" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseAddModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" Foreground="#6b7280" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1" Padding="24" MaxHeight="500">
+                        <StackPanel Spacing="16">
+                            <!-- Rental Item -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Rental Item *" FontWeight="Medium" Foreground="#374151" />
+                                <ComboBox ItemsSource="{Binding AvailableItems}"
+                                          SelectedItem="{Binding ModalItem}"
+                                          PlaceholderText="Select rental item"
+                                          HorizontalAlignment="Stretch" />
+                                <TextBlock Text="{Binding ModalItemError}" Foreground="#dc2626" FontSize="12"
+                                           IsVisible="{Binding ModalItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+
+                            <!-- Customer -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Customer *" FontWeight="Medium" Foreground="#374151" />
+                                <ComboBox ItemsSource="{Binding AvailableCustomers}"
+                                          SelectedItem="{Binding ModalCustomer}"
+                                          PlaceholderText="Select customer"
+                                          HorizontalAlignment="Stretch" />
+                                <TextBlock Text="{Binding ModalCustomerError}" Foreground="#dc2626" FontSize="12"
+                                           IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+
+                            <!-- Accountant -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Accountant" FontWeight="Medium" Foreground="#374151" />
+                                <ComboBox ItemsSource="{Binding AvailableAccountants}"
+                                          SelectedItem="{Binding ModalAccountant}"
+                                          PlaceholderText="Select accountant (optional)"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Quantity and Rate Type Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Quantity *" FontWeight="Medium" Foreground="#374151" />
+                                    <TextBox Text="{Binding ModalQuantity}" Watermark="1" />
+                                    <TextBlock Text="{Binding ModalQuantityError}" Foreground="#dc2626" FontSize="12"
+                                               IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Rate Type *" FontWeight="Medium" Foreground="#374151" />
+                                    <ComboBox ItemsSource="{Binding RateTypeOptions}"
+                                              SelectedItem="{Binding ModalRateType}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Rate Amount and Security Deposit Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Rate Amount *" FontWeight="Medium" Foreground="#374151" />
+                                    <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00" />
+                                    <TextBlock Text="{Binding ModalRateError}" Foreground="#dc2626" FontSize="12"
+                                               IsVisible="{Binding ModalRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Security Deposit" FontWeight="Medium" Foreground="#374151" />
+                                    <TextBox Text="{Binding ModalSecurityDeposit}" Watermark="0.00" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Start Date and Due Date Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Start Date *" FontWeight="Medium" Foreground="#374151" />
+                                    <DatePicker SelectedDate="{Binding ModalStartDate}" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Due Date *" FontWeight="Medium" Foreground="#374151" />
+                                    <DatePicker SelectedDate="{Binding ModalDueDate}" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Notes -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Notes" FontWeight="Medium" Foreground="#374151" />
+                                <TextBox Text="{Binding ModalNotes}" Watermark="Optional notes" TextWrapping="Wrap"
+                                         AcceptsReturn="True" MinHeight="80" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="#e5e7eb" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddModalCommand}" />
+                            <Button Classes="primary-button" Content="Create Rental" Command="{Binding SaveNewRecordCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Edit Record Modal -->
+        <Panel IsVisible="{Binding IsEditModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="White"
+                    CornerRadius="12"
+                    Width="550"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 25 50 -12 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="#e5e7eb" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Edit Rental Record" FontSize="18" FontWeight="SemiBold" Foreground="#111827" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseEditModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" Foreground="#6b7280" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1" Padding="24" MaxHeight="500">
+                        <StackPanel Spacing="16">
+                            <!-- Rental Item -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Rental Item *" FontWeight="Medium" Foreground="#374151" />
+                                <ComboBox ItemsSource="{Binding AvailableItems}"
+                                          SelectedItem="{Binding ModalItem}"
+                                          PlaceholderText="Select rental item"
+                                          HorizontalAlignment="Stretch" />
+                                <TextBlock Text="{Binding ModalItemError}" Foreground="#dc2626" FontSize="12"
+                                           IsVisible="{Binding ModalItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+
+                            <!-- Customer -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Customer *" FontWeight="Medium" Foreground="#374151" />
+                                <ComboBox ItemsSource="{Binding AvailableCustomers}"
+                                          SelectedItem="{Binding ModalCustomer}"
+                                          PlaceholderText="Select customer"
+                                          HorizontalAlignment="Stretch" />
+                                <TextBlock Text="{Binding ModalCustomerError}" Foreground="#dc2626" FontSize="12"
+                                           IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+
+                            <!-- Accountant -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Accountant" FontWeight="Medium" Foreground="#374151" />
+                                <ComboBox ItemsSource="{Binding AvailableAccountants}"
+                                          SelectedItem="{Binding ModalAccountant}"
+                                          PlaceholderText="Select accountant (optional)"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Quantity and Rate Type Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Quantity *" FontWeight="Medium" Foreground="#374151" />
+                                    <TextBox Text="{Binding ModalQuantity}" Watermark="1" />
+                                    <TextBlock Text="{Binding ModalQuantityError}" Foreground="#dc2626" FontSize="12"
+                                               IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Rate Type *" FontWeight="Medium" Foreground="#374151" />
+                                    <ComboBox ItemsSource="{Binding RateTypeOptions}"
+                                              SelectedItem="{Binding ModalRateType}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Rate Amount and Security Deposit Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Rate Amount *" FontWeight="Medium" Foreground="#374151" />
+                                    <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00" />
+                                    <TextBlock Text="{Binding ModalRateError}" Foreground="#dc2626" FontSize="12"
+                                               IsVisible="{Binding ModalRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Security Deposit" FontWeight="Medium" Foreground="#374151" />
+                                    <TextBox Text="{Binding ModalSecurityDeposit}" Watermark="0.00" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Start Date and Due Date Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Start Date *" FontWeight="Medium" Foreground="#374151" />
+                                    <DatePicker SelectedDate="{Binding ModalStartDate}" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="Due Date *" FontWeight="Medium" Foreground="#374151" />
+                                    <DatePicker SelectedDate="{Binding ModalDueDate}" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Notes -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Notes" FontWeight="Medium" Foreground="#374151" />
+                                <TextBox Text="{Binding ModalNotes}" Watermark="Optional notes" TextWrapping="Wrap"
+                                         AcceptsReturn="True" MinHeight="80" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="#e5e7eb" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseEditModalCommand}" />
+                            <Button Classes="primary-button" Content="Save Changes" Command="{Binding SaveEditedRecordCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Delete Confirmation Modal -->
+        <Panel IsVisible="{Binding IsDeleteConfirmOpen}">
+            <Border Background="#80000000" />
+            <Border Background="White"
+                    CornerRadius="12"
+                    Width="450"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 25 50 -12 #40000000">
+                <StackPanel>
+                    <Border Padding="24,20" BorderBrush="#e5e7eb" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Delete Rental Record" FontSize="18" FontWeight="SemiBold" Foreground="#111827" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseDeleteConfirmCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" Foreground="#6b7280" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Padding="24" Spacing="16">
+                        <Border Background="#fef2f2" CornerRadius="8" Padding="16">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                          Width="24" Height="24" Foreground="#dc2626" />
+                                <StackPanel>
+                                    <TextBlock Text="Warning" FontWeight="SemiBold" Foreground="#991b1b" />
+                                    <TextBlock Text="This action cannot be undone. The rental record will be permanently deleted."
+                                               Foreground="#b91c1c" FontSize="13" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock TextWrapping="Wrap" Foreground="#6b7280">
+                            <Run Text="Are you sure you want to delete rental record " />
+                            <Run Text="{Binding DeletingRecordId}" FontWeight="SemiBold" Foreground="#111827" />
+                            <Run Text="? If this rental is active, the inventory will be restored." />
+                        </TextBlock>
+                    </StackPanel>
+
+                    <Border Padding="24,16" BorderBrush="#e5e7eb" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseDeleteConfirmCommand}" />
+                            <Button Classes="danger-button" Content="Delete Record" Command="{Binding ConfirmDeleteCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Filter Modal -->
+        <Panel IsVisible="{Binding IsFilterModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="White"
+                    CornerRadius="12"
+                    Width="500"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 25 50 -12 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="#e5e7eb" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Filter Rental Records" FontSize="18" FontWeight="SemiBold" Foreground="#111827" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseFilterModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" Foreground="#6b7280" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1" Padding="24" MaxHeight="500">
+                        <StackPanel Spacing="16">
+                            <!-- Status -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Status" FontWeight="Medium" Foreground="#374151" />
+                                <ComboBox ItemsSource="{Binding StatusOptions}"
+                                          SelectedItem="{Binding FilterStatus}"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Customer -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Customer" FontWeight="Medium" Foreground="#374151" />
+                                <TextBox Text="{Binding FilterCustomer}" Watermark="Search by customer name" />
+                            </StackPanel>
+
+                            <!-- Item -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Rental Item" FontWeight="Medium" Foreground="#374151" />
+                                <TextBox Text="{Binding FilterItem}" Watermark="Search by item name" />
+                            </StackPanel>
+
+                            <!-- Start Date Range -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Start Date Range" FontWeight="Medium" Foreground="#374151" />
+                                <Grid ColumnDefinitions="*,Auto,*">
+                                    <DatePicker Grid.Column="0" SelectedDate="{Binding FilterStartDateFrom}" HorizontalAlignment="Stretch" />
+                                    <TextBlock Grid.Column="1" Text="to" VerticalAlignment="Center" Margin="12,0" Foreground="#6b7280" />
+                                    <DatePicker Grid.Column="2" SelectedDate="{Binding FilterStartDateTo}" HorizontalAlignment="Stretch" />
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Due Date Range -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Due Date Range" FontWeight="Medium" Foreground="#374151" />
+                                <Grid ColumnDefinitions="*,Auto,*">
+                                    <DatePicker Grid.Column="0" SelectedDate="{Binding FilterDueDateFrom}" HorizontalAlignment="Stretch" />
+                                    <TextBlock Grid.Column="1" Text="to" VerticalAlignment="Center" Margin="12,0" Foreground="#6b7280" />
+                                    <DatePicker Grid.Column="2" SelectedDate="{Binding FilterDueDateTo}" HorizontalAlignment="Stretch" />
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="#e5e7eb" BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Button Grid.Column="0" Classes="secondary-button" Content="Clear Filters" Command="{Binding ClearFiltersCommand}" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseFilterModalCommand}" />
+                                <Button Classes="primary-button" Content="Apply Filters" Command="{Binding ApplyFiltersCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Return Modal -->
+        <Panel IsVisible="{Binding IsReturnModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="White"
+                    CornerRadius="12"
+                    Width="500"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 25 50 -12 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="#e5e7eb" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Process Return" FontSize="18" FontWeight="SemiBold" Foreground="#111827" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseReturnModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" Foreground="#6b7280" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <StackPanel Grid.Row="1" Padding="24" Spacing="16">
+                        <!-- Rental Summary -->
+                        <Border Background="#f9fafb" CornerRadius="8" Padding="16">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Rental Summary" FontWeight="SemiBold" Foreground="#374151" />
+                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,8,0,0">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Record ID:" Foreground="#6b7280" Margin="0,0,16,4" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ReturnRecordId}" FontWeight="Medium" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Item:" Foreground="#6b7280" Margin="0,0,16,4" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ReturnItemName}" FontWeight="Medium" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Customer:" Foreground="#6b7280" Margin="0,0,16,4" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ReturnCustomerName}" FontWeight="Medium" />
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Quantity:" Foreground="#6b7280" Margin="0,0,16,0" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ReturnQuantity}" FontWeight="Medium" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Return Date -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Return Date" FontWeight="Medium" Foreground="#374151" />
+                            <DatePicker SelectedDate="{Binding ReturnDate}" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- Total Cost -->
+                        <Border Background="#f0fdf4" CornerRadius="8" Padding="16">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel>
+                                    <TextBlock Text="Total Rental Cost" FontWeight="Medium" Foreground="#166534" />
+                                    <TextBlock Text="Calculated based on rental duration" FontSize="12" Foreground="#16a34a" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1" Text="{Binding ReturnTotalCostFormatted}" FontSize="24" FontWeight="Bold" Foreground="#166534" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Security Deposit -->
+                        <Border Background="#fefce8" CornerRadius="8" Padding="16">
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Security Deposit" FontWeight="Medium" Foreground="#854d0e" />
+                                    <TextBlock Text="{Binding ReturnDepositFormatted}" FontSize="18" FontWeight="SemiBold" Foreground="#a16207" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <CheckBox IsChecked="{Binding ReturnRefundDeposit}" Content="Refund Deposit" Foreground="#854d0e" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Return Notes -->
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Return Notes" FontWeight="Medium" Foreground="#374151" />
+                            <TextBox Text="{Binding ReturnNotes}" Watermark="Optional notes about the return" TextWrapping="Wrap"
+                                     AcceptsReturn="True" MinHeight="60" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="#e5e7eb" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseReturnModalCommand}" />
+                            <Button Classes="success-button" Content="Confirm Return" Command="{Binding ConfirmReturnCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- View Modal -->
+        <Panel IsVisible="{Binding IsViewModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="White"
+                    CornerRadius="12"
+                    Width="550"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 25 50 -12 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="#e5e7eb" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <TextBlock Text="Rental Details" FontSize="18" FontWeight="SemiBold" Foreground="#111827" />
+                                <Border Background="{Binding ViewStatus, Converter={x:Static conv:CategoriesConverters.ToRentalStatusBackground}}"
+                                        CornerRadius="4" Padding="8,4">
+                                    <TextBlock Text="{Binding ViewStatus}"
+                                               Foreground="{Binding ViewStatus, Converter={x:Static conv:CategoriesConverters.ToRentalStatusForeground}}"
+                                               FontSize="12" FontWeight="Medium" />
+                                </Border>
+                            </StackPanel>
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseViewModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" Foreground="#6b7280" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1" Padding="24" MaxHeight="500">
+                        <StackPanel Spacing="20">
+                            <!-- Record ID -->
+                            <Border Background="#f9fafb" CornerRadius="8" Padding="16">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Record ID:" FontWeight="Medium" Foreground="#6b7280" />
+                                    <TextBlock Text="{Binding ViewRecordId}" FontWeight="SemiBold" Foreground="#111827" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Item and Customer -->
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Rental Item" FontSize="12" Foreground="#6b7280" />
+                                    <TextBlock Text="{Binding ViewItemName}" FontWeight="SemiBold" Foreground="#111827" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Customer" FontSize="12" Foreground="#6b7280" />
+                                    <TextBlock Text="{Binding ViewCustomerName}" FontWeight="SemiBold" Foreground="#111827" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Accountant and Quantity -->
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Accountant" FontSize="12" Foreground="#6b7280" />
+                                    <TextBlock Text="{Binding ViewAccountantName}" FontWeight="SemiBold" Foreground="#111827" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Quantity" FontSize="12" Foreground="#6b7280" />
+                                    <TextBlock Text="{Binding ViewQuantity}" FontWeight="SemiBold" Foreground="#111827" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Rate and Deposit -->
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="Rate" FontSize="12" Foreground="#6b7280" />
+                                    <TextBlock Text="{Binding ViewRateFormatted}" FontWeight="SemiBold" Foreground="#111827" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="4">
+                                    <TextBlock Text="Security Deposit" FontSize="12" Foreground="#6b7280" />
+                                    <TextBlock Text="{Binding ViewDepositFormatted}" FontWeight="SemiBold" Foreground="#111827" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Dates -->
+                            <Border Background="#f0f9ff" CornerRadius="8" Padding="16">
+                                <Grid ColumnDefinitions="*,*,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="Start Date" FontSize="12" Foreground="#0369a1" />
+                                        <TextBlock Text="{Binding ViewStartDateFormatted}" FontWeight="SemiBold" Foreground="#0c4a6e" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="4">
+                                        <TextBlock Text="Due Date" FontSize="12" Foreground="#0369a1" />
+                                        <TextBlock Text="{Binding ViewDueDateFormatted}" FontWeight="SemiBold" Foreground="#0c4a6e" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="Return Date" FontSize="12" Foreground="#0369a1" />
+                                        <TextBlock Text="{Binding ViewReturnDateFormatted}" FontWeight="SemiBold" Foreground="#0c4a6e" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Overdue Warning -->
+                            <Border Background="#fef2f2" CornerRadius="8" Padding="16"
+                                    IsVisible="{Binding ViewDaysOverdue, Converter={x:Static conv:IntConverters.IsPositive}}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                              Width="20" Height="20" Foreground="#dc2626" />
+                                    <TextBlock Foreground="#b91c1c">
+                                        <Run Text="This rental is " />
+                                        <Run Text="{Binding ViewDaysOverdue}" FontWeight="Bold" />
+                                        <Run Text=" days overdue" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Financial Summary -->
+                            <Border Background="#f0fdf4" CornerRadius="8" Padding="16">
+                                <Grid ColumnDefinitions="*,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="Total Cost" FontSize="12" Foreground="#166534" />
+                                        <TextBlock Text="{Binding ViewTotalCostFormatted}" FontSize="20" FontWeight="Bold" Foreground="#15803d" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="4">
+                                        <TextBlock Text="Deposit Status" FontSize="12" Foreground="#166534" />
+                                        <TextBlock Text="{Binding ViewDepositStatusFormatted}" FontWeight="SemiBold" Foreground="#15803d" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Notes -->
+                            <StackPanel Spacing="4" IsVisible="{Binding ViewNotes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <TextBlock Text="Notes" FontSize="12" Foreground="#6b7280" />
+                                <Border Background="#f9fafb" CornerRadius="6" Padding="12">
+                                    <TextBlock Text="{Binding ViewNotes}" TextWrapping="Wrap" Foreground="#374151" />
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="#e5e7eb" BorderThickness="0,1,0,0">
+                        <Button Classes="secondary-button" Content="Close" Command="{Binding CloseViewModalCommand}" HorizontalAlignment="Right" />
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+    </Panel>
+</UserControl>
