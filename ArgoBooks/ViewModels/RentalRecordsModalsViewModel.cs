@@ -869,7 +869,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         }
 
         AvailableAccountants.Clear();
-        foreach (var accountant in companyData.Accountants.Where(a => a.Status == EntityStatus.Active).OrderBy(a => a.Name))
+        foreach (var accountant in companyData.Accountants.OrderBy(a => a.Name))
         {
             AvailableAccountants.Add(new AccountantOption { Id = accountant.Id, Name = accountant.Name });
         }
