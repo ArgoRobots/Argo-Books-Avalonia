@@ -222,7 +222,7 @@ public partial class CustomersPageViewModel : ViewModelBase
     private string _modalStateProvince = string.Empty;
 
     [ObservableProperty]
-    private string _modalPostalCode = string.Empty;
+    private string _modalZipCode = string.Empty;
 
     [ObservableProperty]
     private string _modalCountry = string.Empty;
@@ -646,7 +646,7 @@ public partial class CustomersPageViewModel : ViewModelBase
                 Street = ModalStreetAddress.Trim(),
                 City = ModalCity.Trim(),
                 State = ModalStateProvince.Trim(),
-                PostalCode = ModalPostalCode.Trim(),
+                ZipCode = ModalZipCode.Trim(),
                 Country = ModalCountry.Trim()
             },
             Notes = ModalNotes.Trim(),
@@ -709,7 +709,7 @@ public partial class CustomersPageViewModel : ViewModelBase
         ModalStreetAddress = customer.Address.Street;
         ModalCity = customer.Address.City;
         ModalStateProvince = customer.Address.State;
-        ModalPostalCode = customer.Address.PostalCode;
+        ModalZipCode = customer.Address.ZipCode;
         ModalCountry = customer.Address.Country;
         ModalNotes = customer.Notes;
         ModalStatus = customer.Status switch
@@ -757,7 +757,7 @@ public partial class CustomersPageViewModel : ViewModelBase
             Street = _editingCustomer.Address.Street,
             City = _editingCustomer.Address.City,
             State = _editingCustomer.Address.State,
-            PostalCode = _editingCustomer.Address.PostalCode,
+            ZipCode = _editingCustomer.Address.ZipCode,
             Country = _editingCustomer.Address.Country
         };
         var oldNotes = _editingCustomer.Notes;
@@ -772,7 +772,7 @@ public partial class CustomersPageViewModel : ViewModelBase
             Street = ModalStreetAddress.Trim(),
             City = ModalCity.Trim(),
             State = ModalStateProvince.Trim(),
-            PostalCode = ModalPostalCode.Trim(),
+            ZipCode = ModalZipCode.Trim(),
             Country = ModalCountry.Trim()
         };
         var newNotes = ModalNotes.Trim();
@@ -1136,7 +1136,7 @@ public partial class CustomersPageViewModel : ViewModelBase
         ModalStreetAddress = string.Empty;
         ModalCity = string.Empty;
         ModalStateProvince = string.Empty;
-        ModalPostalCode = string.Empty;
+        ModalZipCode = string.Empty;
         ModalCountry = string.Empty;
         ModalNotes = string.Empty;
         ModalStatus = "Active";
