@@ -331,25 +331,27 @@
                         </Grid>
                     </Border>
 
-                    <StackPanel Padding="24" Spacing="16">
-                        <Border Background="#fef2f2" CornerRadius="8" Padding="16">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                                          Width="24" Height="24" Foreground="#dc2626" />
-                                <StackPanel>
-                                    <TextBlock Text="Warning" FontWeight="SemiBold" Foreground="#991b1b" />
-                                    <TextBlock Text="This action cannot be undone. The rental record will be permanently deleted."
-                                               Foreground="#b91c1c" FontSize="13" TextWrapping="Wrap" />
+                    <Border Padding="24">
+                        <StackPanel Spacing="16">
+                            <Border Background="#fef2f2" CornerRadius="8" Padding="16">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                              Width="24" Height="24" Foreground="#dc2626" />
+                                    <StackPanel>
+                                        <TextBlock Text="Warning" FontWeight="SemiBold" Foreground="#991b1b" />
+                                        <TextBlock Text="This action cannot be undone. The rental record will be permanently deleted."
+                                                   Foreground="#b91c1c" FontSize="13" TextWrapping="Wrap" />
+                                    </StackPanel>
                                 </StackPanel>
-                            </StackPanel>
-                        </Border>
+                            </Border>
 
-                        <TextBlock TextWrapping="Wrap" Foreground="#6b7280">
-                            <Run Text="Are you sure you want to delete rental record " />
-                            <Run Text="{Binding DeletingRecordId}" FontWeight="SemiBold" Foreground="#111827" />
-                            <Run Text="? If this rental is active, the inventory will be restored." />
-                        </TextBlock>
-                    </StackPanel>
+                            <TextBlock TextWrapping="Wrap" Foreground="#6b7280">
+                                <Run Text="Are you sure you want to delete rental record " />
+                                <Run Text="{Binding DeletingRecordId}" FontWeight="SemiBold" Foreground="#111827" />
+                                <Run Text="? If this rental is active, the inventory will be restored." />
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
 
                     <Border Padding="24,16" BorderBrush="#e5e7eb" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
@@ -463,9 +465,10 @@
                     </Border>
 
                     <!-- Content -->
-                    <StackPanel Grid.Row="1" Padding="24" Spacing="16">
-                        <!-- Rental Summary -->
-                        <Border Background="#f9fafb" CornerRadius="8" Padding="16">
+                    <Border Grid.Row="1" Padding="24">
+                        <StackPanel Spacing="16">
+                            <!-- Rental Summary -->
+                            <Border Background="#f9fafb" CornerRadius="8" Padding="16">
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Rental Summary" FontWeight="SemiBold" Foreground="#374151" />
                                 <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,8,0,0">
@@ -514,13 +517,14 @@
                             </Grid>
                         </Border>
 
-                        <!-- Return Notes -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Return Notes" FontWeight="Medium" Foreground="#374151" />
-                            <TextBox Text="{Binding ReturnNotes}" Watermark="Optional notes about the return" TextWrapping="Wrap"
-                                     AcceptsReturn="True" MinHeight="60" />
+                            <!-- Return Notes -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Return Notes" FontWeight="Medium" Foreground="#374151" />
+                                <TextBox Text="{Binding ReturnNotes}" Watermark="Optional notes about the return" TextWrapping="Wrap"
+                                         AcceptsReturn="True" MinHeight="60" />
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </Border>
 
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="#e5e7eb" BorderThickness="0,1,0,0">
@@ -548,10 +552,10 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Orientation="Horizontal" Spacing="12">
                                 <TextBlock Text="Rental Details" FontSize="18" FontWeight="SemiBold" Foreground="#111827" />
-                                <Border Background="{Binding ViewStatus, Converter={x:Static conv:CategoriesConverters.ToRentalStatusBackground}}"
+                                <Border Background="{Binding ViewStatus, Converter={x:Static conv:StringConverters.ToRentalStatusBackground}}"
                                         CornerRadius="4" Padding="8,4">
                                     <TextBlock Text="{Binding ViewStatus}"
-                                               Foreground="{Binding ViewStatus, Converter={x:Static conv:CategoriesConverters.ToRentalStatusForeground}}"
+                                               Foreground="{Binding ViewStatus, Converter={x:Static conv:StringConverters.ToRentalStatusForeground}}"
                                                FontSize="12" FontWeight="Medium" />
                                 </Border>
                             </StackPanel>
