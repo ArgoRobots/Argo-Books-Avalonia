@@ -37,6 +37,31 @@ public partial class App : Application
     /// </summary>
     public static Services.UndoRedoManager? UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
 
+    /// <summary>
+    /// Gets the customer modals view model for shared access.
+    /// </summary>
+    public static CustomerModalsViewModel? CustomerModalsViewModel => _appShellViewModel?.CustomerModalsViewModel;
+
+    /// <summary>
+    /// Gets the product modals view model for shared access.
+    /// </summary>
+    public static ProductModalsViewModel? ProductModalsViewModel => _appShellViewModel?.ProductModalsViewModel;
+
+    /// <summary>
+    /// Gets the category modals view model for shared access.
+    /// </summary>
+    public static CategoryModalsViewModel? CategoryModalsViewModel => _appShellViewModel?.CategoryModalsViewModel;
+
+    /// <summary>
+    /// Gets the department modals view model for shared access.
+    /// </summary>
+    public static DepartmentModalsViewModel? DepartmentModalsViewModel => _appShellViewModel?.DepartmentModalsViewModel;
+
+    /// <summary>
+    /// Gets the supplier modals view model for shared access.
+    /// </summary>
+    public static SupplierModalsViewModel? SupplierModalsViewModel => _appShellViewModel?.SupplierModalsViewModel;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
@@ -472,6 +497,27 @@ public partial class App : Application
         {
             if (string.IsNullOrEmpty(company.FilePath)) return;
             await OpenCompanyWithRetryAsync(company.FilePath);
+        };
+
+        // Remove from recent companies
+        _welcomeScreenViewModel.RemoveFromRecentRequested += async (_, company) =>
+        {
+            if (string.IsNullOrEmpty(company.FilePath)) return;
+            SettingsService?.RemoveRecentCompany(company.FilePath);
+            if (SettingsService != null)
+            {
+                await SettingsService.SaveGlobalSettingsAsync();
+            }
+        };
+
+        // Clear all recent companies
+        _welcomeScreenViewModel.ClearRecentRequested += async (_, _) =>
+        {
+            if (SettingsService != null)
+            {
+                SettingsService.GlobalSettings.RecentCompanies.Clear();
+                await SettingsService.SaveGlobalSettingsAsync();
+            }
         };
     }
 
@@ -1169,7 +1215,7 @@ public partial class App : Application
         });
 
         // Contacts Section
-        navigationService.RegisterPage("Customers", _ => CreatePlaceholderPage("Customers", "Manage customer information"));
+        navigationService.RegisterPage("Customers", _ => new CustomersPage { DataContext = new CustomersPageViewModel() });
         navigationService.RegisterPage("Suppliers", _ => new SuppliersPage { DataContext = new SuppliersPageViewModel() });
         navigationService.RegisterPage("Employees", _ => CreatePlaceholderPage("Employees", "Manage employee records"));
         navigationService.RegisterPage("Departments", _ => new DepartmentsPage { DataContext = new DepartmentsPageViewModel() });

@@ -104,5 +104,20 @@
 
         <!-- Edit Company Modal -->
         <modals:EditCompanyModal DataContext="{Binding EditCompanyModalViewModel}" />
+
+        <!-- Customer Modals -->
+        <modals:CustomerModals DataContext="{Binding CustomerModalsViewModel}" />
+
+        <!-- Product Modals -->
+        <modals:ProductModals DataContext="{Binding ProductModalsViewModel}" />
+
+        <!-- Category Modals -->
+        <modals:CategoryModals DataContext="{Binding CategoryModalsViewModel}" />
+
+        <!-- Department Modals -->
+        <modals:DepartmentModals DataContext="{Binding DepartmentModalsViewModel}" />
+
+        <!-- Supplier Modals -->
+        <modals:SupplierModals DataContext="{Binding SupplierModalsViewModel}" />
     </Panel>
 </UserControl>

@@ -153,6 +153,21 @@ public partial class DepartmentsPageViewModel : ViewModelBase
         {
             App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         }
+
+        // Subscribe to shared modal events to refresh data
+        if (App.DepartmentModalsViewModel != null)
+        {
+            App.DepartmentModalsViewModel.DepartmentSaved += OnDepartmentModalClosed;
+            App.DepartmentModalsViewModel.DepartmentDeleted += OnDepartmentModalClosed;
+        }
+    }
+
+    /// <summary>
+    /// Handles department modal closed events by refreshing the departments.
+    /// </summary>
+    private void OnDepartmentModalClosed(object? sender, EventArgs e)
+    {
+        LoadDepartments();
     }
 
     /// <summary>
@@ -273,9 +288,7 @@ public partial class DepartmentsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAddModal()
     {
-        _editingDepartment = null;
-        ClearModalFields();
-        IsAddModalOpen = true;
+        App.DepartmentModalsViewModel?.OpenAddModal();
     }
 
     /// <summary>
@@ -351,23 +364,7 @@ public partial class DepartmentsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenEditModal(DepartmentDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        var department = _allDepartments.FirstOrDefault(d => d.Id == item.Id);
-        if (department == null)
-            return;
-
-        _editingDepartment = department;
-
-        // Populate fields
-        ModalDepartmentName = department.Name;
-        ModalDescription = department.Description ?? string.Empty;
-        ModalSelectedIcon = AvailableIcons.FirstOrDefault(i => i.Icon == department.Icon) ?? AvailableIcons.First();
-        ModalSelectedColor = AvailableColors.FirstOrDefault(c => c.Value == department.IconColor) ?? AvailableColors.First();
-
-        ModalError = null;
-        IsEditModalOpen = true;
+        App.DepartmentModalsViewModel?.OpenEditModal(item);
     }
 
     /// <summary>
@@ -453,13 +450,7 @@ public partial class DepartmentsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenDeleteConfirm(DepartmentDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        _deletingDepartment = item;
-        OnPropertyChanged(nameof(DeletingDepartmentName));
-        OnPropertyChanged(nameof(DeletingDepartmentEmployeeCount));
-        IsDeleteConfirmOpen = true;
+        App.DepartmentModalsViewModel?.OpenDeleteConfirm(item);
     }
 
     /// <summary>

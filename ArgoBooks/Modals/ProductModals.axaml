@@ -1,0 +1,441 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ArgoBooks.Modals.ProductModals"
+             x:DataType="vm:ProductModalsViewModel">
+
+    <Design.DataContext>
+        <vm:ProductModalsViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- Add Product Modal -->
+        <Panel IsVisible="{Binding IsAddModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="550"
+                    MaxHeight="700"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0"
+                            Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Add Product"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseAddModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="16">
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Product Name" /><Run Text="*" Foreground="#dc2626" />
+                                </TextBlock>
+                                <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="Enter product name" />
+                                <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="#dc2626"
+                                           IsVisible="{Binding ModalProductNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Description" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="Enter description (optional)"
+                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Item Type" /><Run Text="*" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" PlaceholderText="Select type" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Category" /><Run Text="*" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <controls:CategoryInput Categories="{Binding CategoryItems}"
+                                                            SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
+                                                            OpenCategoriesPageCommand="{Binding OpenCategoriesWithAddModalCommand}" />
+                                    <TextBlock Text="{Binding ModalCategoryError}" FontSize="12" Foreground="#dc2626"
+                                               IsVisible="{Binding ModalCategoryError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding ModalSupplier}" Classes="form-combobox" PlaceholderText="Select supplier">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate DataType="vm:SupplierOption">
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Country of Origin" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <controls:CountryInput SelectedCountryName="{Binding ModalCountryOfOrigin, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Reorder Point" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" />
+                                        <TextBlock Grid.Column="1" Text="units" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                    </Grid>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Overstock Threshold" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" />
+                                        <TextBlock Grid.Column="1" Text="units" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddModalCommand}" />
+                            <Button Classes="primary-button" Content="Add Product" Command="{Binding SaveNewProductCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Edit Product Modal -->
+        <Panel IsVisible="{Binding IsEditModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="550"
+                    MaxHeight="700"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0"
+                            Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Edit Product"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseEditModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="16">
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Product Name" /><Run Text="*" Foreground="#dc2626" />
+                                </TextBlock>
+                                <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="Enter product name" />
+                                <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="#dc2626"
+                                           IsVisible="{Binding ModalProductNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Description" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="Enter description (optional)"
+                                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Item Type" /><Run Text="*" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" PlaceholderText="Select type" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Category" /><Run Text="*" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <controls:CategoryInput Categories="{Binding CategoryItems}"
+                                                            SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
+                                                            OpenCategoriesPageCommand="{Binding OpenCategoriesWithAddModalCommand}" />
+                                    <TextBlock Text="{Binding ModalCategoryError}" FontSize="12" Foreground="#dc2626"
+                                               IsVisible="{Binding ModalCategoryError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding ModalSupplier}" Classes="form-combobox" PlaceholderText="Select supplier">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate DataType="vm:SupplierOption">
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Country of Origin" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <controls:CountryInput SelectedCountryName="{Binding ModalCountryOfOrigin, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Reorder Point" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" />
+                                        <TextBlock Grid.Column="1" Text="units" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                    </Grid>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Overstock Threshold" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" />
+                                        <TextBlock Grid.Column="1" Text="units" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseEditModalCommand}" />
+                            <Button Classes="primary-button" Content="Save Changes" Command="{Binding SaveEditedProductCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Delete Confirmation Modal -->
+        <Panel IsVisible="{Binding IsDeleteConfirmOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <Border Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock Text="Delete Product" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                    <StackPanel Margin="24" Spacing="16">
+                        <Border Width="48" Height="48" CornerRadius="24" Background="#FEE2E2" HorizontalAlignment="Center">
+                            <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                      Width="24" Height="24" Foreground="#DC2626" />
+                        </Border>
+                        <TextBlock Text="Are you sure you want to delete this product?" FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" TextAlignment="Center" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding DeletingProductName}" FontSize="16" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" TextAlignment="Center" />
+                    </StackPanel>
+                    <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseDeleteConfirmCommand}" />
+                            <Button Classes="danger-button" Content="Delete" Command="{Binding ConfirmDeleteCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Filter Modal -->
+        <Panel IsVisible="{Binding IsFilterModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Filter Products" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseFilterModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <StackPanel Grid.Row="1" Margin="24" Spacing="20">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Item Type" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding ItemTypeOptions}" SelectedItem="{Binding FilterItemType}" Classes="form-combobox" />
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Category" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding AvailableCategories}" SelectedItem="{Binding FilterCategory}" Classes="form-combobox" PlaceholderText="All Categories">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate DataType="vm:CategoryOption">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding FilterSupplier}" Classes="form-combobox" PlaceholderText="All Suppliers">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate DataType="vm:SupplierOption">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Country of Origin" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding AvailableCountries}" SelectedItem="{Binding FilterCountry}" Classes="form-combobox" PlaceholderText="All Countries" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Button Grid.Column="0" Classes="secondary-button" Content="Clear Filters" Command="{Binding ClearFiltersCommand}" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseFilterModalCommand}" />
+                                <Button Classes="primary-button" Content="Apply" Command="{Binding ApplyFiltersCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+    </Panel>
+
+    <UserControl.Styles>
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <Style Selector="Button.danger-button">
+            <Setter Property="Background" Value="#DC2626" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#DC2626" />
+        </Style>
+        <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#B91C1C" />
+        </Style>
+
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBox.form-input /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <Style Selector="ComboBox.form-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

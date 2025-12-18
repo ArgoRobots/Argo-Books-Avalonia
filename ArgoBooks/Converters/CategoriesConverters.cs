@@ -158,6 +158,112 @@ public static class StringConverters
             var color = value == "Service" ? "#7C3AED" : "#1E40AF";
             return new SolidColorBrush(Color.Parse(color));
         });
+
+    /// <summary>
+    /// Converts payment status to badge background color.
+    /// Current = green (#DCFCE7), Overdue = yellow (#FEF3C7), Delinquent = red (#FEE2E2).
+    /// </summary>
+    public static readonly IValueConverter ToPaymentStatusBackground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Current" => "#DCFCE7",
+                "Overdue" => "#FEF3C7",
+                "Delinquent" => "#FEE2E2",
+                _ => "#F3F4F6"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts payment status to badge foreground color.
+    /// Current = green (#166534), Overdue = yellow (#92400E), Delinquent = red (#DC2626).
+    /// </summary>
+    public static readonly IValueConverter ToPaymentStatusForeground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Current" => "#166534",
+                "Overdue" => "#92400E",
+                "Delinquent" => "#DC2626",
+                _ => "#4B5563"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts history transaction type to badge background color.
+    /// Rental = blue (#DBEAFE), Purchase = purple (#F3E8FF), Return = orange (#FFEDD5), Payment = green (#DCFCE7).
+    /// </summary>
+    public static readonly IValueConverter ToHistoryTypeBadgeBackground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Rental" => "#DBEAFE",
+                "Purchase" => "#F3E8FF",
+                "Return" => "#FFEDD5",
+                "Payment" => "#DCFCE7",
+                _ => "#F3F4F6"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts history transaction type to badge foreground color.
+    /// Rental = blue (#1E40AF), Purchase = purple (#7C3AED), Return = orange (#C2410C), Payment = green (#166534).
+    /// </summary>
+    public static readonly IValueConverter ToHistoryTypeBadgeForeground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Rental" => "#1E40AF",
+                "Purchase" => "#7C3AED",
+                "Return" => "#C2410C",
+                "Payment" => "#166534",
+                _ => "#4B5563"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts history status to badge background color.
+    /// Completed = green (#DCFCE7), Pending = yellow (#FEF3C7), Overdue = red (#FEE2E2), Refunded = gray (#F3F4F6).
+    /// </summary>
+    public static readonly IValueConverter ToHistoryStatusBadgeBackground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Completed" => "#DCFCE7",
+                "Pending" => "#FEF3C7",
+                "Overdue" => "#FEE2E2",
+                "Refunded" => "#E0E7FF",
+                _ => "#F3F4F6"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts history status to badge foreground color.
+    /// Completed = green (#166534), Pending = yellow (#92400E), Overdue = red (#DC2626), Refunded = indigo (#4F46E5).
+    /// </summary>
+    public static readonly IValueConverter ToHistoryStatusBadgeForeground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Completed" => "#166534",
+                "Pending" => "#92400E",
+                "Overdue" => "#DC2626",
+                "Refunded" => "#4F46E5",
+                _ => "#4B5563"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
 }
 
 /// <summary>

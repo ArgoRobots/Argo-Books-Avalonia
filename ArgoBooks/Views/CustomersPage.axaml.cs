@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace ArgoBooks.Views;
 
-public partial class ProductsPage : UserControl
+public partial class CustomersPage : UserControl
 {
-    public ProductsPage()
+    public CustomersPage()
     {
         InitializeComponent();
     }

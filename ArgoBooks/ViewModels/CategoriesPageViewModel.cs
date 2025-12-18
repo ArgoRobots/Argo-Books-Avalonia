@@ -361,6 +361,21 @@ public partial class CategoriesPageViewModel : ViewModelBase
         {
             App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         }
+
+        // Subscribe to shared modal events to refresh data
+        if (App.CategoryModalsViewModel != null)
+        {
+            App.CategoryModalsViewModel.CategorySaved += OnCategoryModalClosed;
+            App.CategoryModalsViewModel.CategoryDeleted += OnCategoryModalClosed;
+        }
+    }
+
+    /// <summary>
+    /// Handles category modal closed events by refreshing the categories.
+    /// </summary>
+    private void OnCategoryModalClosed(object? sender, EventArgs e)
+    {
+        LoadCategories();
     }
 
     /// <summary>
@@ -547,12 +562,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAddModal()
     {
-        _editingCategory = null;
-        _addingSubCategoryParent = null;
-        ClearModalFields();
-        OnPropertyChanged(nameof(IsAddingSubCategory));
-        OnPropertyChanged(nameof(AddingSubCategoryParentName));
-        IsAddModalOpen = true;
+        App.CategoryModalsViewModel?.OpenAddModal(IsExpensesTabSelected);
     }
 
     /// <summary>
@@ -561,15 +571,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAddSubCategoryModal(CategoryDisplayItem? parent)
     {
-        if (parent == null)
-            return;
-
-        _editingCategory = null;
-        ClearModalFields();
-        _addingSubCategoryParent = parent;  // Set AFTER ClearModalFields to avoid being reset
-        OnPropertyChanged(nameof(IsAddingSubCategory));
-        OnPropertyChanged(nameof(AddingSubCategoryParentName));
-        IsAddModalOpen = true;
+        App.CategoryModalsViewModel?.OpenAddSubCategoryModal(parent, IsExpensesTabSelected);
     }
 
     /// <summary>
@@ -652,23 +654,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenEditModal(CategoryDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        var category = _allCategories.FirstOrDefault(c => c.Id == item.Id);
-        if (category == null)
-            return;
-
-        _editingCategory = category;
-
-        // Populate fields
-        ModalCategoryName = category.Name;
-        ModalDescription = category.Description ?? string.Empty;
-        ModalItemType = category.ItemType;
-        ModalSelectedIconOption = AvailableIcons.FirstOrDefault(i => i.Icon == category.Icon) ?? AvailableIcons.First();
-
-        ModalError = null;
-        IsEditModalOpen = true;
+        App.CategoryModalsViewModel?.OpenEditModal(item, IsExpensesTabSelected);
     }
 
     /// <summary>
@@ -754,14 +740,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenDeleteConfirm(CategoryDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        _deletingCategory = item;
-        DeleteSubcategories = false;
-        OnPropertyChanged(nameof(DeletingCategoryName));
-        OnPropertyChanged(nameof(DeletingCategoryHasChildren));
-        IsDeleteConfirmOpen = true;
+        App.CategoryModalsViewModel?.OpenDeleteConfirm(item);
     }
 
     /// <summary>
@@ -914,14 +893,7 @@ public partial class CategoriesPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenMoveModal(CategoryDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        _movingCategory = item;
-        MoveError = null;
-        UpdateMoveTargetCategories();
-        OnPropertyChanged(nameof(MovingCategoryName));
-        IsMoveModalOpen = true;
+        App.CategoryModalsViewModel?.OpenMoveModal(item, IsExpensesTabSelected);
     }
 
     /// <summary>
