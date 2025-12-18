@@ -37,6 +37,11 @@ public partial class App : Application
     /// </summary>
     public static Services.UndoRedoManager? UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
 
+    /// <summary>
+    /// Gets the customer modals view model for shared access.
+    /// </summary>
+    public static CustomerModalsViewModel? CustomerModalsViewModel => _appShellViewModel?.CustomerModalsViewModel;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;

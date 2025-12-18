@@ -104,5 +104,8 @@
 
         <!-- Edit Company Modal -->
         <modals:EditCompanyModal DataContext="{Binding EditCompanyModalViewModel}" />
+
+        <!-- Customer Modals -->
+        <modals:CustomerModals DataContext="{Binding CustomerModalsViewModel}" />
     </Panel>
 </UserControl>

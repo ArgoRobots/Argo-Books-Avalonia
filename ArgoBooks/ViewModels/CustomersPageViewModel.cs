@@ -340,6 +340,15 @@ public partial class CustomersPageViewModel : ViewModelBase
         {
             App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         }
+
+        // Subscribe to customer modal events to refresh data
+        if (App.CustomerModalsViewModel != null)
+        {
+            App.CustomerModalsViewModel.CustomerSaved += OnCustomerSaved;
+            App.CustomerModalsViewModel.CustomerDeleted += OnCustomerDeleted;
+            App.CustomerModalsViewModel.FiltersApplied += OnFiltersApplied;
+            App.CustomerModalsViewModel.FiltersCleared += OnFiltersCleared;
+        }
     }
 
     /// <summary>
@@ -348,6 +357,58 @@ public partial class CustomersPageViewModel : ViewModelBase
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
         LoadCustomers();
+    }
+
+    /// <summary>
+    /// Handles customer saved event from modals.
+    /// </summary>
+    private void OnCustomerSaved(object? sender, EventArgs e)
+    {
+        LoadCustomers();
+    }
+
+    /// <summary>
+    /// Handles customer deleted event from modals.
+    /// </summary>
+    private void OnCustomerDeleted(object? sender, EventArgs e)
+    {
+        LoadCustomers();
+    }
+
+    /// <summary>
+    /// Handles filters applied event from modals.
+    /// </summary>
+    private void OnFiltersApplied(object? sender, EventArgs e)
+    {
+        // Copy filter values from shared ViewModel
+        var modals = App.CustomerModalsViewModel;
+        if (modals != null)
+        {
+            FilterPaymentStatus = modals.FilterPaymentStatus;
+            FilterCustomerStatus = modals.FilterCustomerStatus;
+            FilterOutstandingMin = modals.FilterOutstandingMin;
+            FilterOutstandingMax = modals.FilterOutstandingMax;
+            FilterLastRentalFrom = modals.FilterLastRentalFrom;
+            FilterLastRentalTo = modals.FilterLastRentalTo;
+        }
+        CurrentPage = 1;
+        FilterCustomers();
+    }
+
+    /// <summary>
+    /// Handles filters cleared event from modals.
+    /// </summary>
+    private void OnFiltersCleared(object? sender, EventArgs e)
+    {
+        FilterPaymentStatus = "All";
+        FilterCustomerStatus = "All";
+        FilterOutstandingMin = null;
+        FilterOutstandingMax = null;
+        FilterLastRentalFrom = null;
+        FilterLastRentalTo = null;
+        SearchQuery = null;
+        CurrentPage = 1;
+        FilterCustomers();
     }
 
     #endregion
@@ -603,9 +664,7 @@ public partial class CustomersPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAddModal()
     {
-        _editingCustomer = null;
-        ClearModalFields();
-        IsAddModalOpen = true;
+        App.CustomerModalsViewModel?.OpenAddModal();
     }
 
     /// <summary>
@@ -691,37 +750,7 @@ public partial class CustomersPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenEditModal(CustomerDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        var customer = _allCustomers.FirstOrDefault(c => c.Id == item.Id);
-        if (customer == null)
-            return;
-
-        _editingCustomer = customer;
-
-        // Parse name into first/last
-        var nameParts = customer.Name.Split(' ', 2);
-        ModalFirstName = nameParts.Length > 0 ? nameParts[0] : string.Empty;
-        ModalLastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
-        ModalEmail = customer.Email;
-        ModalPhone = customer.Phone;
-        ModalStreetAddress = customer.Address.Street;
-        ModalCity = customer.Address.City;
-        ModalStateProvince = customer.Address.State;
-        ModalZipCode = customer.Address.ZipCode;
-        ModalCountry = customer.Address.Country;
-        ModalNotes = customer.Notes;
-        ModalStatus = customer.Status switch
-        {
-            EntityStatus.Active => "Active",
-            EntityStatus.Inactive => "Inactive",
-            EntityStatus.Archived => "Banned",
-            _ => "Active"
-        };
-
-        ClearModalErrors();
-        IsEditModalOpen = true;
+        App.CustomerModalsViewModel?.OpenEditModal(item);
     }
 
     /// <summary>
@@ -838,12 +867,7 @@ public partial class CustomersPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenDeleteConfirm(CustomerDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        _deletingCustomer = item;
-        OnPropertyChanged(nameof(DeletingCustomerName));
-        IsDeleteConfirmOpen = true;
+        App.CustomerModalsViewModel?.OpenDeleteConfirm(item);
     }
 
     /// <summary>
@@ -913,7 +937,7 @@ public partial class CustomersPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenFilterModal()
     {
-        IsFilterModalOpen = true;
+        App.CustomerModalsViewModel?.OpenFilterModal();
     }
 
     /// <summary>
@@ -964,16 +988,7 @@ public partial class CustomersPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenHistoryModal(CustomerDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        _historyCustomer = item;
-        HistoryCustomerName = item.Name;
-
-        // Load sample transaction history
-        LoadCustomerHistory(item.Id);
-
-        IsHistoryModalOpen = true;
+        App.CustomerModalsViewModel?.OpenHistoryModal(item);
     }
 
     /// <summary>
@@ -1044,83 +1059,8 @@ public partial class CustomersPageViewModel : ViewModelBase
     {
         CustomerHistory.Clear();
 
-        // In a real implementation, this would load from Sales/Rentals/etc.
-        // For now, generate sample data based on the customer
-        var customer = _allCustomers.FirstOrDefault(c => c.Id == customerId);
-        if (customer == null)
-            return;
-
-        // Generate some sample history entries
-        var rng = new Random(customerId.GetHashCode());
-        var types = new[] { "Rental", "Purchase", "Return", "Payment" };
-        var statuses = new[] { "Completed", "Pending", "Overdue", "Refunded" };
-
-        var historyItems = new List<CustomerHistoryItem>();
-
-        for (int i = 0; i < 12; i++)
-        {
-            var type = types[rng.Next(types.Length)];
-            var status = statuses[rng.Next(statuses.Length)];
-            var daysAgo = rng.Next(1, 365);
-            var amount = type == "Payment"
-                ? -Math.Round((decimal)(rng.NextDouble() * 500 + 50), 2)
-                : Math.Round((decimal)(rng.NextDouble() * 500 + 50), 2);
-
-            historyItems.Add(new CustomerHistoryItem
-            {
-                Date = DateTime.Now.AddDays(-daysAgo),
-                Type = type,
-                Description = type switch
-                {
-                    "Rental" => $"Equipment Rental - {daysAgo % 7 + 1} day(s)",
-                    "Purchase" => "Product Purchase",
-                    "Return" => "Equipment Return",
-                    "Payment" => "Payment Received",
-                    _ => "Transaction"
-                },
-                Amount = amount,
-                Status = status
-            });
-        }
-
-        // Apply history filters
-        var filtered = historyItems.AsEnumerable();
-
-        if (HistoryFilterType != "All")
-        {
-            filtered = filtered.Where(h => h.Type == HistoryFilterType);
-        }
-
-        if (HistoryFilterStatus != "All")
-        {
-            filtered = filtered.Where(h => h.Status == HistoryFilterStatus);
-        }
-
-        if (HistoryFilterDateFrom.HasValue)
-        {
-            filtered = filtered.Where(h => h.Date >= HistoryFilterDateFrom.Value);
-        }
-
-        if (HistoryFilterDateTo.HasValue)
-        {
-            filtered = filtered.Where(h => h.Date <= HistoryFilterDateTo.Value);
-        }
-
-        if (decimal.TryParse(HistoryFilterAmountMin, out var minAmt))
-        {
-            filtered = filtered.Where(h => Math.Abs(h.Amount) >= minAmt);
-        }
-
-        if (decimal.TryParse(HistoryFilterAmountMax, out var maxAmt))
-        {
-            filtered = filtered.Where(h => Math.Abs(h.Amount) <= maxAmt);
-        }
-
-        // Sort by date descending and add to collection
-        foreach (var item in filtered.OrderByDescending(h => h.Date))
-        {
-            CustomerHistory.Add(item);
-        }
+        // TODO: In a real implementation, this would load from Sales/Rentals/etc.
+        // For now, the history will be empty until transaction data is available.
     }
 
     #endregion
