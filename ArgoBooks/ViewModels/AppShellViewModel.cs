@@ -369,6 +369,39 @@ public partial class AppShellViewModel : ViewModelBase
             }
         };
 
+        // Wire up modal save/delete events to update HasUnsavedChanges
+        void MarkUnsavedChanges(object? sender, EventArgs e) => HeaderViewModel.HasUnsavedChanges = true;
+
+        // Customer modals
+        CustomerModalsViewModel.CustomerSaved += MarkUnsavedChanges;
+        CustomerModalsViewModel.CustomerDeleted += MarkUnsavedChanges;
+
+        // Product modals
+        ProductModalsViewModel.ProductSaved += MarkUnsavedChanges;
+        ProductModalsViewModel.ProductDeleted += MarkUnsavedChanges;
+
+        // Category modals
+        CategoryModalsViewModel.CategorySaved += MarkUnsavedChanges;
+        CategoryModalsViewModel.CategoryDeleted += MarkUnsavedChanges;
+
+        // Department modals
+        DepartmentModalsViewModel.DepartmentSaved += MarkUnsavedChanges;
+        DepartmentModalsViewModel.DepartmentDeleted += MarkUnsavedChanges;
+
+        // Supplier modals
+        SupplierModalsViewModel.SupplierSaved += MarkUnsavedChanges;
+        SupplierModalsViewModel.SupplierDeleted += MarkUnsavedChanges;
+
+        // Rental inventory modals
+        RentalInventoryModalsViewModel.ItemSaved += MarkUnsavedChanges;
+        RentalInventoryModalsViewModel.ItemDeleted += MarkUnsavedChanges;
+        RentalInventoryModalsViewModel.RentalCreated += MarkUnsavedChanges;
+
+        // Rental records modals
+        RentalRecordsModalsViewModel.RecordSaved += MarkUnsavedChanges;
+        RentalRecordsModalsViewModel.RecordDeleted += MarkUnsavedChanges;
+        RentalRecordsModalsViewModel.RecordReturned += MarkUnsavedChanges;
+
         // Subscribe to navigation events to update UI state
         if (_navigationService != null)
         {
