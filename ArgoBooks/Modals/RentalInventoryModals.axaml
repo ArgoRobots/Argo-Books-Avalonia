@@ -410,17 +410,17 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Start Date and Due Date -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Start Date" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding RentOutStartDate}" Classes="form-datepicker" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Due Date" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding RentOutDueDate}" Classes="form-datepicker" />
-                                </StackPanel>
-                            </Grid>
+                            <!-- Start Date -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Start Date" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <DatePicker SelectedDate="{Binding RentOutStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Due Date -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Due Date" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <DatePicker SelectedDate="{Binding RentOutDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                            </StackPanel>
 
                             <!-- Security Deposit and Estimated Total -->
                             <Grid ColumnDefinitions="*,16,*">

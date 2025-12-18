@@ -345,6 +345,30 @@ public partial class AppShellViewModel : ViewModelBase
             }
         };
 
+        // Wire up quick action execution for modals
+        QuickActionsViewModel.ActionRequested += (_, e) =>
+        {
+            // Handle actions that open modals after navigation
+            if (e.ActionName == "OpenAddModal")
+            {
+                switch (e.NavigationTarget)
+                {
+                    case "RentalInventory":
+                        RentalInventoryModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Customers":
+                        CustomerModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Products":
+                        ProductModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Suppliers":
+                        SupplierModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                }
+            }
+        };
+
         // Subscribe to navigation events to update UI state
         if (_navigationService != null)
         {

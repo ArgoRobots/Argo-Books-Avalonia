@@ -750,9 +750,14 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
             isValid = false;
         }
 
-        if (!decimal.TryParse(ModalDailyRate, out var rate) || rate < 0)
+        // Require at least one valid rate (daily, weekly, or monthly)
+        var hasDaily = decimal.TryParse(ModalDailyRate, out var daily) && daily > 0;
+        var hasWeekly = decimal.TryParse(ModalWeeklyRate, out var weekly) && weekly > 0;
+        var hasMonthly = decimal.TryParse(ModalMonthlyRate, out var monthly) && monthly > 0;
+
+        if (!hasDaily && !hasWeekly && !hasMonthly)
         {
-            ModalDailyRateError = "Please enter a valid daily rate.";
+            ModalDailyRateError = "Please enter at least one rental rate.";
             isValid = false;
         }
 
