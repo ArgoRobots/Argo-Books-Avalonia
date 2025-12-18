@@ -175,9 +175,17 @@ public partial class CategoriesPageViewModel : ViewModelBase
             return;
         }
 
-        var start = (CurrentPage - 1) * PageSize + 1;
-        var end = Math.Min(CurrentPage * PageSize, totalCount);
-        PaginationText = $"{start}-{end} of {totalCount} categories";
+        // For single page, just show count; for multiple pages, show range
+        if (TotalPages <= 1)
+        {
+            PaginationText = totalCount == 1 ? "1 category" : $"{totalCount} categories";
+        }
+        else
+        {
+            var start = (CurrentPage - 1) * PageSize + 1;
+            var end = Math.Min(CurrentPage * PageSize, totalCount);
+            PaginationText = $"{start}-{end} of {totalCount} categories";
+        }
     }
 
     #endregion
