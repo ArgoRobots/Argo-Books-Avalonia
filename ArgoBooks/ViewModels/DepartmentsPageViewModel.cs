@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Services;
@@ -20,7 +21,151 @@ public partial class DepartmentsPageViewModel : ViewModelBase
 
     partial void OnSearchQueryChanged(string? value)
     {
+        CurrentPage = 1;
         FilterDepartments();
+    }
+
+    #endregion
+
+    #region Sorting
+
+    [ObservableProperty]
+    private string _sortColumn = "Name";
+
+    [ObservableProperty]
+    private SortDirection _sortDirection = SortDirection.None;
+
+    /// <summary>
+    /// Sorts the departments list by the specified column.
+    /// </summary>
+    [RelayCommand]
+    private void SortBy(string column)
+    {
+        if (SortColumn == column)
+        {
+            SortDirection = SortDirection switch
+            {
+                SortDirection.None => SortDirection.Ascending,
+                SortDirection.Ascending => SortDirection.Descending,
+                SortDirection.Descending => SortDirection.None,
+                _ => SortDirection.Ascending
+            };
+        }
+        else
+        {
+            SortColumn = column;
+            SortDirection = SortDirection.Ascending;
+        }
+        FilterDepartments();
+    }
+
+    #endregion
+
+    #region Pagination
+
+    [ObservableProperty]
+    private int _currentPage = 1;
+
+    [ObservableProperty]
+    private int _totalPages = 1;
+
+    [ObservableProperty]
+    private int _pageSize = 10;
+
+    /// <summary>
+    /// Available page size options for the dropdown.
+    /// </summary>
+    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
+
+    partial void OnPageSizeChanged(int value)
+    {
+        CurrentPage = 1;
+        FilterDepartments();
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+    }
+
+    [ObservableProperty]
+    private string _paginationText = "0 departments";
+
+    /// <summary>
+    /// Page numbers for pagination display.
+    /// </summary>
+    public ObservableCollection<int> PageNumbers { get; } = [];
+
+    /// <summary>
+    /// Gets whether we can navigate to the previous page.
+    /// </summary>
+    public bool CanGoToPreviousPage => CurrentPage > 1;
+
+    /// <summary>
+    /// Gets whether we can navigate to the next page.
+    /// </summary>
+    public bool CanGoToNextPage => CurrentPage < TotalPages;
+
+    /// <summary>
+    /// Navigates to the previous page.
+    /// </summary>
+    [RelayCommand]
+    private void GoToPreviousPage()
+    {
+        if (CurrentPage > 1)
+        {
+            CurrentPage--;
+            FilterDepartments();
+            OnPropertyChanged(nameof(CanGoToPreviousPage));
+            OnPropertyChanged(nameof(CanGoToNextPage));
+        }
+    }
+
+    /// <summary>
+    /// Navigates to the next page.
+    /// </summary>
+    [RelayCommand]
+    private void GoToNextPage()
+    {
+        if (CurrentPage < TotalPages)
+        {
+            CurrentPage++;
+            FilterDepartments();
+            OnPropertyChanged(nameof(CanGoToPreviousPage));
+            OnPropertyChanged(nameof(CanGoToNextPage));
+        }
+    }
+
+    /// <summary>
+    /// Navigates to a specific page.
+    /// </summary>
+    [RelayCommand]
+    private void GoToPage(int page)
+    {
+        if (page >= 1 && page <= TotalPages && page != CurrentPage)
+        {
+            CurrentPage = page;
+            FilterDepartments();
+            OnPropertyChanged(nameof(CanGoToPreviousPage));
+            OnPropertyChanged(nameof(CanGoToNextPage));
+        }
+    }
+
+    /// <summary>
+    /// Updates the page numbers collection for pagination display.
+    /// </summary>
+    private void UpdatePageNumbers()
+    {
+        PageNumbers.Clear();
+        for (int i = 1; i <= TotalPages; i++)
+        {
+            PageNumbers.Add(i);
+        }
+    }
+
+    /// <summary>
+    /// Updates the pagination text to display item count.
+    /// </summary>
+    private void UpdatePaginationText(int totalItems)
+    {
+        PaginationText = totalItems == 1 ? "1 department" : $"{totalItems} departments";
     }
 
     #endregion
@@ -35,6 +180,9 @@ public partial class DepartmentsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private int _newThisMonth;
+
+    [ObservableProperty]
+    private int _activeDepartments;
 
     #endregion
 
@@ -221,6 +369,14 @@ public partial class DepartmentsPageViewModel : ViewModelBase
         // Count departments created this month
         var startOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
         NewThisMonth = _allDepartments.Count(d => d.CreatedAt >= startOfMonth);
+
+        // Count departments with at least one employee (active departments)
+        var deptIdsWithEmployees = companyData?.Employees
+            .Where(e => !string.IsNullOrEmpty(e.DepartmentId))
+            .Select(e => e.DepartmentId)
+            .Distinct()
+            .ToHashSet() ?? [];
+        ActiveDepartments = _allDepartments.Count(d => deptIdsWithEmployees.Contains(d.Id));
     }
 
     /// <summary>
@@ -247,14 +403,60 @@ public partial class DepartmentsPageViewModel : ViewModelBase
                 .OrderByDescending(x => Math.Max(x.NameScore, x.DescScore))
                 .Select(x => x.Department);
         }
-        else
+
+        // Create display items with employee counts
+        var displayItems = departments.Select(dept => CreateDisplayItem(dept, companyData)).ToList();
+
+        // Apply sorting (only if not searching, since search has its own relevance sorting)
+        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            departments = departments.OrderBy(d => d.Name);
+            if (SortDirection != SortDirection.None)
+            {
+                displayItems = SortColumn switch
+                {
+                    "Name" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(d => d.Name).ToList()
+                        : displayItems.OrderByDescending(d => d.Name).ToList(),
+                    "Description" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(d => d.Description).ToList()
+                        : displayItems.OrderByDescending(d => d.Description).ToList(),
+                    "Employees" => SortDirection == SortDirection.Ascending
+                        ? displayItems.OrderBy(d => d.EmployeeCount).ToList()
+                        : displayItems.OrderByDescending(d => d.EmployeeCount).ToList(),
+                    _ => displayItems.OrderBy(d => d.Name).ToList()
+                };
+            }
+            else if (string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                // Default sort by name when not searching
+                displayItems = displayItems.OrderBy(d => d.Name).ToList();
+            }
         }
 
-        foreach (var dept in departments)
+        // Calculate pagination
+        var totalItems = displayItems.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)PageSize));
+
+        // Ensure current page is valid
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+        if (CurrentPage < 1)
+            CurrentPage = 1;
+
+        UpdatePageNumbers();
+        UpdatePaginationText(totalItems);
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+
+        // Apply pagination
+        var pagedItems = displayItems
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize);
+
+        // Add paginated items to collection
+        foreach (var item in pagedItems)
         {
-            Departments.Add(CreateDisplayItem(dept, companyData));
+            Departments.Add(item);
         }
     }
 
