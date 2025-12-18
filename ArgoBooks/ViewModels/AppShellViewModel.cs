@@ -115,6 +115,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public CustomerModalsViewModel CustomerModalsViewModel { get; }
 
+    /// <summary>
+    /// Gets the product modals view model.
+    /// </summary>
+    public ProductModalsViewModel ProductModalsViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -203,6 +208,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create customer modals
         CustomerModalsViewModel = new CustomerModalsViewModel();
+
+        // Create product modals
+        ProductModalsViewModel = new ProductModalsViewModel();
 
         // Wire up switch account modal's account selected to open login modal
         SwitchAccountModalViewModel.AccountSelected += (_, account) => LoginModalViewModel.OpenForAccount(account);

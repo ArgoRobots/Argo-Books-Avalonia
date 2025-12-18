@@ -116,6 +116,7 @@ public partial class WelcomeScreenViewModel : ViewModelBase
         if (company == null) return;
         RecentCompanies.Remove(company);
         HasRecentCompanies = RecentCompanies.Count > 0;
+        RemoveFromRecentRequested?.Invoke(this, company);
     }
 
     /// <summary>
@@ -126,6 +127,7 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     {
         RecentCompanies.Clear();
         HasRecentCompanies = false;
+        ClearRecentRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -177,6 +179,8 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     public event EventHandler? CreateNewCompanyRequested;
     public event EventHandler? OpenCompanyRequested;
     public event EventHandler<RecentCompanyItem>? OpenRecentCompanyRequested;
+    public event EventHandler<RecentCompanyItem>? RemoveFromRecentRequested;
+    public event EventHandler? ClearRecentRequested;
     public event EventHandler? OpenSampleCompanyRequested;
     public event EventHandler? OpenHelpRequested;
     public event EventHandler? OpenWhatsNewRequested;

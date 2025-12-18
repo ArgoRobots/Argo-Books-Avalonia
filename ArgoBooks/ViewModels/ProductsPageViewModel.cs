@@ -350,6 +350,16 @@ public partial class ProductsPageViewModel : ViewModelBase
         {
             App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         }
+
+        // Subscribe to product modal events to refresh data
+        if (App.ProductModalsViewModel != null)
+        {
+            App.ProductModalsViewModel.ProductSaved += OnProductSaved;
+            App.ProductModalsViewModel.ProductDeleted += OnProductDeleted;
+            App.ProductModalsViewModel.FiltersApplied += OnFiltersApplied;
+            App.ProductModalsViewModel.FiltersCleared += OnFiltersCleared;
+            App.ProductModalsViewModel.OpenCategoriesRequested += OnOpenCategoriesRequested;
+        }
     }
 
     /// <summary>
@@ -358,6 +368,46 @@ public partial class ProductsPageViewModel : ViewModelBase
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
         LoadProducts();
+    }
+
+    private void OnProductSaved(object? sender, EventArgs e)
+    {
+        LoadProducts();
+    }
+
+    private void OnProductDeleted(object? sender, EventArgs e)
+    {
+        LoadProducts();
+    }
+
+    private void OnFiltersApplied(object? sender, EventArgs e)
+    {
+        var modals = App.ProductModalsViewModel;
+        if (modals != null)
+        {
+            FilterItemType = modals.FilterItemType;
+            FilterCategory = modals.FilterCategory;
+            FilterSupplier = modals.FilterSupplier;
+            FilterCountry = modals.FilterCountry;
+        }
+        CurrentPage = 1;
+        FilterProducts();
+    }
+
+    private void OnFiltersCleared(object? sender, EventArgs e)
+    {
+        FilterItemType = "All";
+        FilterCategory = null;
+        FilterSupplier = null;
+        FilterCountry = null;
+        SearchQuery = null;
+        CurrentPage = 1;
+        FilterProducts();
+    }
+
+    private void OnOpenCategoriesRequested(object? sender, EventArgs e)
+    {
+        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
     }
 
     #endregion
@@ -690,10 +740,7 @@ public partial class ProductsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAddModal()
     {
-        _editingProduct = null;
-        ClearModalFields();
-        UpdateModalCategories();
-        IsAddModalOpen = true;
+        App.ProductModalsViewModel?.OpenAddModal(IsExpensesTabSelected);
     }
 
     /// <summary>
@@ -787,49 +834,7 @@ public partial class ProductsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenEditModal(ProductDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        var product = _allProducts.FirstOrDefault(p => p.Id == item.Id);
-        if (product == null)
-            return;
-
-        _editingProduct = product;
-        UpdateModalCategories();
-
-        // Populate fields
-        ModalProductName = product.Name;
-        ModalDescription = product.Description;
-        ModalSku = product.Sku;
-        ModalUnitPrice = product.UnitPrice.ToString("0.00");
-        ModalCostPrice = product.CostPrice.ToString("0.00");
-
-        // Find category
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData != null)
-        {
-            var category = companyData.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
-            if (category != null)
-            {
-                ModalItemType = category.ItemType;
-                ModalCategory = AvailableCategories.FirstOrDefault(c => c.Id == category.Id);
-                ModalCategoryId = category.Id;
-            }
-
-            // Find supplier
-            ModalSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == product.SupplierId);
-            if (ModalSupplier != null)
-            {
-                var supplier = companyData.Suppliers.FirstOrDefault(s => s.Id == product.SupplierId);
-                ModalCountryOfOrigin = supplier?.Address.Country ?? string.Empty;
-            }
-        }
-
-        ModalReorderPoint = product.TrackInventory ? "10" : string.Empty;
-        ModalOverstockThreshold = product.TrackInventory ? "100" : string.Empty;
-
-        ModalError = null;
-        IsEditModalOpen = true;
+        App.ProductModalsViewModel?.OpenEditModal(item, IsExpensesTabSelected);
     }
 
     /// <summary>
@@ -936,12 +941,7 @@ public partial class ProductsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenDeleteConfirm(ProductDisplayItem? item)
     {
-        if (item == null)
-            return;
-
-        _deletingProduct = item;
-        OnPropertyChanged(nameof(DeletingProductName));
-        IsDeleteConfirmOpen = true;
+        App.ProductModalsViewModel?.OpenDeleteConfirm(item);
     }
 
     /// <summary>
@@ -1011,8 +1011,7 @@ public partial class ProductsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenFilterModal()
     {
-        UpdateDropdownOptions();
-        IsFilterModalOpen = true;
+        App.ProductModalsViewModel?.OpenFilterModal(IsExpensesTabSelected);
     }
 
     /// <summary>

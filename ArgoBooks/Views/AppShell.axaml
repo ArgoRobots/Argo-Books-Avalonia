@@ -107,5 +107,8 @@
 
         <!-- Customer Modals -->
         <modals:CustomerModals DataContext="{Binding CustomerModalsViewModel}" />
+
+        <!-- Product Modals -->
+        <modals:ProductModals DataContext="{Binding ProductModalsViewModel}" />
     </Panel>
 </UserControl>

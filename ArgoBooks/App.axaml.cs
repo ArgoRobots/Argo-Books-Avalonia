@@ -42,6 +42,11 @@ public partial class App : Application
     /// </summary>
     public static CustomerModalsViewModel? CustomerModalsViewModel => _appShellViewModel?.CustomerModalsViewModel;
 
+    /// <summary>
+    /// Gets the product modals view model for shared access.
+    /// </summary>
+    public static ProductModalsViewModel? ProductModalsViewModel => _appShellViewModel?.ProductModalsViewModel;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
@@ -477,6 +482,27 @@ public partial class App : Application
         {
             if (string.IsNullOrEmpty(company.FilePath)) return;
             await OpenCompanyWithRetryAsync(company.FilePath);
+        };
+
+        // Remove from recent companies
+        _welcomeScreenViewModel.RemoveFromRecentRequested += async (_, company) =>
+        {
+            if (string.IsNullOrEmpty(company.FilePath)) return;
+            SettingsService?.RemoveRecentCompany(company.FilePath);
+            if (SettingsService != null)
+            {
+                await SettingsService.SaveGlobalSettingsAsync();
+            }
+        };
+
+        // Clear all recent companies
+        _welcomeScreenViewModel.ClearRecentRequested += async (_, _) =>
+        {
+            if (SettingsService != null)
+            {
+                SettingsService.GlobalSettings.RecentCompanies.Clear();
+                await SettingsService.SaveGlobalSettingsAsync();
+            }
         };
     }
 
