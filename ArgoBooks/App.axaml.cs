@@ -305,6 +305,44 @@ public partial class App : Application
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
         };
 
+        // Wire up modal save/delete events to update HasUnsavedChanges
+        // This is needed because modals call companyData.MarkAsModified() which doesn't raise CompanyDataChanged
+        void MarkUnsavedChanges(object? sender, EventArgs e)
+        {
+            _mainWindowViewModel.HasUnsavedChanges = true;
+            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
+        }
+
+        // Customer modals
+        _appShellViewModel.CustomerModalsViewModel.CustomerSaved += MarkUnsavedChanges;
+        _appShellViewModel.CustomerModalsViewModel.CustomerDeleted += MarkUnsavedChanges;
+
+        // Product modals
+        _appShellViewModel.ProductModalsViewModel.ProductSaved += MarkUnsavedChanges;
+        _appShellViewModel.ProductModalsViewModel.ProductDeleted += MarkUnsavedChanges;
+
+        // Category modals
+        _appShellViewModel.CategoryModalsViewModel.CategorySaved += MarkUnsavedChanges;
+        _appShellViewModel.CategoryModalsViewModel.CategoryDeleted += MarkUnsavedChanges;
+
+        // Department modals
+        _appShellViewModel.DepartmentModalsViewModel.DepartmentSaved += MarkUnsavedChanges;
+        _appShellViewModel.DepartmentModalsViewModel.DepartmentDeleted += MarkUnsavedChanges;
+
+        // Supplier modals
+        _appShellViewModel.SupplierModalsViewModel.SupplierSaved += MarkUnsavedChanges;
+        _appShellViewModel.SupplierModalsViewModel.SupplierDeleted += MarkUnsavedChanges;
+
+        // Rental inventory modals
+        _appShellViewModel.RentalInventoryModalsViewModel.ItemSaved += MarkUnsavedChanges;
+        _appShellViewModel.RentalInventoryModalsViewModel.ItemDeleted += MarkUnsavedChanges;
+        _appShellViewModel.RentalInventoryModalsViewModel.RentalCreated += MarkUnsavedChanges;
+
+        // Rental records modals
+        _appShellViewModel.RentalRecordsModalsViewModel.RecordSaved += MarkUnsavedChanges;
+        _appShellViewModel.RentalRecordsModalsViewModel.RecordDeleted += MarkUnsavedChanges;
+        _appShellViewModel.RentalRecordsModalsViewModel.RecordReturned += MarkUnsavedChanges;
+
         // Use async callback for password requests (allows proper awaiting)
         CompanyManager.PasswordRequestCallback = async (filePath) =>
         {
