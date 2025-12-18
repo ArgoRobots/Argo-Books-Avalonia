@@ -223,10 +223,10 @@ public partial class RentalRecordsPageViewModel : ViewModelBase
             FilterStatus = modals.FilterStatus;
             FilterCustomer = modals.FilterCustomer;
             FilterItem = modals.FilterItem;
-            FilterStartDateFrom = modals.FilterStartDateFrom;
-            FilterStartDateTo = modals.FilterStartDateTo;
-            FilterDueDateFrom = modals.FilterDueDateFrom;
-            FilterDueDateTo = modals.FilterDueDateTo;
+            FilterStartDateFrom = modals.FilterStartDateFrom?.DateTime;
+            FilterStartDateTo = modals.FilterStartDateTo?.DateTime;
+            FilterDueDateFrom = modals.FilterDueDateFrom?.DateTime;
+            FilterDueDateTo = modals.FilterDueDateTo?.DateTime;
         }
         CurrentPage = 1;
         FilterRecords();
