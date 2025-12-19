@@ -35,6 +35,26 @@ public partial class InvoicesPageViewModel : ViewModelBase
     [ObservableProperty]
     private string _selectedTab = "All";
 
+    private int _selectedTabIndex;
+    public int SelectedTabIndex
+    {
+        get => _selectedTabIndex;
+        set
+        {
+            if (SetProperty(ref _selectedTabIndex, value))
+            {
+                var tab = value switch
+                {
+                    0 => "All",
+                    1 => "Drafts",
+                    2 => "Recurring",
+                    _ => "All"
+                };
+                SelectTabInternal(tab);
+            }
+        }
+    }
+
     [ObservableProperty]
     private bool _isAllInvoicesTab = true;
 
@@ -52,6 +72,11 @@ public partial class InvoicesPageViewModel : ViewModelBase
 
     [RelayCommand]
     private void SelectTab(string tab)
+    {
+        SelectTabInternal(tab);
+    }
+
+    private void SelectTabInternal(string tab)
     {
         SelectedTab = tab;
         IsAllInvoicesTab = tab == "All";
