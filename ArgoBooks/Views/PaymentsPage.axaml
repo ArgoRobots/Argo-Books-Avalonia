@@ -489,7 +489,7 @@
                                                         <TextBlock.Foreground>
                                                             <Binding Path="IsRefund">
                                                                 <Binding.Converter>
-                                                                    <local:BoolToColorConverter TrueColor="#DC2626" FalseColor="{DynamicResource TextPrimaryBrush}" />
+                                                                    <local:BoolToColorConverter TrueColor="#DC2626" FalseColor="default" />
                                                                 </Binding.Converter>
                                                             </Binding>
                                                         </TextBlock.Foreground>
