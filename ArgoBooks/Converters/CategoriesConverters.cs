@@ -343,6 +343,52 @@ public static class StringConverters
             };
             return new SolidColorBrush(Color.Parse(color));
         });
+
+    /// <summary>
+    /// Converts invoice status to badge background color.
+    /// Paid = green (#DCFCE7), Pending = yellow (#FEF3C7), Overdue = red (#FEE2E2), Draft = gray (#F3F4F6),
+    /// Sent = blue (#DBEAFE), Partial = purple (#F3E8FF), Cancelled = gray (#F3F4F6).
+    /// </summary>
+    public static readonly IValueConverter ToInvoiceStatusBackground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Paid" => "#DCFCE7",
+                "Pending" => "#FEF3C7",
+                "Overdue" => "#FEE2E2",
+                "Draft" => "#F3F4F6",
+                "Sent" => "#DBEAFE",
+                "Viewed" => "#DBEAFE",
+                "Partial" => "#F3E8FF",
+                "Cancelled" => "#F3F4F6",
+                _ => "#F3F4F6"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts invoice status to badge foreground color.
+    /// Paid = green (#166534), Pending = yellow (#92400E), Overdue = red (#DC2626), Draft = gray (#4B5563),
+    /// Sent = blue (#1E40AF), Partial = purple (#7C3AED), Cancelled = gray (#4B5563).
+    /// </summary>
+    public static readonly IValueConverter ToInvoiceStatusForeground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Paid" => "#166534",
+                "Pending" => "#92400E",
+                "Overdue" => "#DC2626",
+                "Draft" => "#4B5563",
+                "Sent" => "#1E40AF",
+                "Viewed" => "#1E40AF",
+                "Partial" => "#7C3AED",
+                "Cancelled" => "#4B5563",
+                _ => "#4B5563"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
 }
 
 /// <summary>

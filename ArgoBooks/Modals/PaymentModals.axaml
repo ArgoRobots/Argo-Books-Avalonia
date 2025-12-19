@@ -54,10 +54,10 @@
                             <!-- Invoice (Optional) -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Invoice (Optional)" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding InvoiceOptions}"
-                                          SelectedItem="{Binding SelectedInvoice}"
-                                          Classes="form-combobox"
-                                          PlaceholderText="Select an invoice..." />
+                                <controls:SearchableDropdown ItemsSource="{Binding InvoiceOptions}"
+                                                            SelectedItem="{Binding SelectedInvoice}"
+                                                            DisplayMemberPath="Display"
+                                                            Placeholder="Search for an invoice..." />
                                 <TextBlock Text="{Binding ModalInvoiceError}"
                                            FontSize="12"
                                            Foreground="#dc2626"
@@ -158,10 +158,10 @@
                             <!-- Invoice (Optional) -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Invoice (Optional)" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding InvoiceOptions}"
-                                          SelectedItem="{Binding SelectedInvoice}"
-                                          Classes="form-combobox"
-                                          PlaceholderText="Select an invoice..." />
+                                <controls:SearchableDropdown ItemsSource="{Binding InvoiceOptions}"
+                                                            SelectedItem="{Binding SelectedInvoice}"
+                                                            DisplayMemberPath="Display"
+                                                            Placeholder="Search for an invoice..." />
                             </StackPanel>
 
                             <!-- Amount -->

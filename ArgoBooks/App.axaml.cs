@@ -74,6 +74,11 @@ public partial class App : Application
     /// </summary>
     public static PaymentModalsViewModel? PaymentModalsViewModel => _appShellViewModel?.PaymentModalsViewModel;
 
+    /// <summary>
+    /// Gets the invoice modals view model for shared access.
+    /// </summary>
+    public static InvoiceModalsViewModel? InvoiceModalsViewModel => _appShellViewModel?.InvoiceModalsViewModel;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
@@ -375,6 +380,10 @@ public partial class App : Application
         // Payment modals
         _appShellViewModel.PaymentModalsViewModel.PaymentSaved += MarkUnsavedChanges;
         _appShellViewModel.PaymentModalsViewModel.PaymentDeleted += MarkUnsavedChanges;
+
+        // Invoice modals
+        _appShellViewModel.InvoiceModalsViewModel.InvoiceSaved += MarkUnsavedChanges;
+        _appShellViewModel.InvoiceModalsViewModel.InvoiceDeleted += MarkUnsavedChanges;
     }
 
     /// <summary>
@@ -1265,7 +1274,7 @@ public partial class App : Application
         // Transactions Section
         navigationService.RegisterPage("Revenue", _ => CreatePlaceholderPage("Revenue", "Track income and sales"));
         navigationService.RegisterPage("Expenses", _ => CreatePlaceholderPage("Expenses", "Record and manage expenses"));
-        navigationService.RegisterPage("Invoices", _ => CreatePlaceholderPage("Invoices", "Create and manage invoices"));
+        navigationService.RegisterPage("Invoices", _ => new InvoicesPage { DataContext = new InvoicesPageViewModel() });
         navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = new PaymentsPageViewModel() });
 
         // Inventory Section

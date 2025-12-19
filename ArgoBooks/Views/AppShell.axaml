@@ -128,5 +128,8 @@
 
         <!-- Payment Modals -->
         <modals:PaymentModals DataContext="{Binding PaymentModalsViewModel}" />
+
+        <!-- Invoice Modals -->
+        <modals:InvoiceModals DataContext="{Binding InvoiceModalsViewModel}" />
     </Panel>
 </UserControl>
