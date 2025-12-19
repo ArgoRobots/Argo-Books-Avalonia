@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
@@ -499,7 +500,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         CloseCreateEditModal();
     }
 
-    private void SaveNewInvoice(Core.Models.CompanyData companyData)
+    private void SaveNewInvoice(CompanyData companyData)
     {
         // Generate invoice ID
         var nextNumber = (companyData.Invoices?.Count ?? 0) + 1;
@@ -551,7 +552,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
     }
 
-    private void SaveEditedInvoice(Core.Models.CompanyData companyData)
+    private void SaveEditedInvoice(CompanyData companyData)
     {
         var invoice = companyData.Invoices?.FirstOrDefault(i => i.Id == _editingInvoiceId);
         if (invoice == null) return;
