@@ -420,7 +420,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 historyEntries.Add(new InvoiceHistoryDisplayItem
                 {
                     ActionType = entry.Action,
-                    Description = entry.Description,
+                    Description = entry.Details ?? entry.Action,
                     DateTime = entry.Timestamp
                 });
             }
@@ -484,9 +484,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
-
-        // Ensure invoices list exists
-        companyData.Invoices ??= [];
 
         if (IsEditMode)
         {
