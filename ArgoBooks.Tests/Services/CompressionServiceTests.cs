@@ -155,7 +155,7 @@ public class CompressionServiceTests : IDisposable
         var originalData = Encoding.UTF8.GetBytes("Test data");
         using var inputStream = new MemoryStream(originalData);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             _compressionService.CompressGZipAsync(inputStream, CompressionLevel.Optimal, cts.Token));
     }
 
@@ -263,7 +263,7 @@ public class CompressionServiceTests : IDisposable
         var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             _compressionService.CreateTarArchiveAsync(sourceDir, cancellationToken: cts.Token));
     }
 

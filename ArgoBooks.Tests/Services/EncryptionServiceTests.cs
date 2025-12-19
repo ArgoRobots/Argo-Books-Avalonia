@@ -160,7 +160,7 @@ public class EncryptionServiceTests
 
         var encrypted = _encryptionService.Encrypt(originalData, "CorrectPassword1", salt, iv);
 
-        Assert.Throws<CryptographicException>(() =>
+        Assert.ThrowsAny<CryptographicException>(() =>
             _encryptionService.Decrypt(encrypted, "WrongPassword1", salt, iv));
     }
 
@@ -175,7 +175,7 @@ public class EncryptionServiceTests
 
         var encrypted = _encryptionService.Encrypt(originalData, password, salt, iv1);
 
-        Assert.Throws<CryptographicException>(() =>
+        Assert.ThrowsAny<CryptographicException>(() =>
             _encryptionService.Decrypt(encrypted, password, salt, iv2));
     }
 
@@ -196,7 +196,7 @@ public class EncryptionServiceTests
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();
 
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentNullException>(() =>
             _encryptionService.Encrypt(data, null!, salt, iv));
     }
 
@@ -366,7 +366,7 @@ public class EncryptionServiceTests
         encrypted[0] ^= 0xFF;
 
         // Should fail authentication
-        Assert.Throws<CryptographicException>(() =>
+        Assert.ThrowsAny<CryptographicException>(() =>
             _encryptionService.Decrypt(encrypted, password, salt, iv));
     }
 
