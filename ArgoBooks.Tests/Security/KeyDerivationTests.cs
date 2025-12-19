@@ -168,7 +168,7 @@ public class KeyDerivationTests
     {
         var salt = KeyDerivation.GenerateSalt();
 
-        Assert.Throws<ArgumentException>(() => KeyDerivation.DeriveKey(null!, salt));
+        Assert.Throws<ArgumentNullException>(() => KeyDerivation.DeriveKey(null!, salt));
     }
 
     [Fact]
