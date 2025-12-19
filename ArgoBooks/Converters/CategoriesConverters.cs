@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
@@ -309,6 +307,92 @@ public static class StringConverters
             };
             return new SolidColorBrush(Color.Parse(color));
         });
+
+    /// <summary>
+    /// Converts payment transaction status to badge background color.
+    /// Completed = green (#DCFCE7), Pending = yellow (#FEF3C7), Partial = blue (#DBEAFE), Refunded = purple (#F3E8FF).
+    /// </summary>
+    public static readonly IValueConverter ToPaymentTransactionStatusBackground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Completed" => "#DCFCE7",
+                "Pending" => "#FEF3C7",
+                "Partial" => "#DBEAFE",
+                "Refunded" => "#F3E8FF",
+                _ => "#F3F4F6"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts payment transaction status to badge foreground color.
+    /// Completed = green (#166534), Pending = yellow (#92400E), Partial = blue (#1E40AF), Refunded = purple (#7C3AED).
+    /// </summary>
+    public static readonly IValueConverter ToPaymentTransactionStatusForeground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Completed" => "#166534",
+                "Pending" => "#92400E",
+                "Partial" => "#1E40AF",
+                "Refunded" => "#7C3AED",
+                _ => "#4B5563"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+}
+
+/// <summary>
+/// Converter that returns one of two colors based on a boolean value.
+/// </summary>
+public class BoolToColorConverter : IValueConverter
+{
+    public string TrueColor { get; set; } = "#DC2626";
+    public object? FalseColor { get; set; } = "#374151";
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not bool boolValue)
+            return GetBrush(FalseColor);
+
+        return boolValue ? new SolidColorBrush(Color.Parse(TrueColor)) : GetBrush(FalseColor);
+    }
+
+    private static IBrush GetBrush(object? colorValue)
+    {
+        if (colorValue is string colorString)
+        {
+            try
+            {
+                return new SolidColorBrush(Color.Parse(colorString));
+            }
+            catch
+            {
+                // Try to get from resources
+            }
+        }
+
+        if (colorValue is IBrush brush)
+            return brush;
+
+        // Try to get TextPrimaryBrush from resources
+        if (Application.Current?.Resources != null &&
+            Application.Current.Resources.TryGetResource("TextPrimaryBrush", Application.Current.ActualThemeVariant, out var resource) &&
+            resource is IBrush textBrush)
+        {
+            return textBrush;
+        }
+
+        return new SolidColorBrush(Color.Parse("#374151"));
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 /// <summary>

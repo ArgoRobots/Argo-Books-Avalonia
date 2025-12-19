@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Data.Converters;
-using Avalonia.Media;
-using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
 

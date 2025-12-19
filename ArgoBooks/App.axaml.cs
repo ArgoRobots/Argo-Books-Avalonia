@@ -1,12 +1,9 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
-using System.Linq;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
@@ -71,6 +68,11 @@ public partial class App : Application
     /// Gets the rental records modals view model for shared access.
     /// </summary>
     public static RentalRecordsModalsViewModel? RentalRecordsModalsViewModel => _appShellViewModel?.RentalRecordsModalsViewModel;
+
+    /// <summary>
+    /// Gets the payment modals view model for shared access.
+    /// </summary>
+    public static PaymentModalsViewModel? PaymentModalsViewModel => _appShellViewModel?.PaymentModalsViewModel;
 
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
@@ -331,10 +333,13 @@ public partial class App : Application
         if (_mainWindowViewModel == null || _appShellViewModel == null)
             return;
 
+        var mainWindowVm = _mainWindowViewModel;
+        var appShellVm = _appShellViewModel;
+
         void MarkUnsavedChanges(object? sender, EventArgs e)
         {
-            _mainWindowViewModel.HasUnsavedChanges = true;
-            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
+            mainWindowVm.HasUnsavedChanges = true;
+            appShellVm.HeaderViewModel.HasUnsavedChanges = true;
         }
 
         // Customer modals
@@ -366,6 +371,10 @@ public partial class App : Application
         _appShellViewModel.RentalRecordsModalsViewModel.RecordSaved += MarkUnsavedChanges;
         _appShellViewModel.RentalRecordsModalsViewModel.RecordDeleted += MarkUnsavedChanges;
         _appShellViewModel.RentalRecordsModalsViewModel.RecordReturned += MarkUnsavedChanges;
+
+        // Payment modals
+        _appShellViewModel.PaymentModalsViewModel.PaymentSaved += MarkUnsavedChanges;
+        _appShellViewModel.PaymentModalsViewModel.PaymentDeleted += MarkUnsavedChanges;
     }
 
     /// <summary>
@@ -1257,7 +1266,7 @@ public partial class App : Application
         navigationService.RegisterPage("Revenue", _ => CreatePlaceholderPage("Revenue", "Track income and sales"));
         navigationService.RegisterPage("Expenses", _ => CreatePlaceholderPage("Expenses", "Record and manage expenses"));
         navigationService.RegisterPage("Invoices", _ => CreatePlaceholderPage("Invoices", "Create and manage invoices"));
-        navigationService.RegisterPage("Payments", _ => CreatePlaceholderPage("Payments", "Record payments"));
+        navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = new PaymentsPageViewModel() });
 
         // Inventory Section
         navigationService.RegisterPage("Products", _ => new ProductsPage { DataContext = new ProductsPageViewModel() });

@@ -145,6 +145,11 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public RentalRecordsModalsViewModel RentalRecordsModalsViewModel { get; }
 
+    /// <summary>
+    /// Gets the payment modals view model.
+    /// </summary>
+    public PaymentModalsViewModel PaymentModalsViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
@@ -251,6 +256,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create rental records modals
         RentalRecordsModalsViewModel = new RentalRecordsModalsViewModel();
+
+        // Create payment modals
+        PaymentModalsViewModel = new PaymentModalsViewModel();
 
         // Wire up switch account modal's account selected to open login modal
         SwitchAccountModalViewModel.AccountSelected += (_, account) => LoginModalViewModel.OpenForAccount(account);

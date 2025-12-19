@@ -125,5 +125,8 @@
 
         <!-- Rental Records Modals -->
         <modals:RentalRecordsModals DataContext="{Binding RentalRecordsModalsViewModel}" />
+
+        <!-- Payment Modals -->
+        <modals:PaymentModals DataContext="{Binding PaymentModalsViewModel}" />
     </Panel>
 </UserControl>
