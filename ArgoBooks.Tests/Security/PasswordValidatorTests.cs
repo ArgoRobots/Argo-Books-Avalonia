@@ -233,8 +233,9 @@ public class PasswordValidatorTests
     [Fact]
     public void GetStrengthScore_SequentialCharsPenalized()
     {
-        var normalScore = PasswordValidator.GetStrengthScore("Pmqz123!");
-        var sequentialScore = PasswordValidator.GetStrengthScore("Pabc123!");
+        // Use passwords without "123" since that's also sequential
+        var normalScore = PasswordValidator.GetStrengthScore("Pmqz597!");
+        var sequentialScore = PasswordValidator.GetStrengthScore("Pabc597!");
 
         Assert.True(sequentialScore < normalScore);
     }
