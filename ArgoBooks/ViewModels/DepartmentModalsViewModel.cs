@@ -1,6 +1,4 @@
-using System.Collections.ObjectModel;
 using ArgoBooks.Core.Models.Entities;
-using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
