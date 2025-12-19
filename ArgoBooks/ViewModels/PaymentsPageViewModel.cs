@@ -57,10 +57,10 @@ public partial class PaymentsPageViewModel : ViewModelBase
     private string? _filterAmountMax;
 
     [ObservableProperty]
-    private DateTime? _filterDateFrom;
+    private DateTimeOffset? _filterDateFrom;
 
     [ObservableProperty]
-    private DateTime? _filterDateTo;
+    private DateTimeOffset? _filterDateTo;
 
     #endregion
 
@@ -437,11 +437,11 @@ public partial class PaymentsPageViewModel : ViewModelBase
         // Apply date filter
         if (FilterDateFrom.HasValue)
         {
-            filtered = filtered.Where(p => p.Date >= FilterDateFrom.Value).ToList();
+            filtered = filtered.Where(p => p.Date >= FilterDateFrom.Value.DateTime).ToList();
         }
         if (FilterDateTo.HasValue)
         {
-            filtered = filtered.Where(p => p.Date <= FilterDateTo.Value).ToList();
+            filtered = filtered.Where(p => p.Date <= FilterDateTo.Value.DateTime).ToList();
         }
 
         // Create display items

@@ -39,7 +39,7 @@ public partial class PaymentModalsViewModel : ObservableObject
     private string _modalAmount = string.Empty;
 
     [ObservableProperty]
-    private DateTime _modalDate = DateTime.Today;
+    private DateTimeOffset? _modalDate = DateTimeOffset.Now;
 
     [ObservableProperty]
     private string _modalPaymentMethod = "Cash";
@@ -86,10 +86,10 @@ public partial class PaymentModalsViewModel : ObservableObject
     private string? _filterAmountMax;
 
     [ObservableProperty]
-    private DateTime? _filterDateFrom;
+    private DateTimeOffset? _filterDateFrom;
 
     [ObservableProperty]
-    private DateTime? _filterDateTo;
+    private DateTimeOffset? _filterDateTo;
 
     #endregion
 
@@ -234,7 +234,7 @@ public partial class PaymentModalsViewModel : ObservableObject
             Id = newId,
             InvoiceId = ModalInvoiceId ?? string.Empty,
             CustomerId = ModalCustomerId ?? string.Empty,
-            Date = ModalDate,
+            Date = ModalDate?.DateTime ?? DateTime.Today,
             Amount = decimal.Parse(ModalAmount),
             PaymentMethod = paymentMethod,
             ReferenceNumber = string.IsNullOrWhiteSpace(ModalReferenceNumber) ? null : ModalReferenceNumber.Trim(),
@@ -288,7 +288,7 @@ public partial class PaymentModalsViewModel : ObservableObject
         SelectedInvoice = InvoiceOptions.FirstOrDefault(i => i.Id == payment.InvoiceId);
         ModalCustomerId = payment.CustomerId;
         ModalAmount = payment.Amount.ToString("F2");
-        ModalDate = payment.Date;
+        ModalDate = new DateTimeOffset(payment.Date);
         ModalPaymentMethod = payment.PaymentMethod switch
         {
             PaymentMethod.Cash => "Cash",
@@ -330,7 +330,7 @@ public partial class PaymentModalsViewModel : ObservableObject
 
         var newInvoiceId = ModalInvoiceId ?? string.Empty;
         var newCustomerId = ModalCustomerId ?? string.Empty;
-        var newDate = ModalDate;
+        var newDate = ModalDate?.DateTime ?? DateTime.Today;
         var newAmount = decimal.Parse(ModalAmount);
         var newPaymentMethod = ModalPaymentMethod switch
         {
@@ -559,7 +559,7 @@ public partial class PaymentModalsViewModel : ObservableObject
         SelectedInvoice = null;
         ModalCustomerId = null;
         ModalAmount = string.Empty;
-        ModalDate = DateTime.Today;
+        ModalDate = DateTimeOffset.Now;
         ModalPaymentMethod = "Cash";
         ModalReferenceNumber = string.Empty;
         ModalNotes = string.Empty;
