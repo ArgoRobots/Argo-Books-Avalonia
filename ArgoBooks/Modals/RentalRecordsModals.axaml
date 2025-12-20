@@ -770,12 +770,7 @@
             <Setter Property="Padding" Value="12,10" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
-        </Style>
-        <Style Selector="ComboBox.form-combobox /template/ ContentControl#ContentPresenter TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
-        </Style>
-        <Style Selector="ComboBox.form-combobox:focus /template/ ContentControl#ContentPresenter TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="PlaceholderForeground" Value="{DynamicResource TextTertiaryBrush}" />
         </Style>
 
         <!-- Form DatePicker -->
