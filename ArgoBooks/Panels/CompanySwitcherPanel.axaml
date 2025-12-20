@@ -290,6 +290,12 @@
             <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
         </Style>
 
+        <!-- Current Company Card Style -->
+        <Style Selector="Border.current-company-card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
         <!-- Inline Edit Button Style (inside company card) -->
         <Style Selector="Button.edit-button-inline">
             <Setter Property="Background" Value="Transparent" />

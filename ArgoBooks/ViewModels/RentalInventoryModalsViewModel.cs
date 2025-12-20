@@ -786,17 +786,6 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 }
 
 /// <summary>
-/// Option model for customer dropdown.
-/// </summary>
-public class CustomerOption
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-
-    public override string ToString() => Name;
-}
-
-/// <summary>
 /// Option model for accountant dropdown.
 /// </summary>
 public class AccountantOption

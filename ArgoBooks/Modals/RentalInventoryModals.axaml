@@ -52,7 +52,9 @@
 
                             <!-- Supplier -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Supplier" /><Run Text=" *" Foreground="#dc2626" />
+                                </TextBlock>
                                 <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding ModalSupplier}" Classes="form-combobox" />
                             </StackPanel>
 
@@ -68,14 +70,14 @@
                             </StackPanel>
 
                             <!-- Rates Section -->
-                            <TextBlock Text="Rental Rates" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
+                            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0">
+                                <Run Text="Rental Rates" /><Run Text=" *" Foreground="#dc2626" />
+                            </TextBlock>
 
                             <!-- Daily and Weekly Rate Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Daily Rate" /><Run Text=" *" Foreground="#dc2626" />
-                                    </TextBlock>
+                                    <TextBlock Text="Daily Rate" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                     <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="#dc2626"
@@ -160,7 +162,9 @@
 
                             <!-- Supplier -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Supplier" /><Run Text=" *" Foreground="#dc2626" />
+                                </TextBlock>
                                 <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding ModalSupplier}" Classes="form-combobox" />
                             </StackPanel>
 
@@ -182,14 +186,14 @@
                             </Grid>
 
                             <!-- Rates Section -->
-                            <TextBlock Text="Rental Rates" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
+                            <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0">
+                                <Run Text="Rental Rates" /><Run Text=" *" Foreground="#dc2626" />
+                            </TextBlock>
 
                             <!-- Daily and Weekly Rate Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Daily Rate" /><Run Text=" *" Foreground="#dc2626" />
-                                    </TextBlock>
+                                    <TextBlock Text="Daily Rate" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" Watermark="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" />
                                     <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="#dc2626"

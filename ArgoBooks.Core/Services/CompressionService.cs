@@ -22,13 +22,20 @@ public class CompressionService
     {
         var tarStream = new MemoryStream();
 
-        await using var tarWriter = new TarWriter(tarStream, TarEntryFormat.Pax, leaveOpen: true);
+        // Use explicit disposal to ensure position is set after TarWriter finalizes
+        var tarWriter = new TarWriter(tarStream, TarEntryFormat.Pax, leaveOpen: true);
+        try
+        {
+            var basePath = includeBaseDirectory
+                ? Path.GetDirectoryName(sourceDirectory) ?? sourceDirectory
+                : sourceDirectory;
 
-        var basePath = includeBaseDirectory
-            ? Path.GetDirectoryName(sourceDirectory) ?? sourceDirectory
-            : sourceDirectory;
-
-        await AddDirectoryToTarAsync(tarWriter, sourceDirectory, basePath, cancellationToken);
+            await AddDirectoryToTarAsync(tarWriter, sourceDirectory, basePath, cancellationToken);
+        }
+        finally
+        {
+            await tarWriter.DisposeAsync();
+        }
 
         tarStream.Position = 0;
         return tarStream;

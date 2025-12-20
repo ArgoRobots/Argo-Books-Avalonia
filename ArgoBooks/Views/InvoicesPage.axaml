@@ -19,10 +19,27 @@
         <vm:InvoicesPageViewModel />
     </Design.DataContext>
 
-    <Grid RowDefinitions="*">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Tab Bar -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+                        Margin="0"
+                        Classes="page-tabs">
+                <TabItem Header="All Invoices" />
+                <TabItem Header="Drafts" />
+                <TabItem Header="Recurring Invoices" />
+            </TabControl>
+        </Border>
+
         <!-- Main Content -->
-        <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
-            <!-- Statistics Cards (Row 0) -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid RowDefinitions="Auto,*" Margin="24">
+                <!-- Statistics Cards (Row 0) -->
             <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
                 <Grid.Styles>
                     <Style Selector="Border.stat-card">
@@ -138,7 +155,7 @@
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1">
 
-                <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header with Title, Search and Buttons -->
                     <Border Grid.Row="0"
                             Padding="24,20"
@@ -198,35 +215,8 @@
                         </Grid>
                     </Border>
 
-                    <!-- Tab Navigation -->
-                    <Border Grid.Row="1"
-                            Padding="24,0"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <StackPanel Orientation="Horizontal" Spacing="0">
-                            <Button Classes="tab-button"
-                                    Classes.active="{Binding IsAllInvoicesTab}"
-                                    Command="{Binding SelectTabCommand}"
-                                    CommandParameter="All">
-                                <TextBlock Text="All Invoices" />
-                            </Button>
-                            <Button Classes="tab-button"
-                                    Classes.active="{Binding IsDraftsTab}"
-                                    Command="{Binding SelectTabCommand}"
-                                    CommandParameter="Drafts">
-                                <TextBlock Text="Drafts" />
-                            </Button>
-                            <Button Classes="tab-button"
-                                    Classes.active="{Binding IsRecurringTab}"
-                                    Command="{Binding SelectTabCommand}"
-                                    CommandParameter="Recurring">
-                                <TextBlock Text="Recurring Invoices" />
-                            </Button>
-                        </StackPanel>
-                    </Border>
-
                     <!-- Table Content -->
-                    <Grid Grid.Row="2" RowDefinitions="Auto,*">
+                    <Grid Grid.Row="1" RowDefinitions="Auto,*">
                         <!-- Table Header -->
                         <Border Grid.Row="0"
                                 Background="{DynamicResource SurfaceAltBrush}"
@@ -577,7 +567,7 @@
                     </Grid>
 
                     <!-- Pagination Footer -->
-                    <Border Grid.Row="3"
+                    <Border Grid.Row="2"
                             Background="{DynamicResource SurfaceAltBrush}"
                             Padding="24,12"
                             CornerRadius="0,0,11,11"
@@ -662,7 +652,8 @@
                     </Border>
                 </Grid>
             </Border>
-        </Grid>
+            </Grid>
+        </ScrollViewer>
 
         <!-- Note: Modals are now rendered at AppShell level for full-screen coverage -->
     </Grid>
@@ -681,30 +672,50 @@
             <Setter Property="BorderThickness" Value="0" />
         </Style>
 
-        <!-- Tab Button -->
-        <Style Selector="Button.tab-button">
+        <!-- Page Tabs (TabControl) -->
+        <Style Selector="TabControl.page-tabs">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs /template/ ItemsPresenter#PART_ItemsPresenter">
+            <Setter Property="Margin" Value="24,0" />
+        </Style>
+        <Style Selector="TabControl.page-tabs /template/ Border#PART_InnerBorder">
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="16,16" />
+        </Style>
+        <Style Selector="TabControl.page-tabs /template/ ContentPresenter#PART_SelectedContentHost">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <!-- Tab Item Styling -->
+        <Style Selector="TabControl.page-tabs TabItem">
             <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Padding" Value="4,12,4,10" />
+            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <Style Selector="Button.tab-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.tab-button:pointerover">
+        <Style Selector="TabControl.page-tabs TabItem:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
-        <Style Selector="Button.tab-button.active">
+        <Style Selector="TabControl.page-tabs TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:selected">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
-        <Style Selector="Button.tab-button.active">
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Style Selector="TabControl.page-tabs TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:selected /template/ Border#PART_SelectedPipe">
+            <Setter Property="IsVisible" Value="True" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Height" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Margin" Value="0,0,0,0" />
+            <Setter Property="CornerRadius" Value="1" />
         </Style>
 
         <!-- Icon Button -->
