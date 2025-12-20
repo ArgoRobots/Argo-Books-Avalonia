@@ -69,6 +69,15 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<string> AddNewTextProperty =
         AvaloniaProperty.Register<SearchableDropdown, string>(nameof(AddNewText), "Add new...");
 
+    public static readonly StyledProperty<string?> EmptyMessageProperty =
+        AvaloniaProperty.Register<SearchableDropdown, string?>(nameof(EmptyMessage));
+
+    public static readonly StyledProperty<string?> EmptyCreateLinkTextProperty =
+        AvaloniaProperty.Register<SearchableDropdown, string?>(nameof(EmptyCreateLinkText), "Create one here");
+
+    public static readonly StyledProperty<ICommand?> EmptyCreateCommandProperty =
+        AvaloniaProperty.Register<SearchableDropdown, ICommand?>(nameof(EmptyCreateCommand));
+
     #endregion
 
     #region Properties
@@ -191,6 +200,33 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Gets or sets the message shown when no items exist (e.g., "No customers exist.").
+    /// </summary>
+    public string? EmptyMessage
+    {
+        get => GetValue(EmptyMessageProperty);
+        set => SetValue(EmptyMessageProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the create link text shown when no items exist (e.g., "Create one here").
+    /// </summary>
+    public string? EmptyCreateLinkText
+    {
+        get => GetValue(EmptyCreateLinkTextProperty);
+        set => SetValue(EmptyCreateLinkTextProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the command executed when the create link is clicked.
+    /// </summary>
+    public ICommand? EmptyCreateCommand
+    {
+        get => GetValue(EmptyCreateCommandProperty);
+        set => SetValue(EmptyCreateCommandProperty, value);
+    }
+
+    /// <summary>
     /// Gets the filtered items based on search text.
     /// </summary>
     public ObservableCollection<object> FilteredItems { get; } = new();
@@ -199,6 +235,16 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// Gets whether there are filtered items to display.
     /// </summary>
     public bool HasFilteredItems => FilteredItems.Count > 0;
+
+    /// <summary>
+    /// Gets whether the items source has any items.
+    /// </summary>
+    public bool HasItems => ItemsSource?.Cast<object>().Any() == true;
+
+    /// <summary>
+    /// Gets whether to show the empty create link (no items and command is set).
+    /// </summary>
+    public bool ShowEmptyCreate => !HasItems && EmptyCreateCommand != null;
 
     #endregion
 
@@ -466,8 +512,10 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
             }
         }
 
-        // Notify property changed for HasFilteredItems
+        // Notify property changed for computed properties
         RaisePropertyChanged(nameof(HasFilteredItems));
+        RaisePropertyChanged(nameof(HasItems));
+        RaisePropertyChanged(nameof(ShowEmptyCreate));
     }
 
     private string GetDisplayText(object item)

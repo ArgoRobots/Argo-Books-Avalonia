@@ -154,6 +154,23 @@
             </Border>
         </Popup>
 
+        <!-- Empty State Message with Create Link -->
+        <StackPanel Orientation="Horizontal"
+                    Spacing="4"
+                    Margin="0,2,0,0"
+                    IsVisible="{Binding ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+            <TextBlock Text="{Binding EmptyMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                       FontSize="{StaticResource FontSizeXs}"
+                       Foreground="{DynamicResource TextTertiaryBrush}"
+                       VerticalAlignment="Center" />
+            <Button Classes="link"
+                    Content="{Binding EmptyCreateLinkText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                    Command="{Binding EmptyCreateCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                    FontSize="{StaticResource FontSizeXs}"
+                    Padding="0"
+                    VerticalAlignment="Center" />
+        </StackPanel>
+
         <!-- Helper Text / Error Message -->
         <TextBlock FontSize="{StaticResource FontSizeXs}"
                    Margin="0,2,0,0"

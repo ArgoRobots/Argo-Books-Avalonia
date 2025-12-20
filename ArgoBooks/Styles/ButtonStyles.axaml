@@ -138,4 +138,21 @@
         <Setter Property="HorizontalAlignment" Value="Stretch" />
     </Style>
 
+    <!-- Link Button (looks like a hyperlink) -->
+    <Style Selector="Button.link">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.link:pointerover /template/ ContentPresenter">
+        <Setter Property="TextBlock.TextDecorations" Value="Underline" />
+    </Style>
+    <Style Selector="Button.link:pressed /template/ ContentPresenter">
+        <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryDarkBrush}" />
+    </Style>
+
 </Styles>

@@ -57,7 +57,10 @@
                                                             SelectedItem="{Binding SelectedInvoice}"
                                                             DisplayMemberPath="Display"
                                                             Placeholder="Search for an invoice..."
-                                                            ShowAddNew="False" />
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No invoices found."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateInvoiceCommand}" />
                                 <TextBlock Text="{Binding ModalInvoiceError}"
                                            FontSize="12"
                                            Foreground="#dc2626"
@@ -162,7 +165,10 @@
                                                             SelectedItem="{Binding SelectedInvoice}"
                                                             DisplayMemberPath="Display"
                                                             Placeholder="Search for an invoice..."
-                                                            ShowAddNew="False" />
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No invoices found."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateInvoiceCommand}" />
                             </StackPanel>
 
                             <!-- Amount -->

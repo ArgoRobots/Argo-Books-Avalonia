@@ -135,6 +135,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Navigates to Customers page and opens the create customer modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateCustomer()
+    {
+        // Close the current modal
+        IsCreateEditModalOpen = false;
+
+        // Navigate to Customers page with openAddModal parameter
+        App.NavigationService?.NavigateTo("Customers", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
     #endregion
 
     #region Delete Confirmation
