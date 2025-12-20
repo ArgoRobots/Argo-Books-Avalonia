@@ -64,7 +64,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         AvaloniaProperty.Register<SearchableDropdown, bool>(nameof(IsDropdownOpen));
 
     public static readonly StyledProperty<bool> ShowAddNewProperty =
-        AvaloniaProperty.Register<SearchableDropdown, bool>(nameof(ShowAddNew));
+        AvaloniaProperty.Register<SearchableDropdown, bool>(nameof(ShowAddNew), defaultValue: false);
 
     public static readonly StyledProperty<string> AddNewTextProperty =
         AvaloniaProperty.Register<SearchableDropdown, string>(nameof(AddNewText), "Add new...");
@@ -276,6 +276,14 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         {
             // Sync SearchText when SelectedItem is set programmatically
             OnSelectedItemChanged(change.NewValue);
+        }
+        else if (change.Property == IsDropdownOpenProperty)
+        {
+            // Refresh filtered items when dropdown opens to ensure latest data
+            if (change.NewValue is true)
+            {
+                UpdateFilteredItems();
+            }
         }
     }
 
