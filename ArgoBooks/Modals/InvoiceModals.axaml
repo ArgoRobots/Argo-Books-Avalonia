@@ -492,7 +492,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <Button Grid.Column="0"
                                     Classes="secondary-button"
-                                    Content="Reset"
+                                    Content="Clear Filters"
                                     Command="{Binding ClearFiltersCommand}" />
                             <Button Grid.Column="2"
                                     Classes="secondary-button"

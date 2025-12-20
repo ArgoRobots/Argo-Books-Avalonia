@@ -297,19 +297,25 @@
                             <!-- Date Range -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Date Range" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <Grid ColumnDefinitions="*,Auto,*">
-                                    <DatePicker Grid.Column="0" SelectedDate="{Binding FilterDateFrom}" Classes="form-datepicker" />
-                                    <TextBlock Grid.Column="1" Text="to" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
-                                    <DatePicker Grid.Column="2" SelectedDate="{Binding FilterDateTo}" Classes="form-datepicker" />
-                                </Grid>
+                                <StackPanel Spacing="8">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="From" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding FilterDateFrom}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="To" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding FilterDateTo}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </StackPanel>
                             </StackPanel>
 
                             <!-- Customer -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Customer" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding CustomerOptions}"
-                                          SelectedItem="{Binding SelectedCustomerFilter}"
-                                          Classes="form-combobox" />
+                                <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
+                                                            SelectedItem="{Binding SelectedCustomerFilter}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="All customers" />
                             </StackPanel>
 
                             <!-- Payment Method -->
@@ -343,7 +349,7 @@
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Button Grid.Column="0" Classes="secondary-button" Content="Reset" Command="{Binding ClearFiltersCommand}" />
+                            <Button Grid.Column="0" Classes="secondary-button" Content="Clear Filters" Command="{Binding ClearFiltersCommand}" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
                                 <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseFilterModalCommand}" />
                                 <Button Classes="primary-button" Content="Apply Filter" Command="{Binding ApplyFiltersCommand}" />
