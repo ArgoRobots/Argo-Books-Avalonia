@@ -57,7 +57,8 @@
                                 <controls:SearchableDropdown ItemsSource="{Binding InvoiceOptions}"
                                                             SelectedItem="{Binding SelectedInvoice}"
                                                             DisplayMemberPath="Display"
-                                                            Placeholder="Search for an invoice..." />
+                                                            Placeholder="Search for an invoice..."
+                                                            ShowAddNew="False" />
                                 <TextBlock Text="{Binding ModalInvoiceError}"
                                            FontSize="12"
                                            Foreground="#dc2626"
@@ -161,7 +162,8 @@
                                 <controls:SearchableDropdown ItemsSource="{Binding InvoiceOptions}"
                                                             SelectedItem="{Binding SelectedInvoice}"
                                                             DisplayMemberPath="Display"
-                                                            Placeholder="Search for an invoice..." />
+                                                            Placeholder="Search for an invoice..."
+                                                            ShowAddNew="False" />
                             </StackPanel>
 
                             <!-- Amount -->
@@ -315,7 +317,8 @@
                                 <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
                                                             SelectedItem="{Binding SelectedCustomerFilter}"
                                                             DisplayMemberPath="Name"
-                                                            Placeholder="All customers" />
+                                                            Placeholder="All customers"
+                                                            ShowAddNew="False" />
                             </StackPanel>
 
                             <!-- Payment Method -->

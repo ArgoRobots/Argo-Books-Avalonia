@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -253,6 +254,18 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
         if (change.Property == ItemsSourceProperty)
         {
+            // Unsubscribe from old collection
+            if (change.OldValue is INotifyCollectionChanged oldCollection)
+            {
+                oldCollection.CollectionChanged -= OnItemsSourceCollectionChanged;
+            }
+
+            // Subscribe to new collection
+            if (change.NewValue is INotifyCollectionChanged newCollection)
+            {
+                newCollection.CollectionChanged += OnItemsSourceCollectionChanged;
+            }
+
             UpdateFilteredItems();
         }
         else if (change.Property == SearchTextProperty)
@@ -264,6 +277,11 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
             // Sync SearchText when SelectedItem is set programmatically
             OnSelectedItemChanged(change.NewValue);
         }
+    }
+
+    private void OnItemsSourceCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        UpdateFilteredItems();
     }
 
     private void OnSelectedItemChanged(object? newValue)
