@@ -378,12 +378,6 @@
                                            IsVisible="{Binding RentOutCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
-                            <!-- Accountant -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Accountant" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding AvailableAccountants}" SelectedItem="{Binding RentOutAccountant}" Classes="form-combobox" />
-                            </StackPanel>
-
                             <!-- Quantity and Available -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
@@ -563,7 +557,19 @@
 
         <!-- Form DatePicker -->
         <Style Selector="DatePicker.form-datepicker">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="MinHeight" Value="36" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="DatePicker.form-datepicker /template/ Button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,8" />
         </Style>
     </UserControl.Styles>
 </UserControl>

@@ -412,24 +412,27 @@
                     <!-- Content -->
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="24" Spacing="20">
-                            <!-- Status Filter -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding StatusFilterOptions}"
-                                          SelectedItem="{Binding FilterStatus}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
+                            <!-- Status and Customer Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <!-- Status Filter -->
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding StatusFilterOptions}"
+                                              SelectedItem="{Binding FilterStatus}"
+                                              Classes="form-combobox"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
 
-                            <!-- Customer Filter -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Customer" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
-                                                            SelectedItem="{Binding FilterSelectedCustomer}"
-                                                            DisplayMemberPath="Name"
-                                                            Placeholder="All customers"
-                                                            ShowAddNew="False" />
-                            </StackPanel>
+                                <!-- Customer Filter -->
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Customer" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
+                                                                SelectedItem="{Binding FilterSelectedCustomer}"
+                                                                DisplayMemberPath="Name"
+                                                                Placeholder="All customers"
+                                                                ShowAddNew="False" />
+                                </StackPanel>
+                            </Grid>
 
                             <!-- Issue Date Range -->
                             <StackPanel Spacing="6">
