@@ -174,6 +174,12 @@ public partial class HeaderViewModel : ViewModelBase
 
         // Initialize undo/redo with the shared manager
         UndoRedoViewModel.SetUndoRedoManager(SharedUndoRedoManager);
+
+        // Sync HasUnsavedChanges with undo/redo state
+        SharedUndoRedoManager.StateChanged += (_, _) =>
+        {
+            HasUnsavedChanges = !SharedUndoRedoManager.IsAtSavedState;
+        };
     }
 
     #region Commands

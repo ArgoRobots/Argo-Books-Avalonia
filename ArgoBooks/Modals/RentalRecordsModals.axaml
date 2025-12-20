@@ -102,23 +102,21 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Dates Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <!-- Start Date -->
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Start Date" /><Run Text=" *" Foreground="#dc2626" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <!-- Due Date -->
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Due Date" /><Run Text=" *" Foreground="#dc2626" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                            <!-- Start Date -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Start Date" /><Run Text=" *" Foreground="#dc2626" />
+                                </TextBlock>
+                                <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Due Date -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Due Date" /><Run Text=" *" Foreground="#dc2626" />
+                                </TextBlock>
+                                <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                            </StackPanel>
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
@@ -232,23 +230,21 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Dates Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <!-- Start Date -->
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Start Date" /><Run Text=" *" Foreground="#dc2626" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <!-- Due Date -->
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Due Date" /><Run Text=" *" Foreground="#dc2626" />
-                                    </TextBlock>
-                                    <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                            <!-- Start Date -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Start Date" /><Run Text=" *" Foreground="#dc2626" />
+                                </TextBlock>
+                                <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Due Date -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Due Date" /><Run Text=" *" Foreground="#dc2626" />
+                                </TextBlock>
+                                <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                            </StackPanel>
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
@@ -774,11 +770,24 @@
             <Setter Property="Padding" Value="12,10" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="PlaceholderForeground" Value="{DynamicResource TextTertiaryBrush}" />
         </Style>
 
         <!-- Form DatePicker -->
         <Style Selector="DatePicker.form-datepicker">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="MinHeight" Value="36" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="DatePicker.form-datepicker /template/ Button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,8" />
         </Style>
     </UserControl.Styles>
 </UserControl>
