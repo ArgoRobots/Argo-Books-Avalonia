@@ -17,8 +17,7 @@
         <!-- ======================= CREATE / EDIT INVOICE MODAL ======================= -->
         <Panel IsVisible="{Binding IsCreateEditModalOpen}">
             <!-- Overlay -->
-            <Border Background="#80000000"
-                    PointerPressed="OnOverlayPointerPressed" />
+            <Border Background="#80000000" />
 
             <!-- Modal -->
             <Border HorizontalAlignment="Center"
@@ -318,8 +317,7 @@
         <!-- ======================= DELETE CONFIRMATION MODAL ======================= -->
         <Panel IsVisible="{Binding IsDeleteConfirmOpen}">
             <!-- Overlay -->
-            <Border Background="#80000000"
-                    PointerPressed="OnOverlayPointerPressed" />
+            <Border Background="#80000000" />
 
             <!-- Modal -->
             <Border HorizontalAlignment="Center"
@@ -380,8 +378,7 @@
         <!-- ======================= FILTER MODAL ======================= -->
         <Panel IsVisible="{Binding IsFilterModalOpen}">
             <!-- Overlay -->
-            <Border Background="#80000000"
-                    PointerPressed="OnOverlayPointerPressed" />
+            <Border Background="#80000000" />
 
             <!-- Modal -->
             <Border HorizontalAlignment="Center"
@@ -514,8 +511,7 @@
         <!-- ======================= HISTORY MODAL ======================= -->
         <Panel IsVisible="{Binding IsHistoryModalOpen}">
             <!-- Overlay -->
-            <Border Background="#80000000"
-                    PointerPressed="OnOverlayPointerPressed" />
+            <Border Background="#80000000" />
 
             <!-- Modal -->
             <Border HorizontalAlignment="Center"
