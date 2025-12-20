@@ -50,26 +50,25 @@
                     </Border>
                 </Grid>
 
-                <!-- Panels centered in main content area -->
-
-                <!-- Quick Actions Panel -->
-                <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
-
-                <!-- File Menu Panel -->
-                <panels:FileMenuPanel DataContext="{Binding FileMenuPanelViewModel}" />
-
-                <!-- Notification Panel -->
-                <panels:NotificationPanel DataContext="{Binding NotificationPanelViewModel}" />
-
-                <!-- User Panel -->
-                <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
-
-                <!-- Help Panel -->
-                <panels:HelpPanel DataContext="{Binding HelpPanelViewModel}" />
             </Panel>
         </Grid>
 
-        <!-- Panels/Modals at root level (need full window coverage) -->
+        <!-- Panels at root level (need full window coverage for click-away backdrop) -->
+
+        <!-- Quick Actions Panel -->
+        <panels:QuickActionsPanel DataContext="{Binding QuickActionsViewModel}" />
+
+        <!-- File Menu Panel -->
+        <panels:FileMenuPanel DataContext="{Binding FileMenuPanelViewModel}" />
+
+        <!-- Notification Panel -->
+        <panels:NotificationPanel DataContext="{Binding NotificationPanelViewModel}" />
+
+        <!-- User Panel -->
+        <panels:UserPanel DataContext="{Binding UserPanelViewModel}" />
+
+        <!-- Help Panel -->
+        <panels:HelpPanel DataContext="{Binding HelpPanelViewModel}" />
 
         <!-- Company Switcher Panel (positioned relative to sidebar) -->
         <panels:CompanySwitcherPanel DataContext="{Binding CompanySwitcherPanelViewModel}" />
