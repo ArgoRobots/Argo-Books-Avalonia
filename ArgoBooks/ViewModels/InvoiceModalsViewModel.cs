@@ -37,6 +37,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private bool _isHistoryModalOpen;
 
     [ObservableProperty]
+    private bool _isPreviewModalOpen;
+
+    [ObservableProperty]
     private bool _isEditMode;
 
     [ObservableProperty]
@@ -220,7 +223,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ResetForm();
         IsEditMode = false;
         ModalTitle = "Create Invoice";
-        SaveButtonText = "Create Invoice";
+        SaveButtonText = "Preview";
         IsCreateEditModalOpen = true;
     }
 
@@ -447,6 +450,117 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #endregion
 
+    #region Preview Modal
+
+    public string PreviewCustomerName => SelectedCustomer?.Name ?? "No customer selected";
+    public string PreviewIssueDate => ModalIssueDate?.ToString("MMMM d, yyyy") ?? "-";
+    public string PreviewDueDate => ModalDueDate?.ToString("MMMM d, yyyy") ?? "-";
+
+    [RelayCommand]
+    private void OpenPreviewModal()
+    {
+        // Validation before showing preview
+        if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
+        {
+            HasCustomerError = true;
+            ValidationMessage = "Please select a customer";
+            HasValidationMessage = true;
+            return;
+        }
+
+        if (LineItems.Count == 0)
+        {
+            ValidationMessage = "Please add at least one line item";
+            HasValidationMessage = true;
+            return;
+        }
+
+        if (LineItems.Any(i => string.IsNullOrWhiteSpace(i.Description)))
+        {
+            ValidationMessage = "All line items must have a description";
+            HasValidationMessage = true;
+            return;
+        }
+
+        // Update preview properties
+        OnPropertyChanged(nameof(PreviewCustomerName));
+        OnPropertyChanged(nameof(PreviewIssueDate));
+        OnPropertyChanged(nameof(PreviewDueDate));
+
+        IsCreateEditModalOpen = false;
+        IsPreviewModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void ClosePreviewModal()
+    {
+        IsPreviewModalOpen = false;
+        IsCreateEditModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CreateAndSendInvoice()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        // Generate invoice ID
+        var nextNumber = (companyData.Invoices?.Count ?? 0) + 1;
+        var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
+
+        var invoice = new Invoice
+        {
+            Id = invoiceId,
+            InvoiceNumber = invoiceId,
+            CustomerId = SelectedCustomer!.Id!,
+            IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
+            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+            TaxRate = TaxRate,
+            Notes = ModalNotes,
+            Status = InvoiceStatus.Sent, // Mark as Sent since we're "sending" it
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now,
+            LineItems = LineItems.Select(i => new LineItem
+            {
+                Description = i.Description,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                TaxRate = 0
+            }).ToList()
+        };
+
+        // Create undo action
+        var action = new InvoiceAddAction(
+            $"Create and send invoice {invoiceId}",
+            invoice,
+            () =>
+            {
+                companyData.Invoices!.Remove(invoice);
+                InvoiceSaved?.Invoke(this, EventArgs.Empty);
+            },
+            () =>
+            {
+                companyData.Invoices!.Add(invoice);
+                InvoiceSaved?.Invoke(this, EventArgs.Empty);
+            });
+
+        // Add the invoice
+        companyData.Invoices!.Add(invoice);
+
+        // Record undo action and mark as changed
+        App.UndoRedoManager?.RecordAction(action);
+        App.CompanyManager?.MarkAsChanged();
+
+        // TODO: Actually send email to customer here
+        // For now, we just mark it as sent
+
+        InvoiceSaved?.Invoke(this, EventArgs.Empty);
+        IsPreviewModalOpen = false;
+        ResetForm();
+    }
+
+    #endregion
+
     #region Save Invoice
 
     [RelayCommand]
@@ -454,6 +568,72 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         IsCreateEditModalOpen = false;
         ResetForm();
+    }
+
+    [RelayCommand]
+    private void SaveAsDraft()
+    {
+        // Validation - less strict for drafts
+        if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
+        {
+            HasCustomerError = true;
+            ValidationMessage = "Please select a customer";
+            HasValidationMessage = true;
+            return;
+        }
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        // Generate invoice ID
+        var nextNumber = (companyData.Invoices?.Count ?? 0) + 1;
+        var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
+
+        var invoice = new Invoice
+        {
+            Id = invoiceId,
+            InvoiceNumber = invoiceId,
+            CustomerId = SelectedCustomer!.Id!,
+            IssueDate = ModalIssueDate?.DateTime ?? DateTime.Now,
+            DueDate = ModalDueDate?.DateTime ?? DateTime.Now.AddDays(30),
+            TaxRate = TaxRate,
+            Notes = ModalNotes,
+            Status = InvoiceStatus.Draft,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now,
+            LineItems = LineItems.Select(i => new LineItem
+            {
+                Description = i.Description,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                TaxRate = 0
+            }).ToList()
+        };
+
+        // Create undo action
+        var action = new InvoiceAddAction(
+            $"Add draft invoice {invoiceId}",
+            invoice,
+            () =>
+            {
+                companyData.Invoices!.Remove(invoice);
+                InvoiceSaved?.Invoke(this, EventArgs.Empty);
+            },
+            () =>
+            {
+                companyData.Invoices!.Add(invoice);
+                InvoiceSaved?.Invoke(this, EventArgs.Empty);
+            });
+
+        // Add the invoice
+        companyData.Invoices!.Add(invoice);
+
+        // Record undo action and mark as changed
+        App.UndoRedoManager?.RecordAction(action);
+        App.CompanyManager?.MarkAsChanged();
+
+        InvoiceSaved?.Invoke(this, EventArgs.Empty);
+        CloseCreateEditModal();
     }
 
     [RelayCommand]
