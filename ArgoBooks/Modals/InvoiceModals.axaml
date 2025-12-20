@@ -51,7 +51,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" Padding="24">
+                    <ScrollViewer Grid.Row="1" Padding="24" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Spacing="20">
                             <!-- Customer Selection -->
                             <StackPanel Spacing="6">
@@ -227,7 +227,8 @@
                                                        Maximum="100"
                                                        FormatString="0.##"
                                                        Width="70"
-                                                       Classes="form-input" />
+                                                       ShowButtonSpinner="False"
+                                                       Classes="line-item-input" />
                                         <TextBlock Text="%"
                                                    VerticalAlignment="Center"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -280,6 +281,8 @@
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
+                                         MaxWidth="700"
+                                         HorizontalAlignment="Stretch"
                                          Watermark="Additional notes for this invoice..." />
                             </StackPanel>
                         </StackPanel>
@@ -383,7 +386,7 @@
             <!-- Modal -->
             <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Width="600"
+                    Width="700"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BoxShadow="0 8 32 0 #40000000">
@@ -410,7 +413,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" Padding="24">
+                    <ScrollViewer Grid.Row="1" Padding="24" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Spacing="16">
                             <!-- Status Filter -->
                             <StackPanel Spacing="6">
