@@ -195,13 +195,17 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public InvoiceModalsViewModel()
     {
-        LoadCustomerOptions();
+        LoadCustomerOptions(includeAllOption: false);
     }
 
-    private void LoadCustomerOptions()
+    private void LoadCustomerOptions(bool includeAllOption = false)
     {
         CustomerOptions.Clear();
-        CustomerOptions.Add(new CustomerOption { Id = string.Empty, Name = "All Customers" });
+
+        if (includeAllOption)
+        {
+            CustomerOptions.Add(new CustomerOption { Id = null, Name = "All Customers" });
+        }
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Customers == null)
@@ -219,7 +223,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public void OpenCreateModal()
     {
-        LoadCustomerOptions();
+        LoadCustomerOptions(includeAllOption: false);
         ResetForm();
         IsEditMode = false;
         ModalTitle = "Create Invoice";
@@ -235,7 +239,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         if (item == null) return;
 
-        LoadCustomerOptions();
+        LoadCustomerOptions(includeAllOption: false);
 
         var invoice = App.CompanyManager?.CompanyData?.Invoices?.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
@@ -339,7 +343,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public void OpenFilterModal()
     {
-        LoadCustomerOptions();
+        LoadCustomerOptions(includeAllOption: true);
         IsFilterModalOpen = true;
     }
 
