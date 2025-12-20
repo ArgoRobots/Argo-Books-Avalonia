@@ -154,6 +154,12 @@ public partial class App : Application
             // Wire up modal change events (separate from company manager)
             WireModalChangeEvents();
 
+            // Sync MainWindowViewModel.HasUnsavedChanges with undo/redo state
+            UndoRedoManager!.StateChanged += (_, _) =>
+            {
+                _mainWindowViewModel.HasUnsavedChanges = !UndoRedoManager.IsAtSavedState;
+            };
+
             // Wire up file menu events
             WireFileMenuEvents(desktop);
 
