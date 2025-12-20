@@ -23,7 +23,7 @@
             <!-- Modal -->
             <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Width="900"
+                    Width="750"
                     MaxHeight="700"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
@@ -154,15 +154,15 @@
                                                                    Minimum="1"
                                                                    FormatString="0"
                                                                    Classes="line-item-input"
-                                                                   ShowButtonSpinner="True"
+                                                                   ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
                                                                    Margin="0,0,8,0" />
                                                     <NumericUpDown Grid.Column="2"
                                                                    Value="{Binding UnitPrice, Mode=TwoWay}"
                                                                    Minimum="0"
-                                                                   FormatString="C2"
+                                                                   FormatString="N2"
                                                                    Classes="line-item-input"
-                                                                   ShowButtonSpinner="True"
+                                                                   ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
                                                                    Margin="0,0,8,0" />
                                                     <TextBlock Grid.Column="3"
@@ -278,7 +278,8 @@
                                          Classes="form-input"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
-                                         Height="80"
+                                         MinHeight="80"
+                                         MaxHeight="120"
                                          Watermark="Additional notes for this invoice..." />
                             </StackPanel>
                         </StackPanel>
@@ -382,7 +383,7 @@
             <!-- Modal -->
             <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Width="500"
+                    Width="600"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BoxShadow="0 8 32 0 #40000000">
@@ -763,15 +764,16 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="MinHeight" Value="36" />
-            <Setter Property="MinWidth" Value="60" />
-            <Setter Property="Padding" Value="8,4" />
-        </Style>
-        <Style Selector="NumericUpDown.line-item-input /template/ ButtonSpinner">
-            <Setter Property="MinWidth" Value="60" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="NumericUpDown.line-item-input /template/ TextBox#PART_TextBox">
-            <Setter Property="MinWidth" Value="30" />
-            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="NumericUpDown.line-item-input:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>
