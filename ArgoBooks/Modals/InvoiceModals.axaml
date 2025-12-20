@@ -281,8 +281,6 @@
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         MaxWidth="700"
-                                         HorizontalAlignment="Stretch"
                                          Watermark="Additional notes for this invoice..." />
                             </StackPanel>
                         </StackPanel>
