@@ -256,22 +256,24 @@ public class ReportTableDataService
 
     private ReturnTableRow CreateReturnRow(Return returnRecord)
     {
-        var product = _companyData?.GetProduct(returnRecord.ProductId ?? "");
+        // Get first item's product info (returns can have multiple items)
+        var firstItem = returnRecord.Items?.FirstOrDefault();
+        var product = firstItem != null ? _companyData?.GetProduct(firstItem.ProductId) : null;
         var category = product != null ? _companyData?.GetCategory(product.CategoryId ?? "") : null;
 
         return new ReturnTableRow
         {
             Id = returnRecord.Id,
             ReturnDate = returnRecord.ReturnDate,
-            OriginalTransactionId = returnRecord.OriginalTransactionId ?? "",
-            ReturnType = returnRecord.ReturnType ?? "Unknown",
-            ProductName = product?.Name ?? "Unknown",
+            OriginalTransactionId = returnRecord.OriginalTransactionId,
+            ReturnType = "Sale", // Returns are from sales
+            ProductName = product?.Name ?? (returnRecord.Items?.Count > 1 ? $"Multiple ({returnRecord.Items.Count} items)" : "Unknown"),
             CategoryName = category?.Name ?? "Unknown",
-            Quantity = returnRecord.Quantity,
+            Quantity = returnRecord.Items?.Sum(i => i.Quantity) ?? 0,
             RefundAmount = returnRecord.RefundAmount,
-            Reason = returnRecord.Reason ?? "Not specified",
+            Reason = firstItem?.Reason ?? "Not specified",
             Status = returnRecord.Status.ToString(),
-            Notes = returnRecord.Notes ?? ""
+            Notes = returnRecord.Notes
         };
     }
 
@@ -290,16 +292,16 @@ public class ReportTableDataService
         var (startDate, endDate) = GetDateRange();
 
         var query = _companyData.LostDamaged
-            .Where(l => l.ReportedDate >= startDate && l.ReportedDate <= endDate);
+            .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate);
 
         // Apply sort order
         query = tableConfig.SortOrder switch
         {
-            TableSortOrder.DateAscending => query.OrderBy(l => l.ReportedDate),
-            TableSortOrder.DateDescending => query.OrderByDescending(l => l.ReportedDate),
-            TableSortOrder.AmountAscending => query.OrderBy(l => l.EstimatedValue),
-            TableSortOrder.AmountDescending => query.OrderByDescending(l => l.EstimatedValue),
-            _ => query.OrderByDescending(l => l.ReportedDate)
+            TableSortOrder.DateAscending => query.OrderBy(l => l.DateDiscovered),
+            TableSortOrder.DateDescending => query.OrderByDescending(l => l.DateDiscovered),
+            TableSortOrder.AmountAscending => query.OrderBy(l => l.ValueLost),
+            TableSortOrder.AmountDescending => query.OrderByDescending(l => l.ValueLost),
+            _ => query.OrderByDescending(l => l.DateDiscovered)
         };
 
         // Apply max rows
@@ -313,21 +315,21 @@ public class ReportTableDataService
 
     private LossTableRow CreateLossRow(LostDamaged lossRecord)
     {
-        var product = _companyData?.GetProduct(lossRecord.ProductId ?? "");
+        var product = _companyData?.GetProduct(lossRecord.ProductId);
         var category = product != null ? _companyData?.GetCategory(product.CategoryId ?? "") : null;
 
         return new LossTableRow
         {
             Id = lossRecord.Id,
-            ReportedDate = lossRecord.ReportedDate,
-            LossType = lossRecord.LossType ?? "Unknown",
+            ReportedDate = lossRecord.DateDiscovered,
+            LossType = lossRecord.Reason.ToString(),
             ProductName = product?.Name ?? "Unknown",
             CategoryName = category?.Name ?? "Unknown",
             Quantity = lossRecord.Quantity,
-            EstimatedValue = lossRecord.EstimatedValue,
+            EstimatedValue = lossRecord.ValueLost,
             Reason = lossRecord.Reason.ToString(),
-            Location = lossRecord.Location ?? "",
-            Notes = lossRecord.Notes ?? ""
+            Location = "", // Not available in model
+            Notes = lossRecord.Notes
         };
     }
 
@@ -390,9 +392,9 @@ public class ReportTableDataService
         // Calculate losses statistics
         if (_companyData?.LostDamaged != null && _filters.IncludeLosses)
         {
-            var losses = _companyData.LostDamaged.Where(l => l.ReportedDate >= startDate && l.ReportedDate <= endDate).ToList();
+            var losses = _companyData.LostDamaged.Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate).ToList();
             stats.TotalLosses = losses.Count;
-            stats.TotalLossAmount = losses.Sum(l => l.EstimatedValue);
+            stats.TotalLossAmount = losses.Sum(l => l.ValueLost);
         }
 
         // Calculate shipping statistics

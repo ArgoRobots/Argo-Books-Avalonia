@@ -603,9 +603,11 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
+        // Returns have Items, each with a Reason - group by all item reasons
         return _companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
-            .GroupBy(r => r.Reason ?? "Unknown")
+            .SelectMany(r => r.Items ?? [])
+            .GroupBy(item => string.IsNullOrEmpty(item.Reason) ? "Unknown" : item.Reason)
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
@@ -648,11 +650,13 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
+        // Returns have Items with ProductId - group by category of each returned item
         return _companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
-            .GroupBy(r =>
+            .SelectMany(r => r.Items ?? [])
+            .GroupBy(item =>
             {
-                var product = _companyData.GetProduct(r.ProductId ?? "");
+                var product = _companyData.GetProduct(item.ProductId ?? "");
                 var category = product != null ? _companyData.GetCategory(product.CategoryId ?? "") : null;
                 return category?.Name ?? "Unknown";
             })
@@ -676,9 +680,11 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
+        // Returns have Items with ProductId - group by product name of each returned item
         return _companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
-            .GroupBy(r => _companyData.GetProduct(r.ProductId ?? "")?.Name ?? "Unknown")
+            .SelectMany(r => r.Items ?? [])
+            .GroupBy(item => _companyData.GetProduct(item.ProductId ?? "")?.Name ?? "Unknown")
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
@@ -690,7 +696,8 @@ public class ReportChartDataService
     }
 
     /// <summary>
-    /// Gets purchase vs sale returns comparison.
+    /// Gets returns comparison over time.
+    /// Note: Current model only tracks sale returns (returns from customers).
     /// </summary>
     public List<ChartSeriesData> GetPurchaseVsSaleReturns()
     {
@@ -701,6 +708,7 @@ public class ReportChartDataService
 
         var months = GetMonthsBetween(startDate, endDate);
 
+        // Current Return model represents returns from sales (customer returns)
         var saleReturns = months.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
@@ -710,23 +718,17 @@ public class ReportChartDataService
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = _companyData.Returns
-                    .Count(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd && r.ReturnType == "Sale"),
+                    .Count(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd),
                 Date = month
             };
         }).ToList();
 
-        var purchaseReturns = months.Select(month =>
+        // No purchase returns in current model - return empty series
+        var purchaseReturns = months.Select(month => new ChartDataPoint
         {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-
-            return new ChartDataPoint
-            {
-                Label = month.ToString("MMM yyyy"),
-                Value = _companyData.Returns
-                    .Count(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd && r.ReturnType == "Purchase"),
-                Date = month
-            };
+            Label = month.ToString("MMM yyyy"),
+            Value = 0,
+            Date = month
         }).ToList();
 
         return
@@ -751,8 +753,8 @@ public class ReportChartDataService
         var (startDate, endDate) = GetDateRange();
 
         return _companyData.LostDamaged
-            .Where(l => l.ReportedDate >= startDate && l.ReportedDate <= endDate)
-            .GroupBy(l => l.ReportedDate.Date)
+            .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
+            .GroupBy(l => l.DateDiscovered.Date)
             .OrderBy(g => g.Key)
             .Select(g => new ChartDataPoint
             {
@@ -774,7 +776,7 @@ public class ReportChartDataService
         var (startDate, endDate) = GetDateRange();
 
         return _companyData.LostDamaged
-            .Where(l => l.ReportedDate >= startDate && l.ReportedDate <= endDate)
+            .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
             .GroupBy(l => l.Reason.ToString())
             .Select(g => new ChartDataPoint
             {
@@ -796,13 +798,13 @@ public class ReportChartDataService
         var (startDate, endDate) = GetDateRange();
 
         return _companyData.LostDamaged
-            .Where(l => l.ReportedDate >= startDate && l.ReportedDate <= endDate)
-            .GroupBy(l => new DateTime(l.ReportedDate.Year, l.ReportedDate.Month, 1))
+            .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
+            .GroupBy(l => new DateTime(l.DateDiscovered.Year, l.DateDiscovered.Month, 1))
             .OrderBy(g => g.Key)
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key.ToString("MMM yyyy"),
-                Value = (double)g.Sum(l => l.EstimatedValue),
+                Value = (double)g.Sum(l => l.ValueLost),
                 Date = g.Key
             })
             .ToList();
@@ -819,7 +821,7 @@ public class ReportChartDataService
         var (startDate, endDate) = GetDateRange();
 
         return _companyData.LostDamaged
-            .Where(l => l.ReportedDate >= startDate && l.ReportedDate <= endDate)
+            .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
             .GroupBy(l =>
             {
                 var product = _companyData.GetProduct(l.ProductId ?? "");
@@ -847,7 +849,7 @@ public class ReportChartDataService
         var (startDate, endDate) = GetDateRange();
 
         return _companyData.LostDamaged
-            .Where(l => l.ReportedDate >= startDate && l.ReportedDate <= endDate)
+            .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
             .GroupBy(l => _companyData.GetProduct(l.ProductId ?? "")?.Name ?? "Unknown")
             .Select(g => new ChartDataPoint
             {
@@ -860,7 +862,8 @@ public class ReportChartDataService
     }
 
     /// <summary>
-    /// Gets purchase vs sale losses comparison.
+    /// Gets losses by reason type over time.
+    /// Note: Current model tracks inventory losses by reason (Lost, Damaged, Stolen, Expired, Other).
     /// </summary>
     public List<ChartSeriesData> GetPurchaseVsSaleLosses()
     {
@@ -871,7 +874,8 @@ public class ReportChartDataService
 
         var months = GetMonthsBetween(startDate, endDate);
 
-        var saleLosses = months.Select(month =>
+        // Group by reason type - show Damaged vs Lost as the two main categories
+        var damagedLosses = months.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -880,12 +884,13 @@ public class ReportChartDataService
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = _companyData.LostDamaged
-                    .Count(l => l.ReportedDate >= monthStart && l.ReportedDate <= monthEnd && l.LossType == "Sale"),
+                    .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd &&
+                           l.Reason == Enums.LostDamagedReason.Damaged),
                 Date = month
             };
         }).ToList();
 
-        var purchaseLosses = months.Select(month =>
+        var lostLosses = months.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -894,15 +899,16 @@ public class ReportChartDataService
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = _companyData.LostDamaged
-                    .Count(l => l.ReportedDate >= monthStart && l.ReportedDate <= monthEnd && l.LossType == "Purchase"),
+                    .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd &&
+                           l.Reason == Enums.LostDamagedReason.Lost),
                 Date = month
             };
         }).ToList();
 
         return
         [
-            new ChartSeriesData { Name = "Sale Losses", Color = "#DC2626", DataPoints = saleLosses },
-            new ChartSeriesData { Name = "Purchase Losses", Color = "#9333EA", DataPoints = purchaseLosses }
+            new ChartSeriesData { Name = "Damaged", Color = "#DC2626", DataPoints = damagedLosses },
+            new ChartSeriesData { Name = "Lost", Color = "#9333EA", DataPoints = lostLosses }
         ];
     }
 
