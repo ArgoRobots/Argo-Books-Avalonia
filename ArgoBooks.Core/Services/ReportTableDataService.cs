@@ -1,7 +1,8 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services;
 
