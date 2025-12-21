@@ -10,8 +10,7 @@
              x:Name="Root">
 
     <UserControl.Resources>
-        <local:PageActiveBackgroundConverter x:Key="PageActiveBackgroundConverter" />
-        <local:PageActiveForegroundConverter x:Key="PageActiveForegroundConverter" />
+        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
     </UserControl.Resources>
 
     <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -47,7 +46,8 @@
             <!-- Page Numbers -->
             <StackPanel Grid.Column="2"
                         Orientation="Horizontal"
-                        Spacing="4">
+                        Spacing="4"
+                        IsVisible="{Binding #Root.ShowPaginationControls}">
                 <!-- Previous Button -->
                 <Button Classes="pagination-button"
                         Command="{Binding #Root.GoToPreviousPageCommand}"
@@ -65,22 +65,15 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Classes="pagination-button"
-                                    Content="{Binding}"
+                            <Button Content="{Binding}"
                                     Command="{Binding #Root.GoToPageCommand}"
                                     CommandParameter="{Binding}">
-                                <Button.Background>
-                                    <MultiBinding Converter="{StaticResource PageActiveBackgroundConverter}">
+                                <Button.Classes>
+                                    <MultiBinding Converter="{StaticResource PageEqualsConverter}">
                                         <Binding />
                                         <Binding Path="#Root.CurrentPage" />
                                     </MultiBinding>
-                                </Button.Background>
-                                <Button.Foreground>
-                                    <MultiBinding Converter="{StaticResource PageActiveForegroundConverter}">
-                                        <Binding />
-                                        <Binding Path="#Root.CurrentPage" />
-                                    </MultiBinding>
-                                </Button.Foreground>
+                                </Button.Classes>
                             </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -117,7 +110,7 @@
             <Setter Property="Background" Value="{TemplateBinding Background}" />
             <Setter Property="CornerRadius" Value="6" />
         </Style>
-        <Style Selector="Button.pagination-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.pagination-button:not(.active):pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
         <Style Selector="Button.pagination-button:disabled">
@@ -125,6 +118,13 @@
         </Style>
         <Style Selector="Button.pagination-button PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <!-- Active page button -->
+        <Style Selector="Button.pagination-button.active /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.pagination-button.active">
+            <Setter Property="Foreground" Value="White" />
         </Style>
 
         <!-- Page Size ComboBox -->

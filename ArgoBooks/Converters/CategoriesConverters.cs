@@ -103,6 +103,13 @@ public static class IntConverters
     /// </summary>
     public static readonly IValueConverter IsPositive =
         new FuncValueConverter<int, bool>(value => value > 0);
+
+    /// <summary>
+    /// Returns true if the integer is greater than one.
+    /// Useful for showing pagination controls only when there are multiple pages.
+    /// </summary>
+    public static readonly IValueConverter IsGreaterThanOne =
+        new FuncValueConverter<int, bool>(value => value > 1);
 }
 
 /// <summary>
@@ -483,9 +490,10 @@ public class PageEqualsConverter : IMultiValueConverter
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count < 2)
-            return false;
+            return "pagination-button";
 
-        return Equals(values[0], values[1]);
+        var isActive = Equals(values[0], values[1]);
+        return isActive ? "pagination-button active" : "pagination-button";
     }
 }
 

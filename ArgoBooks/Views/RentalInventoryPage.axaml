@@ -691,7 +691,8 @@
                             <!-- Page Numbers -->
                             <StackPanel Grid.Column="2"
                                         Orientation="Horizontal"
-                                        Spacing="4">
+                                        Spacing="4"
+                                        IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
                                 <!-- Previous Button -->
                                 <Button Classes="pagination-button"
                                         Command="{Binding GoToPreviousPageCommand}"
@@ -709,22 +710,15 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Button Classes="pagination-button"
-                                                    Content="{Binding}"
+                                            <Button Content="{Binding}"
                                                     Command="{Binding $parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).GoToPageCommand}"
                                                     CommandParameter="{Binding}">
-                                                <Button.Background>
-                                                    <MultiBinding Converter="{StaticResource PageActiveBackgroundConverter}">
+                                                <Button.Classes>
+                                                    <MultiBinding Converter="{StaticResource PageEqualsConverter}">
                                                         <Binding />
                                                         <Binding Path="$parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).CurrentPage" />
                                                     </MultiBinding>
-                                                </Button.Background>
-                                                <Button.Foreground>
-                                                    <MultiBinding Converter="{StaticResource PageActiveForegroundConverter}">
-                                                        <Binding />
-                                                        <Binding Path="$parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).CurrentPage" />
-                                                    </MultiBinding>
-                                                </Button.Foreground>
+                                                </Button.Classes>
                                             </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

@@ -31,6 +31,9 @@ public partial class PaginationFooter : UserControl
     public static readonly StyledProperty<bool> CanGoToNextPageProperty =
         AvaloniaProperty.Register<PaginationFooter, bool>(nameof(CanGoToNextPage), false);
 
+    public static readonly StyledProperty<bool> ShowPaginationControlsProperty =
+        AvaloniaProperty.Register<PaginationFooter, bool>(nameof(ShowPaginationControls), false);
+
     public static readonly StyledProperty<ICommand?> GoToPreviousPageCommandProperty =
         AvaloniaProperty.Register<PaginationFooter, ICommand?>(nameof(GoToPreviousPageCommand));
 
@@ -86,6 +89,12 @@ public partial class PaginationFooter : UserControl
     {
         get => GetValue(CanGoToNextPageProperty);
         set => SetValue(CanGoToNextPageProperty, value);
+    }
+
+    public bool ShowPaginationControls
+    {
+        get => GetValue(ShowPaginationControlsProperty);
+        set => SetValue(ShowPaginationControlsProperty, value);
     }
 
     public ICommand? GoToPreviousPageCommand
