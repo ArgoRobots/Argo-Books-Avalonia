@@ -601,7 +601,8 @@
                             <!-- Page Numbers -->
                             <StackPanel Grid.Column="2"
                                         Orientation="Horizontal"
-                                        Spacing="4">
+                                        Spacing="4"
+                                        IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
                                 <!-- Previous Button -->
                                 <Button Classes="pagination-button"
                                         Command="{Binding GoToPreviousPageCommand}"
@@ -623,18 +624,12 @@
                                                     Content="{Binding}"
                                                     Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).GoToPageCommand}"
                                                     CommandParameter="{Binding}">
-                                                <Button.Background>
-                                                    <MultiBinding Converter="{StaticResource PageActiveBackgroundConverter}">
+                                                <controls:PaginationHelper.IsActivePage>
+                                                    <MultiBinding Converter="{StaticResource PageEqualsConverter}">
                                                         <Binding />
                                                         <Binding Path="$parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).CurrentPage" />
                                                     </MultiBinding>
-                                                </Button.Background>
-                                                <Button.Foreground>
-                                                    <MultiBinding Converter="{StaticResource PageActiveForegroundConverter}">
-                                                        <Binding />
-                                                        <Binding Path="$parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).CurrentPage" />
-                                                    </MultiBinding>
-                                                </Button.Foreground>
+                                                </controls:PaginationHelper.IsActivePage>
                                             </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

@@ -64,7 +64,10 @@
                                                             IsRequired="True"
                                                             HasError="{Binding HasCustomerError}"
                                                             ErrorMessage="Please select a customer"
-                                                            ShowAddNew="False" />
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No customers found."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
                             </StackPanel>
 
                             <!-- Dates Row -->

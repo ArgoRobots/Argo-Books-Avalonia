@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.DepartmentsPage"
              x:DataType="vm:DepartmentsPageViewModel">
@@ -449,7 +450,8 @@
                         <!-- Page Numbers -->
                         <StackPanel Grid.Column="2"
                                     Orientation="Horizontal"
-                                    Spacing="4">
+                                    Spacing="4"
+                                    IsVisible="{Binding TotalPages, Converter={x:Static local:IntConverters.IsGreaterThanOne}}">
                             <!-- Previous Button -->
                             <Button Classes="pagination-button"
                                     Command="{Binding GoToPreviousPageCommand}"
@@ -471,18 +473,12 @@
                                                 Content="{Binding}"
                                                 Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).GoToPageCommand}"
                                                 CommandParameter="{Binding}">
-                                            <Button.Background>
-                                                <MultiBinding Converter="{StaticResource PageActiveBackgroundConverter}">
+                                            <controls:PaginationHelper.IsActivePage>
+                                                <MultiBinding Converter="{StaticResource PageEqualsConverter}">
                                                     <Binding />
                                                     <Binding Path="$parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).CurrentPage" />
                                                 </MultiBinding>
-                                            </Button.Background>
-                                            <Button.Foreground>
-                                                <MultiBinding Converter="{StaticResource PageActiveForegroundConverter}">
-                                                    <Binding />
-                                                    <Binding Path="$parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).CurrentPage" />
-                                                </MultiBinding>
-                                            </Button.Foreground>
+                                            </controls:PaginationHelper.IsActivePage>
                                         </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

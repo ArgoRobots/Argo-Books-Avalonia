@@ -103,6 +103,13 @@ public static class IntConverters
     /// </summary>
     public static readonly IValueConverter IsPositive =
         new FuncValueConverter<int, bool>(value => value > 0);
+
+    /// <summary>
+    /// Returns true if the integer is greater than one.
+    /// Useful for showing pagination controls only when there are multiple pages.
+    /// </summary>
+    public static readonly IValueConverter IsGreaterThanOne =
+        new FuncValueConverter<int, bool>(value => value > 1);
 }
 
 /// <summary>
@@ -474,7 +481,8 @@ public class SortIndicatorConverter : IMultiValueConverter
 }
 
 /// <summary>
-/// Converter for checking if two values are equal and returning an "active" class name.
+/// Converter for checking if two values are equal.
+/// Returns true if both values are equal.
 /// </summary>
 public class PageEqualsConverter : IMultiValueConverter
 {

@@ -91,19 +91,19 @@
                     BoxShadow="0 4 12 0 #20000000">
 
                 <DockPanel>
-                    <!-- Add New Button -->
+                    <!-- Add New Button - use $parent syntax to traverse across Popup boundary -->
                     <Button DockPanel.Dock="Bottom"
                             Classes="ghost"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Left"
                             Padding="12,10"
-                            IsVisible="{Binding ShowAddNew, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
-                            Command="{Binding AddNewCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+                            IsVisible="{Binding $parent[controls:SearchableDropdown].ShowAddNew}"
+                            Command="{Binding $parent[controls:SearchableDropdown].AddNewCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                       Width="16" Height="16"
                                       Foreground="{DynamicResource PrimaryBrush}" />
-                            <TextBlock Text="{Binding AddNewText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                            <TextBlock Text="{Binding $parent[controls:SearchableDropdown].AddNewText}"
                                        Foreground="{DynamicResource PrimaryBrush}"
                                        FontWeight="Medium" />
                         </StackPanel>
@@ -113,7 +113,7 @@
                     <Border DockPanel.Dock="Bottom"
                             Height="1"
                             Background="{DynamicResource BorderLightBrush}"
-                            IsVisible="{Binding ShowAddNew, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
+                            IsVisible="{Binding $parent[controls:SearchableDropdown].ShowAddNew}" />
 
                     <!-- Items List -->
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled"
@@ -125,10 +125,10 @@
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        Padding="12,16"
                                        HorizontalAlignment="Center"
-                                       IsVisible="{Binding !HasFilteredItems, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
+                                       IsVisible="{Binding !$parent[controls:SearchableDropdown].HasFilteredItems}" />
 
                             <!-- Filtered Items -->
-                            <ItemsControl ItemsSource="{Binding FilteredItems, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+                            <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredItems}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Button Classes="ghost"
@@ -136,7 +136,7 @@
                                                 HorizontalContentAlignment="Left"
                                                 Padding="12,10"
                                                 Tag="{Binding}"
-                                                Command="{Binding SelectItemCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                                                Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
                                                 CommandParameter="{Binding}">
                                             <Button.Styles>
                                                 <Style Selector="Button.selected /template/ ContentPresenter">
@@ -153,6 +153,23 @@
                 </DockPanel>
             </Border>
         </Popup>
+
+        <!-- Empty State Message with Create Link -->
+        <StackPanel Orientation="Horizontal"
+                    Spacing="4"
+                    Margin="0,2,0,0"
+                    IsVisible="{Binding ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+            <TextBlock Text="{Binding EmptyMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                       FontSize="{StaticResource FontSizeXs}"
+                       Foreground="{DynamicResource TextTertiaryBrush}"
+                       VerticalAlignment="Center" />
+            <Button Classes="link"
+                    Content="{Binding EmptyCreateLinkText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                    Command="{Binding EmptyCreateCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                    FontSize="{StaticResource FontSizeXs}"
+                    Padding="0"
+                    VerticalAlignment="Center" />
+        </StackPanel>
 
         <!-- Helper Text / Error Message -->
         <TextBlock FontSize="{StaticResource FontSizeXs}"

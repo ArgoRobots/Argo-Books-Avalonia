@@ -209,6 +209,20 @@ public partial class PaymentModalsViewModel : ObservableObject
         ClearModalFields();
     }
 
+    /// <summary>
+    /// Navigates to Invoices page and opens the create invoice modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateInvoice()
+    {
+        // Close the current modal
+        IsAddModalOpen = false;
+        IsEditModalOpen = false;
+
+        // Navigate to Invoices page with openAddModal parameter
+        App.NavigationService?.NavigateTo("Invoices", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
     [RelayCommand]
     public void SaveNewPayment()
     {
