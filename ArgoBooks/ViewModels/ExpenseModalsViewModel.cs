@@ -303,7 +303,12 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         ModalDiscount = expense.Discount;
         SelectedPaymentMethod = expense.PaymentMethod.ToString();
         ModalNotes = expense.Notes;
-        ModalReferenceNumber = expense.ReferenceNumber;
+
+        // Load receipt info if available
+        _receiptFilePath = expense.ReferenceNumber;
+        ReceiptFileName = string.IsNullOrEmpty(expense.ReferenceNumber)
+            ? "No receipt attached"
+            : System.IO.Path.GetFileName(expense.ReferenceNumber);
 
         ClearValidationErrors();
         IsAddEditModalOpen = true;
@@ -586,7 +591,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         expense.Total = Total;
         expense.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
         expense.Notes = ModalNotes;
-        expense.ReferenceNumber = ModalReferenceNumber;
+        expense.ReferenceNumber = _receiptFilePath ?? string.Empty;
         expense.UpdatedAt = DateTime.Now;
 
         // Create undo action
@@ -628,7 +633,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
                 expense.Total = Total;
                 expense.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
                 expense.Notes = ModalNotes;
-                expense.ReferenceNumber = ModalReferenceNumber;
+                expense.ReferenceNumber = _receiptFilePath ?? string.Empty;
                 ExpenseSaved?.Invoke(this, EventArgs.Empty);
             });
 

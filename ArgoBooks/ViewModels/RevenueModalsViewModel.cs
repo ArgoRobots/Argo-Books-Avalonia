@@ -300,7 +300,12 @@ public partial class RevenueModalsViewModel : ViewModelBase
         ModalDiscount = sale.Discount;
         SelectedPaymentMethod = sale.PaymentMethod.ToString();
         ModalNotes = sale.Notes;
-        ModalReferenceNumber = sale.ReferenceNumber;
+
+        // Load receipt info if available
+        _receiptFilePath = sale.ReferenceNumber;
+        ReceiptFileName = string.IsNullOrEmpty(sale.ReferenceNumber)
+            ? "No receipt attached"
+            : System.IO.Path.GetFileName(sale.ReferenceNumber);
 
         ClearValidationErrors();
         IsAddEditModalOpen = true;
@@ -582,7 +587,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
         sale.Total = Total;
         sale.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
         sale.Notes = ModalNotes;
-        sale.ReferenceNumber = ModalReferenceNumber;
+        sale.ReferenceNumber = _receiptFilePath ?? string.Empty;
         sale.UpdatedAt = DateTime.Now;
 
         // Create undo action
@@ -624,7 +629,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
                 sale.Total = Total;
                 sale.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
                 sale.Notes = ModalNotes;
-                sale.ReferenceNumber = ModalReferenceNumber;
+                sale.ReferenceNumber = _receiptFilePath ?? string.Empty;
                 RevenueSaved?.Invoke(this, EventArgs.Empty);
             });
 
