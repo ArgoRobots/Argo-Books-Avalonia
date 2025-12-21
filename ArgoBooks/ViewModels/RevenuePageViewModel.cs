@@ -591,6 +591,23 @@ public partial class RevenueDisplayItem : ObservableObject
     public string DateFormatted => Date.ToString("MMM d, yyyy");
     public string TotalFormatted => $"${Total:N2}";
 
+    public string CustomerInitials
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(CustomerName) || CustomerName == "-")
+                return "?";
+
+            var parts = CustomerName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2)
+                return $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant();
+
+            return parts.Length > 0 && parts[0].Length > 0
+                ? parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant()
+                : "?";
+        }
+    }
+
     public bool IsReturned => StatusDisplay == "Returned";
     public bool IsPartialReturn => StatusDisplay == "Partial Return";
 }
