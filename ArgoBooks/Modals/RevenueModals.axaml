@@ -131,8 +131,8 @@
                                         CornerRadius="6"
                                         Padding="12,8"
                                         IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
-                                    <Grid ColumnDefinitions="2*,80,90,70,Auto">
-                                        <TextBlock Grid.Column="0" Text="Description" FontSize="12" FontWeight="Medium"
+                                    <Grid ColumnDefinitions="*,80,90,70,Auto">
+                                        <TextBlock Grid.Column="0" Text="Product / Description" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    Margin="0,0,8,0" />
                                         <TextBlock Grid.Column="1" Text="Qty" FontSize="12" FontWeight="Medium"
@@ -157,11 +157,14 @@
                                             <Border Padding="12,8"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="2*,80,90,70,Auto">
-                                                    <TextBox Grid.Column="0"
-                                                             Text="{Binding Description, Mode=TwoWay}"
-                                                             Classes="form-input"
-                                                             Watermark="Item description"
+                                                <Grid ColumnDefinitions="*,80,90,70,Auto">
+                                                    <controls:SearchableDropdown Grid.Column="0"
+                                                             ItemsSource="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).ProductOptions}"
+                                                             SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                                                             DisplayMemberPath="Name"
+                                                             Placeholder="Search for a product..."
+                                                             ShowAddNew="False"
+                                                             EmptyMessage="No products found. Type to add custom item."
                                                              Margin="0,0,8,0" />
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay}"

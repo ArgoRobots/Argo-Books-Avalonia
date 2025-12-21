@@ -106,6 +106,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
     public ObservableCollection<SupplierOption> SupplierOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
+    public ObservableCollection<ProductOption> ProductOptions { get; } = [];
     public ObservableCollection<string> PaymentMethodOptions { get; } = ["Cash", "Credit Card", "Debit Card", "Bank Transfer", "Check", "PayPal", "Other"];
     public ObservableCollection<ExpenseLineItem> LineItems { get; } = [];
 
@@ -199,6 +200,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     {
         LoadSupplierOptions();
         LoadCategoryOptions();
+        LoadProductOptions();
     }
 
     private void LoadSupplierOptions()
@@ -233,6 +235,26 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         }
     }
 
+    private void LoadProductOptions()
+    {
+        ProductOptions.Clear();
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Products == null)
+            return;
+
+        foreach (var product in companyData.Products.OrderBy(p => p.Name))
+        {
+            ProductOptions.Add(new ProductOption
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                UnitPrice = product.CostPrice  // Use cost price for expenses
+            });
+        }
+    }
+
     #endregion
 
     #region Add Modal
@@ -242,6 +264,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     {
         LoadSupplierOptions();
         LoadCategoryOptions();
+        LoadProductOptions();
         ResetForm();
         IsEditMode = false;
         ModalTitle = "Add Expense";
@@ -728,6 +751,9 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 public partial class ExpenseLineItem : ObservableObject
 {
     [ObservableProperty]
+    private ProductOption? _selectedProduct;
+
+    [ObservableProperty]
     private string _description = string.Empty;
 
     [ObservableProperty]
@@ -738,6 +764,15 @@ public partial class ExpenseLineItem : ObservableObject
 
     public decimal Amount => Quantity * UnitPrice;
     public string AmountFormatted => $"${Amount:N2}";
+
+    partial void OnSelectedProductChanged(ProductOption? value)
+    {
+        if (value != null)
+        {
+            Description = value.Name;
+            UnitPrice = value.UnitPrice;
+        }
+    }
 
     partial void OnQuantityChanged(decimal value)
     {
@@ -750,4 +785,15 @@ public partial class ExpenseLineItem : ObservableObject
         OnPropertyChanged(nameof(Amount));
         OnPropertyChanged(nameof(AmountFormatted));
     }
+}
+
+/// <summary>
+/// Option for product selection.
+/// </summary>
+public class ProductOption
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public decimal UnitPrice { get; set; }
 }

@@ -106,6 +106,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
 
     public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
+    public ObservableCollection<ProductOption> ProductOptions { get; } = [];
     public ObservableCollection<string> PaymentMethodOptions { get; } = ["Cash", "Credit Card", "Debit Card", "Bank Transfer", "Check", "PayPal", "Other"];
     public ObservableCollection<RevenueLineItem> LineItems { get; } = [];
 
@@ -196,6 +197,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
     {
         LoadCustomerOptions();
         LoadCategoryOptions();
+        LoadProductOptions();
     }
 
     private void LoadCustomerOptions()
@@ -230,6 +232,26 @@ public partial class RevenueModalsViewModel : ViewModelBase
         }
     }
 
+    private void LoadProductOptions()
+    {
+        ProductOptions.Clear();
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Products == null)
+            return;
+
+        foreach (var product in companyData.Products.OrderBy(p => p.Name))
+        {
+            ProductOptions.Add(new ProductOption
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                UnitPrice = product.UnitPrice  // Use selling price for revenue
+            });
+        }
+    }
+
     #endregion
 
     #region Add Modal
@@ -239,6 +261,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
     {
         LoadCustomerOptions();
         LoadCategoryOptions();
+        LoadProductOptions();
         ResetForm();
         IsEditMode = false;
         ModalTitle = "Add Revenue";
@@ -724,6 +747,9 @@ public partial class RevenueModalsViewModel : ViewModelBase
 public partial class RevenueLineItem : ObservableObject
 {
     [ObservableProperty]
+    private ProductOption? _selectedProduct;
+
+    [ObservableProperty]
     private string _description = string.Empty;
 
     [ObservableProperty]
@@ -734,6 +760,15 @@ public partial class RevenueLineItem : ObservableObject
 
     public decimal Amount => Quantity * UnitPrice;
     public string AmountFormatted => $"${Amount:N2}";
+
+    partial void OnSelectedProductChanged(ProductOption? value)
+    {
+        if (value != null)
+        {
+            Description = value.Name;
+            UnitPrice = value.UnitPrice;
+        }
+    }
 
     partial void OnQuantityChanged(decimal value)
     {
