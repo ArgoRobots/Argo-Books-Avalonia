@@ -44,10 +44,28 @@ public class Purchase
     public string Description { get; set; } = string.Empty;
 
     /// <summary>
-    /// Amount before tax.
+    /// Quantity purchased.
+    /// </summary>
+    [JsonPropertyName("quantity")]
+    public decimal Quantity { get; set; } = 1;
+
+    /// <summary>
+    /// Unit price.
+    /// </summary>
+    [JsonPropertyName("unitPrice")]
+    public decimal UnitPrice { get; set; }
+
+    /// <summary>
+    /// Amount before tax (Quantity * UnitPrice).
     /// </summary>
     [JsonPropertyName("amount")]
     public decimal Amount { get; set; }
+
+    /// <summary>
+    /// Tax rate percentage.
+    /// </summary>
+    [JsonPropertyName("taxRate")]
+    public decimal TaxRate { get; set; }
 
     /// <summary>
     /// Tax amount.
@@ -56,10 +74,28 @@ public class Purchase
     public decimal TaxAmount { get; set; }
 
     /// <summary>
+    /// Shipping cost.
+    /// </summary>
+    [JsonPropertyName("shippingCost")]
+    public decimal ShippingCost { get; set; }
+
+    /// <summary>
+    /// Discount amount.
+    /// </summary>
+    [JsonPropertyName("discount")]
+    public decimal Discount { get; set; }
+
+    /// <summary>
     /// Total amount including tax.
     /// </summary>
     [JsonPropertyName("total")]
     public decimal Total { get; set; }
+
+    /// <summary>
+    /// Reference number (e.g., invoice number, receipt number).
+    /// </summary>
+    [JsonPropertyName("referenceNumber")]
+    public string ReferenceNumber { get; set; } = string.Empty;
 
     /// <summary>
     /// Payment method used.

@@ -1,0 +1,388 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.ExpensesPage"
+             x:DataType="vm:ExpensesPageViewModel">
+
+    <Design.DataContext>
+        <vm:ExpensesPageViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Page Header -->
+        <Border Grid.Row="0" Padding="24,20">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Expenses"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="Track and manage your business expenses"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Classes="primary-button"
+                        Command="{Binding OpenAddModalCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                  Width="16" Height="16" />
+                        <TextBlock Text="Add Expense" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Stats Cards -->
+        <Border Grid.Row="1" Padding="24,0,24,16">
+            <Grid ColumnDefinitions="*,16,*,16,*,16,*">
+                <!-- Total Monthly Expenses -->
+                <controls:StatCard Grid.Column="0"
+                                   Title="Monthly Expenses"
+                                   Value="{Binding TotalMonthlyExpenses}"
+                                   IconData="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+                                   IconBackground="{DynamicResource ErrorLightBrush}"
+                                   IconForeground="{DynamicResource ErrorBrush}" />
+
+                <!-- Transaction Count -->
+                <controls:StatCard Grid.Column="2"
+                                   Title="Transactions"
+                                   Value="{Binding TransactionCount}"
+                                   IconData="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                                   IconBackground="{DynamicResource InfoLightBrush}"
+                                   IconForeground="{DynamicResource InfoBrush}" />
+
+                <!-- Receipts on File -->
+                <controls:StatCard Grid.Column="4"
+                                   Title="Receipts on File"
+                                   Value="{Binding ReceiptsOnFile}"
+                                   IconData="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                   IconBackground="{DynamicResource SuccessLightBrush}"
+                                   IconForeground="{DynamicResource SuccessBrush}" />
+
+                <!-- Returns -->
+                <controls:StatCard Grid.Column="6"
+                                   Title="Returns"
+                                   Value="{Binding ReturnsCount}"
+                                   IconData="M12.5 6.9c1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-.53.12-1.03.3-1.48.54l1.47 1.47c.41-.17.91-.27 1.51-.27zM5.33 4.06L4.06 5.33 7.5 8.77c0 2.08 1.56 3.22 3.91 3.91l3.51 3.51c-.34.49-1.05.91-2.42.91-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c.96-.18 1.83-.55 2.46-1.12l2.22 2.22 1.27-1.27L5.33 4.06z"
+                                   IconBackground="{DynamicResource WarningLightBrush}"
+                                   IconForeground="{DynamicResource WarningBrush}" />
+            </Grid>
+        </Border>
+
+        <!-- Search and Filter Bar -->
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Margin="24,0" Padding="0">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Search/Filter Header -->
+                <Border Grid.Row="0" Padding="16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <!-- Search Box -->
+                        <TextBox Grid.Column="0"
+                                 Classes="search-input"
+                                 Text="{Binding SearchQuery, Mode=TwoWay}"
+                                 Watermark="Search expenses by ID, description, supplier..."
+                                 MaxWidth="400"
+                                 HorizontalAlignment="Left" />
+
+                        <!-- Filter Button -->
+                        <Button Grid.Column="1"
+                                Classes="secondary-button"
+                                Command="{Binding OpenFilterModalCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <PathIcon Data="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"
+                                          Width="16" Height="16" />
+                                <TextBlock Text="Filter" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Expenses Table -->
+                <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                    <!-- Table Header -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            Padding="16,12"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="100,120,2*,*,*,100,90,80,90,80">
+                            <!-- ID -->
+                            <Button Grid.Column="0" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Id">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="ID" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Id}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Id}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Accountant -->
+                            <Button Grid.Column="1" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Accountant">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Accountant" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Accountant}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Accountant}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Product/Description -->
+                            <Button Grid.Column="2" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Product">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Description" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Product}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Product}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Category -->
+                            <Button Grid.Column="3" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Category">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Category" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Category}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Category}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Supplier -->
+                            <Button Grid.Column="4" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Supplier">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Supplier" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Supplier}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Supplier}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Date -->
+                            <Button Grid.Column="5" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Date">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Date" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Date}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Date}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Total -->
+                            <Button Grid.Column="6" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Total">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Total" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Total}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Total}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Receipt -->
+                            <TextBlock Grid.Column="7"
+                                       Text="Receipt"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center" />
+
+                            <!-- Status -->
+                            <Button Grid.Column="8" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Status">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Status" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Status}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Status}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Actions -->
+                            <TextBlock Grid.Column="9"
+                                       Text="Actions"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Table Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Expenses}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:ExpenseDisplayItem">
+                                    <Border Padding="16,12"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="0,0,0,1"
+                                            Background="{DynamicResource SurfaceBrush}">
+                                        <Border.Styles>
+                                            <Style Selector="Border:pointerover">
+                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                            </Style>
+                                        </Border.Styles>
+                                        <Grid ColumnDefinitions="100,120,2*,*,*,100,90,80,90,80">
+                                            <!-- ID -->
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Id}"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource AccentBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Accountant -->
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding AccountantName}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Description -->
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding ProductDescription}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Margin="0,0,8,0" />
+
+                                            <!-- Category -->
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding CategoryName}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Supplier -->
+                                            <TextBlock Grid.Column="4"
+                                                       Text="{Binding SupplierName}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Date -->
+                                            <TextBlock Grid.Column="5"
+                                                       Text="{Binding DateFormatted}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+
+                                            <!-- Total -->
+                                            <TextBlock Grid.Column="6"
+                                                       Text="{Binding TotalFormatted}"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       VerticalAlignment="Center" />
+
+                                            <!-- Receipt Icon -->
+                                            <Panel Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="16" Height="16"
+                                                          Foreground="{DynamicResource SuccessBrush}"
+                                                          IsVisible="{Binding HasReceipt}" />
+                                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                          Width="16" Height="16"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          IsVisible="{Binding !HasReceipt}" />
+                                            </Panel>
+
+                                            <!-- Status Badge -->
+                                            <Border Grid.Column="8"
+                                                    CornerRadius="4"
+                                                    Padding="8,4"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Background="{Binding StatusDisplay, Converter={x:Static local:StatusColorConverter.BackgroundInstance}}">
+                                                <TextBlock Text="{Binding StatusDisplay}"
+                                                           FontSize="11"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{Binding StatusDisplay, Converter={x:Static local:StatusColorConverter.ForegroundInstance}}" />
+                                            </Border>
+
+                                            <!-- Actions -->
+                                            <StackPanel Grid.Column="9"
+                                                        Orientation="Horizontal"
+                                                        Spacing="4"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center">
+                                                <Button Classes="icon-button"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).OpenEditModalCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip.Tip="Edit">
+                                                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                              Width="14" Height="14" />
+                                                </Button>
+                                                <Button Classes="icon-button danger"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip.Tip="Delete">
+                                                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                              Width="14" Height="14" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Empty State -->
+                    <Border Grid.Row="1"
+                            IsVisible="{Binding Expenses.Count, Converter={x:Static local:IntConverters.IsZero}}"
+                            Background="{DynamicResource SurfaceBrush}">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <PathIcon Data="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
+                                      Width="48" Height="48"
+                                      Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Text="No expenses found"
+                                       FontSize="16"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="Add your first expense to get started"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       HorizontalAlignment="Center" />
+                            <Button Classes="primary-button"
+                                    Command="{Binding OpenAddModalCommand}"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,8,0,0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                              Width="16" Height="16" />
+                                    <TextBlock Text="Add Expense" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Pagination Footer -->
+        <controls:PaginationFooter Grid.Row="3"
+                                   Margin="24,16"
+                                   CurrentPage="{Binding CurrentPage}"
+                                   TotalPages="{Binding TotalPages}"
+                                   PageSize="{Binding PageSize, Mode=TwoWay}"
+                                   PageSizeOptions="{Binding PageSizeOptions}"
+                                   PageNumbers="{Binding PageNumbers}"
+                                   PaginationText="{Binding PaginationText}"
+                                   GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                                   GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                   GoToPageCommand="{Binding GoToPageCommand}"
+                                   IsVisible="{Binding Expenses.Count, Converter={x:Static local:IntConverters.IsPositive}}" />
+    </Grid>
+</UserControl>

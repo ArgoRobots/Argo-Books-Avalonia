@@ -1,0 +1,506 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="ArgoBooks.Modals.RevenueModals"
+             x:DataType="vm:RevenueModalsViewModel">
+
+    <Design.DataContext>
+        <vm:RevenueModalsViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- ======================= ADD / EDIT REVENUE MODAL ======================= -->
+        <Panel IsVisible="{Binding IsAddEditModalOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="650"
+                    MaxHeight="700"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding ModalTitle}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseAddEditModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="20">
+                            <!-- Date and Payment Method Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <!-- Date -->
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Date" /><Run Text=" *" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <DatePicker SelectedDate="{Binding ModalDate}"
+                                                Classes="form-datepicker"
+                                                HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <!-- Payment Method -->
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="Payment Method" />
+                                    <ComboBox ItemsSource="{Binding PaymentMethodOptions}"
+                                              SelectedItem="{Binding SelectedPaymentMethod}"
+                                              Classes="form-combobox"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Customer Selection -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Customer" />
+                                <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
+                                                            SelectedItem="{Binding SelectedCustomer}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search for a customer..."
+                                                            HasError="{Binding HasCustomerError}"
+                                                            ErrorMessage="Please select a customer"
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No customers found."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
+                            </StackPanel>
+
+                            <!-- Category Selection -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Category" />
+                                <controls:SearchableDropdown ItemsSource="{Binding CategoryOptions}"
+                                                            SelectedItem="{Binding SelectedCategory}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search for a category..."
+                                                            HasError="{Binding HasCategoryError}"
+                                                            ErrorMessage="Please select a category"
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No categories found."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}" />
+                            </StackPanel>
+
+                            <!-- Description -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Description" /><Run Text=" *" Foreground="#dc2626" />
+                                </TextBlock>
+                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         Watermark="Enter sale description"
+                                         Classes.has-error="{Binding HasDescriptionError}" />
+                                <TextBlock Text="Description is required"
+                                           FontSize="12"
+                                           Foreground="#dc2626"
+                                           IsVisible="{Binding HasDescriptionError}" />
+                            </StackPanel>
+
+                            <!-- Quantity and Unit Price Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <!-- Quantity -->
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="Quantity" />
+                                    <NumericUpDown Value="{Binding ModalQuantity, Mode=TwoWay}"
+                                                   Minimum="0.01"
+                                                   FormatString="N2"
+                                                   Classes="form-numericupdown"
+                                                   ShowButtonSpinner="False"
+                                                   HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <!-- Unit Price -->
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Unit Price" /><Run Text=" *" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <NumericUpDown Value="{Binding ModalUnitPrice, Mode=TwoWay}"
+                                                   Minimum="0"
+                                                   FormatString="C2"
+                                                   Classes="form-numericupdown"
+                                                   Classes.has-error="{Binding HasUnitPriceError}"
+                                                   ShowButtonSpinner="False"
+                                                   HorizontalAlignment="Stretch" />
+                                    <TextBlock Text="Unit price is required"
+                                               FontSize="12"
+                                               Foreground="#dc2626"
+                                               IsVisible="{Binding HasUnitPriceError}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Tax, Shipping, Discount Row -->
+                            <Grid ColumnDefinitions="*,16,*,16,*">
+                                <!-- Tax Rate -->
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="Tax Rate (%)" />
+                                    <NumericUpDown Value="{Binding ModalTaxRate, Mode=TwoWay}"
+                                                   Minimum="0"
+                                                   Maximum="100"
+                                                   FormatString="N2"
+                                                   Classes="form-numericupdown"
+                                                   ShowButtonSpinner="False"
+                                                   HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <!-- Shipping -->
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="Shipping" />
+                                    <NumericUpDown Value="{Binding ModalShipping, Mode=TwoWay}"
+                                                   Minimum="0"
+                                                   FormatString="C2"
+                                                   Classes="form-numericupdown"
+                                                   ShowButtonSpinner="False"
+                                                   HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <!-- Discount -->
+                                <StackPanel Grid.Column="4" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="Discount" />
+                                    <NumericUpDown Value="{Binding ModalDiscount, Mode=TwoWay}"
+                                                   Minimum="0"
+                                                   FormatString="C2"
+                                                   Classes="form-numericupdown"
+                                                   ShowButtonSpinner="False"
+                                                   HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Reference Number -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Reference Number" />
+                                <TextBox Text="{Binding ModalReferenceNumber, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         Watermark="Order or invoice number" />
+                            </StackPanel>
+
+                            <!-- Notes -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Notes" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         Height="80"
+                                         Watermark="Additional notes..." />
+                            </StackPanel>
+
+                            <!-- Totals Summary -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16">
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Subtotal" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding SubtotalFormatted}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Tax" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding TaxAmountFormatted}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Shipping" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding ShippingAmountFormatted}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Discount" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding DiscountAmountFormatted}" FontSize="13" Foreground="{DynamicResource ErrorBrush}" />
+                                    </Grid>
+                                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Total" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding TotalFormatted}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Validation Message -->
+                            <Border Background="#fee2e2"
+                                    CornerRadius="6"
+                                    Padding="12"
+                                    IsVisible="{Binding HasValidationMessage}">
+                                <TextBlock Text="{Binding ValidationMessage}"
+                                           FontSize="13"
+                                           Foreground="#dc2626" />
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <Button Grid.Column="1"
+                                    Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding CloseAddEditModalCommand}"
+                                    Margin="0,0,12,0" />
+                            <Button Grid.Column="2"
+                                    Classes="primary-button"
+                                    Content="{Binding SaveButtonText}"
+                                    Command="{Binding SaveRevenueCommand}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- ======================= DELETE CONFIRMATION MODAL ======================= -->
+        <Panel IsVisible="{Binding IsDeleteConfirmOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="420"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <!-- Header -->
+                    <Border Padding="24,20">
+                        <StackPanel Spacing="16">
+                            <!-- Warning Icon -->
+                            <Border Width="48" Height="48"
+                                    CornerRadius="24"
+                                    Background="{DynamicResource ErrorLightBrush}"
+                                    HorizontalAlignment="Center">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                          Width="24" Height="24"
+                                          Foreground="{DynamicResource ErrorBrush}" />
+                            </Border>
+
+                            <!-- Title -->
+                            <TextBlock Text="Delete Sale"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" />
+
+                            <!-- Message -->
+                            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                <TextBlock Text="Are you sure you want to delete this sale?"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center" />
+                                <TextBlock FontSize="14"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           FontWeight="Medium"
+                                           HorizontalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center">
+                                    <Run Text="{Binding DeleteRevenueId}" />
+                                    <Run Text=" - " />
+                                    <Run Text="{Binding DeleteRevenueDescription}" />
+                                </TextBlock>
+                                <TextBlock FontSize="16"
+                                           Foreground="{DynamicResource SuccessBrush}"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           Text="{Binding DeleteRevenueAmount}" />
+                            </StackPanel>
+
+                            <TextBlock Text="This action cannot be undone."
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Footer -->
+                    <Border Padding="24,0,24,20">
+                        <Grid ColumnDefinitions="*,12,*">
+                            <Button Grid.Column="0"
+                                    Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding CloseDeleteConfirmCommand}"
+                                    HorizontalAlignment="Stretch" />
+                            <Button Grid.Column="2"
+                                    Classes="danger-button"
+                                    Content="Delete"
+                                    Command="{Binding DeleteRevenueCommand}"
+                                    HorizontalAlignment="Stretch" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- ======================= FILTER MODAL ======================= -->
+        <Panel IsVisible="{Binding IsFilterModalOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="500"
+                    MaxHeight="600"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Filter Revenue"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseFilterModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="20">
+                            <!-- Status -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Status" />
+                                <ComboBox ItemsSource="{Binding StatusFilterOptions}"
+                                          SelectedItem="{Binding FilterStatus}"
+                                          Classes="form-combobox"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Customer -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Customer" />
+                                <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
+                                                            SelectedItem="{Binding FilterSelectedCustomer}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Select customer..."
+                                                            ShowAddNew="False" />
+                            </StackPanel>
+
+                            <!-- Category -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Category" />
+                                <controls:SearchableDropdown ItemsSource="{Binding CategoryOptions}"
+                                                            SelectedItem="{Binding FilterSelectedCategory}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Select category..."
+                                                            ShowAddNew="False" />
+                            </StackPanel>
+
+                            <!-- Date Range -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Date Range" />
+                                <Grid ColumnDefinitions="*,Auto,*">
+                                    <DatePicker Grid.Column="0"
+                                                SelectedDate="{Binding FilterDateFrom}"
+                                                Classes="form-datepicker"
+                                                HorizontalAlignment="Stretch" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="to"
+                                               Margin="12,0"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <DatePicker Grid.Column="2"
+                                                SelectedDate="{Binding FilterDateTo}"
+                                                Classes="form-datepicker"
+                                                HorizontalAlignment="Stretch" />
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Amount Range -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Amount Range" />
+                                <Grid ColumnDefinitions="*,Auto,*">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding FilterAmountMin, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="Min"
+                                             HorizontalAlignment="Stretch" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="to"
+                                               Margin="12,0"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Grid.Column="2"
+                                             Text="{Binding FilterAmountMax, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="Max"
+                                             HorizontalAlignment="Stretch" />
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                            <Button Grid.Column="0"
+                                    Classes="text-button"
+                                    Content="Clear All"
+                                    Command="{Binding ClearFiltersCommand}" />
+                            <Button Grid.Column="2"
+                                    Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding CloseFilterModalCommand}"
+                                    Margin="0,0,12,0" />
+                            <Button Grid.Column="3"
+                                    Classes="primary-button"
+                                    Content="Apply Filters"
+                                    Command="{Binding ApplyFiltersCommand}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+    </Panel>
+</UserControl>

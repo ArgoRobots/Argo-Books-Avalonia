@@ -79,6 +79,16 @@ public partial class App : Application
     /// </summary>
     public static InvoiceModalsViewModel? InvoiceModalsViewModel => _appShellViewModel?.InvoiceModalsViewModel;
 
+    /// <summary>
+    /// Gets the expense modals view model for shared access.
+    /// </summary>
+    public static ExpenseModalsViewModel? ExpenseModalsViewModel => _appShellViewModel?.ExpenseModalsViewModel;
+
+    /// <summary>
+    /// Gets the revenue modals view model for shared access.
+    /// </summary>
+    public static RevenueModalsViewModel? RevenueModalsViewModel => _appShellViewModel?.RevenueModalsViewModel;
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
@@ -390,6 +400,14 @@ public partial class App : Application
         // Invoice modals
         _appShellViewModel.InvoiceModalsViewModel.InvoiceSaved += MarkUnsavedChanges;
         _appShellViewModel.InvoiceModalsViewModel.InvoiceDeleted += MarkUnsavedChanges;
+
+        // Expense modals
+        _appShellViewModel.ExpenseModalsViewModel.ExpenseSaved += MarkUnsavedChanges;
+        _appShellViewModel.ExpenseModalsViewModel.ExpenseDeleted += MarkUnsavedChanges;
+
+        // Revenue modals
+        _appShellViewModel.RevenueModalsViewModel.RevenueSaved += MarkUnsavedChanges;
+        _appShellViewModel.RevenueModalsViewModel.RevenueDeleted += MarkUnsavedChanges;
     }
 
     /// <summary>
@@ -1278,8 +1296,8 @@ public partial class App : Application
         navigationService.RegisterPage("Reports", _ => CreatePlaceholderPage("Reports", "Generate and view reports"));
 
         // Transactions Section
-        navigationService.RegisterPage("Revenue", _ => CreatePlaceholderPage("Revenue", "Track income and sales"));
-        navigationService.RegisterPage("Expenses", _ => CreatePlaceholderPage("Expenses", "Record and manage expenses"));
+        navigationService.RegisterPage("Revenue", _ => new RevenuePage { DataContext = new RevenuePageViewModel() });
+        navigationService.RegisterPage("Expenses", _ => new ExpensesPage { DataContext = new ExpensesPageViewModel() });
         navigationService.RegisterPage("Invoices", _ => new InvoicesPage { DataContext = new InvoicesPageViewModel() });
         navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = new PaymentsPageViewModel() });
 

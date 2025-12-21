@@ -1,0 +1,367 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.RevenuePage"
+             x:DataType="vm:RevenuePageViewModel">
+
+    <Design.DataContext>
+        <vm:RevenuePageViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Page Header -->
+        <Border Grid.Row="0" Padding="24,20">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Revenue"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="Track your sales and income"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Classes="primary-button"
+                        Command="{Binding OpenAddModalCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                  Width="16" Height="16" />
+                        <TextBlock Text="Add Revenue" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Stats Cards -->
+        <Border Grid.Row="1" Padding="24,0,24,16">
+            <Grid ColumnDefinitions="*,16,*,16,*,16,*">
+                <!-- Total Monthly Revenue -->
+                <controls:StatCard Grid.Column="0"
+                                   Title="Monthly Revenue"
+                                   Value="{Binding TotalMonthlyRevenue}"
+                                   IconData="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
+                                   IconBackground="{DynamicResource SuccessLightBrush}"
+                                   IconForeground="{DynamicResource SuccessBrush}" />
+
+                <!-- Sales Count -->
+                <controls:StatCard Grid.Column="2"
+                                   Title="Sales"
+                                   Value="{Binding SalesCount}"
+                                   IconData="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                                   IconBackground="{DynamicResource InfoLightBrush}"
+                                   IconForeground="{DynamicResource InfoBrush}" />
+
+                <!-- Unique Customers -->
+                <controls:StatCard Grid.Column="4"
+                                   Title="Unique Customers"
+                                   Value="{Binding UniqueCustomers}"
+                                   IconData="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+                                   IconBackground="{DynamicResource AccentLightBrush}"
+                                   IconForeground="{DynamicResource AccentBrush}" />
+
+                <!-- Returns -->
+                <controls:StatCard Grid.Column="6"
+                                   Title="Returns"
+                                   Value="{Binding ReturnsCount}"
+                                   IconData="M12.5 6.9c1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-.53.12-1.03.3-1.48.54l1.47 1.47c.41-.17.91-.27 1.51-.27zM5.33 4.06L4.06 5.33 7.5 8.77c0 2.08 1.56 3.22 3.91 3.91l3.51 3.51c-.34.49-1.05.91-2.42.91-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c.96-.18 1.83-.55 2.46-1.12l2.22 2.22 1.27-1.27L5.33 4.06z"
+                                   IconBackground="{DynamicResource WarningLightBrush}"
+                                   IconForeground="{DynamicResource WarningBrush}" />
+            </Grid>
+        </Border>
+
+        <!-- Search and Filter Bar -->
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" CornerRadius="8" Margin="24,0" Padding="0">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Search/Filter Header -->
+                <Border Grid.Row="0" Padding="16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <!-- Search Box -->
+                        <TextBox Grid.Column="0"
+                                 Classes="search-input"
+                                 Text="{Binding SearchQuery, Mode=TwoWay}"
+                                 Watermark="Search revenue by ID, description, customer..."
+                                 MaxWidth="400"
+                                 HorizontalAlignment="Left" />
+
+                        <!-- Filter Button -->
+                        <Button Grid.Column="1"
+                                Classes="secondary-button"
+                                Command="{Binding OpenFilterModalCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <PathIcon Data="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"
+                                          Width="16" Height="16" />
+                                <TextBlock Text="Filter" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Revenue Table -->
+                <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                    <!-- Table Header -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            Padding="16,12"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="100,120,*,2*,*,100,90,90,80">
+                            <!-- ID -->
+                            <Button Grid.Column="0" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Id">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="ID" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Id}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Id}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Accountant -->
+                            <Button Grid.Column="1" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Accountant">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Accountant" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Accountant}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Accountant}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Customer -->
+                            <Button Grid.Column="2" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Customer">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Customer" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Customer}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Customer}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Product/Description -->
+                            <Button Grid.Column="3" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Product">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Description" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Product}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Product}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Category -->
+                            <Button Grid.Column="4" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Category">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Category" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Category}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Category}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Date -->
+                            <Button Grid.Column="5" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Date">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Date" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Date}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Date}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Total -->
+                            <Button Grid.Column="6" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Total">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Total" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Total}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Total}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Status -->
+                            <Button Grid.Column="7" Classes="table-header-button" Command="{Binding SortByCommand}" CommandParameter="Status">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="Status" />
+                                    <PathIcon Data="{Binding SortColumn, Converter={x:Static local:SortIconConverter.Instance}, ConverterParameter=Status}"
+                                              IsVisible="{Binding SortColumn, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Status}"
+                                              Width="12" Height="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Actions -->
+                            <TextBlock Grid.Column="8"
+                                       Text="Actions"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Table Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Revenue}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:RevenueDisplayItem">
+                                    <Border Padding="16,12"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="0,0,0,1"
+                                            Background="{DynamicResource SurfaceBrush}">
+                                        <Border.Styles>
+                                            <Style Selector="Border:pointerover">
+                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                            </Style>
+                                        </Border.Styles>
+                                        <Grid ColumnDefinitions="100,120,*,2*,*,100,90,90,80">
+                                            <!-- ID -->
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{Binding Id}"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource AccentBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Accountant -->
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding AccountantName}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Customer -->
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding CustomerName}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Description -->
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding ProductDescription}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Margin="0,0,8,0" />
+
+                                            <!-- Category -->
+                                            <TextBlock Grid.Column="4"
+                                                       Text="{Binding CategoryName}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+
+                                            <!-- Date -->
+                                            <TextBlock Grid.Column="5"
+                                                       Text="{Binding DateFormatted}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+
+                                            <!-- Total -->
+                                            <TextBlock Grid.Column="6"
+                                                       Text="{Binding TotalFormatted}"
+                                                       FontSize="13"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource SuccessBrush}"
+                                                       VerticalAlignment="Center" />
+
+                                            <!-- Status Badge -->
+                                            <Border Grid.Column="7"
+                                                    CornerRadius="4"
+                                                    Padding="8,4"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Background="{Binding StatusDisplay, Converter={x:Static local:StatusColorConverter.BackgroundInstance}}">
+                                                <TextBlock Text="{Binding StatusDisplay}"
+                                                           FontSize="11"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{Binding StatusDisplay, Converter={x:Static local:StatusColorConverter.ForegroundInstance}}" />
+                                            </Border>
+
+                                            <!-- Actions -->
+                                            <StackPanel Grid.Column="8"
+                                                        Orientation="Horizontal"
+                                                        Spacing="4"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center">
+                                                <Button Classes="icon-button"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).OpenEditModalCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip.Tip="Edit">
+                                                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                              Width="14" Height="14" />
+                                                </Button>
+                                                <Button Classes="icon-button danger"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip.Tip="Delete">
+                                                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                              Width="14" Height="14" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Empty State -->
+                    <Border Grid.Row="1"
+                            IsVisible="{Binding Revenue.Count, Converter={x:Static local:IntConverters.IsZero}}"
+                            Background="{DynamicResource SurfaceBrush}">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="12">
+                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
+                                      Width="48" Height="48"
+                                      Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Text="No revenue found"
+                                       FontSize="16"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="Record your first sale to get started"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       HorizontalAlignment="Center" />
+                            <Button Classes="primary-button"
+                                    Command="{Binding OpenAddModalCommand}"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,8,0,0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                              Width="16" Height="16" />
+                                    <TextBlock Text="Add Revenue" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Pagination Footer -->
+        <controls:PaginationFooter Grid.Row="3"
+                                   Margin="24,16"
+                                   CurrentPage="{Binding CurrentPage}"
+                                   TotalPages="{Binding TotalPages}"
+                                   PageSize="{Binding PageSize, Mode=TwoWay}"
+                                   PageSizeOptions="{Binding PageSizeOptions}"
+                                   PageNumbers="{Binding PageNumbers}"
+                                   PaginationText="{Binding PaginationText}"
+                                   GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                                   GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                                   GoToPageCommand="{Binding GoToPageCommand}"
+                                   IsVisible="{Binding Revenue.Count, Converter={x:Static local:IntConverters.IsPositive}}" />
+    </Grid>
+</UserControl>
