@@ -73,7 +73,7 @@ public class ReportChartDataService
             .Where(s => s.Date >= startDate && s.Date <= endDate);
 
         return sales
-            .GroupBy(s => s.Items?.FirstOrDefault()?.CategoryId ?? "Unknown")
+            .GroupBy(s => s.CategoryId ?? "Unknown")
             .Select(g =>
             {
                 var categoryName = _companyData.GetCategory(g.Key)?.Name ?? "Other";
@@ -396,7 +396,7 @@ public class ReportChartDataService
     #region Geographic Charts
 
     /// <summary>
-    /// Gets sales by country of origin.
+    /// Gets sales by customer country.
     /// </summary>
     public List<ChartDataPoint> GetSalesByCountryOfOrigin()
     {
@@ -407,7 +407,11 @@ public class ReportChartDataService
 
         return _companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .GroupBy(s => s.ShippingAddress?.Country ?? "Unknown")
+            .GroupBy(s =>
+            {
+                var customer = _companyData.GetCustomer(s.CustomerId ?? "");
+                return customer?.Address?.Country ?? "Unknown";
+            })
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
@@ -429,13 +433,18 @@ public class ReportChartDataService
         var (startDate, endDate) = GetDateRange();
 
         return _companyData.Sales
-            .Where(s => s.Date >= startDate && s.Date <= endDate && s.ShippingAddress?.Country != null)
-            .GroupBy(s => s.ShippingAddress!.Country!)
-            .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.Total));
+            .Where(s => s.Date >= startDate && s.Date <= endDate)
+            .GroupBy(s =>
+            {
+                var customer = _companyData.GetCustomer(s.CustomerId ?? "");
+                return customer?.Address?.Country;
+            })
+            .Where(g => g.Key != null)
+            .ToDictionary(g => g.Key!, g => (double)g.Sum(s => s.Total));
     }
 
     /// <summary>
-    /// Gets purchases by country of destination.
+    /// Gets purchases by supplier country.
     /// </summary>
     public List<ChartDataPoint> GetPurchasesByCountryOfDestination()
     {
@@ -446,7 +455,11 @@ public class ReportChartDataService
 
         return _companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate)
-            .GroupBy(p => p.SupplierAddress?.Country ?? "Unknown")
+            .GroupBy(p =>
+            {
+                var supplier = _companyData.GetSupplier(p.SupplierId ?? "");
+                return supplier?.Address?.Country ?? "Unknown";
+            })
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
@@ -458,7 +471,7 @@ public class ReportChartDataService
     }
 
     /// <summary>
-    /// Gets sales by company of origin.
+    /// Gets sales by customer.
     /// </summary>
     public List<ChartDataPoint> GetSalesByCompanyOfOrigin()
     {
@@ -469,7 +482,7 @@ public class ReportChartDataService
 
         return _companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .GroupBy(s => _companyData.GetCompany(s.CompanyId ?? "")?.Name ?? "Unknown")
+            .GroupBy(s => _companyData.GetCustomer(s.CustomerId ?? "")?.Name ?? "Unknown")
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
@@ -885,7 +898,7 @@ public class ReportChartDataService
                 Label = month.ToString("MMM yyyy"),
                 Value = _companyData.LostDamaged
                     .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd &&
-                           l.Reason == Enums.LostDamagedReason.Damaged),
+                           l.Reason == LostDamagedReason.Damaged),
                 Date = month
             };
         }).ToList();
@@ -900,7 +913,7 @@ public class ReportChartDataService
                 Label = month.ToString("MMM yyyy"),
                 Value = _companyData.LostDamaged
                     .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd &&
-                           l.Reason == Enums.LostDamagedReason.Lost),
+                           l.Reason == LostDamagedReason.Lost),
                 Date = month
             };
         }).ToList();

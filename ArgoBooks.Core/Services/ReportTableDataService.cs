@@ -56,7 +56,6 @@ public class ReportTableDataService
         {
             TableDataSelection.TopByAmount => query.OrderByDescending(s => s.Total),
             TableDataSelection.BottomByAmount => query.OrderBy(s => s.Total),
-            TableDataSelection.ReturnsOnly => query.Where(s => s.HasReturn),
             _ => query.OrderByDescending(s => s.Date)
         };
 
@@ -81,28 +80,26 @@ public class ReportTableDataService
 
     private TransactionTableRow CreateSalesRow(Sale sale)
     {
-        var company = _companyData?.GetCompany(sale.CompanyId ?? "");
+        var customer = _companyData?.GetCustomer(sale.CustomerId ?? "");
         var accountant = _companyData?.GetAccountant(sale.AccountantId ?? "");
-        var primaryProduct = sale.Items?.FirstOrDefault();
-        var product = primaryProduct != null ? _companyData?.GetProduct(primaryProduct.ProductId ?? "") : null;
+        var primaryItem = sale.LineItems?.FirstOrDefault();
+        var product = primaryItem != null ? _companyData?.GetProduct(primaryItem.ProductId ?? "") : null;
 
         return new TransactionTableRow
         {
             Id = sale.Id,
-            TransactionId = sale.TransactionNumber ?? sale.Id,
+            TransactionId = sale.ReferenceNumber ?? sale.Id,
             Date = sale.Date,
             TransactionType = "Sale",
-            CompanyName = company?.Name ?? "Unknown",
-            ProductName = product?.Name ?? (sale.Items?.Count > 1 ? $"Multiple ({sale.Items.Count} items)" : "Unknown"),
-            Quantity = sale.Items?.Sum(i => i.Quantity) ?? 0,
-            UnitPrice = primaryProduct?.UnitPrice ?? 0,
+            CompanyName = customer?.Name ?? "Unknown",
+            ProductName = product?.Description ?? (sale.LineItems?.Count > 1 ? $"Multiple ({sale.LineItems.Count} items)" : sale.Description),
+            Quantity = (int)(sale.LineItems?.Sum(i => i.Quantity) ?? sale.Quantity),
+            UnitPrice = primaryItem?.UnitPrice ?? sale.UnitPrice,
             Total = sale.Total,
-            Status = sale.Status.ToString(),
+            Status = sale.PaymentStatus,
             AccountantName = accountant?.Name ?? "Unknown",
             ShippingCost = sale.ShippingCost,
-            Country = sale.ShippingAddress?.Country ?? "",
-            HasReturn = sale.HasReturn,
-            ReturnAmount = sale.ReturnAmount,
+            Country = customer?.Address?.Country ?? "",
             Notes = sale.Notes ?? ""
         };
     }
@@ -129,7 +126,6 @@ public class ReportTableDataService
         {
             TableDataSelection.TopByAmount => query.OrderByDescending(p => p.Total),
             TableDataSelection.BottomByAmount => query.OrderBy(p => p.Total),
-            TableDataSelection.ReturnsOnly => query.Where(p => p.HasReturn),
             _ => query.OrderByDescending(p => p.Date)
         };
 
@@ -156,26 +152,22 @@ public class ReportTableDataService
     {
         var supplier = _companyData?.GetSupplier(purchase.SupplierId ?? "");
         var accountant = _companyData?.GetAccountant(purchase.AccountantId ?? "");
-        var primaryProduct = purchase.Items?.FirstOrDefault();
-        var product = primaryProduct != null ? _companyData?.GetProduct(primaryProduct.ProductId ?? "") : null;
 
         return new TransactionTableRow
         {
             Id = purchase.Id,
-            TransactionId = purchase.TransactionNumber ?? purchase.Id,
+            TransactionId = purchase.ReferenceNumber ?? purchase.Id,
             Date = purchase.Date,
             TransactionType = "Purchase",
             CompanyName = supplier?.Name ?? "Unknown",
-            ProductName = product?.Name ?? (purchase.Items?.Count > 1 ? $"Multiple ({purchase.Items.Count} items)" : "Unknown"),
-            Quantity = purchase.Items?.Sum(i => i.Quantity) ?? 0,
-            UnitPrice = primaryProduct?.UnitPrice ?? 0,
+            ProductName = purchase.Description,
+            Quantity = (int)purchase.Quantity,
+            UnitPrice = purchase.UnitPrice,
             Total = purchase.Total,
-            Status = purchase.Status.ToString(),
+            Status = "Completed",
             AccountantName = accountant?.Name ?? "Unknown",
             ShippingCost = purchase.ShippingCost,
-            Country = purchase.SupplierAddress?.Country ?? "",
-            HasReturn = purchase.HasReturn,
-            ReturnAmount = purchase.ReturnAmount,
+            Country = supplier?.Address?.Country ?? "",
             Notes = purchase.Notes ?? ""
         };
     }
@@ -189,12 +181,19 @@ public class ReportTableDataService
     /// </summary>
     public List<TransactionTableRow> GetAllTransactionsTableData(TableReportElement tableConfig)
     {
+        var noMaxConfig = new TableReportElement
+        {
+            DataSelection = tableConfig.DataSelection,
+            SortOrder = tableConfig.SortOrder,
+            MaxRows = 0
+        };
+
         var sales = _filters.TransactionType is TransactionType.Revenue or TransactionType.Both
-            ? GetSalesTableData(tableConfig with { MaxRows = 0 })
+            ? GetSalesTableData(noMaxConfig)
             : [];
 
         var purchases = _filters.TransactionType is TransactionType.Expenses or TransactionType.Both
-            ? GetPurchasesTableData(tableConfig with { MaxRows = 0 })
+            ? GetPurchasesTableData(noMaxConfig)
             : [];
 
         var combined = sales.Concat(purchases).ToList();
@@ -465,7 +464,7 @@ public class ReportTableDataService
 
         var productSales = _companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .SelectMany(s => s.Items ?? [])
+            .SelectMany(s => s.LineItems ?? [])
             .GroupBy(i => i.ProductId)
             .Select(g =>
             {
@@ -477,8 +476,8 @@ public class ReportTableDataService
                     ProductId = g.Key ?? "",
                     ProductName = product?.Name ?? "Unknown",
                     CategoryName = category?.Name ?? "Unknown",
-                    TotalQuantity = g.Sum(i => i.Quantity),
-                    TotalRevenue = g.Sum(i => i.Total),
+                    TotalQuantity = (int)g.Sum(i => i.Quantity),
+                    TotalRevenue = g.Sum(i => i.Amount),
                     TransactionCount = g.Count(),
                     AveragePrice = g.Average(i => i.UnitPrice)
                 };
@@ -502,16 +501,16 @@ public class ReportTableDataService
 
         var customerSales = _companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .GroupBy(s => s.CompanyId)
+            .GroupBy(s => s.CustomerId)
             .Select(g =>
             {
-                var company = _companyData.GetCompany(g.Key ?? "");
+                var customer = _companyData.GetCustomer(g.Key ?? "");
 
                 return new CustomerAnalysisRow
                 {
                     CustomerId = g.Key ?? "",
-                    CustomerName = company?.Name ?? "Unknown",
-                    Country = company?.Address?.Country ?? "",
+                    CustomerName = customer?.Name ?? "Unknown",
+                    Country = customer?.Address?.Country ?? "",
                     TotalRevenue = g.Sum(s => s.Total),
                     TransactionCount = g.Count(),
                     AverageTransaction = g.Average(s => s.Total),
@@ -642,8 +641,6 @@ public class TransactionTableRow
     public string AccountantName { get; set; } = string.Empty;
     public decimal ShippingCost { get; set; }
     public string Country { get; set; } = string.Empty;
-    public bool HasReturn { get; set; }
-    public decimal ReturnAmount { get; set; }
     public string Notes { get; set; } = string.Empty;
 }
 

@@ -23,6 +23,8 @@ public class ReportRenderer : IDisposable
     // Fonts
     private readonly SKTypeface _defaultTypeface;
     private readonly SKTypeface _boldTypeface;
+    private readonly SKFont _defaultFont;
+    private readonly SKFont _headerFont;
 
     public ReportRenderer(ReportConfiguration config, CompanyData? companyData, float renderScale = 1f)
     {
@@ -32,6 +34,9 @@ public class ReportRenderer : IDisposable
 
         _defaultTypeface = SKTypeface.FromFamilyName("Segoe UI") ?? SKTypeface.Default;
         _boldTypeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold) ?? SKTypeface.Default;
+
+        _defaultFont = new SKFont(_defaultTypeface, 12 * renderScale);
+        _headerFont = new SKFont(_boldTypeface, 18 * renderScale);
 
         _backgroundPaint = new SKPaint
         {
@@ -43,18 +48,13 @@ public class ReportRenderer : IDisposable
         _textPaint = new SKPaint
         {
             Color = SKColors.Black,
-            IsAntialias = true,
-            TextAlign = SKTextAlign.Left,
-            Typeface = _defaultTypeface
+            IsAntialias = true
         };
 
         _headerPaint = new SKPaint
         {
             Color = SKColors.Black,
-            IsAntialias = true,
-            TextAlign = SKTextAlign.Center,
-            Typeface = _boldTypeface,
-            TextSize = 18 * renderScale
+            IsAntialias = true
         };
 
         _borderPaint = new SKPaint
@@ -253,17 +253,11 @@ public class ReportRenderer : IDisposable
         // Draw chart title
         if (chart.ShowTitle)
         {
-            var titlePaint = new SKPaint
-            {
-                Color = SKColors.Black,
-                IsAntialias = true,
-                TextAlign = SKTextAlign.Center,
-                TextSize = (float)chart.TitleFontSize * _renderScale,
-                Typeface = _boldTypeface
-            };
+            using var titleFont = new SKFont(_boldTypeface, (float)chart.TitleFontSize * _renderScale);
+            using var titlePaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
 
             var title = GetChartTitle(chart.ChartType);
-            canvas.DrawText(title, rect.MidX, rect.Top + 20 * _renderScale, titlePaint);
+            canvas.DrawText(title, rect.MidX, rect.Top + 20 * _renderScale, SKTextAlign.Center, titleFont, titlePaint);
         }
 
         // Draw placeholder for chart
@@ -284,15 +278,9 @@ public class ReportRenderer : IDisposable
         canvas.DrawRect(chartArea, placeholderPaint);
 
         // Draw chart type indicator text
-        var typePaint = new SKPaint
-        {
-            Color = SKColors.Gray,
-            IsAntialias = true,
-            TextAlign = SKTextAlign.Center,
-            TextSize = 12 * _renderScale,
-            Typeface = _defaultTypeface
-        };
-        canvas.DrawText($"[{chart.ChartType}]", chartArea.MidX, chartArea.MidY, typePaint);
+        using var typeFont = new SKFont(_defaultTypeface, 12 * _renderScale);
+        using var typePaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+        canvas.DrawText($"[{chart.ChartType}]", chartArea.MidX, chartArea.MidY, SKTextAlign.Center, typeFont, typePaint);
     }
 
     private void RenderTable(SKCanvas canvas, TableReportElement table)
@@ -312,20 +300,14 @@ public class ReportRenderer : IDisposable
             // Draw column headers
             var columns = GetVisibleColumns(table);
             var columnWidth = rect.Width / columns.Count;
-            var headerTextPaint = new SKPaint
-            {
-                Color = ParseColor(table.HeaderTextColor),
-                IsAntialias = true,
-                TextAlign = SKTextAlign.Center,
-                TextSize = (float)table.FontSize * _renderScale,
-                Typeface = _boldTypeface
-            };
+            using var headerFont = new SKFont(_boldTypeface, (float)table.FontSize * _renderScale);
+            using var headerTextPaint = new SKPaint { Color = ParseColor(table.HeaderTextColor), IsAntialias = true };
 
             for (int i = 0; i < columns.Count; i++)
             {
                 var x = rect.Left + (i * columnWidth) + (columnWidth / 2);
                 var y = headerRect.MidY + (table.FontSize * _renderScale) / 3;
-                canvas.DrawText(columns[i], x, y, headerTextPaint);
+                canvas.DrawText(columns[i], x, y, SKTextAlign.Center, headerFont, headerTextPaint);
             }
         }
 
@@ -360,20 +342,15 @@ public class ReportRenderer : IDisposable
             style = SKFontStyle.Italic;
 
         var typeface = SKTypeface.FromFamilyName(label.FontFamily, style) ?? _defaultTypeface;
+        using var font = new SKFont(typeface, (float)label.FontSize * _renderScale);
+        using var paint = new SKPaint { Color = ParseColor(label.TextColor), IsAntialias = true };
 
-        var paint = new SKPaint
+        var textAlign = label.HorizontalAlignment switch
         {
-            Color = ParseColor(label.TextColor),
-            IsAntialias = true,
-            TextSize = (float)label.FontSize * _renderScale,
-            Typeface = typeface,
-            TextAlign = label.HorizontalAlignment switch
-            {
-                HorizontalTextAlignment.Left => SKTextAlign.Left,
-                HorizontalTextAlignment.Center => SKTextAlign.Center,
-                HorizontalTextAlignment.Right => SKTextAlign.Right,
-                _ => SKTextAlign.Left
-            }
+            HorizontalTextAlignment.Left => SKTextAlign.Left,
+            HorizontalTextAlignment.Center => SKTextAlign.Center,
+            HorizontalTextAlignment.Right => SKTextAlign.Right,
+            _ => SKTextAlign.Left
         };
 
         var x = label.HorizontalAlignment switch
@@ -392,12 +369,12 @@ public class ReportRenderer : IDisposable
             _ => rect.MidY
         };
 
-        canvas.DrawText(label.Text, x, y, paint);
+        canvas.DrawText(label.Text, x, y, textAlign, font, paint);
 
         // Draw underline if specified
         if (label.IsUnderline)
         {
-            var metrics = paint.FontMetrics;
+            font.GetFontMetrics(out var metrics);
             var underlinePaint = new SKPaint
             {
                 Color = paint.Color,
@@ -406,8 +383,8 @@ public class ReportRenderer : IDisposable
                 IsAntialias = true
             };
 
-            var textWidth = paint.MeasureText(label.Text);
-            var underlineY = y + metrics.UnderlinePosition ?? (y + 3 * _renderScale);
+            var textWidth = font.MeasureText(label.Text);
+            var underlineY = y + (metrics.UnderlinePosition ?? 3 * _renderScale);
             var startX = label.HorizontalAlignment switch
             {
                 HorizontalTextAlignment.Left => x,
@@ -496,20 +473,15 @@ public class ReportRenderer : IDisposable
 
         var style = dateRange.IsItalic ? SKFontStyle.Italic : SKFontStyle.Normal;
         var typeface = SKTypeface.FromFamilyName(dateRange.FontFamily, style) ?? _defaultTypeface;
+        using var font = new SKFont(typeface, (float)dateRange.FontSize * _renderScale);
+        using var paint = new SKPaint { Color = ParseColor(dateRange.TextColor), IsAntialias = true };
 
-        var paint = new SKPaint
+        var textAlign = dateRange.HorizontalAlignment switch
         {
-            Color = ParseColor(dateRange.TextColor),
-            IsAntialias = true,
-            TextSize = (float)dateRange.FontSize * _renderScale,
-            Typeface = typeface,
-            TextAlign = dateRange.HorizontalAlignment switch
-            {
-                HorizontalTextAlignment.Left => SKTextAlign.Left,
-                HorizontalTextAlignment.Center => SKTextAlign.Center,
-                HorizontalTextAlignment.Right => SKTextAlign.Right,
-                _ => SKTextAlign.Center
-            }
+            HorizontalTextAlignment.Left => SKTextAlign.Left,
+            HorizontalTextAlignment.Center => SKTextAlign.Center,
+            HorizontalTextAlignment.Right => SKTextAlign.Right,
+            _ => SKTextAlign.Center
         };
 
         var text = GetDateRangeText(dateRange.DateFormat);
@@ -530,7 +502,7 @@ public class ReportRenderer : IDisposable
             _ => rect.MidY
         };
 
-        canvas.DrawText(text, x, y, paint);
+        canvas.DrawText(text, x, y, textAlign, font, paint);
     }
 
     private void RenderSummary(SKCanvas canvas, SummaryReportElement summary)
@@ -555,12 +527,15 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw summary statistics
-        var textPaint = new SKPaint
+        using var font = new SKFont(_defaultTypeface, (float)summary.FontSize * _renderScale);
+        using var textPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+
+        var textAlign = summary.HorizontalAlignment switch
         {
-            Color = SKColors.Black,
-            IsAntialias = true,
-            TextSize = (float)summary.FontSize * _renderScale,
-            Typeface = _defaultTypeface
+            HorizontalTextAlignment.Left => SKTextAlign.Left,
+            HorizontalTextAlignment.Center => SKTextAlign.Center,
+            HorizontalTextAlignment.Right => SKTextAlign.Right,
+            _ => SKTextAlign.Left
         };
 
         var lines = new List<string>();
@@ -608,17 +583,9 @@ public class ReportRenderer : IDisposable
             _ => rect.Left + 10 * _renderScale
         };
 
-        textPaint.TextAlign = summary.HorizontalAlignment switch
-        {
-            HorizontalTextAlignment.Left => SKTextAlign.Left,
-            HorizontalTextAlignment.Center => SKTextAlign.Center,
-            HorizontalTextAlignment.Right => SKTextAlign.Right,
-            _ => SKTextAlign.Left
-        };
-
         for (int i = 0; i < lines.Count; i++)
         {
-            canvas.DrawText(lines[i], x, startY + (i * lineHeight), textPaint);
+            canvas.DrawText(lines[i], x, startY + (i * lineHeight), textAlign, font, textPaint);
         }
     }
 
@@ -636,8 +603,7 @@ public class ReportRenderer : IDisposable
         canvas.DrawRect(headerRect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
 
         // Draw title
-        _headerPaint.TextSize = 18 * _renderScale;
-        canvas.DrawText(_config.Title, width / 2, headerHeight / 2 + 6 * _renderScale, _headerPaint);
+        canvas.DrawText(_config.Title, width / 2f, headerHeight / 2 + 6 * _renderScale, SKTextAlign.Center, _headerFont, _headerPaint);
 
         // Draw separator line
         var separatorPaint = new SKPaint
@@ -665,23 +631,16 @@ public class ReportRenderer : IDisposable
         canvas.DrawLine(margin, footerY + 5 * _renderScale, width - margin, footerY + 5 * _renderScale, separatorPaint);
 
         // Draw timestamp
-        var footerPaint = new SKPaint
-        {
-            Color = SKColors.Gray,
-            IsAntialias = true,
-            TextSize = 10 * _renderScale,
-            Typeface = _defaultTypeface,
-            TextAlign = SKTextAlign.Left
-        };
+        using var footerFont = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var footerPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
 
         var timestamp = DateTime.Now.ToString("MMM dd, yyyy HH:mm");
-        canvas.DrawText($"Generated: {timestamp}", margin, footerY + footerHeight / 2 + 4 * _renderScale, footerPaint);
+        canvas.DrawText($"Generated: {timestamp}", margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Left, footerFont, footerPaint);
 
         // Draw page number if enabled
         if (_config.ShowPageNumbers)
         {
-            footerPaint.TextAlign = SKTextAlign.Right;
-            canvas.DrawText($"Page {_config.CurrentPageNumber}", width - margin, footerY + footerHeight / 2 + 4 * _renderScale, footerPaint);
+            canvas.DrawText($"Page {_config.CurrentPageNumber}", width - margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Right, footerFont, footerPaint);
         }
     }
 
@@ -790,16 +749,9 @@ public class ReportRenderer : IDisposable
         var bgPaint = new SKPaint { Color = new SKColor(240, 240, 240), Style = SKPaintStyle.Fill };
         canvas.DrawRect(rect, bgPaint);
 
-        var textPaint = new SKPaint
-        {
-            Color = SKColors.Gray,
-            IsAntialias = true,
-            TextSize = 10 * _renderScale,
-            Typeface = _defaultTypeface,
-            TextAlign = SKTextAlign.Center
-        };
-
-        canvas.DrawText(message, rect.MidX, rect.MidY, textPaint);
+        using var font = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var textPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+        canvas.DrawText(message, rect.MidX, rect.MidY, SKTextAlign.Center, font, textPaint);
 
         var borderPaint = new SKPaint { Color = SKColors.Black, Style = SKPaintStyle.Stroke, StrokeWidth = 1 };
         canvas.DrawRect(rect, borderPaint);
@@ -1008,6 +960,8 @@ public class ReportRenderer : IDisposable
         _borderPaint.Dispose();
         _defaultTypeface.Dispose();
         _boldTypeface.Dispose();
+        _defaultFont.Dispose();
+        _headerFont.Dispose();
         GC.SuppressFinalize(this);
     }
 }
