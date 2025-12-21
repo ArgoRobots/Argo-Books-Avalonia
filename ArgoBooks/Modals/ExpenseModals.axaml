@@ -91,22 +91,6 @@
                                                             EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}" />
                             </StackPanel>
 
-                            <!-- Category Selection -->
-                            <StackPanel Spacing="6">
-                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Text="Category" />
-                                <controls:SearchableDropdown ItemsSource="{Binding CategoryOptions}"
-                                                            SelectedItem="{Binding SelectedCategory}"
-                                                            DisplayMemberPath="Name"
-                                                            Placeholder="Search for a category..."
-                                                            HasError="{Binding HasCategoryError}"
-                                                            ErrorMessage="Please select a category"
-                                                            ShowAddNew="False"
-                                                            EmptyMessage="No categories found."
-                                                            EmptyCreateLinkText="Create one"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}" />
-                            </StackPanel>
-
                             <!-- Line Items Section -->
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="*,Auto">
@@ -164,7 +148,9 @@
                                                              DisplayMemberPath="Name"
                                                              Placeholder="Search for a product..."
                                                              ShowAddNew="False"
-                                                             EmptyMessage="No products found. Type to add custom item."
+                                                             EmptyMessage="No products found."
+                                                             EmptyCreateLinkText="Create one"
+                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:ExpenseModalsViewModel)DataContext).NavigateToCreateProductCommand}"
                                                              Margin="0,0,8,0" />
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay}"
@@ -573,8 +559,8 @@
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <Button Grid.Column="0"
-                                    Classes="text-button"
-                                    Content="Clear All"
+                                    Classes="secondary-button"
+                                    Content="Clear Filters"
                                     Command="{Binding ClearFiltersCommand}" />
                             <Button Grid.Column="2"
                                     Classes="secondary-button"

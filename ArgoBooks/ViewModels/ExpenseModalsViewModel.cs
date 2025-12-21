@@ -107,7 +107,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     public ObservableCollection<SupplierOption> SupplierOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
     public ObservableCollection<ProductOption> ProductOptions { get; } = [];
-    public ObservableCollection<string> PaymentMethodOptions { get; } = ["Cash", "Credit Card", "Debit Card", "Bank Transfer", "Check", "PayPal", "Other"];
+    public ObservableCollection<string> PaymentMethodOptions { get; } = ["Cash", "Bank Card", "Bank Transfer", "Check", "PayPal", "Other"];
     public ObservableCollection<ExpenseLineItem> LineItems { get; } = [];
 
     // Computed totals from line items
@@ -659,6 +659,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         SelectedPaymentMethod = "Cash";
         ModalNotes = string.Empty;
         LineItems.Clear();
+        // Add a default line item
+        AddLineItem();
         ReceiptFileName = "No receipt attached";
         _receiptFilePath = null;
         ClearValidationErrors();
@@ -692,6 +694,13 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
     }
 
+    [RelayCommand]
+    private void NavigateToCreateProduct()
+    {
+        IsAddEditModalOpen = false;
+        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
     #endregion
 
     #region Line Items
@@ -708,7 +717,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     [RelayCommand]
     private void RemoveLineItem(ExpenseLineItem? item)
     {
-        if (item != null)
+        // Don't allow removing the last item
+        if (item != null && LineItems.Count > 1)
         {
             LineItems.Remove(item);
             UpdateTotals();

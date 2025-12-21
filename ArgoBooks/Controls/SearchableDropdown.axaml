@@ -160,13 +160,13 @@
                     Margin="0,2,0,0"
                     IsVisible="{Binding ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
             <TextBlock Text="{Binding EmptyMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
-                       FontSize="{StaticResource FontSizeXs}"
+                       FontSize="{StaticResource FontSizeSm}"
                        Foreground="{DynamicResource TextTertiaryBrush}"
                        VerticalAlignment="Center" />
             <Button Classes="link"
                     Content="{Binding EmptyCreateLinkText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                     Command="{Binding EmptyCreateCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
-                    FontSize="{StaticResource FontSizeXs}"
+                    FontSize="{StaticResource FontSizeSm}"
                     Padding="0"
                     VerticalAlignment="Center" />
         </StackPanel>
