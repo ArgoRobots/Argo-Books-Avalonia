@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -346,6 +347,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
 
         LoadCustomerOptions();
         LoadCategoryOptions();
+        LoadProductOptions();
 
         _editingRevenueId = sale.Id;
         IsEditMode = true;
@@ -356,14 +358,42 @@ public partial class RevenueModalsViewModel : ViewModelBase
         ModalDate = new DateTimeOffset(sale.Date);
         SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == sale.CustomerId);
         SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == sale.CategoryId);
-        ModalDescription = sale.Description;
-        ModalQuantity = sale.Quantity;
-        ModalUnitPrice = sale.UnitPrice;
         ModalTaxRate = sale.TaxRate;
         ModalShipping = sale.ShippingCost;
         ModalDiscount = sale.Discount;
         SelectedPaymentMethod = sale.PaymentMethod.ToString();
         ModalNotes = sale.Notes;
+
+        // Load line items from sale
+        LineItems.Clear();
+        if (sale.LineItems.Count > 0)
+        {
+            foreach (var li in sale.LineItems)
+            {
+                var lineItem = new RevenueLineItem
+                {
+                    Description = li.Description,
+                    Quantity = li.Quantity,
+                    UnitPrice = li.UnitPrice,
+                    SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId)
+                };
+                lineItem.PropertyChanged += (_, _) => UpdateTotals();
+                LineItems.Add(lineItem);
+            }
+        }
+        else
+        {
+            // Fallback for old data without line items
+            var lineItem = new RevenueLineItem
+            {
+                Description = sale.Description,
+                Quantity = sale.Quantity,
+                UnitPrice = sale.UnitPrice
+            };
+            lineItem.PropertyChanged += (_, _) => UpdateTotals();
+            LineItems.Add(lineItem);
+        }
+        UpdateTotals();
 
         // Load receipt info if available
         _receiptFilePath = sale.ReferenceNumber;
@@ -644,12 +674,23 @@ public partial class RevenueModalsViewModel : ViewModelBase
         companyData.IdCounters.Sale++;
         var saleId = $"SAL-{DateTime.Now:yyyy}-{companyData.IdCounters.Sale:D5}";
 
-        // Combine line items into description
+        // Create description from line items for display purposes
         var description = LineItems.Count == 1
             ? LineItems[0].Description
             : string.Join(", ", LineItems.Select(li => li.Description).Where(d => !string.IsNullOrEmpty(d)));
         var totalQuantity = LineItems.Sum(li => li.Quantity);
         var averageUnitPrice = LineItems.Count > 0 ? LineItems.Average(li => li.UnitPrice) : 0;
+
+        // Convert UI line items to model line items
+        var modelLineItems = LineItems.Select(li => new LineItem
+        {
+            ProductId = li.SelectedProduct?.Id,
+            Description = li.Description,
+            Quantity = li.Quantity,
+            UnitPrice = li.UnitPrice,
+            TaxRate = 0,  // Tax applied at transaction level
+            Discount = 0  // Discount applied at transaction level
+        }).ToList();
 
         var sale = new Sale
         {
@@ -658,6 +699,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
             CustomerId = SelectedCustomer?.Id,
             CategoryId = SelectedCategory?.Id,
             Description = description,
+            LineItems = modelLineItems,
             Quantity = totalQuantity,
             UnitPrice = averageUnitPrice,
             Amount = Subtotal,
@@ -710,6 +752,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
         var originalCustomerId = sale.CustomerId;
         var originalCategoryId = sale.CategoryId;
         var originalDescription = sale.Description;
+        var originalLineItems = sale.LineItems.ToList();
         var originalQuantity = sale.Quantity;
         var originalUnitPrice = sale.UnitPrice;
         var originalAmount = sale.Amount;
@@ -722,13 +765,31 @@ public partial class RevenueModalsViewModel : ViewModelBase
         var originalNotes = sale.Notes;
         var originalReferenceNumber = sale.ReferenceNumber;
 
+        // Create description and line items from UI
+        var description = LineItems.Count == 1
+            ? LineItems[0].Description
+            : string.Join(", ", LineItems.Select(li => li.Description).Where(d => !string.IsNullOrEmpty(d)));
+        var totalQuantity = LineItems.Sum(li => li.Quantity);
+        var averageUnitPrice = LineItems.Count > 0 ? LineItems.Average(li => li.UnitPrice) : 0;
+
+        var modelLineItems = LineItems.Select(li => new LineItem
+        {
+            ProductId = li.SelectedProduct?.Id,
+            Description = li.Description,
+            Quantity = li.Quantity,
+            UnitPrice = li.UnitPrice,
+            TaxRate = 0,
+            Discount = 0
+        }).ToList();
+
         // Apply changes
         sale.Date = ModalDate?.DateTime ?? DateTime.Now;
         sale.CustomerId = SelectedCustomer?.Id;
         sale.CategoryId = SelectedCategory?.Id;
-        sale.Description = ModalDescription;
-        sale.Quantity = ModalQuantity;
-        sale.UnitPrice = ModalUnitPrice;
+        sale.Description = description;
+        sale.LineItems = modelLineItems;
+        sale.Quantity = totalQuantity;
+        sale.UnitPrice = averageUnitPrice;
         sale.Amount = Subtotal;
         sale.TaxRate = ModalTaxRate;
         sale.TaxAmount = TaxAmount;
@@ -740,7 +801,18 @@ public partial class RevenueModalsViewModel : ViewModelBase
         sale.ReferenceNumber = _receiptFilePath ?? string.Empty;
         sale.UpdatedAt = DateTime.Now;
 
-        // Create undo action
+        // Create undo action (capture current values for redo)
+        var newDescription = description;
+        var newLineItems = modelLineItems;
+        var newQuantity = totalQuantity;
+        var newUnitPrice = averageUnitPrice;
+        var newAmount = Subtotal;
+        var newTaxRate = ModalTaxRate;
+        var newTaxAmount = TaxAmount;
+        var newShippingCost = ModalShipping;
+        var newDiscount = ModalDiscount;
+        var newTotal = Total;
+
         var action = new RevenueEditAction(
             $"Edit sale {_editingRevenueId}",
             sale,
@@ -750,6 +822,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
                 sale.CustomerId = originalCustomerId;
                 sale.CategoryId = originalCategoryId;
                 sale.Description = originalDescription;
+                sale.LineItems = originalLineItems;
                 sale.Quantity = originalQuantity;
                 sale.UnitPrice = originalUnitPrice;
                 sale.Amount = originalAmount;
@@ -768,15 +841,16 @@ public partial class RevenueModalsViewModel : ViewModelBase
                 sale.Date = ModalDate?.DateTime ?? DateTime.Now;
                 sale.CustomerId = SelectedCustomer?.Id;
                 sale.CategoryId = SelectedCategory?.Id;
-                sale.Description = ModalDescription;
-                sale.Quantity = ModalQuantity;
-                sale.UnitPrice = ModalUnitPrice;
-                sale.Amount = Subtotal;
-                sale.TaxRate = ModalTaxRate;
-                sale.TaxAmount = TaxAmount;
-                sale.ShippingCost = ModalShipping;
-                sale.Discount = ModalDiscount;
-                sale.Total = Total;
+                sale.Description = newDescription;
+                sale.LineItems = newLineItems;
+                sale.Quantity = newQuantity;
+                sale.UnitPrice = newUnitPrice;
+                sale.Amount = newAmount;
+                sale.TaxRate = newTaxRate;
+                sale.TaxAmount = newTaxAmount;
+                sale.ShippingCost = newShippingCost;
+                sale.Discount = newDiscount;
+                sale.Total = newTotal;
                 sale.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
                 sale.Notes = ModalNotes;
                 sale.ReferenceNumber = _receiptFilePath ?? string.Empty;

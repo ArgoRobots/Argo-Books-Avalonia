@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -348,6 +349,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
         LoadSupplierOptions();
         LoadCategoryOptions();
+        LoadProductOptions();
 
         _editingExpenseId = expense.Id;
         IsEditMode = true;
@@ -358,14 +360,42 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         ModalDate = new DateTimeOffset(expense.Date);
         SelectedSupplier = SupplierOptions.FirstOrDefault(s => s.Id == expense.SupplierId);
         SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == expense.CategoryId);
-        ModalDescription = expense.Description;
-        ModalQuantity = expense.Quantity;
-        ModalUnitPrice = expense.UnitPrice;
         ModalTaxRate = expense.TaxRate;
         ModalShipping = expense.ShippingCost;
         ModalDiscount = expense.Discount;
         SelectedPaymentMethod = expense.PaymentMethod.ToString();
         ModalNotes = expense.Notes;
+
+        // Load line items from expense
+        LineItems.Clear();
+        if (expense.LineItems.Count > 0)
+        {
+            foreach (var li in expense.LineItems)
+            {
+                var lineItem = new ExpenseLineItem
+                {
+                    Description = li.Description,
+                    Quantity = li.Quantity,
+                    UnitPrice = li.UnitPrice,
+                    SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId)
+                };
+                lineItem.PropertyChanged += (_, _) => UpdateTotals();
+                LineItems.Add(lineItem);
+            }
+        }
+        else
+        {
+            // Fallback for old data without line items
+            var lineItem = new ExpenseLineItem
+            {
+                Description = expense.Description,
+                Quantity = expense.Quantity,
+                UnitPrice = expense.UnitPrice
+            };
+            lineItem.PropertyChanged += (_, _) => UpdateTotals();
+            LineItems.Add(lineItem);
+        }
+        UpdateTotals();
 
         // Load receipt info if available
         _receiptFilePath = expense.ReferenceNumber;
@@ -647,12 +677,23 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         companyData.IdCounters.Purchase++;
         var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Purchase:D5}";
 
-        // Combine line items into description
+        // Create description from line items for display purposes
         var description = LineItems.Count == 1
             ? LineItems[0].Description
             : string.Join(", ", LineItems.Select(li => li.Description).Where(d => !string.IsNullOrEmpty(d)));
         var totalQuantity = LineItems.Sum(li => li.Quantity);
         var averageUnitPrice = LineItems.Count > 0 ? LineItems.Average(li => li.UnitPrice) : 0;
+
+        // Convert UI line items to model line items
+        var modelLineItems = LineItems.Select(li => new LineItem
+        {
+            ProductId = li.SelectedProduct?.Id,
+            Description = li.Description,
+            Quantity = li.Quantity,
+            UnitPrice = li.UnitPrice,
+            TaxRate = 0,  // Tax applied at transaction level
+            Discount = 0  // Discount applied at transaction level
+        }).ToList();
 
         var expense = new Purchase
         {
@@ -661,6 +702,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             SupplierId = SelectedSupplier?.Id,
             CategoryId = SelectedCategory?.Id,
             Description = description,
+            LineItems = modelLineItems,
             Quantity = totalQuantity,
             UnitPrice = averageUnitPrice,
             Amount = Subtotal,
@@ -713,6 +755,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         var originalSupplierId = expense.SupplierId;
         var originalCategoryId = expense.CategoryId;
         var originalDescription = expense.Description;
+        var originalLineItems = expense.LineItems.ToList();
         var originalQuantity = expense.Quantity;
         var originalUnitPrice = expense.UnitPrice;
         var originalAmount = expense.Amount;
@@ -725,13 +768,31 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         var originalNotes = expense.Notes;
         var originalReferenceNumber = expense.ReferenceNumber;
 
+        // Create description and line items from UI
+        var description = LineItems.Count == 1
+            ? LineItems[0].Description
+            : string.Join(", ", LineItems.Select(li => li.Description).Where(d => !string.IsNullOrEmpty(d)));
+        var totalQuantity = LineItems.Sum(li => li.Quantity);
+        var averageUnitPrice = LineItems.Count > 0 ? LineItems.Average(li => li.UnitPrice) : 0;
+
+        var modelLineItems = LineItems.Select(li => new LineItem
+        {
+            ProductId = li.SelectedProduct?.Id,
+            Description = li.Description,
+            Quantity = li.Quantity,
+            UnitPrice = li.UnitPrice,
+            TaxRate = 0,
+            Discount = 0
+        }).ToList();
+
         // Apply changes
         expense.Date = ModalDate?.DateTime ?? DateTime.Now;
         expense.SupplierId = SelectedSupplier?.Id;
         expense.CategoryId = SelectedCategory?.Id;
-        expense.Description = ModalDescription;
-        expense.Quantity = ModalQuantity;
-        expense.UnitPrice = ModalUnitPrice;
+        expense.Description = description;
+        expense.LineItems = modelLineItems;
+        expense.Quantity = totalQuantity;
+        expense.UnitPrice = averageUnitPrice;
         expense.Amount = Subtotal;
         expense.TaxRate = ModalTaxRate;
         expense.TaxAmount = TaxAmount;
@@ -743,7 +804,18 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         expense.ReferenceNumber = _receiptFilePath ?? string.Empty;
         expense.UpdatedAt = DateTime.Now;
 
-        // Create undo action
+        // Create undo action (capture current values for redo)
+        var newDescription = description;
+        var newLineItems = modelLineItems;
+        var newQuantity = totalQuantity;
+        var newUnitPrice = averageUnitPrice;
+        var newAmount = Subtotal;
+        var newTaxRate = ModalTaxRate;
+        var newTaxAmount = TaxAmount;
+        var newShippingCost = ModalShipping;
+        var newDiscount = ModalDiscount;
+        var newTotal = Total;
+
         var action = new ExpenseEditAction(
             $"Edit expense {_editingExpenseId}",
             expense,
@@ -753,6 +825,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
                 expense.SupplierId = originalSupplierId;
                 expense.CategoryId = originalCategoryId;
                 expense.Description = originalDescription;
+                expense.LineItems = originalLineItems;
                 expense.Quantity = originalQuantity;
                 expense.UnitPrice = originalUnitPrice;
                 expense.Amount = originalAmount;
@@ -771,15 +844,16 @@ public partial class ExpenseModalsViewModel : ViewModelBase
                 expense.Date = ModalDate?.DateTime ?? DateTime.Now;
                 expense.SupplierId = SelectedSupplier?.Id;
                 expense.CategoryId = SelectedCategory?.Id;
-                expense.Description = ModalDescription;
-                expense.Quantity = ModalQuantity;
-                expense.UnitPrice = ModalUnitPrice;
-                expense.Amount = Subtotal;
-                expense.TaxRate = ModalTaxRate;
-                expense.TaxAmount = TaxAmount;
-                expense.ShippingCost = ModalShipping;
-                expense.Discount = ModalDiscount;
-                expense.Total = Total;
+                expense.Description = newDescription;
+                expense.LineItems = newLineItems;
+                expense.Quantity = newQuantity;
+                expense.UnitPrice = newUnitPrice;
+                expense.Amount = newAmount;
+                expense.TaxRate = newTaxRate;
+                expense.TaxAmount = newTaxAmount;
+                expense.ShippingCost = newShippingCost;
+                expense.Discount = newDiscount;
+                expense.Total = newTotal;
                 expense.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
                 expense.Notes = ModalNotes;
                 expense.ReferenceNumber = _receiptFilePath ?? string.Empty;

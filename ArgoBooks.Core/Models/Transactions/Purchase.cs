@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 
 namespace ArgoBooks.Core.Models.Transactions;
 
@@ -42,6 +43,12 @@ public class Purchase
     /// </summary>
     [JsonPropertyName("description")]
     public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Line items in this purchase.
+    /// </summary>
+    [JsonPropertyName("lineItems")]
+    public List<LineItem> LineItems { get; set; } = [];
 
     /// <summary>
     /// Quantity purchased.
