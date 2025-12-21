@@ -95,6 +95,61 @@ public partial class RevenuePageViewModel : ViewModelBase
 
     #endregion
 
+    #region Column Visibility
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private bool _showIdColumn = true;
+
+    [ObservableProperty]
+    private bool _showCustomerColumn = true;
+
+    [ObservableProperty]
+    private bool _showProductColumn = true;
+
+    [ObservableProperty]
+    private bool _showDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showQuantityColumn = false;
+
+    [ObservableProperty]
+    private bool _showUnitPriceColumn = false;
+
+    [ObservableProperty]
+    private bool _showAmountColumn = false;
+
+    [ObservableProperty]
+    private bool _showTaxColumn = false;
+
+    [ObservableProperty]
+    private bool _showShippingColumn = false;
+
+    [ObservableProperty]
+    private bool _showDiscountColumn = false;
+
+    [ObservableProperty]
+    private bool _showTotalColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Revenue Collection
 
     private readonly List<Sale> _allRevenue = [];
@@ -402,6 +457,11 @@ public partial class RevenuePageViewModel : ViewModelBase
                 CategoryId = sale.CategoryId,
                 Amount = sale.Amount,
                 TaxAmount = sale.TaxAmount,
+                TaxRate = sale.TaxRate,
+                ShippingCost = sale.ShippingCost,
+                Discount = sale.Discount,
+                Quantity = (int)sale.Quantity,
+                UnitPrice = sale.UnitPrice,
                 PaymentMethod = sale.PaymentMethod
             };
         }).ToList();
@@ -598,10 +658,31 @@ public partial class RevenueDisplayItem : ObservableObject
     private decimal _taxAmount;
 
     [ObservableProperty]
+    private decimal _taxRate;
+
+    [ObservableProperty]
+    private decimal _shippingCost;
+
+    [ObservableProperty]
+    private decimal _discount;
+
+    [ObservableProperty]
+    private int _quantity;
+
+    [ObservableProperty]
+    private decimal _unitPrice;
+
+    [ObservableProperty]
     private PaymentMethod _paymentMethod;
 
     public string DateFormatted => Date.ToString("MMM d, yyyy");
     public string TotalFormatted => $"${Total:N2}";
+    public string AmountFormatted => $"${Amount:N2}";
+    public string TaxAmountFormatted => $"${TaxAmount:N2}";
+    public string TaxRateFormatted => $"{TaxRate:N1}%";
+    public string ShippingCostFormatted => $"${ShippingCost:N2}";
+    public string DiscountFormatted => $"-${Discount:N2}";
+    public string UnitPriceFormatted => $"${UnitPrice:N2}";
 
     public string CustomerInitials
     {
