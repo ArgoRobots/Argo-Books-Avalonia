@@ -1,0 +1,734 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="ArgoBooks.Modals.RevenueModals"
+             x:DataType="vm:RevenueModalsViewModel">
+
+    <Design.DataContext>
+        <vm:RevenueModalsViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- ======================= ADD / EDIT REVENUE MODAL ======================= -->
+        <Panel IsVisible="{Binding IsAddEditModalOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="750"
+                    MaxHeight="700"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding ModalTitle}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseAddEditModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="20">
+                            <!-- Date and Payment Method Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <!-- Date -->
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Date" /><Run Text=" *" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <DatePicker SelectedDate="{Binding ModalDate}"
+                                                Classes="form-datepicker"
+                                                HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <!-- Payment Method -->
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="Payment Method" />
+                                    <ComboBox ItemsSource="{Binding PaymentMethodOptions}"
+                                              SelectedItem="{Binding SelectedPaymentMethod}"
+                                              Classes="form-combobox"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Customer Selection -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Customer" />
+                                <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
+                                                            SelectedItem="{Binding SelectedCustomer}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search for a customer..."
+                                                            HasError="{Binding HasCustomerError}"
+                                                            ErrorMessage="Please select a customer"
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No customers found."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
+                            </StackPanel>
+
+                            <!-- Line Items Section -->
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0"
+                                               Text="Line Items"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <Button Grid.Column="1"
+                                            Classes="secondary-button"
+                                            Command="{Binding AddLineItemCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                      Width="14" Height="14" />
+                                            <TextBlock Text="Add Item" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+
+                                <!-- Line Items Header -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
+                                    <Grid ColumnDefinitions="*,80,90,70,Auto">
+                                        <TextBlock Grid.Column="0" Text="Product / Description" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="1" Text="Qty" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="2" Text="Price" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="3" Text="Amount" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="4" Width="32" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Line Items List -->
+                                <ItemsControl ItemsSource="{Binding LineItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:RevenueLineItem">
+                                            <Border Padding="12,8"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="0,0,0,1">
+                                                <Grid ColumnDefinitions="*,80,90,70,Auto">
+                                                    <controls:SearchableDropdown Grid.Column="0"
+                                                             ItemsSource="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).ProductOptions}"
+                                                             SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                                                             DisplayMemberPath="Name"
+                                                             Placeholder="Search for a product..."
+                                                             ShowAddNew="False"
+                                                             EmptyMessage="No products found."
+                                                             EmptyCreateLinkText="Create one"
+                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).NavigateToCreateProductCommand}"
+                                                             Margin="0,0,8,0" />
+                                                    <NumericUpDown Grid.Column="1"
+                                                                   Value="{Binding Quantity, Mode=TwoWay}"
+                                                                   Minimum="1"
+                                                                   FormatString="0"
+                                                                   Classes="line-item-input"
+                                                                   ShowButtonSpinner="False"
+                                                                   HorizontalAlignment="Stretch"
+                                                                   Margin="0,0,8,0" />
+                                                    <NumericUpDown Grid.Column="2"
+                                                                   Value="{Binding UnitPrice, Mode=TwoWay}"
+                                                                   Minimum="0"
+                                                                   FormatString="N2"
+                                                                   Classes="line-item-input"
+                                                                   ShowButtonSpinner="False"
+                                                                   HorizontalAlignment="Stretch"
+                                                                   Margin="0,0,8,0" />
+                                                    <TextBlock Grid.Column="3"
+                                                               Text="{Binding AmountFormatted}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               HorizontalAlignment="Right" />
+                                                    <Button Grid.Column="4"
+                                                            Classes="icon-button danger"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).RemoveLineItemCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip.Tip="Remove item">
+                                                        <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                  Width="14" Height="14" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Empty State for Line Items -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="24,16"
+                                        IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsZero}}">
+                                    <TextBlock Text="No line items added. Click 'Add Item' to add products or services."
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Tax, Shipping, Discount Row -->
+                            <Grid ColumnDefinitions="*,16,*,16,*">
+                                <!-- Tax Rate -->
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="Tax Rate (%)" />
+                                    <NumericUpDown Value="{Binding ModalTaxRate, Mode=TwoWay}"
+                                                   Minimum="0"
+                                                   Maximum="100"
+                                                   FormatString="N2"
+                                                   Classes="form-numericupdown"
+                                                   ShowButtonSpinner="False"
+                                                   HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <!-- Shipping -->
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="Shipping" />
+                                    <NumericUpDown Value="{Binding ModalShipping, Mode=TwoWay}"
+                                                   Minimum="0"
+                                                   FormatString="C2"
+                                                   Classes="form-numericupdown"
+                                                   ShowButtonSpinner="False"
+                                                   HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <!-- Discount -->
+                                <StackPanel Grid.Column="4" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Text="Discount" />
+                                    <NumericUpDown Value="{Binding ModalDiscount, Mode=TwoWay}"
+                                                   Minimum="0"
+                                                   FormatString="C2"
+                                                   Classes="form-numericupdown"
+                                                   ShowButtonSpinner="False"
+                                                   HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Attach Receipt -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Receipt" />
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Border Grid.Column="0"
+                                            Background="{DynamicResource SurfaceAltBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="12,10">
+                                        <TextBlock Text="{Binding ReceiptFileName, FallbackValue='No receipt attached'}"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                    <Button Grid.Column="1"
+                                            Classes="secondary-button"
+                                            Command="{Binding AttachReceiptCommand}"
+                                            Margin="8,0,0,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"
+                                                      Width="14" Height="14" />
+                                            <TextBlock Text="Attach" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Notes -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Notes" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         Height="80"
+                                         Watermark="Additional notes..." />
+                            </StackPanel>
+
+                            <!-- Totals Summary -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16">
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Subtotal" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding SubtotalFormatted}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Tax" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding TaxAmountFormatted}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Shipping" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding ShippingAmountFormatted}" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Discount" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding DiscountAmountFormatted}" FontSize="13" Foreground="{DynamicResource ErrorBrush}" />
+                                    </Grid>
+                                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,4" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Total" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding TotalFormatted}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Validation Message -->
+                            <Border Background="#fee2e2"
+                                    CornerRadius="6"
+                                    Padding="12"
+                                    IsVisible="{Binding HasValidationMessage}">
+                                <TextBlock Text="{Binding ValidationMessage}"
+                                           FontSize="13"
+                                           Foreground="#dc2626" />
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <Button Grid.Column="1"
+                                    Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding CloseAddEditModalCommand}"
+                                    Margin="0,0,12,0" />
+                            <Button Grid.Column="2"
+                                    Classes="primary-button"
+                                    Content="{Binding SaveButtonText}"
+                                    Command="{Binding SaveRevenueCommand}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- ======================= DELETE CONFIRMATION MODAL ======================= -->
+        <Panel IsVisible="{Binding IsDeleteConfirmOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="420"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel>
+                    <!-- Header -->
+                    <Border Padding="24,20">
+                        <StackPanel Spacing="16">
+                            <!-- Warning Icon -->
+                            <Border Width="48" Height="48"
+                                    CornerRadius="24"
+                                    Background="{DynamicResource ErrorLightBrush}"
+                                    HorizontalAlignment="Center">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                          Width="24" Height="24"
+                                          Foreground="{DynamicResource ErrorBrush}" />
+                            </Border>
+
+                            <!-- Title -->
+                            <TextBlock Text="Delete Revenue"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" />
+
+                            <!-- Message -->
+                            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                <TextBlock Text="Are you sure you want to delete this revenue entry?"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center" />
+                                <TextBlock FontSize="14"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           FontWeight="Medium"
+                                           HorizontalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center">
+                                    <Run Text="{Binding DeleteRevenueId}" />
+                                    <Run Text=" - " />
+                                    <Run Text="{Binding DeleteRevenueDescription}" />
+                                </TextBlock>
+                                <TextBlock FontSize="16"
+                                           Foreground="{DynamicResource SuccessBrush}"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           Text="{Binding DeleteRevenueAmount}" />
+                            </StackPanel>
+
+                            <TextBlock Text="This action cannot be undone."
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Footer -->
+                    <Border Padding="24,0,24,20">
+                        <Grid ColumnDefinitions="*,12,*">
+                            <Button Grid.Column="0"
+                                    Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding CloseDeleteConfirmCommand}"
+                                    HorizontalAlignment="Stretch" />
+                            <Button Grid.Column="2"
+                                    Classes="danger-button"
+                                    Content="Delete"
+                                    Command="{Binding DeleteRevenueCommand}"
+                                    HorizontalAlignment="Stretch" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- ======================= FILTER MODAL ======================= -->
+        <Panel IsVisible="{Binding IsFilterModalOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="500"
+                    MaxHeight="600"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Filter Revenue"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseFilterModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="20">
+                            <!-- Status -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Status" />
+                                <ComboBox ItemsSource="{Binding StatusFilterOptions}"
+                                          SelectedItem="{Binding FilterStatus}"
+                                          Classes="form-combobox"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Customer -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Customer" />
+                                <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
+                                                            SelectedItem="{Binding FilterSelectedCustomer}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Select customer..."
+                                                            ShowAddNew="False" />
+                            </StackPanel>
+
+                            <!-- Category -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Category" />
+                                <controls:SearchableDropdown ItemsSource="{Binding CategoryOptions}"
+                                                            SelectedItem="{Binding FilterSelectedCategory}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Select category..."
+                                                            ShowAddNew="False" />
+                            </StackPanel>
+
+                            <!-- Date Range - Stacked -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Date Range" />
+                                <StackPanel Spacing="8">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="From" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding FilterDateFrom}"
+                                                    Classes="form-datepicker"
+                                                    HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="To" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding FilterDateTo}"
+                                                    Classes="form-datepicker"
+                                                    HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Amount Range - Stacked -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Text="Amount Range" />
+                                <StackPanel Spacing="8">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Min" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 Watermark="$0.00"
+                                                 HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Max" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 Watermark="$0.00"
+                                                 HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                            <Button Grid.Column="0"
+                                    Classes="secondary-button"
+                                    Content="Clear Filters"
+                                    Command="{Binding ClearFiltersCommand}" />
+                            <Button Grid.Column="2"
+                                    Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding CloseFilterModalCommand}"
+                                    Margin="0,0,12,0" />
+                            <Button Grid.Column="3"
+                                    Classes="primary-button"
+                                    Content="Apply Filters"
+                                    Command="{Binding ApplyFiltersCommand}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Icon Button -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FEE2E2" />
+        </Style>
+        <Style Selector="Button.icon-button.danger:pointerover PathIcon">
+            <Setter Property="Foreground" Value="#DC2626" />
+        </Style>
+
+        <!-- Primary Button -->
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+
+        <!-- Secondary Button -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Text Button -->
+        <Style Selector="Button.text-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.text-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.text-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Danger Button -->
+        <Style Selector="Button.danger-button">
+            <Setter Property="Background" Value="#DC2626" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#DC2626" />
+        </Style>
+        <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#B91C1C" />
+        </Style>
+
+        <!-- Form Input -->
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style Selector="TextBox.form-input:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Form ComboBox -->
+        <Style Selector="ComboBox.form-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="MinHeight" Value="40" />
+        </Style>
+
+        <!-- Form DatePicker -->
+        <Style Selector="DatePicker.form-datepicker">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="MinHeight" Value="40" />
+        </Style>
+        <Style Selector="DatePicker.form-datepicker /template/ Button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+
+        <!-- NumericUpDown in forms -->
+        <Style Selector="NumericUpDown.form-numericupdown">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="MinHeight" Value="40" />
+        </Style>
+
+        <!-- Line Item NumericUpDown -->
+        <Style Selector="NumericUpDown.line-item-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="NumericUpDown.line-item-input /template/ TextBox#PART_TextBox">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="NumericUpDown.line-item-input:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

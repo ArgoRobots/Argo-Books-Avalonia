@@ -130,5 +130,11 @@
 
         <!-- Invoice Modals -->
         <modals:InvoiceModals DataContext="{Binding InvoiceModalsViewModel}" />
+
+        <!-- Expense Modals -->
+        <modals:ExpenseModals DataContext="{Binding ExpenseModalsViewModel}" />
+
+        <!-- Revenue Modals -->
+        <modals:RevenueModals DataContext="{Binding RevenueModalsViewModel}" />
     </Panel>
 </UserControl>

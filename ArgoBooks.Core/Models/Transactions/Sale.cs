@@ -33,10 +33,46 @@ public class Sale
     public string? AccountantId { get; set; }
 
     /// <summary>
+    /// Category ID for this sale.
+    /// </summary>
+    [JsonPropertyName("categoryId")]
+    public string? CategoryId { get; set; }
+
+    /// <summary>
+    /// Description of the sale.
+    /// </summary>
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
     /// Line items in this sale.
     /// </summary>
     [JsonPropertyName("lineItems")]
     public List<LineItem> LineItems { get; set; } = [];
+
+    /// <summary>
+    /// Quantity sold.
+    /// </summary>
+    [JsonPropertyName("quantity")]
+    public decimal Quantity { get; set; } = 1;
+
+    /// <summary>
+    /// Unit price.
+    /// </summary>
+    [JsonPropertyName("unitPrice")]
+    public decimal UnitPrice { get; set; }
+
+    /// <summary>
+    /// Amount before tax (Quantity * UnitPrice).
+    /// </summary>
+    [JsonPropertyName("amount")]
+    public decimal Amount { get; set; }
+
+    /// <summary>
+    /// Tax rate percentage.
+    /// </summary>
+    [JsonPropertyName("taxRate")]
+    public decimal TaxRate { get; set; }
 
     /// <summary>
     /// Subtotal before tax.
@@ -51,10 +87,28 @@ public class Sale
     public decimal TaxAmount { get; set; }
 
     /// <summary>
+    /// Shipping cost.
+    /// </summary>
+    [JsonPropertyName("shippingCost")]
+    public decimal ShippingCost { get; set; }
+
+    /// <summary>
+    /// Discount amount.
+    /// </summary>
+    [JsonPropertyName("discount")]
+    public decimal Discount { get; set; }
+
+    /// <summary>
     /// Total amount including tax.
     /// </summary>
     [JsonPropertyName("total")]
     public decimal Total { get; set; }
+
+    /// <summary>
+    /// Reference number (e.g., order number).
+    /// </summary>
+    [JsonPropertyName("referenceNumber")]
+    public string ReferenceNumber { get; set; } = string.Empty;
 
     /// <summary>
     /// Payment method used.
