@@ -177,7 +177,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
 
     // Computed totals from line items
     public decimal Subtotal => LineItems.Sum(li => li.Amount);
-    public decimal TaxAmount => Subtotal * (ModalTaxRate / 100m);
+    public decimal TaxAmount => ModalTaxRate;  // Tax is entered as dollar amount
     public decimal DiscountAmount => ModalDiscount;
     public decimal ShippingAmount => ModalShipping;
     public decimal Total => Subtotal + TaxAmount + ShippingAmount - DiscountAmount;
@@ -358,7 +358,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
         ModalDate = new DateTimeOffset(sale.Date);
         SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == sale.CustomerId);
         SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == sale.CategoryId);
-        ModalTaxRate = sale.TaxRate;
+        ModalTaxRate = sale.TaxAmount;  // Load tax as dollar amount
         ModalShipping = sale.ShippingCost;
         ModalDiscount = sale.Discount;
         SelectedPaymentMethod = sale.PaymentMethod.ToString();
@@ -370,13 +370,15 @@ public partial class RevenueModalsViewModel : ViewModelBase
         {
             foreach (var li in sale.LineItems)
             {
+                // Set SelectedProduct first so OnSelectedProductChanged fires before we set saved values
                 var lineItem = new RevenueLineItem
                 {
-                    Description = li.Description,
-                    Quantity = li.Quantity,
-                    UnitPrice = li.UnitPrice,
                     SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId)
                 };
+                // Now override with saved values (after product handler has fired)
+                lineItem.Description = li.Description;
+                lineItem.Quantity = li.Quantity;
+                lineItem.UnitPrice = li.UnitPrice;
                 lineItem.PropertyChanged += (_, _) => UpdateTotals();
                 LineItems.Add(lineItem);
             }
@@ -703,8 +705,8 @@ public partial class RevenueModalsViewModel : ViewModelBase
             Quantity = totalQuantity,
             UnitPrice = averageUnitPrice,
             Amount = Subtotal,
-            TaxRate = ModalTaxRate,
-            TaxAmount = TaxAmount,
+            TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0,  // Calculate percentage for records
+            TaxAmount = TaxAmount,  // Store entered dollar amount
             ShippingCost = ModalShipping,
             Discount = ModalDiscount,
             Total = Total,
@@ -791,8 +793,8 @@ public partial class RevenueModalsViewModel : ViewModelBase
         sale.Quantity = totalQuantity;
         sale.UnitPrice = averageUnitPrice;
         sale.Amount = Subtotal;
-        sale.TaxRate = ModalTaxRate;
-        sale.TaxAmount = TaxAmount;
+        sale.TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0;  // Calculate percentage for records
+        sale.TaxAmount = TaxAmount;  // Store entered dollar amount
         sale.ShippingCost = ModalShipping;
         sale.Discount = ModalDiscount;
         sale.Total = Total;

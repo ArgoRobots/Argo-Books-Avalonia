@@ -176,7 +176,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
     // Computed totals from line items
     public decimal Subtotal => LineItems.Sum(li => li.Amount);
-    public decimal TaxAmount => Subtotal * (ModalTaxRate / 100m);
+    public decimal TaxAmount => ModalTaxRate;  // Tax is entered as dollar amount
     public decimal DiscountAmount => ModalDiscount;
     public decimal ShippingAmount => ModalShipping;
     public decimal Total => Subtotal + TaxAmount + ShippingAmount - DiscountAmount;
@@ -360,7 +360,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         ModalDate = new DateTimeOffset(expense.Date);
         SelectedSupplier = SupplierOptions.FirstOrDefault(s => s.Id == expense.SupplierId);
         SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == expense.CategoryId);
-        ModalTaxRate = expense.TaxRate;
+        ModalTaxRate = expense.TaxAmount;  // Load tax as dollar amount
         ModalShipping = expense.ShippingCost;
         ModalDiscount = expense.Discount;
         SelectedPaymentMethod = expense.PaymentMethod.ToString();
@@ -372,13 +372,15 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         {
             foreach (var li in expense.LineItems)
             {
+                // Set SelectedProduct first so OnSelectedProductChanged fires before we set saved values
                 var lineItem = new ExpenseLineItem
                 {
-                    Description = li.Description,
-                    Quantity = li.Quantity,
-                    UnitPrice = li.UnitPrice,
                     SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId)
                 };
+                // Now override with saved values (after product handler has fired)
+                lineItem.Description = li.Description;
+                lineItem.Quantity = li.Quantity;
+                lineItem.UnitPrice = li.UnitPrice;
                 lineItem.PropertyChanged += (_, _) => UpdateTotals();
                 LineItems.Add(lineItem);
             }
@@ -706,8 +708,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             Quantity = totalQuantity,
             UnitPrice = averageUnitPrice,
             Amount = Subtotal,
-            TaxRate = ModalTaxRate,
-            TaxAmount = TaxAmount,
+            TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0,  // Calculate percentage for records
+            TaxAmount = TaxAmount,  // Store entered dollar amount
             ShippingCost = ModalShipping,
             Discount = ModalDiscount,
             Total = Total,
@@ -794,8 +796,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         expense.Quantity = totalQuantity;
         expense.UnitPrice = averageUnitPrice;
         expense.Amount = Subtotal;
-        expense.TaxRate = ModalTaxRate;
-        expense.TaxAmount = TaxAmount;
+        expense.TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0;  // Calculate percentage for records
+        expense.TaxAmount = TaxAmount;  // Store entered dollar amount
         expense.ShippingCost = ModalShipping;
         expense.Discount = ModalDiscount;
         expense.Total = Total;
