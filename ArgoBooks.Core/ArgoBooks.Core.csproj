@@ -15,6 +15,9 @@
         <!-- Dependency Injection -->
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 
+        <!-- Graphics (for report rendering) -->
+        <PackageReference Include="SkiaSharp" />
+
         <!-- PDF -->
         <PackageReference Include="QuestPDF" />
 
