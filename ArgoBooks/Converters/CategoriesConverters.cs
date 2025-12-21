@@ -400,7 +400,7 @@ public static class StringConverters
     /// <summary>
     /// Returns true if the value equals the parameter.
     /// </summary>
-    public static readonly IValueConverter Equals =
+    public static new readonly IValueConverter Equals =
         new FuncValueConverter<string, string, bool>((value, parameter) =>
             string.Equals(value, parameter, StringComparison.OrdinalIgnoreCase));
 }

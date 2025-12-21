@@ -672,21 +672,3 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
     #endregion
 }
-
-/// <summary>
-/// Option model for supplier dropdown.
-/// </summary>
-public class SupplierOption
-{
-    public string? Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Option model for category dropdown.
-/// </summary>
-public class CategoryOption
-{
-    public string? Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-}
