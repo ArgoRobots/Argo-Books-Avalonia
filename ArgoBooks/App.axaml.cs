@@ -1308,10 +1308,18 @@ public partial class App : Application
         navigationService.RegisterPage("Categories", param =>
         {
             var viewModel = new CategoriesPageViewModel();
-            // Check if we should open the add modal
-            if (param is Dictionary<string, object?> dict && dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
+            if (param is Dictionary<string, object?> dict)
             {
-                viewModel.IsAddModalOpen = true;
+                // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)
+                if (dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
+                {
+                    viewModel.SelectedTabIndex = index;
+                }
+                // Check if we should open the add modal
+                if (dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
+                {
+                    viewModel.IsAddModalOpen = true;
+                }
             }
             return new CategoriesPage { DataContext = viewModel };
         });

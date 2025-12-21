@@ -691,7 +691,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     private void NavigateToCreateCategory()
     {
         IsAddEditModalOpen = false;
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
+        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", 0 } });
     }
 
     [RelayCommand]
@@ -811,4 +811,6 @@ public class ProductOption
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }
+
+    public override string ToString() => Name;
 }

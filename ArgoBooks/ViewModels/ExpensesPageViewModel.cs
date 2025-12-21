@@ -547,6 +547,18 @@ public partial class ExpensesPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void MarkAsLostDamaged(ExpenseDisplayItem? item)
+    {
+        // TODO: Implement mark as lost/damaged functionality
+    }
+
+    [RelayCommand]
+    private void MarkAsReturned(ExpenseDisplayItem? item)
+    {
+        // TODO: Implement mark as returned functionality
+    }
+
+    [RelayCommand]
     private void OpenFilterModal()
     {
         App.ExpenseModalsViewModel?.OpenFilterModal();

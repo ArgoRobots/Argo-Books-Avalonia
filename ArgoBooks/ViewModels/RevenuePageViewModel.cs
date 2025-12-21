@@ -533,6 +533,18 @@ public partial class RevenuePageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void MarkAsLostDamaged(RevenueDisplayItem? item)
+    {
+        // TODO: Implement mark as lost/damaged functionality
+    }
+
+    [RelayCommand]
+    private void MarkAsReturned(RevenueDisplayItem? item)
+    {
+        // TODO: Implement mark as returned functionality
+    }
+
+    [RelayCommand]
     private void OpenFilterModal()
     {
         App.RevenueModalsViewModel?.OpenFilterModal();

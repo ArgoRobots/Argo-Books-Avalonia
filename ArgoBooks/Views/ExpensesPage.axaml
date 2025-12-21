@@ -205,7 +205,7 @@
                         <Border Grid.Row="0"
                                 Background="{DynamicResource SurfaceAltBrush}"
                                 Padding="24,12">
-                            <Grid ColumnDefinitions="0.6*,0.8*,1.5*,0.8*,0.8*,0.7*,0.6*,0.5*,0.6*,80">
+                            <Grid ColumnDefinitions="0.5*,0.7*,1.5*,0.8*,0.7*,0.6*,0.5*,0.6*,140">
                                 <!-- ID Column Header -->
                                 <Button Grid.Column="0" Classes="column-header"
                                         Command="{Binding SortByCommand}" CommandParameter="Id">
@@ -268,11 +268,11 @@
                                     </StackPanel>
                                 </Button>
 
-                                <!-- Description Column Header -->
+                                <!-- Product Column Header -->
                                 <Button Grid.Column="2" Classes="column-header"
                                         Command="{Binding SortByCommand}" CommandParameter="Product">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Description" FontSize="12" FontWeight="SemiBold"
+                                        <TextBlock Text="Product" FontSize="12" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <Panel Width="12" Height="12">
                                             <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -299,39 +299,8 @@
                                     </StackPanel>
                                 </Button>
 
-                                <!-- Category Column Header -->
-                                <Button Grid.Column="3" Classes="column-header"
-                                        Command="{Binding SortByCommand}" CommandParameter="Category">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Category" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Category:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Category:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
                                 <!-- Supplier Column Header -->
-                                <Button Grid.Column="4" Classes="column-header"
+                                <Button Grid.Column="3" Classes="column-header"
                                         Command="{Binding SortByCommand}" CommandParameter="Supplier">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="Supplier" FontSize="12" FontWeight="SemiBold"
@@ -362,7 +331,7 @@
                                 </Button>
 
                                 <!-- Date Column Header -->
-                                <Button Grid.Column="5" Classes="column-header"
+                                <Button Grid.Column="4" Classes="column-header"
                                         Command="{Binding SortByCommand}" CommandParameter="Date">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="Date" FontSize="12" FontWeight="SemiBold"
@@ -393,7 +362,7 @@
                                 </Button>
 
                                 <!-- Total Column Header -->
-                                <Button Grid.Column="6" Classes="column-header"
+                                <Button Grid.Column="5" Classes="column-header"
                                         Command="{Binding SortByCommand}" CommandParameter="Total">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="Total" FontSize="12" FontWeight="SemiBold"
@@ -424,7 +393,7 @@
                                 </Button>
 
                                 <!-- Receipt - not sortable -->
-                                <TextBlock Grid.Column="7"
+                                <TextBlock Grid.Column="6"
                                            Text="Receipt"
                                            FontSize="12"
                                            FontWeight="SemiBold"
@@ -432,7 +401,7 @@
                                            HorizontalAlignment="Center" />
 
                                 <!-- Status Column Header -->
-                                <Button Grid.Column="8" Classes="column-header"
+                                <Button Grid.Column="7" Classes="column-header"
                                         Command="{Binding SortByCommand}" CommandParameter="Status">
                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                         <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold"
@@ -463,7 +432,7 @@
                                 </Button>
 
                                 <!-- Actions - not sortable -->
-                                <TextBlock Grid.Column="9"
+                                <TextBlock Grid.Column="8"
                                            Text="Actions"
                                            FontSize="12"
                                            FontWeight="SemiBold"
@@ -482,7 +451,7 @@
                                             <Border Padding="24,16"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="0.6*,0.8*,1.5*,0.8*,0.8*,0.7*,0.6*,0.5*,0.6*,80">
+                                                <Grid ColumnDefinitions="0.5*,0.7*,1.5*,0.8*,0.7*,0.6*,0.5*,0.6*,140">
                                                     <!-- ID -->
                                                     <TextBlock Grid.Column="0"
                                                                Text="{Binding Id}"
@@ -500,7 +469,7 @@
                                                                VerticalAlignment="Center"
                                                                TextTrimming="CharacterEllipsis" />
 
-                                                    <!-- Description -->
+                                                    <!-- Product -->
                                                     <TextBlock Grid.Column="2"
                                                                Text="{Binding ProductDescription}"
                                                                FontSize="14"
@@ -508,16 +477,8 @@
                                                                VerticalAlignment="Center"
                                                                TextTrimming="CharacterEllipsis" />
 
-                                                    <!-- Category -->
-                                                    <TextBlock Grid.Column="3"
-                                                               Text="{Binding CategoryName}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis" />
-
                                                     <!-- Supplier -->
-                                                    <TextBlock Grid.Column="4"
+                                                    <TextBlock Grid.Column="3"
                                                                Text="{Binding SupplierName}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -525,14 +486,14 @@
                                                                TextTrimming="CharacterEllipsis" />
 
                                                     <!-- Date -->
-                                                    <TextBlock Grid.Column="5"
+                                                    <TextBlock Grid.Column="4"
                                                                Text="{Binding DateFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                                VerticalAlignment="Center" />
 
                                                     <!-- Total -->
-                                                    <TextBlock Grid.Column="6"
+                                                    <TextBlock Grid.Column="5"
                                                                Text="{Binding TotalFormatted}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
@@ -540,7 +501,7 @@
                                                                VerticalAlignment="Center" />
 
                                                     <!-- Receipt Icon -->
-                                                    <Panel Grid.Column="7" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                    <Panel Grid.Column="6" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                                                   Width="16" Height="16"
                                                                   Foreground="#22C55E"
@@ -552,7 +513,7 @@
                                                     </Panel>
 
                                                     <!-- Status Badge -->
-                                                    <Border Grid.Column="8"
+                                                    <Border Grid.Column="7"
                                                             VerticalAlignment="Center"
                                                             HorizontalAlignment="Left"
                                                             Padding="8,4"
@@ -565,7 +526,7 @@
                                                     </Border>
 
                                                     <!-- Actions -->
-                                                    <StackPanel Grid.Column="9"
+                                                    <StackPanel Grid.Column="8"
                                                                 Orientation="Horizontal"
                                                                 HorizontalAlignment="Right"
                                                                 Spacing="4">
@@ -574,6 +535,20 @@
                                                                 Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).OpenEditModalCommand}"
                                                                 CommandParameter="{Binding}">
                                                             <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                                      Width="16" Height="16" />
+                                                        </Button>
+                                                        <Button Classes="icon-button warning"
+                                                                ToolTip.Tip="Mark as Lost/Damaged"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).MarkAsLostDamagedCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                                                      Width="16" Height="16" />
+                                                        </Button>
+                                                        <Button Classes="icon-button"
+                                                                ToolTip.Tip="Mark as Returned"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).MarkAsReturnedCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
                                                                       Width="16" Height="16" />
                                                         </Button>
                                                         <Button Classes="icon-button danger"
@@ -755,6 +730,12 @@
         </Style>
         <Style Selector="Button.icon-button.danger:pointerover PathIcon">
             <Setter Property="Foreground" Value="#DC2626" />
+        </Style>
+        <Style Selector="Button.icon-button.warning:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FEF3C7" />
+        </Style>
+        <Style Selector="Button.icon-button.warning:pointerover PathIcon">
+            <Setter Property="Foreground" Value="#F59E0B" />
         </Style>
 
         <!-- Primary Button -->

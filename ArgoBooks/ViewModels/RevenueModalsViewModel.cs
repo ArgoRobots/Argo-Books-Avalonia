@@ -687,7 +687,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
     private void NavigateToCreateCategory()
     {
         IsAddEditModalOpen = false;
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
+        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", 1 } });
     }
 
     [RelayCommand]
