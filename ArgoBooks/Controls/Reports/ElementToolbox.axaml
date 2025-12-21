@@ -1,0 +1,253 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="400"
+             x:Class="ArgoBooks.Controls.Reports.ElementToolbox"
+             Background="#FAFAFA">
+
+    <UserControl.Styles>
+        <!-- Toolbox item button style -->
+        <Style Selector="Button.toolbox-item">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.toolbox-item:pointerover">
+            <Setter Property="Background" Value="#F5F5F5"/>
+            <Setter Property="BorderBrush" Value="#BDBDBD"/>
+        </Style>
+
+        <Style Selector="Button.toolbox-item:pressed">
+            <Setter Property="Background" Value="#EEEEEE"/>
+        </Style>
+
+        <!-- Section header style -->
+        <Style Selector="TextBlock.section-header">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#757575"/>
+            <Setter Property="Margin" Value="0,16,0,8"/>
+            <Setter Property="TextTransform" Value="Uppercase"/>
+        </Style>
+
+        <!-- Toolbox icon style -->
+        <Style Selector="PathIcon.toolbox-icon">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="12" Spacing="6">
+
+            <!-- Header -->
+            <TextBlock Text="Elements"
+                       FontWeight="SemiBold"
+                       FontSize="14"
+                       Foreground="#424242"
+                       Margin="0,0,0,8"/>
+
+            <TextBlock Text="Click to add to canvas"
+                       FontSize="11"
+                       Foreground="#9E9E9E"
+                       Margin="0,0,0,12"/>
+
+            <!-- Data Elements Section -->
+            <TextBlock Text="Data Elements" Classes="section-header"/>
+
+            <!-- Chart -->
+            <Button Classes="toolbox-item"
+                    Click="OnAddChartClick"
+                    ToolTip.Tip="Add a data visualization chart">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <PathIcon Classes="toolbox-icon"
+                              Foreground="#2196F3"
+                              Data="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
+                    <StackPanel>
+                        <TextBlock Text="Chart" FontWeight="Medium" FontSize="13"/>
+                        <TextBlock Text="Bar, line, pie charts" FontSize="11" Foreground="#757575"/>
+                    </StackPanel>
+                </StackPanel>
+            </Button>
+
+            <!-- Table -->
+            <Button Classes="toolbox-item"
+                    Click="OnAddTableClick"
+                    ToolTip.Tip="Add a data table">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <PathIcon Classes="toolbox-icon"
+                              Foreground="#4CAF50"
+                              Data="M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z"/>
+                    <StackPanel>
+                        <TextBlock Text="Table" FontWeight="Medium" FontSize="13"/>
+                        <TextBlock Text="Transaction data table" FontSize="11" Foreground="#757575"/>
+                    </StackPanel>
+                </StackPanel>
+            </Button>
+
+            <!-- Summary -->
+            <Button Classes="toolbox-item"
+                    Click="OnAddSummaryClick"
+                    ToolTip.Tip="Add a summary statistics block">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <PathIcon Classes="toolbox-icon"
+                              Foreground="#607D8B"
+                              Data="M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z"/>
+                    <StackPanel>
+                        <TextBlock Text="Summary" FontWeight="Medium" FontSize="13"/>
+                        <TextBlock Text="Key metrics summary" FontSize="11" Foreground="#757575"/>
+                    </StackPanel>
+                </StackPanel>
+            </Button>
+
+            <!-- Text Elements Section -->
+            <TextBlock Text="Text Elements" Classes="section-header"/>
+
+            <!-- Label -->
+            <Button Classes="toolbox-item"
+                    Click="OnAddLabelClick"
+                    ToolTip.Tip="Add a text label">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <PathIcon Classes="toolbox-icon"
+                              Foreground="#FF9800"
+                              Data="M5,4V7H10.5V19H13.5V7H19V4H5Z"/>
+                    <StackPanel>
+                        <TextBlock Text="Label" FontWeight="Medium" FontSize="13"/>
+                        <TextBlock Text="Text label or heading" FontSize="11" Foreground="#757575"/>
+                    </StackPanel>
+                </StackPanel>
+            </Button>
+
+            <!-- Date Range -->
+            <Button Classes="toolbox-item"
+                    Click="OnAddDateRangeClick"
+                    ToolTip.Tip="Add a date range display">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <PathIcon Classes="toolbox-icon"
+                              Foreground="#00BCD4"
+                              Data="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1"/>
+                    <StackPanel>
+                        <TextBlock Text="Date Range" FontWeight="Medium" FontSize="13"/>
+                        <TextBlock Text="Report date period" FontSize="11" Foreground="#757575"/>
+                    </StackPanel>
+                </StackPanel>
+            </Button>
+
+            <!-- Media Elements Section -->
+            <TextBlock Text="Media Elements" Classes="section-header"/>
+
+            <!-- Image -->
+            <Button Classes="toolbox-item"
+                    Click="OnAddImageClick"
+                    ToolTip.Tip="Add an image or logo">
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <PathIcon Classes="toolbox-icon"
+                              Foreground="#9C27B0"
+                              Data="M21,17H7V3H21M21,1H7A2,2 0 0,0 5,3V17A2,2 0 0,0 7,19H21A2,2 0 0,0 23,17V3A2,2 0 0,0 21,1M3,5H1V21A2,2 0 0,0 3,23H19V21H3M15.96,10.29L13.21,13.83L11.25,11.47L8.5,15H19.5L15.96,10.29Z"/>
+                    <StackPanel>
+                        <TextBlock Text="Image" FontWeight="Medium" FontSize="13"/>
+                        <TextBlock Text="Logo or picture" FontSize="11" Foreground="#757575"/>
+                    </StackPanel>
+                </StackPanel>
+            </Button>
+
+            <!-- Quick Add Section -->
+            <TextBlock Text="Quick Add Charts" Classes="section-header"/>
+
+            <WrapPanel Orientation="Horizontal">
+                <!-- Revenue Chart Quick Add -->
+                <Button Classes="toolbox-item"
+                        Width="85"
+                        Margin="0,0,6,6"
+                        Click="OnAddRevenueChartClick"
+                        ToolTip.Tip="Add revenue over time chart">
+                    <StackPanel HorizontalAlignment="Center">
+                        <PathIcon Width="24" Height="24"
+                                  Foreground="#4CAF50"
+                                  Data="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
+                        <TextBlock Text="Revenue" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Expenses Chart Quick Add -->
+                <Button Classes="toolbox-item"
+                        Width="85"
+                        Margin="0,0,6,6"
+                        Click="OnAddExpensesChartClick"
+                        ToolTip.Tip="Add expenses over time chart">
+                    <StackPanel HorizontalAlignment="Center">
+                        <PathIcon Width="24" Height="24"
+                                  Foreground="#F44336"
+                                  Data="M16,11.78L20.24,4.45L21.97,5.45L16.74,14.5L10.23,10.75L5.46,19H22V21H2V3H4V17.54L9.5,8L16,11.78Z"/>
+                        <TextBlock Text="Expenses" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Profit Chart Quick Add -->
+                <Button Classes="toolbox-item"
+                        Width="85"
+                        Margin="0,0,0,6"
+                        Click="OnAddProfitChartClick"
+                        ToolTip.Tip="Add profit over time chart">
+                    <StackPanel HorizontalAlignment="Center">
+                        <PathIcon Width="24" Height="24"
+                                  Foreground="#2196F3"
+                                  Data="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
+                        <TextBlock Text="Profit" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Pie Chart Quick Add -->
+                <Button Classes="toolbox-item"
+                        Width="85"
+                        Margin="0,0,6,6"
+                        Click="OnAddDistributionChartClick"
+                        ToolTip.Tip="Add distribution pie chart">
+                    <StackPanel HorizontalAlignment="Center">
+                        <PathIcon Width="24" Height="24"
+                                  Foreground="#9C27B0"
+                                  Data="M21,11H13V3A8,8 0 0,1 21,11M19,13A8,8 0 0,1 3,11A8,8 0 0,1 11,3V13H19Z"/>
+                        <TextBlock Text="Distribution" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- World Map Quick Add -->
+                <Button Classes="toolbox-item"
+                        Width="85"
+                        Margin="0,0,6,6"
+                        Click="OnAddWorldMapClick"
+                        ToolTip.Tip="Add geographic sales map">
+                    <StackPanel HorizontalAlignment="Center">
+                        <PathIcon Width="24" Height="24"
+                                  Foreground="#00BCD4"
+                                  Data="M17.9,17.39C17.64,16.59 16.89,16 16,16H15V13A1,1 0 0,0 14,12H8V10H10A1,1 0 0,0 11,9V7H13A2,2 0 0,0 15,5V4.59C17.93,5.77 20,8.64 20,12C20,14.08 19.2,15.97 17.9,17.39M11,19.93C7.05,19.44 4,16.08 4,12C4,11.38 4.08,10.79 4.21,10.21L9,15V16A2,2 0 0,0 11,18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                        <TextBlock Text="World Map" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Growth Chart Quick Add -->
+                <Button Classes="toolbox-item"
+                        Width="85"
+                        Margin="0,0,0,6"
+                        Click="OnAddGrowthChartClick"
+                        ToolTip.Tip="Add growth rates chart">
+                    <StackPanel HorizontalAlignment="Center">
+                        <PathIcon Width="24" Height="24"
+                                  Foreground="#FF9800"
+                                  Data="M3,13H5V11H3V13M3,17H5V15H3V17M3,9H5V7H3V9M7,13H21V11H7V13M7,17H21V15H7V17M7,7V9H21V7H7Z"/>
+                        <TextBlock Text="Growth" FontSize="10" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Button>
+            </WrapPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
