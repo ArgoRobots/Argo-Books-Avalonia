@@ -403,6 +403,82 @@ public static class StringConverters
     public static new readonly IValueConverter Equals =
         new FuncValueConverter<string, string, bool>((value, parameter) =>
             string.Equals(value, parameter, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Converts expense status to badge background color.
+    /// Completed = green (#DCFCE7), Pending = yellow (#FEF3C7), Returned = blue (#DBEAFE), Cancelled = gray (#F3F4F6).
+    /// </summary>
+    public static readonly IValueConverter ToExpenseStatusBackground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Completed" => "#DCFCE7",
+                "Pending" => "#FEF3C7",
+                "Returned" => "#DBEAFE",
+                "Partial Return" => "#F3E8FF",
+                "Cancelled" => "#F3F4F6",
+                _ => "#F3F4F6"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts expense status to badge foreground color.
+    /// Completed = green (#166534), Pending = yellow (#92400E), Returned = blue (#1E40AF), Cancelled = gray (#4B5563).
+    /// </summary>
+    public static readonly IValueConverter ToExpenseStatusForeground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Completed" => "#166534",
+                "Pending" => "#92400E",
+                "Returned" => "#1E40AF",
+                "Partial Return" => "#7C3AED",
+                "Cancelled" => "#4B5563",
+                _ => "#4B5563"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts revenue status to badge background color.
+    /// Completed = green (#DCFCE7), Pending = yellow (#FEF3C7), Returned = blue (#DBEAFE), Cancelled = gray (#F3F4F6).
+    /// </summary>
+    public static readonly IValueConverter ToRevenueStatusBackground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Completed" => "#DCFCE7",
+                "Pending" => "#FEF3C7",
+                "Returned" => "#DBEAFE",
+                "Partial Return" => "#F3E8FF",
+                "Cancelled" => "#F3F4F6",
+                _ => "#F3F4F6"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
+
+    /// <summary>
+    /// Converts revenue status to badge foreground color.
+    /// Completed = green (#166534), Pending = yellow (#92400E), Returned = blue (#1E40AF), Cancelled = gray (#4B5563).
+    /// </summary>
+    public static readonly IValueConverter ToRevenueStatusForeground =
+        new FuncValueConverter<string, IBrush>(value =>
+        {
+            var color = value switch
+            {
+                "Completed" => "#166534",
+                "Pending" => "#92400E",
+                "Returned" => "#1E40AF",
+                "Partial Return" => "#7C3AED",
+                "Cancelled" => "#4B5563",
+                _ => "#4B5563"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        });
 }
 
 /// <summary>
