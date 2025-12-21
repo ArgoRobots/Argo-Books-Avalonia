@@ -307,7 +307,7 @@ public partial class ExpensesPageViewModel : ViewModelBase
         // Returns count (linked to returns data)
         var companyData = App.CompanyManager?.CompanyData;
         ReturnsCount = companyData?.Returns?.Count(r =>
-            _allExpenses.Any(p => p.Id == r.TransactionId)) ?? 0;
+            _allExpenses.Any(p => p.Id == r.OriginalTransactionId)) ?? 0;
     }
 
     [RelayCommand]
@@ -480,16 +480,10 @@ public partial class ExpensesPageViewModel : ViewModelBase
     private static string GetStatusDisplay(Purchase purchase, Core.Data.CompanyData? companyData)
     {
         // Check for returns related to this purchase
-        var hasReturn = companyData?.Returns?.Any(r => r.TransactionId == purchase.Id) ?? false;
-        var hasPartialReturn = companyData?.Returns?.Any(r =>
-            r.TransactionId == purchase.Id &&
-            r.Status == Core.Enums.ReturnStatus.Completed &&
-            r.Items.Sum(i => i.Quantity) < r.Items.Sum(i => i.OriginalQuantity)) ?? false;
+        var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
 
-        if (hasReturn)
+        if (relatedReturn != null && relatedReturn.Status == Core.Enums.ReturnStatus.Completed)
         {
-            if (hasPartialReturn)
-                return "Partial Return";
             return "Returned";
         }
 
