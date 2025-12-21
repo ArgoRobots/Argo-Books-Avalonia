@@ -34,6 +34,9 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     private bool _isFilterModalOpen;
 
     [ObservableProperty]
+    private bool _isItemStatusModalOpen;
+
+    [ObservableProperty]
     private bool _isEditMode;
 
     [ObservableProperty]
@@ -41,6 +44,66 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _saveButtonText = "Add Expense";
+
+    #endregion
+
+    #region Item Status Modal Fields
+
+    private ExpenseDisplayItem? _itemStatusItem;
+
+    [ObservableProperty]
+    private string _itemStatusModalTitle = "Update Item Status";
+
+    [ObservableProperty]
+    private string _itemStatusAction = string.Empty;
+
+    [ObservableProperty]
+    private string _itemStatusItemDescription = string.Empty;
+
+    [ObservableProperty]
+    private string? _selectedItemStatusReason;
+
+    [ObservableProperty]
+    private string _itemStatusNotes = string.Empty;
+
+    [ObservableProperty]
+    private bool _isUndoAction;
+
+    [ObservableProperty]
+    private string _itemStatusSaveButtonText = "Confirm";
+
+    public ObservableCollection<string> LostDamagedReasonOptions { get; } =
+    [
+        "Damaged in transit",
+        "Defective product",
+        "Lost in warehouse",
+        "Damaged during storage",
+        "Expired",
+        "Other"
+    ];
+
+    public ObservableCollection<string> ReturnReasonOptions { get; } =
+    [
+        "Wrong item received",
+        "Quality issues",
+        "Not as described",
+        "Duplicate order",
+        "Changed mind",
+        "Better price elsewhere",
+        "Other"
+    ];
+
+    public ObservableCollection<string> UndoReasonOptions { get; } =
+    [
+        "Item found",
+        "Damage was repairable",
+        "Incorrect status",
+        "Administrative error",
+        "Other"
+    ];
+
+    [ObservableProperty]
+    private ObservableCollection<string> _currentReasonOptions = [];
 
     #endregion
 
@@ -451,6 +514,92 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         FilterReceiptStatus = "All";
         FiltersCleared?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
+    }
+
+    #endregion
+
+    #region Item Status Modal
+
+    public void OpenMarkAsLostDamagedModal(ExpenseDisplayItem? item)
+    {
+        if (item == null) return;
+
+        _itemStatusItem = item;
+        ItemStatusAction = "LostDamaged";
+        ItemStatusModalTitle = "Mark as Lost/Damaged";
+        ItemStatusItemDescription = $"{item.Id} - {item.ProductDescription}";
+        ItemStatusSaveButtonText = "Mark as Lost/Damaged";
+        IsUndoAction = false;
+        CurrentReasonOptions = new ObservableCollection<string>(LostDamagedReasonOptions);
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+        IsItemStatusModalOpen = true;
+    }
+
+    public void OpenMarkAsReturnedModal(ExpenseDisplayItem? item)
+    {
+        if (item == null) return;
+
+        _itemStatusItem = item;
+        ItemStatusAction = "Returned";
+        ItemStatusModalTitle = "Mark as Returned";
+        ItemStatusItemDescription = $"{item.Id} - {item.ProductDescription}";
+        ItemStatusSaveButtonText = "Mark as Returned";
+        IsUndoAction = false;
+        CurrentReasonOptions = new ObservableCollection<string>(ReturnReasonOptions);
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+        IsItemStatusModalOpen = true;
+    }
+
+    public void OpenUndoLostDamagedModal(ExpenseDisplayItem? item)
+    {
+        if (item == null) return;
+
+        _itemStatusItem = item;
+        ItemStatusAction = "UndoLostDamaged";
+        ItemStatusModalTitle = "Undo Lost/Damaged Status";
+        ItemStatusItemDescription = $"{item.Id} - {item.ProductDescription}";
+        ItemStatusSaveButtonText = "Undo Status";
+        IsUndoAction = true;
+        CurrentReasonOptions = new ObservableCollection<string>(UndoReasonOptions);
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+        IsItemStatusModalOpen = true;
+    }
+
+    public void OpenUndoReturnedModal(ExpenseDisplayItem? item)
+    {
+        if (item == null) return;
+
+        _itemStatusItem = item;
+        ItemStatusAction = "UndoReturned";
+        ItemStatusModalTitle = "Undo Returned Status";
+        ItemStatusItemDescription = $"{item.Id} - {item.ProductDescription}";
+        ItemStatusSaveButtonText = "Undo Status";
+        IsUndoAction = true;
+        CurrentReasonOptions = new ObservableCollection<string>(UndoReasonOptions);
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+        IsItemStatusModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseItemStatusModal()
+    {
+        IsItemStatusModalOpen = false;
+        _itemStatusItem = null;
+        ItemStatusAction = string.Empty;
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmItemStatus()
+    {
+        // TODO: Implement the actual status change logic when backend is ready
+        // For now, just close the modal
+        CloseItemStatusModal();
     }
 
     #endregion

@@ -535,13 +535,13 @@ public partial class RevenuePageViewModel : ViewModelBase
     [RelayCommand]
     private void MarkAsLostDamaged(RevenueDisplayItem? item)
     {
-        // TODO: Implement mark as lost/damaged functionality
+        App.RevenueModalsViewModel?.OpenMarkAsLostDamagedModal(item);
     }
 
     [RelayCommand]
     private void MarkAsReturned(RevenueDisplayItem? item)
     {
-        // TODO: Implement mark as returned functionality
+        App.RevenueModalsViewModel?.OpenMarkAsReturnedModal(item);
     }
 
     [RelayCommand]
