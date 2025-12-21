@@ -15,7 +15,7 @@
     <!-- Main Content -->
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-        <Grid RowDefinitions="Auto,Auto,*" Margin="24">
+        <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24">
             <!-- Statistics Cards (Row 0) -->
             <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
                 <Grid.Styles>
@@ -177,8 +177,187 @@
                 </Grid>
             </Border>
 
-            <!-- Insights Content (Row 2) -->
-            <Grid Grid.Row="2" ColumnDefinitions="*,*">
+            <!-- Forecasted Growth Section (Row 2) -->
+            <Border Grid.Row="2"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    Padding="24"
+                    Margin="0,0,0,24">
+                <StackPanel Spacing="20">
+                    <!-- Section Header -->
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Grid.Column="0"
+                                Width="32" Height="32"
+                                CornerRadius="8"
+                                Background="#DBEAFE"
+                                Margin="0,0,12,0">
+                            <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
+                                      Width="16" Height="16"
+                                      Foreground="#3B82F6" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Forecasted Growth"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="Predictions based on historical data and market trends"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Forecast Cards -->
+                    <Grid ColumnDefinitions="*,*,*,*">
+                        <!-- Next Month Revenue -->
+                        <Border Grid.Column="0"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="10"
+                                Padding="16"
+                                Margin="0,0,8,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Next Month Revenue"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding ForecastedRevenue}"
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="M7 14l5-5 5 5z"
+                                              Width="12" Height="12"
+                                              Foreground="#22C55E" />
+                                    <TextBlock Text="{Binding RevenueGrowth}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="#22C55E" />
+                                    <TextBlock Text="vs last month"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Next Month Expenses -->
+                        <Border Grid.Column="1"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="10"
+                                Padding="16"
+                                Margin="8,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Next Month Expenses"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding ForecastedExpenses}"
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="M7 10l5 5 5-5z"
+                                              Width="12" Height="12"
+                                              Foreground="#EF4444" />
+                                    <TextBlock Text="{Binding ExpenseGrowth}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="#EF4444" />
+                                    <TextBlock Text="vs last month"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Projected Profit -->
+                        <Border Grid.Column="2"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="10"
+                                Padding="16"
+                                Margin="8,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Projected Profit"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding ForecastedProfit}"
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="#22C55E" />
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="M7 14l5-5 5 5z"
+                                              Width="12" Height="12"
+                                              Foreground="#22C55E" />
+                                    <TextBlock Text="{Binding ProfitGrowth}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="#22C55E" />
+                                    <TextBlock Text="vs last month"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Customer Growth -->
+                        <Border Grid.Column="3"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="10"
+                                Padding="16"
+                                Margin="8,0,0,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Expected New Customers"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding ForecastedCustomers}"
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="M7 14l5-5 5 5z"
+                                              Width="12" Height="12"
+                                              Foreground="#22C55E" />
+                                    <TextBlock Text="{Binding CustomerGrowth}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="#22C55E" />
+                                    <TextBlock Text="vs last month"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Confidence Indicator -->
+                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                            CornerRadius="8"
+                            Padding="16">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                          Width="16" Height="16"
+                                          Foreground="#22C55E" />
+                                <TextBlock Text="Prediction Confidence:"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding PredictionConfidence}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="#22C55E"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="2"
+                                       Text="Based on 12 months of historical data"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Insights Content (Row 3) -->
+            <Grid Grid.Row="3" ColumnDefinitions="*,*">
                 <!-- Left Column -->
                 <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,12,0">
                     <!-- Revenue Trends Section -->
