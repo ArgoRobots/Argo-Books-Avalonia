@@ -22,7 +22,7 @@
             <!-- Modal -->
             <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Width="650"
+                    Width="750"
                     MaxHeight="700"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
@@ -107,53 +107,110 @@
                                                             EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}" />
                             </StackPanel>
 
-                            <!-- Description -->
-                            <StackPanel Spacing="6">
-                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Description" /><Run Text=" *" Foreground="#dc2626" />
-                                </TextBlock>
-                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         Watermark="Enter sale description"
-                                         Classes.has-error="{Binding HasDescriptionError}" />
-                                <TextBlock Text="Description is required"
-                                           FontSize="12"
-                                           Foreground="#dc2626"
-                                           IsVisible="{Binding HasDescriptionError}" />
+                            <!-- Line Items Section -->
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0"
+                                               Text="Line Items"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <Button Grid.Column="1"
+                                            Classes="secondary-button"
+                                            Command="{Binding AddLineItemCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                      Width="14" Height="14" />
+                                            <TextBlock Text="Add Item" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+
+                                <!-- Line Items Header -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="6"
+                                        Padding="12,8"
+                                        IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
+                                    <Grid ColumnDefinitions="2*,80,90,70,Auto">
+                                        <TextBlock Grid.Column="0" Text="Description" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="1" Text="Qty" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="2" Text="Price" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="3" Text="Amount" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="4" Width="32" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Line Items List -->
+                                <ItemsControl ItemsSource="{Binding LineItems}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="vm:RevenueLineItem">
+                                            <Border Padding="12,8"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="0,0,0,1">
+                                                <Grid ColumnDefinitions="2*,80,90,70,Auto">
+                                                    <TextBox Grid.Column="0"
+                                                             Text="{Binding Description, Mode=TwoWay}"
+                                                             Classes="form-input"
+                                                             Watermark="Item description"
+                                                             Margin="0,0,8,0" />
+                                                    <NumericUpDown Grid.Column="1"
+                                                                   Value="{Binding Quantity, Mode=TwoWay}"
+                                                                   Minimum="1"
+                                                                   FormatString="0"
+                                                                   Classes="line-item-input"
+                                                                   ShowButtonSpinner="False"
+                                                                   HorizontalAlignment="Stretch"
+                                                                   Margin="0,0,8,0" />
+                                                    <NumericUpDown Grid.Column="2"
+                                                                   Value="{Binding UnitPrice, Mode=TwoWay}"
+                                                                   Minimum="0"
+                                                                   FormatString="N2"
+                                                                   Classes="line-item-input"
+                                                                   ShowButtonSpinner="False"
+                                                                   HorizontalAlignment="Stretch"
+                                                                   Margin="0,0,8,0" />
+                                                    <TextBlock Grid.Column="3"
+                                                               Text="{Binding AmountFormatted}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               HorizontalAlignment="Right" />
+                                                    <Button Grid.Column="4"
+                                                            Classes="icon-button danger"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).RemoveLineItemCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip.Tip="Remove item">
+                                                        <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                  Width="14" Height="14" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Empty State for Line Items -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="24,16"
+                                        IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsZero}}">
+                                    <TextBlock Text="No line items added. Click 'Add Item' to add products or services."
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               HorizontalAlignment="Center" />
+                                </Border>
                             </StackPanel>
-
-                            <!-- Quantity and Unit Price Row -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <!-- Quantity -->
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Text="Quantity" />
-                                    <NumericUpDown Value="{Binding ModalQuantity, Mode=TwoWay}"
-                                                   Minimum="0.01"
-                                                   FormatString="N2"
-                                                   Classes="form-numericupdown"
-                                                   ShowButtonSpinner="False"
-                                                   HorizontalAlignment="Stretch" />
-                                </StackPanel>
-
-                                <!-- Unit Price -->
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Unit Price" /><Run Text=" *" Foreground="#dc2626" />
-                                    </TextBlock>
-                                    <NumericUpDown Value="{Binding ModalUnitPrice, Mode=TwoWay}"
-                                                   Minimum="0"
-                                                   FormatString="C2"
-                                                   Classes="form-numericupdown"
-                                                   Classes.has-error="{Binding HasUnitPriceError}"
-                                                   ShowButtonSpinner="False"
-                                                   HorizontalAlignment="Stretch" />
-                                    <TextBlock Text="Unit price is required"
-                                               FontSize="12"
-                                               Foreground="#dc2626"
-                                               IsVisible="{Binding HasUnitPriceError}" />
-                                </StackPanel>
-                            </Grid>
 
                             <!-- Tax, Shipping, Discount Row -->
                             <Grid ColumnDefinitions="*,16,*,16,*">
@@ -195,13 +252,33 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Reference Number -->
+                            <!-- Attach Receipt -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Text="Reference Number" />
-                                <TextBox Text="{Binding ModalReferenceNumber, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         Watermark="Order or invoice number" />
+                                           Text="Receipt" />
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Border Grid.Column="0"
+                                            Background="{DynamicResource SurfaceAltBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="12,10">
+                                        <TextBlock Text="{Binding ReceiptFileName, FallbackValue='No receipt attached'}"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                    <Button Grid.Column="1"
+                                            Classes="secondary-button"
+                                            Command="{Binding AttachReceiptCommand}"
+                                            Margin="8,0,0,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"
+                                                      Width="14" Height="14" />
+                                            <TextBlock Text="Attach" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
                             </StackPanel>
 
                             <!-- Notes -->
@@ -432,48 +509,46 @@
                                                             ShowAddNew="False" />
                             </StackPanel>
 
-                            <!-- Date Range -->
+                            <!-- Date Range - Stacked -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                            Text="Date Range" />
-                                <Grid ColumnDefinitions="*,Auto,*">
-                                    <DatePicker Grid.Column="0"
-                                                SelectedDate="{Binding FilterDateFrom}"
-                                                Classes="form-datepicker"
-                                                HorizontalAlignment="Stretch" />
-                                    <TextBlock Grid.Column="1"
-                                               Text="to"
-                                               Margin="12,0"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker Grid.Column="2"
-                                                SelectedDate="{Binding FilterDateTo}"
-                                                Classes="form-datepicker"
-                                                HorizontalAlignment="Stretch" />
-                                </Grid>
+                                <StackPanel Spacing="8">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="From" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding FilterDateFrom}"
+                                                    Classes="form-datepicker"
+                                                    HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="To" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding FilterDateTo}"
+                                                    Classes="form-datepicker"
+                                                    HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </StackPanel>
                             </StackPanel>
 
-                            <!-- Amount Range -->
+                            <!-- Amount Range - Stacked -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
                                            Text="Amount Range" />
-                                <Grid ColumnDefinitions="*,Auto,*">
-                                    <TextBox Grid.Column="0"
-                                             Text="{Binding FilterAmountMin, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="Min"
-                                             HorizontalAlignment="Stretch" />
-                                    <TextBlock Grid.Column="1"
-                                               Text="to"
-                                               Margin="12,0"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Grid.Column="2"
-                                             Text="{Binding FilterAmountMax, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="Max"
-                                             HorizontalAlignment="Stretch" />
-                                </Grid>
+                                <StackPanel Spacing="8">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Min" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBox Text="{Binding FilterAmountMin, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 Watermark="$0.00"
+                                                 HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Max" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBox Text="{Binding FilterAmountMax, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 Watermark="$0.00"
+                                                 HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -503,4 +578,168 @@
             </Border>
         </Panel>
     </Panel>
+
+    <UserControl.Styles>
+        <!-- Icon Button -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FEE2E2" />
+        </Style>
+        <Style Selector="Button.icon-button.danger:pointerover PathIcon">
+            <Setter Property="Foreground" Value="#DC2626" />
+        </Style>
+
+        <!-- Primary Button -->
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+
+        <!-- Secondary Button -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Text Button -->
+        <Style Selector="Button.text-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.text-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.text-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Danger Button -->
+        <Style Selector="Button.danger-button">
+            <Setter Property="Background" Value="#DC2626" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#DC2626" />
+        </Style>
+        <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#B91C1C" />
+        </Style>
+
+        <!-- Form Input -->
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        <Style Selector="TextBox.form-input:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Form ComboBox -->
+        <Style Selector="ComboBox.form-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="MinHeight" Value="40" />
+        </Style>
+
+        <!-- Form DatePicker -->
+        <Style Selector="DatePicker.form-datepicker">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="MinHeight" Value="40" />
+        </Style>
+        <Style Selector="DatePicker.form-datepicker /template/ Button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+
+        <!-- NumericUpDown in forms -->
+        <Style Selector="NumericUpDown.form-numericupdown">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="MinHeight" Value="40" />
+        </Style>
+
+        <!-- Line Item NumericUpDown -->
+        <Style Selector="NumericUpDown.line-item-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="NumericUpDown.line-item-input /template/ TextBox#PART_TextBox">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="NumericUpDown.line-item-input:focus">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+    </UserControl.Styles>
 </UserControl>

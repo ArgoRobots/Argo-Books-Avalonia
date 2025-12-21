@@ -94,20 +94,23 @@ public partial class RevenueModalsViewModel : ViewModelBase
     private string _modalNotes = string.Empty;
 
     [ObservableProperty]
-    private string _modalReferenceNumber = string.Empty;
-
-    [ObservableProperty]
     private string _validationMessage = string.Empty;
 
     [ObservableProperty]
     private bool _hasValidationMessage;
 
+    [ObservableProperty]
+    private string _receiptFileName = "No receipt attached";
+
+    private string? _receiptFilePath;
+
     public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
     public ObservableCollection<string> PaymentMethodOptions { get; } = ["Cash", "Credit Card", "Debit Card", "Bank Transfer", "Check", "PayPal", "Other"];
+    public ObservableCollection<RevenueLineItem> LineItems { get; } = [];
 
-    // Computed totals
-    public decimal Subtotal => ModalQuantity * ModalUnitPrice;
+    // Computed totals from line items
+    public decimal Subtotal => LineItems.Sum(li => li.Amount);
     public decimal TaxAmount => Subtotal * (ModalTaxRate / 100m);
     public decimal DiscountAmount => ModalDiscount;
     public decimal ShippingAmount => ModalShipping;
@@ -119,8 +122,6 @@ public partial class RevenueModalsViewModel : ViewModelBase
     public string ShippingAmountFormatted => $"${ShippingAmount:N2}";
     public string TotalFormatted => $"${Total:N2}";
 
-    partial void OnModalQuantityChanged(decimal value) => UpdateTotals();
-    partial void OnModalUnitPriceChanged(decimal value) => UpdateTotals();
     partial void OnModalTaxRateChanged(decimal value) => UpdateTotals();
     partial void OnModalShippingChanged(decimal value) => UpdateTotals();
     partial void OnModalDiscountChanged(decimal value) => UpdateTotals();
@@ -436,23 +437,10 @@ public partial class RevenueModalsViewModel : ViewModelBase
     {
         // Validation
         ClearValidationErrors();
-        var hasErrors = false;
 
-        if (string.IsNullOrWhiteSpace(ModalDescription))
+        if (LineItems.Count == 0)
         {
-            HasDescriptionError = true;
-            hasErrors = true;
-        }
-
-        if (ModalUnitPrice <= 0)
-        {
-            HasUnitPriceError = true;
-            hasErrors = true;
-        }
-
-        if (hasErrors)
-        {
-            ValidationMessage = "Please fix the errors above";
+            ValidationMessage = "Please add at least one line item";
             HasValidationMessage = true;
             return;
         }
@@ -478,15 +466,22 @@ public partial class RevenueModalsViewModel : ViewModelBase
         companyData.IdCounters.Sale++;
         var saleId = $"SAL-{DateTime.Now:yyyy}-{companyData.IdCounters.Sale:D5}";
 
+        // Combine line items into description
+        var description = LineItems.Count == 1
+            ? LineItems[0].Description
+            : string.Join(", ", LineItems.Select(li => li.Description).Where(d => !string.IsNullOrEmpty(d)));
+        var totalQuantity = LineItems.Sum(li => li.Quantity);
+        var averageUnitPrice = LineItems.Count > 0 ? LineItems.Average(li => li.UnitPrice) : 0;
+
         var sale = new Sale
         {
             Id = saleId,
             Date = ModalDate?.DateTime ?? DateTime.Now,
             CustomerId = SelectedCustomer?.Id,
             CategoryId = SelectedCategory?.Id,
-            Description = ModalDescription,
-            Quantity = ModalQuantity,
-            UnitPrice = ModalUnitPrice,
+            Description = description,
+            Quantity = totalQuantity,
+            UnitPrice = averageUnitPrice,
             Amount = Subtotal,
             TaxRate = ModalTaxRate,
             TaxAmount = TaxAmount,
@@ -495,7 +490,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
             Total = Total,
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             Notes = ModalNotes,
-            ReferenceNumber = ModalReferenceNumber,
+            ReferenceNumber = _receiptFilePath ?? string.Empty,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
@@ -631,7 +626,9 @@ public partial class RevenueModalsViewModel : ViewModelBase
         ModalDiscount = 0;
         SelectedPaymentMethod = "Cash";
         ModalNotes = string.Empty;
-        ModalReferenceNumber = string.Empty;
+        LineItems.Clear();
+        ReceiptFileName = "No receipt attached";
+        _receiptFilePath = null;
         ClearValidationErrors();
     }
 
@@ -664,4 +661,89 @@ public partial class RevenueModalsViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Line Items
+
+    [RelayCommand]
+    private void AddLineItem()
+    {
+        var lineItem = new RevenueLineItem();
+        lineItem.PropertyChanged += (_, _) => UpdateTotals();
+        LineItems.Add(lineItem);
+        UpdateTotals();
+    }
+
+    [RelayCommand]
+    private void RemoveLineItem(RevenueLineItem? item)
+    {
+        if (item != null)
+        {
+            LineItems.Remove(item);
+            UpdateTotals();
+        }
+    }
+
+    #endregion
+
+    #region Receipt
+
+    [RelayCommand]
+    private async Task AttachReceipt()
+    {
+        var topLevel = App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null;
+
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+        {
+            Title = "Select Receipt",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType("Images") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.pdf" } },
+                new Avalonia.Platform.Storage.FilePickerFileType("All Files") { Patterns = new[] { "*.*" } }
+            }
+        });
+
+        if (files.Count > 0)
+        {
+            var file = files[0];
+            _receiptFilePath = file.Path.LocalPath;
+            ReceiptFileName = file.Name;
+        }
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Line item for revenue/sale form.
+/// </summary>
+public partial class RevenueLineItem : ObservableObject
+{
+    [ObservableProperty]
+    private string _description = string.Empty;
+
+    [ObservableProperty]
+    private decimal _quantity = 1;
+
+    [ObservableProperty]
+    private decimal _unitPrice;
+
+    public decimal Amount => Quantity * UnitPrice;
+    public string AmountFormatted => $"${Amount:N2}";
+
+    partial void OnQuantityChanged(decimal value)
+    {
+        OnPropertyChanged(nameof(Amount));
+        OnPropertyChanged(nameof(AmountFormatted));
+    }
+
+    partial void OnUnitPriceChanged(decimal value)
+    {
+        OnPropertyChanged(nameof(Amount));
+        OnPropertyChanged(nameof(AmountFormatted));
+    }
 }
