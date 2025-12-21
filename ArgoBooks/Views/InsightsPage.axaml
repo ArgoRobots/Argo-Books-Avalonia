@@ -1,0 +1,640 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:local="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.InsightsPage"
+             x:DataType="vm:InsightsPageViewModel">
+
+    <Design.DataContext>
+        <vm:InsightsPageViewModel />
+    </Design.DataContext>
+
+    <!-- Main Content -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+        <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24">
+            <!-- Statistics Cards (Row 0) -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
+                <Grid.Styles>
+                    <Style Selector="Border.stat-card">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                        <Setter Property="CornerRadius" Value="12" />
+                        <Setter Property="Padding" Value="20" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                        <Setter Property="BorderThickness" Value="1" />
+                    </Style>
+                </Grid.Styles>
+
+                <!-- Total Insights -->
+                <Border Grid.Column="0" Classes="stat-card" Margin="0,0,12,0">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Grid.Column="0"
+                                Width="48" Height="48"
+                                CornerRadius="10"
+                                Background="#EDE9FE"
+                                Margin="0,0,16,0">
+                            <PathIcon Data="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"
+                                      Width="24" Height="24"
+                                      Foreground="#8B5CF6" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding TotalInsights}"
+                                       FontSize="28"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="AI Insights"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Trends Detected -->
+                <Border Grid.Column="1" Classes="stat-card" Margin="6,0">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Grid.Column="0"
+                                Width="48" Height="48"
+                                CornerRadius="10"
+                                Background="#DCFCE7"
+                                Margin="0,0,16,0">
+                            <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
+                                      Width="24" Height="24"
+                                      Foreground="#22C55E" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding TrendsDetected}"
+                                       FontSize="28"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="Trends Detected"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Anomalies -->
+                <Border Grid.Column="2" Classes="stat-card" Margin="6,0">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Grid.Column="0"
+                                Width="48" Height="48"
+                                CornerRadius="10"
+                                Background="#FEF3C7"
+                                Margin="0,0,16,0">
+                            <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                      Width="24" Height="24"
+                                      Foreground="#F59E0B" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding AnomaliesDetected}"
+                                       FontSize="28"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="Anomalies"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Opportunities -->
+                <Border Grid.Column="3" Classes="stat-card" Margin="12,0,0,0">
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Grid.Column="0"
+                                Width="48" Height="48"
+                                CornerRadius="10"
+                                Background="#DBEAFE"
+                                Margin="0,0,16,0">
+                            <PathIcon Data="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                                      Width="24" Height="24"
+                                      Foreground="#3B82F6" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Opportunities}"
+                                       FontSize="28"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="Opportunities"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Page Header (Row 1) -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    Padding="24,20"
+                    Margin="0,0,0,24">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- AI Icon and Title -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                        <Border Width="48" Height="48"
+                                CornerRadius="10"
+                                Background="{DynamicResource PrimaryLightBrush}">
+                            <PathIcon Data="M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58s9.14-3.47 12.65 0L21 3v7.12zM12.5 8v4.25l3.5 2.08-.72 1.21L11 13V8h1.5z"
+                                      Width="24" Height="24"
+                                      Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                        <StackPanel>
+                            <TextBlock Text="AI Business Insights"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="Intelligent analysis of your business data"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Last Updated -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="Last updated:"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding LastUpdated}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <Button Classes="secondary-button"
+                                Margin="16,0,0,0"
+                                Command="{Binding RefreshInsightsCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                                          Width="14" Height="14" />
+                                <TextBlock Text="Refresh" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Forecasted Growth Section (Row 2) -->
+            <Border Grid.Row="2"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    Padding="24"
+                    Margin="0,0,0,24">
+                <StackPanel Spacing="20">
+                    <!-- Section Header -->
+                    <Grid ColumnDefinitions="Auto,*">
+                        <Border Grid.Column="0"
+                                Width="32" Height="32"
+                                CornerRadius="8"
+                                Background="#DBEAFE"
+                                Margin="0,0,12,0">
+                            <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
+                                      Width="16" Height="16"
+                                      Foreground="#3B82F6" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Forecasted Growth"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="Predictions based on historical data and market trends"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Forecast Cards -->
+                    <Grid ColumnDefinitions="*,*,*,*">
+                        <!-- Next Month Revenue -->
+                        <Border Grid.Column="0"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="10"
+                                Padding="16"
+                                Margin="0,0,8,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Next Month Revenue"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding ForecastedRevenue}"
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="M7 14l5-5 5 5z"
+                                              Width="12" Height="12"
+                                              Foreground="#22C55E" />
+                                    <TextBlock Text="{Binding RevenueGrowth}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="#22C55E" />
+                                    <TextBlock Text="vs last month"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Next Month Expenses -->
+                        <Border Grid.Column="1"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="10"
+                                Padding="16"
+                                Margin="8,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Next Month Expenses"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding ForecastedExpenses}"
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="M7 10l5 5 5-5z"
+                                              Width="12" Height="12"
+                                              Foreground="#EF4444" />
+                                    <TextBlock Text="{Binding ExpenseGrowth}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="#EF4444" />
+                                    <TextBlock Text="vs last month"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Projected Profit -->
+                        <Border Grid.Column="2"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="10"
+                                Padding="16"
+                                Margin="8,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Projected Profit"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding ForecastedProfit}"
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="#22C55E" />
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="M7 14l5-5 5 5z"
+                                              Width="12" Height="12"
+                                              Foreground="#22C55E" />
+                                    <TextBlock Text="{Binding ProfitGrowth}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="#22C55E" />
+                                    <TextBlock Text="vs last month"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Customer Growth -->
+                        <Border Grid.Column="3"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="10"
+                                Padding="16"
+                                Margin="8,0,0,0">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Expected New Customers"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{Binding ForecastedCustomers}"
+                                           FontSize="24"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <PathIcon Data="M7 14l5-5 5 5z"
+                                              Width="12" Height="12"
+                                              Foreground="#22C55E" />
+                                    <TextBlock Text="{Binding CustomerGrowth}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="#22C55E" />
+                                    <TextBlock Text="vs last month"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Confidence Indicator -->
+                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                            CornerRadius="8"
+                            Padding="16">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                          Width="16" Height="16"
+                                          Foreground="#22C55E" />
+                                <TextBlock Text="Prediction Confidence:"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding PredictionConfidence}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="#22C55E"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="2"
+                                       Text="Based on 12 months of historical data"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Insights Content (Row 3) -->
+            <Grid Grid.Row="3" ColumnDefinitions="*,*">
+                <!-- Left Column -->
+                <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,12,0">
+                    <!-- Revenue Trends Section -->
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            CornerRadius="12"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <Border Padding="20"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="32" Height="32"
+                                            CornerRadius="8"
+                                            Background="#DCFCE7"
+                                            Margin="0,0,12,0">
+                                        <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
+                                                  Width="16" Height="16"
+                                                  Foreground="#22C55E" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1"
+                                               Text="Revenue Trends"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding RevenueTrends}" Margin="0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:InsightItem">
+                                        <Border Padding="20"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Border Grid.Column="0"
+                                                        Width="8" Height="8"
+                                                        CornerRadius="4"
+                                                        Background="{Binding StatusColor}"
+                                                        Margin="0,6,12,0"
+                                                        VerticalAlignment="Top" />
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Recommendation}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource PrimaryBrush}"
+                                                               Margin="0,4,0,0"
+                                                               IsVisible="{Binding HasRecommendation}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Forecasting Section -->
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            CornerRadius="12"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <Border Padding="20"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="32" Height="32"
+                                            CornerRadius="8"
+                                            Background="#EDE9FE"
+                                            Margin="0,0,12,0">
+                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                                  Width="16" Height="16"
+                                                  Foreground="#8B5CF6" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1"
+                                               Text="Forecasting"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding Forecasts}" Margin="0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:InsightItem">
+                                        <Border Padding="20"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Border Grid.Column="0"
+                                                        Width="8" Height="8"
+                                                        CornerRadius="4"
+                                                        Background="{Binding StatusColor}"
+                                                        Margin="0,6,12,0"
+                                                        VerticalAlignment="Top" />
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Recommendation}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource PrimaryBrush}"
+                                                               Margin="0,4,0,0"
+                                                               IsVisible="{Binding HasRecommendation}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Right Column -->
+                <StackPanel Grid.Column="1" Spacing="16" Margin="12,0,0,0">
+                    <!-- Anomalies Section -->
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            CornerRadius="12"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <Border Padding="20"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="32" Height="32"
+                                            CornerRadius="8"
+                                            Background="#FEF3C7"
+                                            Margin="0,0,12,0">
+                                        <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                                  Width="16" Height="16"
+                                                  Foreground="#F59E0B" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1"
+                                               Text="Anomaly Detection"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding Anomalies}" Margin="0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:InsightItem">
+                                        <Border Padding="20"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Border Grid.Column="0"
+                                                        Width="8" Height="8"
+                                                        CornerRadius="4"
+                                                        Background="{Binding StatusColor}"
+                                                        Margin="0,6,12,0"
+                                                        VerticalAlignment="Top" />
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Recommendation}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource PrimaryBrush}"
+                                                               Margin="0,4,0,0"
+                                                               IsVisible="{Binding HasRecommendation}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Recommendations Section -->
+                    <Border Background="{DynamicResource SurfaceBrush}"
+                            CornerRadius="12"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <Border Padding="20"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="32" Height="32"
+                                            CornerRadius="8"
+                                            Background="#DBEAFE"
+                                            Margin="0,0,12,0">
+                                        <PathIcon Data="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                                                  Width="16" Height="16"
+                                                  Foreground="#3B82F6" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1"
+                                               Text="Recommendations"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding Recommendations}" Margin="0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:InsightItem">
+                                        <Border Padding="20"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <Border Grid.Column="0"
+                                                        Width="8" Height="8"
+                                                        CornerRadius="4"
+                                                        Background="{Binding StatusColor}"
+                                                        Margin="0,6,12,0"
+                                                        VerticalAlignment="Top" />
+                                                <StackPanel Grid.Column="1" Spacing="4">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontSize="14"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Recommendation}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource PrimaryBrush}"
+                                                               Margin="0,4,0,0"
+                                                               IsVisible="{Binding HasRecommendation}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+
+    <UserControl.Styles>
+        <!-- Secondary Button -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>
