@@ -1293,7 +1293,7 @@ public partial class App : Application
         navigationService.RegisterPage("Dashboard", _ => CreatePlaceholderPage("Dashboard", "Welcome to the Dashboard"));
         navigationService.RegisterPage("Analytics", _ => new AnalyticsPage { DataContext = new AnalyticsPageViewModel() });
         navigationService.RegisterPage("Insights", _ => new InsightsPage { DataContext = new InsightsPageViewModel() });
-        navigationService.RegisterPage("Reports", _ => CreatePlaceholderPage("Reports", "Generate and view reports"));
+        navigationService.RegisterPage("Reports", _ => new ReportsPage { DataContext = new ReportsPageViewModel() });
 
         // Transactions Section
         navigationService.RegisterPage("Revenue", _ => new RevenuePage { DataContext = new RevenuePageViewModel() });

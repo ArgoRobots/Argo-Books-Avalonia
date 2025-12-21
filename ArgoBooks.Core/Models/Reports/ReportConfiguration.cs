@@ -1,0 +1,417 @@
+using System.Text.Json.Serialization;
+using ArgoBooks.Core.Enums;
+
+namespace ArgoBooks.Core.Models.Reports;
+
+/// <summary>
+/// Complete configuration for a report including layout, data filters, and settings.
+/// </summary>
+public class ReportConfiguration
+{
+    /// <summary>
+    /// Unique identifier for the configuration.
+    /// </summary>
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = Guid.NewGuid().ToString();
+
+    /// <summary>
+    /// Report title.
+    /// </summary>
+    [JsonPropertyName("title")]
+    public string Title { get; set; } = "Untitled Report";
+
+    /// <summary>
+    /// Page size setting.
+    /// </summary>
+    [JsonPropertyName("pageSize")]
+    public PageSize PageSize { get; set; } = PageSize.A4;
+
+    /// <summary>
+    /// Page orientation.
+    /// </summary>
+    [JsonPropertyName("pageOrientation")]
+    public PageOrientation PageOrientation { get; set; } = PageOrientation.Landscape;
+
+    /// <summary>
+    /// Page margins in pixels.
+    /// </summary>
+    [JsonPropertyName("pageMargins")]
+    public ReportMargins PageMargins { get; set; } = new();
+
+    /// <summary>
+    /// Background color for the report (hex format).
+    /// </summary>
+    [JsonPropertyName("backgroundColor")]
+    public string BackgroundColor { get; set; } = "#FFFFFF";
+
+    /// <summary>
+    /// Whether to show page numbers.
+    /// </summary>
+    [JsonPropertyName("showPageNumbers")]
+    public bool ShowPageNumbers { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show header with title.
+    /// </summary>
+    [JsonPropertyName("showHeader")]
+    public bool ShowHeader { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show footer with date/time.
+    /// </summary>
+    [JsonPropertyName("showFooter")]
+    public bool ShowFooter { get; set; } = true;
+
+    /// <summary>
+    /// Data filtering configuration.
+    /// </summary>
+    [JsonPropertyName("filters")]
+    public ReportFilters Filters { get; set; } = new();
+
+    /// <summary>
+    /// List of all elements in the report.
+    /// </summary>
+    [JsonPropertyName("elements")]
+    public List<ReportElementBase> Elements { get; set; } = [];
+
+    /// <summary>
+    /// Indicates whether the user has manually moved or resized any charts.
+    /// </summary>
+    [JsonPropertyName("hasManualChartLayout")]
+    public bool HasManualChartLayout { get; set; }
+
+    /// <summary>
+    /// Current page number for display in footer.
+    /// </summary>
+    [JsonIgnore]
+    public int CurrentPageNumber { get; set; } = 1;
+
+    /// <summary>
+    /// Gets elements sorted by Z-order (for rendering).
+    /// </summary>
+    public List<ReportElementBase> GetElementsByZOrder()
+    {
+        return Elements.OrderBy(e => e.ZOrder).ToList();
+    }
+
+    /// <summary>
+    /// Adds an element to the report.
+    /// </summary>
+    public void AddElement(ReportElementBase element)
+    {
+        if (element != null)
+        {
+            element.ZOrder = Elements.Count != 0 ? Elements.Max(e => e.ZOrder) + 1 : 0;
+            Elements.Add(element);
+        }
+    }
+
+    /// <summary>
+    /// Removes an element from the report.
+    /// </summary>
+    public bool RemoveElement(string elementId)
+    {
+        var element = Elements.FirstOrDefault(e => e.Id == elementId);
+        if (element != null)
+        {
+            Elements.Remove(element);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Gets an element by its ID.
+    /// </summary>
+    public ReportElementBase? GetElementById(string elementId)
+    {
+        return Elements.FirstOrDefault(e => e.Id == elementId);
+    }
+
+    /// <summary>
+    /// Gets all elements of a specific type.
+    /// </summary>
+    public List<T> GetElementsOfType<T>() where T : ReportElementBase
+    {
+        return Elements.OfType<T>().ToList();
+    }
+
+    /// <summary>
+    /// Creates a deep clone of this configuration.
+    /// </summary>
+    public ReportConfiguration Clone()
+    {
+        return new ReportConfiguration
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = Title,
+            PageSize = PageSize,
+            PageOrientation = PageOrientation,
+            PageMargins = new ReportMargins
+            {
+                Left = PageMargins.Left,
+                Top = PageMargins.Top,
+                Right = PageMargins.Right,
+                Bottom = PageMargins.Bottom
+            },
+            BackgroundColor = BackgroundColor,
+            ShowPageNumbers = ShowPageNumbers,
+            ShowHeader = ShowHeader,
+            ShowFooter = ShowFooter,
+            Filters = new ReportFilters
+            {
+                StartDate = Filters.StartDate,
+                EndDate = Filters.EndDate,
+                TransactionType = Filters.TransactionType,
+                IncludeReturns = Filters.IncludeReturns,
+                IncludeLosses = Filters.IncludeLosses,
+                DatePresetName = Filters.DatePresetName,
+                SelectedChartTypes = [.. Filters.SelectedChartTypes]
+            },
+            HasManualChartLayout = HasManualChartLayout,
+            Elements = Elements.Select(e => e.Clone()).ToList()
+        };
+    }
+}
+
+/// <summary>
+/// Page margins specification.
+/// </summary>
+public class ReportMargins
+{
+    [JsonPropertyName("left")]
+    public double Left { get; set; } = 40;
+
+    [JsonPropertyName("top")]
+    public double Top { get; set; } = 40;
+
+    [JsonPropertyName("right")]
+    public double Right { get; set; } = 40;
+
+    [JsonPropertyName("bottom")]
+    public double Bottom { get; set; } = 40;
+
+    public ReportMargins() { }
+
+    public ReportMargins(double allSides)
+    {
+        Left = Top = Right = Bottom = allSides;
+    }
+
+    public ReportMargins(double left, double top, double right, double bottom)
+    {
+        Left = left;
+        Top = top;
+        Right = right;
+        Bottom = bottom;
+    }
+}
+
+/// <summary>
+/// Data filtering options for report generation.
+/// </summary>
+public class ReportFilters
+{
+    /// <summary>
+    /// Start date for data filtering.
+    /// </summary>
+    [JsonPropertyName("startDate")]
+    public DateTime? StartDate { get; set; }
+
+    /// <summary>
+    /// End date for data filtering.
+    /// </summary>
+    [JsonPropertyName("endDate")]
+    public DateTime? EndDate { get; set; }
+
+    /// <summary>
+    /// Transaction types to include.
+    /// </summary>
+    [JsonPropertyName("transactionType")]
+    public TransactionType TransactionType { get; set; } = TransactionType.Revenue;
+
+    /// <summary>
+    /// Selected chart types to include.
+    /// </summary>
+    [JsonPropertyName("selectedChartTypes")]
+    public List<ChartDataType> SelectedChartTypes { get; set; } = [];
+
+    /// <summary>
+    /// Whether to include returned items.
+    /// </summary>
+    [JsonPropertyName("includeReturns")]
+    public bool IncludeReturns { get; set; } = true;
+
+    /// <summary>
+    /// Whether to include lost items.
+    /// </summary>
+    [JsonPropertyName("includeLosses")]
+    public bool IncludeLosses { get; set; } = true;
+
+    /// <summary>
+    /// The name of the date preset to use (e.g., "This month", "Last quarter").
+    /// If null or empty, uses StartDate and EndDate.
+    /// </summary>
+    [JsonPropertyName("datePresetName")]
+    public string? DatePresetName { get; set; }
+}
+
+/// <summary>
+/// Export settings for report output.
+/// </summary>
+public class ExportSettings
+{
+    /// <summary>
+    /// Export format.
+    /// </summary>
+    [JsonPropertyName("format")]
+    public ExportFormat Format { get; set; } = ExportFormat.PDF;
+
+    /// <summary>
+    /// Output file path.
+    /// </summary>
+    [JsonPropertyName("filePath")]
+    public string FilePath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Quality setting (0-100).
+    /// </summary>
+    [JsonPropertyName("quality")]
+    public int Quality { get; set; } = 95;
+
+    /// <summary>
+    /// Whether to open the file after export.
+    /// </summary>
+    [JsonPropertyName("openAfterExport")]
+    public bool OpenAfterExport { get; set; } = true;
+
+    /// <summary>
+    /// Whether to include metadata in the export.
+    /// </summary>
+    [JsonPropertyName("includeMetadata")]
+    public bool IncludeMetadata { get; set; } = true;
+}
+
+/// <summary>
+/// Page size dimensions helper.
+/// </summary>
+public static class PageDimensions
+{
+    /// <summary>
+    /// Header height in pixels.
+    /// </summary>
+    public const int HeaderHeight = 50;
+
+    /// <summary>
+    /// Footer height in pixels.
+    /// </summary>
+    public const int FooterHeight = 30;
+
+    /// <summary>
+    /// Separator height in pixels.
+    /// </summary>
+    public const int SeparatorHeight = 5;
+
+    /// <summary>
+    /// Render scale for high-quality export.
+    /// </summary>
+    public const float RenderScale = 3f;
+
+    /// <summary>
+    /// Gets the dimensions for a page size in pixels (96 DPI).
+    /// </summary>
+    public static (int Width, int Height) GetDimensions(PageSize pageSize, PageOrientation orientation)
+    {
+        var (width, height) = pageSize switch
+        {
+            PageSize.A4 => (794, 1123),      // 210 × 297 mm
+            PageSize.Letter => (816, 1056),  // 8.5 × 11 inches
+            PageSize.Legal => (816, 1344),   // 8.5 × 14 inches
+            PageSize.Tabloid => (1122, 1632),// 11 × 17 inches
+            PageSize.A3 => (1123, 1587),     // 297 × 420 mm
+            _ => (794, 1123)                 // Default to A4
+        };
+
+        // Swap dimensions for landscape
+        if (orientation == PageOrientation.Landscape)
+        {
+            return (height, width);
+        }
+
+        return (width, height);
+    }
+}
+
+/// <summary>
+/// Date preset names for common date ranges.
+/// </summary>
+public static class DatePresetNames
+{
+    public const string Today = "Today";
+    public const string Yesterday = "Yesterday";
+    public const string Last7Days = "Last 7 days";
+    public const string Last30Days = "Last 30 days";
+    public const string ThisWeek = "This week";
+    public const string LastWeek = "Last week";
+    public const string ThisMonth = "This month";
+    public const string LastMonth = "Last month";
+    public const string ThisQuarter = "This quarter";
+    public const string LastQuarter = "Last quarter";
+    public const string YearToDate = "Year to date";
+    public const string LastYear = "Last year";
+    public const string AllTime = "All time";
+    public const string Custom = "Custom";
+
+    /// <summary>
+    /// Gets the date range for a preset name.
+    /// </summary>
+    public static (DateTime Start, DateTime End) GetDateRange(string presetName)
+    {
+        var now = DateTime.Now;
+        var today = now.Date;
+
+        return presetName switch
+        {
+            Today => (today, today.AddDays(1).AddSeconds(-1)),
+            Yesterday => (today.AddDays(-1), today.AddSeconds(-1)),
+            Last7Days => (today.AddDays(-6), today.AddDays(1).AddSeconds(-1)),
+            Last30Days => (today.AddDays(-29), today.AddDays(1).AddSeconds(-1)),
+            ThisWeek => (today.AddDays(-(int)today.DayOfWeek), today.AddDays(7 - (int)today.DayOfWeek).AddSeconds(-1)),
+            LastWeek => (today.AddDays(-(int)today.DayOfWeek - 7), today.AddDays(-(int)today.DayOfWeek).AddSeconds(-1)),
+            ThisMonth => (new DateTime(now.Year, now.Month, 1), new DateTime(now.Year, now.Month, 1).AddMonths(1).AddSeconds(-1)),
+            LastMonth => (new DateTime(now.Year, now.Month, 1).AddMonths(-1), new DateTime(now.Year, now.Month, 1).AddSeconds(-1)),
+            ThisQuarter => GetThisQuarterRange(now),
+            LastQuarter => GetLastQuarterRange(now),
+            YearToDate => (new DateTime(now.Year, 1, 1), today.AddDays(1).AddSeconds(-1)),
+            LastYear => (new DateTime(now.Year - 1, 1, 1), new DateTime(now.Year, 1, 1).AddSeconds(-1)),
+            AllTime => (DateTime.MinValue, DateTime.MaxValue),
+            _ => (today.AddDays(-29), today.AddDays(1).AddSeconds(-1)) // Default to last 30 days
+        };
+    }
+
+    private static (DateTime Start, DateTime End) GetThisQuarterRange(DateTime now)
+    {
+        int quarter = (now.Month - 1) / 3;
+        var start = new DateTime(now.Year, quarter * 3 + 1, 1);
+        var end = start.AddMonths(3).AddSeconds(-1);
+        return (start, end);
+    }
+
+    private static (DateTime Start, DateTime End) GetLastQuarterRange(DateTime now)
+    {
+        int quarter = (now.Month - 1) / 3;
+        var thisQuarterStart = new DateTime(now.Year, quarter * 3 + 1, 1);
+        var start = thisQuarterStart.AddMonths(-3);
+        var end = thisQuarterStart.AddSeconds(-1);
+        return (start, end);
+    }
+
+    /// <summary>
+    /// Gets all available preset names.
+    /// </summary>
+    public static string[] GetAllPresets()
+    {
+        return [Today, Yesterday, Last7Days, Last30Days, ThisWeek, LastWeek,
+                ThisMonth, LastMonth, ThisQuarter, LastQuarter, YearToDate, LastYear, AllTime, Custom];
+    }
+}
