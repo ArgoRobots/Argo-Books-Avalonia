@@ -481,7 +481,8 @@ public class SortIndicatorConverter : IMultiValueConverter
 }
 
 /// <summary>
-/// Converter for checking if two values are equal and returning an "active" class name.
+/// Converter for checking if two values are equal.
+/// Returns true if both values are equal.
 /// </summary>
 public class PageEqualsConverter : IMultiValueConverter
 {
@@ -490,10 +491,9 @@ public class PageEqualsConverter : IMultiValueConverter
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count < 2)
-            return "pagination-button";
+            return false;
 
-        var isActive = Equals(values[0], values[1]);
-        return isActive ? "pagination-button active" : "pagination-button";
+        return Equals(values[0], values[1]);
     }
 }
 

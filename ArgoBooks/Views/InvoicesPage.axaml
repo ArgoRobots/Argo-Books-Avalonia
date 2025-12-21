@@ -620,15 +620,16 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Button Content="{Binding}"
+                                            <Button Classes="pagination-button"
+                                                    Content="{Binding}"
                                                     Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).GoToPageCommand}"
                                                     CommandParameter="{Binding}">
-                                                <Button.Classes>
+                                                <controls:PaginationHelper.IsActivePage>
                                                     <MultiBinding Converter="{StaticResource PageEqualsConverter}">
                                                         <Binding />
                                                         <Binding Path="$parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).CurrentPage" />
                                                     </MultiBinding>
-                                                </Button.Classes>
+                                                </controls:PaginationHelper.IsActivePage>
                                             </Button>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

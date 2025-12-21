@@ -174,7 +174,7 @@
         <Setter Property="Background" Value="{TemplateBinding Background}" />
         <Setter Property="CornerRadius" Value="6" />
     </Style>
-    <Style Selector="Button.pagination-button:not(.active):pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.pagination-button:not(:active):pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
     </Style>
     <Style Selector="Button.pagination-button:disabled">
@@ -183,11 +183,11 @@
     <Style Selector="Button.pagination-button PathIcon">
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
     </Style>
-    <!-- Active page button -->
-    <Style Selector="Button.pagination-button.active /template/ ContentPresenter#PART_ContentPresenter">
+    <!-- Active page button (uses :active pseudo-class set by PaginationHelper.IsActivePage) -->
+    <Style Selector="Button.pagination-button:active /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
     </Style>
-    <Style Selector="Button.pagination-button.active">
+    <Style Selector="Button.pagination-button:active">
         <Setter Property="Foreground" Value="White" />
     </Style>
 
