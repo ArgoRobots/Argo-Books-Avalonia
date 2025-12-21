@@ -434,6 +434,94 @@ public class ReportChartDataService
             .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.Total));
     }
 
+    /// <summary>
+    /// Gets purchases by country of destination.
+    /// </summary>
+    public List<ChartDataPoint> GetPurchasesByCountryOfDestination()
+    {
+        if (_companyData?.Purchases == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return _companyData.Purchases
+            .Where(p => p.Date >= startDate && p.Date <= endDate)
+            .GroupBy(p => p.SupplierAddress?.Country ?? "Unknown")
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key,
+                Value = (double)g.Sum(p => p.Total)
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets sales by company of origin.
+    /// </summary>
+    public List<ChartDataPoint> GetSalesByCompanyOfOrigin()
+    {
+        if (_companyData?.Sales == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return _companyData.Sales
+            .Where(s => s.Date >= startDate && s.Date <= endDate)
+            .GroupBy(s => _companyData.GetCompany(s.CompanyId ?? "")?.Name ?? "Unknown")
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key,
+                Value = (double)g.Sum(s => s.Total)
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets average shipping costs over time.
+    /// </summary>
+    public List<ChartDataPoint> GetAverageShippingCosts()
+    {
+        if (_companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var months = GetMonthsBetween(startDate, endDate);
+
+        return months.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            var shippingCosts = new List<decimal>();
+
+            if (_companyData.Sales != null)
+            {
+                shippingCosts.AddRange(_companyData.Sales
+                    .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
+                    .Select(s => s.ShippingCost));
+            }
+
+            if (_companyData.Purchases != null)
+            {
+                shippingCosts.AddRange(_companyData.Purchases
+                    .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
+                    .Select(p => p.ShippingCost));
+            }
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = shippingCosts.Count > 0 ? (double)shippingCosts.Average() : 0,
+                Date = month
+            };
+        }).ToList();
+    }
+
     #endregion
 
     #region Accountant Charts
@@ -550,6 +638,104 @@ public class ReportChartDataService
             .ToList();
     }
 
+    /// <summary>
+    /// Gets returns by category.
+    /// </summary>
+    public List<ChartDataPoint> GetReturnsByCategory()
+    {
+        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return _companyData.Returns
+            .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
+            .GroupBy(r =>
+            {
+                var product = _companyData.GetProduct(r.ProductId ?? "");
+                var category = product != null ? _companyData.GetCategory(product.CategoryId ?? "") : null;
+                return category?.Name ?? "Unknown";
+            })
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key,
+                Value = g.Count()
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets returns by product.
+    /// </summary>
+    public List<ChartDataPoint> GetReturnsByProduct()
+    {
+        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return _companyData.Returns
+            .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
+            .GroupBy(r => _companyData.GetProduct(r.ProductId ?? "")?.Name ?? "Unknown")
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key,
+                Value = g.Count()
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets purchase vs sale returns comparison.
+    /// </summary>
+    public List<ChartSeriesData> GetPurchaseVsSaleReturns()
+    {
+        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var months = GetMonthsBetween(startDate, endDate);
+
+        var saleReturns = months.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = _companyData.Returns
+                    .Count(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd && r.ReturnType == "Sale"),
+                Date = month
+            };
+        }).ToList();
+
+        var purchaseReturns = months.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = _companyData.Returns
+                    .Count(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd && r.ReturnType == "Purchase"),
+                Date = month
+            };
+        }).ToList();
+
+        return
+        [
+            new ChartSeriesData { Name = "Sale Returns", Color = "#EF4444", DataPoints = saleReturns },
+            new ChartSeriesData { Name = "Purchase Returns", Color = "#F59E0B", DataPoints = purchaseReturns }
+        ];
+    }
+
     #endregion
 
     #region Losses Charts
@@ -622,6 +808,104 @@ public class ReportChartDataService
             .ToList();
     }
 
+    /// <summary>
+    /// Gets losses by category.
+    /// </summary>
+    public List<ChartDataPoint> GetLossesByCategory()
+    {
+        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return _companyData.LostDamaged
+            .Where(l => l.ReportedDate >= startDate && l.ReportedDate <= endDate)
+            .GroupBy(l =>
+            {
+                var product = _companyData.GetProduct(l.ProductId ?? "");
+                var category = product != null ? _companyData.GetCategory(product.CategoryId ?? "") : null;
+                return category?.Name ?? "Unknown";
+            })
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key,
+                Value = g.Count()
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets losses by product.
+    /// </summary>
+    public List<ChartDataPoint> GetLossesByProduct()
+    {
+        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return _companyData.LostDamaged
+            .Where(l => l.ReportedDate >= startDate && l.ReportedDate <= endDate)
+            .GroupBy(l => _companyData.GetProduct(l.ProductId ?? "")?.Name ?? "Unknown")
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key,
+                Value = g.Count()
+            })
+            .OrderByDescending(p => p.Value)
+            .Take(10)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets purchase vs sale losses comparison.
+    /// </summary>
+    public List<ChartSeriesData> GetPurchaseVsSaleLosses()
+    {
+        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var months = GetMonthsBetween(startDate, endDate);
+
+        var saleLosses = months.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = _companyData.LostDamaged
+                    .Count(l => l.ReportedDate >= monthStart && l.ReportedDate <= monthEnd && l.LossType == "Sale"),
+                Date = month
+            };
+        }).ToList();
+
+        var purchaseLosses = months.Select(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            return new ChartDataPoint
+            {
+                Label = month.ToString("MMM yyyy"),
+                Value = _companyData.LostDamaged
+                    .Count(l => l.ReportedDate >= monthStart && l.ReportedDate <= monthEnd && l.LossType == "Purchase"),
+                Date = month
+            };
+        }).ToList();
+
+        return
+        [
+            new ChartSeriesData { Name = "Sale Losses", Color = "#DC2626", DataPoints = saleLosses },
+            new ChartSeriesData { Name = "Purchase Losses", Color = "#9333EA", DataPoints = purchaseLosses }
+        ];
+    }
+
     #endregion
 
     #region Helper Methods
@@ -648,24 +932,49 @@ public class ReportChartDataService
     {
         return chartType switch
         {
+            // Revenue charts
             ChartDataType.TotalRevenue => GetRevenueOverTime(),
             ChartDataType.RevenueDistribution => GetRevenueDistribution(),
+
+            // Expense charts
             ChartDataType.TotalExpenses => GetExpensesOverTime(),
             ChartDataType.ExpensesDistribution => GetExpenseDistribution(),
+
+            // Financial charts
             ChartDataType.TotalProfits => GetProfitOverTime(),
             ChartDataType.SalesVsExpenses => GetSalesVsExpenses(),
             ChartDataType.GrowthRates => GetGrowthRates(),
+
+            // Transaction charts
             ChartDataType.AverageTransactionValue => GetAverageTransactionValue(),
             ChartDataType.TotalTransactions => GetTransactionCount(),
+            ChartDataType.AverageShippingCosts => GetAverageShippingCosts(),
+
+            // Geographic charts
             ChartDataType.WorldMap => GetWorldMapData(),
             ChartDataType.CountriesOfOrigin => GetSalesByCountryOfOrigin(),
+            ChartDataType.CountriesOfDestination => GetPurchasesByCountryOfDestination(),
+            ChartDataType.CompaniesOfOrigin => GetSalesByCompanyOfOrigin(),
+
+            // Accountant charts
             ChartDataType.AccountantsTransactions => GetTransactionsByAccountant(),
+
+            // Returns charts
             ChartDataType.ReturnsOverTime => GetReturnsOverTime(),
             ChartDataType.ReturnReasons => GetReturnReasons(),
             ChartDataType.ReturnFinancialImpact => GetReturnFinancialImpact(),
+            ChartDataType.ReturnsByCategory => GetReturnsByCategory(),
+            ChartDataType.ReturnsByProduct => GetReturnsByProduct(),
+            ChartDataType.PurchaseVsSaleReturns => GetPurchaseVsSaleReturns(),
+
+            // Losses charts
             ChartDataType.LossesOverTime => GetLossesOverTime(),
             ChartDataType.LossReasons => GetLossReasons(),
             ChartDataType.LossFinancialImpact => GetLossFinancialImpact(),
+            ChartDataType.LossesByCategory => GetLossesByCategory(),
+            ChartDataType.LossesByProduct => GetLossesByProduct(),
+            ChartDataType.PurchaseVsSaleLosses => GetPurchaseVsSaleLosses(),
+
             _ => new List<ChartDataPoint>()
         };
     }
