@@ -249,4 +249,10 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     /// Gets the undo/redo manager.
     /// </summary>
     public UndoRedoManager? Manager => _undoRedoManager;
+
+    // Explicit interface implementation for ICommand properties
+    ICommand IUndoRedoButtonGroupViewModel.UndoCommand => UndoCommand;
+    ICommand IUndoRedoButtonGroupViewModel.RedoCommand => RedoCommand;
+    ICommand IUndoRedoButtonGroupViewModel.UndoToCommand => UndoToCommand;
+    ICommand IUndoRedoButtonGroupViewModel.RedoToCommand => RedoToCommand;
 }

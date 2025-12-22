@@ -194,4 +194,10 @@ public partial class ReportsUndoRedoButtonGroupViewModel : ViewModelBase, IUndoR
     /// Gets the undo/redo manager.
     /// </summary>
     public ReportUndoRedoManager? Manager => _undoRedoManager;
+
+    // Explicit interface implementation for ICommand properties
+    System.Windows.Input.ICommand IUndoRedoButtonGroupViewModel.UndoCommand => UndoCommand;
+    System.Windows.Input.ICommand IUndoRedoButtonGroupViewModel.RedoCommand => RedoCommand;
+    System.Windows.Input.ICommand IUndoRedoButtonGroupViewModel.UndoToCommand => UndoToCommand;
+    System.Windows.Input.ICommand IUndoRedoButtonGroupViewModel.RedoToCommand => RedoToCommand;
 }
