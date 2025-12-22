@@ -49,9 +49,6 @@
                                  HorizontalAlignment="Center"
                                  IsColorSpectrumVisible="True"
                                  IsColorPreviewVisible="False"
-                                 IsColorSliderVisible="True"
-                                 IsHexInputVisible="False"
-                                 IsAlphaVisible="False"
                                  IsColorPaletteVisible="False"
                                  IsColorComponentsVisible="False" />
 
