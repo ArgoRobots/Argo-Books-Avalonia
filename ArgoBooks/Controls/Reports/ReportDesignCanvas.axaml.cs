@@ -491,8 +491,29 @@ public partial class ReportDesignCanvas : UserControl
     {
         if (_scrollViewer == null) return;
 
-        // Reset scroll offset to let the Grid centering work naturally
-        _scrollViewer.Offset = new Vector(0, 0);
+        // Calculate the total content size with zoom
+        var scaledWidth = (_pageWidth * ZoomLevel) + 80; // 40px padding on each side
+        var scaledHeight = (_pageHeight * ZoomLevel) + 80;
+
+        var viewportWidth = _scrollViewer.Viewport.Width;
+        var viewportHeight = _scrollViewer.Viewport.Height;
+
+        // Calculate offset to center the content
+        double offsetX = 0;
+        double offsetY = 0;
+
+        if (scaledWidth > viewportWidth)
+        {
+            // Content is larger than viewport - scroll to center
+            offsetX = (scaledWidth - viewportWidth) / 2;
+        }
+        if (scaledHeight > viewportHeight)
+        {
+            // Content is larger than viewport - scroll to center
+            offsetY = (scaledHeight - viewportHeight) / 2;
+        }
+
+        _scrollViewer.Offset = new Vector(offsetX, offsetY);
     }
 
     #endregion

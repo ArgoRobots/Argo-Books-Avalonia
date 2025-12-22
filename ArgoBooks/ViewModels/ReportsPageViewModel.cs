@@ -358,6 +358,11 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
 
+    /// <summary>
+    /// ViewModel for the undo/redo button group control.
+    /// </summary>
+    public ReportsUndoRedoButtonGroupViewModel UndoRedoViewModel { get; }
+
     [ObservableProperty]
     private bool _isUndoDropdownOpen;
 
@@ -791,6 +796,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         BackgroundColor = _originalBackgroundColor;
 
         IsPageSettingsOpen = false;
+
+        // Ensure canvas is refreshed after modal closes with original values
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
@@ -1200,6 +1208,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         UpdateCanvasDimensions();
         IsPageSettingsOpen = false;
+
+        // Refresh the canvas after modal closes
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -1257,6 +1268,10 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ReportsPageViewModel()
     {
+        // Initialize the undo/redo view model
+        UndoRedoViewModel = new ReportsUndoRedoButtonGroupViewModel(UndoRedoManager);
+        UndoRedoViewModel.ActionPerformed += (_, _) => OnPropertyChanged(nameof(Configuration));
+
         InitializeCollections();
         LoadTemplate(SelectedTemplateName);
         InitializeExportSettings();

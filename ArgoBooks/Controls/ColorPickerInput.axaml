@@ -43,16 +43,26 @@
                     CornerRadius="8"
                     Padding="12"
                     BoxShadow="0 4 16 0 #22000000">
-                <StackPanel Spacing="12">
-                    <!-- Color View with sliders -->
-                    <ColorView x:Name="ColorViewControl"
-                               Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
-                               IsAlphaVisible="False"
-                               IsColorSpectrumVisible="True"
-                               IsColorComponentsVisible="True"
-                               IsColorPaletteVisible="True"
-                               IsHexInputVisible="True"
-                               HorizontalAlignment="Stretch" />
+                <StackPanel Spacing="12" Width="280">
+                    <!-- Color Spectrum -->
+                    <ColorSpectrum Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
+                                   MinHue="0" MaxHue="360"
+                                   MinSaturation="0" MaxSaturation="100"
+                                   MinValue="0" MaxValue="100"
+                                   Width="256" Height="256"
+                                   HorizontalAlignment="Center" />
+
+                    <!-- Preview and Hex -->
+                    <Grid ColumnDefinitions="Auto,*" Margin="0,8,0,0">
+                        <Border Grid.Column="0" Width="40" Height="40" CornerRadius="4"
+                                Background="{Binding #Root.ColorBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                Margin="0,0,12,0" />
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding #Root.ColorValue, Mode=TwoWay}"
+                                 VerticalAlignment="Center" />
+                    </Grid>
 
                     <!-- Apply Button -->
                     <Button Content="Apply"
