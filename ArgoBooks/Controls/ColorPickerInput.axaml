@@ -44,13 +44,13 @@
                     Padding="12"
                     BoxShadow="0 4 16 0 #22000000">
                 <StackPanel Spacing="12" Width="300">
-                    <!-- Color Picker -->
-                    <ColorPicker Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
-                                 HorizontalAlignment="Center"
-                                 IsColorSpectrumVisible="True"
-                                 IsColorPreviewVisible="False"
-                                 IsColorPaletteVisible="False"
-                                 IsColorComponentsVisible="False" />
+                    <!-- Color View (inline color editing surface) -->
+                    <ColorView Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
+                               HorizontalAlignment="Center"
+                               IsColorSpectrumVisible="True"
+                               IsColorPreviewVisible="False"
+                               IsColorPaletteVisible="False"
+                               IsColorComponentsVisible="False" />
 
                     <!-- Preview and Hex -->
                     <Grid ColumnDefinitions="Auto,*" Margin="0,8,0,0">
