@@ -267,6 +267,40 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ObservableCollection<ReportElementBase> SelectedElements { get; } = [];
 
+    // Properties for toolbar button enabling
+    public bool HasSelectedElements => SelectedElements.Count > 0;
+    public bool HasMultipleSelectedElements => SelectedElements.Count > 1;
+
+    private void NotifySelectionChanged()
+    {
+        OnPropertyChanged(nameof(HasSelectedElements));
+        OnPropertyChanged(nameof(HasMultipleSelectedElements));
+    }
+
+    [RelayCommand]
+    private void SelectElement(ReportElementBase? element)
+    {
+        SelectedElements.Clear();
+        if (element != null)
+        {
+            SelectedElements.Add(element);
+            SelectedElement = element;
+        }
+        else
+        {
+            SelectedElement = null;
+        }
+        NotifySelectionChanged();
+    }
+
+    [RelayCommand]
+    private void ClearSelection()
+    {
+        SelectedElements.Clear();
+        SelectedElement = null;
+        NotifySelectionChanged();
+    }
+
     partial void OnConfigurationChanged(ReportConfiguration value)
     {
         UpdateCanvasDimensions();
@@ -298,6 +332,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         SelectedElement = element;
         SelectedElements.Clear();
         SelectedElements.Add(element);
+        NotifySelectionChanged();
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -311,6 +346,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
         SelectedElements.Clear();
         SelectedElement = null;
+        NotifySelectionChanged();
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -625,6 +661,9 @@ public partial class ReportsPageViewModel : ViewModelBase
             {
                 ExportMessage = "Export completed successfully!";
 
+                // Save export settings for next time
+                await SaveExportSettingsAsync();
+
                 if (OpenAfterExport && File.Exists(ExportFilePath))
                 {
                     try
@@ -659,8 +698,6 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private async Task BrowseExportPathAsync()
     {
-        // In a real implementation, this would use a file picker dialog
-        // For now, we'll set a default path
         var defaultName = string.IsNullOrWhiteSpace(ReportName) ? "Report" : ReportName;
         var extension = SelectedExportFormat switch
         {
@@ -670,9 +707,25 @@ public partial class ReportsPageViewModel : ViewModelBase
             _ => ".pdf"
         };
 
-        var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        ExportFilePath = Path.Combine(documentsPath, $"{defaultName}{extension}");
+        // Use last export directory, or default to Desktop
+        var lastDir = App.SettingsService?.GlobalSettings.ReportExport.LastExportDirectory;
+        var defaultPath = !string.IsNullOrEmpty(lastDir) && Directory.Exists(lastDir)
+            ? lastDir
+            : Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+        ExportFilePath = Path.Combine(defaultPath, $"{defaultName}{extension}");
         await Task.CompletedTask;
+    }
+
+    private async Task SaveExportSettingsAsync()
+    {
+        if (App.SettingsService?.GlobalSettings.ReportExport is { } settings)
+        {
+            settings.LastExportDirectory = Path.GetDirectoryName(ExportFilePath);
+            settings.OpenAfterExport = OpenAfterExport;
+            settings.IncludeMetadata = IncludeMetadata;
+            await App.SettingsService.SaveGlobalSettingsAsync();
+        }
     }
 
     #endregion
@@ -787,6 +840,18 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         InitializeCollections();
         LoadTemplate(SelectedTemplateName);
+        InitializeExportSettings();
+    }
+
+    private void InitializeExportSettings()
+    {
+        // Load settings from persisted storage
+        var settings = App.SettingsService?.GlobalSettings.ReportExport;
+        if (settings != null)
+        {
+            OpenAfterExport = settings.OpenAfterExport;
+            IncludeMetadata = settings.IncludeMetadata;
+        }
     }
 
     private void InitializeCollections()

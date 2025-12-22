@@ -90,33 +90,29 @@ public partial class ReportsPage : UserControl
 
     private void OnCanvasPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        // Always zoom with scroll wheel (no CTRL required)
+        if (DataContext is ReportsPageViewModel vm)
         {
-            if (DataContext is ReportsPageViewModel vm)
-            {
-                if (e.Delta.Y > 0)
-                    vm.ZoomInCommand.Execute(null);
-                else if (e.Delta.Y < 0)
-                    vm.ZoomOutCommand.Execute(null);
+            if (e.Delta.Y > 0)
+                vm.ZoomInCommand.Execute(null);
+            else if (e.Delta.Y < 0)
+                vm.ZoomOutCommand.Execute(null);
 
-                e.Handled = true;
-            }
+            e.Handled = true;
         }
     }
 
     private void OnPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        // Always zoom with scroll wheel (no CTRL required)
+        if (DataContext is ReportsPageViewModel vm)
         {
-            if (DataContext is ReportsPageViewModel vm)
-            {
-                if (e.Delta.Y > 0)
-                    vm.PreviewZoomInCommand.Execute(null);
-                else if (e.Delta.Y < 0)
-                    vm.PreviewZoomOutCommand.Execute(null);
+            if (e.Delta.Y > 0)
+                vm.PreviewZoomInCommand.Execute(null);
+            else if (e.Delta.Y < 0)
+                vm.PreviewZoomOutCommand.Execute(null);
 
-                e.Handled = true;
-            }
+            e.Handled = true;
         }
     }
 
