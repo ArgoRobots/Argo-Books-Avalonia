@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -34,6 +35,9 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     private bool _isFilterModalOpen;
 
     [ObservableProperty]
+    private bool _isItemStatusModalOpen;
+
+    [ObservableProperty]
     private bool _isEditMode;
 
     [ObservableProperty]
@@ -41,6 +45,66 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _saveButtonText = "Add Expense";
+
+    #endregion
+
+    #region Item Status Modal Fields
+
+    private ExpenseDisplayItem? _itemStatusItem;
+
+    [ObservableProperty]
+    private string _itemStatusModalTitle = "Update Item Status";
+
+    [ObservableProperty]
+    private string _itemStatusAction = string.Empty;
+
+    [ObservableProperty]
+    private string _itemStatusItemDescription = string.Empty;
+
+    [ObservableProperty]
+    private string? _selectedItemStatusReason;
+
+    [ObservableProperty]
+    private string _itemStatusNotes = string.Empty;
+
+    [ObservableProperty]
+    private bool _isUndoAction;
+
+    [ObservableProperty]
+    private string _itemStatusSaveButtonText = "Confirm";
+
+    public ObservableCollection<string> LostDamagedReasonOptions { get; } =
+    [
+        "Damaged in transit",
+        "Defective product",
+        "Lost in warehouse",
+        "Damaged during storage",
+        "Expired",
+        "Other"
+    ];
+
+    public ObservableCollection<string> ReturnReasonOptions { get; } =
+    [
+        "Wrong item received",
+        "Quality issues",
+        "Not as described",
+        "Duplicate order",
+        "Changed mind",
+        "Better price elsewhere",
+        "Other"
+    ];
+
+    public ObservableCollection<string> UndoReasonOptions { get; } =
+    [
+        "Item found",
+        "Damage was repairable",
+        "Incorrect status",
+        "Administrative error",
+        "Other"
+    ];
+
+    [ObservableProperty]
+    private ObservableCollection<string> _currentReasonOptions = [];
 
     #endregion
 
@@ -112,7 +176,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
     // Computed totals from line items
     public decimal Subtotal => LineItems.Sum(li => li.Amount);
-    public decimal TaxAmount => Subtotal * (ModalTaxRate / 100m);
+    public decimal TaxAmount => ModalTaxRate;  // Tax is entered as dollar amount
     public decimal DiscountAmount => ModalDiscount;
     public decimal ShippingAmount => ModalShipping;
     public decimal Total => Subtotal + TaxAmount + ShippingAmount - DiscountAmount;
@@ -285,6 +349,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
         LoadSupplierOptions();
         LoadCategoryOptions();
+        LoadProductOptions();
 
         _editingExpenseId = expense.Id;
         IsEditMode = true;
@@ -295,14 +360,44 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         ModalDate = new DateTimeOffset(expense.Date);
         SelectedSupplier = SupplierOptions.FirstOrDefault(s => s.Id == expense.SupplierId);
         SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == expense.CategoryId);
-        ModalDescription = expense.Description;
-        ModalQuantity = expense.Quantity;
-        ModalUnitPrice = expense.UnitPrice;
-        ModalTaxRate = expense.TaxRate;
+        ModalTaxRate = expense.TaxAmount;  // Load tax as dollar amount
         ModalShipping = expense.ShippingCost;
         ModalDiscount = expense.Discount;
         SelectedPaymentMethod = expense.PaymentMethod.ToString();
         ModalNotes = expense.Notes;
+
+        // Load line items from expense
+        LineItems.Clear();
+        if (expense.LineItems.Count > 0)
+        {
+            foreach (var li in expense.LineItems)
+            {
+                // Set SelectedProduct first so OnSelectedProductChanged fires before we set saved values
+                var lineItem = new ExpenseLineItem
+                {
+                    SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId)
+                };
+                // Now override with saved values (after product handler has fired)
+                lineItem.Description = li.Description;
+                lineItem.Quantity = li.Quantity;
+                lineItem.UnitPrice = li.UnitPrice;
+                lineItem.PropertyChanged += (_, _) => UpdateTotals();
+                LineItems.Add(lineItem);
+            }
+        }
+        else
+        {
+            // Fallback for old data without line items
+            var lineItem = new ExpenseLineItem
+            {
+                Description = expense.Description,
+                Quantity = expense.Quantity,
+                UnitPrice = expense.UnitPrice
+            };
+            lineItem.PropertyChanged += (_, _) => UpdateTotals();
+            LineItems.Add(lineItem);
+        }
+        UpdateTotals();
 
         // Load receipt info if available
         _receiptFilePath = expense.ReferenceNumber;
@@ -455,6 +550,92 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
     #endregion
 
+    #region Item Status Modal
+
+    public void OpenMarkAsLostDamagedModal(ExpenseDisplayItem? item)
+    {
+        if (item == null) return;
+
+        _itemStatusItem = item;
+        ItemStatusAction = "LostDamaged";
+        ItemStatusModalTitle = "Mark as Lost/Damaged";
+        ItemStatusItemDescription = $"{item.Id} - {item.ProductDescription}";
+        ItemStatusSaveButtonText = "Mark as Lost/Damaged";
+        IsUndoAction = false;
+        CurrentReasonOptions = new ObservableCollection<string>(LostDamagedReasonOptions);
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+        IsItemStatusModalOpen = true;
+    }
+
+    public void OpenMarkAsReturnedModal(ExpenseDisplayItem? item)
+    {
+        if (item == null) return;
+
+        _itemStatusItem = item;
+        ItemStatusAction = "Returned";
+        ItemStatusModalTitle = "Mark as Returned";
+        ItemStatusItemDescription = $"{item.Id} - {item.ProductDescription}";
+        ItemStatusSaveButtonText = "Mark as Returned";
+        IsUndoAction = false;
+        CurrentReasonOptions = new ObservableCollection<string>(ReturnReasonOptions);
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+        IsItemStatusModalOpen = true;
+    }
+
+    public void OpenUndoLostDamagedModal(ExpenseDisplayItem? item)
+    {
+        if (item == null) return;
+
+        _itemStatusItem = item;
+        ItemStatusAction = "UndoLostDamaged";
+        ItemStatusModalTitle = "Undo Lost/Damaged Status";
+        ItemStatusItemDescription = $"{item.Id} - {item.ProductDescription}";
+        ItemStatusSaveButtonText = "Undo Status";
+        IsUndoAction = true;
+        CurrentReasonOptions = new ObservableCollection<string>(UndoReasonOptions);
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+        IsItemStatusModalOpen = true;
+    }
+
+    public void OpenUndoReturnedModal(ExpenseDisplayItem? item)
+    {
+        if (item == null) return;
+
+        _itemStatusItem = item;
+        ItemStatusAction = "UndoReturned";
+        ItemStatusModalTitle = "Undo Returned Status";
+        ItemStatusItemDescription = $"{item.Id} - {item.ProductDescription}";
+        ItemStatusSaveButtonText = "Undo Status";
+        IsUndoAction = true;
+        CurrentReasonOptions = new ObservableCollection<string>(UndoReasonOptions);
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+        IsItemStatusModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseItemStatusModal()
+    {
+        IsItemStatusModalOpen = false;
+        _itemStatusItem = null;
+        ItemStatusAction = string.Empty;
+        SelectedItemStatusReason = null;
+        ItemStatusNotes = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmItemStatus()
+    {
+        // TODO: Implement the actual status change logic when backend is ready
+        // For now, just close the modal
+        CloseItemStatusModal();
+    }
+
+    #endregion
+
     #region Save Expense
 
     [RelayCommand]
@@ -498,12 +679,23 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         companyData.IdCounters.Purchase++;
         var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Purchase:D5}";
 
-        // Combine line items into description
+        // Create description from line items for display purposes
         var description = LineItems.Count == 1
             ? LineItems[0].Description
             : string.Join(", ", LineItems.Select(li => li.Description).Where(d => !string.IsNullOrEmpty(d)));
         var totalQuantity = LineItems.Sum(li => li.Quantity);
         var averageUnitPrice = LineItems.Count > 0 ? LineItems.Average(li => li.UnitPrice) : 0;
+
+        // Convert UI line items to model line items
+        var modelLineItems = LineItems.Select(li => new LineItem
+        {
+            ProductId = li.SelectedProduct?.Id,
+            Description = li.Description,
+            Quantity = li.Quantity,
+            UnitPrice = li.UnitPrice,
+            TaxRate = 0,  // Tax applied at transaction level
+            Discount = 0  // Discount applied at transaction level
+        }).ToList();
 
         var expense = new Purchase
         {
@@ -512,11 +704,12 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             SupplierId = SelectedSupplier?.Id,
             CategoryId = SelectedCategory?.Id,
             Description = description,
+            LineItems = modelLineItems,
             Quantity = totalQuantity,
             UnitPrice = averageUnitPrice,
             Amount = Subtotal,
-            TaxRate = ModalTaxRate,
-            TaxAmount = TaxAmount,
+            TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0,  // Calculate percentage for records
+            TaxAmount = TaxAmount,  // Store entered dollar amount
             ShippingCost = ModalShipping,
             Discount = ModalDiscount,
             Total = Total,
@@ -564,6 +757,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         var originalSupplierId = expense.SupplierId;
         var originalCategoryId = expense.CategoryId;
         var originalDescription = expense.Description;
+        var originalLineItems = expense.LineItems.ToList();
         var originalQuantity = expense.Quantity;
         var originalUnitPrice = expense.UnitPrice;
         var originalAmount = expense.Amount;
@@ -576,16 +770,34 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         var originalNotes = expense.Notes;
         var originalReferenceNumber = expense.ReferenceNumber;
 
+        // Create description and line items from UI
+        var description = LineItems.Count == 1
+            ? LineItems[0].Description
+            : string.Join(", ", LineItems.Select(li => li.Description).Where(d => !string.IsNullOrEmpty(d)));
+        var totalQuantity = LineItems.Sum(li => li.Quantity);
+        var averageUnitPrice = LineItems.Count > 0 ? LineItems.Average(li => li.UnitPrice) : 0;
+
+        var modelLineItems = LineItems.Select(li => new LineItem
+        {
+            ProductId = li.SelectedProduct?.Id,
+            Description = li.Description,
+            Quantity = li.Quantity,
+            UnitPrice = li.UnitPrice,
+            TaxRate = 0,
+            Discount = 0
+        }).ToList();
+
         // Apply changes
         expense.Date = ModalDate?.DateTime ?? DateTime.Now;
         expense.SupplierId = SelectedSupplier?.Id;
         expense.CategoryId = SelectedCategory?.Id;
-        expense.Description = ModalDescription;
-        expense.Quantity = ModalQuantity;
-        expense.UnitPrice = ModalUnitPrice;
+        expense.Description = description;
+        expense.LineItems = modelLineItems;
+        expense.Quantity = totalQuantity;
+        expense.UnitPrice = averageUnitPrice;
         expense.Amount = Subtotal;
-        expense.TaxRate = ModalTaxRate;
-        expense.TaxAmount = TaxAmount;
+        expense.TaxRate = Subtotal > 0 ? (TaxAmount / Subtotal) * 100 : 0;  // Calculate percentage for records
+        expense.TaxAmount = TaxAmount;  // Store entered dollar amount
         expense.ShippingCost = ModalShipping;
         expense.Discount = ModalDiscount;
         expense.Total = Total;
@@ -594,7 +806,18 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         expense.ReferenceNumber = _receiptFilePath ?? string.Empty;
         expense.UpdatedAt = DateTime.Now;
 
-        // Create undo action
+        // Create undo action (capture current values for redo)
+        var newDescription = description;
+        var newLineItems = modelLineItems;
+        var newQuantity = totalQuantity;
+        var newUnitPrice = averageUnitPrice;
+        var newAmount = Subtotal;
+        var newTaxRate = ModalTaxRate;
+        var newTaxAmount = TaxAmount;
+        var newShippingCost = ModalShipping;
+        var newDiscount = ModalDiscount;
+        var newTotal = Total;
+
         var action = new ExpenseEditAction(
             $"Edit expense {_editingExpenseId}",
             expense,
@@ -604,6 +827,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
                 expense.SupplierId = originalSupplierId;
                 expense.CategoryId = originalCategoryId;
                 expense.Description = originalDescription;
+                expense.LineItems = originalLineItems;
                 expense.Quantity = originalQuantity;
                 expense.UnitPrice = originalUnitPrice;
                 expense.Amount = originalAmount;
@@ -622,15 +846,16 @@ public partial class ExpenseModalsViewModel : ViewModelBase
                 expense.Date = ModalDate?.DateTime ?? DateTime.Now;
                 expense.SupplierId = SelectedSupplier?.Id;
                 expense.CategoryId = SelectedCategory?.Id;
-                expense.Description = ModalDescription;
-                expense.Quantity = ModalQuantity;
-                expense.UnitPrice = ModalUnitPrice;
-                expense.Amount = Subtotal;
-                expense.TaxRate = ModalTaxRate;
-                expense.TaxAmount = TaxAmount;
-                expense.ShippingCost = ModalShipping;
-                expense.Discount = ModalDiscount;
-                expense.Total = Total;
+                expense.Description = newDescription;
+                expense.LineItems = newLineItems;
+                expense.Quantity = newQuantity;
+                expense.UnitPrice = newUnitPrice;
+                expense.Amount = newAmount;
+                expense.TaxRate = newTaxRate;
+                expense.TaxAmount = newTaxAmount;
+                expense.ShippingCost = newShippingCost;
+                expense.Discount = newDiscount;
+                expense.Total = newTotal;
                 expense.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
                 expense.Notes = ModalNotes;
                 expense.ReferenceNumber = _receiptFilePath ?? string.Empty;
@@ -691,7 +916,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     private void NavigateToCreateCategory()
     {
         IsAddEditModalOpen = false;
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
+        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", 0 } });
     }
 
     [RelayCommand]
@@ -811,4 +1036,6 @@ public class ProductOption
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }
+
+    public override string ToString() => Name;
 }

@@ -27,6 +27,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     }
     private TextBox? _searchTextBox;
     private int _highlightedIndex = -1;
+    private bool _isSettingFromSelectedItem;
 
     #region Styled Properties
 
@@ -340,13 +341,21 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
     private void OnSelectedItemChanged(object? newValue)
     {
-        if (newValue != null)
+        _isSettingFromSelectedItem = true;
+        try
         {
-            SearchText = GetDisplayText(newValue);
+            if (newValue != null)
+            {
+                SearchText = GetDisplayText(newValue);
+            }
+            else
+            {
+                SearchText = string.Empty;
+            }
         }
-        else
+        finally
         {
-            SearchText = string.Empty;
+            _isSettingFromSelectedItem = false;
         }
     }
 
@@ -457,8 +466,8 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     {
         UpdateFilteredItems();
 
-        // Open dropdown when typing
-        if (!string.IsNullOrEmpty(SearchText) && !IsDropdownOpen)
+        // Open dropdown when typing (but not when setting from SelectedItem programmatically)
+        if (!_isSettingFromSelectedItem && !string.IsNullOrEmpty(SearchText) && !IsDropdownOpen)
         {
             IsDropdownOpen = true;
         }

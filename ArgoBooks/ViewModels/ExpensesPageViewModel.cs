@@ -98,6 +98,67 @@ public partial class ExpensesPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Column Visibility
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [ObservableProperty]
+    private bool _showIdColumn = true;
+
+    [ObservableProperty]
+    private bool _showAccountantColumn = true;
+
+    [ObservableProperty]
+    private bool _showProductColumn = true;
+
+    [ObservableProperty]
+    private bool _showSupplierColumn = true;
+
+    [ObservableProperty]
+    private bool _showDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showQuantityColumn = false;
+
+    [ObservableProperty]
+    private bool _showUnitPriceColumn = false;
+
+    [ObservableProperty]
+    private bool _showAmountColumn = false;
+
+    [ObservableProperty]
+    private bool _showTaxColumn = false;
+
+    [ObservableProperty]
+    private bool _showShippingColumn = false;
+
+    [ObservableProperty]
+    private bool _showDiscountColumn = false;
+
+    [ObservableProperty]
+    private bool _showTotalColumn = true;
+
+    [ObservableProperty]
+    private bool _showReceiptColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Expenses Collection
 
     private readonly List<Purchase> _allExpenses = [];
@@ -416,6 +477,11 @@ public partial class ExpensesPageViewModel : ViewModelBase
                 CategoryId = purchase.CategoryId,
                 Amount = purchase.Amount,
                 TaxAmount = purchase.TaxAmount,
+                TaxRate = purchase.TaxRate,
+                ShippingCost = purchase.ShippingCost,
+                Discount = purchase.Discount,
+                Quantity = (int)purchase.Quantity,
+                UnitPrice = purchase.UnitPrice,
                 PaymentMethod = purchase.PaymentMethod
             };
         }).ToList();
@@ -547,6 +613,18 @@ public partial class ExpensesPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void MarkAsLostDamaged(ExpenseDisplayItem? item)
+    {
+        App.ExpenseModalsViewModel?.OpenMarkAsLostDamagedModal(item);
+    }
+
+    [RelayCommand]
+    private void MarkAsReturned(ExpenseDisplayItem? item)
+    {
+        App.ExpenseModalsViewModel?.OpenMarkAsReturnedModal(item);
+    }
+
+    [RelayCommand]
     private void OpenFilterModal()
     {
         App.ExpenseModalsViewModel?.OpenFilterModal();
@@ -603,10 +681,31 @@ public partial class ExpenseDisplayItem : ObservableObject
     private decimal _taxAmount;
 
     [ObservableProperty]
+    private decimal _taxRate;
+
+    [ObservableProperty]
+    private decimal _shippingCost;
+
+    [ObservableProperty]
+    private decimal _discount;
+
+    [ObservableProperty]
+    private int _quantity;
+
+    [ObservableProperty]
+    private decimal _unitPrice;
+
+    [ObservableProperty]
     private PaymentMethod _paymentMethod;
 
     public string DateFormatted => Date.ToString("MMM d, yyyy");
     public string TotalFormatted => $"${Total:N2}";
+    public string AmountFormatted => $"${Amount:N2}";
+    public string TaxAmountFormatted => $"${TaxAmount:N2}";
+    public string TaxRateFormatted => $"{TaxRate:N1}%";
+    public string ShippingCostFormatted => $"${ShippingCost:N2}";
+    public string DiscountFormatted => $"-${Discount:N2}";
+    public string UnitPriceFormatted => $"${UnitPrice:N2}";
     public string ReceiptIcon => HasReceipt ? "✓" : "✗";
 
     public bool IsReturned => StatusDisplay == "Returned";
