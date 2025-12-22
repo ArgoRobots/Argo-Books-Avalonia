@@ -306,7 +306,7 @@ public class ReportRenderer : IDisposable
             for (int i = 0; i < columns.Count; i++)
             {
                 var x = rect.Left + (i * columnWidth) + (columnWidth / 2);
-                var y = headerRect.MidY + (table.FontSize * _renderScale) / 3;
+                var y = headerRect.MidY + (float)(table.FontSize * _renderScale) / 3;
                 canvas.DrawText(columns[i], x, y, SKTextAlign.Center, headerFont, headerTextPaint);
             }
         }
@@ -363,13 +363,13 @@ public class ReportRenderer : IDisposable
 
         var y = label.VerticalAlignment switch
         {
-            VerticalTextAlignment.Top => rect.Top + label.FontSize * _renderScale,
-            VerticalTextAlignment.Center => rect.MidY + (label.FontSize * _renderScale) / 3,
+            VerticalTextAlignment.Top => rect.Top + (float)label.FontSize * _renderScale,
+            VerticalTextAlignment.Center => rect.MidY + (float)(label.FontSize * _renderScale) / 3,
             VerticalTextAlignment.Bottom => rect.Bottom,
             _ => rect.MidY
         };
 
-        canvas.DrawText(label.Text, x, y, textAlign, font, paint);
+        canvas.DrawText(label.Text, x, (float)y, textAlign, font, paint);
 
         // Draw underline if specified
         if (label.IsUnderline)
@@ -384,7 +384,7 @@ public class ReportRenderer : IDisposable
             };
 
             var textWidth = font.MeasureText(label.Text);
-            var underlineY = y + (metrics.UnderlinePosition ?? 3 * _renderScale);
+            var underlineY = (float)y + (metrics.UnderlinePosition ?? 3 * _renderScale);
             var startX = label.HorizontalAlignment switch
             {
                 HorizontalTextAlignment.Left => x,
@@ -496,13 +496,13 @@ public class ReportRenderer : IDisposable
 
         var y = dateRange.VerticalAlignment switch
         {
-            VerticalTextAlignment.Top => rect.Top + dateRange.FontSize * _renderScale,
-            VerticalTextAlignment.Center => rect.MidY + (dateRange.FontSize * _renderScale) / 3,
+            VerticalTextAlignment.Top => rect.Top + (float)dateRange.FontSize * _renderScale,
+            VerticalTextAlignment.Center => rect.MidY + (float)(dateRange.FontSize * _renderScale) / 3,
             VerticalTextAlignment.Bottom => rect.Bottom,
             _ => rect.MidY
         };
 
-        canvas.DrawText(text, x, y, textAlign, font, paint);
+        canvas.DrawText(text, x, (float)y, textAlign, font, paint);
     }
 
     private void RenderSummary(SKCanvas canvas, SummaryReportElement summary)
@@ -566,13 +566,13 @@ public class ReportRenderer : IDisposable
             lines.Add($"Growth Rate: {sign}{growth:N1}%");
         }
 
-        var lineHeight = summary.FontSize * _renderScale * 1.5f;
+        var lineHeight = (float)summary.FontSize * _renderScale * 1.5f;
         var startY = summary.VerticalAlignment switch
         {
-            VerticalTextAlignment.Top => rect.Top + 10 * _renderScale + summary.FontSize * _renderScale,
+            VerticalTextAlignment.Top => rect.Top + 10 * _renderScale + (float)summary.FontSize * _renderScale,
             VerticalTextAlignment.Center => rect.MidY - ((lines.Count - 1) * lineHeight / 2),
             VerticalTextAlignment.Bottom => rect.Bottom - (lines.Count * lineHeight) - 10 * _renderScale,
-            _ => rect.Top + 10 * _renderScale + summary.FontSize * _renderScale
+            _ => rect.Top + 10 * _renderScale + (float)summary.FontSize * _renderScale
         };
 
         var x = summary.HorizontalAlignment switch
@@ -596,7 +596,7 @@ public class ReportRenderer : IDisposable
     private void RenderHeader(SKCanvas canvas, int width)
     {
         var headerHeight = PageDimensions.HeaderHeight * _renderScale;
-        var margin = _config.PageMargins.Left * _renderScale;
+        var margin = (float)_config.PageMargins.Left * _renderScale;
 
         // Draw header background
         var headerRect = new SKRect(0, 0, width, headerHeight);
@@ -619,7 +619,7 @@ public class ReportRenderer : IDisposable
     {
         var footerHeight = PageDimensions.FooterHeight * _renderScale;
         var footerY = height - footerHeight;
-        var margin = _config.PageMargins.Left * _renderScale;
+        var margin = (float)_config.PageMargins.Left * _renderScale;
 
         // Draw separator line
         var separatorPaint = new SKPaint
