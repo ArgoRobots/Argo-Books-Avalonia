@@ -210,6 +210,12 @@ public partial class ReportDesignCanvas : UserControl
         _dropIndicator = this.FindControl<Border>("DropIndicator");
 
         UpdateLayout();
+
+        // If Configuration was set before template was applied, process it now
+        if (Configuration != null && _elementsCanvas != null && _elementControls.Count == 0)
+        {
+            OnConfigurationChanged();
+        }
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)

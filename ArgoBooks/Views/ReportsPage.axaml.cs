@@ -51,6 +51,8 @@ public partial class ReportsPage : UserControl
         if (DataContext is ReportsPageViewModel vm)
         {
             vm.PropertyChanged += OnViewModelPropertyChanged;
+            // Initial sync in case elements were already added
+            _designCanvas?.SyncElements();
         }
     }
 
