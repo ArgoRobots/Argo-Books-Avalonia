@@ -547,7 +547,7 @@ public partial class ReportDesignCanvas : UserControl
         return control;
     }
 
-    private void OnElementPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnElementPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (sender is ReportElementBase element)
         {
