@@ -260,7 +260,8 @@
                                                         HorizontalAlignment="Stretch"
                                                         HorizontalContentAlignment="Center"
                                                         Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
-                                                        CommandParameter="{Binding TemplateName}">
+                                                        CommandParameter="{Binding TemplateName}"
+                                                        Classes.selected="{Binding IsSelected}">
                                                     <Button.Styles>
                                                         <Style Selector="Button">
                                                             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -268,6 +269,10 @@
                                                             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
                                                         </Style>
                                                         <Style Selector="Button:pointerover">
+                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected">
                                                             <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                         </Style>
@@ -291,7 +296,8 @@
                                                                    HorizontalAlignment="Center"
                                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                                    TextWrapping="Wrap"
-                                                                   TextAlignment="Center" />
+                                                                   TextAlignment="Center"
+                                                                   MinHeight="32" />
                                                     </StackPanel>
                                                 </Button>
                                             </DataTemplate>
@@ -540,19 +546,51 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <!-- Left: Main tools -->
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
-                                <!-- Undo/Redo -->
-                                <Button Classes="toolbar-button" Command="{Binding UndoCommand}"
-                                        IsEnabled="{Binding UndoRedoManager.CanUndo}"
-                                        ToolTip.Tip="Undo (Ctrl+Z)">
-                                    <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
-                                              Width="16" Height="16" />
-                                </Button>
-                                <Button Classes="toolbar-button" Command="{Binding RedoCommand}"
-                                        IsEnabled="{Binding UndoRedoManager.CanRedo}"
-                                        ToolTip.Tip="Redo (Ctrl+Y)">
-                                    <PathIcon Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
-                                              Width="16" Height="16" />
-                                </Button>
+                                <!-- Undo Button Group -->
+                                <Grid x:Name="UndoButtonGroup">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0"
+                                            Classes="undo-redo-main"
+                                            Command="{Binding UndoCommand}"
+                                            IsEnabled="{Binding UndoRedoManager.CanUndo}"
+                                            ToolTip.Tip="{Binding UndoRedoManager.UndoDescription, StringFormat='Undo {0}', FallbackValue='Undo'}">
+                                        <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                                                  Width="14" Height="14" />
+                                    </Button>
+                                    <Button Grid.Column="1"
+                                            Classes="undo-redo-dropdown"
+                                            Command="{Binding ToggleUndoDropdownCommand}"
+                                            IsEnabled="{Binding UndoRedoManager.CanUndo}">
+                                        <PathIcon Data="M7 10l5 5 5-5z"
+                                                  Width="10" Height="10" />
+                                    </Button>
+                                </Grid>
+
+                                <!-- Redo Button Group -->
+                                <Grid x:Name="RedoButtonGroup">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0"
+                                            Classes="undo-redo-main"
+                                            Command="{Binding RedoCommand}"
+                                            IsEnabled="{Binding UndoRedoManager.CanRedo}"
+                                            ToolTip.Tip="{Binding UndoRedoManager.RedoDescription, StringFormat='Redo {0}', FallbackValue='Redo'}">
+                                        <PathIcon Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
+                                                  Width="14" Height="14" />
+                                    </Button>
+                                    <Button Grid.Column="1"
+                                            Classes="undo-redo-dropdown"
+                                            Command="{Binding ToggleRedoDropdownCommand}"
+                                            IsEnabled="{Binding UndoRedoManager.CanRedo}">
+                                        <PathIcon Data="M7 10l5 5 5-5z"
+                                                  Width="10" Height="10" />
+                                    </Button>
+                                </Grid>
 
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
@@ -1188,6 +1226,110 @@
         </Border>
     </Grid>
 
+    <!-- Undo History Popup -->
+    <Popup IsOpen="{Binding IsUndoDropdownOpen}"
+           IsLightDismissEnabled="True"
+           PlacementTarget="{Binding #UndoButtonGroup}"
+           Placement="BottomEdgeAlignedLeft">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                BoxShadow="0 4 16 0 #30000000"
+                MinWidth="180"
+                MaxWidth="260">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          MaxHeight="200">
+                <ItemsControl ItemsSource="{Binding UndoHistoryItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).UndoToIndexCommand}"
+                                    CommandParameter="{Binding Index}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Padding="10,6"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="0"
+                                    Cursor="Hand">
+                                <Button.Styles>
+                                    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                    </Style>
+                                </Button.Styles>
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                                              Width="12" Height="12"
+                                              Foreground="{DynamicResource TextTertiaryBrush}"
+                                              Margin="0,0,8,0" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Description}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </Popup>
+
+    <!-- Redo History Popup -->
+    <Popup IsOpen="{Binding IsRedoDropdownOpen}"
+           IsLightDismissEnabled="True"
+           PlacementTarget="{Binding #RedoButtonGroup}"
+           Placement="BottomEdgeAlignedLeft">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                BoxShadow="0 4 16 0 #30000000"
+                MinWidth="180"
+                MaxWidth="260">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          MaxHeight="200">
+                <ItemsControl ItemsSource="{Binding RedoHistoryItems}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).RedoToIndexCommand}"
+                                    CommandParameter="{Binding Index}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Padding="10,6"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="0"
+                                    Cursor="Hand">
+                                <Button.Styles>
+                                    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                    </Style>
+                                </Button.Styles>
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <PathIcon Grid.Column="0"
+                                              Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
+                                              Width="12" Height="12"
+                                              Foreground="{DynamicResource TextTertiaryBrush}"
+                                              Margin="0,0,8,0" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Description}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </Popup>
+
     <!-- Page Settings Modal Overlay -->
     <Border Background="#80000000"
             IsVisible="{Binding IsPageSettingsOpen}"
@@ -1277,6 +1419,68 @@
         </Style>
         <Style Selector="ToggleButton.toolbar-toggle PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Undo/Redo Main Button -->
+        <Style Selector="Button.undo-redo-main">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="4,0,0,4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.undo-redo-main /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="4,0,0,4" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:disabled PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        </Style>
+
+        <!-- Undo/Redo Dropdown Button -->
+        <Style Selector="Button.undo-redo-dropdown">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,1,1,1" />
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0,4,4,0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="0,4,4,0" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:disabled PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
         </Style>
 
         <!-- Primary Button -->

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ArgoBooks.Core.Models;
 
 /// <summary>
@@ -6,6 +8,11 @@ namespace ArgoBooks.Core.Models;
 public class CompanySettings
 {
     public string AppVersion { get; set; } = "1.0.0";
+
+    /// <summary>
+    /// Runtime-only flag to track unsaved changes. Not persisted to JSON.
+    /// </summary>
+    [JsonIgnore]
     public bool ChangesMade { get; set; } = false;
 
     public CompanyInfo Company { get; set; } = new();

@@ -227,6 +227,12 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(templateName))
         {
             SelectedTemplateName = templateName;
+
+            // Update IsSelected on all template options
+            foreach (var template in ReportTemplateOptions)
+            {
+                template.IsSelected = template.TemplateName == templateName;
+            }
         }
     }
 
@@ -323,6 +329,81 @@ public partial class ReportsPageViewModel : ViewModelBase
     private bool _isSaveTemplateOpen;
 
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
+
+    [ObservableProperty]
+    private bool _isUndoDropdownOpen;
+
+    [ObservableProperty]
+    private bool _isRedoDropdownOpen;
+
+    public ObservableCollection<UndoRedoHistoryItem> UndoHistoryItems { get; } = [];
+    public ObservableCollection<UndoRedoHistoryItem> RedoHistoryItems { get; } = [];
+
+    [RelayCommand]
+    private void ToggleUndoDropdown()
+    {
+        if (!UndoRedoManager.CanUndo) return;
+        IsRedoDropdownOpen = false;
+        IsUndoDropdownOpen = !IsUndoDropdownOpen;
+        if (IsUndoDropdownOpen)
+        {
+            RefreshUndoHistory();
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleRedoDropdown()
+    {
+        if (!UndoRedoManager.CanRedo) return;
+        IsUndoDropdownOpen = false;
+        IsRedoDropdownOpen = !IsRedoDropdownOpen;
+        if (IsRedoDropdownOpen)
+        {
+            RefreshRedoHistory();
+        }
+    }
+
+    private void RefreshUndoHistory()
+    {
+        UndoHistoryItems.Clear();
+        int index = 0;
+        foreach (var desc in UndoRedoManager.UndoHistory)
+        {
+            UndoHistoryItems.Add(new UndoRedoHistoryItem { Index = index++, Description = desc });
+        }
+    }
+
+    private void RefreshRedoHistory()
+    {
+        RedoHistoryItems.Clear();
+        int index = 0;
+        foreach (var desc in UndoRedoManager.RedoHistory)
+        {
+            RedoHistoryItems.Add(new UndoRedoHistoryItem { Index = index++, Description = desc });
+        }
+    }
+
+    [RelayCommand]
+    private void UndoToIndex(int index)
+    {
+        for (int i = 0; i <= index; i++)
+        {
+            UndoRedoManager.Undo();
+        }
+        IsUndoDropdownOpen = false;
+        OnPropertyChanged(nameof(Configuration));
+    }
+
+    [RelayCommand]
+    private void RedoToIndex(int index)
+    {
+        for (int i = 0; i <= index; i++)
+        {
+            UndoRedoManager.Redo();
+        }
+        IsRedoDropdownOpen = false;
+        OnPropertyChanged(nameof(Configuration));
+    }
 
     public ObservableCollection<ReportElementBase> SelectedElements { get; } = [];
 
@@ -1262,12 +1343,25 @@ public class ExportFormatOption(string name, ExportFormat format, string descrip
 /// <summary>
 /// Represents a report template option for the Step 1 template grid.
 /// </summary>
-public class ReportTemplateOption(string templateName, string displayName, string description, string iconData, string iconForeground, string iconBackground)
+public partial class ReportTemplateOption : ObservableObject
 {
-    public string TemplateName { get; } = templateName;
-    public string DisplayName { get; } = displayName;
-    public string Description { get; } = description;
-    public string IconData { get; } = iconData;
-    public string IconForeground { get; } = iconForeground;
-    public string IconBackground { get; } = iconBackground;
+    public ReportTemplateOption(string templateName, string displayName, string description, string iconData, string iconForeground, string iconBackground)
+    {
+        TemplateName = templateName;
+        DisplayName = displayName;
+        Description = description;
+        IconData = iconData;
+        IconForeground = iconForeground;
+        IconBackground = iconBackground;
+    }
+
+    public string TemplateName { get; }
+    public string DisplayName { get; }
+    public string Description { get; }
+    public string IconData { get; }
+    public string IconForeground { get; }
+    public string IconBackground { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
 }

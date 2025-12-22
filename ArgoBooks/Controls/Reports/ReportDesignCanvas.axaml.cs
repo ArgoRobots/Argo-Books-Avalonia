@@ -174,8 +174,8 @@ public partial class ReportDesignCanvas : UserControl
     private Canvas? _elementsCanvas;
     private Canvas? _gridLinesCanvas;
     private Rectangle? _marginGuide;
-    private Rectangle? _headerArea;
-    private Rectangle? _footerArea;
+    private Border? _headerArea;
+    private Border? _footerArea;
     private Rectangle? _selectionRectangle;
     private Border? _pageBackground;
     private Border? _dropIndicator;
@@ -203,8 +203,8 @@ public partial class ReportDesignCanvas : UserControl
         _elementsCanvas = this.FindControl<Canvas>("ElementsCanvas");
         _gridLinesCanvas = this.FindControl<Canvas>("GridLinesCanvas");
         _marginGuide = this.FindControl<Rectangle>("MarginGuide");
-        _headerArea = this.FindControl<Rectangle>("HeaderArea");
-        _footerArea = this.FindControl<Rectangle>("FooterArea");
+        _headerArea = this.FindControl<Border>("HeaderArea");
+        _footerArea = this.FindControl<Border>("FooterArea");
         _selectionRectangle = this.FindControl<Rectangle>("SelectionRectangle");
         _pageBackground = this.FindControl<Border>("PageBackground");
         _dropIndicator = this.FindControl<Border>("DropIndicator");
@@ -233,6 +233,11 @@ public partial class ReportDesignCanvas : UserControl
         else if (change.Property == ShowGridProperty || change.Property == GridSizeProperty)
         {
             DrawGrid();
+            UpdateElementsSnapGridSize();
+        }
+        else if (change.Property == SnapToGridProperty)
+        {
+            UpdateElementsSnapGridSize();
         }
         else if (change.Property == ShowMarginGuidesProperty)
         {
@@ -311,6 +316,15 @@ public partial class ReportDesignCanvas : UserControl
         _marginGuide.Margin = new Thickness(margins.Left, margins.Top, margins.Right, margins.Bottom);
         _marginGuide.Width = _pageWidth - margins.Left - margins.Right;
         _marginGuide.Height = _pageHeight - margins.Top - margins.Bottom;
+    }
+
+    private void UpdateElementsSnapGridSize()
+    {
+        var snapSize = (SnapToGrid && ShowGrid) ? GridSize : 0;
+        foreach (var control in _elementControls)
+        {
+            control.SnapGridSize = snapSize;
+        }
     }
 
     private void UpdateHeaderFooterAreas()
@@ -483,7 +497,7 @@ public partial class ReportDesignCanvas : UserControl
             Element = element,
             Width = element.Width,
             Height = element.Height,
-            SnapGridSize = SnapToGrid ? GridSize : 0
+            SnapGridSize = (SnapToGrid && ShowGrid) ? GridSize : 0
         };
 
         Canvas.SetLeft(control, element.X);

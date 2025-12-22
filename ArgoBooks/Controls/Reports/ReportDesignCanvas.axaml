@@ -81,19 +81,36 @@
                                    Classes="margin-guide"
                                    IsVisible="{Binding ShowMarginGuides, ElementName=DesignCanvas}"/>
 
-                        <!-- Header area indicator -->
-                        <Rectangle x:Name="HeaderArea"
-                                   VerticalAlignment="Top"
-                                   Fill="#10000000"
-                                   IsVisible="{Binding ShowHeaderFooter, ElementName=DesignCanvas}"
-                                   IsHitTestVisible="False"/>
+                        <!-- Header area indicator with title -->
+                        <Border x:Name="HeaderArea"
+                                VerticalAlignment="Top"
+                                Background="#10000000"
+                                IsVisible="{Binding ShowHeaderFooter, ElementName=DesignCanvas}"
+                                IsHitTestVisible="False">
+                            <TextBlock x:Name="HeaderTitleText"
+                                       Text="{Binding Configuration.Title, ElementName=DesignCanvas, FallbackValue='Report Title'}"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Foreground="#333333"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Margin="0,15,0,0" />
+                        </Border>
 
-                        <!-- Footer area indicator -->
-                        <Rectangle x:Name="FooterArea"
-                                   VerticalAlignment="Bottom"
-                                   Fill="#10000000"
-                                   IsVisible="{Binding ShowHeaderFooter, ElementName=DesignCanvas}"
-                                   IsHitTestVisible="False"/>
+                        <!-- Footer area indicator with page number -->
+                        <Border x:Name="FooterArea"
+                                VerticalAlignment="Bottom"
+                                Background="#10000000"
+                                IsVisible="{Binding ShowHeaderFooter, ElementName=DesignCanvas}"
+                                IsHitTestVisible="False">
+                            <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Page 1"
+                                           FontSize="10"
+                                           Foreground="#666666" />
+                            </StackPanel>
+                        </Border>
 
                         <!-- Elements canvas -->
                         <Canvas x:Name="ElementsCanvas"
