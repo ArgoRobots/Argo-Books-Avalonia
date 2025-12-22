@@ -106,6 +106,27 @@ public partial class ReportsPageViewModel : ViewModelBase
     #region Step 1 - Template & Settings
 
     [ObservableProperty]
+    private int _step1TabIndex;
+
+    public bool IsTemplatesTabSelected => Step1TabIndex == 0;
+    public bool IsChartsTabSelected => Step1TabIndex == 1;
+
+    partial void OnStep1TabIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsTemplatesTabSelected));
+        OnPropertyChanged(nameof(IsChartsTabSelected));
+    }
+
+    [RelayCommand]
+    private void SetStep1Tab(string tabIndex)
+    {
+        if (int.TryParse(tabIndex, out var index))
+        {
+            Step1TabIndex = index;
+        }
+    }
+
+    [ObservableProperty]
     private string _selectedTemplateName = ReportTemplateFactory.TemplateNames.Custom;
 
     [ObservableProperty]
