@@ -657,7 +657,7 @@ public partial class ReportDesignCanvas : UserControl
         Grid.SetRow(chartArea, showTitle ? 1 : 0);
         grid.Children.Add(chartArea);
 
-        var borderBrush = borderThickness > 0 && element?.BorderColor != null
+        IBrush borderBrush = borderThickness > 0 && element?.BorderColor != null
             ? new SolidColorBrush(Color.Parse(element.BorderColor))
             : Brushes.Gray;
 
@@ -730,7 +730,7 @@ public partial class ReportDesignCanvas : UserControl
         var rowCount = showHeaders ? 4 : 3; // Header + 3 data rows
         for (int i = 0; i < rowCount; i++)
         {
-            grid.RowDefinitions.Add(new RowDefinition(GridUnitType.Auto));
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         }
 
         // Add header row
