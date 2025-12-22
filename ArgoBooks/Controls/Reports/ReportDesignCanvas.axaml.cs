@@ -247,7 +247,7 @@ public partial class ReportDesignCanvas : UserControl
         DrawGrid();
     }
 
-    protected override void OnPointerWheelChanged(PointerWheelChangedEventArgs e)
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
         // Prevent scrolling - mark the event as handled
         e.Handled = true;
