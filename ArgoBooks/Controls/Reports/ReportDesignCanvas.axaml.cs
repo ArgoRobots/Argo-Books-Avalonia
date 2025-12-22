@@ -761,6 +761,42 @@ public partial class ReportDesignCanvas : UserControl
         }
     }
 
+    /// <summary>
+    /// Synchronizes the canvas with the Configuration's elements.
+    /// Adds new elements and removes deleted ones without clearing everything.
+    /// </summary>
+    public void SyncElements()
+    {
+        if (Configuration == null) return;
+
+        var existingIds = _elementControlMap.Keys.ToHashSet();
+        var configIds = Configuration.Elements.Select(e => e.Id).ToHashSet();
+
+        // Add new elements that are in Configuration but not on canvas
+        foreach (var element in Configuration.Elements)
+        {
+            if (!existingIds.Contains(element.Id))
+            {
+                var control = AddElementControl(element);
+                // Select the newly added element
+                SelectElement(element, false);
+            }
+        }
+
+        // Remove elements that are on canvas but not in Configuration
+        foreach (var id in existingIds.Except(configIds).ToList())
+        {
+            if (_elementControlMap.TryGetValue(id, out var control))
+            {
+                if (control.Element != null)
+                {
+                    _selectedElements.Remove(control.Element);
+                }
+                RemoveElementControl(control);
+            }
+        }
+    }
+
     #endregion
 
     #region Selection

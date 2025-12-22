@@ -20,35 +20,9 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1"
                 Padding="24,16">
-            <Grid RowDefinitions="Auto,Auto">
-                <!-- Step Title and Counter -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,*" Margin="0,0,0,16">
-                    <Panel Grid.Column="0" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
-                        <TextBlock Text="{Binding CurrentStepTitle}"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                   VerticalAlignment="Center" />
-                        <Border Background="{DynamicResource PrimaryLightBrush}"
-                                CornerRadius="12"
-                                Padding="12,4">
-                            <TextBlock Foreground="{DynamicResource PrimaryBrush}"
-                                       FontSize="13"
-                                       FontWeight="Medium">
-                                <TextBlock.Text>
-                                    <MultiBinding StringFormat="Step {0} of 3">
-                                        <Binding Path="CurrentStep" />
-                                    </MultiBinding>
-                                </TextBlock.Text>
-                            </TextBlock>
-                        </Border>
-                    </StackPanel>
-                    <Panel Grid.Column="2" />
-                </Grid>
-
+            <Grid RowDefinitions="Auto">
                 <!-- Step Progress Dots -->
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="0" HorizontalAlignment="Center">
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="0" HorizontalAlignment="Center">
                     <!-- Step 1 -->
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <!-- Active circle (current or completed) -->
@@ -56,16 +30,18 @@
                                 Background="{DynamicResource PrimaryBrush}"
                                 IsVisible="{Binding IsStep1Active}">
                             <Panel>
+                                <!-- Show checkmark only if completed AND not currently on step 1 -->
                                 <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                           Width="16" Height="16"
                                           Foreground="White"
-                                          IsVisible="{Binding Step1Completed}" />
+                                          IsVisible="{Binding IsStep1CompletedAndPast}" />
+                                <!-- Show number if on step 1 or not completed -->
                                 <TextBlock Text="1"
                                            Foreground="White"
                                            FontWeight="SemiBold"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
-                                           IsVisible="{Binding !Step1Completed}" />
+                                           IsVisible="{Binding !IsStep1CompletedAndPast}" />
                             </Panel>
                         </Border>
                         <!-- Inactive circle -->
@@ -99,16 +75,18 @@
                                 Background="{DynamicResource PrimaryBrush}"
                                 IsVisible="{Binding IsStep2Active}">
                             <Panel>
+                                <!-- Show checkmark only if completed AND not currently on step 2 -->
                                 <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                           Width="16" Height="16"
                                           Foreground="White"
-                                          IsVisible="{Binding Step2Completed}" />
+                                          IsVisible="{Binding IsStep2CompletedAndPast}" />
+                                <!-- Show number if on step 2 or not completed -->
                                 <TextBlock Text="2"
                                            Foreground="White"
                                            FontWeight="SemiBold"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
-                                           IsVisible="{Binding !Step2Completed}" />
+                                           IsVisible="{Binding !IsStep2CompletedAndPast}" />
                             </Panel>
                         </Border>
                         <!-- Inactive circle -->
@@ -150,16 +128,12 @@
                                 Background="{DynamicResource PrimaryBrush}"
                                 IsVisible="{Binding IsStep3Active}">
                             <Panel>
-                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                                          Width="16" Height="16"
-                                          Foreground="White"
-                                          IsVisible="{Binding Step2Completed}" />
+                                <!-- Step 3 is the final step, never shows checkmark until export is done -->
                                 <TextBlock Text="3"
                                            Foreground="White"
                                            FontWeight="SemiBold"
                                            HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           IsVisible="{Binding !Step2Completed}" />
+                                           VerticalAlignment="Center" />
                             </Panel>
                         </Border>
                         <!-- Inactive circle -->
@@ -215,40 +189,52 @@
                                     <Button Classes="tab-button"
                                             Command="{Binding SetStep1TabCommand}"
                                             CommandParameter="0">
-                                        <Panel>
-                                            <TextBlock Text="Templates"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Padding="0,16"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       IsVisible="{Binding !IsTemplatesTabSelected}" />
-                                            <TextBlock Text="Templates"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Padding="0,16"
-                                                       Foreground="{DynamicResource PrimaryBrush}"
-                                                       IsVisible="{Binding IsTemplatesTabSelected}" />
-                                        </Panel>
+                                        <StackPanel>
+                                            <Panel>
+                                                <TextBlock Text="Templates"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Padding="0,16"
+                                                           Foreground="{DynamicResource PrimaryBrush}"
+                                                           IsVisible="{Binding IsTemplatesTabSelected}" />
+                                                <TextBlock Text="Templates"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Padding="0,16"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           IsVisible="{Binding !IsTemplatesTabSelected}" />
+                                            </Panel>
+                                            <Border Height="2"
+                                                    Margin="0,-1,0,0"
+                                                    Background="{DynamicResource PrimaryBrush}"
+                                                    IsVisible="{Binding IsTemplatesTabSelected}" />
+                                        </StackPanel>
                                     </Button>
-                                    <Border Width="1" Height="20" Background="{DynamicResource BorderBrush}" Margin="16,0" VerticalAlignment="Center" />
-                                    <!-- Custom Charts Tab -->
+                                    <Panel Width="32" />
+                                    <!-- Custom Tab -->
                                     <Button Classes="tab-button"
                                             Command="{Binding SetStep1TabCommand}"
                                             CommandParameter="1">
-                                        <Panel>
-                                            <TextBlock Text="Custom Charts"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Padding="0,16"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       IsVisible="{Binding !IsChartsTabSelected}" />
-                                            <TextBlock Text="Custom Charts"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Padding="0,16"
-                                                       Foreground="{DynamicResource PrimaryBrush}"
-                                                       IsVisible="{Binding IsChartsTabSelected}" />
-                                        </Panel>
+                                        <StackPanel>
+                                            <Panel>
+                                                <TextBlock Text="Custom"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Padding="0,16"
+                                                           Foreground="{DynamicResource PrimaryBrush}"
+                                                           IsVisible="{Binding IsChartsTabSelected}" />
+                                                <TextBlock Text="Custom"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Padding="0,16"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           IsVisible="{Binding !IsChartsTabSelected}" />
+                                            </Panel>
+                                            <Border Height="2"
+                                                    Margin="0,-1,0,0"
+                                                    Background="{DynamicResource PrimaryBrush}"
+                                                    IsVisible="{Binding IsChartsTabSelected}" />
+                                        </StackPanel>
                                     </Button>
                                 </StackPanel>
                             </Border>
@@ -258,7 +244,7 @@
                                 <!-- Templates Tab Content -->
                                 <StackPanel Spacing="16" IsVisible="{Binding IsTemplatesTabSelected}">
                                     <!-- Built-in Templates Grid -->
-                                    <ItemsControl ItemsSource="{Binding TemplateNames}">
+                                    <ItemsControl ItemsSource="{Binding ReportTemplateOptions}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <UniformGrid Columns="2" />
@@ -267,41 +253,42 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Button Margin="0,0,12,12"
-                                                        Padding="16"
+                                                        Padding="20,24"
                                                         CornerRadius="8"
-                                                        HorizontalContentAlignment="Left"
+                                                        HorizontalContentAlignment="Center"
                                                         Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
-                                                        CommandParameter="{Binding}">
+                                                        CommandParameter="{Binding Name}">
                                                     <Button.Styles>
                                                         <Style Selector="Button">
-                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-                                                            <Setter Property="BorderThickness" Value="2" />
-                                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                                            <Setter Property="Background" Value="White" />
+                                                            <Setter Property="BorderThickness" Value="1" />
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
                                                         </Style>
                                                         <Style Selector="Button:pointerover">
-                                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                         </Style>
                                                     </Button.Styles>
-                                                    <StackPanel Spacing="8">
-                                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                                            <Border Background="{DynamicResource PrimaryLightBrush}"
-                                                                    CornerRadius="8"
-                                                                    Padding="8">
-                                                                <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
-                                                                          Width="20" Height="20"
-                                                                          Foreground="{DynamicResource PrimaryBrush}" />
-                                                            </Border>
-                                                            <TextBlock Text="{Binding}"
-                                                                       FontSize="15"
-                                                                       FontWeight="SemiBold"
-                                                                       VerticalAlignment="Center"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                        </StackPanel>
-                                                        <TextBlock Text="Standard report template with common charts and data"
+                                                    <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                                        <Border Background="{Binding IconBackground}"
+                                                                CornerRadius="12"
+                                                                Padding="12"
+                                                                HorizontalAlignment="Center">
+                                                            <PathIcon Data="{Binding IconData}"
+                                                                      Width="28" Height="28"
+                                                                      Foreground="{Binding IconForeground}" />
+                                                        </Border>
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   FontSize="14"
+                                                                   FontWeight="SemiBold"
+                                                                   HorizontalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        <TextBlock Text="{Binding Description}"
                                                                    FontSize="12"
+                                                                   HorizontalAlignment="Center"
                                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                   TextWrapping="Wrap" />
+                                                                   TextWrapping="Wrap"
+                                                                   TextAlignment="Center" />
                                                     </StackPanel>
                                                 </Button>
                                             </DataTemplate>
@@ -660,8 +647,15 @@
                                               Width="16" Height="16" />
                                 </Button>
                                 <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Vertical" ToolTip.Tip="Distribute Vertically">
-                                    <PathIcon Data="M19 4H5v2h14V4zM5 20h14v-2H5v2zm0-7h14v-2H5v2zm0-5h14V6H5v2z"
-                                              Width="16" Height="16" />
+                                    <PathIcon Data="M4 5v14h2V5H4zm14 0v14h2V5h-2zM9 5h2v14H9V5zm4 0h2v14h-2V5z"
+                                              Width="16" Height="16">
+                                        <PathIcon.RenderTransform>
+                                            <RotateTransform Angle="90" />
+                                        </PathIcon.RenderTransform>
+                                        <PathIcon.RenderTransformOrigin>
+                                            <RelativePoint Point="0.5,0.5" Unit="Relative" />
+                                        </PathIcon.RenderTransformOrigin>
+                                    </PathIcon>
                                 </Button>
 
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
