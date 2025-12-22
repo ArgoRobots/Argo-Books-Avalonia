@@ -203,7 +203,7 @@
                     <ScrollViewer Grid.Row="1"
                                   HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Disabled">
-                        <Grid RowDefinitions="Auto,*" MinWidth="1200">
+                        <Grid RowDefinitions="Auto,*">
                             <!-- Column Menu Popup (outside the scroll area) -->
                             <Popup IsOpen="{Binding IsColumnMenuOpen, Mode=TwoWay}"
                                    PlacementMode="Pointer"
