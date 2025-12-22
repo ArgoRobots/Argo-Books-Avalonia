@@ -254,102 +254,263 @@ public class ChartReportElement : ReportElementBase
 /// </summary>
 public class TableReportElement : ReportElementBase
 {
+    private TransactionType _transactionType = TransactionType.Both;
+    private bool _includeReturns = true;
+    private bool _includeLosses = true;
+    private TableDataSelection _dataSelection = TableDataSelection.All;
+    private TableSortOrder _sortOrder = TableSortOrder.DateDescending;
+    private int _maxRows = 10;
+    private bool _showHeaders = true;
+    private bool _alternateRowColors = true;
+    private bool _showGridLines = true;
+    private bool _showTotalsRow;
+    private bool _autoSizeColumns = true;
+    private double _fontSize = 8;
+    private string _fontFamily = "Segoe UI";
+    private int _dataRowHeight = 20;
+    private int _headerRowHeight = 25;
+    private int _cellPadding = 3;
+    private string _headerBackgroundColor = "#5E94FF";
+    private string _headerTextColor = "#FFFFFF";
+    private string _dataRowTextColor = "#000000";
+    private string _gridLineColor = "#D3D3D3";
+    private string _baseRowColor = "#FFFFFF";
+    private string _alternateRowColor = "#F8F8F8";
+    private bool _showDateColumn = true;
+    private bool _showTransactionIdColumn = true;
+    private bool _showCompanyColumn = true;
+    private bool _showProductColumn = true;
+    private bool _showQuantityColumn = true;
+    private bool _showUnitPriceColumn;
+    private bool _showTotalColumn = true;
+    private bool _showStatusColumn;
+    private bool _showAccountantColumn;
+    private bool _showShippingColumn;
+
     [JsonPropertyName("transactionType")]
-    public TransactionType TransactionType { get; set; } = TransactionType.Both;
+    public TransactionType TransactionType
+    {
+        get => _transactionType;
+        set => SetField(ref _transactionType, value);
+    }
 
     [JsonPropertyName("includeReturns")]
-    public bool IncludeReturns { get; set; } = true;
+    public bool IncludeReturns
+    {
+        get => _includeReturns;
+        set => SetField(ref _includeReturns, value);
+    }
 
     [JsonPropertyName("includeLosses")]
-    public bool IncludeLosses { get; set; } = true;
+    public bool IncludeLosses
+    {
+        get => _includeLosses;
+        set => SetField(ref _includeLosses, value);
+    }
 
     [JsonPropertyName("dataSelection")]
-    public TableDataSelection DataSelection { get; set; } = TableDataSelection.All;
+    public TableDataSelection DataSelection
+    {
+        get => _dataSelection;
+        set => SetField(ref _dataSelection, value);
+    }
 
     [JsonPropertyName("sortOrder")]
-    public TableSortOrder SortOrder { get; set; } = TableSortOrder.DateDescending;
+    public TableSortOrder SortOrder
+    {
+        get => _sortOrder;
+        set => SetField(ref _sortOrder, value);
+    }
 
     [JsonPropertyName("maxRows")]
-    public int MaxRows { get; set; } = 10;
+    public int MaxRows
+    {
+        get => _maxRows;
+        set => SetField(ref _maxRows, value);
+    }
 
     [JsonPropertyName("showHeaders")]
-    public bool ShowHeaders { get; set; } = true;
+    public bool ShowHeaders
+    {
+        get => _showHeaders;
+        set => SetField(ref _showHeaders, value);
+    }
 
     [JsonPropertyName("alternateRowColors")]
-    public bool AlternateRowColors { get; set; } = true;
+    public bool AlternateRowColors
+    {
+        get => _alternateRowColors;
+        set => SetField(ref _alternateRowColors, value);
+    }
 
     [JsonPropertyName("showGridLines")]
-    public bool ShowGridLines { get; set; } = true;
+    public bool ShowGridLines
+    {
+        get => _showGridLines;
+        set => SetField(ref _showGridLines, value);
+    }
 
     [JsonPropertyName("showTotalsRow")]
-    public bool ShowTotalsRow { get; set; }
+    public bool ShowTotalsRow
+    {
+        get => _showTotalsRow;
+        set => SetField(ref _showTotalsRow, value);
+    }
 
     [JsonPropertyName("autoSizeColumns")]
-    public bool AutoSizeColumns { get; set; } = true;
+    public bool AutoSizeColumns
+    {
+        get => _autoSizeColumns;
+        set => SetField(ref _autoSizeColumns, value);
+    }
 
     [JsonPropertyName("fontSize")]
-    public double FontSize { get; set; } = 8;
+    public double FontSize
+    {
+        get => _fontSize;
+        set => SetField(ref _fontSize, value);
+    }
 
     [JsonPropertyName("fontFamily")]
-    public string FontFamily { get; set; } = "Segoe UI";
+    public string FontFamily
+    {
+        get => _fontFamily;
+        set => SetField(ref _fontFamily, value);
+    }
 
     [JsonPropertyName("dataRowHeight")]
-    public int DataRowHeight { get; set; } = 20;
+    public int DataRowHeight
+    {
+        get => _dataRowHeight;
+        set => SetField(ref _dataRowHeight, value);
+    }
 
     [JsonPropertyName("headerRowHeight")]
-    public int HeaderRowHeight { get; set; } = 25;
+    public int HeaderRowHeight
+    {
+        get => _headerRowHeight;
+        set => SetField(ref _headerRowHeight, value);
+    }
 
     [JsonPropertyName("cellPadding")]
-    public int CellPadding { get; set; } = 3;
+    public int CellPadding
+    {
+        get => _cellPadding;
+        set => SetField(ref _cellPadding, value);
+    }
 
     [JsonPropertyName("headerBackgroundColor")]
-    public string HeaderBackgroundColor { get; set; } = "#5E94FF";
+    public string HeaderBackgroundColor
+    {
+        get => _headerBackgroundColor;
+        set => SetField(ref _headerBackgroundColor, value);
+    }
 
     [JsonPropertyName("headerTextColor")]
-    public string HeaderTextColor { get; set; } = "#FFFFFF";
+    public string HeaderTextColor
+    {
+        get => _headerTextColor;
+        set => SetField(ref _headerTextColor, value);
+    }
 
     [JsonPropertyName("dataRowTextColor")]
-    public string DataRowTextColor { get; set; } = "#000000";
+    public string DataRowTextColor
+    {
+        get => _dataRowTextColor;
+        set => SetField(ref _dataRowTextColor, value);
+    }
 
     [JsonPropertyName("gridLineColor")]
-    public string GridLineColor { get; set; } = "#D3D3D3";
+    public string GridLineColor
+    {
+        get => _gridLineColor;
+        set => SetField(ref _gridLineColor, value);
+    }
 
     [JsonPropertyName("baseRowColor")]
-    public string BaseRowColor { get; set; } = "#FFFFFF";
+    public string BaseRowColor
+    {
+        get => _baseRowColor;
+        set => SetField(ref _baseRowColor, value);
+    }
 
     [JsonPropertyName("alternateRowColor")]
-    public string AlternateRowColor { get; set; } = "#F8F8F8";
+    public string AlternateRowColor
+    {
+        get => _alternateRowColor;
+        set => SetField(ref _alternateRowColor, value);
+    }
 
     // Column visibility
     [JsonPropertyName("showDateColumn")]
-    public bool ShowDateColumn { get; set; } = true;
+    public bool ShowDateColumn
+    {
+        get => _showDateColumn;
+        set => SetField(ref _showDateColumn, value);
+    }
 
     [JsonPropertyName("showTransactionIdColumn")]
-    public bool ShowTransactionIdColumn { get; set; } = true;
+    public bool ShowTransactionIdColumn
+    {
+        get => _showTransactionIdColumn;
+        set => SetField(ref _showTransactionIdColumn, value);
+    }
 
     [JsonPropertyName("showCompanyColumn")]
-    public bool ShowCompanyColumn { get; set; } = true;
+    public bool ShowCompanyColumn
+    {
+        get => _showCompanyColumn;
+        set => SetField(ref _showCompanyColumn, value);
+    }
 
     [JsonPropertyName("showProductColumn")]
-    public bool ShowProductColumn { get; set; } = true;
+    public bool ShowProductColumn
+    {
+        get => _showProductColumn;
+        set => SetField(ref _showProductColumn, value);
+    }
 
     [JsonPropertyName("showQuantityColumn")]
-    public bool ShowQuantityColumn { get; set; } = true;
+    public bool ShowQuantityColumn
+    {
+        get => _showQuantityColumn;
+        set => SetField(ref _showQuantityColumn, value);
+    }
 
     [JsonPropertyName("showUnitPriceColumn")]
-    public bool ShowUnitPriceColumn { get; set; }
+    public bool ShowUnitPriceColumn
+    {
+        get => _showUnitPriceColumn;
+        set => SetField(ref _showUnitPriceColumn, value);
+    }
 
     [JsonPropertyName("showTotalColumn")]
-    public bool ShowTotalColumn { get; set; } = true;
+    public bool ShowTotalColumn
+    {
+        get => _showTotalColumn;
+        set => SetField(ref _showTotalColumn, value);
+    }
 
     [JsonPropertyName("showStatusColumn")]
-    public bool ShowStatusColumn { get; set; }
+    public bool ShowStatusColumn
+    {
+        get => _showStatusColumn;
+        set => SetField(ref _showStatusColumn, value);
+    }
 
     [JsonPropertyName("showAccountantColumn")]
-    public bool ShowAccountantColumn { get; set; }
+    public bool ShowAccountantColumn
+    {
+        get => _showAccountantColumn;
+        set => SetField(ref _showAccountantColumn, value);
+    }
 
     [JsonPropertyName("showShippingColumn")]
-    public bool ShowShippingColumn { get; set; }
+    public bool ShowShippingColumn
+    {
+        get => _showShippingColumn;
+        set => SetField(ref _showShippingColumn, value);
+    }
 
     public override double MinimumSize => 100;
     public override string DisplayName => "Table";
@@ -599,26 +760,62 @@ public class ImageReportElement : ReportElementBase
 /// </summary>
 public class DateRangeReportElement : ReportElementBase
 {
+    private string _dateFormat = "yyyy-MM-dd";
+    private string _textColor = "#808080";
+    private double _fontSize = 10;
+    private bool _isItalic = true;
+    private string _fontFamily = "Segoe UI";
+    private HorizontalTextAlignment _horizontalAlignment = HorizontalTextAlignment.Center;
+    private VerticalTextAlignment _verticalAlignment = VerticalTextAlignment.Center;
+
     [JsonPropertyName("dateFormat")]
-    public string DateFormat { get; set; } = "yyyy-MM-dd";
+    public string DateFormat
+    {
+        get => _dateFormat;
+        set => SetField(ref _dateFormat, value);
+    }
 
     [JsonPropertyName("textColor")]
-    public string TextColor { get; set; } = "#808080";
+    public string TextColor
+    {
+        get => _textColor;
+        set => SetField(ref _textColor, value);
+    }
 
     [JsonPropertyName("fontSize")]
-    public double FontSize { get; set; } = 10;
+    public double FontSize
+    {
+        get => _fontSize;
+        set => SetField(ref _fontSize, value);
+    }
 
     [JsonPropertyName("isItalic")]
-    public bool IsItalic { get; set; } = true;
+    public bool IsItalic
+    {
+        get => _isItalic;
+        set => SetField(ref _isItalic, value);
+    }
 
     [JsonPropertyName("fontFamily")]
-    public string FontFamily { get; set; } = "Segoe UI";
+    public string FontFamily
+    {
+        get => _fontFamily;
+        set => SetField(ref _fontFamily, value);
+    }
 
     [JsonPropertyName("horizontalAlignment")]
-    public HorizontalTextAlignment HorizontalAlignment { get; set; } = HorizontalTextAlignment.Center;
+    public HorizontalTextAlignment HorizontalAlignment
+    {
+        get => _horizontalAlignment;
+        set => SetField(ref _horizontalAlignment, value);
+    }
 
     [JsonPropertyName("verticalAlignment")]
-    public VerticalTextAlignment VerticalAlignment { get; set; } = VerticalTextAlignment.Center;
+    public VerticalTextAlignment VerticalAlignment
+    {
+        get => _verticalAlignment;
+        set => SetField(ref _verticalAlignment, value);
+    }
 
     public override string DisplayName => "Date Range";
     public override ReportElementType GetElementType() => ReportElementType.DateRange;
@@ -650,47 +847,118 @@ public class DateRangeReportElement : ReportElementBase
 /// </summary>
 public class SummaryReportElement : ReportElementBase
 {
+    private TransactionType _transactionType = TransactionType.Both;
+    private bool _includeReturns = true;
+    private bool _includeLosses = true;
+    private bool _showTotalSales = true;
+    private bool _showTotalTransactions = true;
+    private bool _showAverageValue = true;
+    private bool _showGrowthRate = true;
+    private string _backgroundColor = "#F5F5F5";
+    private int _borderThickness = 1;
+    private string _borderColor = "#D3D3D3";
+    private string _fontFamily = "Segoe UI";
+    private double _fontSize = 10;
+    private HorizontalTextAlignment _horizontalAlignment = HorizontalTextAlignment.Left;
+    private VerticalTextAlignment _verticalAlignment = VerticalTextAlignment.Top;
+
     [JsonPropertyName("transactionType")]
-    public TransactionType TransactionType { get; set; } = TransactionType.Both;
+    public TransactionType TransactionType
+    {
+        get => _transactionType;
+        set => SetField(ref _transactionType, value);
+    }
 
     [JsonPropertyName("includeReturns")]
-    public bool IncludeReturns { get; set; } = true;
+    public bool IncludeReturns
+    {
+        get => _includeReturns;
+        set => SetField(ref _includeReturns, value);
+    }
 
     [JsonPropertyName("includeLosses")]
-    public bool IncludeLosses { get; set; } = true;
+    public bool IncludeLosses
+    {
+        get => _includeLosses;
+        set => SetField(ref _includeLosses, value);
+    }
 
     [JsonPropertyName("showTotalSales")]
-    public bool ShowTotalSales { get; set; } = true;
+    public bool ShowTotalSales
+    {
+        get => _showTotalSales;
+        set => SetField(ref _showTotalSales, value);
+    }
 
     [JsonPropertyName("showTotalTransactions")]
-    public bool ShowTotalTransactions { get; set; } = true;
+    public bool ShowTotalTransactions
+    {
+        get => _showTotalTransactions;
+        set => SetField(ref _showTotalTransactions, value);
+    }
 
     [JsonPropertyName("showAverageValue")]
-    public bool ShowAverageValue { get; set; } = true;
+    public bool ShowAverageValue
+    {
+        get => _showAverageValue;
+        set => SetField(ref _showAverageValue, value);
+    }
 
     [JsonPropertyName("showGrowthRate")]
-    public bool ShowGrowthRate { get; set; } = true;
+    public bool ShowGrowthRate
+    {
+        get => _showGrowthRate;
+        set => SetField(ref _showGrowthRate, value);
+    }
 
     [JsonPropertyName("backgroundColor")]
-    public string BackgroundColor { get; set; } = "#F5F5F5";
+    public string BackgroundColor
+    {
+        get => _backgroundColor;
+        set => SetField(ref _backgroundColor, value);
+    }
 
     [JsonPropertyName("borderThickness")]
-    public int BorderThickness { get; set; } = 1;
+    public int BorderThickness
+    {
+        get => _borderThickness;
+        set => SetField(ref _borderThickness, value);
+    }
 
     [JsonPropertyName("borderColor")]
-    public string BorderColor { get; set; } = "#D3D3D3";
+    public string BorderColor
+    {
+        get => _borderColor;
+        set => SetField(ref _borderColor, value);
+    }
 
     [JsonPropertyName("fontFamily")]
-    public string FontFamily { get; set; } = "Segoe UI";
+    public string FontFamily
+    {
+        get => _fontFamily;
+        set => SetField(ref _fontFamily, value);
+    }
 
     [JsonPropertyName("fontSize")]
-    public double FontSize { get; set; } = 10;
+    public double FontSize
+    {
+        get => _fontSize;
+        set => SetField(ref _fontSize, value);
+    }
 
     [JsonPropertyName("horizontalAlignment")]
-    public HorizontalTextAlignment HorizontalAlignment { get; set; } = HorizontalTextAlignment.Left;
+    public HorizontalTextAlignment HorizontalAlignment
+    {
+        get => _horizontalAlignment;
+        set => SetField(ref _horizontalAlignment, value);
+    }
 
     [JsonPropertyName("verticalAlignment")]
-    public VerticalTextAlignment VerticalAlignment { get; set; } = VerticalTextAlignment.Top;
+    public VerticalTextAlignment VerticalAlignment
+    {
+        get => _verticalAlignment;
+        set => SetField(ref _verticalAlignment, value);
+    }
 
     public override string DisplayName => "Summary";
     public override ReportElementType GetElementType() => ReportElementType.Summary;

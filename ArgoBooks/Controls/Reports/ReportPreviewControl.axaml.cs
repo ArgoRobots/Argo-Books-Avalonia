@@ -266,6 +266,8 @@ public partial class ReportPreviewControl : UserControl
                 {
                     SetPreviewBitmap(avaloniaBitmap);
                     IsLoading = false;
+                    // Fit to page after preview is generated
+                    ZoomToFitPage();
                 });
             });
         }

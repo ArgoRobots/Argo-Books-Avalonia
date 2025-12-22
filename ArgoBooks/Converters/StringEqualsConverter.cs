@@ -61,6 +61,29 @@ public class StringEqualsConverter : IValueConverter
 }
 
 /// <summary>
+/// Converter that returns true if the bound value equals the parameter value.
+/// Used for RadioButton IsChecked binding where the parameter is the option value.
+/// </summary>
+public class EqualityConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value == null && parameter == null)
+            return true;
+        if (value == null || parameter == null)
+            return false;
+        return value.Equals(parameter);
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool isChecked && isChecked)
+            return parameter;
+        return Avalonia.Data.BindingOperations.DoNothing;
+    }
+}
+
+/// <summary>
 /// Converter that returns PrimaryBrush if value equals CompareValue, otherwise BorderBrush.
 /// </summary>
 public class ThemeBorderBrushConverter : IValueConverter

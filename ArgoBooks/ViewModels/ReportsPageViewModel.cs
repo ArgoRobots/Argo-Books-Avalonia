@@ -236,6 +236,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private void SelectDatePreset(string? presetName)
+    {
+        if (!string.IsNullOrEmpty(presetName))
+        {
+            SelectedDatePreset = presetName;
+        }
+    }
+
     #endregion
 
     #region Step 2 - Layout Designer
@@ -1060,6 +1069,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ObservableCollection<VerticalTextAlignment> VerticalAlignments { get; } =
         new(Enum.GetValues<VerticalTextAlignment>());
+
+    public ObservableCollection<string> FontFamilies { get; } =
+        ["Segoe UI", "Arial", "Times New Roman", "Calibri", "Courier New", "Georgia", "Verdana", "Trebuchet MS"];
 
     [RelayCommand]
     private void ApplyPageSettings()

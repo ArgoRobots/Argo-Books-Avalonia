@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -171,6 +172,7 @@ public partial class ReportDesignCanvas : UserControl
     private readonly List<ReportElementBase> _selectedElements = [];
     private readonly Dictionary<string, CanvasElementControl> _elementControlMap = [];
 
+    private ScrollViewer? _scrollViewer;
     private Canvas? _elementsCanvas;
     private Canvas? _gridLinesCanvas;
     private Rectangle? _marginGuide;
@@ -200,6 +202,7 @@ public partial class ReportDesignCanvas : UserControl
     {
         base.OnApplyTemplate(e);
 
+        _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
         _elementsCanvas = this.FindControl<Canvas>("ElementsCanvas");
         _gridLinesCanvas = this.FindControl<Canvas>("GridLinesCanvas");
         _marginGuide = this.FindControl<Rectangle>("MarginGuide");
@@ -254,6 +257,17 @@ public partial class ReportDesignCanvas : UserControl
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
     {
+        // Mouse wheel controls zoom instead of scroll
+        var delta = e.Delta.Y;
+        if (delta > 0)
+        {
+            ZoomIn();
+        }
+        else if (delta < 0)
+        {
+            ZoomOut();
+        }
+
         // Prevent scrolling - mark the event as handled
         e.Handled = true;
         base.OnPointerWheelChanged(e);
@@ -426,10 +440,18 @@ public partial class ReportDesignCanvas : UserControl
     /// </summary>
     public void ZoomToFit()
     {
-        if (Parent is not Control parent) return;
+        // Use ScrollViewer's viewport for accurate fit calculation
+        var viewportWidth = _scrollViewer?.Viewport.Width ?? Bounds.Width;
+        var viewportHeight = _scrollViewer?.Viewport.Height ?? Bounds.Height;
 
-        var scaleX = (parent.Bounds.Width - 80) / _pageWidth;
-        var scaleY = (parent.Bounds.Height - 80) / _pageHeight;
+        if (viewportWidth <= 0 || viewportHeight <= 0 || _pageWidth <= 0 || _pageHeight <= 0) return;
+
+        // Account for padding (40px on each side from ZoomContainer)
+        var availableWidth = viewportWidth - 80;
+        var availableHeight = viewportHeight - 80;
+
+        var scaleX = availableWidth / _pageWidth;
+        var scaleY = availableHeight / _pageHeight;
         ZoomLevel = Math.Min(scaleX, scaleY);
     }
 
@@ -512,6 +534,9 @@ public partial class ReportDesignCanvas : UserControl
         control.DragEnded += OnElementDragEnded;
         control.DeleteRequested += OnElementDeleteRequested;
 
+        // Subscribe to element property changes for real-time rendering
+        element.PropertyChanged += OnElementPropertyChanged;
+
         // Set content based on element type
         control.ElementContent = CreateElementContent(element);
 
@@ -522,6 +547,15 @@ public partial class ReportDesignCanvas : UserControl
         return control;
     }
 
+    private void OnElementPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is ReportElementBase element)
+        {
+            // Refresh the element's visual content when properties change
+            RefreshElementContent(element);
+        }
+    }
+
     private void RemoveElementControl(CanvasElementControl control)
     {
         control.ElementSelected -= OnElementSelected;
@@ -530,6 +564,12 @@ public partial class ReportDesignCanvas : UserControl
         control.DragStarted -= OnElementDragStarted;
         control.DragEnded -= OnElementDragEnded;
         control.DeleteRequested -= OnElementDeleteRequested;
+
+        // Unsubscribe from element property changes
+        if (control.Element != null)
+        {
+            control.Element.PropertyChanged -= OnElementPropertyChanged;
+        }
 
         _elementsCanvas?.Children.Remove(control);
         _elementControls.Remove(control);

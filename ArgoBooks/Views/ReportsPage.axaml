@@ -6,9 +6,14 @@
              xmlns:enums="using:ArgoBooks.Core.Enums"
              xmlns:reports="using:ArgoBooks.Controls.Reports"
              xmlns:modals="using:ArgoBooks.Modals"
+             xmlns:converters="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.ReportsPage"
              x:DataType="vm:ReportsPageViewModel">
+
+    <UserControl.Resources>
+        <converters:EqualityConverter x:Key="EqualityConverter" />
+    </UserControl.Resources>
 
     <Design.DataContext>
         <vm:ReportsPageViewModel />
@@ -273,7 +278,6 @@
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                         </Style>
                                                         <Style Selector="Button.selected">
-                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                         </Style>
                                                     </Button.Styles>
@@ -372,7 +376,6 @@
                                                         </Style>
                                                         <Style Selector="Border.selected">
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
                                                         </Style>
                                                     </Border.Styles>
                                                     <CheckBox IsChecked="{Binding IsSelected}"
@@ -437,9 +440,24 @@
                                            FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding DatePresets}"
-                                          SelectedItem="{Binding SelectedDatePreset}"
-                                          HorizontalAlignment="Stretch" />
+                                <ItemsControl ItemsSource="{Binding DatePresets}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <RadioButton Content="{Binding}"
+                                                         GroupName="DateRange"
+                                                         IsChecked="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectedDatePreset, Converter={StaticResource EqualityConverter}, ConverterParameter={Binding}, Mode=OneWay}"
+                                                         Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectDatePresetCommand}"
+                                                         CommandParameter="{Binding}"
+                                                         Margin="0,2"
+                                                         FontSize="12" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
                                 <!-- Custom Date Range -->
                                 <Grid ColumnDefinitions="*,Auto,*"
@@ -921,7 +939,7 @@
 
                             <!-- Table Properties -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsTableSelected}">
-                                <TextBlock Text="Table Properties"
+                                <TextBlock Text="Data Configuration"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -931,12 +949,8 @@
                                               SelectedItem="{Binding SelectedTableElement.TransactionType}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Data Selection" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TableDataSelections}"
-                                              SelectedItem="{Binding SelectedTableElement.DataSelection}"
-                                              HorizontalAlignment="Stretch" />
-                                </StackPanel>
+                                <CheckBox Content="Include Returns" IsChecked="{Binding SelectedTableElement.IncludeReturns}" />
+                                <CheckBox Content="Include Losses" IsChecked="{Binding SelectedTableElement.IncludeLosses}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Sort Order" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding TableSortOrders}"
@@ -945,12 +959,91 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Max Rows" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="100" />
+                                    <NumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="50" />
                                 </StackPanel>
+
+                                <TextBlock Text="Display Options"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,8,0,0" />
                                 <CheckBox Content="Show Headers" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
                                 <CheckBox Content="Show Grid Lines" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
-                                <CheckBox Content="Alternate Row Colors" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
                                 <CheckBox Content="Show Totals Row" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
+                                <CheckBox Content="Alternate Row Colors" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
+                                <CheckBox Content="Auto Size Columns" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
+
+                                <TextBlock Text="Column Selection"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,8,0,0" />
+                                <CheckBox Content="Date" IsChecked="{Binding SelectedTableElement.ShowDateColumn}" />
+                                <CheckBox Content="Transaction ID" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn}" />
+                                <CheckBox Content="Company" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
+                                <CheckBox Content="Product" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
+                                <CheckBox Content="Quantity" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
+                                <CheckBox Content="Unit Price" IsChecked="{Binding SelectedTableElement.ShowUnitPriceColumn}" />
+                                <CheckBox Content="Total" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
+                                <CheckBox Content="Status" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
+
+                                <TextBlock Text="Formatting"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,8,0,0" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedTableElement.FontSize}" Minimum="6" Maximum="24" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding FontFamilies}"
+                                              SelectedItem="{Binding SelectedTableElement.FontFamily}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Data Row Height" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Header Row Height" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Cell Padding" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedTableElement.CellPadding}" Minimum="0" Maximum="20" />
+                                </StackPanel>
+
+                                <TextBlock Text="Colors"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,8,0,0" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Header Background" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedTableElement.HeaderBackgroundColor}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Header Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedTableElement.HeaderTextColor}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Data Row Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedTableElement.DataRowTextColor}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Grid Line Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedTableElement.GridLineColor}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Base Row Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedTableElement.BaseRowColor}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Alternate Row Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedTableElement.AlternateRowColor}" />
+                                </StackPanel>
                             </StackPanel>
 
                             <!-- No Selection Message -->
