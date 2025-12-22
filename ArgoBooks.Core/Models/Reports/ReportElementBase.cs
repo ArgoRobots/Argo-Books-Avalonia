@@ -763,7 +763,9 @@ public class DateRangeReportElement : ReportElementBase
     private string _dateFormat = "yyyy-MM-dd";
     private string _textColor = "#808080";
     private double _fontSize = 10;
+    private bool _isBold;
     private bool _isItalic = true;
+    private bool _isUnderline;
     private string _fontFamily = "Segoe UI";
     private HorizontalTextAlignment _horizontalAlignment = HorizontalTextAlignment.Center;
     private VerticalTextAlignment _verticalAlignment = VerticalTextAlignment.Center;
@@ -789,11 +791,25 @@ public class DateRangeReportElement : ReportElementBase
         set => SetField(ref _fontSize, value);
     }
 
+    [JsonPropertyName("isBold")]
+    public bool IsBold
+    {
+        get => _isBold;
+        set => SetField(ref _isBold, value);
+    }
+
     [JsonPropertyName("isItalic")]
     public bool IsItalic
     {
         get => _isItalic;
         set => SetField(ref _isItalic, value);
+    }
+
+    [JsonPropertyName("isUnderline")]
+    public bool IsUnderline
+    {
+        get => _isUnderline;
+        set => SetField(ref _isUnderline, value);
     }
 
     [JsonPropertyName("fontFamily")]
@@ -834,7 +850,9 @@ public class DateRangeReportElement : ReportElementBase
             DateFormat = DateFormat,
             TextColor = TextColor,
             FontSize = FontSize,
+            IsBold = IsBold,
             IsItalic = IsItalic,
+            IsUnderline = IsUnderline,
             FontFamily = FontFamily,
             HorizontalAlignment = HorizontalAlignment,
             VerticalAlignment = VerticalAlignment
