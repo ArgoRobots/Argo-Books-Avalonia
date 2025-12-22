@@ -207,14 +207,13 @@
 
                             <!-- Tax, Shipping, Discount Row -->
                             <Grid ColumnDefinitions="*,16,*,16,*">
-                                <!-- Tax Rate -->
+                                <!-- Tax -->
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Text="Tax Rate (%)" />
+                                               Text="Tax ($)" />
                                     <NumericUpDown Value="{Binding ModalTaxRate, Mode=TwoWay}"
                                                    Minimum="0"
-                                                   Maximum="100"
-                                                   FormatString="N2"
+                                                   FormatString="C2"
                                                    Classes="form-numericupdown"
                                                    ShowButtonSpinner="False"
                                                    HorizontalAlignment="Stretch" />
