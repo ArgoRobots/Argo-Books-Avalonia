@@ -46,7 +46,7 @@
                 <StackPanel Spacing="12" Width="280">
                     <!-- Color Spectrum -->
                     <ColorSpectrum Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
-                                   MinHue="0" MaxHue="360"
+                                   MinHue="0" MaxHue="359"
                                    MinSaturation="0" MaxSaturation="100"
                                    MinValue="0" MaxValue="100"
                                    Width="256" Height="256"
