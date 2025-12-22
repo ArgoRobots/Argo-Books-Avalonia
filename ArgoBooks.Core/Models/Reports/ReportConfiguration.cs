@@ -298,14 +298,19 @@ public class ExportSettings
 public static class PageDimensions
 {
     /// <summary>
-    /// Header height in pixels.
+    /// Header height in pixels (matches LayoutContext in ReportTemplateFactory).
     /// </summary>
-    public const int HeaderHeight = 50;
+    public const int HeaderHeight = 80;
 
     /// <summary>
-    /// Footer height in pixels.
+    /// Footer height in pixels (matches LayoutContext in ReportTemplateFactory).
     /// </summary>
-    public const int FooterHeight = 30;
+    public const int FooterHeight = 50;
+
+    /// <summary>
+    /// Margin from page edges in pixels.
+    /// </summary>
+    public const int Margin = 40;
 
     /// <summary>
     /// Separator height in pixels.

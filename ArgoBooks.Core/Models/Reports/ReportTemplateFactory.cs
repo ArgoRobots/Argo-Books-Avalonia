@@ -602,9 +602,9 @@ public static class ReportTemplateFactory
     {
         public double PageWidth { get; }
         public double PageHeight { get; }
-        public double Margin { get; } = 40;
-        public double HeaderHeight { get; } = 80;
-        public double FooterHeight { get; } = 50;
+        public double Margin { get; } = PageDimensions.Margin;
+        public double HeaderHeight { get; } = PageDimensions.HeaderHeight;
+        public double FooterHeight { get; } = PageDimensions.FooterHeight;
         public double ElementSpacing { get; } = 10;
         public double DateRangeHeight { get; } = 30;
         public double ContentTop => HeaderHeight + Margin;

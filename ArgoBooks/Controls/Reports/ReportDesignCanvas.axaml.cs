@@ -608,197 +608,423 @@ public partial class ReportDesignCanvas : UserControl
 
     private static Control CreateChartPreview(ChartReportElement? element)
     {
+        var title = GetChartTitle(element?.ChartType ?? ChartDataType.TotalRevenue);
+        var borderThickness = element?.BorderThickness ?? 0;
+        var showTitle = element?.ShowTitle ?? true;
+        var titleFontSize = element?.TitleFontSize ?? 14;
+
+        var grid = new Grid
+        {
+            RowDefinitions = showTitle
+                ? new RowDefinitions("Auto,*")
+                : new RowDefinitions("*")
+        };
+
+        // Title row
+        if (showTitle)
+        {
+            var titleBlock = new TextBlock
+            {
+                Text = title,
+                FontSize = titleFontSize,
+                FontWeight = FontWeight.Bold,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Margin = new Thickness(0, 8, 0, 4)
+            };
+            Grid.SetRow(titleBlock, 0);
+            grid.Children.Add(titleBlock);
+        }
+
+        // Chart area placeholder
+        var chartArea = new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#E8E8E8")),
+            Margin = new Thickness(10, showTitle ? 4 : 10, 10, 10),
+            Child = new TextBlock
+            {
+                Text = $"[{element?.ChartType}]",
+                Foreground = Brushes.Gray,
+                FontSize = 12,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            }
+        };
+        Grid.SetRow(chartArea, showTitle ? 1 : 0);
+        grid.Children.Add(chartArea);
+
+        var borderBrush = borderThickness > 0 && element?.BorderColor != null
+            ? new SolidColorBrush(Color.Parse(element.BorderColor))
+            : Brushes.Gray;
+
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#E3F2FD")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#2196F3")),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Child = new StackPanel
-            {
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Children =
-                {
-                    new PathIcon
-                    {
-                        Width = 32,
-                        Height = 32,
-                        Foreground = new SolidColorBrush(Color.Parse("#2196F3")),
-                        Data = PathGeometry.Parse("M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z")
-                    },
-                    new TextBlock
-                    {
-                        Text = element?.ChartType.ToString() ?? "Chart",
-                        FontSize = 12,
-                        Foreground = new SolidColorBrush(Color.Parse("#1565C0")),
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                        Margin = new Thickness(0, 4, 0, 0)
-                    }
-                }
-            }
+            Background = Brushes.White,
+            BorderBrush = borderBrush,
+            BorderThickness = new Thickness(borderThickness > 0 ? borderThickness : 1),
+            Child = grid
+        };
+    }
+
+    private static string GetChartTitle(ChartDataType chartType)
+    {
+        return chartType switch
+        {
+            ChartDataType.TotalRevenue => "Total Revenue",
+            ChartDataType.RevenueDistribution => "Revenue Distribution",
+            ChartDataType.TotalExpenses => "Total Expenses",
+            ChartDataType.ExpensesDistribution => "Expense Distribution",
+            ChartDataType.TotalProfits => "Total Profits",
+            ChartDataType.SalesVsExpenses => "Sales vs Expenses",
+            ChartDataType.GrowthRates => "Growth Rates",
+            ChartDataType.AverageTransactionValue => "Average Transaction Value",
+            ChartDataType.TotalTransactions => "Total Transactions",
+            ChartDataType.AverageShippingCosts => "Average Shipping Costs",
+            ChartDataType.WorldMap => "Geographic Distribution",
+            ChartDataType.CountriesOfOrigin => "Countries of Origin",
+            ChartDataType.CountriesOfDestination => "Countries of Destination",
+            ChartDataType.CompaniesOfOrigin => "Companies of Origin",
+            ChartDataType.AccountantsTransactions => "Transactions by Accountant",
+            ChartDataType.ReturnsOverTime => "Returns Over Time",
+            ChartDataType.ReturnReasons => "Return Reasons",
+            ChartDataType.ReturnFinancialImpact => "Return Financial Impact",
+            ChartDataType.ReturnsByCategory => "Returns by Category",
+            ChartDataType.ReturnsByProduct => "Returns by Product",
+            ChartDataType.PurchaseVsSaleReturns => "Purchase vs Sale Returns",
+            ChartDataType.LossesOverTime => "Losses Over Time",
+            ChartDataType.LossReasons => "Loss Reasons",
+            ChartDataType.LossFinancialImpact => "Loss Financial Impact",
+            ChartDataType.LossesByCategory => "Losses by Category",
+            ChartDataType.LossesByProduct => "Losses by Product",
+            ChartDataType.PurchaseVsSaleLosses => "Purchase vs Sale Losses",
+            _ => "Chart"
         };
     }
 
     private static Control CreateTablePreview(TableReportElement? element)
     {
+        var showHeaders = element?.ShowHeaders ?? true;
+        var headerBgColor = element?.HeaderBackgroundColor ?? "#E0E0E0";
+        var headerTextColor = element?.HeaderTextColor ?? "#000000";
+        var fontSize = element?.FontSize ?? 12;
+        var showGridLines = element?.ShowGridLines ?? true;
+        var gridLineColor = element?.GridLineColor ?? "#CCCCCC";
+
+        var grid = new Grid();
+
+        // Get visible columns
+        var columns = GetVisibleTableColumns(element);
+        var columnCount = Math.Max(columns.Count, 3);
+
+        // Create column definitions
+        for (int i = 0; i < columnCount; i++)
+        {
+            grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
+        }
+
+        // Create row definitions
+        var rowCount = showHeaders ? 4 : 3; // Header + 3 data rows
+        for (int i = 0; i < rowCount; i++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition(GridUnitType.Auto));
+        }
+
+        // Add header row
+        if (showHeaders)
+        {
+            for (int col = 0; col < columnCount; col++)
+            {
+                var headerCell = new Border
+                {
+                    Background = new SolidColorBrush(Color.Parse(headerBgColor)),
+                    BorderBrush = showGridLines ? new SolidColorBrush(Color.Parse(gridLineColor)) : null,
+                    BorderThickness = showGridLines ? new Thickness(0, 0, 1, 1) : new Thickness(0),
+                    Padding = new Thickness(4, 2),
+                    Child = new TextBlock
+                    {
+                        Text = col < columns.Count ? columns[col] : $"Col {col + 1}",
+                        FontSize = fontSize,
+                        FontWeight = FontWeight.Bold,
+                        Foreground = new SolidColorBrush(Color.Parse(headerTextColor)),
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                    }
+                };
+                Grid.SetRow(headerCell, 0);
+                Grid.SetColumn(headerCell, col);
+                grid.Children.Add(headerCell);
+            }
+        }
+
+        // Add sample data rows
+        var startRow = showHeaders ? 1 : 0;
+        for (int row = startRow; row < rowCount; row++)
+        {
+            for (int col = 0; col < columnCount; col++)
+            {
+                var dataCell = new Border
+                {
+                    BorderBrush = showGridLines ? new SolidColorBrush(Color.Parse(gridLineColor)) : null,
+                    BorderThickness = showGridLines ? new Thickness(0, 0, 1, 1) : new Thickness(0),
+                    Padding = new Thickness(4, 2),
+                    Child = new TextBlock
+                    {
+                        Text = "...",
+                        FontSize = fontSize,
+                        Foreground = Brushes.Gray,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                    }
+                };
+                Grid.SetRow(dataCell, row);
+                Grid.SetColumn(dataCell, col);
+                grid.Children.Add(dataCell);
+            }
+        }
+
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#E8F5E9")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#4CAF50")),
+            Background = Brushes.White,
+            BorderBrush = new SolidColorBrush(Color.Parse(gridLineColor)),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Child = new StackPanel
-            {
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Children =
-                {
-                    new PathIcon
-                    {
-                        Width = 32,
-                        Height = 32,
-                        Foreground = new SolidColorBrush(Color.Parse("#4CAF50")),
-                        Data = PathGeometry.Parse("M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z")
-                    },
-                    new TextBlock
-                    {
-                        Text = "Data Table",
-                        FontSize = 12,
-                        Foreground = new SolidColorBrush(Color.Parse("#2E7D32")),
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                        Margin = new Thickness(0, 4, 0, 0)
-                    }
-                }
-            }
+            Child = grid
         };
+    }
+
+    private static List<string> GetVisibleTableColumns(TableReportElement? table)
+    {
+        var columns = new List<string>();
+        if (table == null) return ["Date", "Description", "Amount"];
+
+        if (table.ShowDateColumn) columns.Add("Date");
+        if (table.ShowTransactionIdColumn) columns.Add("ID");
+        if (table.ShowCompanyColumn) columns.Add("Company");
+        if (table.ShowProductColumn) columns.Add("Product");
+        if (table.ShowQuantityColumn) columns.Add("Qty");
+        if (table.ShowUnitPriceColumn) columns.Add("Unit Price");
+        if (table.ShowTotalColumn) columns.Add("Total");
+        if (table.ShowStatusColumn) columns.Add("Status");
+        if (table.ShowAccountantColumn) columns.Add("Accountant");
+        if (table.ShowShippingColumn) columns.Add("Shipping");
+
+        return columns.Count > 0 ? columns : ["Date", "Description", "Amount"];
     }
 
     private static Control CreateLabelPreview(LabelReportElement? element)
     {
+        var text = element?.Text ?? "Label";
+        var fontSize = element?.FontSize ?? 14;
+        var isBold = element?.IsBold ?? false;
+        var isItalic = element?.IsItalic ?? false;
+        var isUnderline = element?.IsUnderline ?? false;
+        var textColor = element?.TextColor ?? "#000000";
+        var hAlign = element?.HorizontalAlignment ?? HorizontalTextAlignment.Left;
+        var vAlign = element?.VerticalAlignment ?? VerticalTextAlignment.Top;
+
+        var textBlock = new TextBlock
+        {
+            Text = text,
+            FontSize = fontSize,
+            FontWeight = isBold ? FontWeight.Bold : FontWeight.Normal,
+            FontStyle = isItalic ? FontStyle.Italic : FontStyle.Normal,
+            TextDecorations = isUnderline ? TextDecorations.Underline : null,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = new SolidColorBrush(Color.Parse(textColor)),
+            HorizontalAlignment = hAlign switch
+            {
+                HorizontalTextAlignment.Center => Avalonia.Layout.HorizontalAlignment.Center,
+                HorizontalTextAlignment.Right => Avalonia.Layout.HorizontalAlignment.Right,
+                _ => Avalonia.Layout.HorizontalAlignment.Left
+            },
+            VerticalAlignment = vAlign switch
+            {
+                VerticalTextAlignment.Center => Avalonia.Layout.VerticalAlignment.Center,
+                VerticalTextAlignment.Bottom => Avalonia.Layout.VerticalAlignment.Bottom,
+                _ => Avalonia.Layout.VerticalAlignment.Top
+            }
+        };
+
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#FFF3E0")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#FF9800")),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(8),
-            Child = new TextBlock
-            {
-                Text = element?.Text ?? "Label",
-                FontSize = element?.FontSize ?? 14,
-                FontWeight = element?.IsBold == true ? FontWeight.Bold : FontWeight.Normal,
-                FontStyle = element?.IsItalic == true ? FontStyle.Italic : FontStyle.Normal,
-                TextWrapping = TextWrapping.Wrap,
-                Foreground = element?.TextColor != null
-                    ? new SolidColorBrush(Color.Parse(element.TextColor))
-                    : Brushes.Black
-            }
+            Background = Brushes.Transparent,
+            Padding = new Thickness(4),
+            Child = textBlock
         };
     }
 
     private static Control CreateImagePreview(ImageReportElement? element)
     {
+        var bgColor = element?.BackgroundColor ?? "#F0F0F0";
+        var borderColor = element?.BorderColor ?? "#00FFFFFF";
+        var borderThickness = element?.BorderThickness ?? 0;
+
+        Control content;
+
+        if (!string.IsNullOrEmpty(element?.ImagePath))
+        {
+            try
+            {
+                // Try to load the image
+                var imagePath = element.ImagePath;
+                if (System.IO.File.Exists(imagePath))
+                {
+                    content = new Image
+                    {
+                        Source = new Avalonia.Media.Imaging.Bitmap(imagePath),
+                        Stretch = element.ScaleMode switch
+                        {
+                            ImageScaleMode.Stretch => Stretch.Fill,
+                            ImageScaleMode.Fit => Stretch.Uniform,
+                            ImageScaleMode.Fill => Stretch.UniformToFill,
+                            ImageScaleMode.Center => Stretch.None,
+                            _ => Stretch.Uniform
+                        }
+                    };
+                }
+                else
+                {
+                    content = CreateImagePlaceholder("Image not found");
+                }
+            }
+            catch
+            {
+                content = CreateImagePlaceholder("Error loading image");
+            }
+        }
+        else
+        {
+            content = CreateImagePlaceholder("No image selected");
+        }
+
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#F3E5F5")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#9C27B0")),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Child = new StackPanel
+            Background = bgColor != "#00FFFFFF" ? new SolidColorBrush(Color.Parse(bgColor)) : Brushes.Transparent,
+            BorderBrush = borderThickness > 0 && borderColor != "#00FFFFFF"
+                ? new SolidColorBrush(Color.Parse(borderColor))
+                : null,
+            BorderThickness = new Thickness(borderThickness),
+            Child = content
+        };
+    }
+
+    private static Control CreateImagePlaceholder(string message)
+    {
+        return new Border
+        {
+            Background = new SolidColorBrush(Color.Parse("#F0F0F0")),
+            Child = new TextBlock
             {
+                Text = message,
+                FontSize = 10,
+                Foreground = Brushes.Gray,
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Children =
-                {
-                    new PathIcon
-                    {
-                        Width = 32,
-                        Height = 32,
-                        Foreground = new SolidColorBrush(Color.Parse("#9C27B0")),
-                        Data = PathGeometry.Parse("M21,17H7V3H21M21,1H7A2,2 0 0,0 5,3V17A2,2 0 0,0 7,19H21A2,2 0 0,0 23,17V3A2,2 0 0,0 21,1M3,5H1V21A2,2 0 0,0 3,23H19V21H3M15.96,10.29L13.21,13.83L11.25,11.47L8.5,15H19.5L15.96,10.29Z")
-                    },
-                    new TextBlock
-                    {
-                        Text = string.IsNullOrEmpty(element?.ImagePath) ? "No Image" : "Image",
-                        FontSize = 12,
-                        Foreground = new SolidColorBrush(Color.Parse("#7B1FA2")),
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                        Margin = new Thickness(0, 4, 0, 0)
-                    }
-                }
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
             }
         };
     }
 
     private static Control CreateDateRangePreview(DateRangeReportElement? element)
     {
+        var dateFormat = element?.DateFormat ?? "MMM dd, yyyy";
+        var fontSize = element?.FontSize ?? 12;
+        var textColor = element?.TextColor ?? "#000000";
+        var isItalic = element?.IsItalic ?? false;
+        var hAlign = element?.HorizontalAlignment ?? HorizontalTextAlignment.Center;
+        var vAlign = element?.VerticalAlignment ?? VerticalTextAlignment.Center;
+
+        // Create sample date range text
+        var startDate = DateTime.Now.AddDays(-30);
+        var endDate = DateTime.Now;
+        var text = $"Period: {startDate.ToString(dateFormat)} to {endDate.ToString(dateFormat)}";
+
+        var textBlock = new TextBlock
+        {
+            Text = text,
+            FontSize = fontSize,
+            FontStyle = isItalic ? FontStyle.Italic : FontStyle.Normal,
+            Foreground = new SolidColorBrush(Color.Parse(textColor)),
+            HorizontalAlignment = hAlign switch
+            {
+                HorizontalTextAlignment.Center => Avalonia.Layout.HorizontalAlignment.Center,
+                HorizontalTextAlignment.Right => Avalonia.Layout.HorizontalAlignment.Right,
+                _ => Avalonia.Layout.HorizontalAlignment.Left
+            },
+            VerticalAlignment = vAlign switch
+            {
+                VerticalTextAlignment.Center => Avalonia.Layout.VerticalAlignment.Center,
+                VerticalTextAlignment.Bottom => Avalonia.Layout.VerticalAlignment.Bottom,
+                _ => Avalonia.Layout.VerticalAlignment.Top
+            }
+        };
+
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#E0F7FA")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#00BCD4")),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(8),
-            Child = new StackPanel
-            {
-                Orientation = Avalonia.Layout.Orientation.Horizontal,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Spacing = 8,
-                Children =
-                {
-                    new PathIcon
-                    {
-                        Width = 20,
-                        Height = 20,
-                        Foreground = new SolidColorBrush(Color.Parse("#00BCD4")),
-                        Data = PathGeometry.Parse("M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1")
-                    },
-                    new TextBlock
-                    {
-                        Text = element?.DateFormat ?? "Date Range",
-                        FontSize = 12,
-                        Foreground = new SolidColorBrush(Color.Parse("#00838F")),
-                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-                    }
-                }
-            }
+            Background = Brushes.Transparent,
+            Child = textBlock
         };
     }
 
     private static Control CreateSummaryPreview(SummaryReportElement? element)
     {
+        var bgColor = element?.BackgroundColor ?? "#F5F5F5";
+        var borderColor = element?.BorderColor ?? "#CCCCCC";
+        var borderThickness = element?.BorderThickness ?? 1;
+        var fontSize = element?.FontSize ?? 12;
+        var hAlign = element?.HorizontalAlignment ?? HorizontalTextAlignment.Left;
+        var vAlign = element?.VerticalAlignment ?? VerticalTextAlignment.Top;
+        var transactionType = element?.TransactionType ?? TransactionType.Revenue;
+
+        // Create sample summary lines
+        var lines = new List<string>();
+        if (element?.ShowTotalSales ?? true)
+        {
+            var label = transactionType == TransactionType.Expenses ? "Total Expenses" : "Total Revenue";
+            lines.Add($"{label}: $12,345.67");
+        }
+        if (element?.ShowTotalTransactions ?? true)
+        {
+            lines.Add("Transactions: 156");
+        }
+        if (element?.ShowAverageValue ?? true)
+        {
+            lines.Add("Average Value: $79.14");
+        }
+        if (element?.ShowGrowthRate ?? true)
+        {
+            lines.Add("Growth Rate: +8.5%");
+        }
+
+        var stackPanel = new StackPanel
+        {
+            Margin = new Thickness(10),
+            HorizontalAlignment = hAlign switch
+            {
+                HorizontalTextAlignment.Center => Avalonia.Layout.HorizontalAlignment.Center,
+                HorizontalTextAlignment.Right => Avalonia.Layout.HorizontalAlignment.Right,
+                _ => Avalonia.Layout.HorizontalAlignment.Left
+            },
+            VerticalAlignment = vAlign switch
+            {
+                VerticalTextAlignment.Center => Avalonia.Layout.VerticalAlignment.Center,
+                VerticalTextAlignment.Bottom => Avalonia.Layout.VerticalAlignment.Bottom,
+                _ => Avalonia.Layout.VerticalAlignment.Top
+            }
+        };
+
+        foreach (var line in lines)
+        {
+            stackPanel.Children.Add(new TextBlock
+            {
+                Text = line,
+                FontSize = fontSize,
+                Foreground = Brushes.Black,
+                Margin = new Thickness(0, 2)
+            });
+        }
+
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#ECEFF1")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#607D8B")),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(8),
-            Child = new StackPanel
-            {
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Children =
-                {
-                    new PathIcon
-                    {
-                        Width = 32,
-                        Height = 32,
-                        Foreground = new SolidColorBrush(Color.Parse("#607D8B")),
-                        Data = PathGeometry.Parse("M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z")
-                    },
-                    new TextBlock
-                    {
-                        Text = "Summary",
-                        FontSize = 12,
-                        Foreground = new SolidColorBrush(Color.Parse("#455A64")),
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                        Margin = new Thickness(0, 4, 0, 0)
-                    }
-                }
-            }
+            Background = new SolidColorBrush(Color.Parse(bgColor)),
+            BorderBrush = borderThickness > 0 ? new SolidColorBrush(Color.Parse(borderColor)) : null,
+            BorderThickness = new Thickness(borderThickness),
+            Child = stackPanel
         };
     }
 
