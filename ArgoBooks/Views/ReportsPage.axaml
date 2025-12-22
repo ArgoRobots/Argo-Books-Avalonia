@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:enums="using:ArgoBooks.Core.Enums"
              xmlns:reports="using:ArgoBooks.Controls.Reports"
+             xmlns:modals="using:ArgoBooks.Modals"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.ReportsPage"
              x:DataType="vm:ReportsPageViewModel">
@@ -13,6 +14,7 @@
         <vm:ReportsPageViewModel />
     </Design.DataContext>
 
+    <Panel>
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- Step Indicator -->
         <Border Grid.Row="0"
@@ -1063,6 +1065,27 @@
             </Grid>
         </Border>
     </Grid>
+
+    <!-- Page Settings Modal Overlay -->
+    <Border Background="#80000000"
+            IsVisible="{Binding IsPageSettingsOpen}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <modals:ReportPageSettingsModal DataContext="{Binding}"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+    </Border>
+
+    <!-- Save Template Modal Overlay -->
+    <Border Background="#80000000"
+            IsVisible="{Binding IsSaveTemplateOpen}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <modals:ReportSaveTemplateModal DataContext="{Binding}"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+    </Border>
+    </Panel>
 
     <UserControl.Styles>
         <!-- Toolbox Button -->
