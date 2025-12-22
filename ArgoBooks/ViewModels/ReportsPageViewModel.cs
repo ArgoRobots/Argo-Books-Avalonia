@@ -44,6 +44,13 @@ public partial class ReportsPageViewModel : ViewModelBase
     public bool IsStep2 => CurrentStep == 2;
     public bool IsStep3 => CurrentStep == 3;
 
+    // Step indicator state properties
+    public bool IsStep1Active => CurrentStep >= 1;
+    public bool IsStep2Active => CurrentStep >= 2 || Step1Completed;
+    public bool IsStep3Active => CurrentStep >= 3 || Step2Completed;
+    public bool IsConnector1Active => CurrentStep > 1 || Step1Completed;
+    public bool IsConnector2Active => CurrentStep > 2 || Step2Completed;
+
     public bool CanGoBack => CurrentStep > 1;
     public bool CanGoNext => CurrentStep < 3;
     public bool IsOnFinalStep => CurrentStep == 3;
@@ -63,6 +70,11 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsStep1));
         OnPropertyChanged(nameof(IsStep2));
         OnPropertyChanged(nameof(IsStep3));
+        OnPropertyChanged(nameof(IsStep1Active));
+        OnPropertyChanged(nameof(IsStep2Active));
+        OnPropertyChanged(nameof(IsStep3Active));
+        OnPropertyChanged(nameof(IsConnector1Active));
+        OnPropertyChanged(nameof(IsConnector2Active));
         OnPropertyChanged(nameof(CanGoBack));
         OnPropertyChanged(nameof(CanGoNext));
         OnPropertyChanged(nameof(IsOnFinalStep));
