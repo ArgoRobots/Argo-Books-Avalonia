@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="50"
-             x:Class="ArgoBooks.Controls.UndoRedoButtonGroup">
+             x:Class="ArgoBooks.Controls.UndoRedoButtonGroup"
+             x:CompileBindings="False">
 
     <Design.DataContext>
         <vm:UndoRedoButtonGroupViewModel />
