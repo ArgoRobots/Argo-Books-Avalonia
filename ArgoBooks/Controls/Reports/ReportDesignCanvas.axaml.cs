@@ -898,12 +898,17 @@ public partial class ReportDesignCanvas : UserControl
             content = CreateImagePlaceholder("No image selected");
         }
 
+        IBrush background = bgColor != "#00FFFFFF"
+            ? new SolidColorBrush(Color.Parse(bgColor))
+            : Brushes.Transparent;
+        IBrush? border = borderThickness > 0 && borderColor != "#00FFFFFF"
+            ? new SolidColorBrush(Color.Parse(borderColor))
+            : null;
+
         return new Border
         {
-            Background = bgColor != "#00FFFFFF" ? new SolidColorBrush(Color.Parse(bgColor)) : Brushes.Transparent,
-            BorderBrush = borderThickness > 0 && borderColor != "#00FFFFFF"
-                ? new SolidColorBrush(Color.Parse(borderColor))
-                : null,
+            Background = background,
+            BorderBrush = border,
             BorderThickness = new Thickness(borderThickness),
             Child = content
         };
