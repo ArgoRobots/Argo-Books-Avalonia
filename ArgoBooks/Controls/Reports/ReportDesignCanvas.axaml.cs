@@ -458,6 +458,30 @@ public partial class ReportDesignCanvas : UserControl
         var scaleX = availableWidth / _pageWidth;
         var scaleY = availableHeight / _pageHeight;
         ZoomLevel = Math.Min(scaleX, scaleY);
+
+        // Center the view after zooming
+        CenterView();
+    }
+
+    /// <summary>
+    /// Centers the view on the page.
+    /// </summary>
+    public void CenterView()
+    {
+        if (_scrollViewer == null) return;
+
+        // Calculate the scaled page size including padding
+        var scaledWidth = (_pageWidth * ZoomLevel) + 80;
+        var scaledHeight = (_pageHeight * ZoomLevel) + 80;
+
+        var viewportWidth = _scrollViewer.Viewport.Width;
+        var viewportHeight = _scrollViewer.Viewport.Height;
+
+        // Calculate center offset
+        var offsetX = Math.Max(0, (scaledWidth - viewportWidth) / 2);
+        var offsetY = Math.Max(0, (scaledHeight - viewportHeight) / 2);
+
+        _scrollViewer.Offset = new Vector(offsetX, offsetY);
     }
 
     #endregion
@@ -1032,7 +1056,9 @@ public partial class ReportDesignCanvas : UserControl
                 Text = line,
                 FontSize = fontSize,
                 Foreground = Brushes.Black,
-                Margin = new Thickness(0, 2)
+                Margin = new Thickness(0, 2),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                TextWrapping = TextWrapping.NoWrap
             });
         }
 
@@ -1041,6 +1067,7 @@ public partial class ReportDesignCanvas : UserControl
             Background = new SolidColorBrush(Color.Parse(bgColor)),
             BorderBrush = borderThickness > 0 ? new SolidColorBrush(Color.Parse(borderColor)) : null,
             BorderThickness = new Thickness(borderThickness),
+            ClipToBounds = true,
             Child = stackPanel
         };
     }

@@ -908,7 +908,19 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Opacity" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <Slider Value="{Binding SelectedImageElement.Opacity}" Minimum="0" Maximum="255" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Slider Grid.Column="0"
+                                                Value="{Binding SelectedImageElement.Opacity}"
+                                                Minimum="0" Maximum="255"
+                                                VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
+                                            <NumericUpDown Value="{Binding SelectedImageElement.Opacity}"
+                                                           Minimum="0" Maximum="255"
+                                                           Width="70"
+                                                           FormatString="F0"
+                                                           Increment="1" />
+                                        </StackPanel>
+                                    </Grid>
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Corner Radius (%)" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1042,19 +1054,19 @@
                                 <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,8">
                                     <Button Grid.Column="0"
                                             Content="General"
-                                            Classes="tab-button"
+                                            Classes="property-tab-button"
                                             Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}"
                                             Command="{Binding SetTablePropertiesTabCommand}"
                                             CommandParameter="0" />
                                     <Button Grid.Column="1"
                                             Content="Style"
-                                            Classes="tab-button"
+                                            Classes="property-tab-button"
                                             Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}"
                                             Command="{Binding SetTablePropertiesTabCommand}"
                                             CommandParameter="1" />
                                     <Button Grid.Column="2"
                                             Content="Columns"
-                                            Classes="tab-button"
+                                            Classes="property-tab-button"
                                             Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}"
                                             Command="{Binding SetTablePropertiesTabCommand}"
                                             CommandParameter="2" />
@@ -1639,8 +1651,22 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
 
-        <!-- Tab Button -->
+        <!-- Tab Button (for main navigation tabs - transparent) -->
         <Style Selector="Button.tab-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.tab-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Property Tab Button (for properties panel tabs - with background) -->
+        <Style Selector="Button.property-tab-button">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
@@ -1651,18 +1677,18 @@
             <Setter Property="CornerRadius" Value="4" />
             <Setter Property="Margin" Value="1" />
         </Style>
-        <Style Selector="Button.tab-button /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.property-tab-button /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
         </Style>
-        <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.property-tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
-        <Style Selector="Button.tab-button.selected">
+        <Style Selector="Button.property-tab-button.selected">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
             <Setter Property="Foreground" Value="White" />
         </Style>
-        <Style Selector="Button.tab-button.selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.property-tab-button.selected /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         </Style>
 

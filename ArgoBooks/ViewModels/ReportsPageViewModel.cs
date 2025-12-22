@@ -1091,6 +1091,99 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ObservableCollection<string> FontFamilies { get; } =
         ["Segoe UI", "Arial", "Times New Roman", "Calibri", "Courier New", "Georgia", "Verdana", "Trebuchet MS"];
 
+    // Partial methods to update Configuration immediately when page settings change
+    partial void OnPageSizeChanged(PageSize value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageSize = value;
+            UpdateCanvasDimensions();
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
+    partial void OnPageOrientationChanged(PageOrientation value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageOrientation = value;
+            UpdateCanvasDimensions();
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
+    partial void OnMarginTopChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageMargins = new ReportMargins(MarginLeft, value, MarginRight, MarginBottom);
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
+    partial void OnMarginRightChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, value, MarginBottom);
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
+    partial void OnMarginBottomChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, MarginRight, value);
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
+    partial void OnMarginLeftChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageMargins = new ReportMargins(value, MarginTop, MarginRight, MarginBottom);
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
+    partial void OnShowHeaderChanged(bool value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.ShowHeader = value;
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
+    partial void OnShowFooterChanged(bool value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.ShowFooter = value;
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
+    partial void OnShowPageNumbersChanged(bool value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.ShowPageNumbers = value;
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
+    partial void OnBackgroundColorChanged(string value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.BackgroundColor = value;
+            OnPropertyChanged(nameof(Configuration));
+        }
+    }
+
     [RelayCommand]
     private void ApplyPageSettings()
     {
