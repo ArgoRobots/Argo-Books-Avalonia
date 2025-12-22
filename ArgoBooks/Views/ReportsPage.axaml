@@ -274,10 +274,12 @@
                                                             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
                                                         </Style>
                                                         <Style Selector="Button:pointerover">
-                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
-                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                                         </Style>
                                                         <Style Selector="Button.selected">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected:pointerover">
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                         </Style>
                                                     </Button.Styles>
@@ -453,25 +455,48 @@
                                                          IsChecked="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectedDatePreset, Converter={StaticResource EqualityConverter}, ConverterParameter={Binding}, Mode=OneWay}"
                                                          Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectDatePresetCommand}"
                                                          CommandParameter="{Binding}"
-                                                         Margin="0,2"
-                                                         FontSize="12" />
+                                                         Margin="0,3"
+                                                         FontSize="13" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
                                 <!-- Custom Date Range -->
-                                <Grid ColumnDefinitions="*,Auto,*"
-                                      IsVisible="{Binding IsCustomDateRange}">
-                                    <DatePicker Grid.Column="0"
-                                                SelectedDate="{Binding CustomStartDate}" />
-                                    <TextBlock Grid.Column="1"
-                                               Text="to"
-                                               Margin="12,0"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker Grid.Column="2"
-                                                SelectedDate="{Binding CustomEndDate}" />
-                                </Grid>
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="0,8,0,0"
+                                        IsVisible="{Binding IsCustomDateRange}">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="Custom Date Range"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <Grid ColumnDefinitions="*,Auto,*" RowDefinitions="Auto,Auto">
+                                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                                       Text="Start Date"
+                                                       FontSize="11"
+                                                       Margin="0,0,0,4"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Grid.Row="0" Grid.Column="2"
+                                                       Text="End Date"
+                                                       FontSize="11"
+                                                       Margin="0,0,0,4"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <DatePicker Grid.Row="1" Grid.Column="0"
+                                                        SelectedDate="{Binding CustomStartDate}"
+                                                        HorizontalAlignment="Stretch" />
+                                            <TextBlock Grid.Row="1" Grid.Column="1"
+                                                       Text="to"
+                                                       Margin="12,0"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <DatePicker Grid.Row="1" Grid.Column="2"
+                                                        SelectedDate="{Binding CustomEndDate}"
+                                                        HorizontalAlignment="Stretch" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
 
                         </StackPanel>
@@ -760,7 +785,7 @@
                                            Width="50"
                                            TextAlignment="Center"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <Button Classes="toolbar-button" Command="{Binding ZoomFitCommand}" ToolTip.Tip="Fit to Window">
+                                <Button Classes="toolbar-button" Click="OnZoomFitClick" ToolTip.Tip="Fit to Window">
                                     <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -768,7 +793,7 @@
 
                             <!-- Right: Info text -->
                             <TextBlock Grid.Column="2"
-                                       Text="Ctrl+Scroll to zoom"
+                                       Text="Scroll to zoom, CTRL+G toggle grid"
                                        FontSize="11"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        HorizontalAlignment="Right"
@@ -1125,13 +1150,13 @@
                                                Width="50"
                                                TextAlignment="Center"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <Button Classes="toolbar-button" Command="{Binding PreviewZoomFitCommand}" ToolTip.Tip="Fit to Window">
+                                    <Button Classes="toolbar-button" Click="OnPreviewZoomFitClick" ToolTip.Tip="Fit to Window">
                                         <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
                                                   Width="16" Height="16" />
                                     </Button>
                                 </StackPanel>
                                 <TextBlock Grid.Column="2"
-                                           Text="Ctrl+Scroll to zoom"
+                                           Text="Scroll to zoom"
                                            FontSize="11"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Right"
@@ -1279,14 +1304,6 @@
                         <TextBlock Text="Previous" />
                     </StackPanel>
                 </Button>
-
-                <!-- Step Title -->
-                <TextBlock Grid.Column="1"
-                           Text="{Binding CurrentStepTitle}"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextPrimaryBrush}"
-                           VerticalAlignment="Center" />
 
                 <!-- Next Button -->
                 <Button Grid.Column="2"

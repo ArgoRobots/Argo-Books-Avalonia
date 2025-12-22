@@ -1212,6 +1212,11 @@ public partial class ReportDesignCanvas : UserControl
                 ClearSelection();
                 e.Handled = true;
                 break;
+
+            case Key.G when ctrl:
+                ShowGrid = !ShowGrid;
+                e.Handled = true;
+                break;
         }
     }
 

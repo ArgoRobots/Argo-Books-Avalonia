@@ -225,4 +225,21 @@ public partial class ReportsPage : UserControl
             e.Handled = true;
         }
     }
+
+    /// <summary>
+    /// Handles the Fit to Window button click for the design canvas.
+    /// </summary>
+    public void OnZoomFitClick(object? sender, RoutedEventArgs e)
+    {
+        _designCanvas?.ZoomToFit();
+    }
+
+    /// <summary>
+    /// Handles the Fit to Window button click for the preview.
+    /// </summary>
+    public void OnPreviewZoomFitClick(object? sender, RoutedEventArgs e)
+    {
+        var previewControl = this.FindControl<ReportPreviewControl>("PreviewControl");
+        previewControl?.ZoomToFitPage();
+    }
 }
