@@ -648,13 +648,11 @@
                                 </Button>
                                 <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Vertical" ToolTip.Tip="Distribute Vertically">
                                     <PathIcon Data="M4 5v14h2V5H4zm14 0v14h2V5h-2zM9 5h2v14H9V5zm4 0h2v14h-2V5z"
-                                              Width="16" Height="16">
+                                              Width="16" Height="16"
+                                              RenderTransformOrigin="0.5,0.5">
                                         <PathIcon.RenderTransform>
                                             <RotateTransform Angle="90" />
                                         </PathIcon.RenderTransform>
-                                        <PathIcon.RenderTransformOrigin>
-                                            <RelativePoint Point="0.5,0.5" Unit="Relative" />
-                                        </PathIcon.RenderTransformOrigin>
                                     </PathIcon>
                                 </Button>
 
