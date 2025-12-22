@@ -93,6 +93,16 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         if (CurrentStep > 1)
         {
+            // Reset completion flags when going back
+            if (CurrentStep == 3)
+            {
+                Step2Completed = false;
+            }
+            else if (CurrentStep == 2)
+            {
+                Step1Completed = false;
+            }
+
             CurrentStep--;
             NotifyStepChanged();
         }
@@ -230,8 +240,25 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private ReportElementBase? _selectedElement;
 
-    partial void OnSelectedElementChanged(ReportElementBase? value)
+    /// <summary>
+    /// Event raised when an element's properties change and the canvas needs to refresh.
+    /// </summary>
+    public event EventHandler<ReportElementBase>? ElementPropertyChanged;
+
+    partial void OnSelectedElementChanged(ReportElementBase? oldValue, ReportElementBase? newValue)
     {
+        // Unsubscribe from old element
+        if (oldValue != null)
+        {
+            oldValue.PropertyChanged -= OnElementPropertyChanged;
+        }
+
+        // Subscribe to new element
+        if (newValue != null)
+        {
+            newValue.PropertyChanged += OnElementPropertyChanged;
+        }
+
         OnPropertyChanged(nameof(SelectedChartElement));
         OnPropertyChanged(nameof(SelectedLabelElement));
         OnPropertyChanged(nameof(SelectedImageElement));
@@ -244,6 +271,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsTableSelected));
         OnPropertyChanged(nameof(IsDateRangeSelected));
         OnPropertyChanged(nameof(IsSummarySelected));
+    }
+
+    private void OnElementPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (sender is ReportElementBase element)
+        {
+            // Raise event to notify view to refresh element content
+            ElementPropertyChanged?.Invoke(this, element);
+        }
     }
 
     // Typed accessors for element-specific properties
@@ -572,6 +608,39 @@ public partial class ReportsPageViewModel : ViewModelBase
         ZoomLevel = 1.0;
     }
 
+    [RelayCommand]
+    private async Task BrowseImagePathAsync()
+    {
+        if (SelectedImageElement == null) return;
+
+        var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null;
+
+        if (topLevel?.StorageProvider != null)
+        {
+            var filters = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType("Image files") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif" } },
+                new Avalonia.Platform.Storage.FilePickerFileType("All files") { Patterns = new[] { "*.*" } }
+            };
+
+            var result = await topLevel.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "Select Image",
+                AllowMultiple = false,
+                FileTypeFilter = filters
+            });
+
+            if (result.Count > 0)
+            {
+                SelectedImageElement.ImagePath = result[0].Path.LocalPath;
+                OnPropertyChanged(nameof(SelectedImageElement));
+                OnPropertyChanged(nameof(Configuration));
+            }
+        }
+    }
+
     // Store original values for cancel
     private PageSize _originalPageSize;
     private PageOrientation _originalPageOrientation;
@@ -670,8 +739,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         try
         {
             var companyData = App.CompanyManager?.CompanyData;
-            using var renderer = new ReportRenderer(Configuration, companyData, 1f);
-            using var skBitmap = renderer.CreatePreview(800, 600);
+            // Use actual page dimensions for high-resolution preview
+            var (width, height) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
+            using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale);
+            using var skBitmap = renderer.CreatePreview((int)(width * PageDimensions.RenderScale), (int)(height * PageDimensions.RenderScale));
             PreviewImage = ConvertToBitmap(skBitmap);
         }
         catch
@@ -764,6 +835,26 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void SelectExportFormat(ExportFormat format)
+    {
+        SelectedExportFormat = format;
+        // Update file extension if a path is already set
+        if (!string.IsNullOrEmpty(ExportFilePath))
+        {
+            var dir = Path.GetDirectoryName(ExportFilePath) ?? "";
+            var name = Path.GetFileNameWithoutExtension(ExportFilePath);
+            var newExt = format switch
+            {
+                ExportFormat.PDF => ".pdf",
+                ExportFormat.PNG => ".png",
+                ExportFormat.JPEG => ".jpg",
+                _ => ".pdf"
+            };
+            ExportFilePath = Path.Combine(dir, $"{name}{newExt}");
+        }
+    }
+
+    [RelayCommand]
     private async Task BrowseExportPathAsync()
     {
         var defaultName = string.IsNullOrWhiteSpace(ReportName) ? "Report" : ReportName;
@@ -781,8 +872,39 @@ public partial class ReportsPageViewModel : ViewModelBase
             ? lastDir
             : Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
-        ExportFilePath = Path.Combine(defaultPath, $"{defaultName}{extension}");
-        await Task.CompletedTask;
+        // Try to use the storage provider for a native save dialog
+        var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null;
+
+        if (topLevel?.StorageProvider != null)
+        {
+            var filters = SelectedExportFormat switch
+            {
+                ExportFormat.PDF => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns = new[] { "*.pdf" } } },
+                ExportFormat.PNG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PNG Image") { Patterns = new[] { "*.png" } } },
+                ExportFormat.JPEG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("JPEG Image") { Patterns = new[] { "*.jpg", "*.jpeg" } } },
+                _ => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns = new[] { "*.pdf" } } }
+            };
+
+            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Save Report As",
+                SuggestedFileName = $"{defaultName}{extension}",
+                FileTypeChoices = filters,
+                DefaultExtension = extension.TrimStart('.')
+            });
+
+            if (result != null)
+            {
+                ExportFilePath = result.Path.LocalPath;
+            }
+        }
+        else
+        {
+            // Fallback to default path
+            ExportFilePath = Path.Combine(defaultPath, $"{defaultName}{extension}");
+        }
     }
 
     private async Task SaveExportSettingsAsync()

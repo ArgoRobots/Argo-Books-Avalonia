@@ -51,6 +51,7 @@ public partial class ReportsPage : UserControl
         if (DataContext is ReportsPageViewModel vm)
         {
             vm.PropertyChanged += OnViewModelPropertyChanged;
+            vm.ElementPropertyChanged += OnElementPropertyChanged;
             // Initial sync in case elements were already added
             _designCanvas?.SyncElements();
         }
@@ -81,6 +82,7 @@ public partial class ReportsPage : UserControl
         if (DataContext is ReportsPageViewModel vm)
         {
             vm.PropertyChanged -= OnViewModelPropertyChanged;
+            vm.ElementPropertyChanged -= OnElementPropertyChanged;
         }
     }
 
@@ -92,6 +94,12 @@ public partial class ReportsPage : UserControl
             _designCanvas?.SyncElements();
             _designCanvas?.RefreshAllElements();
         }
+    }
+
+    private void OnElementPropertyChanged(object? sender, ArgoBooks.Core.Models.Reports.ReportElementBase element)
+    {
+        // Refresh the specific element's content when its properties change
+        _designCanvas?.RefreshElementContent(element);
     }
 
     private void OnCanvasSelectionChanged(object? sender, Controls.Reports.SelectionChangedEventArgs e)

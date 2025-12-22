@@ -306,6 +306,7 @@ public partial class CanvasElementControl : UserControl
         Canvas.SetTop(this, Element.Y);
         Width = Element.Width;
         Height = Element.Height;
+        ZIndex = Element.ZOrder;
     }
 
     private void UpdateVisualState()
