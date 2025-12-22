@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:enums="using:ArgoBooks.Core.Enums"
+             xmlns:controls="using:ArgoBooks.Controls"
              xmlns:reports="using:ArgoBooks.Controls.Reports"
              xmlns:modals="using:ArgoBooks.Modals"
              xmlns:converters="using:ArgoBooks.Converters"
@@ -876,7 +877,7 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedLabelElement.TextColor}" Watermark="#000000" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedLabelElement.TextColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <CheckBox Content="Bold" IsChecked="{Binding SelectedLabelElement.IsBold}" />
                                 <CheckBox Content="Italic" IsChecked="{Binding SelectedLabelElement.IsItalic}" />
@@ -1047,27 +1048,27 @@
                                            Margin="0,8,0,0" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Header Background" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedTableElement.HeaderBackgroundColor}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderBackgroundColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Header Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedTableElement.HeaderTextColor}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderTextColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Data Row Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedTableElement.DataRowTextColor}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.DataRowTextColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Grid Line Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedTableElement.GridLineColor}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.GridLineColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Base Row Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedTableElement.BaseRowColor}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.BaseRowColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Alternate Row Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedTableElement.AlternateRowColor}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.AlternateRowColor, Mode=TwoWay}" />
                                 </StackPanel>
                             </StackPanel>
 

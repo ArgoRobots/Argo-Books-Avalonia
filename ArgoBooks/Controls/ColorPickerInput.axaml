@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
+             x:Class="ArgoBooks.Controls.ColorPickerInput"
+             x:DataType="controls:ColorPickerInput">
+
+    <Grid ColumnDefinitions="Auto,*">
+        <!-- Color Swatch Button -->
+        <Button Grid.Column="0"
+                Width="32" Height="32"
+                Padding="4"
+                Margin="0,0,8,0"
+                CornerRadius="4"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource BorderBrush}"
+                Command="{Binding TogglePickerCommand, RelativeSource={RelativeSource AncestorType=controls:ColorPickerInput}}">
+            <Border Width="20" Height="20"
+                    CornerRadius="2"
+                    Background="{Binding ColorBrush, RelativeSource={RelativeSource AncestorType=controls:ColorPickerInput}}">
+                <!-- Checkerboard pattern for transparency -->
+                <Border.Styles>
+                    <Style Selector="Border">
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                    </Style>
+                </Border.Styles>
+            </Border>
+        </Button>
+
+        <!-- Hex Input -->
+        <TextBox Grid.Column="1"
+                 Text="{Binding ColorValue, RelativeSource={RelativeSource AncestorType=controls:ColorPickerInput}, Mode=TwoWay}"
+                 Watermark="#000000"
+                 VerticalAlignment="Center"
+                 Padding="8,6" />
+
+        <!-- Color Picker Popup -->
+        <Popup Grid.Column="0"
+               IsOpen="{Binding IsPickerOpen, RelativeSource={RelativeSource AncestorType=controls:ColorPickerInput}, Mode=TwoWay}"
+               PlacementMode="Bottom"
+               PlacementTarget="{Binding $parent[Grid]}"
+               IsLightDismissEnabled="True">
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12"
+                    BoxShadow="0 4 16 0 #22000000">
+                <StackPanel Spacing="12" Width="220">
+                    <!-- Color Picker -->
+                    <ColorPicker Color="{Binding SelectedColor, RelativeSource={RelativeSource AncestorType=controls:ColorPickerInput}, Mode=TwoWay}"
+                                 ColorSpectrumShape="Ring"
+                                 IsAlphaEnabled="False"
+                                 IsColorPaletteVisible="True"
+                                 IsColorComponentsVisible="False"
+                                 IsColorPreviewVisible="True"
+                                 IsColorSliderVisible="True" />
+
+                    <!-- Apply Button -->
+                    <Button Content="Apply"
+                            HorizontalAlignment="Stretch"
+                            Classes="primary"
+                            Command="{Binding ApplyColorCommand, RelativeSource={RelativeSource AncestorType=controls:ColorPickerInput}}" />
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>
