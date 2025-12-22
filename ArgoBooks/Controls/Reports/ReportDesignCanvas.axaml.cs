@@ -758,7 +758,7 @@ public partial class ReportDesignCanvas : UserControl
 
         // Check if company data is available
         var companyData = App.CompanyManager?.CompanyData;
-        var hasData = companyData != null && (companyData.Revenue.Count > 0 || companyData.Expenses.Count > 0);
+        var hasData = companyData != null && (companyData.Sales.Count > 0 || companyData.Purchases.Count > 0);
 
         if (!hasData)
         {
@@ -1052,12 +1052,20 @@ public partial class ReportDesignCanvas : UserControl
         var hasData = companyData != null;
 
         // Calculate real values if data is available
-        var transactions = transactionType == TransactionType.Expenses
-            ? companyData?.Expenses ?? []
-            : companyData?.Revenue ?? [];
-
-        var total = transactions.Sum(t => t.Total);
-        var count = transactions.Count;
+        decimal total = 0;
+        int count = 0;
+        if (transactionType == TransactionType.Expenses)
+        {
+            var purchases = companyData?.Purchases ?? [];
+            total = purchases.Sum(t => t.Total);
+            count = purchases.Count;
+        }
+        else
+        {
+            var sales = companyData?.Sales ?? [];
+            total = sales.Sum(t => t.Total);
+            count = sales.Count;
+        }
         var average = count > 0 ? total / count : 0;
 
         var lines = new List<string>();
