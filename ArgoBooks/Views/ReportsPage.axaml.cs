@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using ArgoBooks.Controls.Reports;
 using ArgoBooks.ViewModels;
 using Avalonia;
@@ -80,7 +79,7 @@ public partial class ReportsPage : UserControl
         }
     }
 
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         // When Configuration changes, sync the canvas elements
         if (e.PropertyName == nameof(ReportsPageViewModel.Configuration))
