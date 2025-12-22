@@ -194,7 +194,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ObservableCollection<string> TemplateNames { get; } = [];
     public ObservableCollection<string> CustomTemplateNames { get; } = [];
-    public ObservableCollection<string> DatePresets { get; } = [];
+    public ObservableCollection<DatePresetOption> DatePresets { get; } = [];
 
     // Chart selection - all charts in one list, use IsSelected property
     public ObservableCollection<ChartOption> AvailableCharts { get; } = [];
@@ -237,11 +237,17 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void SelectDatePreset(string? presetName)
+    private void SelectDatePreset(DatePresetOption? preset)
     {
-        if (!string.IsNullOrEmpty(presetName))
+        if (preset != null)
         {
-            SelectedDatePreset = presetName;
+            SelectedDatePreset = preset.Name;
+
+            // Update IsSelected on all date preset options
+            foreach (var option in DatePresets)
+            {
+                option.IsSelected = option.Name == preset.Name;
+            }
         }
     }
 
@@ -1173,7 +1179,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Load date presets
         foreach (var preset in DatePresetNames.GetAllPresets())
         {
-            DatePresets.Add(preset);
+            DatePresets.Add(new DatePresetOption(preset));
         }
 
         // Load available charts
@@ -1257,10 +1263,16 @@ public partial class ReportsPageViewModel : ViewModelBase
         ShowPageNumbers = Configuration.ShowPageNumbers;
         BackgroundColor = Configuration.BackgroundColor;
 
-        // Update date preset
+        // Update date preset and radio button selection
         if (!string.IsNullOrEmpty(Configuration.Filters.DatePresetName))
         {
             SelectedDatePreset = Configuration.Filters.DatePresetName;
+
+            // Update IsSelected on all date preset options
+            foreach (var option in DatePresets)
+            {
+                option.IsSelected = option.Name == Configuration.Filters.DatePresetName;
+            }
         }
 
         // Update transaction type
@@ -1337,6 +1349,22 @@ public partial class ChartOption : ObservableObject
     public ChartDataType ChartType { get; }
     public string Name { get; }
     public string Description { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
+}
+
+/// <summary>
+/// Represents a date preset option for selection.
+/// </summary>
+public partial class DatePresetOption : ObservableObject
+{
+    public DatePresetOption(string name)
+    {
+        Name = name;
+    }
+
+    public string Name { get; }
 
     [ObservableProperty]
     private bool _isSelected;

@@ -449,10 +449,10 @@
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <RadioButton Content="{Binding}"
+                                        <DataTemplate DataType="vm:DatePresetOption">
+                                            <RadioButton Content="{Binding Name}"
                                                          GroupName="DateRange"
-                                                         IsChecked="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectedDatePreset, Converter={StaticResource EqualityConverter}, ConverterParameter={Binding}, Mode=OneWay}"
+                                                         IsChecked="{Binding IsSelected}"
                                                          Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectDatePresetCommand}"
                                                          CommandParameter="{Binding}"
                                                          Margin="0,3"
