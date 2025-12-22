@@ -247,6 +247,13 @@ public partial class ReportDesignCanvas : UserControl
         DrawGrid();
     }
 
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        // Prevent scrolling - mark the event as handled
+        e.Handled = true;
+        base.OnPointerWheelChanged(e);
+    }
+
     #region Configuration Handling
 
     private void OnConfigurationChanged()
@@ -277,7 +284,7 @@ public partial class ReportDesignCanvas : UserControl
         }
     }
 
-    private void UpdateLayout()
+    private new void UpdateLayout()
     {
         if (_pageBackground == null || Configuration == null) return;
 

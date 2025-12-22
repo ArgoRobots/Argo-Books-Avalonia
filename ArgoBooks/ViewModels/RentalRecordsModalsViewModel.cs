@@ -442,23 +442,34 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
             _ => RateType.Daily
         };
 
+        // Capture values for undo/redo lambdas
+        var newItemId = ModalItem!.Id;
+        var newCustomerId = ModalCustomer!.Id;
+        var newAccountantId = ModalAccountant?.Id;
+
         var recordToEdit = _editingRecord;
-        recordToEdit.RentalItemId = ModalItem!.Id;
-        recordToEdit.CustomerId = ModalCustomer!.Id;
-        recordToEdit.AccountantId = ModalAccountant?.Id;
+        recordToEdit.RentalItemId = newItemId;
+        recordToEdit.CustomerId = newCustomerId;
+        recordToEdit.AccountantId = newAccountantId;
         recordToEdit.Quantity = newQty;
         recordToEdit.RateType = newRateType;
-        recordToEdit.RateAmount = decimal.TryParse(ModalRateAmount, out var rate) ? rate : 0;
-        recordToEdit.SecurityDeposit = decimal.TryParse(ModalSecurityDeposit, out var deposit) ? deposit : 0;
-        recordToEdit.StartDate = ModalStartDate?.DateTime ?? DateTime.Today;
-        recordToEdit.DueDate = ModalDueDate?.DateTime ?? DateTime.Today.AddDays(1);
-        recordToEdit.Notes = ModalNotes.Trim();
+        var newRate = decimal.TryParse(ModalRateAmount, out var rate) ? rate : 0;
+        var newDeposit = decimal.TryParse(ModalSecurityDeposit, out var deposit) ? deposit : 0;
+        var newStartDate = ModalStartDate?.DateTime ?? DateTime.Today;
+        var newDueDate = ModalDueDate?.DateTime ?? DateTime.Today.AddDays(1);
+        var newNotes = ModalNotes.Trim();
+
+        recordToEdit.RateAmount = newRate;
+        recordToEdit.SecurityDeposit = newDeposit;
+        recordToEdit.StartDate = newStartDate;
+        recordToEdit.DueDate = newDueDate;
+        recordToEdit.Notes = newNotes;
         recordToEdit.UpdatedAt = DateTime.UtcNow;
 
         // Update inventory if quantity changed
         if (qtyDiff != 0)
         {
-            var currentItem = companyData.RentalInventory.FirstOrDefault(i => i.Id == ModalItem.Id);
+            var currentItem = companyData.RentalInventory.FirstOrDefault(i => i.Id == newItemId);
             if (currentItem != null)
             {
                 currentItem.AvailableQuantity -= qtyDiff;
@@ -486,7 +497,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
                 if (qtyDiff != 0)
                 {
-                    var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == ModalItem.Id);
+                    var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == newItemId);
                     if (item != null)
                     {
                         item.AvailableQuantity += qtyDiff;
@@ -499,20 +510,20 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
             },
             () =>
             {
-                recordToEdit.RentalItemId = ModalItem!.Id;
-                recordToEdit.CustomerId = ModalCustomer!.Id;
-                recordToEdit.AccountantId = ModalAccountant?.Id;
+                recordToEdit.RentalItemId = newItemId;
+                recordToEdit.CustomerId = newCustomerId;
+                recordToEdit.AccountantId = newAccountantId;
                 recordToEdit.Quantity = newQty;
                 recordToEdit.RateType = newRateType;
-                recordToEdit.RateAmount = decimal.TryParse(ModalRateAmount, out var r) ? r : 0;
-                recordToEdit.SecurityDeposit = decimal.TryParse(ModalSecurityDeposit, out var d) ? d : 0;
-                recordToEdit.StartDate = ModalStartDate?.DateTime ?? DateTime.Today;
-                recordToEdit.DueDate = ModalDueDate?.DateTime ?? DateTime.Today.AddDays(1);
-                recordToEdit.Notes = ModalNotes.Trim();
+                recordToEdit.RateAmount = newRate;
+                recordToEdit.SecurityDeposit = newDeposit;
+                recordToEdit.StartDate = newStartDate;
+                recordToEdit.DueDate = newDueDate;
+                recordToEdit.Notes = newNotes;
 
                 if (qtyDiff != 0)
                 {
-                    var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == ModalItem.Id);
+                    var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == newItemId);
                     if (item != null)
                     {
                         item.AvailableQuantity -= qtyDiff;

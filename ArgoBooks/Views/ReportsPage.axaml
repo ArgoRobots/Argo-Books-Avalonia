@@ -257,13 +257,14 @@
                                                 <Button Margin="0,0,12,12"
                                                         Padding="20,24"
                                                         CornerRadius="8"
+                                                        HorizontalAlignment="Stretch"
                                                         HorizontalContentAlignment="Center"
                                                         Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
-                                                        CommandParameter="{Binding Name}">
+                                                        CommandParameter="{Binding TemplateName}">
                                                     <Button.Styles>
                                                         <Style Selector="Button">
                                                             <Setter Property="Background" Value="White" />
-                                                            <Setter Property="BorderThickness" Value="1" />
+                                                            <Setter Property="BorderThickness" Value="2" />
                                                             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
                                                         </Style>
                                                         <Style Selector="Button:pointerover">
@@ -280,7 +281,7 @@
                                                                       Width="28" Height="28"
                                                                       Foreground="{Binding IconForeground}" />
                                                         </Border>
-                                                        <TextBlock Text="{Binding Name}"
+                                                        <TextBlock Text="{Binding DisplayName}"
                                                                    FontSize="14"
                                                                    FontWeight="SemiBold"
                                                                    HorizontalAlignment="Center"
@@ -318,6 +319,7 @@
                                                             Background="{DynamicResource SurfaceAltBrush}"
                                                             BorderThickness="2"
                                                             BorderBrush="Transparent"
+                                                            HorizontalAlignment="Stretch"
                                                             HorizontalContentAlignment="Left">
                                                         <StackPanel Orientation="Horizontal" Spacing="10">
                                                             <Border Background="{DynamicResource SurfaceHoverBrush}"
@@ -352,43 +354,45 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Button Margin="0,0,12,12"
-                                                        Padding="16"
+                                                <Border Margin="0,0,12,12"
+                                                        Padding="12"
                                                         CornerRadius="8"
-                                                        HorizontalContentAlignment="Left"
-                                                        Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).AddChartCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <Button.Styles>
-                                                        <Style Selector="Button">
-                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-                                                            <Setter Property="BorderThickness" Value="2" />
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        BorderThickness="2"
+                                                        Classes.selected="{Binding IsSelected}">
+                                                    <Border.Styles>
+                                                        <Style Selector="Border">
                                                             <Setter Property="BorderBrush" Value="Transparent" />
                                                         </Style>
-                                                        <Style Selector="Button:pointerover">
-                                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                        <Style Selector="Border.selected">
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
                                                         </Style>
-                                                    </Button.Styles>
-                                                    <StackPanel Spacing="8">
-                                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                                            <Border Background="{DynamicResource PrimaryLightBrush}"
-                                                                    CornerRadius="8"
-                                                                    Padding="8">
-                                                                <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                                                          Width="20" Height="20"
-                                                                          Foreground="{DynamicResource PrimaryBrush}" />
-                                                            </Border>
-                                                            <TextBlock Text="{Binding Name}"
-                                                                       FontSize="15"
-                                                                       FontWeight="SemiBold"
-                                                                       VerticalAlignment="Center"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    </Border.Styles>
+                                                    <CheckBox IsChecked="{Binding IsSelected}"
+                                                              HorizontalAlignment="Stretch">
+                                                        <StackPanel Spacing="4">
+                                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                                <Border Background="{DynamicResource PrimaryLightBrush}"
+                                                                        CornerRadius="6"
+                                                                        Padding="6">
+                                                                    <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
+                                                                              Width="16" Height="16"
+                                                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Name}"
+                                                                           FontSize="14"
+                                                                           FontWeight="SemiBold"
+                                                                           VerticalAlignment="Center"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding Description}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Margin="0,4,0,0" />
                                                         </StackPanel>
-                                                        <TextBlock Text="Add this chart to your custom report"
-                                                                   FontSize="12"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                    </StackPanel>
-                                                </Button>
+                                                    </CheckBox>
+                                                </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -446,25 +450,6 @@
                                 </Grid>
                             </StackPanel>
 
-                            <!-- Transaction Type -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Transaction Type"
-                                           FontSize="14"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <RadioButton Content="Revenue"
-                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Revenue}}"
-                                                 GroupName="TransactionType" />
-                                    <RadioButton Content="Expenses"
-                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Expenses}}"
-                                                 GroupName="TransactionType" />
-                                    <RadioButton Content="Both"
-                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Both}}"
-                                                 GroupName="TransactionType" />
-                                </StackPanel>
-                            </StackPanel>
-
                             <!-- Selected Charts -->
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Selected Charts"
@@ -472,13 +457,14 @@
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                                <ItemsControl ItemsSource="{Binding SelectedCharts}">
+                                <ItemsControl ItemsSource="{Binding AvailableCharts}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="{DynamicResource PrimaryBrush}"
                                                     CornerRadius="4"
                                                     Padding="8,6"
-                                                    Margin="0,0,0,4">
+                                                    Margin="0,0,0,4"
+                                                    IsVisible="{Binding IsSelected}">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBlock Grid.Column="0"
                                                                Text="{Binding Name}"
@@ -487,7 +473,7 @@
                                                     <Button Grid.Column="1"
                                                             Background="Transparent"
                                                             Padding="4"
-                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).RemoveChartCommand}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).ToggleChartCommand}"
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
                                                                   Width="12" Height="12"
@@ -499,11 +485,11 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <TextBlock Text="No charts selected. Add charts from the left panel."
+                                <TextBlock Text="No charts selected. Select charts from the Custom tab."
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            FontStyle="Italic"
-                                           IsVisible="{Binding !SelectedCharts.Count}" />
+                                           IsVisible="{Binding !HasSelectedCharts}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -613,15 +599,15 @@
 
                                 <!-- Horizontal Alignment -->
                                 <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Left" ToolTip.Tip="Align Left" IsEnabled="{Binding HasMultipleSelectedElements}">
-                                    <PathIcon Data="M15 15H3v2h12v-2zm0-8H3v2h12V7zM3 13h18v-2H3v2zm0 8h18v-2H3v2zM3 3v2h18V3H3z"
+                                    <PathIcon Data="M13 8v3h10v2H13v3l-4-4 4-4zM3 4h2v16H3V4z"
                                               Width="16" Height="16" />
                                 </Button>
                                 <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="CenterH" ToolTip.Tip="Align Center Horizontally" IsEnabled="{Binding HasMultipleSelectedElements}">
-                                    <PathIcon Data="M7 15v2h10v-2H7zm-4 6h18v-2H3v2zm0-8h18v-2H3v2zm4-6v2h10V7H7zM3 3v2h18V3H3z"
+                                    <PathIcon Data="M5 8v3H1v2h4v3l4-4-4-4zm14 0v3h4v2h-4v3l-4-4 4-4zM11 4h2v16h-2V4z"
                                               Width="16" Height="16" />
                                 </Button>
                                 <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Right" ToolTip.Tip="Align Right" IsEnabled="{Binding HasMultipleSelectedElements}">
-                                    <PathIcon Data="M3 21h18v-2H3v2zm6-4h12v-2H9v2zm-6-4h18v-2H3v2zm6-4h12V7H9v2zM3 3v2h18V3H3z"
+                                    <PathIcon Data="M11 8v3H1v2h10v3l4-4-4-4zM19 4h2v16h-2V4z"
                                               Width="16" Height="16" />
                                 </Button>
 
@@ -815,6 +801,151 @@
                                         <NumericUpDown Value="{Binding SelectedElement.Height}" Minimum="20" />
                                     </StackPanel>
                                 </Grid>
+                            </StackPanel>
+
+                            <!-- Chart Properties -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsChartSelected}">
+                                <TextBlock Text="Chart Properties"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Chart Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding ChartTypes}"
+                                              SelectedItem="{Binding SelectedChartElement.ChartType}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <CheckBox Content="Show Legend" IsChecked="{Binding SelectedChartElement.ShowLegend}" />
+                                <CheckBox Content="Show Title" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
+                            </StackPanel>
+
+                            <!-- Label Properties -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsLabelSelected}">
+                                <TextBlock Text="Label Properties"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Text" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedLabelElement.Text}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedLabelElement.FontSize}" Minimum="6" Maximum="72" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedLabelElement.TextColor}" Watermark="#000000" />
+                                </StackPanel>
+                                <CheckBox Content="Bold" IsChecked="{Binding SelectedLabelElement.IsBold}" />
+                                <CheckBox Content="Italic" IsChecked="{Binding SelectedLabelElement.IsItalic}" />
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="H Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding HorizontalAlignments}"
+                                                  SelectedItem="{Binding SelectedLabelElement.HorizontalAlignment}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="V Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding VerticalAlignments}"
+                                                  SelectedItem="{Binding SelectedLabelElement.VerticalAlignment}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Image Properties -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsImageSelected}">
+                                <TextBlock Text="Image Properties"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Image Path" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedImageElement.ImagePath}" Watermark="Path to image..." />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Scale Mode" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding ImageScaleModes}"
+                                              SelectedItem="{Binding SelectedImageElement.ScaleMode}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Opacity" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <Slider Value="{Binding SelectedImageElement.Opacity}" Minimum="0" Maximum="255" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Date Range Properties -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsDateRangeSelected}">
+                                <TextBlock Text="Date Range Properties"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Date Format" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBox Text="{Binding SelectedDateRangeElement.DateFormat}" Watermark="yyyy-MM-dd" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedDateRangeElement.FontSize}" Minimum="6" Maximum="72" />
+                                </StackPanel>
+                                <CheckBox Content="Italic" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
+                            </StackPanel>
+
+                            <!-- Summary Properties -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsSummarySelected}">
+                                <TextBlock Text="Summary Properties"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Transaction Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding TransactionTypes}"
+                                              SelectedItem="{Binding SelectedSummaryElement.TransactionType}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <CheckBox Content="Show Total Sales" IsChecked="{Binding SelectedSummaryElement.ShowTotalSales}" />
+                                <CheckBox Content="Show Total Transactions" IsChecked="{Binding SelectedSummaryElement.ShowTotalTransactions}" />
+                                <CheckBox Content="Show Average Value" IsChecked="{Binding SelectedSummaryElement.ShowAverageValue}" />
+                                <CheckBox Content="Show Growth Rate" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate}" />
+                                <CheckBox Content="Include Returns" IsChecked="{Binding SelectedSummaryElement.IncludeReturns}" />
+                                <CheckBox Content="Include Losses" IsChecked="{Binding SelectedSummaryElement.IncludeLosses}" />
+                            </StackPanel>
+
+                            <!-- Table Properties -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsTableSelected}">
+                                <TextBlock Text="Table Properties"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Transaction Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding TransactionTypes}"
+                                              SelectedItem="{Binding SelectedTableElement.TransactionType}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Data Selection" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding TableDataSelections}"
+                                              SelectedItem="{Binding SelectedTableElement.DataSelection}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Sort Order" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding TableSortOrders}"
+                                              SelectedItem="{Binding SelectedTableElement.SortOrder}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Max Rows" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="100" />
+                                </StackPanel>
+                                <CheckBox Content="Show Headers" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
+                                <CheckBox Content="Show Grid Lines" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
+                                <CheckBox Content="Alternate Row Colors" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
+                                <CheckBox Content="Show Totals Row" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
                             </StackPanel>
 
                             <!-- No Selection Message -->

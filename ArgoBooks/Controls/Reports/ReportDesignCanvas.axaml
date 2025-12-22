@@ -100,12 +100,12 @@
                                 Background="Transparent"
                                 ClipToBounds="True">
                             <!-- Element controls are added here programmatically -->
-                        </Canvas>
 
-                        <!-- Selection rectangle (for multi-select) -->
-                        <Rectangle x:Name="SelectionRectangle"
-                                   Classes="selection-rect"
-                                   IsVisible="False"/>
+                            <!-- Selection rectangle (for multi-select) - must be inside Canvas for positioning -->
+                            <Rectangle x:Name="SelectionRectangle"
+                                       Classes="selection-rect"
+                                       IsVisible="False"/>
+                        </Canvas>
 
                         <!-- Drop indicator for drag-drop -->
                         <Border x:Name="DropIndicator"
