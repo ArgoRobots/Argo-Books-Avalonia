@@ -40,7 +40,7 @@
         <!-- Color Picker Popup -->
         <Popup Grid.Column="0"
                IsOpen="{Binding IsPickerOpen, RelativeSource={RelativeSource AncestorType=controls:ColorPickerInput}, Mode=TwoWay}"
-               PlacementMode="Bottom"
+               Placement="Bottom"
                PlacementTarget="{Binding $parent[Grid]}"
                IsLightDismissEnabled="True">
             <Border Background="{DynamicResource SurfaceBrush}"
@@ -56,8 +56,7 @@
                                  IsAlphaEnabled="False"
                                  IsColorPaletteVisible="True"
                                  IsColorComponentsVisible="False"
-                                 IsColorPreviewVisible="True"
-                                 IsColorSliderVisible="True" />
+                                 IsColorPreviewVisible="True" />
 
                     <!-- Apply Button -->
                     <Button Content="Apply"
