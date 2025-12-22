@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:enums="using:ArgoBooks.Core.Enums"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.ReportsPage"
              x:DataType="vm:ReportsPageViewModel">
@@ -59,13 +60,8 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border Width="32" Height="32" CornerRadius="16"
                                 BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="2">
-                            <Border.Background>
-                                <MultiBinding Converter="{x:Static BoolConverters.Or}">
-                                    <Binding Path="Step1Completed" />
-                                    <Binding Path="Step2Completed" />
-                                </MultiBinding>
-                            </Border.Background>
+                                BorderThickness="2"
+                                Background="{DynamicResource SurfaceBrush}">
                             <Panel>
                                 <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                           Width="16" Height="16"
@@ -75,15 +71,8 @@
                                            FontWeight="SemiBold"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
-                                           IsVisible="{Binding !Step2Completed}">
-                                    <TextBlock.Foreground>
-                                        <Binding Path="Step1Completed">
-                                            <Binding.Converter>
-                                                <x:Static Member="BoolConverters.Or" />
-                                            </Binding.Converter>
-                                        </Binding>
-                                    </TextBlock.Foreground>
-                                </TextBlock>
+                                           IsVisible="{Binding !Step2Completed}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
                             </Panel>
                         </Border>
                         <TextBlock Text="Layout Designer"
@@ -310,13 +299,13 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Orientation="Horizontal" Spacing="12">
                                     <RadioButton Content="Revenue"
-                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:TransactionType.Revenue}}"
+                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Revenue}}"
                                                  GroupName="TransactionType" />
                                     <RadioButton Content="Expenses"
-                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:TransactionType.Expenses}}"
+                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Expenses}}"
                                                  GroupName="TransactionType" />
                                     <RadioButton Content="Both"
-                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static vm:TransactionType.Both}}"
+                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Both}}"
                                                  GroupName="TransactionType" />
                                 </StackPanel>
                             </StackPanel>
@@ -815,7 +804,8 @@
                                           Width="16" Height="16"
                                           Foreground="White"
                                           IsVisible="{Binding !IsExporting}" />
-                                <TextBlock Text="{Binding IsExporting, Converter={x:Static BoolConverters.Or}, ConverterParameter=Exporting...:Export Report}" />
+                                <TextBlock Text="Export Report" IsVisible="{Binding !IsExporting}" />
+                                <TextBlock Text="Exporting..." IsVisible="{Binding IsExporting}" />
                             </StackPanel>
                         </Button>
                     </StackPanel>

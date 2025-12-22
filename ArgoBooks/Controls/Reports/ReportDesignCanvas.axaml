@@ -5,6 +5,7 @@
              xmlns:reports="using:ArgoBooks.Controls.Reports"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Controls.Reports.ReportDesignCanvas"
+             x:Name="DesignCanvas"
              Background="#E0E0E0"
              Focusable="True"
              ClipToBounds="True">
@@ -66,32 +67,32 @@
 
                 <!-- Page background -->
                 <Border x:Name="PageBackground"
-                        Background="{Binding PageBackgroundBrush, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue=White}"
+                        Background="{Binding PageBackgroundBrush, ElementName=DesignCanvas, FallbackValue=White}"
                         ClipToBounds="True">
 
                     <Grid>
                         <!-- Grid lines layer (behind everything) -->
                         <Canvas x:Name="GridLinesCanvas"
-                                IsVisible="{Binding ShowGrid, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                IsVisible="{Binding ShowGrid, ElementName=DesignCanvas}"
                                 IsHitTestVisible="False"/>
 
                         <!-- Margin guides -->
                         <Rectangle x:Name="MarginGuide"
                                    Classes="margin-guide"
-                                   IsVisible="{Binding ShowMarginGuides, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                   IsVisible="{Binding ShowMarginGuides, ElementName=DesignCanvas}"/>
 
                         <!-- Header area indicator -->
                         <Rectangle x:Name="HeaderArea"
                                    VerticalAlignment="Top"
                                    Fill="#10000000"
-                                   IsVisible="{Binding ShowHeaderFooter, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                   IsVisible="{Binding ShowHeaderFooter, ElementName=DesignCanvas}"
                                    IsHitTestVisible="False"/>
 
                         <!-- Footer area indicator -->
                         <Rectangle x:Name="FooterArea"
                                    VerticalAlignment="Bottom"
                                    Fill="#10000000"
-                                   IsVisible="{Binding ShowHeaderFooter, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                   IsVisible="{Binding ShowHeaderFooter, ElementName=DesignCanvas}"
                                    IsHitTestVisible="False"/>
 
                         <!-- Elements canvas -->
@@ -110,7 +111,6 @@
                         <Border x:Name="DropIndicator"
                                 BorderBrush="#4CAF50"
                                 BorderThickness="2"
-                                BorderDashArray="4,4"
                                 Background="#204CAF50"
                                 IsVisible="False"
                                 IsHitTestVisible="False"/>

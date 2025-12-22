@@ -20,7 +20,6 @@
         <Style Selector="Border.hover-border">
             <Setter Property="BorderBrush" Value="#90CAF9"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderDashArray" Value="4,2"/>
         </Style>
 
         <!-- Resize handle style -->
@@ -49,10 +48,10 @@
     <Grid>
         <!-- Main content area -->
         <Border x:Name="ContentBorder"
-                Background="{Binding ElementBackground, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                Background="{Binding ElementBackground, ElementName=ElementControl}"
                 CornerRadius="2">
             <ContentPresenter x:Name="ContentArea"
-                              Content="{Binding ElementContent, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                              Content="{Binding ElementContent, ElementName=ElementControl}"
                               HorizontalAlignment="Stretch"
                               VerticalAlignment="Stretch"/>
         </Border>
@@ -144,7 +143,7 @@
             <TextBlock x:Name="TypeText"
                        FontSize="10"
                        Foreground="White"
-                       Text="{Binding ElementTypeName, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                       Text="{Binding ElementTypeName, ElementName=ElementControl}"/>
         </Border>
 
         <!-- Lock indicator (shown when element is locked) -->

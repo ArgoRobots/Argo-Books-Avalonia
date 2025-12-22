@@ -88,8 +88,7 @@
 
                     <ComboBox x:Name="ZoomComboBox"
                               Width="100"
-                              SelectedIndex="3"
-                              SelectionChanged="OnZoomSelectionChanged">
+                              SelectedIndex="3">
                         <ComboBoxItem Content="50%"/>
                         <ComboBoxItem Content="75%"/>
                         <ComboBoxItem Content="100%"/>
@@ -113,7 +112,6 @@
                             Spacing="8"
                             HorizontalAlignment="Right">
                     <Button Classes="zoom-button"
-                            Width="Auto"
                             Padding="8,4"
                             Click="OnRefreshClick"
                             ToolTip.Tip="Refresh Preview">

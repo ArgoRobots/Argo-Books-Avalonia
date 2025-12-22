@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="600"
              x:Class="ArgoBooks.Controls.Reports.ElementPropertyPanel"
+             x:Name="PropertyPanel"
              Background="#FAFAFA">
 
     <UserControl.Styles>
@@ -77,11 +78,11 @@
                        Foreground="#9E9E9E"
                        FontStyle="Italic"
                        Margin="0,40,0,0"
-                       IsVisible="{Binding !HasSelection, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                       IsVisible="{Binding !HasSelection, ElementName=PropertyPanel}"/>
 
             <!-- Multi-Selection Message -->
             <StackPanel x:Name="MultiSelectionPanel"
-                        IsVisible="{Binding HasMultiSelection, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        IsVisible="{Binding HasMultiSelection, ElementName=PropertyPanel}">
                 <TextBlock Text="Multiple Elements Selected"
                            Classes="section-header"
                            HorizontalAlignment="Center"/>
@@ -94,7 +95,7 @@
 
             <!-- Single Element Properties -->
             <StackPanel x:Name="SingleElementPanel"
-                        IsVisible="{Binding HasSingleSelection, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                        IsVisible="{Binding HasSingleSelection, ElementName=PropertyPanel}">
 
                 <!-- Element Type Header -->
                 <Border Background="#E3F2FD"
