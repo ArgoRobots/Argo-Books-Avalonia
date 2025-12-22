@@ -5,7 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="50"
              x:Class="ArgoBooks.Controls.UndoRedoButtonGroup"
-             x:DataType="vm:UndoRedoButtonGroupViewModel">
+             x:CompileBindings="False">
 
     <Design.DataContext>
         <vm:UndoRedoButtonGroupViewModel />

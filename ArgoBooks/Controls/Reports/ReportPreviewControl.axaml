@@ -88,7 +88,8 @@
 
                     <ComboBox x:Name="ZoomComboBox"
                               Width="100"
-                              SelectedIndex="3">
+                              SelectedIndex="4"
+                              SelectionChanged="OnZoomSelectionChanged">
                         <ComboBoxItem Content="50%"/>
                         <ComboBoxItem Content="75%"/>
                         <ComboBoxItem Content="100%"/>

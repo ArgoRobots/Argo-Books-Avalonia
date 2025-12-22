@@ -306,6 +306,7 @@ public partial class CanvasElementControl : UserControl
         Canvas.SetTop(this, Element.Y);
         Width = Element.Width;
         Height = Element.Height;
+        ZIndex = Element.ZOrder;
     }
 
     private void UpdateVisualState()
@@ -404,9 +405,10 @@ public partial class CanvasElementControl : UserControl
         }
         else if (point.Properties.IsRightButtonPressed)
         {
-            // Context menu handling could go here
+            // Select element on right-click but don't mark as handled
+            // to allow panning from canvas to work
             ElementSelected?.Invoke(this, new ElementSelectedEventArgs(Element, false));
-            e.Handled = true;
+            // Don't set e.Handled = true to allow right-click pan to bubble up
         }
     }
 

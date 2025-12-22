@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
+             x:Class="ArgoBooks.Controls.ColorPickerInput"
+             x:Name="Root">
+
+    <Grid ColumnDefinitions="Auto,*">
+        <!-- Color Swatch Button -->
+        <Button Grid.Column="0"
+                Width="32" Height="32"
+                Padding="4"
+                Margin="0,0,8,0"
+                CornerRadius="4"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource BorderBrush}"
+                Command="{Binding #Root.TogglePickerCommand}">
+            <Border Width="20" Height="20"
+                    CornerRadius="2"
+                    Background="{Binding #Root.ColorBrush}"
+                    BorderThickness="1"
+                    BorderBrush="{DynamicResource BorderBrush}" />
+        </Button>
+
+        <!-- Hex Input -->
+        <TextBox Grid.Column="1"
+                 Text="{Binding #Root.ColorValue, Mode=TwoWay}"
+                 Watermark="#000000"
+                 VerticalAlignment="Center"
+                 Padding="8,6" />
+
+        <!-- Color Picker Popup -->
+        <Popup Grid.Column="0"
+               IsOpen="{Binding #Root.IsPickerOpen, Mode=TwoWay}"
+               Placement="Bottom"
+               PlacementTarget="{Binding #Root}"
+               IsLightDismissEnabled="True">
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12"
+                    BoxShadow="0 4 16 0 #22000000">
+                <StackPanel Spacing="12" Width="300">
+                    <!-- Color View (inline color editing surface) -->
+                    <ColorView Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
+                               HorizontalAlignment="Center"
+                               IsColorSpectrumVisible="True"
+                               IsColorPreviewVisible="False"
+                               IsColorPaletteVisible="False"
+                               IsColorComponentsVisible="False" />
+
+                    <!-- Preview and Hex -->
+                    <Grid ColumnDefinitions="Auto,*" Margin="0,8,0,0">
+                        <Border Grid.Column="0" Width="40" Height="40" CornerRadius="4"
+                                Background="{Binding #Root.ColorBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                Margin="0,0,12,0" />
+                        <TextBox Grid.Column="1"
+                                 Text="{Binding #Root.ColorValue, Mode=TwoWay}"
+                                 VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Apply Button -->
+                    <Button Content="Apply"
+                            HorizontalAlignment="Stretch"
+                            Classes="primary"
+                            Command="{Binding #Root.ApplyColorCommand}" />
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

@@ -134,6 +134,8 @@ public partial class ReportPreviewControl : UserControl
     private double _pageWidth;
     private double _pageHeight;
 
+    private bool _pendingZoomToFit;
+
     #endregion
 
     public ReportPreviewControl()
@@ -155,6 +157,22 @@ public partial class ReportPreviewControl : UserControl
         _pageNumberInput = this.FindControl<NumericUpDown>("PageNumberInput");
         _zoomComboBox = this.FindControl<ComboBox>("ZoomComboBox");
         _previewScrollViewer = this.FindControl<ScrollViewer>("PreviewScrollViewer");
+
+        // Subscribe to layout updated to handle deferred zoom
+        if (_previewScrollViewer != null)
+        {
+            _previewScrollViewer.LayoutUpdated += OnScrollViewerLayoutUpdated;
+        }
+    }
+
+    private void OnScrollViewerLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (_pendingZoomToFit && _previewScrollViewer != null &&
+            _previewScrollViewer.Bounds.Width > 0 && _previewScrollViewer.Bounds.Height > 0)
+        {
+            _pendingZoomToFit = false;
+            ZoomToFitPage();
+        }
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -266,6 +284,8 @@ public partial class ReportPreviewControl : UserControl
                 {
                     SetPreviewBitmap(avaloniaBitmap);
                     IsLoading = false;
+                    // Fit to page after preview is generated
+                    ZoomToFitPage();
                 });
             });
         }
@@ -345,7 +365,7 @@ public partial class ReportPreviewControl : UserControl
         ZoomLevel = Math.Max(ZoomLevel - 0.25, 0.25);
     }
 
-    private void OnZoomSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    public void OnZoomSelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
     {
         if (_zoomComboBox?.SelectedIndex is not int index) return;
 
@@ -381,6 +401,13 @@ public partial class ReportPreviewControl : UserControl
 
         var viewportWidth = _previewScrollViewer.Bounds.Width - 80;
         var viewportHeight = _previewScrollViewer.Bounds.Height - 80;
+
+        // If bounds aren't ready yet, defer the zoom
+        if (viewportWidth <= 0 || viewportHeight <= 0)
+        {
+            _pendingZoomToFit = true;
+            return;
+        }
 
         var scaleX = viewportWidth / _pageWidth;
         var scaleY = viewportHeight / _pageHeight;
@@ -508,6 +535,12 @@ public partial class ReportPreviewControl : UserControl
     {
         base.OnUnloaded(e);
         ClearPreview();
+
+        // Unsubscribe from layout updated
+        if (_previewScrollViewer != null)
+        {
+            _previewScrollViewer.LayoutUpdated -= OnScrollViewerLayoutUpdated;
+        }
     }
 
     #endregion

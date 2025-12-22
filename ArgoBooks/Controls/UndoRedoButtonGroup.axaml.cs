@@ -42,7 +42,7 @@ public partial class UndoRedoButtonGroup : UserControl
 
     private void UndoDropdownButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (_undoPopup != null && DataContext is UndoRedoButtonGroupViewModel vm)
+        if (_undoPopup != null && DataContext is IUndoRedoButtonGroupViewModel vm)
         {
             vm.RefreshHistory();
             _redoPopup?.Close();
@@ -54,7 +54,7 @@ public partial class UndoRedoButtonGroup : UserControl
 
     private void RedoDropdownButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (_redoPopup != null && DataContext is UndoRedoButtonGroupViewModel vm)
+        if (_redoPopup != null && DataContext is IUndoRedoButtonGroupViewModel vm)
         {
             vm.RefreshHistory();
             _undoPopup?.Close();
@@ -81,7 +81,7 @@ public partial class UndoRedoButtonGroup : UserControl
 
     private void UndoItem_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is Border border && border.Tag is int index && DataContext is UndoRedoButtonGroupViewModel vm)
+        if (sender is Border border && border.Tag is int index && DataContext is IUndoRedoButtonGroupViewModel vm)
         {
             vm.UndoToCommand.Execute(index);
             _undoPopup?.Close();
@@ -106,7 +106,7 @@ public partial class UndoRedoButtonGroup : UserControl
 
     private void RedoItem_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is Border border && border.Tag is int index && DataContext is UndoRedoButtonGroupViewModel vm)
+        if (sender is Border border && border.Tag is int index && DataContext is IUndoRedoButtonGroupViewModel vm)
         {
             vm.RedoToCommand.Execute(index);
             _redoPopup?.Close();

@@ -305,7 +305,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         {
             Id = newId,
             RentalItemId = ModalItem!.Id,
-            CustomerId = ModalCustomer!.Id,
+            CustomerId = ModalCustomer!.Id!,
             AccountantId = ModalAccountant?.Id,
             Quantity = rentQty,
             RateType = ModalRateType switch
@@ -449,7 +449,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
         var recordToEdit = _editingRecord;
         recordToEdit.RentalItemId = newItemId;
-        recordToEdit.CustomerId = newCustomerId;
+        recordToEdit.CustomerId = newCustomerId!;
         recordToEdit.AccountantId = newAccountantId;
         recordToEdit.Quantity = newQty;
         recordToEdit.RateType = newRateType;
@@ -511,7 +511,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
             () =>
             {
                 recordToEdit.RentalItemId = newItemId;
-                recordToEdit.CustomerId = newCustomerId;
+                recordToEdit.CustomerId = newCustomerId!;
                 recordToEdit.AccountantId = newAccountantId;
                 recordToEdit.Quantity = newQty;
                 recordToEdit.RateType = newRateType;

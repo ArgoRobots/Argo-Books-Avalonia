@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.ReportPageSettingsModal"
              x:DataType="vm:ReportsPageViewModel">
@@ -95,8 +96,7 @@
                                    FontSize="14"
                                    FontWeight="Medium"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
-                        <TextBox Text="{Binding BackgroundColor}"
-                                 Watermark="#FFFFFF" />
+                        <controls:ColorPickerInput ColorValue="{Binding BackgroundColor, Mode=TwoWay}" />
                     </StackPanel>
 
                     <!-- Display Options -->

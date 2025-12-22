@@ -4,11 +4,18 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:enums="using:ArgoBooks.Core.Enums"
+             xmlns:controls="using:ArgoBooks.Controls"
              xmlns:reports="using:ArgoBooks.Controls.Reports"
              xmlns:modals="using:ArgoBooks.Modals"
+             xmlns:converters="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.ReportsPage"
              x:DataType="vm:ReportsPageViewModel">
+
+    <UserControl.Resources>
+        <converters:EqualityConverter x:Key="EqualityConverter" />
+        <converters:EqualConverter x:Key="EqualConverter" />
+    </UserControl.Resources>
 
     <Design.DataContext>
         <vm:ReportsPageViewModel />
@@ -196,23 +203,23 @@
                                                 <TextBlock Text="Templates"
                                                            FontSize="14"
                                                            FontWeight="Medium"
-                                                           Padding="0,16"
+                                                           Padding="4,12,4,10"
                                                            Foreground="{DynamicResource PrimaryBrush}"
                                                            IsVisible="{Binding IsTemplatesTabSelected}" />
                                                 <TextBlock Text="Templates"
                                                            FontSize="14"
                                                            FontWeight="Medium"
-                                                           Padding="0,16"
+                                                           Padding="4,12,4,10"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            IsVisible="{Binding !IsTemplatesTabSelected}" />
                                             </Panel>
                                             <Border Height="2"
-                                                    Margin="0,-1,0,0"
+                                                    CornerRadius="1"
                                                     Background="{DynamicResource PrimaryBrush}"
                                                     IsVisible="{Binding IsTemplatesTabSelected}" />
                                         </StackPanel>
                                     </Button>
-                                    <Panel Width="32" />
+                                    <Panel Width="16" />
                                     <!-- Custom Tab -->
                                     <Button Classes="tab-button"
                                             Command="{Binding SetStep1TabCommand}"
@@ -222,18 +229,18 @@
                                                 <TextBlock Text="Custom"
                                                            FontSize="14"
                                                            FontWeight="Medium"
-                                                           Padding="0,16"
+                                                           Padding="4,12,4,10"
                                                            Foreground="{DynamicResource PrimaryBrush}"
                                                            IsVisible="{Binding IsChartsTabSelected}" />
                                                 <TextBlock Text="Custom"
                                                            FontSize="14"
                                                            FontWeight="Medium"
-                                                           Padding="0,16"
+                                                           Padding="4,12,4,10"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            IsVisible="{Binding !IsChartsTabSelected}" />
                                             </Panel>
                                             <Border Height="2"
-                                                    Margin="0,-1,0,0"
+                                                    CornerRadius="1"
                                                     Background="{DynamicResource PrimaryBrush}"
                                                     IsVisible="{Binding IsChartsTabSelected}" />
                                         </StackPanel>
@@ -260,15 +267,31 @@
                                                         HorizontalAlignment="Stretch"
                                                         HorizontalContentAlignment="Center"
                                                         Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
-                                                        CommandParameter="{Binding TemplateName}">
+                                                        CommandParameter="{Binding TemplateName}"
+                                                        Classes.selected="{Binding IsSelected}">
                                                     <Button.Styles>
                                                         <Style Selector="Button">
-                                                            <Setter Property="Background" Value="White" />
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
                                                             <Setter Property="BorderThickness" Value="2" />
                                                             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
                                                         </Style>
-                                                        <Style Selector="Button:pointerover">
-                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+                                                        <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected:pointerover">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                         </Style>
                                                     </Button.Styles>
@@ -291,7 +314,8 @@
                                                                    HorizontalAlignment="Center"
                                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                                    TextWrapping="Wrap"
-                                                                   TextAlignment="Center" />
+                                                                   TextAlignment="Center"
+                                                                   MinHeight="32" />
                                                     </StackPanel>
                                                 </Button>
                                             </DataTemplate>
@@ -366,7 +390,6 @@
                                                         </Style>
                                                         <Style Selector="Border.selected">
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
                                                         </Style>
                                                     </Border.Styles>
                                                     <CheckBox IsChecked="{Binding IsSelected}"
@@ -431,66 +454,63 @@
                                            FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding DatePresets}"
-                                          SelectedItem="{Binding SelectedDatePreset}"
-                                          HorizontalAlignment="Stretch" />
-
-                                <!-- Custom Date Range -->
-                                <Grid ColumnDefinitions="*,Auto,*"
-                                      IsVisible="{Binding IsCustomDateRange}">
-                                    <DatePicker Grid.Column="0"
-                                                SelectedDate="{Binding CustomStartDate}" />
-                                    <TextBlock Grid.Column="1"
-                                               Text="to"
-                                               Margin="12,0"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker Grid.Column="2"
-                                                SelectedDate="{Binding CustomEndDate}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <!-- Selected Charts -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Selected Charts"
-                                           FontSize="14"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-
-                                <ItemsControl ItemsSource="{Binding AvailableCharts}">
+                                <ItemsControl ItemsSource="{Binding DatePresets}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Background="{DynamicResource PrimaryBrush}"
-                                                    CornerRadius="4"
-                                                    Padding="8,6"
-                                                    Margin="0,0,0,4"
-                                                    IsVisible="{Binding IsSelected}">
-                                                <Grid ColumnDefinitions="*,Auto">
-                                                    <TextBlock Grid.Column="0"
-                                                               Text="{Binding Name}"
-                                                               Foreground="White"
-                                                               FontSize="13" />
-                                                    <Button Grid.Column="1"
-                                                            Background="Transparent"
-                                                            Padding="4"
-                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).ToggleChartCommand}"
-                                                            CommandParameter="{Binding}">
-                                                        <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                                                                  Width="12" Height="12"
-                                                                  Foreground="White" />
-                                                    </Button>
-                                                </Grid>
-                                            </Border>
+                                        <DataTemplate DataType="vm:DatePresetOption">
+                                            <RadioButton Content="{Binding Name}"
+                                                         GroupName="DateRange"
+                                                         IsChecked="{Binding IsSelected}"
+                                                         Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectDatePresetCommand}"
+                                                         CommandParameter="{Binding}"
+                                                         Margin="0,3"
+                                                         FontSize="13" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <TextBlock Text="No charts selected. Select charts from the Custom tab."
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           FontStyle="Italic"
-                                           IsVisible="{Binding !HasSelectedCharts}" />
+                                <!-- Custom Date Range -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="16"
+                                        Margin="0,8,0,0"
+                                        IsVisible="{Binding IsCustomDateRange}">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="Custom Date Range"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <Grid ColumnDefinitions="*,Auto,*" RowDefinitions="Auto,Auto">
+                                            <TextBlock Grid.Row="0" Grid.Column="0"
+                                                       Text="Start Date"
+                                                       FontSize="11"
+                                                       Margin="0,0,0,4"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Grid.Row="0" Grid.Column="2"
+                                                       Text="End Date"
+                                                       FontSize="11"
+                                                       Margin="0,0,0,4"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <DatePicker Grid.Row="1" Grid.Column="0"
+                                                        SelectedDate="{Binding CustomStartDate}"
+                                                        HorizontalAlignment="Stretch" />
+                                            <TextBlock Grid.Row="1" Grid.Column="1"
+                                                       Text="to"
+                                                       Margin="12,0"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <DatePicker Grid.Row="1" Grid.Column="2"
+                                                        SelectedDate="{Binding CustomEndDate}"
+                                                        HorizontalAlignment="Stretch" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
+
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -571,7 +591,7 @@
                 </Border>
 
                 <!-- Center: Design Canvas -->
-                <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+                <Grid Grid.Column="1" RowDefinitions="Auto,*">
                     <!-- Toolbar -->
                     <Border Grid.Row="0"
                             Background="{DynamicResource SurfaceBrush}"
@@ -581,19 +601,9 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <!-- Left: Main tools -->
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
-                                <!-- Undo/Redo -->
-                                <Button Classes="toolbar-button" Command="{Binding UndoCommand}"
-                                        IsEnabled="{Binding UndoRedoManager.CanUndo}"
-                                        ToolTip.Tip="Undo (Ctrl+Z)">
-                                    <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
-                                              Width="16" Height="16" />
-                                </Button>
-                                <Button Classes="toolbar-button" Command="{Binding RedoCommand}"
-                                        IsEnabled="{Binding UndoRedoManager.CanRedo}"
-                                        ToolTip.Tip="Redo (Ctrl+Y)">
-                                    <PathIcon Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
-                                              Width="16" Height="16" />
-                                </Button>
+                                <!-- Undo/Redo Button Group (same as header) -->
+                                <controls:UndoRedoButtonGroup x:Name="ReportsUndoRedoGroup"
+                                                              DataContext="{Binding UndoRedoViewModel}" />
 
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
@@ -708,59 +718,11 @@
                     <reports:ReportDesignCanvas x:Name="DesignCanvas"
                                                 Grid.Row="1"
                                                 Configuration="{Binding Configuration}"
-                                                ZoomLevel="{Binding ZoomLevel}"
+                                                ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
                                                 ShowGrid="{Binding ShowGrid}"
                                                 GridSize="{Binding GridSize}"
                                                 SnapToGrid="{Binding SnapToGrid}"
                                                 UndoRedoManager="{Binding UndoRedoManager}" />
-
-                    <!-- Bottom Zoom Controls -->
-                    <Border Grid.Row="2"
-                            Background="{DynamicResource SurfaceBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0"
-                            Padding="8">
-                        <Grid ColumnDefinitions="*,Auto,*">
-                            <!-- Left spacer -->
-                            <Panel Grid.Column="0" />
-
-                            <!-- Center: Zoom Controls -->
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                <Button Classes="toolbar-button" Command="{Binding ZoomOutCommand}" ToolTip.Tip="Zoom Out (Ctrl+-)">
-                                    <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"
-                                              Width="16" Height="16" />
-                                </Button>
-                                <Slider Value="{Binding ZoomLevel}"
-                                        Minimum="0.25"
-                                        Maximum="2.0"
-                                        Width="150"
-                                        VerticalAlignment="Center" />
-                                <Button Classes="toolbar-button" Command="{Binding ZoomInCommand}" ToolTip.Tip="Zoom In (Ctrl++)">
-                                    <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z"
-                                              Width="16" Height="16" />
-                                </Button>
-                                <TextBlock Text="{Binding ZoomLevel, StringFormat={}{0:P0}}"
-                                           VerticalAlignment="Center"
-                                           FontSize="12"
-                                           Width="50"
-                                           TextAlignment="Center"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <Button Classes="toolbar-button" Command="{Binding ZoomFitCommand}" ToolTip.Tip="Fit to Window">
-                                    <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
-                                              Width="16" Height="16" />
-                                </Button>
-                            </StackPanel>
-
-                            <!-- Right: Info text -->
-                            <TextBlock Grid.Column="2"
-                                       Text="Ctrl+Scroll to zoom"
-                                       FontSize="11"
-                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                       HorizontalAlignment="Right"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,8,0" />
-                        </Grid>
-                    </Border>
                 </Grid>
 
                 <!-- Right Panel: Properties -->
@@ -768,9 +730,10 @@
                         Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1,0,0,0"
-                        Padding="16">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Spacing="16">
+                        Padding="16,16,0,16">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Spacing="16" Width="212" Margin="0,0,16,0">
                             <TextBlock Text="Properties"
                                        FontSize="14"
                                        FontWeight="SemiBold"
@@ -815,8 +778,32 @@
                                               SelectedItem="{Binding SelectedChartElement.ChartType}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <CheckBox Content="Show Legend" IsChecked="{Binding SelectedChartElement.ShowLegend}" />
                                 <CheckBox Content="Show Title" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
+                                <CheckBox Content="Show Legend" IsChecked="{Binding SelectedChartElement.ShowLegend}" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding FontFamilies}"
+                                              SelectedItem="{Binding SelectedChartElement.FontFamily}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="Title Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedChartElement.TitleFontSize}" Minimum="6" Maximum="36" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="Legend Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedChartElement.LegendFontSize}" Minimum="6" Maximum="24" />
+                                    </StackPanel>
+                                </Grid>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Border Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedChartElement.BorderColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Border Thickness" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedChartElement.BorderThickness}" Minimum="0" Maximum="10" />
+                                </StackPanel>
                             </StackPanel>
 
                             <!-- Label Properties -->
@@ -830,15 +817,24 @@
                                     <TextBox Text="{Binding SelectedLabelElement.Text}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
+                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding FontFamilies}"
+                                              SelectedItem="{Binding SelectedLabelElement.FontFamily}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
                                     <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <NumericUpDown Value="{Binding SelectedLabelElement.FontSize}" Minimum="6" Maximum="72" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedLabelElement.TextColor}" Watermark="#000000" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedLabelElement.TextColor, Mode=TwoWay}" />
                                 </StackPanel>
-                                <CheckBox Content="Bold" IsChecked="{Binding SelectedLabelElement.IsBold}" />
-                                <CheckBox Content="Italic" IsChecked="{Binding SelectedLabelElement.IsItalic}" />
+                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                    <CheckBox Content="Bold" IsChecked="{Binding SelectedLabelElement.IsBold}" />
+                                    <CheckBox Content="Italic" IsChecked="{Binding SelectedLabelElement.IsItalic}" />
+                                    <CheckBox Content="Underline" IsChecked="{Binding SelectedLabelElement.IsUnderline}" />
+                                </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="H Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -863,7 +859,14 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Image Path" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedImageElement.ImagePath}" Watermark="Path to image..." />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0" Text="{Binding SelectedImageElement.ImagePath}" Watermark="Path to image..." />
+                                        <Button Grid.Column="1" Margin="4,0,0,0" Padding="8,6" Command="{Binding BrowseImagePathCommand}" ToolTip.Tip="Browse...">
+                                            <PathIcon Data="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"
+                                                      Width="14" Height="14"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </Button>
+                                    </Grid>
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Scale Mode" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -873,7 +876,35 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Opacity" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <Slider Value="{Binding SelectedImageElement.Opacity}" Minimum="0" Maximum="255" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Slider Grid.Column="0"
+                                                Value="{Binding SelectedImageElement.Opacity}"
+                                                Minimum="0" Maximum="255"
+                                                VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
+                                            <NumericUpDown Value="{Binding SelectedImageElement.Opacity}"
+                                                           Minimum="0" Maximum="255"
+                                                           Width="70"
+                                                           FormatString="F0"
+                                                           Increment="1" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Corner Radius (%)" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedImageElement.CornerRadiusPercent}" Minimum="0" Maximum="50" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Background Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedImageElement.BackgroundColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Border Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedImageElement.BorderColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Border Thickness" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedImageElement.BorderThickness}" Minimum="0" Maximum="20" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -888,10 +919,38 @@
                                     <TextBox Text="{Binding SelectedDateRangeElement.DateFormat}" Watermark="yyyy-MM-dd" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
+                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding FontFamilies}"
+                                              SelectedItem="{Binding SelectedDateRangeElement.FontFamily}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
                                     <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <NumericUpDown Value="{Binding SelectedDateRangeElement.FontSize}" Minimum="6" Maximum="72" />
                                 </StackPanel>
-                                <CheckBox Content="Italic" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedDateRangeElement.TextColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                    <CheckBox Content="Bold" IsChecked="{Binding SelectedDateRangeElement.IsBold}" />
+                                    <CheckBox Content="Italic" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
+                                    <CheckBox Content="Underline" IsChecked="{Binding SelectedDateRangeElement.IsUnderline}" />
+                                </StackPanel>
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="H Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding HorizontalAlignments}"
+                                                  SelectedItem="{Binding SelectedDateRangeElement.HorizontalAlignment}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="V Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding VerticalAlignments}"
+                                                  SelectedItem="{Binding SelectedDateRangeElement.VerticalAlignment}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
                             </StackPanel>
 
                             <!-- Summary Properties -->
@@ -912,6 +971,48 @@
                                 <CheckBox Content="Show Growth Rate" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate}" />
                                 <CheckBox Content="Include Returns" IsChecked="{Binding SelectedSummaryElement.IncludeReturns}" />
                                 <CheckBox Content="Include Losses" IsChecked="{Binding SelectedSummaryElement.IncludeLosses}" />
+
+                                <TextBlock Text="Formatting"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="0,8,0,0" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding FontFamilies}"
+                                              SelectedItem="{Binding SelectedSummaryElement.FontFamily}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedSummaryElement.FontSize}" Minimum="6" Maximum="24" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Background Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedSummaryElement.BackgroundColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Border Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <controls:ColorPickerInput ColorValue="{Binding SelectedSummaryElement.BorderColor, Mode=TwoWay}" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Border Thickness" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <NumericUpDown Value="{Binding SelectedSummaryElement.BorderThickness}" Minimum="0" Maximum="10" />
+                                </StackPanel>
+                                <Grid ColumnDefinitions="*,8,*">
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Text="H Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding HorizontalAlignments}"
+                                                  SelectedItem="{Binding SelectedSummaryElement.HorizontalAlignment}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Spacing="4">
+                                        <TextBlock Text="V Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding VerticalAlignments}"
+                                                  SelectedItem="{Binding SelectedSummaryElement.VerticalAlignment}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
                             </StackPanel>
 
                             <!-- Table Properties -->
@@ -920,32 +1021,149 @@
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Transaction Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TransactionTypes}"
-                                              SelectedItem="{Binding SelectedTableElement.TransactionType}"
-                                              HorizontalAlignment="Stretch" />
+
+                                <!-- Tab Buttons -->
+                                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,8">
+                                    <Button Grid.Column="0"
+                                            Content="General"
+                                            Classes="property-tab-button"
+                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}"
+                                            Command="{Binding SetTablePropertiesTabCommand}"
+                                            CommandParameter="0" />
+                                    <Button Grid.Column="1"
+                                            Content="Style"
+                                            Classes="property-tab-button"
+                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}"
+                                            Command="{Binding SetTablePropertiesTabCommand}"
+                                            CommandParameter="1" />
+                                    <Button Grid.Column="2"
+                                            Content="Columns"
+                                            Classes="property-tab-button"
+                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}"
+                                            Command="{Binding SetTablePropertiesTabCommand}"
+                                            CommandParameter="2" />
+                                </Grid>
+
+                                <!-- General Tab -->
+                                <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Transaction Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding TransactionTypes}"
+                                                  SelectedItem="{Binding SelectedTableElement.TransactionType}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <CheckBox Content="Include Returns" IsChecked="{Binding SelectedTableElement.IncludeReturns}" />
+                                    <CheckBox Content="Include Losses" IsChecked="{Binding SelectedTableElement.IncludeLosses}" />
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Sort Order" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding TableSortOrders}"
+                                                  SelectedItem="{Binding SelectedTableElement.SortOrder}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Max Rows" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="50" />
+                                    </StackPanel>
                                 </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Data Selection" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TableDataSelections}"
-                                              SelectedItem="{Binding SelectedTableElement.DataSelection}"
-                                              HorizontalAlignment="Stretch" />
+
+                                <!-- Style Tab -->
+                                <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}">
+                                    <TextBlock Text="Display Options"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <CheckBox Content="Show Headers" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
+                                    <CheckBox Content="Show Grid Lines" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
+                                    <CheckBox Content="Show Totals Row" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
+                                    <CheckBox Content="Alternate Row Colors" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
+                                    <CheckBox Content="Auto Size Columns" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
+
+                                    <TextBlock Text="Font"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,8,0,0" />
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <NumericUpDown Value="{Binding SelectedTableElement.FontSize}" Minimum="6" Maximum="24" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <ComboBox ItemsSource="{Binding FontFamilies}"
+                                                      SelectedItem="{Binding SelectedTableElement.FontFamily}"
+                                                      HorizontalAlignment="Stretch" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="Row Heights"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,8,0,0" />
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Header" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <NumericUpDown Value="{Binding SelectedTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Data" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <NumericUpDown Value="{Binding SelectedTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Cell Padding" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedTableElement.CellPadding}" Minimum="0" Maximum="20" />
+                                    </StackPanel>
+
+                                    <TextBlock Text="Colors"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,8,0,0" />
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Header BG" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderBackgroundColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Header Text" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderTextColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Row Text" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.DataRowTextColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Grid Lines" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.GridLineColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Base Row" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.BaseRowColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Alt Row" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.AlternateRowColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Grid>
                                 </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Sort Order" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TableSortOrders}"
-                                              SelectedItem="{Binding SelectedTableElement.SortOrder}"
-                                              HorizontalAlignment="Stretch" />
+
+                                <!-- Columns Tab -->
+                                <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}">
+                                    <CheckBox Content="Date" IsChecked="{Binding SelectedTableElement.ShowDateColumn}" />
+                                    <CheckBox Content="Transaction ID" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn}" />
+                                    <CheckBox Content="Company" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
+                                    <CheckBox Content="Product" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
+                                    <CheckBox Content="Quantity" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
+                                    <CheckBox Content="Unit Price" IsChecked="{Binding SelectedTableElement.ShowUnitPriceColumn}" />
+                                    <CheckBox Content="Total" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
+                                    <CheckBox Content="Status" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
                                 </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Max Rows" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="100" />
-                                </StackPanel>
-                                <CheckBox Content="Show Headers" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
-                                <CheckBox Content="Show Grid Lines" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
-                                <CheckBox Content="Alternate Row Colors" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
-                                <CheckBox Content="Show Totals Row" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
                             </StackPanel>
 
                             <!-- No Selection Message -->
@@ -1027,17 +1245,11 @@
                                                Width="50"
                                                TextAlignment="Center"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <Button Classes="toolbar-button" Command="{Binding PreviewZoomFitCommand}" ToolTip.Tip="Fit to Window">
+                                    <Button Classes="toolbar-button" Click="OnPreviewZoomFitClick" ToolTip.Tip="Fit to Window">
                                         <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
                                                   Width="16" Height="16" />
                                     </Button>
                                 </StackPanel>
-                                <TextBlock Grid.Column="2"
-                                           Text="Ctrl+Scroll to zoom"
-                                           FontSize="11"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Right"
-                                           VerticalAlignment="Center" />
                             </Grid>
                         </Border>
                     </Grid>
@@ -1062,23 +1274,47 @@
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                            <ItemsControl ItemsSource="{Binding ExportFormats}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <RadioButton Margin="0,4"
-                                                     GroupName="ExportFormat">
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding Name}"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{Binding Description}"
-                                                           FontSize="12"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                            </StackPanel>
-                                        </RadioButton>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <StackPanel Spacing="4">
+                                <RadioButton GroupName="ExportFormat"
+                                             IsChecked="{Binding SelectedExportFormat, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:ExportFormat.PDF}}"
+                                             Command="{Binding SelectExportFormatCommand}"
+                                             CommandParameter="{x:Static enums:ExportFormat.PDF}">
+                                    <StackPanel>
+                                        <TextBlock Text="PDF Document"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="For printing &amp; sharing"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </RadioButton>
+                                <RadioButton GroupName="ExportFormat"
+                                             IsChecked="{Binding SelectedExportFormat, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:ExportFormat.PNG}}"
+                                             Command="{Binding SelectExportFormatCommand}"
+                                             CommandParameter="{x:Static enums:ExportFormat.PNG}">
+                                    <StackPanel>
+                                        <TextBlock Text="PNG Image"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="High quality, lossless"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </RadioButton>
+                                <RadioButton GroupName="ExportFormat"
+                                             IsChecked="{Binding SelectedExportFormat, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:ExportFormat.JPEG}}"
+                                             Command="{Binding SelectExportFormatCommand}"
+                                             CommandParameter="{x:Static enums:ExportFormat.JPEG}">
+                                    <StackPanel>
+                                        <TextBlock Text="JPEG Image"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="Smaller file size"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </RadioButton>
+                            </StackPanel>
                         </StackPanel>
 
                         <!-- Quality Slider -->
@@ -1158,13 +1394,36 @@
                     </StackPanel>
                 </Button>
 
-                <!-- Step Title -->
-                <TextBlock Grid.Column="1"
-                           Text="{Binding CurrentStepTitle}"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Foreground="{DynamicResource TextPrimaryBrush}"
-                           VerticalAlignment="Center" />
+                <!-- Center: Zoom Controls (Step 2 only) -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            HorizontalAlignment="Center"
+                            IsVisible="{Binding IsStep2}">
+                    <Button Classes="toolbar-button" Command="{Binding ZoomOutCommand}" ToolTip.Tip="Zoom Out (Ctrl+-)">
+                        <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"
+                                  Width="16" Height="16" />
+                    </Button>
+                    <Slider Value="{Binding ZoomLevel}"
+                            Minimum="0.25"
+                            Maximum="2.0"
+                            Width="150"
+                            VerticalAlignment="Center" />
+                    <Button Classes="toolbar-button" Command="{Binding ZoomInCommand}" ToolTip.Tip="Zoom In (Ctrl++)">
+                        <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z"
+                                  Width="16" Height="16" />
+                    </Button>
+                    <TextBlock Text="{Binding ZoomLevel, StringFormat={}{0:P0}}"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               Width="50"
+                               TextAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <Button Classes="toolbar-button" Click="OnZoomFitClick" ToolTip.Tip="Fit to Window">
+                        <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
+                                  Width="16" Height="16" />
+                    </Button>
+                </StackPanel>
 
                 <!-- Next Button -->
                 <Button Grid.Column="2"
@@ -1234,15 +1493,46 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
 
-        <!-- Tab Button -->
+        <!-- Tab Button (for main navigation tabs - transparent) -->
         <Style Selector="Button.tab-button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
+        <Style Selector="Button.tab-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
         <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Property Tab Button (for properties panel tabs - with background) -->
+        <Style Selector="Button.property-tab-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Margin" Value="1" />
+        </Style>
+        <Style Selector="Button.property-tab-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.property-tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.property-tab-button.selected">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.property-tab-button.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         </Style>
 
         <!-- Toolbar Button -->
@@ -1288,6 +1578,68 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
 
+        <!-- Undo/Redo Main Button -->
+        <Style Selector="Button.undo-redo-main">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="4,0,0,4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.undo-redo-main /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="4,0,0,4" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-main:disabled PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        </Style>
+
+        <!-- Undo/Redo Dropdown Button -->
+        <Style Selector="Button.undo-redo-dropdown">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,1,1,1" />
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="0,4,4,0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="CornerRadius" Value="0,4,4,0" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.undo-redo-dropdown:disabled PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        </Style>
+
         <!-- Primary Button -->
         <Style Selector="Button.primary-button">
             <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
@@ -1320,6 +1672,33 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
         </Style>
         <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- NumericUpDown Styling -->
+        <Style Selector="NumericUpDown">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="NumericUpDown:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="NumericUpDown /template/ ButtonSpinner">
+            <Setter Property="Height" Value="30" />
+        </Style>
+        <Style Selector="NumericUpDown /template/ RepeatButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Width" Value="18" />
+            <Setter Property="MinWidth" Value="18" />
+        </Style>
+        <Style Selector="NumericUpDown /template/ RepeatButton:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
     </UserControl.Styles>

@@ -180,6 +180,9 @@ public partial class HeaderViewModel : ViewModelBase
         {
             HasUnsavedChanges = !SharedUndoRedoManager.IsAtSavedState;
         };
+
+        // Initialize with the current undo/redo state (should be at saved state initially)
+        HasUnsavedChanges = !SharedUndoRedoManager.IsAtSavedState;
     }
 
     #region Commands

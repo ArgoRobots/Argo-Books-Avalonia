@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using ArgoBooks.Core.Models.Reports;
 
 namespace ArgoBooks.Services;
@@ -15,12 +16,17 @@ public interface IReportUndoableAction
 /// <summary>
 /// Manages undo/redo operations for the report layout designer.
 /// </summary>
-public class ReportUndoRedoManager
+public class ReportUndoRedoManager : INotifyPropertyChanged
 {
     private readonly Stack<IReportUndoableAction> _undoStack = new();
     private readonly Stack<IReportUndoableAction> _redoStack = new();
     private readonly int _maxStackSize;
     private bool _isUndoingOrRedoing;
+
+    /// <summary>
+    /// Fired when a property changes.
+    /// </summary>
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
     /// Fired when the undo/redo state changes.
@@ -88,7 +94,7 @@ public class ReportUndoRedoManager
             }
         }
 
-        StateChanged?.Invoke(this, EventArgs.Empty);
+        NotifyStateChanged();
     }
 
     /// <summary>
@@ -105,7 +111,7 @@ public class ReportUndoRedoManager
             var action = _undoStack.Pop();
             action.Undo();
             _redoStack.Push(action);
-            StateChanged?.Invoke(this, EventArgs.Empty);
+            NotifyStateChanged();
         }
         finally
         {
@@ -127,7 +133,7 @@ public class ReportUndoRedoManager
             var action = _redoStack.Pop();
             action.Redo();
             _undoStack.Push(action);
-            StateChanged?.Invoke(this, EventArgs.Empty);
+            NotifyStateChanged();
         }
         finally
         {
@@ -142,7 +148,16 @@ public class ReportUndoRedoManager
     {
         _undoStack.Clear();
         _redoStack.Clear();
+        NotifyStateChanged();
+    }
+
+    private void NotifyStateChanged()
+    {
         StateChanged?.Invoke(this, EventArgs.Empty);
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanUndo)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanRedo)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UndoDescription)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RedoDescription)));
     }
 }
 

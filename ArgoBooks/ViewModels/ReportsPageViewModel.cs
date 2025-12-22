@@ -93,6 +93,16 @@ public partial class ReportsPageViewModel : ViewModelBase
     {
         if (CurrentStep > 1)
         {
+            // Reset completion flags when going back
+            if (CurrentStep == 3)
+            {
+                Step2Completed = false;
+            }
+            else if (CurrentStep == 2)
+            {
+                Step1Completed = false;
+            }
+
             CurrentStep--;
             NotifyStepChanged();
         }
@@ -143,6 +153,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private int _step1TabIndex;
 
+    [ObservableProperty]
+    private int _tablePropertiesTabIndex;
+
     public bool IsTemplatesTabSelected => Step1TabIndex == 0;
     public bool IsChartsTabSelected => Step1TabIndex == 1;
 
@@ -158,6 +171,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (int.TryParse(tabIndex, out var index))
         {
             Step1TabIndex = index;
+        }
+    }
+
+    [RelayCommand]
+    private void SetTablePropertiesTab(string tabIndex)
+    {
+        if (int.TryParse(tabIndex, out var index))
+        {
+            TablePropertiesTabIndex = index;
         }
     }
 
@@ -184,7 +206,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ObservableCollection<string> TemplateNames { get; } = [];
     public ObservableCollection<string> CustomTemplateNames { get; } = [];
-    public ObservableCollection<string> DatePresets { get; } = [];
+    public ObservableCollection<DatePresetOption> DatePresets { get; } = [];
 
     // Chart selection - all charts in one list, use IsSelected property
     public ObservableCollection<ChartOption> AvailableCharts { get; } = [];
@@ -217,6 +239,27 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(templateName))
         {
             SelectedTemplateName = templateName;
+
+            // Update IsSelected on all template options
+            foreach (var template in ReportTemplateOptions)
+            {
+                template.IsSelected = template.TemplateName == templateName;
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void SelectDatePreset(DatePresetOption? preset)
+    {
+        if (preset != null)
+        {
+            SelectedDatePreset = preset.Name;
+
+            // Update IsSelected on all date preset options
+            foreach (var option in DatePresets)
+            {
+                option.IsSelected = option.Name == preset.Name;
+            }
         }
     }
 
@@ -230,8 +273,26 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private ReportElementBase? _selectedElement;
 
-    partial void OnSelectedElementChanged(ReportElementBase? value)
+    /// <summary>
+    /// Event raised when an element's properties change and the canvas needs to refresh.
+    /// </summary>
+    public event EventHandler<ReportElementBase>? ElementPropertyChanged;
+    public event EventHandler? PageSettingsRefreshRequested;
+
+    partial void OnSelectedElementChanged(ReportElementBase? oldValue, ReportElementBase? newValue)
     {
+        // Unsubscribe from old element
+        if (oldValue != null)
+        {
+            oldValue.PropertyChanged -= OnElementPropertyChanged;
+        }
+
+        // Subscribe to new element
+        if (newValue != null)
+        {
+            newValue.PropertyChanged += OnElementPropertyChanged;
+        }
+
         OnPropertyChanged(nameof(SelectedChartElement));
         OnPropertyChanged(nameof(SelectedLabelElement));
         OnPropertyChanged(nameof(SelectedImageElement));
@@ -244,6 +305,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsTableSelected));
         OnPropertyChanged(nameof(IsDateRangeSelected));
         OnPropertyChanged(nameof(IsSummarySelected));
+    }
+
+    private void OnElementPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (sender is ReportElementBase element)
+        {
+            // Raise event to notify view to refresh element content
+            ElementPropertyChanged?.Invoke(this, element);
+        }
     }
 
     // Typed accessors for element-specific properties
@@ -287,6 +357,86 @@ public partial class ReportsPageViewModel : ViewModelBase
     private bool _isSaveTemplateOpen;
 
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
+
+    /// <summary>
+    /// ViewModel for the undo/redo button group control.
+    /// </summary>
+    public ReportsUndoRedoButtonGroupViewModel UndoRedoViewModel { get; }
+
+    [ObservableProperty]
+    private bool _isUndoDropdownOpen;
+
+    [ObservableProperty]
+    private bool _isRedoDropdownOpen;
+
+    public ObservableCollection<UndoRedoHistoryItem> UndoHistoryItems { get; } = [];
+    public ObservableCollection<UndoRedoHistoryItem> RedoHistoryItems { get; } = [];
+
+    [RelayCommand]
+    private void ToggleUndoDropdown()
+    {
+        if (!UndoRedoManager.CanUndo) return;
+        IsRedoDropdownOpen = false;
+        IsUndoDropdownOpen = !IsUndoDropdownOpen;
+        if (IsUndoDropdownOpen)
+        {
+            RefreshUndoHistory();
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleRedoDropdown()
+    {
+        if (!UndoRedoManager.CanRedo) return;
+        IsUndoDropdownOpen = false;
+        IsRedoDropdownOpen = !IsRedoDropdownOpen;
+        if (IsRedoDropdownOpen)
+        {
+            RefreshRedoHistory();
+        }
+    }
+
+    private void RefreshUndoHistory()
+    {
+        UndoHistoryItems.Clear();
+        int index = 0;
+        foreach (var desc in UndoRedoManager.UndoHistory)
+        {
+            UndoHistoryItems.Add(new UndoRedoHistoryItem { Index = index++, Description = desc });
+        }
+    }
+
+    private void RefreshRedoHistory()
+    {
+        RedoHistoryItems.Clear();
+        int index = 0;
+        foreach (var desc in UndoRedoManager.RedoHistory)
+        {
+            RedoHistoryItems.Add(new UndoRedoHistoryItem { Index = index++, Description = desc });
+        }
+    }
+
+    [RelayCommand]
+    private void UndoToIndex(int index)
+    {
+        for (int i = 0; i <= index; i++)
+        {
+            UndoRedoManager.Undo();
+        }
+        IsUndoDropdownOpen = false;
+        OnPropertyChanged(nameof(Configuration));
+    }
+
+    [RelayCommand]
+    private void RedoToIndex(int index)
+    {
+        for (int i = 0; i <= index; i++)
+        {
+            UndoRedoManager.Redo();
+        }
+        IsRedoDropdownOpen = false;
+        OnPropertyChanged(nameof(Configuration));
+    }
 
     public ObservableCollection<ReportElementBase> SelectedElements { get; } = [];
 
@@ -572,6 +722,39 @@ public partial class ReportsPageViewModel : ViewModelBase
         ZoomLevel = 1.0;
     }
 
+    [RelayCommand]
+    private async Task BrowseImagePathAsync()
+    {
+        if (SelectedImageElement == null) return;
+
+        var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null;
+
+        if (topLevel?.StorageProvider != null)
+        {
+            var filters = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType("Image files") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif" } },
+                new Avalonia.Platform.Storage.FilePickerFileType("All files") { Patterns = new[] { "*.*" } }
+            };
+
+            var result = await topLevel.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "Select Image",
+                AllowMultiple = false,
+                FileTypeFilter = filters
+            });
+
+            if (result.Count > 0)
+            {
+                SelectedImageElement.ImagePath = result[0].Path.LocalPath;
+                OnPropertyChanged(nameof(SelectedImageElement));
+                OnPropertyChanged(nameof(Configuration));
+            }
+        }
+    }
+
     // Store original values for cancel
     private PageSize _originalPageSize;
     private PageOrientation _originalPageOrientation;
@@ -613,6 +796,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         BackgroundColor = _originalBackgroundColor;
 
         IsPageSettingsOpen = false;
+
+        // Ensure canvas is refreshed after modal closes with original values
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
@@ -670,9 +856,13 @@ public partial class ReportsPageViewModel : ViewModelBase
         try
         {
             var companyData = App.CompanyManager?.CompanyData;
+            // Use 1x scale for preview display (3x scale is only for high-res export)
+            var (width, height) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
             using var renderer = new ReportRenderer(Configuration, companyData, 1f);
-            using var skBitmap = renderer.CreatePreview(800, 600);
+            using var skBitmap = renderer.CreatePreview(width, height);
             PreviewImage = ConvertToBitmap(skBitmap);
+            // Reset zoom to 100% when preview is regenerated
+            PreviewZoom = 1.0;
         }
         catch
         {
@@ -764,6 +954,26 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void SelectExportFormat(ExportFormat format)
+    {
+        SelectedExportFormat = format;
+        // Update file extension if a path is already set
+        if (!string.IsNullOrEmpty(ExportFilePath))
+        {
+            var dir = Path.GetDirectoryName(ExportFilePath) ?? "";
+            var name = Path.GetFileNameWithoutExtension(ExportFilePath);
+            var newExt = format switch
+            {
+                ExportFormat.PDF => ".pdf",
+                ExportFormat.PNG => ".png",
+                ExportFormat.JPEG => ".jpg",
+                _ => ".pdf"
+            };
+            ExportFilePath = Path.Combine(dir, $"{name}{newExt}");
+        }
+    }
+
+    [RelayCommand]
     private async Task BrowseExportPathAsync()
     {
         var defaultName = string.IsNullOrWhiteSpace(ReportName) ? "Report" : ReportName;
@@ -781,8 +991,39 @@ public partial class ReportsPageViewModel : ViewModelBase
             ? lastDir
             : Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
-        ExportFilePath = Path.Combine(defaultPath, $"{defaultName}{extension}");
-        await Task.CompletedTask;
+        // Try to use the storage provider for a native save dialog
+        var topLevel = Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null;
+
+        if (topLevel?.StorageProvider != null)
+        {
+            var filters = SelectedExportFormat switch
+            {
+                ExportFormat.PDF => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns = new[] { "*.pdf" } } },
+                ExportFormat.PNG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PNG Image") { Patterns = new[] { "*.png" } } },
+                ExportFormat.JPEG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("JPEG Image") { Patterns = new[] { "*.jpg", "*.jpeg" } } },
+                _ => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns = new[] { "*.pdf" } } }
+            };
+
+            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Save Report As",
+                SuggestedFileName = $"{defaultName}{extension}",
+                FileTypeChoices = filters,
+                DefaultExtension = extension.TrimStart('.')
+            });
+
+            if (result != null)
+            {
+                ExportFilePath = result.Path.LocalPath;
+            }
+        }
+        else
+        {
+            // Fallback to default path
+            ExportFilePath = Path.Combine(defaultPath, $"{defaultName}{extension}");
+        }
     }
 
     private async Task SaveExportSettingsAsync()
@@ -858,6 +1099,102 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ObservableCollection<VerticalTextAlignment> VerticalAlignments { get; } =
         new(Enum.GetValues<VerticalTextAlignment>());
 
+    public ObservableCollection<string> FontFamilies { get; } =
+        ["Segoe UI", "Arial", "Times New Roman", "Calibri", "Courier New", "Georgia", "Verdana", "Trebuchet MS"];
+
+    // Partial methods to update Configuration immediately when page settings change
+    partial void OnPageSizeChanged(PageSize value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageSize = value;
+            UpdateCanvasDimensions();
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnPageOrientationChanged(PageOrientation value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageOrientation = value;
+            UpdateCanvasDimensions();
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnMarginTopChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageMargins = new ReportMargins(MarginLeft, value, MarginRight, MarginBottom);
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnMarginRightChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, value, MarginBottom);
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnMarginBottomChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, MarginRight, value);
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnMarginLeftChanged(double value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.PageMargins = new ReportMargins(value, MarginTop, MarginRight, MarginBottom);
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnShowHeaderChanged(bool value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.ShowHeader = value;
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnShowFooterChanged(bool value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.ShowFooter = value;
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnShowPageNumbersChanged(bool value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.ShowPageNumbers = value;
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnBackgroundColorChanged(string value)
+    {
+        if (IsPageSettingsOpen)
+        {
+            Configuration.BackgroundColor = value;
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
     [RelayCommand]
     private void ApplyPageSettings()
     {
@@ -871,6 +1208,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         UpdateCanvasDimensions();
         IsPageSettingsOpen = false;
+
+        // Refresh the canvas after modal closes
+        PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -928,6 +1268,10 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ReportsPageViewModel()
     {
+        // Initialize the undo/redo view model
+        UndoRedoViewModel = new ReportsUndoRedoButtonGroupViewModel(UndoRedoManager);
+        UndoRedoViewModel.ActionPerformed += (_, _) => OnPropertyChanged(nameof(Configuration));
+
         InitializeCollections();
         LoadTemplate(SelectedTemplateName);
         InitializeExportSettings();
@@ -958,7 +1302,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Load date presets
         foreach (var preset in DatePresetNames.GetAllPresets())
         {
-            DatePresets.Add(preset);
+            DatePresets.Add(new DatePresetOption(preset));
         }
 
         // Load available charts
@@ -1042,10 +1386,16 @@ public partial class ReportsPageViewModel : ViewModelBase
         ShowPageNumbers = Configuration.ShowPageNumbers;
         BackgroundColor = Configuration.BackgroundColor;
 
-        // Update date preset
+        // Update date preset and radio button selection
         if (!string.IsNullOrEmpty(Configuration.Filters.DatePresetName))
         {
             SelectedDatePreset = Configuration.Filters.DatePresetName;
+
+            // Update IsSelected on all date preset options
+            foreach (var option in DatePresets)
+            {
+                option.IsSelected = option.Name == Configuration.Filters.DatePresetName;
+            }
         }
 
         // Update transaction type
@@ -1128,6 +1478,22 @@ public partial class ChartOption : ObservableObject
 }
 
 /// <summary>
+/// Represents a date preset option for selection.
+/// </summary>
+public partial class DatePresetOption : ObservableObject
+{
+    public DatePresetOption(string name)
+    {
+        Name = name;
+    }
+
+    public string Name { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
+}
+
+/// <summary>
 /// Represents an export format option.
 /// </summary>
 public class ExportFormatOption(string name, ExportFormat format, string description)
@@ -1140,12 +1506,25 @@ public class ExportFormatOption(string name, ExportFormat format, string descrip
 /// <summary>
 /// Represents a report template option for the Step 1 template grid.
 /// </summary>
-public class ReportTemplateOption(string templateName, string displayName, string description, string iconData, string iconForeground, string iconBackground)
+public partial class ReportTemplateOption : ObservableObject
 {
-    public string TemplateName { get; } = templateName;
-    public string DisplayName { get; } = displayName;
-    public string Description { get; } = description;
-    public string IconData { get; } = iconData;
-    public string IconForeground { get; } = iconForeground;
-    public string IconBackground { get; } = iconBackground;
+    public ReportTemplateOption(string templateName, string displayName, string description, string iconData, string iconForeground, string iconBackground)
+    {
+        TemplateName = templateName;
+        DisplayName = displayName;
+        Description = description;
+        IconData = iconData;
+        IconForeground = iconForeground;
+        IconBackground = iconBackground;
+    }
+
+    public string TemplateName { get; }
+    public string DisplayName { get; }
+    public string Description { get; }
+    public string IconData { get; }
+    public string IconForeground { get; }
+    public string IconBackground { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
 }

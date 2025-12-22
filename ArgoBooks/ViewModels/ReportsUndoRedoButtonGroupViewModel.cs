@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Windows.Input;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -8,38 +7,12 @@ using ArgoBooks.Services;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// Represents an item in the undo/redo history.
+/// ViewModel for the undo/redo button group control in the Reports page.
+/// Works with ReportUndoRedoManager instead of the general UndoRedoManager.
 /// </summary>
-public class UndoRedoHistoryItem
+public partial class ReportsUndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButtonGroupViewModel
 {
-    public int Index { get; set; }
-    public string Description { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Interface for undo/redo button group ViewModels.
-/// </summary>
-public interface IUndoRedoButtonGroupViewModel
-{
-    bool CanUndo { get; }
-    bool CanRedo { get; }
-    string UndoTooltip { get; }
-    string RedoTooltip { get; }
-    ObservableCollection<UndoRedoHistoryItem> UndoHistory { get; }
-    ObservableCollection<UndoRedoHistoryItem> RedoHistory { get; }
-    ICommand UndoCommand { get; }
-    ICommand RedoCommand { get; }
-    ICommand UndoToCommand { get; }
-    ICommand RedoToCommand { get; }
-    void RefreshHistory();
-}
-
-/// <summary>
-/// ViewModel for the undo/redo button group control.
-/// </summary>
-public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButtonGroupViewModel
-{
-    private UndoRedoManager? _undoRedoManager;
+    private ReportUndoRedoManager? _undoRedoManager;
 
     [ObservableProperty]
     private bool _canUndo;
@@ -64,16 +37,6 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     public ObservableCollection<UndoRedoHistoryItem> RedoHistory { get; } = new();
 
     /// <summary>
-    /// Event raised when the undo dropdown should be shown.
-    /// </summary>
-    public event EventHandler<Point>? ShowUndoDropdownRequested;
-
-    /// <summary>
-    /// Event raised when the redo dropdown should be shown.
-    /// </summary>
-    public event EventHandler<Point>? ShowRedoDropdownRequested;
-
-    /// <summary>
     /// Event raised when an action is performed.
     /// </summary>
     public event EventHandler? ActionPerformed;
@@ -81,14 +44,14 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     /// <summary>
     /// Default constructor.
     /// </summary>
-    public UndoRedoButtonGroupViewModel()
+    public ReportsUndoRedoButtonGroupViewModel()
     {
     }
 
     /// <summary>
-    /// Constructor with UndoRedoManager.
+    /// Constructor with ReportUndoRedoManager.
     /// </summary>
-    public UndoRedoButtonGroupViewModel(UndoRedoManager manager)
+    public ReportsUndoRedoButtonGroupViewModel(ReportUndoRedoManager manager)
     {
         SetUndoRedoManager(manager);
     }
@@ -96,7 +59,7 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     /// <summary>
     /// Sets the undo/redo manager.
     /// </summary>
-    public void SetUndoRedoManager(UndoRedoManager manager)
+    public void SetUndoRedoManager(ReportUndoRedoManager manager)
     {
         if (_undoRedoManager != null)
         {
@@ -146,23 +109,23 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
 
         if (_undoRedoManager == null) return;
 
-        var undoDescriptions = _undoRedoManager.GetUndoDescriptions();
-        for (int i = 0; i < undoDescriptions.Count; i++)
+        int i = 0;
+        foreach (var description in _undoRedoManager.UndoHistory)
         {
             UndoHistory.Add(new UndoRedoHistoryItem
             {
-                Index = i,
-                Description = undoDescriptions[i]
+                Index = i++,
+                Description = description
             });
         }
 
-        var redoDescriptions = _undoRedoManager.GetRedoDescriptions();
-        for (int i = 0; i < redoDescriptions.Count; i++)
+        i = 0;
+        foreach (var description in _undoRedoManager.RedoHistory)
         {
             RedoHistory.Add(new UndoRedoHistoryItem
             {
-                Index = i,
-                Description = redoDescriptions[i]
+                Index = i++,
+                Description = description
             });
         }
     }
@@ -173,8 +136,9 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     [RelayCommand]
     private void Undo()
     {
-        if (_undoRedoManager?.Undo() == true)
+        if (_undoRedoManager?.CanUndo == true)
         {
+            _undoRedoManager.Undo();
             ActionPerformed?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -185,8 +149,9 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     [RelayCommand]
     private void Redo()
     {
-        if (_undoRedoManager?.Redo() == true)
+        if (_undoRedoManager?.CanRedo == true)
         {
+            _undoRedoManager.Redo();
             ActionPerformed?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -226,33 +191,13 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     }
 
     /// <summary>
-    /// Toggles the undo dropdown.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleUndoDropdown()
-    {
-        // The position will be calculated by the control and passed via event
-        ShowUndoDropdownRequested?.Invoke(this, new Point(0, 0));
-    }
-
-    /// <summary>
-    /// Toggles the redo dropdown.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleRedoDropdown()
-    {
-        // The position will be calculated by the control and passed via event
-        ShowRedoDropdownRequested?.Invoke(this, new Point(0, 0));
-    }
-
-    /// <summary>
     /// Gets the undo/redo manager.
     /// </summary>
-    public UndoRedoManager? Manager => _undoRedoManager;
+    public ReportUndoRedoManager? Manager => _undoRedoManager;
 
     // Explicit interface implementation for ICommand properties
-    ICommand IUndoRedoButtonGroupViewModel.UndoCommand => UndoCommand;
-    ICommand IUndoRedoButtonGroupViewModel.RedoCommand => RedoCommand;
-    ICommand IUndoRedoButtonGroupViewModel.UndoToCommand => UndoToCommand;
-    ICommand IUndoRedoButtonGroupViewModel.RedoToCommand => RedoToCommand;
+    System.Windows.Input.ICommand IUndoRedoButtonGroupViewModel.UndoCommand => UndoCommand;
+    System.Windows.Input.ICommand IUndoRedoButtonGroupViewModel.RedoCommand => RedoCommand;
+    System.Windows.Input.ICommand IUndoRedoButtonGroupViewModel.UndoToCommand => UndoToCommand;
+    System.Windows.Input.ICommand IUndoRedoButtonGroupViewModel.RedoToCommand => RedoToCommand;
 }
