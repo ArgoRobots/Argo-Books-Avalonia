@@ -257,13 +257,14 @@
                                                 <Button Margin="0,0,12,12"
                                                         Padding="20,24"
                                                         CornerRadius="8"
+                                                        HorizontalAlignment="Stretch"
                                                         HorizontalContentAlignment="Center"
                                                         Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
-                                                        CommandParameter="{Binding Name}">
+                                                        CommandParameter="{Binding TemplateName}">
                                                     <Button.Styles>
                                                         <Style Selector="Button">
                                                             <Setter Property="Background" Value="White" />
-                                                            <Setter Property="BorderThickness" Value="1" />
+                                                            <Setter Property="BorderThickness" Value="2" />
                                                             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
                                                         </Style>
                                                         <Style Selector="Button:pointerover">
@@ -280,7 +281,7 @@
                                                                       Width="28" Height="28"
                                                                       Foreground="{Binding IconForeground}" />
                                                         </Border>
-                                                        <TextBlock Text="{Binding Name}"
+                                                        <TextBlock Text="{Binding DisplayName}"
                                                                    FontSize="14"
                                                                    FontWeight="SemiBold"
                                                                    HorizontalAlignment="Center"
@@ -318,6 +319,7 @@
                                                             Background="{DynamicResource SurfaceAltBrush}"
                                                             BorderThickness="2"
                                                             BorderBrush="Transparent"
+                                                            HorizontalAlignment="Stretch"
                                                             HorizontalContentAlignment="Left">
                                                         <StackPanel Orientation="Horizontal" Spacing="10">
                                                             <Border Background="{DynamicResource SurfaceHoverBrush}"
@@ -352,43 +354,45 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Button Margin="0,0,12,12"
-                                                        Padding="16"
+                                                <Border Margin="0,0,12,12"
+                                                        Padding="12"
                                                         CornerRadius="8"
-                                                        HorizontalContentAlignment="Left"
-                                                        Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).AddChartCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <Button.Styles>
-                                                        <Style Selector="Button">
-                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-                                                            <Setter Property="BorderThickness" Value="2" />
+                                                        Background="{DynamicResource SurfaceAltBrush}"
+                                                        BorderThickness="2"
+                                                        Classes.selected="{Binding IsSelected}">
+                                                    <Border.Styles>
+                                                        <Style Selector="Border">
                                                             <Setter Property="BorderBrush" Value="Transparent" />
                                                         </Style>
-                                                        <Style Selector="Button:pointerover">
-                                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                        <Style Selector="Border.selected">
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
                                                         </Style>
-                                                    </Button.Styles>
-                                                    <StackPanel Spacing="8">
-                                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                                            <Border Background="{DynamicResource PrimaryLightBrush}"
-                                                                    CornerRadius="8"
-                                                                    Padding="8">
-                                                                <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                                                          Width="20" Height="20"
-                                                                          Foreground="{DynamicResource PrimaryBrush}" />
-                                                            </Border>
-                                                            <TextBlock Text="{Binding Name}"
-                                                                       FontSize="15"
-                                                                       FontWeight="SemiBold"
-                                                                       VerticalAlignment="Center"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    </Border.Styles>
+                                                    <CheckBox IsChecked="{Binding IsSelected}"
+                                                              HorizontalAlignment="Stretch">
+                                                        <StackPanel Spacing="4">
+                                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                                <Border Background="{DynamicResource PrimaryLightBrush}"
+                                                                        CornerRadius="6"
+                                                                        Padding="6">
+                                                                    <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
+                                                                              Width="16" Height="16"
+                                                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Name}"
+                                                                           FontSize="14"
+                                                                           FontWeight="SemiBold"
+                                                                           VerticalAlignment="Center"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding Description}"
+                                                                       FontSize="12"
+                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                       Margin="0,4,0,0" />
                                                         </StackPanel>
-                                                        <TextBlock Text="Add this chart to your custom report"
-                                                                   FontSize="12"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                    </StackPanel>
-                                                </Button>
+                                                    </CheckBox>
+                                                </Border>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -446,25 +450,6 @@
                                 </Grid>
                             </StackPanel>
 
-                            <!-- Transaction Type -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Transaction Type"
-                                           FontSize="14"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <RadioButton Content="Revenue"
-                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Revenue}}"
-                                                 GroupName="TransactionType" />
-                                    <RadioButton Content="Expenses"
-                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Expenses}}"
-                                                 GroupName="TransactionType" />
-                                    <RadioButton Content="Both"
-                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Both}}"
-                                                 GroupName="TransactionType" />
-                                </StackPanel>
-                            </StackPanel>
-
                             <!-- Selected Charts -->
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Selected Charts"
@@ -472,13 +457,14 @@
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                                <ItemsControl ItemsSource="{Binding SelectedCharts}">
+                                <ItemsControl ItemsSource="{Binding AvailableCharts}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="{DynamicResource PrimaryBrush}"
                                                     CornerRadius="4"
                                                     Padding="8,6"
-                                                    Margin="0,0,0,4">
+                                                    Margin="0,0,0,4"
+                                                    IsVisible="{Binding IsSelected}">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBlock Grid.Column="0"
                                                                Text="{Binding Name}"
@@ -487,7 +473,7 @@
                                                     <Button Grid.Column="1"
                                                             Background="Transparent"
                                                             Padding="4"
-                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).RemoveChartCommand}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).ToggleChartCommand}"
                                                             CommandParameter="{Binding}">
                                                         <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
                                                                   Width="12" Height="12"
@@ -499,11 +485,11 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <TextBlock Text="No charts selected. Add charts from the left panel."
+                                <TextBlock Text="No charts selected. Select charts from the Custom tab."
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            FontStyle="Italic"
-                                           IsVisible="{Binding !SelectedCharts.Count}" />
+                                           IsVisible="{Binding !HasSelectedCharts}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>

@@ -22,22 +22,22 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<ReportTemplateOption> ReportTemplateOptions { get; } =
     [
-        new("Monthly Summary", "Summarize monthly financials",
+        new(ReportTemplateFactory.TemplateNames.MonthlySales, "Monthly Sales", "Summarize monthly sales data",
             "M3 13.125C3 12.504 3.504 12 4.125 12H6.375C6.996 12 7.5 12.504 7.5 13.125V19.875C7.5 20.496 6.996 21 6.375 21H4.125C3.504 21 3 20.496 3 19.875V13.125ZM9.75 8.625C9.75 8.004 10.254 7.5 10.875 7.5H13.125C13.746 7.5 14.25 8.004 14.25 8.625V19.875C14.25 20.496 13.746 21 13.125 21H10.875C10.254 21 9.75 20.496 9.75 19.875V8.625ZM16.5 4.125C16.5 3.504 17.004 3 17.625 3H19.875C20.496 3 21 3.504 21 4.125V19.875C21 20.496 20.496 21 19.875 21H17.625C17.004 21 16.5 20.496 16.5 19.875V4.125Z",
             "#2196F3", "#E3F2FD"),
-        new("Financial Report", "Full financial breakdown",
+        new(ReportTemplateFactory.TemplateNames.FinancialOverview, "Financial Overview", "Full financial breakdown",
             "M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z",
             "#4CAF50", "#E8F5E9"),
-        new("Customer Report", "Customer transaction analysis",
-            "M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58A2.01 2.01 0 0 0 0 16.43V18h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm4 3.43c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1.4.68.63 1.46.63 2.29V18H24v-1.57zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z",
-            "#2196F3", "#E3F2FD"),
-        new("Rental Performance", "Rental metrics overview",
+        new(ReportTemplateFactory.TemplateNames.PerformanceAnalysis, "Performance Analysis", "Business performance metrics",
             "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z",
             "#FF9800", "#FFF3E0"),
-        new("Employee Report", "Employee performance data",
-            "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
-            "#2196F3", "#E3F2FD"),
-        new("Blank Template", "Start from scratch",
+        new(ReportTemplateFactory.TemplateNames.ReturnsAnalysis, "Returns Analysis", "Analyze product returns",
+            "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z",
+            "#F44336", "#FFEBEE"),
+        new(ReportTemplateFactory.TemplateNames.GeographicAnalysis, "Geographic Analysis", "Sales by region",
+            "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+            "#9C27B0", "#F3E5F5"),
+        new(ReportTemplateFactory.TemplateNames.Custom, "Blank Template", "Start from scratch",
             "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z",
             "#9E9E9E", "#F5F5F5")
     ];
@@ -186,9 +186,10 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ObservableCollection<string> CustomTemplateNames { get; } = [];
     public ObservableCollection<string> DatePresets { get; } = [];
 
-    // Chart selection
+    // Chart selection - all charts in one list, use IsSelected property
     public ObservableCollection<ChartOption> AvailableCharts { get; } = [];
-    public ObservableCollection<ChartOption> SelectedCharts { get; } = [];
+
+    public bool HasSelectedCharts => AvailableCharts.Any(c => c.IsSelected);
 
     partial void OnSelectedTemplateNameChanged(string value)
     {
@@ -201,22 +202,12 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddChart(ChartOption chart)
+    private void ToggleChart(ChartOption chart)
     {
-        if (chart != null && !SelectedCharts.Contains(chart))
+        if (chart != null)
         {
-            SelectedCharts.Add(chart);
-            AvailableCharts.Remove(chart);
-        }
-    }
-
-    [RelayCommand]
-    private void RemoveChart(ChartOption chart)
-    {
-        if (chart != null && SelectedCharts.Contains(chart))
-        {
-            SelectedCharts.Remove(chart);
-            AvailableCharts.Add(chart);
+            chart.IsSelected = !chart.IsSelected;
+            OnPropertyChanged(nameof(HasSelectedCharts));
         }
     }
 
@@ -549,15 +540,46 @@ public partial class ReportsPageViewModel : ViewModelBase
         ZoomLevel = 1.0;
     }
 
+    // Store original values for cancel
+    private PageSize _originalPageSize;
+    private PageOrientation _originalPageOrientation;
+    private double _originalMarginTop, _originalMarginRight, _originalMarginBottom, _originalMarginLeft;
+    private bool _originalShowHeader, _originalShowFooter, _originalShowPageNumbers;
+    private string _originalBackgroundColor = "#FFFFFF";
+
     [RelayCommand]
     private void OpenPageSettings()
     {
+        // Store original values
+        _originalPageSize = PageSize;
+        _originalPageOrientation = PageOrientation;
+        _originalMarginTop = MarginTop;
+        _originalMarginRight = MarginRight;
+        _originalMarginBottom = MarginBottom;
+        _originalMarginLeft = MarginLeft;
+        _originalShowHeader = ShowHeader;
+        _originalShowFooter = ShowFooter;
+        _originalShowPageNumbers = ShowPageNumbers;
+        _originalBackgroundColor = BackgroundColor;
+
         IsPageSettingsOpen = true;
     }
 
     [RelayCommand]
     private void ClosePageSettings()
     {
+        // Restore original values on cancel
+        PageSize = _originalPageSize;
+        PageOrientation = _originalPageOrientation;
+        MarginTop = _originalMarginTop;
+        MarginRight = _originalMarginRight;
+        MarginBottom = _originalMarginBottom;
+        MarginLeft = _originalMarginLeft;
+        ShowHeader = _originalShowHeader;
+        ShowFooter = _originalShowFooter;
+        ShowPageNumbers = _originalShowPageNumbers;
+        BackgroundColor = _originalBackgroundColor;
+
         IsPageSettingsOpen = false;
     }
 
@@ -975,16 +997,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Update transaction type
         SelectedTransactionType = Configuration.Filters.TransactionType;
 
-        // Update selected charts
-        SelectedCharts.Clear();
-        foreach (var chartType in Configuration.Filters.SelectedChartTypes)
+        // Update selected charts - reset all and mark selected ones
+        foreach (var chart in AvailableCharts)
         {
-            var option = AvailableCharts.FirstOrDefault(c => c.ChartType == chartType);
-            if (option != null)
-            {
-                SelectedCharts.Add(option);
-                AvailableCharts.Remove(option);
-            }
+            chart.IsSelected = Configuration.Filters.SelectedChartTypes.Contains(chart.ChartType);
         }
 
         UpdateCanvasDimensions();
@@ -1011,7 +1027,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
 
         Configuration.Filters.SelectedChartTypes.Clear();
-        foreach (var chart in SelectedCharts)
+        foreach (var chart in AvailableCharts.Where(c => c.IsSelected))
         {
             Configuration.Filters.SelectedChartTypes.Add(chart.ChartType);
         }
@@ -1040,11 +1056,21 @@ public partial class ReportsPageViewModel : ViewModelBase
 /// <summary>
 /// Represents a chart option for selection.
 /// </summary>
-public class ChartOption(ChartDataType chartType, string name, string description)
+public partial class ChartOption : ObservableObject
 {
-    public ChartDataType ChartType { get; } = chartType;
-    public string Name { get; } = name;
-    public string Description { get; } = description;
+    public ChartOption(ChartDataType chartType, string name, string description)
+    {
+        ChartType = chartType;
+        Name = name;
+        Description = description;
+    }
+
+    public ChartDataType ChartType { get; }
+    public string Name { get; }
+    public string Description { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
 }
 
 /// <summary>
@@ -1060,9 +1086,10 @@ public class ExportFormatOption(string name, ExportFormat format, string descrip
 /// <summary>
 /// Represents a report template option for the Step 1 template grid.
 /// </summary>
-public class ReportTemplateOption(string name, string description, string iconData, string iconForeground, string iconBackground)
+public class ReportTemplateOption(string templateName, string displayName, string description, string iconData, string iconForeground, string iconBackground)
 {
-    public string Name { get; } = name;
+    public string TemplateName { get; } = templateName;
+    public string DisplayName { get; } = displayName;
     public string Description { get; } = description;
     public string IconData { get; } = iconData;
     public string IconForeground { get; } = iconForeground;

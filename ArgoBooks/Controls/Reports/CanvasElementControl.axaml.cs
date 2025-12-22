@@ -157,7 +157,7 @@ public partial class CanvasElementControl : UserControl
     /// <summary>
     /// Raised when the element size changes (during or after resize).
     /// </summary>
-    public event EventHandler<ElementSizeChangedEventArgs>? SizeChanged;
+    public new event EventHandler<ElementSizeChangedEventArgs>? SizeChanged;
 
     /// <summary>
     /// Raised when dragging starts.
