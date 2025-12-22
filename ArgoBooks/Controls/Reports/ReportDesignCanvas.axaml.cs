@@ -475,7 +475,7 @@ public partial class ReportDesignCanvas : UserControl
 
         Canvas.SetLeft(control, element.X);
         Canvas.SetTop(control, element.Y);
-        Panel.SetZIndex(control, element.ZOrder);
+        control.ZIndex = element.ZOrder;
 
         // Wire up events
         control.ElementSelected += OnElementSelected;
@@ -1041,7 +1041,7 @@ public partial class ReportDesignCanvas : UserControl
     {
         if (point == null || _elementsCanvas == null) return null;
 
-        foreach (var control in _elementControls.OrderByDescending(c => Panel.GetZIndex(c)))
+        foreach (var control in _elementControls.OrderByDescending(c => c.ZIndex))
         {
             if (control.Element == null) continue;
 
@@ -1204,7 +1204,7 @@ public partial class ReportDesignCanvas : UserControl
             element.ZOrder = ++maxZOrder;
             if (_elementControlMap.TryGetValue(element.Id, out var control))
             {
-                Panel.SetZIndex(control, element.ZOrder);
+                control.ZIndex = element.ZOrder;
             }
         }
 
@@ -1224,7 +1224,7 @@ public partial class ReportDesignCanvas : UserControl
             element.ZOrder = --minZOrder;
             if (_elementControlMap.TryGetValue(element.Id, out var control))
             {
-                Panel.SetZIndex(control, element.ZOrder);
+                control.ZIndex = element.ZOrder;
             }
         }
 
