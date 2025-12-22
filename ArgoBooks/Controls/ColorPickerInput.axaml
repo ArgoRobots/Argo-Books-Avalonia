@@ -43,14 +43,17 @@
                     CornerRadius="8"
                     Padding="12"
                     BoxShadow="0 4 16 0 #22000000">
-                <StackPanel Spacing="12" Width="280">
-                    <!-- Color Spectrum -->
-                    <ColorSpectrum Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
-                                   MinHue="0" MaxHue="359"
-                                   MinSaturation="0" MaxSaturation="100"
-                                   MinValue="0" MaxValue="100"
-                                   Width="256" Height="256"
-                                   HorizontalAlignment="Center" />
+                <StackPanel Spacing="12" Width="300">
+                    <!-- Color Picker -->
+                    <ColorPicker Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
+                                 HorizontalAlignment="Center"
+                                 IsColorSpectrumVisible="True"
+                                 IsColorPreviewVisible="False"
+                                 IsColorSliderVisible="True"
+                                 IsHexInputVisible="False"
+                                 IsAlphaVisible="False"
+                                 IsColorPaletteVisible="False"
+                                 IsColorComponentsVisible="False" />
 
                     <!-- Preview and Hex -->
                     <Grid ColumnDefinitions="Auto,*" Margin="0,8,0,0">

@@ -279,6 +279,12 @@ public partial class ReportDesignCanvas : UserControl
         base.OnLoaded(e);
         UpdateLayout();
         DrawGrid();
+
+        // Ensure elements are loaded if Configuration was set before loading
+        if (Configuration != null && _elementsCanvas != null && _elementControls.Count == 0)
+        {
+            OnConfigurationChanged();
+        }
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
@@ -491,27 +497,15 @@ public partial class ReportDesignCanvas : UserControl
     {
         if (_scrollViewer == null) return;
 
-        // Calculate the total content size with zoom
-        var scaledWidth = (_pageWidth * ZoomLevel) + 80; // 40px padding on each side
-        var scaledHeight = (_pageHeight * ZoomLevel) + 80;
-
+        // Get the extent (total scrollable content size) and viewport
+        var extentWidth = _scrollViewer.Extent.Width;
+        var extentHeight = _scrollViewer.Extent.Height;
         var viewportWidth = _scrollViewer.Viewport.Width;
         var viewportHeight = _scrollViewer.Viewport.Height;
 
         // Calculate offset to center the content
-        double offsetX = 0;
-        double offsetY = 0;
-
-        if (scaledWidth > viewportWidth)
-        {
-            // Content is larger than viewport - scroll to center
-            offsetX = (scaledWidth - viewportWidth) / 2;
-        }
-        if (scaledHeight > viewportHeight)
-        {
-            // Content is larger than viewport - scroll to center
-            offsetY = (scaledHeight - viewportHeight) / 2;
-        }
+        double offsetX = Math.Max(0, (extentWidth - viewportWidth) / 2);
+        double offsetY = Math.Max(0, (extentHeight - viewportHeight) / 2);
 
         _scrollViewer.Offset = new Vector(offsetX, offsetY);
     }
@@ -902,6 +896,7 @@ public partial class ReportDesignCanvas : UserControl
     private static Control CreateLabelPreview(LabelReportElement? element)
     {
         var text = element?.Text ?? "Label";
+        var fontFamily = element?.FontFamily ?? "Segoe UI";
         var fontSize = element?.FontSize ?? 14;
         var isBold = element?.IsBold ?? false;
         var isItalic = element?.IsItalic ?? false;
@@ -913,6 +908,7 @@ public partial class ReportDesignCanvas : UserControl
         var textBlock = new TextBlock
         {
             Text = text,
+            FontFamily = new FontFamily(fontFamily),
             FontSize = fontSize,
             FontWeight = isBold ? FontWeight.Bold : FontWeight.Normal,
             FontStyle = isItalic ? FontStyle.Italic : FontStyle.Normal,
@@ -946,6 +942,7 @@ public partial class ReportDesignCanvas : UserControl
         var bgColor = element?.BackgroundColor ?? "#F0F0F0";
         var borderColor = element?.BorderColor ?? "#00FFFFFF";
         var borderThickness = element?.BorderThickness ?? 0;
+        var opacity = (element?.Opacity ?? 255) / 255.0;
 
         Control content;
 
@@ -967,7 +964,8 @@ public partial class ReportDesignCanvas : UserControl
                             ImageScaleMode.Fill => Stretch.UniformToFill,
                             ImageScaleMode.Center => Stretch.None,
                             _ => Stretch.Uniform
-                        }
+                        },
+                        Opacity = opacity
                     };
                 }
                 else
@@ -1020,9 +1018,12 @@ public partial class ReportDesignCanvas : UserControl
     private static Control CreateDateRangePreview(DateRangeReportElement? element)
     {
         var dateFormat = element?.DateFormat ?? "MMM dd, yyyy";
+        var fontFamily = element?.FontFamily ?? "Segoe UI";
         var fontSize = element?.FontSize ?? 12;
         var textColor = element?.TextColor ?? "#000000";
+        var isBold = element?.IsBold ?? false;
         var isItalic = element?.IsItalic ?? false;
+        var isUnderline = element?.IsUnderline ?? false;
         var hAlign = element?.HorizontalAlignment ?? HorizontalTextAlignment.Center;
         var vAlign = element?.VerticalAlignment ?? VerticalTextAlignment.Center;
 
@@ -1034,8 +1035,11 @@ public partial class ReportDesignCanvas : UserControl
         var textBlock = new TextBlock
         {
             Text = text,
+            FontFamily = new FontFamily(fontFamily),
             FontSize = fontSize,
+            FontWeight = isBold ? FontWeight.Bold : FontWeight.Normal,
             FontStyle = isItalic ? FontStyle.Italic : FontStyle.Normal,
+            TextDecorations = isUnderline ? TextDecorations.Underline : null,
             Foreground = new SolidColorBrush(Color.Parse(textColor)),
             HorizontalAlignment = hAlign switch
             {
@@ -1485,6 +1489,34 @@ public partial class ReportDesignCanvas : UserControl
         {
             var currentPoint = e.GetPosition(_elementsCanvas);
             UpdateSelectionRectangle(_selectionStartPoint, currentPoint);
+
+            // Highlight elements that would be selected in real-time
+            if (_selectionRectangle.IsVisible)
+            {
+                var selectionRect = new Rect(
+                    Canvas.GetLeft(_selectionRectangle),
+                    Canvas.GetTop(_selectionRectangle),
+                    _selectionRectangle.Width,
+                    _selectionRectangle.Height);
+
+                foreach (var control in _elementControls)
+                {
+                    if (control.Element == null) continue;
+
+                    var elementRect = new Rect(
+                        control.Element.X,
+                        control.Element.Y,
+                        control.Element.Width,
+                        control.Element.Height);
+
+                    // Select elements that intersect with the selection rectangle
+                    var shouldBeSelected = selectionRect.Intersects(elementRect);
+                    if (shouldBeSelected != control.IsSelected)
+                    {
+                        control.IsSelected = shouldBeSelected;
+                    }
+                }
+            }
         }
     }
 

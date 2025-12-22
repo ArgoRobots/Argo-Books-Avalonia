@@ -203,23 +203,23 @@
                                                 <TextBlock Text="Templates"
                                                            FontSize="14"
                                                            FontWeight="Medium"
-                                                           Padding="0,16"
+                                                           Padding="4,12,4,10"
                                                            Foreground="{DynamicResource PrimaryBrush}"
                                                            IsVisible="{Binding IsTemplatesTabSelected}" />
                                                 <TextBlock Text="Templates"
                                                            FontSize="14"
                                                            FontWeight="Medium"
-                                                           Padding="0,16"
+                                                           Padding="4,12,4,10"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            IsVisible="{Binding !IsTemplatesTabSelected}" />
                                             </Panel>
                                             <Border Height="2"
-                                                    Margin="0,-1,0,0"
+                                                    CornerRadius="1"
                                                     Background="{DynamicResource PrimaryBrush}"
                                                     IsVisible="{Binding IsTemplatesTabSelected}" />
                                         </StackPanel>
                                     </Button>
-                                    <Panel Width="32" />
+                                    <Panel Width="16" />
                                     <!-- Custom Tab -->
                                     <Button Classes="tab-button"
                                             Command="{Binding SetStep1TabCommand}"
@@ -229,18 +229,18 @@
                                                 <TextBlock Text="Custom"
                                                            FontSize="14"
                                                            FontWeight="Medium"
-                                                           Padding="0,16"
+                                                           Padding="4,12,4,10"
                                                            Foreground="{DynamicResource PrimaryBrush}"
                                                            IsVisible="{Binding IsChartsTabSelected}" />
                                                 <TextBlock Text="Custom"
                                                            FontSize="14"
                                                            FontWeight="Medium"
-                                                           Padding="0,16"
+                                                           Padding="4,12,4,10"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            IsVisible="{Binding !IsChartsTabSelected}" />
                                             </Panel>
                                             <Border Height="2"
-                                                    Margin="0,-1,0,0"
+                                                    CornerRadius="1"
                                                     Background="{DynamicResource PrimaryBrush}"
                                                     IsVisible="{Binding IsChartsTabSelected}" />
                                         </StackPanel>
@@ -275,13 +275,23 @@
                                                             <Setter Property="BorderThickness" Value="2" />
                                                             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
                                                         </Style>
-                                                        <Style Selector="Button:pointerover">
+                                                        <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
                                                             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                                         </Style>
                                                         <Style Selector="Button.selected">
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                         </Style>
+                                                        <Style Selector="Button.selected /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
                                                         <Style Selector="Button.selected:pointerover">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                         </Style>
                                                     </Button.Styles>
@@ -922,7 +932,11 @@
                                     <TextBlock Text="Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedDateRangeElement.TextColor, Mode=TwoWay}" />
                                 </StackPanel>
-                                <CheckBox Content="Italic" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
+                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                    <CheckBox Content="Bold" IsChecked="{Binding SelectedDateRangeElement.IsBold}" />
+                                    <CheckBox Content="Italic" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
+                                    <CheckBox Content="Underline" IsChecked="{Binding SelectedDateRangeElement.IsUnderline}" />
+                                </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="H Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1681,7 +1695,8 @@
         <Style Selector="NumericUpDown /template/ RepeatButton">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-            <Setter Property="Width" Value="24" />
+            <Setter Property="Width" Value="18" />
+            <Setter Property="MinWidth" Value="18" />
         </Style>
         <Style Selector="NumericUpDown /template/ RepeatButton:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
