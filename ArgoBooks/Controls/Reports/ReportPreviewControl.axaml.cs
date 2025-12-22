@@ -130,7 +130,6 @@ public partial class ReportPreviewControl : UserControl
     private ScrollViewer? _previewScrollViewer;
 
     private Bitmap? _currentBitmap;
-    private readonly ReportRenderer _renderer = new();
 
     private double _pageWidth;
     private double _pageHeight;
@@ -244,14 +243,28 @@ public partial class ReportPreviewControl : UserControl
 
         try
         {
+            var config = Configuration;
+            var width = (int)_pageWidth;
+            var height = (int)_pageHeight;
+
             await Task.Run(() =>
             {
-                // Generate preview bitmap
-                var bitmap = _renderer.CreatePreview(Configuration, (int)_pageWidth, (int)_pageHeight);
+                // Generate preview bitmap using SkiaSharp
+                using var renderer = new ReportRenderer(config!, null);
+                using var skBitmap = renderer.CreatePreview(width, height);
+
+                // Convert SKBitmap to Avalonia Bitmap
+                using var stream = new System.IO.MemoryStream();
+                using var image = SkiaSharp.SKImage.FromBitmap(skBitmap);
+                using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+                data.SaveTo(stream);
+                stream.Position = 0;
+
+                var avaloniaBitmap = new Bitmap(stream);
 
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    SetPreviewBitmap(bitmap);
+                    SetPreviewBitmap(avaloniaBitmap);
                     IsLoading = false;
                 });
             });

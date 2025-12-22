@@ -179,7 +179,7 @@ public partial class ElementPropertyPanel : UserControl
             if (_positionY != null) _positionY.Value = (decimal)element.Y;
             if (_elementWidth != null) _elementWidth.Value = (decimal)element.Width;
             if (_elementHeight != null) _elementHeight.Value = (decimal)element.Height;
-            if (_isLockedCheckbox != null) _isLockedCheckbox.IsChecked = element.IsLocked;
+            // IsLocked is not a base property - skip for now
             if (_isVisibleCheckbox != null) _isVisibleCheckbox.IsChecked = element.IsVisible;
 
             // Update type header
@@ -218,7 +218,7 @@ public partial class ElementPropertyPanel : UserControl
     {
         if (_elementTypeText == null || _elementTypeIcon == null) return;
 
-        var (typeName, iconData) = element.ElementType switch
+        var (typeName, iconData) = element.GetElementType() switch
         {
             ReportElementType.Chart => ("Chart Element", "M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"),
             ReportElementType.Table => ("Table Element", "M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z"),
@@ -282,35 +282,28 @@ public partial class ElementPropertyPanel : UserControl
         };
         panel.Children.Add(chartTypeCombo);
 
-        // Title
-        panel.Children.Add(new TextBlock
+        // Show Title
+        var showTitleCheck = new CheckBox
         {
-            Text = "Title",
-            Classes = { "property-label" },
+            Content = "Show Title",
+            Classes = { "property-checkbox" },
+            IsChecked = chart.ShowTitle,
             Margin = new Thickness(0, 8, 0, 0)
-        });
-
-        var titleInput = new TextBox
-        {
-            Classes = { "property-input" },
-            Text = chart.Title,
-            Watermark = "Chart title..."
         };
-        titleInput.TextChanged += (s, e) =>
+        showTitleCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
-            chart.Title = titleInput.Text ?? "";
-            OnPropertyChanged(chart, nameof(chart.Title), titleInput.Text);
+            chart.ShowTitle = showTitleCheck.IsChecked ?? true;
+            OnPropertyChanged(chart, nameof(chart.ShowTitle), chart.ShowTitle);
         };
-        panel.Children.Add(titleInput);
+        panel.Children.Add(showTitleCheck);
 
         // Show Legend
         var showLegendCheck = new CheckBox
         {
             Content = "Show Legend",
             Classes = { "property-checkbox" },
-            IsChecked = chart.ShowLegend,
-            Margin = new Thickness(0, 8, 0, 0)
+            IsChecked = chart.ShowLegend
         };
         showLegendCheck.IsCheckedChanged += (s, e) =>
         {
@@ -319,21 +312,6 @@ public partial class ElementPropertyPanel : UserControl
             OnPropertyChanged(chart, nameof(chart.ShowLegend), chart.ShowLegend);
         };
         panel.Children.Add(showLegendCheck);
-
-        // Show Labels
-        var showLabelsCheck = new CheckBox
-        {
-            Content = "Show Labels",
-            Classes = { "property-checkbox" },
-            IsChecked = chart.ShowLabels
-        };
-        showLabelsCheck.IsCheckedChanged += (s, e) =>
-        {
-            if (_isUpdating) return;
-            chart.ShowLabels = showLabelsCheck.IsChecked ?? true;
-            OnPropertyChanged(chart, nameof(chart.ShowLabels), chart.ShowLabels);
-        };
-        panel.Children.Add(showLabelsCheck);
 
         return panel;
     }
@@ -348,33 +326,11 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "section-header" }
         });
 
-        // Title
-        panel.Children.Add(new TextBlock
-        {
-            Text = "Title",
-            Classes = { "property-label" }
-        });
-
-        var titleInput = new TextBox
-        {
-            Classes = { "property-input" },
-            Text = table.Title,
-            Watermark = "Table title..."
-        };
-        titleInput.TextChanged += (s, e) =>
-        {
-            if (_isUpdating) return;
-            table.Title = titleInput.Text ?? "";
-            OnPropertyChanged(table, nameof(table.Title), titleInput.Text);
-        };
-        panel.Children.Add(titleInput);
-
         // Data Selection
         panel.Children.Add(new TextBlock
         {
             Text = "Data Selection",
-            Classes = { "property-label" },
-            Margin = new Thickness(0, 8, 0, 0)
+            Classes = { "property-label" }
         });
 
         var dataSelectionCombo = new ComboBox
@@ -419,14 +375,14 @@ public partial class ElementPropertyPanel : UserControl
         {
             Content = "Show Header Row",
             Classes = { "property-checkbox" },
-            IsChecked = table.ShowHeader,
+            IsChecked = table.ShowHeaders,
             Margin = new Thickness(0, 8, 0, 0)
         };
         showHeaderCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
-            table.ShowHeader = showHeaderCheck.IsChecked ?? true;
-            OnPropertyChanged(table, nameof(table.ShowHeader), table.ShowHeader);
+            table.ShowHeaders = showHeaderCheck.IsChecked ?? true;
+            OnPropertyChanged(table, nameof(table.ShowHeaders), table.ShowHeaders);
         };
         panel.Children.Add(showHeaderCheck);
 
@@ -434,13 +390,13 @@ public partial class ElementPropertyPanel : UserControl
         {
             Content = "Alternating Row Colors",
             Classes = { "property-checkbox" },
-            IsChecked = table.AlternatingRowColors
+            IsChecked = table.AlternateRowColors
         };
         alternatingRowsCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
-            table.AlternatingRowColors = alternatingRowsCheck.IsChecked ?? true;
-            OnPropertyChanged(table, nameof(table.AlternatingRowColors), table.AlternatingRowColors);
+            table.AlternateRowColors = alternatingRowsCheck.IsChecked ?? true;
+            OnPropertyChanged(table, nameof(table.AlternateRowColors), table.AlternateRowColors);
         };
         panel.Children.Add(alternatingRowsCheck);
 
@@ -655,22 +611,6 @@ public partial class ElementPropertyPanel : UserControl
         };
         panel.Children.Add(scaleModeCombo);
 
-        // Maintain Aspect Ratio
-        var maintainAspectCheck = new CheckBox
-        {
-            Content = "Maintain Aspect Ratio",
-            Classes = { "property-checkbox" },
-            IsChecked = image.MaintainAspectRatio,
-            Margin = new Thickness(0, 8, 0, 0)
-        };
-        maintainAspectCheck.IsCheckedChanged += (s, e) =>
-        {
-            if (_isUpdating) return;
-            image.MaintainAspectRatio = maintainAspectCheck.IsChecked ?? true;
-            OnPropertyChanged(image, nameof(image.MaintainAspectRatio), image.MaintainAspectRatio);
-        };
-        panel.Children.Add(maintainAspectCheck);
-
         return panel;
     }
 
@@ -684,33 +624,11 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "section-header" }
         });
 
-        // Format
-        panel.Children.Add(new TextBlock
-        {
-            Text = "Format",
-            Classes = { "property-label" }
-        });
-
-        var formatInput = new TextBox
-        {
-            Classes = { "property-input" },
-            Text = dateRange.Format,
-            Watermark = "{StartDate} - {EndDate}"
-        };
-        formatInput.TextChanged += (s, e) =>
-        {
-            if (_isUpdating) return;
-            dateRange.Format = formatInput.Text ?? "{StartDate} - {EndDate}";
-            OnPropertyChanged(dateRange, nameof(dateRange.Format), formatInput.Text);
-        };
-        panel.Children.Add(formatInput);
-
         // Date Format
         panel.Children.Add(new TextBlock
         {
             Text = "Date Format",
-            Classes = { "property-label" },
-            Margin = new Thickness(0, 8, 0, 0)
+            Classes = { "property-label" }
         });
 
         var dateFormatInput = new TextBox
@@ -770,75 +688,61 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "property-label" }
         });
 
-        var totalRevenueCheck = new CheckBox
+        var totalSalesCheck = new CheckBox
         {
-            Content = "Total Revenue",
+            Content = "Total Sales",
             Classes = { "property-checkbox" },
-            IsChecked = summary.ShowTotalRevenue
+            IsChecked = summary.ShowTotalSales
         };
-        totalRevenueCheck.IsCheckedChanged += (s, e) =>
+        totalSalesCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
-            summary.ShowTotalRevenue = totalRevenueCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowTotalRevenue), summary.ShowTotalRevenue);
+            summary.ShowTotalSales = totalSalesCheck.IsChecked ?? true;
+            OnPropertyChanged(summary, nameof(summary.ShowTotalSales), summary.ShowTotalSales);
         };
-        panel.Children.Add(totalRevenueCheck);
-
-        var totalExpensesCheck = new CheckBox
-        {
-            Content = "Total Expenses",
-            Classes = { "property-checkbox" },
-            IsChecked = summary.ShowTotalExpenses
-        };
-        totalExpensesCheck.IsCheckedChanged += (s, e) =>
-        {
-            if (_isUpdating) return;
-            summary.ShowTotalExpenses = totalExpensesCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowTotalExpenses), summary.ShowTotalExpenses);
-        };
-        panel.Children.Add(totalExpensesCheck);
-
-        var netProfitCheck = new CheckBox
-        {
-            Content = "Net Profit",
-            Classes = { "property-checkbox" },
-            IsChecked = summary.ShowNetProfit
-        };
-        netProfitCheck.IsCheckedChanged += (s, e) =>
-        {
-            if (_isUpdating) return;
-            summary.ShowNetProfit = netProfitCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowNetProfit), summary.ShowNetProfit);
-        };
-        panel.Children.Add(netProfitCheck);
+        panel.Children.Add(totalSalesCheck);
 
         var transactionCountCheck = new CheckBox
         {
-            Content = "Transaction Count",
+            Content = "Total Transactions",
             Classes = { "property-checkbox" },
-            IsChecked = summary.ShowTransactionCount
+            IsChecked = summary.ShowTotalTransactions
         };
         transactionCountCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
-            summary.ShowTransactionCount = transactionCountCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowTransactionCount), summary.ShowTransactionCount);
+            summary.ShowTotalTransactions = transactionCountCheck.IsChecked ?? true;
+            OnPropertyChanged(summary, nameof(summary.ShowTotalTransactions), summary.ShowTotalTransactions);
         };
         panel.Children.Add(transactionCountCheck);
 
-        var avgTransactionCheck = new CheckBox
+        var avgValueCheck = new CheckBox
         {
-            Content = "Average Transaction",
+            Content = "Average Value",
             Classes = { "property-checkbox" },
-            IsChecked = summary.ShowAverageTransaction
+            IsChecked = summary.ShowAverageValue
         };
-        avgTransactionCheck.IsCheckedChanged += (s, e) =>
+        avgValueCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
-            summary.ShowAverageTransaction = avgTransactionCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowAverageTransaction), summary.ShowAverageTransaction);
+            summary.ShowAverageValue = avgValueCheck.IsChecked ?? true;
+            OnPropertyChanged(summary, nameof(summary.ShowAverageValue), summary.ShowAverageValue);
         };
-        panel.Children.Add(avgTransactionCheck);
+        panel.Children.Add(avgValueCheck);
+
+        var growthRateCheck = new CheckBox
+        {
+            Content = "Growth Rate",
+            Classes = { "property-checkbox" },
+            IsChecked = summary.ShowGrowthRate
+        };
+        growthRateCheck.IsCheckedChanged += (s, e) =>
+        {
+            if (_isUpdating) return;
+            summary.ShowGrowthRate = growthRateCheck.IsChecked ?? true;
+            OnPropertyChanged(summary, nameof(summary.ShowGrowthRate), summary.ShowGrowthRate);
+        };
+        panel.Children.Add(growthRateCheck);
 
         return panel;
     }
@@ -877,9 +781,7 @@ public partial class ElementPropertyPanel : UserControl
 
     private void OnIsLockedChanged(object? sender, RoutedEventArgs e)
     {
-        if (_isUpdating || SelectedElement == null || _isLockedCheckbox == null) return;
-        SelectedElement.IsLocked = _isLockedCheckbox.IsChecked ?? false;
-        OnPropertyChanged(SelectedElement, "IsLocked", SelectedElement.IsLocked);
+        // IsLocked is not a base property - skip for now
     }
 
     private void OnIsVisibleChanged(object? sender, RoutedEventArgs e)

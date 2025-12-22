@@ -278,8 +278,7 @@ public partial class CanvasElementControl : UserControl
     {
         if (Element != null)
         {
-            ElementTypeName = GetElementTypeName(Element.ElementType);
-            IsLocked = Element.IsLocked;
+            ElementTypeName = GetElementTypeName(Element.GetElementType());
             UpdateFromElement();
         }
     }

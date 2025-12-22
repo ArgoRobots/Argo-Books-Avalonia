@@ -421,7 +421,7 @@ public partial class ReportDesignCanvas : UserControl
         var control = AddElementControl(element);
 
         // Record for undo
-        UndoRedoManager?.AddAction(new AddElementAction(Configuration, element));
+        UndoRedoManager?.RecordAction(new AddElementAction(Configuration, element));
 
         ElementAdded?.Invoke(this, new ElementAddedEventArgs(element));
 
@@ -444,7 +444,7 @@ public partial class ReportDesignCanvas : UserControl
         Configuration.RemoveElement(element.Id);
 
         // Record for undo
-        UndoRedoManager?.AddAction(new RemoveElementAction(Configuration, element));
+        UndoRedoManager?.RecordAction(new RemoveElementAction(Configuration, element));
 
         _selectedElements.Remove(element);
         ElementRemoved?.Invoke(this, new ElementRemovedEventArgs(element));
@@ -475,7 +475,7 @@ public partial class ReportDesignCanvas : UserControl
 
         Canvas.SetLeft(control, element.X);
         Canvas.SetTop(control, element.Y);
-        Canvas.SetZIndex(control, element.ZOrder);
+        Panel.SetZIndex(control, element.ZOrder);
 
         // Wire up events
         control.ElementSelected += OnElementSelected;
@@ -527,7 +527,7 @@ public partial class ReportDesignCanvas : UserControl
 
     private static Control CreateElementContent(ReportElementBase element)
     {
-        return element.ElementType switch
+        return element.GetElementType() switch
         {
             ReportElementType.Chart => CreateChartPreview(element as ChartReportElement),
             ReportElementType.Table => CreateTablePreview(element as TableReportElement),
@@ -690,7 +690,7 @@ public partial class ReportDesignCanvas : UserControl
                     },
                     new TextBlock
                     {
-                        Text = element?.Format ?? "Date Range",
+                        Text = element?.DateFormat ?? "Date Range",
                         FontSize = 12,
                         Foreground = new SolidColorBrush(Color.Parse("#00838F")),
                         VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
@@ -882,7 +882,8 @@ public partial class ReportDesignCanvas : UserControl
         if (e.WasCancelled || _dragStartStates == null) return;
 
         // Record batch move action for undo
-        var moveActions = new List<(ReportElementBase Element, Point OldPosition, Point NewPosition)>();
+        var oldBounds = new Dictionary<string, (double X, double Y, double Width, double Height)>();
+        var newBounds = new Dictionary<string, (double X, double Y, double Width, double Height)>();
 
         foreach (var element in _selectedElements)
         {
@@ -891,14 +892,15 @@ public partial class ReportDesignCanvas : UserControl
                 var newPosition = new Point(element.X, element.Y);
                 if (startState.Position != newPosition)
                 {
-                    moveActions.Add((element, startState.Position, newPosition));
+                    oldBounds[element.Id] = (startState.Position.X, startState.Position.Y, startState.Size.Width, startState.Size.Height);
+                    newBounds[element.Id] = (element.X, element.Y, element.Width, element.Height);
                 }
             }
         }
 
-        if (moveActions.Count > 0 && Configuration != null)
+        if (oldBounds.Count > 0 && Configuration != null)
         {
-            UndoRedoManager?.AddAction(new BatchMoveResizeAction(Configuration, moveActions));
+            UndoRedoManager?.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Move elements"));
             Configuration.HasManualChartLayout = true;
         }
 
@@ -931,13 +933,12 @@ public partial class ReportDesignCanvas : UserControl
     {
         if (e.IsComplete && e.Element != null && Configuration != null)
         {
-            UndoRedoManager?.AddAction(new MoveResizeElementAction(
+            UndoRedoManager?.RecordAction(new MoveResizeElementAction(
                 Configuration,
-                e.Element,
-                new Point(e.Element.X, e.Element.Y),
-                new Point(e.Element.X, e.Element.Y),
-                e.OldSize,
-                e.NewSize));
+                e.Element.Id,
+                (e.Element.X, e.Element.Y, e.OldSize.Width, e.OldSize.Height),
+                (e.Element.X, e.Element.Y, e.NewSize.Width, e.NewSize.Height),
+                true));
 
             Configuration.HasManualChartLayout = true;
             ElementsModified?.Invoke(this, new ElementsModifiedEventArgs([e.Element]));
@@ -1040,7 +1041,7 @@ public partial class ReportDesignCanvas : UserControl
     {
         if (point == null || _elementsCanvas == null) return null;
 
-        foreach (var control in _elementControls.OrderByDescending(c => Canvas.GetZIndex(c)))
+        foreach (var control in _elementControls.OrderByDescending(c => Panel.GetZIndex(c)))
         {
             if (control.Element == null) continue;
 
@@ -1203,7 +1204,7 @@ public partial class ReportDesignCanvas : UserControl
             element.ZOrder = ++maxZOrder;
             if (_elementControlMap.TryGetValue(element.Id, out var control))
             {
-                Canvas.SetZIndex(control, element.ZOrder);
+                Panel.SetZIndex(control, element.ZOrder);
             }
         }
 
@@ -1223,7 +1224,7 @@ public partial class ReportDesignCanvas : UserControl
             element.ZOrder = --minZOrder;
             if (_elementControlMap.TryGetValue(element.Id, out var control))
             {
-                Canvas.SetZIndex(control, element.ZOrder);
+                Panel.SetZIndex(control, element.ZOrder);
             }
         }
 

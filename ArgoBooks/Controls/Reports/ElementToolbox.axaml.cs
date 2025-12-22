@@ -28,8 +28,7 @@ public partial class ElementToolbox : UserControl
         {
             ChartType = ChartDataType.TotalRevenue,
             Width = 400,
-            Height = 300,
-            Title = "Chart"
+            Height = 300
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
     }
@@ -40,7 +39,6 @@ public partial class ElementToolbox : UserControl
         {
             Width = 500,
             Height = 250,
-            Title = "Data Table",
             MaxRows = 10
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
@@ -52,10 +50,10 @@ public partial class ElementToolbox : UserControl
         {
             Width = 300,
             Height = 200,
-            ShowTotalRevenue = true,
-            ShowTotalExpenses = true,
-            ShowNetProfit = true,
-            ShowTransactionCount = true
+            ShowTotalSales = true,
+            ShowTotalTransactions = true,
+            ShowAverageValue = true,
+            ShowGrowthRate = true
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
     }
@@ -78,7 +76,6 @@ public partial class ElementToolbox : UserControl
         {
             Width = 250,
             Height = 30,
-            Format = "{StartDate} - {EndDate}",
             DateFormat = "MMM dd, yyyy"
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
@@ -90,8 +87,7 @@ public partial class ElementToolbox : UserControl
         {
             Width = 200,
             Height = 150,
-            ScaleMode = ImageScaleMode.Fit,
-            MaintainAspectRatio = true
+            ScaleMode = ImageScaleMode.Fit
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
     }
@@ -107,9 +103,8 @@ public partial class ElementToolbox : UserControl
             ChartType = ChartDataType.TotalRevenue,
             Width = 400,
             Height = 280,
-            Title = "Revenue Over Time",
             ShowLegend = true,
-            ShowLabels = true
+            ShowTitle = true
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
     }
@@ -121,9 +116,8 @@ public partial class ElementToolbox : UserControl
             ChartType = ChartDataType.TotalExpenses,
             Width = 400,
             Height = 280,
-            Title = "Expenses Over Time",
             ShowLegend = true,
-            ShowLabels = true
+            ShowTitle = true
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
     }
@@ -135,9 +129,8 @@ public partial class ElementToolbox : UserControl
             ChartType = ChartDataType.TotalProfits,
             Width = 400,
             Height = 280,
-            Title = "Profit Analysis",
             ShowLegend = true,
-            ShowLabels = true
+            ShowTitle = true
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
     }
@@ -149,9 +142,8 @@ public partial class ElementToolbox : UserControl
             ChartType = ChartDataType.RevenueDistribution,
             Width = 350,
             Height = 300,
-            Title = "Revenue Distribution",
             ShowLegend = true,
-            ShowLabels = true
+            ShowTitle = true
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
     }
@@ -163,8 +155,8 @@ public partial class ElementToolbox : UserControl
             ChartType = ChartDataType.WorldMap,
             Width = 500,
             Height = 300,
-            Title = "Geographic Distribution",
-            ShowLegend = true
+            ShowLegend = true,
+            ShowTitle = true
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
     }
@@ -176,9 +168,8 @@ public partial class ElementToolbox : UserControl
             ChartType = ChartDataType.GrowthRates,
             Width = 400,
             Height = 280,
-            Title = "Growth Rates",
             ShowLegend = true,
-            ShowLabels = true
+            ShowTitle = true
         };
         AddElementRequested?.Invoke(this, new AddElementRequestedEventArgs(element));
     }
