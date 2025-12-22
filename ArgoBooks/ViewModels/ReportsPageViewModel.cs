@@ -301,6 +301,20 @@ public partial class ReportsPageViewModel : ViewModelBase
         NotifySelectionChanged();
     }
 
+    /// <summary>
+    /// Syncs selection from the canvas control.
+    /// </summary>
+    public void SyncSelection(List<ReportElementBase> selectedElements)
+    {
+        SelectedElements.Clear();
+        foreach (var element in selectedElements)
+        {
+            SelectedElements.Add(element);
+        }
+        SelectedElement = selectedElements.FirstOrDefault();
+        NotifySelectionChanged();
+    }
+
     partial void OnConfigurationChanged(ReportConfiguration value)
     {
         UpdateCanvasDimensions();

@@ -1,3 +1,4 @@
+using System.Linq;
 using ArgoBooks.Controls.Reports;
 using ArgoBooks.ViewModels;
 using Avalonia;
@@ -27,13 +28,14 @@ public partial class ReportsPage : UserControl
         _designCanvas = this.FindControl<ReportDesignCanvas>("DesignCanvas");
         _previewScrollViewer = this.FindControl<ScrollViewer>("PreviewScrollViewer");
 
-        // Wire up CTRL+scroll zoom for the design canvas
+        // Wire up zoom, pan, and selection for the design canvas
         if (_designCanvas != null)
         {
             _designCanvas.PointerWheelChanged += OnCanvasPointerWheelChanged;
             _designCanvas.PointerPressed += OnCanvasPointerPressed;
             _designCanvas.PointerMoved += OnCanvasPointerMoved;
             _designCanvas.PointerReleased += OnCanvasPointerReleased;
+            _designCanvas.SelectionChanged += OnCanvasSelectionChanged;
         }
 
         // Wire up CTRL+scroll zoom and right-click pan for the preview canvas
@@ -63,6 +65,7 @@ public partial class ReportsPage : UserControl
             _designCanvas.PointerPressed -= OnCanvasPointerPressed;
             _designCanvas.PointerMoved -= OnCanvasPointerMoved;
             _designCanvas.PointerReleased -= OnCanvasPointerReleased;
+            _designCanvas.SelectionChanged -= OnCanvasSelectionChanged;
         }
 
         if (_previewScrollViewer != null)
@@ -85,6 +88,15 @@ public partial class ReportsPage : UserControl
         if (e.PropertyName == nameof(ReportsPageViewModel.Configuration))
         {
             _designCanvas?.SyncElements();
+        }
+    }
+
+    private void OnCanvasSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        // Sync canvas selection to ViewModel
+        if (DataContext is ReportsPageViewModel vm)
+        {
+            vm.SyncSelection(e.SelectedElements.ToList());
         }
     }
 
