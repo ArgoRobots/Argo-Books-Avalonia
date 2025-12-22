@@ -185,6 +185,11 @@ public partial class ReportDesignCanvas : UserControl
     private bool _isMultiSelecting;
     private Point _selectionStartPoint;
 
+    // Right-click panning
+    private bool _isPanning;
+    private Point _panStartPoint;
+    private Vector _panStartOffset;
+
     private double _pageWidth;
     private double _pageHeight;
 
@@ -1289,7 +1294,17 @@ public partial class ReportDesignCanvas : UserControl
 
         var point = e.GetCurrentPoint(this);
 
-        if (point.Properties.IsLeftButtonPressed)
+        if (point.Properties.IsRightButtonPressed)
+        {
+            // Start panning with right mouse button
+            _isPanning = true;
+            _panStartPoint = e.GetPosition(this);
+            _panStartOffset = new Vector(_scrollViewer?.Offset.X ?? 0, _scrollViewer?.Offset.Y ?? 0);
+            e.Pointer.Capture(this);
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.SizeAll);
+            e.Handled = true;
+        }
+        else if (point.Properties.IsLeftButtonPressed)
         {
             // Check if we clicked on an element
             var hitElement = GetElementAtPoint(e.GetPosition(_elementsCanvas));
@@ -1309,7 +1324,16 @@ public partial class ReportDesignCanvas : UserControl
     {
         base.OnPointerMoved(e);
 
-        if (_isMultiSelecting && _selectionRectangle != null)
+        if (_isPanning && _scrollViewer != null)
+        {
+            var currentPoint = e.GetPosition(this);
+            var delta = _panStartPoint - currentPoint;
+            _scrollViewer.Offset = new Vector(
+                _panStartOffset.X + delta.X,
+                _panStartOffset.Y + delta.Y);
+            e.Handled = true;
+        }
+        else if (_isMultiSelecting && _selectionRectangle != null)
         {
             var currentPoint = e.GetPosition(_elementsCanvas);
             UpdateSelectionRectangle(_selectionStartPoint, currentPoint);
@@ -1320,7 +1344,14 @@ public partial class ReportDesignCanvas : UserControl
     {
         base.OnPointerReleased(e);
 
-        if (_isMultiSelecting)
+        if (_isPanning)
+        {
+            _isPanning = false;
+            e.Pointer.Capture(null);
+            Cursor = Avalonia.Input.Cursor.Default;
+            e.Handled = true;
+        }
+        else if (_isMultiSelecting)
         {
             _isMultiSelecting = false;
             e.Pointer.Capture(null);
