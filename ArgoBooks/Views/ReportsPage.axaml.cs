@@ -93,7 +93,7 @@ public partial class ReportsPage : UserControl
         }
     }
 
-    private void OnCanvasSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnCanvasSelectionChanged(object? sender, Controls.Reports.SelectionChangedEventArgs e)
     {
         // Sync canvas selection to ViewModel
         if (DataContext is ReportsPageViewModel vm)
