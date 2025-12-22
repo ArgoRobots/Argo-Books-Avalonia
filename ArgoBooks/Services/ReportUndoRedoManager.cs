@@ -299,9 +299,9 @@ public class ZOrderChangeAction : IReportUndoableAction
 }
 
 /// <summary>
-/// Action for changing a property value.
+/// Action for changing a property value in report configuration.
 /// </summary>
-public class PropertyChangeAction<T> : IReportUndoableAction
+public class ReportPropertyChangeAction<T> : IReportUndoableAction
 {
     private readonly Action<T> _setter;
     private readonly T _oldValue;
@@ -311,7 +311,7 @@ public class PropertyChangeAction<T> : IReportUndoableAction
 
     public string Description => $"Change {_propertyName}";
 
-    public PropertyChangeAction(
+    public ReportPropertyChangeAction(
         string propertyName,
         T oldValue,
         T newValue,
