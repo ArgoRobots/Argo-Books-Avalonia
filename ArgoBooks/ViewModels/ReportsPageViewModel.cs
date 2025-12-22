@@ -40,6 +40,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         };
     }
 
+    public bool IsStep1 => CurrentStep == 1;
+    public bool IsStep2 => CurrentStep == 2;
+    public bool IsStep3 => CurrentStep == 3;
+
     public bool CanGoBack => CurrentStep > 1;
     public bool CanGoNext => CurrentStep < 3;
     public bool IsOnFinalStep => CurrentStep == 3;
@@ -50,10 +54,18 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (CurrentStep > 1)
         {
             CurrentStep--;
-            OnPropertyChanged(nameof(CanGoBack));
-            OnPropertyChanged(nameof(CanGoNext));
-            OnPropertyChanged(nameof(IsOnFinalStep));
+            NotifyStepChanged();
         }
+    }
+
+    private void NotifyStepChanged()
+    {
+        OnPropertyChanged(nameof(IsStep1));
+        OnPropertyChanged(nameof(IsStep2));
+        OnPropertyChanged(nameof(IsStep3));
+        OnPropertyChanged(nameof(CanGoBack));
+        OnPropertyChanged(nameof(CanGoNext));
+        OnPropertyChanged(nameof(IsOnFinalStep));
     }
 
     [RelayCommand]
@@ -73,9 +85,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             }
 
             CurrentStep++;
-            OnPropertyChanged(nameof(CanGoBack));
-            OnPropertyChanged(nameof(CanGoNext));
-            OnPropertyChanged(nameof(IsOnFinalStep));
+            NotifyStepChanged();
         }
     }
 

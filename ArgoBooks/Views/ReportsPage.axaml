@@ -109,7 +109,7 @@
         <!-- Main Content Area -->
         <Panel Grid.Row="1">
             <!-- Step 1: Template & Settings -->
-            <ScrollViewer IsVisible="{Binding CurrentStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=1}"
+            <ScrollViewer IsVisible="{Binding IsStep1}"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
                 <Grid ColumnDefinitions="*,400" Margin="24">
@@ -356,7 +356,7 @@
             </ScrollViewer>
 
             <!-- Step 2: Layout Designer -->
-            <Grid IsVisible="{Binding CurrentStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=2}"
+            <Grid IsVisible="{Binding IsStep2}"
                   ColumnDefinitions="160,*,260">
 
                 <!-- Left Panel: Element Toolbox -->
@@ -651,7 +651,7 @@
             </Grid>
 
             <!-- Step 3: Preview & Export -->
-            <Grid IsVisible="{Binding CurrentStep, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=3}"
+            <Grid IsVisible="{Binding IsStep3}"
                   ColumnDefinitions="*,300">
 
                 <!-- Preview Area -->
