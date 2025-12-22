@@ -90,6 +90,7 @@ public partial class ReportsPage : UserControl
         if (e.PropertyName == nameof(ReportsPageViewModel.Configuration))
         {
             _designCanvas?.SyncElements();
+            _designCanvas?.RefreshAllElements();
         }
     }
 

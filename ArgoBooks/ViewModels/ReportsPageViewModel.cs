@@ -230,6 +230,38 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private ReportElementBase? _selectedElement;
 
+    partial void OnSelectedElementChanged(ReportElementBase? value)
+    {
+        OnPropertyChanged(nameof(SelectedChartElement));
+        OnPropertyChanged(nameof(SelectedLabelElement));
+        OnPropertyChanged(nameof(SelectedImageElement));
+        OnPropertyChanged(nameof(SelectedTableElement));
+        OnPropertyChanged(nameof(SelectedDateRangeElement));
+        OnPropertyChanged(nameof(SelectedSummaryElement));
+        OnPropertyChanged(nameof(IsChartSelected));
+        OnPropertyChanged(nameof(IsLabelSelected));
+        OnPropertyChanged(nameof(IsImageSelected));
+        OnPropertyChanged(nameof(IsTableSelected));
+        OnPropertyChanged(nameof(IsDateRangeSelected));
+        OnPropertyChanged(nameof(IsSummarySelected));
+    }
+
+    // Typed accessors for element-specific properties
+    public ChartReportElement? SelectedChartElement => SelectedElement as ChartReportElement;
+    public LabelReportElement? SelectedLabelElement => SelectedElement as LabelReportElement;
+    public ImageReportElement? SelectedImageElement => SelectedElement as ImageReportElement;
+    public TableReportElement? SelectedTableElement => SelectedElement as TableReportElement;
+    public DateRangeReportElement? SelectedDateRangeElement => SelectedElement as DateRangeReportElement;
+    public SummaryReportElement? SelectedSummaryElement => SelectedElement as SummaryReportElement;
+
+    // Type checking properties for conditional visibility
+    public bool IsChartSelected => SelectedElement is ChartReportElement;
+    public bool IsLabelSelected => SelectedElement is LabelReportElement;
+    public bool IsImageSelected => SelectedElement is ImageReportElement;
+    public bool IsTableSelected => SelectedElement is TableReportElement;
+    public bool IsDateRangeSelected => SelectedElement is DateRangeReportElement;
+    public bool IsSummarySelected => SelectedElement is SummaryReportElement;
+
     [ObservableProperty]
     private bool _showGrid = true;
 
@@ -803,6 +835,28 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     public ObservableCollection<PageOrientation> Orientations { get; } =
         new(Enum.GetValues<PageOrientation>());
+
+    // Element property enum collections
+    public ObservableCollection<ChartDataType> ChartTypes { get; } =
+        new(Enum.GetValues<ChartDataType>());
+
+    public ObservableCollection<ImageScaleMode> ImageScaleModes { get; } =
+        new(Enum.GetValues<ImageScaleMode>());
+
+    public ObservableCollection<TableDataSelection> TableDataSelections { get; } =
+        new(Enum.GetValues<TableDataSelection>());
+
+    public ObservableCollection<TableSortOrder> TableSortOrders { get; } =
+        new(Enum.GetValues<TableSortOrder>());
+
+    public ObservableCollection<TransactionType> TransactionTypes { get; } =
+        new(Enum.GetValues<TransactionType>());
+
+    public ObservableCollection<HorizontalTextAlignment> HorizontalAlignments { get; } =
+        new(Enum.GetValues<HorizontalTextAlignment>());
+
+    public ObservableCollection<VerticalTextAlignment> VerticalAlignments { get; } =
+        new(Enum.GetValues<VerticalTextAlignment>());
 
     [RelayCommand]
     private void ApplyPageSettings()
