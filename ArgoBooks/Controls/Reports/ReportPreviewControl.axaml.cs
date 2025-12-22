@@ -347,7 +347,7 @@ public partial class ReportPreviewControl : UserControl
         ZoomLevel = Math.Max(ZoomLevel - 0.25, 0.25);
     }
 
-    private void OnZoomSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    public void OnZoomSelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
     {
         if (_zoomComboBox?.SelectedIndex is not int index) return;
 
