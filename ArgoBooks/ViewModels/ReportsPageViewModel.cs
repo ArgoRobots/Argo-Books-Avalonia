@@ -277,6 +277,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// Event raised when an element's properties change and the canvas needs to refresh.
     /// </summary>
     public event EventHandler<ReportElementBase>? ElementPropertyChanged;
+    public event EventHandler? PageSettingsRefreshRequested;
 
     partial void OnSelectedElementChanged(ReportElementBase? oldValue, ReportElementBase? newValue)
     {
@@ -847,11 +848,13 @@ public partial class ReportsPageViewModel : ViewModelBase
         try
         {
             var companyData = App.CompanyManager?.CompanyData;
-            // Use actual page dimensions for high-resolution preview
+            // Use 1x scale for preview display (3x scale is only for high-res export)
             var (width, height) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
-            using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale);
-            using var skBitmap = renderer.CreatePreview((int)(width * PageDimensions.RenderScale), (int)(height * PageDimensions.RenderScale));
+            using var renderer = new ReportRenderer(Configuration, companyData, 1f);
+            using var skBitmap = renderer.CreatePreview(width, height);
             PreviewImage = ConvertToBitmap(skBitmap);
+            // Reset zoom to 100% when preview is regenerated
+            PreviewZoom = 1.0;
         }
         catch
         {
@@ -1098,7 +1101,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             Configuration.PageSize = value;
             UpdateCanvasDimensions();
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1108,7 +1111,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             Configuration.PageOrientation = value;
             UpdateCanvasDimensions();
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1117,7 +1120,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (IsPageSettingsOpen)
         {
             Configuration.PageMargins = new ReportMargins(MarginLeft, value, MarginRight, MarginBottom);
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1126,7 +1129,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (IsPageSettingsOpen)
         {
             Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, value, MarginBottom);
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1135,7 +1138,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (IsPageSettingsOpen)
         {
             Configuration.PageMargins = new ReportMargins(MarginLeft, MarginTop, MarginRight, value);
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1144,7 +1147,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (IsPageSettingsOpen)
         {
             Configuration.PageMargins = new ReportMargins(value, MarginTop, MarginRight, MarginBottom);
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1153,7 +1156,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (IsPageSettingsOpen)
         {
             Configuration.ShowHeader = value;
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1162,7 +1165,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (IsPageSettingsOpen)
         {
             Configuration.ShowFooter = value;
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1171,7 +1174,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (IsPageSettingsOpen)
         {
             Configuration.ShowPageNumbers = value;
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1180,7 +1183,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (IsPageSettingsOpen)
         {
             Configuration.BackgroundColor = value;
-            OnPropertyChanged(nameof(Configuration));
+            PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 

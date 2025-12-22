@@ -52,9 +52,15 @@ public partial class ReportsPage : UserControl
         {
             vm.PropertyChanged += OnViewModelPropertyChanged;
             vm.ElementPropertyChanged += OnElementPropertyChanged;
+            vm.PageSettingsRefreshRequested += OnPageSettingsRefreshRequested;
             // Initial sync in case elements were already added
             _designCanvas?.SyncElements();
         }
+    }
+
+    private void OnPageSettingsRefreshRequested(object? sender, EventArgs e)
+    {
+        _designCanvas?.RefreshPageSettings();
     }
 
     protected override void OnUnloaded(RoutedEventArgs e)
@@ -83,6 +89,7 @@ public partial class ReportsPage : UserControl
         {
             vm.PropertyChanged -= OnViewModelPropertyChanged;
             vm.ElementPropertyChanged -= OnElementPropertyChanged;
+            vm.PageSettingsRefreshRequested -= OnPageSettingsRefreshRequested;
         }
     }
 

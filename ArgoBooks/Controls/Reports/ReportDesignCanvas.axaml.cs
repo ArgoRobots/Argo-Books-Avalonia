@@ -217,6 +217,12 @@ public partial class ReportDesignCanvas : UserControl
         _pageBackground = this.FindControl<Border>("PageBackground");
         _dropIndicator = this.FindControl<Border>("DropIndicator");
 
+        // Intercept wheel events on the ScrollViewer to prevent scrolling
+        if (_scrollViewer != null)
+        {
+            _scrollViewer.AddHandler(PointerWheelChangedEvent, OnScrollViewerPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        }
+
         UpdateLayout();
 
         // If Configuration was set before template was applied, process it now
@@ -224,6 +230,21 @@ public partial class ReportDesignCanvas : UserControl
         {
             OnConfigurationChanged();
         }
+    }
+
+    private void OnScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        // Intercept wheel events to zoom instead of scroll
+        var delta = e.Delta.Y;
+        if (delta > 0)
+        {
+            ZoomIn();
+        }
+        else if (delta < 0)
+        {
+            ZoomOut();
+        }
+        e.Handled = true;
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -470,18 +491,8 @@ public partial class ReportDesignCanvas : UserControl
     {
         if (_scrollViewer == null) return;
 
-        // Calculate the scaled page size including padding
-        var scaledWidth = (_pageWidth * ZoomLevel) + 80;
-        var scaledHeight = (_pageHeight * ZoomLevel) + 80;
-
-        var viewportWidth = _scrollViewer.Viewport.Width;
-        var viewportHeight = _scrollViewer.Viewport.Height;
-
-        // Calculate center offset
-        var offsetX = Math.Max(0, (scaledWidth - viewportWidth) / 2);
-        var offsetY = Math.Max(0, (scaledHeight - viewportHeight) / 2);
-
-        _scrollViewer.Offset = new Vector(offsetX, offsetY);
+        // Reset scroll offset to let the Grid centering work naturally
+        _scrollViewer.Offset = new Vector(0, 0);
     }
 
     #endregion
@@ -628,7 +639,7 @@ public partial class ReportDesignCanvas : UserControl
         _selectedElements.Clear();
     }
 
-    private static Control CreateElementContent(ReportElementBase element)
+    private Control CreateElementContent(ReportElementBase element)
     {
         return element.GetElementType() switch
         {
@@ -736,7 +747,7 @@ public partial class ReportDesignCanvas : UserControl
         };
     }
 
-    private static Control CreateTablePreview(TableReportElement? element)
+    private Control CreateTablePreview(TableReportElement? element)
     {
         var showHeaders = element?.ShowHeaders ?? true;
         var headerBgColor = element?.HeaderBackgroundColor ?? "#E0E0E0";
@@ -744,6 +755,30 @@ public partial class ReportDesignCanvas : UserControl
         var fontSize = element?.FontSize ?? 12;
         var showGridLines = element?.ShowGridLines ?? true;
         var gridLineColor = element?.GridLineColor ?? "#CCCCCC";
+
+        // Check if company data is available
+        var companyData = App.CompanyManager?.CompanyData;
+        var hasData = companyData != null && (companyData.Revenue.Count > 0 || companyData.Expenses.Count > 0);
+
+        if (!hasData)
+        {
+            // Show "No data" message
+            return new Border
+            {
+                Background = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.Parse(gridLineColor)),
+                BorderThickness = new Thickness(1),
+                Child = new TextBlock
+                {
+                    Text = "No data available",
+                    FontSize = fontSize,
+                    Foreground = Brushes.Gray,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                    Margin = new Thickness(10)
+                }
+            };
+        }
 
         var grid = new Grid();
 
@@ -757,8 +792,8 @@ public partial class ReportDesignCanvas : UserControl
             grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
         }
 
-        // Create row definitions
-        var rowCount = showHeaders ? 4 : 3; // Header + 3 data rows
+        // Create row definitions - header + sample data rows
+        var rowCount = showHeaders ? 4 : 3;
         for (int i = 0; i < rowCount; i++)
         {
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -790,7 +825,7 @@ public partial class ReportDesignCanvas : UserControl
             }
         }
 
-        // Add sample data rows
+        // Add sample data rows with placeholder
         var startRow = showHeaders ? 1 : 0;
         for (int row = startRow; row < rowCount; row++)
         {
@@ -1002,7 +1037,7 @@ public partial class ReportDesignCanvas : UserControl
         };
     }
 
-    private static Control CreateSummaryPreview(SummaryReportElement? element)
+    private Control CreateSummaryPreview(SummaryReportElement? element)
     {
         var bgColor = element?.BackgroundColor ?? "#F5F5F5";
         var borderColor = element?.BorderColor ?? "#CCCCCC";
@@ -1012,24 +1047,44 @@ public partial class ReportDesignCanvas : UserControl
         var vAlign = element?.VerticalAlignment ?? VerticalTextAlignment.Top;
         var transactionType = element?.TransactionType ?? TransactionType.Revenue;
 
-        // Create sample summary lines
+        // Get real data from company
+        var companyData = App.CompanyManager?.CompanyData;
+        var hasData = companyData != null;
+
+        // Calculate real values if data is available
+        var transactions = transactionType == TransactionType.Expenses
+            ? companyData?.Expenses ?? []
+            : companyData?.Revenue ?? [];
+
+        var total = transactions.Sum(t => t.Total);
+        var count = transactions.Count;
+        var average = count > 0 ? total / count : 0;
+
         var lines = new List<string>();
-        if (element?.ShowTotalSales ?? true)
+
+        if (!hasData || count == 0)
         {
-            var label = transactionType == TransactionType.Expenses ? "Total Expenses" : "Total Revenue";
-            lines.Add($"{label}: $12,345.67");
+            lines.Add("No data available");
         }
-        if (element?.ShowTotalTransactions ?? true)
+        else
         {
-            lines.Add("Transactions: 156");
-        }
-        if (element?.ShowAverageValue ?? true)
-        {
-            lines.Add("Average Value: $79.14");
-        }
-        if (element?.ShowGrowthRate ?? true)
-        {
-            lines.Add("Growth Rate: +8.5%");
+            if (element?.ShowTotalSales ?? true)
+            {
+                var label = transactionType == TransactionType.Expenses ? "Total Expenses" : "Total Revenue";
+                lines.Add($"{label}: ${total:N2}");
+            }
+            if (element?.ShowTotalTransactions ?? true)
+            {
+                lines.Add($"Transactions: {count}");
+            }
+            if (element?.ShowAverageValue ?? true)
+            {
+                lines.Add($"Average Value: ${average:N2}");
+            }
+            if (element?.ShowGrowthRate ?? true)
+            {
+                lines.Add("Growth Rate: N/A"); // Would need historical data
+            }
         }
 
         var stackPanel = new StackPanel
@@ -1086,6 +1141,31 @@ public partial class ReportDesignCanvas : UserControl
     /// <summary>
     /// Refreshes all element controls from their elements.
     /// </summary>
+    /// <summary>
+    /// Refreshes the page settings (size, orientation, margins, background color).
+    /// Call this when page settings are changed outside of Configuration property assignment.
+    /// </summary>
+    public void RefreshPageSettings()
+    {
+        if (Configuration == null) return;
+
+        // Update page dimensions
+        var (width, height) = PageDimensions.GetDimensions(
+            Configuration.PageSize,
+            Configuration.PageOrientation);
+        _pageWidth = width;
+        _pageHeight = height;
+
+        // Update page background
+        if (Color.TryParse(Configuration.BackgroundColor, out var color))
+        {
+            PageBackgroundBrush = new SolidColorBrush(color);
+        }
+
+        // Update layout
+        UpdateLayout();
+    }
+
     public void RefreshAllElements()
     {
         foreach (var control in _elementControls)

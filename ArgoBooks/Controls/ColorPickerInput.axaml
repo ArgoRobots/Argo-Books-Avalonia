@@ -43,16 +43,16 @@
                     CornerRadius="8"
                     Padding="12"
                     BoxShadow="0 4 16 0 #22000000">
-                <StackPanel Spacing="12" Width="240">
-                    <!-- Color Spectrum -->
-                    <ColorPicker x:Name="ColorPickerControl"
-                                 Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
-                                 ColorSpectrumShape="Ring"
-                                 IsAlphaEnabled="False"
-                                 IsColorPaletteVisible="True"
-                                 IsColorComponentsVisible="True"
-                                 IsColorPreviewVisible="True"
-                                 HorizontalAlignment="Stretch" />
+                <StackPanel Spacing="12">
+                    <!-- Color View with sliders -->
+                    <ColorView x:Name="ColorViewControl"
+                               Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
+                               IsAlphaVisible="False"
+                               IsColorSpectrumVisible="True"
+                               IsColorComponentsVisible="True"
+                               IsColorPaletteVisible="True"
+                               IsHexInputVisible="True"
+                               HorizontalAlignment="Stretch" />
 
                     <!-- Apply Button -->
                     <Button Content="Apply"
