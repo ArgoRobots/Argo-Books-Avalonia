@@ -14,6 +14,7 @@ public class GlobalSettings
     public LicenseSettings License { get; set; } = new();
     public PrivacySettings Privacy { get; set; } = new();
     public WindowStateSettings? WindowState { get; set; }
+    public ReportExportSettings ReportExport { get; set; } = new();
 }
 
 public class WelcomeSettings
@@ -47,4 +48,11 @@ public class PrivacySettings
 {
     public bool AnonymousDataCollectionConsent { get; set; } = false;
     public DateTime? ConsentDate { get; set; }
+}
+
+public class ReportExportSettings
+{
+    public string? LastExportDirectory { get; set; }
+    public bool OpenAfterExport { get; set; } = true;
+    public bool IncludeMetadata { get; set; } = true;
 }

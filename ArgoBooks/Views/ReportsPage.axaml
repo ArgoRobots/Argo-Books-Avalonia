@@ -1,0 +1,1195 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:enums="using:ArgoBooks.Core.Enums"
+             xmlns:reports="using:ArgoBooks.Controls.Reports"
+             xmlns:modals="using:ArgoBooks.Modals"
+             mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
+             x:Class="ArgoBooks.Views.ReportsPage"
+             x:DataType="vm:ReportsPageViewModel">
+
+    <Design.DataContext>
+        <vm:ReportsPageViewModel />
+    </Design.DataContext>
+
+    <Panel>
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Step Indicator -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="24,16">
+            <Grid RowDefinitions="Auto">
+                <!-- Step Progress Dots -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="0" HorizontalAlignment="Center">
+                    <!-- Step 1 -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <!-- Active circle (current or completed) -->
+                        <Border Width="32" Height="32" CornerRadius="16"
+                                Background="{DynamicResource PrimaryBrush}"
+                                IsVisible="{Binding IsStep1Active}">
+                            <Panel>
+                                <!-- Show checkmark only if completed AND not currently on step 1 -->
+                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                          Width="16" Height="16"
+                                          Foreground="White"
+                                          IsVisible="{Binding IsStep1CompletedAndPast}" />
+                                <!-- Show number if on step 1 or not completed -->
+                                <TextBlock Text="1"
+                                           Foreground="White"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !IsStep1CompletedAndPast}" />
+                            </Panel>
+                        </Border>
+                        <!-- Inactive circle -->
+                        <Border Width="32" Height="32" CornerRadius="16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="2"
+                                Background="{DynamicResource SurfaceBrush}"
+                                IsVisible="{Binding !IsStep1Active}">
+                            <TextBlock Text="1"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="Template &amp; Settings"
+                                   FontWeight="Medium"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </StackPanel>
+
+                    <!-- Connector 1-2 -->
+                    <Panel Width="60" Height="2" Margin="12,0" VerticalAlignment="Center">
+                        <Border Background="{DynamicResource BorderBrush}" />
+                        <Border Background="{DynamicResource PrimaryBrush}" IsVisible="{Binding IsConnector1Active}" />
+                    </Panel>
+
+                    <!-- Step 2 -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <!-- Active circle -->
+                        <Border Width="32" Height="32" CornerRadius="16"
+                                Background="{DynamicResource PrimaryBrush}"
+                                IsVisible="{Binding IsStep2Active}">
+                            <Panel>
+                                <!-- Show checkmark only if completed AND not currently on step 2 -->
+                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                          Width="16" Height="16"
+                                          Foreground="White"
+                                          IsVisible="{Binding IsStep2CompletedAndPast}" />
+                                <!-- Show number if on step 2 or not completed -->
+                                <TextBlock Text="2"
+                                           Foreground="White"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !IsStep2CompletedAndPast}" />
+                            </Panel>
+                        </Border>
+                        <!-- Inactive circle -->
+                        <Border Width="32" Height="32" CornerRadius="16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="2"
+                                Background="{DynamicResource SurfaceBrush}"
+                                IsVisible="{Binding !IsStep2Active}">
+                            <TextBlock Text="2"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                        <Panel>
+                            <TextBlock Text="Layout Designer"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       IsVisible="{Binding IsStep2Active}" />
+                            <TextBlock Text="Layout Designer"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       IsVisible="{Binding !IsStep2Active}" />
+                        </Panel>
+                    </StackPanel>
+
+                    <!-- Connector 2-3 -->
+                    <Panel Width="60" Height="2" Margin="12,0" VerticalAlignment="Center">
+                        <Border Background="{DynamicResource BorderBrush}" />
+                        <Border Background="{DynamicResource PrimaryBrush}" IsVisible="{Binding IsConnector2Active}" />
+                    </Panel>
+
+                    <!-- Step 3 -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <!-- Active circle -->
+                        <Border Width="32" Height="32" CornerRadius="16"
+                                Background="{DynamicResource PrimaryBrush}"
+                                IsVisible="{Binding IsStep3Active}">
+                            <Panel>
+                                <!-- Step 3 is the final step, never shows checkmark until export is done -->
+                                <TextBlock Text="3"
+                                           Foreground="White"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                            </Panel>
+                        </Border>
+                        <!-- Inactive circle -->
+                        <Border Width="32" Height="32" CornerRadius="16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="2"
+                                Background="{DynamicResource SurfaceBrush}"
+                                IsVisible="{Binding !IsStep3Active}">
+                            <TextBlock Text="3"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                        <Panel>
+                            <TextBlock Text="Preview &amp; Export"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       IsVisible="{Binding IsStep3Active}" />
+                            <TextBlock Text="Preview &amp; Export"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       IsVisible="{Binding !IsStep3Active}" />
+                        </Panel>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Panel Grid.Row="1">
+            <!-- Step 1: Template & Settings -->
+            <ScrollViewer IsVisible="{Binding IsStep1}"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <Grid ColumnDefinitions="*,400" Margin="24">
+                    <!-- Left: Templates with Tab Navigation -->
+                    <Border Grid.Column="0"
+                            Background="{DynamicResource SurfaceBrush}"
+                            CornerRadius="12"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            Margin="0,0,24,0">
+                        <Grid RowDefinitions="Auto,*">
+                            <!-- Tab Navigation -->
+                            <Border Grid.Row="0"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <StackPanel Orientation="Horizontal" Margin="24,0">
+                                    <!-- Templates Tab -->
+                                    <Button Classes="tab-button"
+                                            Command="{Binding SetStep1TabCommand}"
+                                            CommandParameter="0">
+                                        <StackPanel>
+                                            <Panel>
+                                                <TextBlock Text="Templates"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Padding="0,16"
+                                                           Foreground="{DynamicResource PrimaryBrush}"
+                                                           IsVisible="{Binding IsTemplatesTabSelected}" />
+                                                <TextBlock Text="Templates"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Padding="0,16"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           IsVisible="{Binding !IsTemplatesTabSelected}" />
+                                            </Panel>
+                                            <Border Height="2"
+                                                    Margin="0,-1,0,0"
+                                                    Background="{DynamicResource PrimaryBrush}"
+                                                    IsVisible="{Binding IsTemplatesTabSelected}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Panel Width="32" />
+                                    <!-- Custom Tab -->
+                                    <Button Classes="tab-button"
+                                            Command="{Binding SetStep1TabCommand}"
+                                            CommandParameter="1">
+                                        <StackPanel>
+                                            <Panel>
+                                                <TextBlock Text="Custom"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Padding="0,16"
+                                                           Foreground="{DynamicResource PrimaryBrush}"
+                                                           IsVisible="{Binding IsChartsTabSelected}" />
+                                                <TextBlock Text="Custom"
+                                                           FontSize="14"
+                                                           FontWeight="Medium"
+                                                           Padding="0,16"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           IsVisible="{Binding !IsChartsTabSelected}" />
+                                            </Panel>
+                                            <Border Height="2"
+                                                    Margin="0,-1,0,0"
+                                                    Background="{DynamicResource PrimaryBrush}"
+                                                    IsVisible="{Binding IsChartsTabSelected}" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Tab Content -->
+                            <Panel Grid.Row="1" Margin="24">
+                                <!-- Templates Tab Content -->
+                                <StackPanel Spacing="16" IsVisible="{Binding IsTemplatesTabSelected}">
+                                    <!-- Built-in Templates Grid -->
+                                    <ItemsControl ItemsSource="{Binding ReportTemplateOptions}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Columns="2" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Margin="0,0,12,12"
+                                                        Padding="20,24"
+                                                        CornerRadius="8"
+                                                        HorizontalContentAlignment="Center"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
+                                                        CommandParameter="{Binding Name}">
+                                                    <Button.Styles>
+                                                        <Style Selector="Button">
+                                                            <Setter Property="Background" Value="White" />
+                                                            <Setter Property="BorderThickness" Value="1" />
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Button:pointerover">
+                                                            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                    </Button.Styles>
+                                                    <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                                        <Border Background="{Binding IconBackground}"
+                                                                CornerRadius="12"
+                                                                Padding="12"
+                                                                HorizontalAlignment="Center">
+                                                            <PathIcon Data="{Binding IconData}"
+                                                                      Width="28" Height="28"
+                                                                      Foreground="{Binding IconForeground}" />
+                                                        </Border>
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   FontSize="14"
+                                                                   FontWeight="SemiBold"
+                                                                   HorizontalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        <TextBlock Text="{Binding Description}"
+                                                                   FontSize="12"
+                                                                   HorizontalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   TextWrapping="Wrap"
+                                                                   TextAlignment="Center" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Custom Templates Section -->
+                                    <StackPanel Spacing="12" IsVisible="{Binding CustomTemplateNames.Count}">
+                                        <TextBlock Text="Custom Templates"
+                                                   FontSize="14"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   Margin="0,8,0,0" />
+                                        <ItemsControl ItemsSource="{Binding CustomTemplateNames}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <UniformGrid Columns="2" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Margin="0,0,12,12"
+                                                            Padding="16"
+                                                            CornerRadius="8"
+                                                            Background="{DynamicResource SurfaceAltBrush}"
+                                                            BorderThickness="2"
+                                                            BorderBrush="Transparent"
+                                                            HorizontalContentAlignment="Left">
+                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                            <Border Background="{DynamicResource SurfaceHoverBrush}"
+                                                                    CornerRadius="8"
+                                                                    Padding="8">
+                                                                <PathIcon Data="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"
+                                                                          Width="20" Height="20"
+                                                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                            </Border>
+                                                            <TextBlock Text="{Binding}"
+                                                                       FontWeight="Medium"
+                                                                       VerticalAlignment="Center"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Custom Charts Tab Content -->
+                                <StackPanel Spacing="16" IsVisible="{Binding IsChartsTabSelected}">
+                                    <TextBlock Text="Select charts to include in your report"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ItemsControl ItemsSource="{Binding AvailableCharts}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Columns="2" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Margin="0,0,12,12"
+                                                        Padding="16"
+                                                        CornerRadius="8"
+                                                        HorizontalContentAlignment="Left"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).AddChartCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <Button.Styles>
+                                                        <Style Selector="Button">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                            <Setter Property="BorderThickness" Value="2" />
+                                                            <Setter Property="BorderBrush" Value="Transparent" />
+                                                        </Style>
+                                                        <Style Selector="Button:pointerover">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                        </Style>
+                                                    </Button.Styles>
+                                                    <StackPanel Spacing="8">
+                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                            <Border Background="{DynamicResource PrimaryLightBrush}"
+                                                                    CornerRadius="8"
+                                                                    Padding="8">
+                                                                <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
+                                                                          Width="20" Height="20"
+                                                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                                            </Border>
+                                                            <TextBlock Text="{Binding Name}"
+                                                                       FontSize="15"
+                                                                       FontWeight="SemiBold"
+                                                                       VerticalAlignment="Center"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        </StackPanel>
+                                                        <TextBlock Text="Add this chart to your custom report"
+                                                                   FontSize="12"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Panel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Right: Settings -->
+                    <Border Grid.Column="1"
+                            Background="{DynamicResource SurfaceBrush}"
+                            CornerRadius="12"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            Padding="24">
+                        <StackPanel Spacing="20">
+                            <TextBlock Text="Report Settings"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                            <!-- Report Name -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Report Name"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ReportName}"
+                                         Watermark="Enter report name..."
+                                         Padding="12,10" />
+                            </StackPanel>
+
+                            <!-- Date Range -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Date Range"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <ComboBox ItemsSource="{Binding DatePresets}"
+                                          SelectedItem="{Binding SelectedDatePreset}"
+                                          HorizontalAlignment="Stretch" />
+
+                                <!-- Custom Date Range -->
+                                <Grid ColumnDefinitions="*,Auto,*"
+                                      IsVisible="{Binding IsCustomDateRange}">
+                                    <DatePicker Grid.Column="0"
+                                                SelectedDate="{Binding CustomStartDate}" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="to"
+                                               Margin="12,0"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <DatePicker Grid.Column="2"
+                                                SelectedDate="{Binding CustomEndDate}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Transaction Type -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Transaction Type"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <RadioButton Content="Revenue"
+                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Revenue}}"
+                                                 GroupName="TransactionType" />
+                                    <RadioButton Content="Expenses"
+                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Expenses}}"
+                                                 GroupName="TransactionType" />
+                                    <RadioButton Content="Both"
+                                                 IsChecked="{Binding SelectedTransactionType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:TransactionType.Both}}"
+                                                 GroupName="TransactionType" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Selected Charts -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Selected Charts"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                <ItemsControl ItemsSource="{Binding SelectedCharts}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{DynamicResource PrimaryBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="8,6"
+                                                    Margin="0,0,0,4">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0"
+                                                               Text="{Binding Name}"
+                                                               Foreground="White"
+                                                               FontSize="13" />
+                                                    <Button Grid.Column="1"
+                                                            Background="Transparent"
+                                                            Padding="4"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).RemoveChartCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                                  Width="12" Height="12"
+                                                                  Foreground="White" />
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <TextBlock Text="No charts selected. Add charts from the left panel."
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           FontStyle="Italic"
+                                           IsVisible="{Binding !SelectedCharts.Count}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- Step 2: Layout Designer -->
+            <Grid IsVisible="{Binding IsStep2}"
+                  ColumnDefinitions="160,*,260">
+
+                <!-- Left Panel: Element Toolbox -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,1,0"
+                        Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Elements"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   Margin="0,0,0,8" />
+
+                        <!-- Element Buttons -->
+                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Chart">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
+                                          Width="18" Height="18"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Text="Chart" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Label">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M5 4v3h5.5v12h3V7H19V4z"
+                                          Width="18" Height="18"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Text="Label" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="DateRange">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
+                                          Width="18" Height="18"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Text="Date Range" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Summary">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                          Width="18" Height="18"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Text="Summary" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Table">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z"
+                                          Width="18" Height="18"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Text="Table" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Image">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                                          Width="18" Height="18"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Text="Image" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Center: Design Canvas -->
+                <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+                    <!-- Toolbar -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="8">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <!-- Left: Main tools -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                                <!-- Undo/Redo -->
+                                <Button Classes="toolbar-button" Command="{Binding UndoCommand}"
+                                        IsEnabled="{Binding UndoRedoManager.CanUndo}"
+                                        ToolTip.Tip="Undo (Ctrl+Z)">
+                                    <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Classes="toolbar-button" Command="{Binding RedoCommand}"
+                                        IsEnabled="{Binding UndoRedoManager.CanRedo}"
+                                        ToolTip.Tip="Redo (Ctrl+Y)">
+                                    <PathIcon Data="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"
+                                              Width="16" Height="16" />
+                                </Button>
+
+                                <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
+
+                                <!-- Horizontal Alignment -->
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Left" ToolTip.Tip="Align Left" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M15 15H3v2h12v-2zm0-8H3v2h12V7zM3 13h18v-2H3v2zm0 8h18v-2H3v2zM3 3v2h18V3H3z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="CenterH" ToolTip.Tip="Align Center Horizontally" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M7 15v2h10v-2H7zm-4 6h18v-2H3v2zm0-8h18v-2H3v2zm4-6v2h10V7H7zM3 3v2h18V3H3z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Right" ToolTip.Tip="Align Right" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M3 21h18v-2H3v2zm6-4h12v-2H9v2zm-6-4h18v-2H3v2zm6-4h12V7H9v2zM3 3v2h18V3H3z"
+                                              Width="16" Height="16" />
+                                </Button>
+
+                                <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
+
+                                <!-- Vertical Alignment -->
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Top" ToolTip.Tip="Align Top" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M8 11h3v10h2V11h3l-4-4-4 4zM4 3v2h16V3H4z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="CenterV" ToolTip.Tip="Align Center Vertically" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M8 19h3v4h2v-4h3l-4-4-4 4zm8-14h-3V1h-2v4H8l4 4 4-4zM4 11v2h16v-2H4z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Bottom" ToolTip.Tip="Align Bottom" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"
+                                              Width="16" Height="16" />
+                                </Button>
+
+                                <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
+
+                                <!-- Distribution -->
+                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Horizontal" ToolTip.Tip="Distribute Horizontally" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M4 5v14h2V5H4zm14 0v14h2V5h-2zM9 5h2v14H9V5zm4 0h2v14h-2V5z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Vertical" ToolTip.Tip="Distribute Vertically" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M5 18h14v2H5v-2zm0-4h14v2H5v-2zm0-4h14v2H5v-2zm0-4h14v2H5V6zm0-4h14v2H5V2z"
+                                              Width="16" Height="16" />
+                                </Button>
+
+                                <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
+
+                                <!-- Same Size -->
+                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Width" ToolTip.Tip="Same Width" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M21 3H3v2h18V3zM21 19H3v2h18v-2zM4 11h16v2H4z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Height" ToolTip.Tip="Same Height" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M3 21h2V3H3v18zM19 3h2v18h-2V3zM11 4v16h2V4z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Both" ToolTip.Tip="Same Size" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                    <PathIcon Data="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"
+                                              Width="16" Height="16" />
+                                </Button>
+
+                                <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
+
+                                <!-- Z-Order -->
+                                <Button Classes="toolbar-button" Command="{Binding BringToFrontCommand}" ToolTip.Tip="Bring to Front" IsEnabled="{Binding HasSelectedElements}">
+                                    <PathIcon Data="M3 5h2V3c-1.1 0-2 .9-2 2zm0 8h2v-2H3v2zm4 8h2v-2H7v2zM3 9h2V7H3v2zm10-6h-2v2h2V3zm6 0v2h2c0-1.1-.9-2-2-2zM5 21v-2H3c0 1.1.9 2 2 2zm-2-4h2v-2H3v2zM9 3H7v2h2V3zm2 18h2v-2h-2v2zm8-8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2zm0-12h2V7h-2v2zm0 8h2v-2h-2v2zm-4 4h2v-2h-2v2zm0-16h2V3h-2v2z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Button Classes="toolbar-button" Command="{Binding SendToBackCommand}" ToolTip.Tip="Send to Back" IsEnabled="{Binding HasSelectedElements}">
+                                    <PathIcon Data="M9 7H7v2h2V7zm0 4H7v2h2v-2zm0-8c-1.11 0-2 .9-2 2h2V3zm4 12h-2v2h2v-2zm6-12v2h2c0-1.1-.9-2-2-2zm-6 0h-2v2h2V3zM9 17v-2H7c0 1.1.89 2 2 2zm10-4h2v-2h-2v2zm0-4h2V7h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2zM5 7H3v12c0 1.1.89 2 2 2h12v-2H5V7zm10-2h2V3h-2v2zm0 12h2v-2h-2v2z"
+                                              Width="16" Height="16" />
+                                </Button>
+
+                                <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
+
+                                <!-- Delete -->
+                                <Button Classes="toolbar-button danger" Command="{Binding DeleteSelectedElementsCommand}" ToolTip.Tip="Delete (Del)" IsEnabled="{Binding HasSelectedElements}">
+                                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                              Width="16" Height="16" />
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Spacer -->
+                            <Panel Grid.Column="1" />
+
+                            <!-- Right: Utility buttons -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                                <!-- Grid Toggle -->
+                                <ToggleButton Classes="toolbar-toggle" IsChecked="{Binding ShowGrid}" ToolTip.Tip="Toggle Grid (Ctrl+G)">
+                                    <PathIcon Data="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z"
+                                              Width="16" Height="16" />
+                                </ToggleButton>
+
+                                <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
+
+                                <!-- Page Settings -->
+                                <Button Classes="toolbar-button" Command="{Binding OpenPageSettingsCommand}" ToolTip.Tip="Page Settings">
+                                    <PathIcon Data="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                                              Width="16" Height="16" />
+                                </Button>
+
+                                <!-- Save Template -->
+                                <Button Classes="toolbar-button" Command="{Binding OpenSaveTemplateCommand}" ToolTip.Tip="Save as Template">
+                                    <PathIcon Data="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"
+                                              Width="16" Height="16" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Canvas Area with ReportDesignCanvas -->
+                    <reports:ReportDesignCanvas x:Name="DesignCanvas"
+                                                Grid.Row="1"
+                                                Configuration="{Binding Configuration}"
+                                                ZoomLevel="{Binding ZoomLevel}"
+                                                ShowGrid="{Binding ShowGrid}"
+                                                GridSize="{Binding GridSize}"
+                                                SnapToGrid="{Binding SnapToGrid}"
+                                                UndoRedoManager="{Binding UndoRedoManager}" />
+
+                    <!-- Bottom Zoom Controls -->
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0"
+                            Padding="8">
+                        <Grid ColumnDefinitions="*,Auto,*">
+                            <!-- Left spacer -->
+                            <Panel Grid.Column="0" />
+
+                            <!-- Center: Zoom Controls -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <Button Classes="toolbar-button" Command="{Binding ZoomOutCommand}" ToolTip.Tip="Zoom Out (Ctrl+-)">
+                                    <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <Slider Value="{Binding ZoomLevel}"
+                                        Minimum="0.25"
+                                        Maximum="2.0"
+                                        Width="150"
+                                        VerticalAlignment="Center" />
+                                <Button Classes="toolbar-button" Command="{Binding ZoomInCommand}" ToolTip.Tip="Zoom In (Ctrl++)">
+                                    <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z"
+                                              Width="16" Height="16" />
+                                </Button>
+                                <TextBlock Text="{Binding ZoomLevel, StringFormat={}{0:P0}}"
+                                           VerticalAlignment="Center"
+                                           FontSize="12"
+                                           Width="50"
+                                           TextAlignment="Center"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <Button Classes="toolbar-button" Command="{Binding ZoomFitCommand}" ToolTip.Tip="Fit to Window">
+                                    <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
+                                              Width="16" Height="16" />
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Right: Info text -->
+                            <TextBlock Grid.Column="2"
+                                       Text="Ctrl+Scroll to zoom"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0" />
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Right Panel: Properties -->
+                <Border Grid.Column="2"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1,0,0,0"
+                        Padding="16">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="Properties"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                            <!-- Position & Size -->
+                            <StackPanel Spacing="8" IsVisible="{Binding SelectedElement, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <TextBlock Text="Position &amp; Size"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,8,Auto">
+                                    <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4">
+                                        <TextBlock Text="X" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedElement.X}" Minimum="0" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Grid.Row="0" Spacing="4">
+                                        <TextBlock Text="Y" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedElement.Y}" Minimum="0" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="0" Grid.Row="2" Spacing="4">
+                                        <TextBlock Text="Width" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedElement.Width}" Minimum="20" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Grid.Row="2" Spacing="4">
+                                        <TextBlock Text="Height" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedElement.Height}" Minimum="20" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- No Selection Message -->
+                            <StackPanel IsVisible="{Binding SelectedElement, Converter={x:Static ObjectConverters.IsNull}}"
+                                        Spacing="8"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,40">
+                                <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                          Width="32" Height="32"
+                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                          HorizontalAlignment="Center" />
+                                <TextBlock Text="No element selected"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Click an element on the canvas to edit its properties"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <!-- Step 3: Preview & Export -->
+            <Grid IsVisible="{Binding IsStep3}"
+                  ColumnDefinitions="*,300">
+
+                <!-- Preview Area -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource BackgroundSecondaryBrush}"
+                        Margin="24">
+                    <Grid RowDefinitions="*,Auto">
+                        <!-- Preview Image -->
+                        <Border Grid.Row="0"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="8,8,0,0">
+                            <ScrollViewer x:Name="PreviewScrollViewer"
+                                          HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Auto">
+                                <Image Source="{Binding PreviewImage}"
+                                       Stretch="None"
+                                       Margin="20">
+                                    <Image.RenderTransform>
+                                        <ScaleTransform ScaleX="{Binding PreviewZoom}" ScaleY="{Binding PreviewZoom}" />
+                                    </Image.RenderTransform>
+                                </Image>
+                            </ScrollViewer>
+                        </Border>
+
+                        <!-- Bottom Zoom Controls -->
+                        <Border Grid.Row="1"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="0,0,8,8"
+                                Padding="12,8">
+                            <Grid ColumnDefinitions="*,Auto,*">
+                                <Panel Grid.Column="0" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Button Classes="toolbar-button" Command="{Binding PreviewZoomOutCommand}" ToolTip.Tip="Zoom Out (Ctrl+-)">
+                                        <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"
+                                                  Width="16" Height="16" />
+                                    </Button>
+                                    <Slider Value="{Binding PreviewZoom}"
+                                            Minimum="0.25"
+                                            Maximum="2.0"
+                                            Width="150"
+                                            VerticalAlignment="Center" />
+                                    <Button Classes="toolbar-button" Command="{Binding PreviewZoomInCommand}" ToolTip.Tip="Zoom In (Ctrl++)">
+                                        <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z"
+                                                  Width="16" Height="16" />
+                                    </Button>
+                                    <TextBlock Text="{Binding PreviewZoom, StringFormat={}{0:P0}}"
+                                               VerticalAlignment="Center"
+                                               FontSize="12"
+                                               Width="50"
+                                               TextAlignment="Center"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <Button Classes="toolbar-button" Command="{Binding PreviewZoomFitCommand}" ToolTip.Tip="Fit to Window">
+                                        <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
+                                                  Width="16" Height="16" />
+                                    </Button>
+                                </StackPanel>
+                                <TextBlock Grid.Column="2"
+                                           Text="Ctrl+Scroll to zoom"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Export Settings -->
+                <Border Grid.Column="1"
+                        Background="{DynamicResource SurfaceBrush}"
+                        Margin="0,24,24,24"
+                        CornerRadius="12"
+                        Padding="24">
+                    <StackPanel Spacing="20">
+                        <TextBlock Text="Export Settings"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                        <!-- Format Selection -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Format"
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                            <ItemsControl ItemsSource="{Binding ExportFormats}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <RadioButton Margin="0,4"
+                                                     GroupName="ExportFormat">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding Description}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </RadioButton>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- Quality Slider -->
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="Quality"
+                                           FontSize="14"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding ExportQuality, StringFormat={}{0}%}"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                            </Grid>
+                            <Slider Value="{Binding ExportQuality}"
+                                    Minimum="50"
+                                    Maximum="100"
+                                    TickFrequency="5"
+                                    IsSnapToTickEnabled="True" />
+                        </StackPanel>
+
+                        <!-- File Path -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="File Path"
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding ExportFilePath}"
+                                         Watermark="Select file path..."
+                                         Padding="12,10" />
+                                <Button Grid.Column="1"
+                                        Content="Browse"
+                                        Margin="8,0,0,0"
+                                        Command="{Binding BrowseExportPathCommand}" />
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Options -->
+                        <StackPanel Spacing="8">
+                            <CheckBox Content="Open after export"
+                                      IsChecked="{Binding OpenAfterExport}" />
+                            <CheckBox Content="Include metadata"
+                                      IsChecked="{Binding IncludeMetadata}" />
+                        </StackPanel>
+
+                        <!-- Export Message -->
+                        <TextBlock Text="{Binding ExportMessage}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource SuccessBrush}"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding ExportMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Panel>
+
+        <!-- Footer Navigation -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="24,16">
+            <Grid ColumnDefinitions="*,Auto,*">
+                <!-- Previous Button -->
+                <Button Grid.Column="0"
+                        Classes="secondary-button"
+                        HorizontalAlignment="Left"
+                        Command="{Binding GoToPreviousStepCommand}"
+                        IsVisible="{Binding CanGoBack}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                  Width="16" Height="16" />
+                        <TextBlock Text="Previous" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Step Title -->
+                <TextBlock Grid.Column="1"
+                           Text="{Binding CurrentStepTitle}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           VerticalAlignment="Center" />
+
+                <!-- Next Button -->
+                <Button Grid.Column="2"
+                        Classes="primary-button"
+                        HorizontalAlignment="Right"
+                        Command="{Binding GoToNextStepCommand}"
+                        IsVisible="{Binding CanGoNext}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="Next" />
+                        <PathIcon Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                                  Width="16" Height="16"
+                                  Foreground="White" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Create Report Button (Final Step) -->
+                <Button Grid.Column="2"
+                        Classes="primary-button"
+                        HorizontalAlignment="Right"
+                        Command="{Binding ExportReportCommand}"
+                        IsVisible="{Binding IsOnFinalStep}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                  Width="16" Height="16"
+                                  Foreground="White" />
+                        <TextBlock Text="Create Report" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+
+    <!-- Page Settings Modal Overlay -->
+    <Border Background="#80000000"
+            IsVisible="{Binding IsPageSettingsOpen}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <modals:ReportPageSettingsModal DataContext="{Binding}"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+    </Border>
+
+    <!-- Save Template Modal Overlay -->
+    <Border Background="#80000000"
+            IsVisible="{Binding IsSaveTemplateOpen}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <modals:ReportSaveTemplateModal DataContext="{Binding}"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+    </Border>
+    </Panel>
+
+    <UserControl.Styles>
+        <!-- Toolbox Button -->
+        <Style Selector="Button.toolbox-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.toolbox-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+
+        <!-- Tab Button -->
+        <Style Selector="Button.tab-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Toolbar Button -->
+        <Style Selector="Button.toolbar-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.toolbar-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.toolbar-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.toolbar-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FEE2E2" />
+        </Style>
+        <Style Selector="Button.toolbar-button.danger:pointerover PathIcon">
+            <Setter Property="Foreground" Value="#DC2626" />
+        </Style>
+
+        <!-- Toolbar Toggle Button -->
+        <Style Selector="ToggleButton.toolbar-toggle">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="ToggleButton.toolbar-toggle:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="ToggleButton.toolbar-toggle:checked PathIcon">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="ToggleButton.toolbar-toggle PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Primary Button -->
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="20,12" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+
+        <!-- Secondary Button -->
+        <Style Selector="Button.secondary-button">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="20,12" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

@@ -21,6 +21,9 @@
         <!-- Charts -->
         <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc3.3" />
 
+        <!-- Graphics (for report rendering) -->
+        <PackageVersion Include="SkiaSharp" Version="3.116.1" />
+
         <!-- PDF -->
         <PackageVersion Include="QuestPDF" Version="2024.10.3" />
 
