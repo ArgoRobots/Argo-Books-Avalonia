@@ -84,6 +84,33 @@ public class EqualityConverter : IValueConverter
 }
 
 /// <summary>
+/// Converter that returns true if the bound integer value equals the parameter integer.
+/// Handles string parameter conversion for XAML compatibility.
+/// </summary>
+public class EqualConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value == null || parameter == null)
+            return false;
+
+        // Handle integer comparison with string parameter
+        if (value is int intValue && parameter is string strParam)
+        {
+            if (int.TryParse(strParam, out var paramInt))
+                return intValue == paramInt;
+        }
+
+        return value.Equals(parameter);
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
 /// Converter that returns PrimaryBrush if value equals CompareValue, otherwise BorderBrush.
 /// </summary>
 public class ThemeBorderBrushConverter : IValueConverter

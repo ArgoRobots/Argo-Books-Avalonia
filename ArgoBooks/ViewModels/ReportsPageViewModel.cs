@@ -153,6 +153,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private int _step1TabIndex;
 
+    [ObservableProperty]
+    private int _tablePropertiesTabIndex;
+
     public bool IsTemplatesTabSelected => Step1TabIndex == 0;
     public bool IsChartsTabSelected => Step1TabIndex == 1;
 
@@ -168,6 +171,15 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (int.TryParse(tabIndex, out var index))
         {
             Step1TabIndex = index;
+        }
+    }
+
+    [RelayCommand]
+    private void SetTablePropertiesTab(string tabIndex)
+    {
+        if (int.TryParse(tabIndex, out var index))
+        {
+            TablePropertiesTabIndex = index;
         }
     }
 

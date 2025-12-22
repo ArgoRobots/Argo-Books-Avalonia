@@ -554,10 +554,17 @@ public partial class ReportDesignCanvas : UserControl
 
     private void OnElementPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (sender is ReportElementBase element)
+        if (sender is ReportElementBase element && _elementControlMap.TryGetValue(element.Id, out var control))
         {
+            // Update position and size if those properties changed
+            if (e.PropertyName is nameof(ReportElementBase.X) or nameof(ReportElementBase.Y) or
+                nameof(ReportElementBase.Width) or nameof(ReportElementBase.Height) or nameof(ReportElementBase.ZOrder))
+            {
+                control.SyncFromElement();
+            }
+
             // Refresh the element's visual content when properties change
-            RefreshElementContent(element);
+            control.ElementContent = CreateElementContent(element);
         }
     }
 

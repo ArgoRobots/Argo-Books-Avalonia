@@ -14,6 +14,7 @@
 
     <UserControl.Resources>
         <converters:EqualityConverter x:Key="EqualityConverter" />
+        <converters:EqualConverter x:Key="EqualConverter" />
     </UserControl.Resources>
 
     <Design.DataContext>
@@ -749,7 +750,7 @@
                     <reports:ReportDesignCanvas x:Name="DesignCanvas"
                                                 Grid.Row="1"
                                                 Configuration="{Binding Configuration}"
-                                                ZoomLevel="{Binding ZoomLevel}"
+                                                ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
                                                 ShowGrid="{Binding ShowGrid}"
                                                 GridSize="{Binding GridSize}"
                                                 SnapToGrid="{Binding SnapToGrid}"
@@ -761,10 +762,10 @@
                         Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1,0,0,0"
-                        Padding="16">
+                        Padding="16,16,0,16">
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
-                        <StackPanel Spacing="16" MaxWidth="228">
+                        <StackPanel Spacing="16" Width="212" Margin="0,0,16,0">
                             <TextBlock Text="Properties"
                                        FontSize="14"
                                        FontWeight="SemiBold"
@@ -1032,110 +1033,152 @@
 
                             <!-- Table Properties -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsTableSelected}">
-                                <TextBlock Text="Data Configuration"
+                                <TextBlock Text="Table Properties"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Transaction Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TransactionTypes}"
-                                              SelectedItem="{Binding SelectedTableElement.TransactionType}"
-                                              HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <CheckBox Content="Include Returns" IsChecked="{Binding SelectedTableElement.IncludeReturns}" />
-                                <CheckBox Content="Include Losses" IsChecked="{Binding SelectedTableElement.IncludeLosses}" />
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Sort Order" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding TableSortOrders}"
-                                              SelectedItem="{Binding SelectedTableElement.SortOrder}"
-                                              HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Max Rows" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="50" />
+
+                                <!-- Tab Buttons -->
+                                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,8">
+                                    <Button Grid.Column="0"
+                                            Content="General"
+                                            Classes="tab-button"
+                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}"
+                                            Command="{Binding SetTablePropertiesTabCommand}"
+                                            CommandParameter="0" />
+                                    <Button Grid.Column="1"
+                                            Content="Style"
+                                            Classes="tab-button"
+                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}"
+                                            Command="{Binding SetTablePropertiesTabCommand}"
+                                            CommandParameter="1" />
+                                    <Button Grid.Column="2"
+                                            Content="Columns"
+                                            Classes="tab-button"
+                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}"
+                                            Command="{Binding SetTablePropertiesTabCommand}"
+                                            CommandParameter="2" />
+                                </Grid>
+
+                                <!-- General Tab -->
+                                <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Transaction Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding TransactionTypes}"
+                                                  SelectedItem="{Binding SelectedTableElement.TransactionType}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <CheckBox Content="Include Returns" IsChecked="{Binding SelectedTableElement.IncludeReturns}" />
+                                    <CheckBox Content="Include Losses" IsChecked="{Binding SelectedTableElement.IncludeLosses}" />
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Sort Order" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding TableSortOrders}"
+                                                  SelectedItem="{Binding SelectedTableElement.SortOrder}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Max Rows" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="50" />
+                                    </StackPanel>
                                 </StackPanel>
 
-                                <TextBlock Text="Display Options"
-                                           FontSize="12"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Margin="0,8,0,0" />
-                                <CheckBox Content="Show Headers" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
-                                <CheckBox Content="Show Grid Lines" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
-                                <CheckBox Content="Show Totals Row" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
-                                <CheckBox Content="Alternate Row Colors" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
-                                <CheckBox Content="Auto Size Columns" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
+                                <!-- Style Tab -->
+                                <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}">
+                                    <TextBlock Text="Display Options"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <CheckBox Content="Show Headers" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
+                                    <CheckBox Content="Show Grid Lines" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
+                                    <CheckBox Content="Show Totals Row" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
+                                    <CheckBox Content="Alternate Row Colors" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
+                                    <CheckBox Content="Auto Size Columns" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
 
-                                <TextBlock Text="Column Selection"
-                                           FontSize="12"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Margin="0,8,0,0" />
-                                <CheckBox Content="Date" IsChecked="{Binding SelectedTableElement.ShowDateColumn}" />
-                                <CheckBox Content="Transaction ID" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn}" />
-                                <CheckBox Content="Company" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
-                                <CheckBox Content="Product" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
-                                <CheckBox Content="Quantity" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
-                                <CheckBox Content="Unit Price" IsChecked="{Binding SelectedTableElement.ShowUnitPriceColumn}" />
-                                <CheckBox Content="Total" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
-                                <CheckBox Content="Status" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
+                                    <TextBlock Text="Font"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,8,0,0" />
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <NumericUpDown Value="{Binding SelectedTableElement.FontSize}" Minimum="6" Maximum="24" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <ComboBox ItemsSource="{Binding FontFamilies}"
+                                                      SelectedItem="{Binding SelectedTableElement.FontFamily}"
+                                                      HorizontalAlignment="Stretch" />
+                                        </StackPanel>
+                                    </Grid>
 
-                                <TextBlock Text="Formatting"
-                                           FontSize="12"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Margin="0,8,0,0" />
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedTableElement.FontSize}" Minimum="6" Maximum="24" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding FontFamilies}"
-                                              SelectedItem="{Binding SelectedTableElement.FontFamily}"
-                                              HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Data Row Height" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Header Row Height" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Cell Padding" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedTableElement.CellPadding}" Minimum="0" Maximum="20" />
+                                    <TextBlock Text="Row Heights"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,8,0,0" />
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Header" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <NumericUpDown Value="{Binding SelectedTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Data" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <NumericUpDown Value="{Binding SelectedTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Cell Padding" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <NumericUpDown Value="{Binding SelectedTableElement.CellPadding}" Minimum="0" Maximum="20" />
+                                    </StackPanel>
+
+                                    <TextBlock Text="Colors"
+                                               FontSize="11"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Margin="0,8,0,0" />
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Header BG" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderBackgroundColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Header Text" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderTextColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Row Text" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.DataRowTextColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Grid Lines" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.GridLineColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid ColumnDefinitions="*,8,*">
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="Base Row" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.BaseRowColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="4">
+                                            <TextBlock Text="Alt Row" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.AlternateRowColor, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Grid>
                                 </StackPanel>
 
-                                <TextBlock Text="Colors"
-                                           FontSize="12"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Margin="0,8,0,0" />
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Header Background" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderBackgroundColor, Mode=TwoWay}" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Header Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderTextColor, Mode=TwoWay}" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Data Row Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.DataRowTextColor, Mode=TwoWay}" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Grid Line Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.GridLineColor, Mode=TwoWay}" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Base Row Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.BaseRowColor, Mode=TwoWay}" />
-                                </StackPanel>
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Alternate Row Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.AlternateRowColor, Mode=TwoWay}" />
+                                <!-- Columns Tab -->
+                                <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}">
+                                    <CheckBox Content="Date" IsChecked="{Binding SelectedTableElement.ShowDateColumn}" />
+                                    <CheckBox Content="Transaction ID" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn}" />
+                                    <CheckBox Content="Company" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
+                                    <CheckBox Content="Product" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
+                                    <CheckBox Content="Quantity" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
+                                    <CheckBox Content="Unit Price" IsChecked="{Binding SelectedTableElement.ShowUnitPriceColumn}" />
+                                    <CheckBox Content="Total" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
+                                    <CheckBox Content="Status" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -1598,13 +1641,29 @@
 
         <!-- Tab Button -->
         <Style Selector="Button.tab-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="8,6" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Margin" Value="1" />
+        </Style>
+        <Style Selector="Button.tab-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
         </Style>
         <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.tab-button.selected">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.tab-button.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         </Style>
 
         <!-- Toolbar Button -->

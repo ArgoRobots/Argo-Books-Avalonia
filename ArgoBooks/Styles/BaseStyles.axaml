@@ -139,4 +139,26 @@
         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
     </Style>
 
+    <!-- Global NumericUpDown Styling - Compact spin buttons -->
+    <Style Selector="NumericUpDown">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="MinHeight" Value="32" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ ButtonSpinner">
+        <Setter Property="MinWidth" Value="0" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ Border#BorderElement">
+        <Setter Property="MinWidth" Value="0" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton">
+        <Setter Property="MinWidth" Value="20" />
+        <Setter Property="Width" Value="20" />
+        <Setter Property="Padding" Value="2" />
+    </Style>
+    <Style Selector="NumericUpDown /template/ TextBox">
+        <Setter Property="MinWidth" Value="40" />
+    </Style>
+
 </Styles>
