@@ -390,6 +390,13 @@ public partial class ReportDesignCanvas : UserControl
             _elementsCanvas.Height = _pageHeight;
         }
 
+        // Set explicit dimensions on grid canvas to match page size
+        if (_gridLinesCanvas != null)
+        {
+            _gridLinesCanvas.Width = _pageWidth;
+            _gridLinesCanvas.Height = _pageHeight;
+        }
+
         UpdateMarginGuides();
         UpdateHeaderFooterAreas();
         DrawGrid();
@@ -446,6 +453,36 @@ public partial class ReportDesignCanvas : UserControl
 
         var width = _pageWidth;
         var height = _pageHeight;
+
+        // Draw edge lines (border frame) at page boundaries
+        // Top edge
+        _gridLinesCanvas.Children.Add(new Line
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(width, 0),
+            Classes = { "grid-line-major" }
+        });
+        // Bottom edge
+        _gridLinesCanvas.Children.Add(new Line
+        {
+            StartPoint = new Point(0, height),
+            EndPoint = new Point(width, height),
+            Classes = { "grid-line-major" }
+        });
+        // Left edge
+        _gridLinesCanvas.Children.Add(new Line
+        {
+            StartPoint = new Point(0, 0),
+            EndPoint = new Point(0, height),
+            Classes = { "grid-line-major" }
+        });
+        // Right edge
+        _gridLinesCanvas.Children.Add(new Line
+        {
+            StartPoint = new Point(width, 0),
+            EndPoint = new Point(width, height),
+            Classes = { "grid-line-major" }
+        });
 
         // Draw vertical lines
         for (double x = GridSize; x < width; x += GridSize)

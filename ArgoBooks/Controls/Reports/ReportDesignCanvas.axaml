@@ -14,7 +14,7 @@
         <!-- Page shadow style -->
         <Style Selector="Border.page-shadow">
             <Setter Property="BoxShadow" Value="2 2 10 0 #40000000"/>
-            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="CornerRadius" Value="0"/>
         </Style>
 
         <!-- Margin guide style -->
