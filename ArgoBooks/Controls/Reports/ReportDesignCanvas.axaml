@@ -55,9 +55,7 @@
                   Background="#E0E0E0">
 
         <!-- Zoom container using LayoutTransformControl for proper scroll behavior -->
-        <LayoutTransformControl x:Name="ZoomTransformControl"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center">
+        <LayoutTransformControl x:Name="ZoomTransformControl">
             <Border x:Name="ZoomContainer"
                     Padding="40"
                     Background="#E0E0E0">
