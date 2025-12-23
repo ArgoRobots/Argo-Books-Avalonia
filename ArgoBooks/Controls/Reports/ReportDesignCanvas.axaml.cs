@@ -519,25 +519,27 @@ public partial class ReportDesignCanvas : UserControl
         // Apply the new zoom level (this triggers ApplyZoom via PropertyChanged)
         ZoomLevel = newZoom;
 
-        // After zoom, this unscaled point will be at: unscaledPoint * newZoom
-        // We want it to appear at the same viewport position
-        // So: newOffset = unscaledPoint * newZoom - viewportPoint
-        var newOffsetX = unscaledX * newZoom - viewportPoint.X;
-        var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
+        // Defer offset calculation until after layout updates
+        // This ensures scrollbar appearance is accounted for
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (_scrollViewer == null) return;
 
-        // Calculate the new extent based on the zoom ratio
-        var zoomRatio = newZoom / oldZoom;
-        var newExtentWidth = _scrollViewer.Extent.Width * zoomRatio;
-        var newExtentHeight = _scrollViewer.Extent.Height * zoomRatio;
+            // After zoom, this unscaled point will be at: unscaledPoint * newZoom
+            // We want it to appear at the same viewport position
+            // So: newOffset = unscaledPoint * newZoom - viewportPoint
+            var newOffsetX = unscaledX * newZoom - viewportPoint.X;
+            var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
 
-        // Clamp to valid scroll bounds
-        var maxX = Math.Max(0, newExtentWidth - _scrollViewer.Viewport.Width);
-        var maxY = Math.Max(0, newExtentHeight - _scrollViewer.Viewport.Height);
+            // Use actual extent and viewport after layout
+            var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+            var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
 
-        _scrollViewer.Offset = new Vector(
-            Math.Clamp(newOffsetX, 0, maxX),
-            Math.Clamp(newOffsetY, 0, maxY)
-        );
+            _scrollViewer.Offset = new Vector(
+                Math.Clamp(newOffsetX, 0, maxX),
+                Math.Clamp(newOffsetY, 0, maxY)
+            );
+        }, Avalonia.Threading.DispatcherPriority.Layout);
     }
 
     /// <summary>
