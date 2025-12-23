@@ -1202,13 +1202,16 @@
                             <ScrollViewer x:Name="PreviewScrollViewer"
                                           HorizontalScrollBarVisibility="Auto"
                                           VerticalScrollBarVisibility="Auto">
-                                <Image Source="{Binding PreviewImage}"
-                                       Stretch="None"
-                                       Margin="20">
-                                    <Image.RenderTransform>
-                                        <ScaleTransform ScaleX="{Binding PreviewZoom}" ScaleY="{Binding PreviewZoom}" />
-                                    </Image.RenderTransform>
-                                </Image>
+                                <!-- Zoom container using LayoutTransformControl for proper scroll behavior -->
+                                <LayoutTransformControl x:Name="PreviewZoomTransformControl">
+                                    <Border Padding="20" Background="{DynamicResource SurfaceBrush}">
+                                        <Image x:Name="PreviewImage"
+                                               Source="{Binding PreviewImage}"
+                                               Width="{Binding PreviewDisplayWidth}"
+                                               Height="{Binding PreviewDisplayHeight}"
+                                               Stretch="Fill" />
+                                    </Border>
+                                </LayoutTransformControl>
                             </ScrollViewer>
                         </Border>
 

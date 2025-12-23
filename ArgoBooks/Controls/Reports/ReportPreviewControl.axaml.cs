@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -128,6 +129,7 @@ public partial class ReportPreviewControl : UserControl
     private NumericUpDown? _pageNumberInput;
     private ComboBox? _zoomComboBox;
     private ScrollViewer? _previewScrollViewer;
+    private LayoutTransformControl? _zoomTransformControl;
 
     private Bitmap? _currentBitmap;
 
@@ -135,6 +137,16 @@ public partial class ReportPreviewControl : UserControl
     private double _pageHeight;
 
     private bool _pendingZoomToFit;
+
+    // Right-click panning
+    private bool _isPanning;
+    private Point _panStartPoint;
+    private Vector _panStartOffset;
+
+    // Rubberband overscroll effect
+    private Vector _overscroll;
+    private const double OverscrollResistance = 0.3; // How much resistance when overscrolling (0-1)
+    private const double OverscrollMaxDistance = 100; // Maximum overscroll distance in pixels
 
     #endregion
 
@@ -157,11 +169,14 @@ public partial class ReportPreviewControl : UserControl
         _pageNumberInput = this.FindControl<NumericUpDown>("PageNumberInput");
         _zoomComboBox = this.FindControl<ComboBox>("ZoomComboBox");
         _previewScrollViewer = this.FindControl<ScrollViewer>("PreviewScrollViewer");
+        _zoomTransformControl = this.FindControl<LayoutTransformControl>("ZoomTransformControl");
 
         // Subscribe to layout updated to handle deferred zoom
         if (_previewScrollViewer != null)
         {
             _previewScrollViewer.LayoutUpdated += OnScrollViewerLayoutUpdated;
+            // Intercept wheel events on the ScrollViewer to zoom instead of scroll
+            _previewScrollViewer.AddHandler(PointerWheelChangedEvent, OnScrollViewerPointerWheelChanged, RoutingStrategies.Tunnel);
         }
     }
 
@@ -326,10 +341,9 @@ public partial class ReportPreviewControl : UserControl
 
     private void ApplyZoom()
     {
-        if (_zoomContainer == null) return;
+        if (_zoomTransformControl == null) return;
 
-        _zoomContainer.RenderTransform = new ScaleTransform(ZoomLevel, ZoomLevel);
-        _zoomContainer.RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
+        _zoomTransformControl.LayoutTransform = new ScaleTransform(ZoomLevel, ZoomLevel);
 
         UpdateZoomComboBox();
     }
@@ -413,6 +427,65 @@ public partial class ReportPreviewControl : UserControl
         var scaleY = viewportHeight / _pageHeight;
 
         ZoomLevel = Math.Min(scaleX, scaleY);
+    }
+
+    /// <summary>
+    /// Handles mouse wheel events to zoom at the cursor position.
+    /// </summary>
+    private void OnScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        // Intercept wheel events to zoom instead of scroll
+        var delta = e.Delta.Y;
+        if (delta != 0 && _zoomTransformControl != null)
+        {
+            // Get cursor position relative to the scroll viewer's viewport
+            var viewportPoint = e.GetPosition(_previewScrollViewer);
+            // Get cursor position relative to the scaled content
+            var contentPoint = e.GetPosition(_zoomTransformControl);
+            ZoomAtPoint(delta > 0, viewportPoint, contentPoint);
+        }
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// Zooms at a specific point, keeping that point fixed on screen.
+    /// </summary>
+    /// <param name="zoomIn">True to zoom in, false to zoom out.</param>
+    /// <param name="viewportPoint">The cursor position relative to the scroll viewer.</param>
+    /// <param name="scaledContentPoint">The cursor position relative to the scaled content.</param>
+    private void ZoomAtPoint(bool zoomIn, Point viewportPoint, Point scaledContentPoint)
+    {
+        if (_previewScrollViewer == null || _zoomTransformControl == null) return;
+
+        var oldZoom = ZoomLevel;
+        var newZoom = zoomIn
+            ? Math.Min(oldZoom + 0.25, 4.0)
+            : Math.Max(oldZoom - 0.25, 0.25);
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        // Convert scaled content point to unscaled coordinates
+        var unscaledX = scaledContentPoint.X / oldZoom;
+        var unscaledY = scaledContentPoint.Y / oldZoom;
+
+        // Apply the zoom
+        ZoomLevel = newZoom;
+
+        // Force layout to update so we get accurate extent/viewport values
+        _zoomTransformControl.UpdateLayout();
+
+        // Now calculate offset with actual post-zoom values
+        var newOffsetX = unscaledX * newZoom - viewportPoint.X;
+        var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
+
+        // Use actual extent and viewport after layout update
+        var maxX = Math.Max(0, _previewScrollViewer.Extent.Width - _previewScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _previewScrollViewer.Extent.Height - _previewScrollViewer.Viewport.Height);
+
+        _previewScrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
     }
 
     #endregion
@@ -505,6 +578,153 @@ public partial class ReportPreviewControl : UserControl
     {
         RefreshRequested?.Invoke(this, EventArgs.Empty);
         GeneratePreviewAsync();
+    }
+
+    #endregion
+
+    #region Panning and Overscroll
+
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+
+        var point = e.GetCurrentPoint(this);
+
+        if (point.Properties.IsRightButtonPressed)
+        {
+            // Start panning with right mouse button
+            _isPanning = true;
+            _panStartPoint = e.GetPosition(this);
+            _panStartOffset = new Vector(_previewScrollViewer?.Offset.X ?? 0, _previewScrollViewer?.Offset.Y ?? 0);
+            e.Pointer.Capture(this);
+            Cursor = new Cursor(StandardCursorType.SizeAll);
+            e.Handled = true;
+        }
+    }
+
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+
+        if (_isPanning && _previewScrollViewer != null)
+        {
+            var currentPoint = e.GetPosition(this);
+            var delta = _panStartPoint - currentPoint;
+
+            // Calculate desired offset
+            var desiredX = _panStartOffset.X + delta.X;
+            var desiredY = _panStartOffset.Y + delta.Y;
+
+            // Calculate bounds
+            var maxX = Math.Max(0, _previewScrollViewer.Extent.Width - _previewScrollViewer.Viewport.Width);
+            var maxY = Math.Max(0, _previewScrollViewer.Extent.Height - _previewScrollViewer.Viewport.Height);
+
+            // Calculate overscroll with resistance
+            double overscrollX = 0;
+            double overscrollY = 0;
+
+            double clampedX = desiredX;
+            double clampedY = desiredY;
+
+            if (desiredX < 0)
+            {
+                overscrollX = desiredX * OverscrollResistance;
+                overscrollX = Math.Max(overscrollX, -OverscrollMaxDistance);
+                clampedX = 0;
+            }
+            else if (desiredX > maxX)
+            {
+                overscrollX = (desiredX - maxX) * OverscrollResistance;
+                overscrollX = Math.Min(overscrollX, OverscrollMaxDistance);
+                clampedX = maxX;
+            }
+
+            if (desiredY < 0)
+            {
+                overscrollY = desiredY * OverscrollResistance;
+                overscrollY = Math.Max(overscrollY, -OverscrollMaxDistance);
+                clampedY = 0;
+            }
+            else if (desiredY > maxY)
+            {
+                overscrollY = (desiredY - maxY) * OverscrollResistance;
+                overscrollY = Math.Min(overscrollY, OverscrollMaxDistance);
+                clampedY = maxY;
+            }
+
+            // Apply clamped scroll offset
+            _previewScrollViewer.Offset = new Vector(clampedX, clampedY);
+
+            // Apply overscroll visual effect
+            _overscroll = new Vector(overscrollX, overscrollY);
+            ApplyOverscrollTransform();
+
+            e.Handled = true;
+        }
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+
+        if (_isPanning)
+        {
+            _isPanning = false;
+            e.Pointer.Capture(null);
+            Cursor = Cursor.Default;
+
+            // Animate overscroll back to zero (rubberband snap-back)
+            if (_overscroll.X != 0 || _overscroll.Y != 0)
+            {
+                AnimateOverscrollSnapBack();
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Applies the current overscroll as a visual transform.
+    /// </summary>
+    private void ApplyOverscrollTransform()
+    {
+        if (_zoomTransformControl == null) return;
+
+        // Apply translation to show overscroll effect
+        // The overscroll is inverted because dragging right should show content from left
+        var translateTransform = new TranslateTransform(-_overscroll.X, -_overscroll.Y);
+        _zoomTransformControl.RenderTransform = translateTransform;
+    }
+
+    /// <summary>
+    /// Animates the overscroll back to zero with a spring-like effect.
+    /// </summary>
+    private async void AnimateOverscrollSnapBack()
+    {
+        const int steps = 12;
+        const int delayMs = 16; // ~60fps
+
+        var startOverscroll = _overscroll;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            // Ease-out curve for smooth deceleration
+            double t = i / (double)steps;
+            double easeOut = 1 - Math.Pow(1 - t, 3); // Cubic ease-out
+
+            _overscroll = new Vector(
+                startOverscroll.X * (1 - easeOut),
+                startOverscroll.Y * (1 - easeOut)
+            );
+
+            ApplyOverscrollTransform();
+
+            await Task.Delay(delayMs);
+        }
+
+        // Ensure we end at exactly zero
+        _overscroll = new Vector(0, 0);
+        ApplyOverscrollTransform();
     }
 
     #endregion

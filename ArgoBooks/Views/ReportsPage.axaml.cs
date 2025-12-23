@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 
 namespace ArgoBooks.Views;
 
@@ -12,9 +13,18 @@ public partial class ReportsPage : UserControl
 {
     private ReportDesignCanvas? _designCanvas;
     private ScrollViewer? _previewScrollViewer;
+    private LayoutTransformControl? _previewZoomTransformControl;
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
+
+    // Preview zoom level (managed here since we're not using binding anymore)
+    private double _previewZoomLevel = 1.0;
+
+    // Rubberband overscroll effect for preview
+    private Vector _previewOverscroll;
+    private const double OverscrollResistance = 0.3;
+    private const double OverscrollMaxDistance = 100;
 
     public ReportsPage()
     {
@@ -27,6 +37,7 @@ public partial class ReportsPage : UserControl
 
         _designCanvas = this.FindControl<ReportDesignCanvas>("DesignCanvas");
         _previewScrollViewer = this.FindControl<ScrollViewer>("PreviewScrollViewer");
+        _previewZoomTransformControl = this.FindControl<LayoutTransformControl>("PreviewZoomTransformControl");
 
         // Wire up zoom, pan, and selection for the design canvas
         if (_designCanvas != null)
@@ -38,14 +49,18 @@ public partial class ReportsPage : UserControl
             _designCanvas.SelectionChanged += OnCanvasSelectionChanged;
         }
 
-        // Wire up CTRL+scroll zoom and right-click pan for the preview canvas
+        // Wire up zoom-to-cursor and right-click pan with rubberband for the preview
         if (_previewScrollViewer != null)
         {
-            _previewScrollViewer.PointerWheelChanged += OnPreviewPointerWheelChanged;
+            // Use tunnel routing to intercept before ScrollViewer handles it
+            _previewScrollViewer.AddHandler(PointerWheelChangedEvent, OnPreviewPointerWheelChanged, RoutingStrategies.Tunnel);
             _previewScrollViewer.PointerPressed += OnPreviewPointerPressed;
             _previewScrollViewer.PointerMoved += OnPreviewPointerMoved;
             _previewScrollViewer.PointerReleased += OnPreviewPointerReleased;
         }
+
+        // Apply initial zoom
+        ApplyPreviewZoom();
 
         // Subscribe to ViewModel property changes to sync canvas elements
         if (DataContext is ReportsPageViewModel vm)
@@ -79,7 +94,7 @@ public partial class ReportsPage : UserControl
 
         if (_previewScrollViewer != null)
         {
-            _previewScrollViewer.PointerWheelChanged -= OnPreviewPointerWheelChanged;
+            _previewScrollViewer.RemoveHandler(PointerWheelChangedEvent, OnPreviewPointerWheelChanged);
             _previewScrollViewer.PointerPressed -= OnPreviewPointerPressed;
             _previewScrollViewer.PointerMoved -= OnPreviewPointerMoved;
             _previewScrollViewer.PointerReleased -= OnPreviewPointerReleased;
@@ -100,6 +115,11 @@ public partial class ReportsPage : UserControl
         {
             _designCanvas?.SyncElements();
             _designCanvas?.RefreshAllElements();
+        }
+        // When PreviewZoom changes from slider/buttons, sync to our local zoom
+        else if (e.PropertyName == nameof(ReportsPageViewModel.PreviewZoom))
+        {
+            SyncPreviewZoomFromViewModel();
         }
     }
 
@@ -134,15 +154,69 @@ public partial class ReportsPage : UserControl
 
     private void OnPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        // Always zoom with scroll wheel (no CTRL required)
+        // Zoom at cursor position
+        if (_previewScrollViewer != null && _previewZoomTransformControl != null)
+        {
+            var viewportPoint = e.GetPosition(_previewScrollViewer);
+            var contentPoint = e.GetPosition(_previewZoomTransformControl);
+            PreviewZoomAtPoint(e.Delta.Y > 0, viewportPoint, contentPoint);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// Zooms the preview at a specific point, keeping that point fixed on screen.
+    /// </summary>
+    private void PreviewZoomAtPoint(bool zoomIn, Point viewportPoint, Point scaledContentPoint)
+    {
+        if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
+
+        var oldZoom = _previewZoomLevel;
+        var newZoom = zoomIn
+            ? Math.Min(oldZoom + 0.25, 4.0)
+            : Math.Max(oldZoom - 0.25, 0.25);
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        // Convert scaled content point to unscaled coordinates
+        var unscaledX = scaledContentPoint.X / oldZoom;
+        var unscaledY = scaledContentPoint.Y / oldZoom;
+
+        // Apply the zoom
+        _previewZoomLevel = newZoom;
+        ApplyPreviewZoom();
+
+        // Force layout to update so we get accurate extent/viewport values
+        _previewZoomTransformControl.UpdateLayout();
+
+        // Now calculate offset with actual post-zoom values
+        var newOffsetX = unscaledX * newZoom - viewportPoint.X;
+        var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
+
+        // Use actual extent and viewport after layout update
+        var maxX = Math.Max(0, _previewScrollViewer.Extent.Width - _previewScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _previewScrollViewer.Extent.Height - _previewScrollViewer.Viewport.Height);
+
+        _previewScrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
+
+        // Update the ViewModel's PreviewZoom to keep slider in sync
         if (DataContext is ReportsPageViewModel vm)
         {
-            if (e.Delta.Y > 0)
-                vm.PreviewZoomInCommand.Execute(null);
-            else if (e.Delta.Y < 0)
-                vm.PreviewZoomOutCommand.Execute(null);
+            vm.PreviewZoom = newZoom;
+        }
+    }
 
-            e.Handled = true;
+    /// <summary>
+    /// Applies the current zoom level to the preview.
+    /// </summary>
+    private void ApplyPreviewZoom()
+    {
+        if (_previewZoomTransformControl != null)
+        {
+            _previewZoomTransformControl.LayoutTransform = new ScaleTransform(_previewZoomLevel, _previewZoomLevel);
         }
     }
 
@@ -194,7 +268,7 @@ public partial class ReportsPage : UserControl
         }
     }
 
-    // Right-click pan for preview scroll viewer
+    // Right-click pan for preview scroll viewer with rubber band effect
     private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         var point = e.GetCurrentPoint(_previewScrollViewer);
@@ -204,7 +278,7 @@ public partial class ReportsPage : UserControl
             _panStartPoint = e.GetPosition(_previewScrollViewer);
             _panStartOffset = new Vector(_previewScrollViewer.Offset.X, _previewScrollViewer.Offset.Y);
             e.Pointer.Capture(_previewScrollViewer);
-            _previewScrollViewer.Cursor = new Cursor(StandardCursorType.Hand);
+            _previewScrollViewer.Cursor = new Cursor(StandardCursorType.SizeAll);
             e.Handled = true;
         }
     }
@@ -215,9 +289,55 @@ public partial class ReportsPage : UserControl
         {
             var currentPoint = e.GetPosition(_previewScrollViewer);
             var delta = _panStartPoint - currentPoint;
-            _previewScrollViewer.Offset = new Vector(
-                _panStartOffset.X + delta.X,
-                _panStartOffset.Y + delta.Y);
+
+            // Calculate desired offset
+            var desiredX = _panStartOffset.X + delta.X;
+            var desiredY = _panStartOffset.Y + delta.Y;
+
+            // Calculate bounds
+            var maxX = Math.Max(0, _previewScrollViewer.Extent.Width - _previewScrollViewer.Viewport.Width);
+            var maxY = Math.Max(0, _previewScrollViewer.Extent.Height - _previewScrollViewer.Viewport.Height);
+
+            // Calculate overscroll with resistance
+            double overscrollX = 0;
+            double overscrollY = 0;
+
+            double clampedX = desiredX;
+            double clampedY = desiredY;
+
+            if (desiredX < 0)
+            {
+                overscrollX = desiredX * OverscrollResistance;
+                overscrollX = Math.Max(overscrollX, -OverscrollMaxDistance);
+                clampedX = 0;
+            }
+            else if (desiredX > maxX)
+            {
+                overscrollX = (desiredX - maxX) * OverscrollResistance;
+                overscrollX = Math.Min(overscrollX, OverscrollMaxDistance);
+                clampedX = maxX;
+            }
+
+            if (desiredY < 0)
+            {
+                overscrollY = desiredY * OverscrollResistance;
+                overscrollY = Math.Max(overscrollY, -OverscrollMaxDistance);
+                clampedY = 0;
+            }
+            else if (desiredY > maxY)
+            {
+                overscrollY = (desiredY - maxY) * OverscrollResistance;
+                overscrollY = Math.Min(overscrollY, OverscrollMaxDistance);
+                clampedY = maxY;
+            }
+
+            // Apply clamped scroll offset
+            _previewScrollViewer.Offset = new Vector(clampedX, clampedY);
+
+            // Apply overscroll visual effect
+            _previewOverscroll = new Vector(overscrollX, overscrollY);
+            ApplyPreviewOverscrollTransform();
+
             e.Handled = true;
         }
     }
@@ -229,8 +349,59 @@ public partial class ReportsPage : UserControl
             _isPanning = false;
             e.Pointer.Capture(null);
             _previewScrollViewer.Cursor = new Cursor(StandardCursorType.Arrow);
+
+            // Animate overscroll back to zero (rubberband snap-back)
+            if (_previewOverscroll.X != 0 || _previewOverscroll.Y != 0)
+            {
+                AnimatePreviewOverscrollSnapBack();
+            }
+
             e.Handled = true;
         }
+    }
+
+    /// <summary>
+    /// Applies the current overscroll as a visual transform on the preview.
+    /// </summary>
+    private void ApplyPreviewOverscrollTransform()
+    {
+        if (_previewZoomTransformControl == null) return;
+
+        // Apply translation to show overscroll effect
+        // The overscroll is inverted because dragging right should show content from left
+        var translateTransform = new TranslateTransform(-_previewOverscroll.X, -_previewOverscroll.Y);
+        _previewZoomTransformControl.RenderTransform = translateTransform;
+    }
+
+    /// <summary>
+    /// Animates the preview overscroll back to zero with a spring-like effect.
+    /// </summary>
+    private async void AnimatePreviewOverscrollSnapBack()
+    {
+        const int steps = 12;
+        const int delayMs = 16; // ~60fps
+
+        var startOverscroll = _previewOverscroll;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            // Ease-out curve for smooth deceleration
+            double t = i / (double)steps;
+            double easeOut = 1 - Math.Pow(1 - t, 3); // Cubic ease-out
+
+            _previewOverscroll = new Vector(
+                startOverscroll.X * (1 - easeOut),
+                startOverscroll.Y * (1 - easeOut)
+            );
+
+            ApplyPreviewOverscrollTransform();
+
+            await Task.Delay(delayMs);
+        }
+
+        // Ensure we end at exactly zero
+        _previewOverscroll = new Vector(0, 0);
+        ApplyPreviewOverscrollTransform();
     }
 
     /// <summary>
@@ -246,7 +417,51 @@ public partial class ReportsPage : UserControl
     /// </summary>
     public void OnPreviewZoomFitClick(object? sender, RoutedEventArgs e)
     {
-        var previewControl = this.FindControl<ReportPreviewControl>("PreviewControl");
-        previewControl?.ZoomToFitPage();
+        PreviewZoomToFit();
+    }
+
+    /// <summary>
+    /// Zooms the preview to fit the entire content in the viewport.
+    /// </summary>
+    private void PreviewZoomToFit()
+    {
+        if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
+        if (DataContext is not ReportsPageViewModel vm) return;
+
+        // Use the display dimensions (original page size, not the 2x rendered size)
+        var imageWidth = vm.PreviewDisplayWidth;
+        var imageHeight = vm.PreviewDisplayHeight;
+
+        if (imageWidth <= 0 || imageHeight <= 0) return;
+
+        var viewportWidth = _previewScrollViewer.Bounds.Width - 40; // Account for padding
+        var viewportHeight = _previewScrollViewer.Bounds.Height - 40;
+
+        if (viewportWidth <= 0 || viewportHeight <= 0) return;
+
+        var scaleX = viewportWidth / imageWidth;
+        var scaleY = viewportHeight / imageHeight;
+
+        _previewZoomLevel = Math.Min(scaleX, scaleY);
+        _previewZoomLevel = Math.Clamp(_previewZoomLevel, 0.25, 4.0);
+        ApplyPreviewZoom();
+
+        // Update ViewModel
+        vm.PreviewZoom = _previewZoomLevel;
+    }
+
+    /// <summary>
+    /// Syncs our local zoom level from the ViewModel (when slider changes).
+    /// </summary>
+    private void SyncPreviewZoomFromViewModel()
+    {
+        if (DataContext is ReportsPageViewModel vm)
+        {
+            if (Math.Abs(_previewZoomLevel - vm.PreviewZoom) > 0.001)
+            {
+                _previewZoomLevel = vm.PreviewZoom;
+                ApplyPreviewZoom();
+            }
+        }
     }
 }

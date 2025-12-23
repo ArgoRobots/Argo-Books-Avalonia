@@ -133,27 +133,29 @@
                       VerticalScrollBarVisibility="Auto"
                       Background="#E0E0E0">
 
-            <Border Padding="40"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-
-                <!-- Page container with zoom transform -->
+            <!-- Zoom container using LayoutTransformControl for proper scroll behavior -->
+            <LayoutTransformControl x:Name="ZoomTransformControl">
                 <Border x:Name="ZoomContainer"
-                        Classes="page-shadow"
-                        HorizontalAlignment="Center">
+                        Padding="40"
+                        Background="#E0E0E0">
 
-                    <!-- Page content -->
-                    <Border x:Name="PageBorder"
-                            Background="White"
-                            ClipToBounds="True">
+                    <!-- Page container with shadow -->
+                    <Border Classes="page-shadow"
+                            HorizontalAlignment="Center">
 
-                        <!-- Rendered preview image -->
-                        <Image x:Name="PreviewImage"
-                               Stretch="None"
-                               RenderOptions.BitmapInterpolationMode="HighQuality"/>
+                        <!-- Page content -->
+                        <Border x:Name="PageBorder"
+                                Background="White"
+                                ClipToBounds="True">
+
+                            <!-- Rendered preview image -->
+                            <Image x:Name="PreviewImage"
+                                   Stretch="None"
+                                   RenderOptions.BitmapInterpolationMode="HighQuality"/>
+                        </Border>
                     </Border>
                 </Border>
-            </Border>
+            </LayoutTransformControl>
         </ScrollViewer>
 
         <!-- Loading overlay -->

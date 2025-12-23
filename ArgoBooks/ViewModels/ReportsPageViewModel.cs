@@ -839,6 +839,12 @@ public partial class ReportsPageViewModel : ViewModelBase
     private double _previewZoom = 1.0;
 
     [ObservableProperty]
+    private double _previewDisplayWidth = 612;
+
+    [ObservableProperty]
+    private double _previewDisplayHeight = 792;
+
+    [ObservableProperty]
     private bool _isExporting;
 
     [ObservableProperty]
@@ -856,11 +862,18 @@ public partial class ReportsPageViewModel : ViewModelBase
         try
         {
             var companyData = App.CompanyManager?.CompanyData;
-            // Use 1x scale for preview display (3x scale is only for high-res export)
             var (width, height) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
+
+            // Store display dimensions (original page size)
+            PreviewDisplayWidth = width;
+            PreviewDisplayHeight = height;
+
+            // Render at 2x resolution for sharper zoom, but display at original size
+            const int resolutionMultiplier = 2;
             using var renderer = new ReportRenderer(Configuration, companyData, 1f);
-            using var skBitmap = renderer.CreatePreview(width, height);
+            using var skBitmap = renderer.CreatePreview(width * resolutionMultiplier, height * resolutionMultiplier);
             PreviewImage = ConvertToBitmap(skBitmap);
+
             // Reset zoom to 100% when preview is regenerated
             PreviewZoom = 1.0;
         }
