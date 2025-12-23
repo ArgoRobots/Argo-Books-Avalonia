@@ -209,8 +209,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Create user panel with navigation service and header view model
         UserPanelViewModel = new UserPanelViewModel(navigationService, HeaderViewModel);
 
-        // Create file menu panel with navigation service
+        // Create file menu panel with navigation service and link to sidebar for dynamic positioning
         FileMenuPanelViewModel = new FileMenuPanelViewModel(navigationService);
+        FileMenuPanelViewModel.SetSidebarViewModel(SidebarViewModel);
 
         // Create profile modal with navigation service and header view model
         ProfileModalViewModel = new ProfileModalViewModel(navigationService, HeaderViewModel);

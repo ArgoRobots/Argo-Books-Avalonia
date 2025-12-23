@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -11,6 +12,14 @@ namespace ArgoBooks.ViewModels;
 public partial class FileMenuPanelViewModel : ViewModelBase
 {
     private readonly INavigationService? _navigationService;
+    private SidebarViewModel? _sidebarViewModel;
+
+    // Header button offset from sidebar edge (accounts for hamburger button and padding)
+    private const double HeaderButtonOffset = 56;
+    // Width of the main file menu panel
+    private const double PanelWidth = 240;
+    // Vertical offset of submenu from main panel top
+    private const double SubmenuVerticalOffset = 69;
 
     [ObservableProperty]
     private bool _isOpen;
@@ -20,6 +29,30 @@ public partial class FileMenuPanelViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _currentCompanyPath;
+
+    #region Dynamic Positioning
+
+    /// <summary>
+    /// Gets the left offset for the main file menu panel based on sidebar width.
+    /// </summary>
+    public double PanelLeftOffset => (_sidebarViewModel?.Width ?? 250) + HeaderButtonOffset;
+
+    /// <summary>
+    /// Gets the left offset for the submenu (main panel left + panel width).
+    /// </summary>
+    public double SubmenuLeftOffset => PanelLeftOffset + PanelWidth;
+
+    /// <summary>
+    /// Gets the margin for the main file menu panel.
+    /// </summary>
+    public Thickness PanelMargin => new(PanelLeftOffset, 60, 0, 0);
+
+    /// <summary>
+    /// Gets the margin for the submenu.
+    /// </summary>
+    public Thickness SubmenuMargin => new(SubmenuLeftOffset, 60 + SubmenuVerticalOffset, 0, 0);
+
+    #endregion
 
     /// <summary>
     /// Recent companies for quick access.
@@ -55,6 +88,24 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     public FileMenuPanelViewModel(INavigationService? navigationService)
     {
         _navigationService = navigationService;
+    }
+
+    /// <summary>
+    /// Sets the sidebar view model to track sidebar width for dynamic positioning.
+    /// </summary>
+    public void SetSidebarViewModel(SidebarViewModel sidebarViewModel)
+    {
+        _sidebarViewModel = sidebarViewModel;
+        _sidebarViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(SidebarViewModel.Width))
+            {
+                OnPropertyChanged(nameof(PanelLeftOffset));
+                OnPropertyChanged(nameof(SubmenuLeftOffset));
+                OnPropertyChanged(nameof(PanelMargin));
+                OnPropertyChanged(nameof(SubmenuMargin));
+            }
+        };
     }
 
     #region Commands

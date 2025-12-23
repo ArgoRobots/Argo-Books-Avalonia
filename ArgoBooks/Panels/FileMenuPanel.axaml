@@ -16,7 +16,7 @@
         <Border Background="Transparent"
                 PointerPressed="Backdrop_PointerPressed" />
 
-        <!-- File Menu Panel - positioned relative to hamburger button (margin includes sidebar width) -->
+        <!-- File Menu Panel - positioned dynamically relative to sidebar width -->
         <Border x:Name="FileMenuBorder"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -25,7 +25,7 @@
                 Width="240"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="306,60,0,0"
+                Margin="{Binding PanelMargin}"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
                 KeyDown="FileMenu_KeyDown"
@@ -188,7 +188,7 @@
             </StackPanel>
         </Border>
 
-        <!-- Recent Companies Submenu (positioned to right of main menu: 306 + 240 = 546) -->
+        <!-- Recent Companies Submenu - positioned dynamically to right of main menu -->
         <Border x:Name="RecentSubmenu"
                 IsVisible="{Binding IsRecentSubmenuOpen}"
                 Background="{DynamicResource SurfaceBrush}"
@@ -198,7 +198,7 @@
                 MinWidth="200"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="546,129,0,0"
+                Margin="{Binding SubmenuMargin}"
                 BoxShadow="0 4 20 0 #26000000"
                 Focusable="True"
                 KeyDown="FileMenu_KeyDown"
