@@ -515,42 +515,20 @@ public partial class ReportDesignCanvas : UserControl
         var unscaledX = scaledContentPoint.X / oldZoom;
         var unscaledY = scaledContentPoint.Y / oldZoom;
 
-        // Calculate expected new extent (content size scales with zoom)
-        var zoomRatio = newZoom / oldZoom;
-        var newExtentWidth = _scrollViewer.Extent.Width * zoomRatio;
-        var newExtentHeight = _scrollViewer.Extent.Height * zoomRatio;
+        // Apply the zoom
+        ZoomLevel = newZoom;
 
-        // Calculate new offset to keep the content point under cursor
+        // Force layout to update so we get accurate extent/viewport values
+        _zoomTransformControl.UpdateLayout();
+
+        // Now calculate offset with actual post-zoom values
         var newOffsetX = unscaledX * newZoom - viewportPoint.X;
         var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
 
-        // Estimate viewport size (may change if scrollbars appear/disappear)
-        var currentViewport = _scrollViewer.Viewport;
-        var scrollViewerBounds = _scrollViewer.Bounds;
+        // Use actual extent and viewport after layout update
+        var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
 
-        // Check if scrollbars will appear/disappear and adjust viewport estimate
-        bool hadHorizontalScrollbar = _scrollViewer.Extent.Width > currentViewport.Width;
-        bool hadVerticalScrollbar = _scrollViewer.Extent.Height > currentViewport.Height;
-        bool willHaveHorizontalScrollbar = newExtentWidth > scrollViewerBounds.Width;
-        bool willHaveVerticalScrollbar = newExtentHeight > scrollViewerBounds.Height;
-
-        // Estimate scrollbar size (typical is ~18px)
-        const double scrollbarSize = 18;
-
-        double estimatedViewportWidth = scrollViewerBounds.Width;
-        double estimatedViewportHeight = scrollViewerBounds.Height;
-
-        if (willHaveVerticalScrollbar)
-            estimatedViewportWidth -= scrollbarSize;
-        if (willHaveHorizontalScrollbar)
-            estimatedViewportHeight -= scrollbarSize;
-
-        // Clamp to valid scroll bounds using estimated values
-        var maxX = Math.Max(0, newExtentWidth - estimatedViewportWidth);
-        var maxY = Math.Max(0, newExtentHeight - estimatedViewportHeight);
-
-        // Apply zoom and offset together to minimize visual distortion
-        ZoomLevel = newZoom;
         _scrollViewer.Offset = new Vector(
             Math.Clamp(newOffsetX, 0, maxX),
             Math.Clamp(newOffsetY, 0, maxY)
