@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -173,6 +174,7 @@ public partial class ReportDesignCanvas : UserControl
     private readonly Dictionary<string, CanvasElementControl> _elementControlMap = [];
 
     private ScrollViewer? _scrollViewer;
+    private LayoutTransformControl? _zoomTransformControl;
     private Canvas? _elementsCanvas;
     private Canvas? _gridLinesCanvas;
     private Rectangle? _marginGuide;
@@ -189,6 +191,11 @@ public partial class ReportDesignCanvas : UserControl
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
+
+    // Rubberband overscroll effect
+    private Vector _overscroll;
+    private const double OverscrollResistance = 0.3; // How much resistance when overscrolling (0-1)
+    private const double OverscrollMaxDistance = 100; // Maximum overscroll distance in pixels
 
     private double _pageWidth;
     private double _pageHeight;
@@ -208,6 +215,7 @@ public partial class ReportDesignCanvas : UserControl
         base.OnApplyTemplate(e);
 
         _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
+        _zoomTransformControl = this.FindControl<LayoutTransformControl>("ZoomTransformControl");
         _elementsCanvas = this.FindControl<Canvas>("ElementsCanvas");
         _gridLinesCanvas = this.FindControl<Canvas>("GridLinesCanvas");
         _marginGuide = this.FindControl<Rectangle>("MarginGuide");
@@ -236,13 +244,13 @@ public partial class ReportDesignCanvas : UserControl
     {
         // Intercept wheel events to zoom instead of scroll
         var delta = e.Delta.Y;
-        if (delta > 0)
+        if (delta != 0 && _zoomTransformControl != null)
         {
-            ZoomIn();
-        }
-        else if (delta < 0)
-        {
-            ZoomOut();
+            // Get cursor position relative to the scroll viewer's viewport
+            var viewportPoint = e.GetPosition(_scrollViewer);
+            // Get cursor position relative to the scaled content
+            var contentPoint = e.GetPosition(_zoomTransformControl);
+            ZoomAtPoint(delta > 0, viewportPoint, contentPoint);
         }
         e.Handled = true;
     }
@@ -470,10 +478,9 @@ public partial class ReportDesignCanvas : UserControl
 
     private void ApplyZoom()
     {
-        if (_pageBackground?.Parent is Border zoomContainer)
+        if (_zoomTransformControl != null)
         {
-            zoomContainer.RenderTransform = new ScaleTransform(ZoomLevel, ZoomLevel);
-            zoomContainer.RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
+            _zoomTransformControl.LayoutTransform = new ScaleTransform(ZoomLevel, ZoomLevel);
         }
     }
 
@@ -491,6 +498,47 @@ public partial class ReportDesignCanvas : UserControl
     public void ZoomOut()
     {
         ZoomLevel = Math.Max(ZoomLevel - 0.25, 0.25);
+    }
+
+    /// <summary>
+    /// Zooms at a specific point, keeping that point fixed on screen.
+    /// </summary>
+    /// <param name="zoomIn">True to zoom in, false to zoom out.</param>
+    /// <param name="viewportPoint">The cursor position relative to the scroll viewer.</param>
+    /// <param name="scaledContentPoint">The cursor position relative to the scaled content.</param>
+    private void ZoomAtPoint(bool zoomIn, Point viewportPoint, Point scaledContentPoint)
+    {
+        if (_scrollViewer == null || _zoomTransformControl == null) return;
+
+        var oldZoom = ZoomLevel;
+        var newZoom = zoomIn
+            ? Math.Min(oldZoom + 0.25, 4.0)
+            : Math.Max(oldZoom - 0.25, 0.25);
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        // Convert scaled content point to unscaled coordinates
+        var unscaledX = scaledContentPoint.X / oldZoom;
+        var unscaledY = scaledContentPoint.Y / oldZoom;
+
+        // Apply the zoom
+        ZoomLevel = newZoom;
+
+        // Force layout to update so we get accurate extent/viewport values
+        _zoomTransformControl.UpdateLayout();
+
+        // Now calculate offset with actual post-zoom values
+        var newOffsetX = unscaledX * newZoom - viewportPoint.X;
+        var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
+
+        // Use actual extent and viewport after layout update
+        var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+
+        _scrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
     }
 
     /// <summary>
@@ -542,6 +590,63 @@ public partial class ReportDesignCanvas : UserControl
         double offsetY = Math.Max(0, (extentHeight - viewportHeight) / 2);
 
         _scrollViewer.Offset = new Vector(offsetX, offsetY);
+    }
+
+    #endregion
+
+    #region Overscroll/Rubberband Effect
+
+    /// <summary>
+    /// Applies the current overscroll as a visual transform.
+    /// </summary>
+    private void ApplyOverscrollTransform()
+    {
+        if (_zoomTransformControl == null) return;
+
+        // Apply translation to show overscroll effect
+        // The overscroll is inverted because dragging right should show content from left
+        var translateTransform = new TranslateTransform(-_overscroll.X, -_overscroll.Y);
+
+        // Combine with existing layout transform
+        if (_zoomTransformControl.LayoutTransform is ScaleTransform scaleTransform)
+        {
+            _zoomTransformControl.RenderTransform = translateTransform;
+        }
+        else
+        {
+            _zoomTransformControl.RenderTransform = translateTransform;
+        }
+    }
+
+    /// <summary>
+    /// Animates the overscroll back to zero with a spring-like effect.
+    /// </summary>
+    private async void AnimateOverscrollSnapBack()
+    {
+        const int steps = 12;
+        const int delayMs = 16; // ~60fps
+
+        var startOverscroll = _overscroll;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            // Ease-out curve for smooth deceleration
+            double t = i / (double)steps;
+            double easeOut = 1 - Math.Pow(1 - t, 3); // Cubic ease-out
+
+            _overscroll = new Vector(
+                startOverscroll.X * (1 - easeOut),
+                startOverscroll.Y * (1 - easeOut)
+            );
+
+            ApplyOverscrollTransform();
+
+            await Task.Delay(delayMs);
+        }
+
+        // Ensure we end at exactly zero
+        _overscroll = new Vector(0, 0);
+        ApplyOverscrollTransform();
     }
 
     #endregion
@@ -988,9 +1093,11 @@ public partial class ReportDesignCanvas : UserControl
         var bgColor = element?.BackgroundColor ?? "#F0F0F0";
         var borderColor = element?.BorderColor ?? "#00FFFFFF";
         var borderThickness = element?.BorderThickness ?? 0;
-        var opacity = (element?.Opacity ?? 255) / 255.0;
+        var opacity = (element?.Opacity ?? 100) / 100.0;
 
-        IBrush background = bgColor != "#00FFFFFF"
+        // Check if background is transparent
+        bool isTransparentBg = bgColor == "#00FFFFFF";
+        IBrush background = !isTransparentBg
             ? new SolidColorBrush(Color.Parse(bgColor))
             : Brushes.Transparent;
 
@@ -1020,26 +1127,34 @@ public partial class ReportDesignCanvas : UserControl
                 }
                 else
                 {
-                    content = CreateImagePlaceholder("Image not found", background);
+                    // For placeholder, always use a visible background
+                    content = CreateImagePlaceholder("Image not found");
                 }
             }
             catch
             {
-                content = CreateImagePlaceholder("Error loading image", background);
+                // For placeholder, always use a visible background
+                content = CreateImagePlaceholder("Error loading image");
             }
         }
         else
         {
-            content = CreateImagePlaceholder("No image selected", background);
+            // For placeholder, always use a visible background
+            content = CreateImagePlaceholder("No image selected");
         }
 
         IBrush? border = borderThickness > 0 && borderColor != "#00FFFFFF"
             ? new SolidColorBrush(Color.Parse(borderColor))
             : null;
 
+        // For placeholders (when no actual image is loaded), always show the visible background
+        // For actual images, use the configured background (which may be transparent)
+        bool hasActualImage = !string.IsNullOrEmpty(element?.ImagePath) && System.IO.File.Exists(element.ImagePath);
+        IBrush effectiveBackground = hasActualImage ? background : new SolidColorBrush(Color.Parse("#F0F0F0"));
+
         return new Border
         {
-            Background = background,
+            Background = effectiveBackground,
             BorderBrush = border,
             BorderThickness = new Thickness(borderThickness),
             Child = content,
@@ -1047,11 +1162,11 @@ public partial class ReportDesignCanvas : UserControl
         };
     }
 
-    private static Control CreateImagePlaceholder(string message, IBrush? background = null)
+    private static Control CreateImagePlaceholder(string message)
     {
         return new Border
         {
-            Background = background ?? new SolidColorBrush(Color.Parse("#F0F0F0")),
+            Background = Brushes.Transparent,
             Child = new TextBlock
             {
                 Text = message,
@@ -1528,9 +1643,55 @@ public partial class ReportDesignCanvas : UserControl
         {
             var currentPoint = e.GetPosition(this);
             var delta = _panStartPoint - currentPoint;
-            _scrollViewer.Offset = new Vector(
-                _panStartOffset.X + delta.X,
-                _panStartOffset.Y + delta.Y);
+
+            // Calculate desired offset
+            var desiredX = _panStartOffset.X + delta.X;
+            var desiredY = _panStartOffset.Y + delta.Y;
+
+            // Calculate bounds
+            var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+            var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+
+            // Calculate overscroll with resistance
+            double overscrollX = 0;
+            double overscrollY = 0;
+
+            double clampedX = desiredX;
+            double clampedY = desiredY;
+
+            if (desiredX < 0)
+            {
+                overscrollX = desiredX * OverscrollResistance;
+                overscrollX = Math.Max(overscrollX, -OverscrollMaxDistance);
+                clampedX = 0;
+            }
+            else if (desiredX > maxX)
+            {
+                overscrollX = (desiredX - maxX) * OverscrollResistance;
+                overscrollX = Math.Min(overscrollX, OverscrollMaxDistance);
+                clampedX = maxX;
+            }
+
+            if (desiredY < 0)
+            {
+                overscrollY = desiredY * OverscrollResistance;
+                overscrollY = Math.Max(overscrollY, -OverscrollMaxDistance);
+                clampedY = 0;
+            }
+            else if (desiredY > maxY)
+            {
+                overscrollY = (desiredY - maxY) * OverscrollResistance;
+                overscrollY = Math.Min(overscrollY, OverscrollMaxDistance);
+                clampedY = maxY;
+            }
+
+            // Apply clamped scroll offset
+            _scrollViewer.Offset = new Vector(clampedX, clampedY);
+
+            // Apply overscroll visual effect
+            _overscroll = new Vector(overscrollX, overscrollY);
+            ApplyOverscrollTransform();
+
             e.Handled = true;
         }
         else if (_isMultiSelecting && _selectionRectangle != null)
@@ -1577,6 +1738,13 @@ public partial class ReportDesignCanvas : UserControl
             _isPanning = false;
             e.Pointer.Capture(null);
             Cursor = Avalonia.Input.Cursor.Default;
+
+            // Animate overscroll back to zero (rubberband snap-back)
+            if (_overscroll.X != 0 || _overscroll.Y != 0)
+            {
+                AnimateOverscrollSnapBack();
+            }
+
             e.Handled = true;
         }
         else if (_isMultiSelecting)

@@ -679,7 +679,7 @@ public class ImageReportElement : ReportElementBase
     private string _borderColor = "#00FFFFFF";
     private int _borderThickness = 1;
     private int _cornerRadiusPercent;
-    private byte _opacity = 255;
+    private int _opacity = 100;
 
     [JsonPropertyName("imagePath")]
     public string ImagePath
@@ -724,10 +724,10 @@ public class ImageReportElement : ReportElementBase
     }
 
     [JsonPropertyName("opacity")]
-    public byte Opacity
+    public int Opacity
     {
         get => _opacity;
-        set => SetField(ref _opacity, value);
+        set => SetField(ref _opacity, Math.Clamp(value, 0, 100));
     }
 
     public override string DisplayName => "Image";

@@ -426,10 +426,11 @@ public class ReportRenderer : IDisposable
                     {
                         var destRect = CalculateImageRect(bitmap, rect, image.ScaleMode);
 
-                        // Apply opacity
-                        if (image.Opacity < 255)
+                        // Apply opacity (convert percentage 0-100 to alpha 0-255)
+                        if (image.Opacity < 100)
                         {
-                            var paint = new SKPaint { Color = SKColors.White.WithAlpha(image.Opacity) };
+                            var alpha = (byte)(image.Opacity * 255 / 100);
+                            var paint = new SKPaint { Color = SKColors.White.WithAlpha(alpha) };
                             canvas.DrawBitmap(bitmap, destRect, paint);
                         }
                         else

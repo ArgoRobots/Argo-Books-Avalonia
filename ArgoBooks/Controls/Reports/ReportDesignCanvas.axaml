@@ -52,20 +52,13 @@
     <ScrollViewer x:Name="CanvasScrollViewer"
                   HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto"
-                  HorizontalContentAlignment="Center"
-                  VerticalContentAlignment="Center"
                   Background="#E0E0E0">
 
-        <!-- Centering wrapper -->
-        <Grid x:Name="CenteringGrid"
-              HorizontalAlignment="Center"
-              VerticalAlignment="Center">
-            <!-- Zoom container -->
+        <!-- Zoom container using LayoutTransformControl for proper scroll behavior -->
+        <LayoutTransformControl x:Name="ZoomTransformControl">
             <Border x:Name="ZoomContainer"
                     Padding="40"
-                    Background="#E0E0E0"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
+                    Background="#E0E0E0">
 
             <!-- Page container with shadow -->
             <Border x:Name="PageShadowBorder"
@@ -143,6 +136,6 @@
                 </Border>
             </Border>
         </Border>
-        </Grid>
+        </LayoutTransformControl>
     </ScrollViewer>
 </UserControl>
