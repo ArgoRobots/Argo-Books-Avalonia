@@ -238,11 +238,13 @@ public partial class ReportDesignCanvas : UserControl
     {
         // Intercept wheel events to zoom instead of scroll
         var delta = e.Delta.Y;
-        if (delta != 0)
+        if (delta != 0 && _zoomTransformControl != null)
         {
-            // Get cursor position relative to the scroll viewer
-            var cursorPos = e.GetPosition(_scrollViewer);
-            ZoomAtPoint(delta > 0, cursorPos);
+            // Get cursor position relative to the scroll viewer's viewport
+            var viewportPoint = e.GetPosition(_scrollViewer);
+            // Get cursor position relative to the scaled content
+            var contentPoint = e.GetPosition(_zoomTransformControl);
+            ZoomAtPoint(delta > 0, viewportPoint, contentPoint);
         }
         e.Handled = true;
     }
@@ -496,8 +498,9 @@ public partial class ReportDesignCanvas : UserControl
     /// Zooms at a specific point, keeping that point fixed on screen.
     /// </summary>
     /// <param name="zoomIn">True to zoom in, false to zoom out.</param>
-    /// <param name="viewportPoint">The point in viewport coordinates to zoom towards.</param>
-    private void ZoomAtPoint(bool zoomIn, Point viewportPoint)
+    /// <param name="viewportPoint">The cursor position relative to the scroll viewer.</param>
+    /// <param name="scaledContentPoint">The cursor position relative to the scaled content.</param>
+    private void ZoomAtPoint(bool zoomIn, Point viewportPoint, Point scaledContentPoint)
     {
         if (_scrollViewer == null || _zoomTransformControl == null) return;
 
@@ -508,29 +511,26 @@ public partial class ReportDesignCanvas : UserControl
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
-        // Get current scroll offset
-        var oldOffset = _scrollViewer.Offset;
-
-        // Calculate the point in unscaled content coordinates
-        // The point under cursor in content space = (scroll offset + viewport position) / current zoom
-        var contentX = (oldOffset.X + viewportPoint.X) / oldZoom;
-        var contentY = (oldOffset.Y + viewportPoint.Y) / oldZoom;
+        // Convert scaled content point to unscaled coordinates
+        // This is the actual point in the unscaled content that's under the cursor
+        var unscaledX = scaledContentPoint.X / oldZoom;
+        var unscaledY = scaledContentPoint.Y / oldZoom;
 
         // Apply the new zoom level (this triggers ApplyZoom via PropertyChanged)
         ZoomLevel = newZoom;
 
-        // Calculate new offset to keep the same content point under the cursor
-        // New offset = content point * new zoom - viewport position
-        var newOffsetX = contentX * newZoom - viewportPoint.X;
-        var newOffsetY = contentY * newZoom - viewportPoint.Y;
+        // After zoom, this unscaled point will be at: unscaledPoint * newZoom
+        // We want it to appear at the same viewport position
+        // So: newOffset = unscaledPoint * newZoom - viewportPoint
+        var newOffsetX = unscaledX * newZoom - viewportPoint.X;
+        var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
 
         // Calculate the new extent based on the zoom ratio
-        // Since we're using LayoutTransformControl, extent scales with zoom
         var zoomRatio = newZoom / oldZoom;
         var newExtentWidth = _scrollViewer.Extent.Width * zoomRatio;
         var newExtentHeight = _scrollViewer.Extent.Height * zoomRatio;
 
-        // Clamp to valid scroll bounds using calculated new extent
+        // Clamp to valid scroll bounds
         var maxX = Math.Max(0, newExtentWidth - _scrollViewer.Viewport.Width);
         var maxY = Math.Max(0, newExtentHeight - _scrollViewer.Viewport.Height);
 
