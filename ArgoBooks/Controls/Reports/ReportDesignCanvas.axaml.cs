@@ -173,6 +173,7 @@ public partial class ReportDesignCanvas : UserControl
     private readonly Dictionary<string, CanvasElementControl> _elementControlMap = [];
 
     private ScrollViewer? _scrollViewer;
+    private LayoutTransformControl? _zoomTransformControl;
     private Canvas? _elementsCanvas;
     private Canvas? _gridLinesCanvas;
     private Rectangle? _marginGuide;
@@ -208,6 +209,7 @@ public partial class ReportDesignCanvas : UserControl
         base.OnApplyTemplate(e);
 
         _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
+        _zoomTransformControl = this.FindControl<LayoutTransformControl>("ZoomTransformControl");
         _elementsCanvas = this.FindControl<Canvas>("ElementsCanvas");
         _gridLinesCanvas = this.FindControl<Canvas>("GridLinesCanvas");
         _marginGuide = this.FindControl<Rectangle>("MarginGuide");
@@ -468,10 +470,9 @@ public partial class ReportDesignCanvas : UserControl
 
     private void ApplyZoom()
     {
-        if (_pageBackground?.Parent is Border zoomContainer)
+        if (_zoomTransformControl != null)
         {
-            zoomContainer.RenderTransform = new ScaleTransform(ZoomLevel, ZoomLevel);
-            zoomContainer.RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
+            _zoomTransformControl.LayoutTransform = new ScaleTransform(ZoomLevel, ZoomLevel);
         }
     }
 
@@ -498,7 +499,7 @@ public partial class ReportDesignCanvas : UserControl
     /// <param name="viewportPoint">The point in viewport coordinates to zoom towards.</param>
     private void ZoomAtPoint(bool zoomIn, Point viewportPoint)
     {
-        if (_scrollViewer == null) return;
+        if (_scrollViewer == null || _zoomTransformControl == null) return;
 
         var oldZoom = ZoomLevel;
         var newZoom = zoomIn
@@ -510,20 +511,28 @@ public partial class ReportDesignCanvas : UserControl
         // Get current scroll offset
         var oldOffset = _scrollViewer.Offset;
 
-        // Calculate the point in content coordinates (accounting for current zoom and offset)
+        // Calculate the point in unscaled content coordinates
+        // The point under cursor in content space = (scroll offset + viewport position) / current zoom
         var contentX = (oldOffset.X + viewportPoint.X) / oldZoom;
         var contentY = (oldOffset.Y + viewportPoint.Y) / oldZoom;
 
-        // Apply the new zoom level (this will trigger ApplyZoom via PropertyChanged)
+        // Apply the new zoom level (this triggers ApplyZoom via PropertyChanged)
         ZoomLevel = newZoom;
 
         // Calculate new offset to keep the same content point under the cursor
+        // New offset = content point * new zoom - viewport position
         var newOffsetX = contentX * newZoom - viewportPoint.X;
         var newOffsetY = contentY * newZoom - viewportPoint.Y;
 
-        // Clamp to valid scroll bounds
-        var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
-        var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+        // Calculate the new extent based on the zoom ratio
+        // Since we're using LayoutTransformControl, extent scales with zoom
+        var zoomRatio = newZoom / oldZoom;
+        var newExtentWidth = _scrollViewer.Extent.Width * zoomRatio;
+        var newExtentHeight = _scrollViewer.Extent.Height * zoomRatio;
+
+        // Clamp to valid scroll bounds using calculated new extent
+        var maxX = Math.Max(0, newExtentWidth - _scrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, newExtentHeight - _scrollViewer.Viewport.Height);
 
         _scrollViewer.Offset = new Vector(
             Math.Clamp(newOffsetX, 0, maxX),
