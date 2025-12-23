@@ -17,6 +17,25 @@ namespace ArgoBooks.Controls.Reports;
 /// </summary>
 public partial class ReportDesignCanvas : UserControl
 {
+    #region Zoom Constants
+
+    /// <summary>
+    /// Minimum zoom level (25%).
+    /// </summary>
+    public const double MinZoom = 0.25;
+
+    /// <summary>
+    /// Maximum zoom level (200%).
+    /// </summary>
+    public const double MaxZoom = 2.0;
+
+    /// <summary>
+    /// Zoom step size for incremental zoom operations.
+    /// </summary>
+    public const double ZoomStep = 0.25;
+
+    #endregion
+
     #region Styled Properties
 
     public static readonly StyledProperty<ReportConfiguration?> ConfigurationProperty =
@@ -65,7 +84,7 @@ public partial class ReportDesignCanvas : UserControl
     public double ZoomLevel
     {
         get => GetValue(ZoomLevelProperty);
-        set => SetValue(ZoomLevelProperty, Math.Clamp(value, 0.25, 4.0));
+        set => SetValue(ZoomLevelProperty, Math.Clamp(value, MinZoom, MaxZoom));
     }
 
     /// <summary>
@@ -522,19 +541,62 @@ public partial class ReportDesignCanvas : UserControl
     }
 
     /// <summary>
-    /// Zooms in by 25%.
+    /// Zooms in by step amount, centering the view.
     /// </summary>
     public void ZoomIn()
     {
-        ZoomLevel = Math.Min(ZoomLevel + 0.25, 4.0);
+        ZoomTowardsCenter(true);
     }
 
     /// <summary>
-    /// Zooms out by 25%.
+    /// Zooms out by step amount, centering the view.
     /// </summary>
     public void ZoomOut()
     {
-        ZoomLevel = Math.Max(ZoomLevel - 0.25, 0.25);
+        ZoomTowardsCenter(false);
+    }
+
+    /// <summary>
+    /// Zooms towards the center of the viewport.
+    /// </summary>
+    /// <param name="zoomIn">True to zoom in, false to zoom out.</param>
+    private void ZoomTowardsCenter(bool zoomIn)
+    {
+        if (_scrollViewer == null || _zoomTransformControl == null) return;
+
+        var oldZoom = ZoomLevel;
+        var newZoom = zoomIn
+            ? Math.Min(oldZoom + ZoomStep, MaxZoom)
+            : Math.Max(oldZoom - ZoomStep, MinZoom);
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        // Get the center point of the viewport
+        var viewportCenterX = _scrollViewer.Viewport.Width / 2;
+        var viewportCenterY = _scrollViewer.Viewport.Height / 2;
+
+        // Calculate the content point at the center of the viewport
+        var contentCenterX = (_scrollViewer.Offset.X + viewportCenterX) / oldZoom;
+        var contentCenterY = (_scrollViewer.Offset.Y + viewportCenterY) / oldZoom;
+
+        // Apply the zoom
+        ZoomLevel = newZoom;
+
+        // Force layout to update so we get accurate extent/viewport values
+        _zoomTransformControl.UpdateLayout();
+
+        // Calculate new offset to keep the same content point at center
+        var newOffsetX = contentCenterX * newZoom - viewportCenterX;
+        var newOffsetY = contentCenterY * newZoom - viewportCenterY;
+
+        // Use actual extent and viewport after layout update
+        var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+
+        _scrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
     }
 
     /// <summary>
@@ -549,8 +611,8 @@ public partial class ReportDesignCanvas : UserControl
 
         var oldZoom = ZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + 0.25, 4.0)
-            : Math.Max(oldZoom - 0.25, 0.25);
+            ? Math.Min(oldZoom + ZoomStep, MaxZoom)
+            : Math.Max(oldZoom - ZoomStep, MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 

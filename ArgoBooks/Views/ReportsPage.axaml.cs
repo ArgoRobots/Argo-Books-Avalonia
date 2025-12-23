@@ -81,6 +81,9 @@ public partial class ReportsPage : UserControl
     {
         if (_designCanvas == null) return;
 
+        // Hide canvas during initial load to prevent flash of unzoomed content
+        _designCanvas.Opacity = 0;
+
         // Wait for layout to stabilize - the ScrollViewer inside the canvas
         // needs time for its Viewport to be calculated
         var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
@@ -110,13 +113,27 @@ public partial class ReportsPage : UserControl
         await Task.Delay(50);
 
         _designCanvas?.ZoomToFit();
+
+        // Show canvas after zoom is applied
+        if (_designCanvas != null)
+        {
+            _designCanvas.Opacity = 1;
+        }
     }
 
     private async void OnTemplateLoaded(object? sender, EventArgs e)
     {
+        if (_designCanvas == null) return;
+
+        // Hide canvas during template load to prevent flash of unzoomed content
+        _designCanvas.Opacity = 0;
+
         // Wait a frame for layout to complete before fitting to window
         await Task.Delay(50);
-        _designCanvas?.ZoomToFit();
+        _designCanvas.ZoomToFit();
+
+        // Show canvas after zoom is applied
+        _designCanvas.Opacity = 1;
     }
 
     private void OnPageSettingsRefreshRequested(object? sender, EventArgs e)
