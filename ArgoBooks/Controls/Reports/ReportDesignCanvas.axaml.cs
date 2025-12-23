@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -190,6 +191,11 @@ public partial class ReportDesignCanvas : UserControl
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
+
+    // Rubberband overscroll effect
+    private Vector _overscroll;
+    private const double OverscrollResistance = 0.3; // How much resistance when overscrolling (0-1)
+    private const double OverscrollMaxDistance = 100; // Maximum overscroll distance in pixels
 
     private double _pageWidth;
     private double _pageHeight;
@@ -584,6 +590,63 @@ public partial class ReportDesignCanvas : UserControl
         double offsetY = Math.Max(0, (extentHeight - viewportHeight) / 2);
 
         _scrollViewer.Offset = new Vector(offsetX, offsetY);
+    }
+
+    #endregion
+
+    #region Overscroll/Rubberband Effect
+
+    /// <summary>
+    /// Applies the current overscroll as a visual transform.
+    /// </summary>
+    private void ApplyOverscrollTransform()
+    {
+        if (_zoomTransformControl == null) return;
+
+        // Apply translation to show overscroll effect
+        // The overscroll is inverted because dragging right should show content from left
+        var translateTransform = new TranslateTransform(-_overscroll.X, -_overscroll.Y);
+
+        // Combine with existing layout transform
+        if (_zoomTransformControl.LayoutTransform is ScaleTransform scaleTransform)
+        {
+            _zoomTransformControl.RenderTransform = translateTransform;
+        }
+        else
+        {
+            _zoomTransformControl.RenderTransform = translateTransform;
+        }
+    }
+
+    /// <summary>
+    /// Animates the overscroll back to zero with a spring-like effect.
+    /// </summary>
+    private async void AnimateOverscrollSnapBack()
+    {
+        const int steps = 12;
+        const int delayMs = 16; // ~60fps
+
+        var startOverscroll = _overscroll;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            // Ease-out curve for smooth deceleration
+            double t = i / (double)steps;
+            double easeOut = 1 - Math.Pow(1 - t, 3); // Cubic ease-out
+
+            _overscroll = new Vector(
+                startOverscroll.X * (1 - easeOut),
+                startOverscroll.Y * (1 - easeOut)
+            );
+
+            ApplyOverscrollTransform();
+
+            await Task.Delay(delayMs);
+        }
+
+        // Ensure we end at exactly zero
+        _overscroll = new Vector(0, 0);
+        ApplyOverscrollTransform();
     }
 
     #endregion
@@ -1580,9 +1643,55 @@ public partial class ReportDesignCanvas : UserControl
         {
             var currentPoint = e.GetPosition(this);
             var delta = _panStartPoint - currentPoint;
-            _scrollViewer.Offset = new Vector(
-                _panStartOffset.X + delta.X,
-                _panStartOffset.Y + delta.Y);
+
+            // Calculate desired offset
+            var desiredX = _panStartOffset.X + delta.X;
+            var desiredY = _panStartOffset.Y + delta.Y;
+
+            // Calculate bounds
+            var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+            var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+
+            // Calculate overscroll with resistance
+            double overscrollX = 0;
+            double overscrollY = 0;
+
+            double clampedX = desiredX;
+            double clampedY = desiredY;
+
+            if (desiredX < 0)
+            {
+                overscrollX = desiredX * OverscrollResistance;
+                overscrollX = Math.Max(overscrollX, -OverscrollMaxDistance);
+                clampedX = 0;
+            }
+            else if (desiredX > maxX)
+            {
+                overscrollX = (desiredX - maxX) * OverscrollResistance;
+                overscrollX = Math.Min(overscrollX, OverscrollMaxDistance);
+                clampedX = maxX;
+            }
+
+            if (desiredY < 0)
+            {
+                overscrollY = desiredY * OverscrollResistance;
+                overscrollY = Math.Max(overscrollY, -OverscrollMaxDistance);
+                clampedY = 0;
+            }
+            else if (desiredY > maxY)
+            {
+                overscrollY = (desiredY - maxY) * OverscrollResistance;
+                overscrollY = Math.Min(overscrollY, OverscrollMaxDistance);
+                clampedY = maxY;
+            }
+
+            // Apply clamped scroll offset
+            _scrollViewer.Offset = new Vector(clampedX, clampedY);
+
+            // Apply overscroll visual effect
+            _overscroll = new Vector(overscrollX, overscrollY);
+            ApplyOverscrollTransform();
+
             e.Handled = true;
         }
         else if (_isMultiSelecting && _selectionRectangle != null)
@@ -1629,6 +1738,13 @@ public partial class ReportDesignCanvas : UserControl
             _isPanning = false;
             e.Pointer.Capture(null);
             Cursor = Avalonia.Input.Cursor.Default;
+
+            // Animate overscroll back to zero (rubberband snap-back)
+            if (_overscroll.X != 0 || _overscroll.Y != 0)
+            {
+                AnimateOverscrollSnapBack();
+            }
+
             e.Handled = true;
         }
         else if (_isMultiSelecting)
