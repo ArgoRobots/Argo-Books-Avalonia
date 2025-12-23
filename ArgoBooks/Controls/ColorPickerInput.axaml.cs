@@ -1,6 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using Avalonia.Media;
+using ColorPicker;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -10,6 +13,9 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public partial class ColorPickerInput : UserControl
 {
+    private StandardColorPicker? _colorPickerControl;
+    private bool _isUpdatingFromPicker;
+
     #region Styled Properties
 
     public static readonly StyledProperty<string> ColorValueProperty =
@@ -17,9 +23,6 @@ public partial class ColorPickerInput : UserControl
 
     public static readonly StyledProperty<bool> IsPickerOpenProperty =
         AvaloniaProperty.Register<ColorPickerInput, bool>(nameof(IsPickerOpen));
-
-    public static readonly StyledProperty<Color> SelectedColorProperty =
-        AvaloniaProperty.Register<ColorPickerInput, Color>(nameof(SelectedColor), Colors.Black);
 
     public static readonly StyledProperty<IBrush?> ColorBrushProperty =
         AvaloniaProperty.Register<ColorPickerInput, IBrush?>(nameof(ColorBrush));
@@ -44,15 +47,6 @@ public partial class ColorPickerInput : UserControl
     {
         get => GetValue(IsPickerOpenProperty);
         set => SetValue(IsPickerOpenProperty, value);
-    }
-
-    /// <summary>
-    /// The selected color in the picker.
-    /// </summary>
-    public Color SelectedColor
-    {
-        get => GetValue(SelectedColorProperty);
-        set => SetValue(SelectedColorProperty, value);
     }
 
     /// <summary>
@@ -82,14 +76,20 @@ public partial class ColorPickerInput : UserControl
         UpdateColorBrush();
     }
 
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+        _colorPickerControl = this.FindControl<StandardColorPicker>("ColorPickerControl");
+    }
+
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == ColorValueProperty)
+        if (change.Property == ColorValueProperty && !_isUpdatingFromPicker)
         {
             UpdateColorBrush();
-            UpdateSelectedColor();
+            UpdatePickerColor();
         }
     }
 
@@ -113,13 +113,16 @@ public partial class ColorPickerInput : UserControl
         }
     }
 
-    private void UpdateSelectedColor()
+    private void UpdatePickerColor()
     {
+        if (_colorPickerControl == null) return;
+
         try
         {
             if (!string.IsNullOrEmpty(ColorValue))
             {
-                SelectedColor = Color.Parse(ColorValue);
+                var color = Color.Parse(ColorValue);
+                _colorPickerControl.SelectedColor = color;
             }
         }
         catch
@@ -128,17 +131,32 @@ public partial class ColorPickerInput : UserControl
         }
     }
 
+    private void OnColorPickerColorChanged(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not StandardColorPicker picker) return;
+
+        _isUpdatingFromPicker = true;
+        try
+        {
+            var color = picker.SelectedColor;
+            ColorValue = $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+            UpdateColorBrush();
+        }
+        finally
+        {
+            _isUpdatingFromPicker = false;
+        }
+    }
+
     private void TogglePicker()
     {
-        // Update selected color before opening
-        UpdateSelectedColor();
+        // Update picker color before opening
+        UpdatePickerColor();
         IsPickerOpen = !IsPickerOpen;
     }
 
     private void ApplyColor()
     {
-        // Convert the selected color to hex string
-        ColorValue = $"#{SelectedColor.R:X2}{SelectedColor.G:X2}{SelectedColor.B:X2}";
         IsPickerOpen = false;
     }
 }

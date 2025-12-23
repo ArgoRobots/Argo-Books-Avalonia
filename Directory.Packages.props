@@ -21,6 +21,9 @@
         <!-- Charts -->
         <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc3.3" />
 
+        <!-- Color Picker -->
+        <PackageVersion Include="PixiEditor.ColorPicker.AvaloniaUI" Version="1.0.7" />
+
         <!-- Graphics (for report rendering) -->
         <PackageVersion Include="SkiaSharp" Version="3.116.1" />
 
