@@ -68,9 +68,17 @@ public partial class ReportsPage : UserControl
             vm.PropertyChanged += OnViewModelPropertyChanged;
             vm.ElementPropertyChanged += OnElementPropertyChanged;
             vm.PageSettingsRefreshRequested += OnPageSettingsRefreshRequested;
+            vm.TemplateLoaded += OnTemplateLoaded;
             // Initial sync in case elements were already added
             _designCanvas?.SyncElements();
         }
+    }
+
+    private async void OnTemplateLoaded(object? sender, EventArgs e)
+    {
+        // Wait a frame for layout to complete before fitting to window
+        await Task.Delay(50);
+        _designCanvas?.ZoomToFit();
     }
 
     private void OnPageSettingsRefreshRequested(object? sender, EventArgs e)
@@ -105,6 +113,7 @@ public partial class ReportsPage : UserControl
             vm.PropertyChanged -= OnViewModelPropertyChanged;
             vm.ElementPropertyChanged -= OnElementPropertyChanged;
             vm.PageSettingsRefreshRequested -= OnPageSettingsRefreshRequested;
+            vm.TemplateLoaded -= OnTemplateLoaded;
         }
     }
 

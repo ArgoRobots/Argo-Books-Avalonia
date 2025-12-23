@@ -278,6 +278,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     public event EventHandler<ReportElementBase>? ElementPropertyChanged;
     public event EventHandler? PageSettingsRefreshRequested;
+    public event EventHandler? TemplateLoaded;
 
     partial void OnSelectedElementChanged(ReportElementBase? oldValue, ReportElementBase? newValue)
     {
@@ -1423,6 +1424,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         UpdateCanvasDimensions();
         UndoRedoManager.Clear();
         OnPropertyChanged(nameof(Configuration));
+
+        // Notify view to fit canvas to window
+        TemplateLoaded?.Invoke(this, EventArgs.Empty);
     }
 
     private void ApplyFiltersToConfiguration()
