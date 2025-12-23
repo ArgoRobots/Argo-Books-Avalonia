@@ -79,8 +79,36 @@ public partial class ReportsPage : UserControl
 
     private async void TriggerInitialZoomToFit()
     {
-        // Wait for layout to complete before fitting to window
-        await Task.Delay(100);
+        if (_designCanvas == null) return;
+
+        // Wait for layout to stabilize - the ScrollViewer inside the canvas
+        // needs time for its Viewport to be calculated
+        var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
+
+        void OnLayoutUpdated(object? sender, EventArgs args)
+        {
+            if (_designCanvas.Bounds.Width > 0 && _designCanvas.Bounds.Height > 0)
+            {
+                _designCanvas.LayoutUpdated -= OnLayoutUpdated;
+                tcs.TrySetResult(true);
+            }
+        }
+
+        if (_designCanvas.Bounds.Width > 0 && _designCanvas.Bounds.Height > 0)
+        {
+            tcs.TrySetResult(true);
+        }
+        else
+        {
+            _designCanvas.LayoutUpdated += OnLayoutUpdated;
+        }
+
+        // Wait for layout to complete
+        await tcs.Task;
+
+        // Additional delay to ensure ScrollViewer's Viewport is calculated
+        await Task.Delay(50);
+
         _designCanvas?.ZoomToFit();
     }
 
