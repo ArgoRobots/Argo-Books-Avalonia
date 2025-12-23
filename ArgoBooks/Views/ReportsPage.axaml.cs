@@ -71,7 +71,17 @@ public partial class ReportsPage : UserControl
             vm.TemplateLoaded += OnTemplateLoaded;
             // Initial sync in case elements were already added
             _designCanvas?.SyncElements();
+
+            // Trigger initial fit-to-window (template was already loaded in ViewModel constructor)
+            TriggerInitialZoomToFit();
         }
+    }
+
+    private async void TriggerInitialZoomToFit()
+    {
+        // Wait for layout to complete before fitting to window
+        await Task.Delay(100);
+        _designCanvas?.ZoomToFit();
     }
 
     private async void OnTemplateLoaded(object? sender, EventArgs e)
