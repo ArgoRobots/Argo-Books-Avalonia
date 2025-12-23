@@ -539,7 +539,7 @@ public partial class ReportDesignCanvas : UserControl
                 Math.Clamp(newOffsetX, 0, maxX),
                 Math.Clamp(newOffsetY, 0, maxY)
             );
-        }, Avalonia.Threading.DispatcherPriority.Layout);
+        }, Avalonia.Threading.DispatcherPriority.Render);
     }
 
     /// <summary>
