@@ -512,34 +512,49 @@ public partial class ReportDesignCanvas : UserControl
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
         // Convert scaled content point to unscaled coordinates
-        // This is the actual point in the unscaled content that's under the cursor
         var unscaledX = scaledContentPoint.X / oldZoom;
         var unscaledY = scaledContentPoint.Y / oldZoom;
 
-        // Apply the new zoom level (this triggers ApplyZoom via PropertyChanged)
+        // Calculate expected new extent (content size scales with zoom)
+        var zoomRatio = newZoom / oldZoom;
+        var newExtentWidth = _scrollViewer.Extent.Width * zoomRatio;
+        var newExtentHeight = _scrollViewer.Extent.Height * zoomRatio;
+
+        // Calculate new offset to keep the content point under cursor
+        var newOffsetX = unscaledX * newZoom - viewportPoint.X;
+        var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
+
+        // Estimate viewport size (may change if scrollbars appear/disappear)
+        var currentViewport = _scrollViewer.Viewport;
+        var scrollViewerBounds = _scrollViewer.Bounds;
+
+        // Check if scrollbars will appear/disappear and adjust viewport estimate
+        bool hadHorizontalScrollbar = _scrollViewer.Extent.Width > currentViewport.Width;
+        bool hadVerticalScrollbar = _scrollViewer.Extent.Height > currentViewport.Height;
+        bool willHaveHorizontalScrollbar = newExtentWidth > scrollViewerBounds.Width;
+        bool willHaveVerticalScrollbar = newExtentHeight > scrollViewerBounds.Height;
+
+        // Estimate scrollbar size (typical is ~18px)
+        const double scrollbarSize = 18;
+
+        double estimatedViewportWidth = scrollViewerBounds.Width;
+        double estimatedViewportHeight = scrollViewerBounds.Height;
+
+        if (willHaveVerticalScrollbar)
+            estimatedViewportWidth -= scrollbarSize;
+        if (willHaveHorizontalScrollbar)
+            estimatedViewportHeight -= scrollbarSize;
+
+        // Clamp to valid scroll bounds using estimated values
+        var maxX = Math.Max(0, newExtentWidth - estimatedViewportWidth);
+        var maxY = Math.Max(0, newExtentHeight - estimatedViewportHeight);
+
+        // Apply zoom and offset together to minimize visual distortion
         ZoomLevel = newZoom;
-
-        // Defer offset calculation until after layout updates
-        // This ensures scrollbar appearance is accounted for
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-        {
-            if (_scrollViewer == null) return;
-
-            // After zoom, this unscaled point will be at: unscaledPoint * newZoom
-            // We want it to appear at the same viewport position
-            // So: newOffset = unscaledPoint * newZoom - viewportPoint
-            var newOffsetX = unscaledX * newZoom - viewportPoint.X;
-            var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
-
-            // Use actual extent and viewport after layout
-            var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
-            var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
-
-            _scrollViewer.Offset = new Vector(
-                Math.Clamp(newOffsetX, 0, maxX),
-                Math.Clamp(newOffsetY, 0, maxY)
-            );
-        }, Avalonia.Threading.DispatcherPriority.Render);
+        _scrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
     }
 
     /// <summary>
