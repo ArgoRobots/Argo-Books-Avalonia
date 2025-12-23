@@ -236,13 +236,11 @@ public partial class ReportDesignCanvas : UserControl
     {
         // Intercept wheel events to zoom instead of scroll
         var delta = e.Delta.Y;
-        if (delta > 0)
+        if (delta != 0)
         {
-            ZoomIn();
-        }
-        else if (delta < 0)
-        {
-            ZoomOut();
+            // Get cursor position relative to the scroll viewer
+            var cursorPos = e.GetPosition(_scrollViewer);
+            ZoomAtPoint(delta > 0, cursorPos);
         }
         e.Handled = true;
     }
@@ -491,6 +489,46 @@ public partial class ReportDesignCanvas : UserControl
     public void ZoomOut()
     {
         ZoomLevel = Math.Max(ZoomLevel - 0.25, 0.25);
+    }
+
+    /// <summary>
+    /// Zooms at a specific point, keeping that point fixed on screen.
+    /// </summary>
+    /// <param name="zoomIn">True to zoom in, false to zoom out.</param>
+    /// <param name="viewportPoint">The point in viewport coordinates to zoom towards.</param>
+    private void ZoomAtPoint(bool zoomIn, Point viewportPoint)
+    {
+        if (_scrollViewer == null) return;
+
+        var oldZoom = ZoomLevel;
+        var newZoom = zoomIn
+            ? Math.Min(oldZoom + 0.25, 4.0)
+            : Math.Max(oldZoom - 0.25, 0.25);
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        // Get current scroll offset
+        var oldOffset = _scrollViewer.Offset;
+
+        // Calculate the point in content coordinates (accounting for current zoom and offset)
+        var contentX = (oldOffset.X + viewportPoint.X) / oldZoom;
+        var contentY = (oldOffset.Y + viewportPoint.Y) / oldZoom;
+
+        // Apply the new zoom level (this will trigger ApplyZoom via PropertyChanged)
+        ZoomLevel = newZoom;
+
+        // Calculate new offset to keep the same content point under the cursor
+        var newOffsetX = contentX * newZoom - viewportPoint.X;
+        var newOffsetY = contentY * newZoom - viewportPoint.Y;
+
+        // Clamp to valid scroll bounds
+        var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+
+        _scrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
     }
 
     /// <summary>
@@ -988,9 +1026,11 @@ public partial class ReportDesignCanvas : UserControl
         var bgColor = element?.BackgroundColor ?? "#F0F0F0";
         var borderColor = element?.BorderColor ?? "#00FFFFFF";
         var borderThickness = element?.BorderThickness ?? 0;
-        var opacity = (element?.Opacity ?? 255) / 255.0;
+        var opacity = (element?.Opacity ?? 100) / 100.0;
 
-        IBrush background = bgColor != "#00FFFFFF"
+        // Check if background is transparent
+        bool isTransparentBg = bgColor == "#00FFFFFF";
+        IBrush background = !isTransparentBg
             ? new SolidColorBrush(Color.Parse(bgColor))
             : Brushes.Transparent;
 
@@ -1020,26 +1060,34 @@ public partial class ReportDesignCanvas : UserControl
                 }
                 else
                 {
-                    content = CreateImagePlaceholder("Image not found", background);
+                    // For placeholder, always use a visible background
+                    content = CreateImagePlaceholder("Image not found");
                 }
             }
             catch
             {
-                content = CreateImagePlaceholder("Error loading image", background);
+                // For placeholder, always use a visible background
+                content = CreateImagePlaceholder("Error loading image");
             }
         }
         else
         {
-            content = CreateImagePlaceholder("No image selected", background);
+            // For placeholder, always use a visible background
+            content = CreateImagePlaceholder("No image selected");
         }
 
         IBrush? border = borderThickness > 0 && borderColor != "#00FFFFFF"
             ? new SolidColorBrush(Color.Parse(borderColor))
             : null;
 
+        // For placeholders (when no actual image is loaded), always show the visible background
+        // For actual images, use the configured background (which may be transparent)
+        bool hasActualImage = !string.IsNullOrEmpty(element?.ImagePath) && System.IO.File.Exists(element.ImagePath);
+        IBrush effectiveBackground = hasActualImage ? background : new SolidColorBrush(Color.Parse("#F0F0F0"));
+
         return new Border
         {
-            Background = background,
+            Background = effectiveBackground,
             BorderBrush = border,
             BorderThickness = new Thickness(borderThickness),
             Child = content,
@@ -1047,11 +1095,11 @@ public partial class ReportDesignCanvas : UserControl
         };
     }
 
-    private static Control CreateImagePlaceholder(string message, IBrush? background = null)
+    private static Control CreateImagePlaceholder(string message)
     {
         return new Border
         {
-            Background = background ?? new SolidColorBrush(Color.Parse("#F0F0F0")),
+            Background = Brushes.Transparent,
             Child = new TextBlock
             {
                 Text = message,
