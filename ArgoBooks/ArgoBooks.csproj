@@ -31,6 +31,9 @@
 
         <!-- Charts -->
         <PackageReference Include="LiveChartsCore.SkiaSharpView.Avalonia" />
+
+        <!-- Color Picker -->
+        <PackageReference Include="PixiEditor.ColorPicker.AvaloniaUI" />
     </ItemGroup>
 
     <ItemGroup>

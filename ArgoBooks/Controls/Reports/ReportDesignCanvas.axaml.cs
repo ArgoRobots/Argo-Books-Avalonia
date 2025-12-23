@@ -277,13 +277,47 @@ public partial class ReportDesignCanvas : UserControl
     protected override void OnLoaded(Avalonia.Interactivity.RoutedEventArgs e)
     {
         base.OnLoaded(e);
+        EnsureElementsLoaded();
+    }
+
+    protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        // This is called when control becomes visible in the visual tree
+        // Important for cases where Configuration was set while the control was hidden
+        EnsureElementsLoaded();
+    }
+
+    private void EnsureElementsLoaded()
+    {
         UpdateLayout();
         DrawGrid();
 
-        // Ensure elements are loaded if Configuration was set before loading
-        if (Configuration != null && _elementsCanvas != null && _elementControls.Count == 0)
+        // Ensure elements are loaded if Configuration was set before loading/becoming visible
+        // Check both that we have a configuration AND that elements haven't been added to canvas yet
+        var elementsNeedLoading = Configuration != null && _elementsCanvas != null &&
+            ((_elementControls.Count == 0 && Configuration.Elements.Count > 0) ||
+             (_elementControls.Count > 0 && _elementsCanvas.Children.Count == 0));
+
+        if (elementsNeedLoading)
         {
             OnConfigurationChanged();
+        }
+    }
+
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
+    {
+        base.OnSizeChanged(e);
+        // When the control gets a non-zero size (becomes visible), ensure elements are loaded
+        if (e.NewSize.Width > 0 && e.NewSize.Height > 0 && Configuration != null && _elementsCanvas != null)
+        {
+            // Check if elements exist in config but aren't on canvas
+            var elementsNeedLoading = (_elementControls.Count == 0 && Configuration.Elements.Count > 0) ||
+                                       (_elementControls.Count > 0 && _elementsCanvas.Children.Count == 0);
+            if (elementsNeedLoading)
+            {
+                OnConfigurationChanged();
+            }
         }
     }
 
@@ -567,8 +601,11 @@ public partial class ReportDesignCanvas : UserControl
         }
     }
 
-    private CanvasElementControl AddElementControl(ReportElementBase element)
+    private CanvasElementControl? AddElementControl(ReportElementBase element)
     {
+        // Don't add if canvas isn't ready
+        if (_elementsCanvas == null) return null;
+
         var control = new CanvasElementControl
         {
             Element = element,
@@ -595,7 +632,7 @@ public partial class ReportDesignCanvas : UserControl
         // Set content based on element type
         control.ElementContent = CreateElementContent(element);
 
-        _elementsCanvas?.Children.Add(control);
+        _elementsCanvas.Children.Add(control);
         _elementControls.Add(control);
         _elementControlMap[element.Id] = control;
 
@@ -770,6 +807,8 @@ public partial class ReportDesignCanvas : UserControl
         var fontSize = element?.FontSize ?? 12;
         var showGridLines = element?.ShowGridLines ?? true;
         var gridLineColor = element?.GridLineColor ?? "#CCCCCC";
+        var headerRowHeight = element?.HeaderRowHeight ?? 25;
+        var dataRowHeight = element?.DataRowHeight ?? 20;
 
         // Check if company data is available
         var companyData = App.CompanyManager?.CompanyData;
@@ -807,12 +846,17 @@ public partial class ReportDesignCanvas : UserControl
             grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
         }
 
-        // Create row definitions - header + sample data rows
-        var rowCount = showHeaders ? 4 : 3;
-        for (int i = 0; i < rowCount; i++)
+        // Create row definitions with proper heights - header + sample data rows
+        var dataRowCount = 3;
+        if (showHeaders)
         {
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(headerRowHeight) });
         }
+        for (int i = 0; i < dataRowCount; i++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(dataRowHeight) });
+        }
+        var rowCount = showHeaders ? dataRowCount + 1 : dataRowCount;
 
         // Add header row
         if (showHeaders)
@@ -824,14 +868,15 @@ public partial class ReportDesignCanvas : UserControl
                     Background = new SolidColorBrush(Color.Parse(headerBgColor)),
                     BorderBrush = showGridLines ? new SolidColorBrush(Color.Parse(gridLineColor)) : null,
                     BorderThickness = showGridLines ? new Thickness(0, 0, 1, 1) : new Thickness(0),
-                    Padding = new Thickness(4, 2),
+                    Padding = new Thickness(4, 0),
                     Child = new TextBlock
                     {
                         Text = col < columns.Count ? columns[col] : $"Col {col + 1}",
                         FontSize = fontSize,
                         FontWeight = FontWeight.Bold,
                         Foreground = new SolidColorBrush(Color.Parse(headerTextColor)),
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
                     }
                 };
                 Grid.SetRow(headerCell, 0);
@@ -850,13 +895,14 @@ public partial class ReportDesignCanvas : UserControl
                 {
                     BorderBrush = showGridLines ? new SolidColorBrush(Color.Parse(gridLineColor)) : null,
                     BorderThickness = showGridLines ? new Thickness(0, 0, 1, 1) : new Thickness(0),
-                    Padding = new Thickness(4, 2),
+                    Padding = new Thickness(4, 0),
                     Child = new TextBlock
                     {
                         Text = "...",
                         FontSize = fontSize,
                         Foreground = Brushes.Gray,
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
                     }
                 };
                 Grid.SetRow(dataCell, row);
@@ -944,6 +990,10 @@ public partial class ReportDesignCanvas : UserControl
         var borderThickness = element?.BorderThickness ?? 0;
         var opacity = (element?.Opacity ?? 255) / 255.0;
 
+        IBrush background = bgColor != "#00FFFFFF"
+            ? new SolidColorBrush(Color.Parse(bgColor))
+            : Brushes.Transparent;
+
         Control content;
 
         if (!string.IsNullOrEmpty(element?.ImagePath))
@@ -964,28 +1014,25 @@ public partial class ReportDesignCanvas : UserControl
                             ImageScaleMode.Fill => Stretch.UniformToFill,
                             ImageScaleMode.Center => Stretch.None,
                             _ => Stretch.Uniform
-                        },
-                        Opacity = opacity
+                        }
+                        // Opacity is applied to the parent Border
                     };
                 }
                 else
                 {
-                    content = CreateImagePlaceholder("Image not found");
+                    content = CreateImagePlaceholder("Image not found", background);
                 }
             }
             catch
             {
-                content = CreateImagePlaceholder("Error loading image");
+                content = CreateImagePlaceholder("Error loading image", background);
             }
         }
         else
         {
-            content = CreateImagePlaceholder("No image selected");
+            content = CreateImagePlaceholder("No image selected", background);
         }
 
-        IBrush background = bgColor != "#00FFFFFF"
-            ? new SolidColorBrush(Color.Parse(bgColor))
-            : Brushes.Transparent;
         IBrush? border = borderThickness > 0 && borderColor != "#00FFFFFF"
             ? new SolidColorBrush(Color.Parse(borderColor))
             : null;
@@ -995,15 +1042,16 @@ public partial class ReportDesignCanvas : UserControl
             Background = background,
             BorderBrush = border,
             BorderThickness = new Thickness(borderThickness),
-            Child = content
+            Child = content,
+            Opacity = opacity // Apply opacity to entire element including background
         };
     }
 
-    private static Control CreateImagePlaceholder(string message)
+    private static Control CreateImagePlaceholder(string message, IBrush? background = null)
     {
         return new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#F0F0F0")),
+            Background = background ?? new SolidColorBrush(Color.Parse("#F0F0F0")),
             Child = new TextBlock
             {
                 Text = message,

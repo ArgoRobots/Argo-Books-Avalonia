@@ -3,9 +3,51 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:colorPicker="clr-namespace:ColorPicker;assembly=ColorPicker.AvaloniaUI"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
              x:Class="ArgoBooks.Controls.ColorPickerInput"
              x:Name="Root">
+
+    <UserControl.Styles>
+        <!-- Hide the H and S sliders in the color picker -->
+        <Style Selector="colorPicker|StandardColorPicker colorPicker|ColorSliders">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+        <!-- Hide the HSV/HSL/RGB color display section -->
+        <Style Selector="colorPicker|StandardColorPicker colorPicker|ColorDisplay">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+        <!-- Hide the Hex input row inside the picker -->
+        <Style Selector="colorPicker|StandardColorPicker colorPicker|HexColorTextBox">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+        <!-- Hide any ComboBox (HSV/HSL selector) inside the picker -->
+        <Style Selector="colorPicker|StandardColorPicker ComboBox">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+        <!-- Hide ALL text blocks including the "Hex" label -->
+        <Style Selector="colorPicker|StandardColorPicker TextBlock">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+        <Style Selector="colorPicker|StandardColorPicker Label">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+        <!-- Hide the entire hex row - it's likely in a container -->
+        <Style Selector="colorPicker|StandardColorPicker StackPanel">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+        <!-- Only show the SquarePicker (main color selection area) -->
+        <Style Selector="colorPicker|StandardColorPicker colorPicker|SquarePicker">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+    </UserControl.Styles>
 
     <Grid ColumnDefinitions="Auto,*">
         <!-- Color Swatch Button -->
@@ -43,32 +85,34 @@
                     CornerRadius="8"
                     Padding="12"
                     BoxShadow="0 4 16 0 #22000000">
-                <StackPanel Spacing="12" Width="300">
-                    <!-- Color View (inline color editing surface) -->
-                    <ColorView Color="{Binding #Root.SelectedColor, Mode=TwoWay}"
-                               HorizontalAlignment="Center"
-                               IsColorSpectrumVisible="True"
-                               IsColorPreviewVisible="False"
-                               IsColorPaletteVisible="False"
-                               IsColorComponentsVisible="False" />
+                <StackPanel Spacing="12">
+                    <!-- PixiEditor Standard Color Picker - clip to hide the hex row at bottom -->
+                    <Border ClipToBounds="True" Height="150">
+                        <colorPicker:StandardColorPicker x:Name="ColorPickerControl"
+                                                         Width="220" Height="280"
+                                                         Margin="0,125,0,0"
+                                                         ColorChanged="OnColorPickerColorChanged" />
+                    </Border>
 
-                    <!-- Preview and Hex -->
-                    <Grid ColumnDefinitions="Auto,*" Margin="0,8,0,0">
-                        <Border Grid.Column="0" Width="40" Height="40" CornerRadius="4"
+                    <!-- Preview and Hex Input Row -->
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="4"
                                 Background="{Binding #Root.ColorBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                Margin="0,0,12,0" />
+                                BorderThickness="1" />
                         <TextBox Grid.Column="1"
                                  Text="{Binding #Root.ColorValue, Mode=TwoWay}"
-                                 VerticalAlignment="Center" />
+                                 VerticalAlignment="Center"
+                                 Margin="8,0"
+                                 FontFamily="Consolas,Menlo,monospace"
+                                 FontSize="13"
+                                 Padding="6,4" />
+                        <Button Grid.Column="2"
+                                Content="Apply"
+                                Classes="primary"
+                                MinWidth="60"
+                                Command="{Binding #Root.ApplyColorCommand}" />
                     </Grid>
-
-                    <!-- Apply Button -->
-                    <Button Content="Apply"
-                            HorizontalAlignment="Stretch"
-                            Classes="primary"
-                            Command="{Binding #Root.ApplyColorCommand}" />
                 </StackPanel>
             </Border>
         </Popup>

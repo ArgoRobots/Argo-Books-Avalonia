@@ -1675,7 +1675,7 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
 
-        <!-- NumericUpDown Styling -->
+        <!-- NumericUpDown Styling - hide spinner buttons, just show text input -->
         <Style Selector="NumericUpDown">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
@@ -1685,21 +1685,10 @@
             <Setter Property="MinHeight" Value="32" />
             <Setter Property="Padding" Value="8,4" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="ShowButtonSpinner" Value="False" />
         </Style>
         <Style Selector="NumericUpDown:focus /template/ Border#PART_BorderElement">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="NumericUpDown /template/ ButtonSpinner">
-            <Setter Property="Height" Value="30" />
-        </Style>
-        <Style Selector="NumericUpDown /template/ RepeatButton">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-            <Setter Property="Width" Value="18" />
-            <Setter Property="MinWidth" Value="18" />
-        </Style>
-        <Style Selector="NumericUpDown /template/ RepeatButton:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>
