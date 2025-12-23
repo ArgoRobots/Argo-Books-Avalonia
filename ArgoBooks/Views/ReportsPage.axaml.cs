@@ -426,13 +426,11 @@ public partial class ReportsPage : UserControl
     private void PreviewZoomToFit()
     {
         if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
+        if (DataContext is not ReportsPageViewModel vm) return;
 
-        // Get the image inside the transform control
-        var previewImage = this.FindControl<Image>("PreviewImage");
-        if (previewImage?.Source == null) return;
-
-        var imageWidth = previewImage.Source.Size.Width;
-        var imageHeight = previewImage.Source.Size.Height;
+        // Use the display dimensions (original page size, not the 2x rendered size)
+        var imageWidth = vm.PreviewDisplayWidth;
+        var imageHeight = vm.PreviewDisplayHeight;
 
         if (imageWidth <= 0 || imageHeight <= 0) return;
 
@@ -449,10 +447,7 @@ public partial class ReportsPage : UserControl
         ApplyPreviewZoom();
 
         // Update ViewModel
-        if (DataContext is ReportsPageViewModel vm)
-        {
-            vm.PreviewZoom = _previewZoomLevel;
-        }
+        vm.PreviewZoom = _previewZoomLevel;
     }
 
     /// <summary>
