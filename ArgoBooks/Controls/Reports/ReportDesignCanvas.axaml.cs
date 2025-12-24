@@ -1246,10 +1246,18 @@ public partial class ReportDesignCanvas : UserControl
             ? new SolidColorBrush(Color.Parse(borderColor))
             : null;
 
-        // For placeholders (when no actual image is loaded), always show the visible background
-        // For actual images, use the configured background (which may be transparent)
+        // Use user's background color if set, otherwise use default gray for placeholders
         bool hasActualImage = !string.IsNullOrEmpty(element?.ImagePath) && System.IO.File.Exists(element.ImagePath);
-        IBrush effectiveBackground = hasActualImage ? background : new SolidColorBrush(Color.Parse("#F0F0F0"));
+        IBrush effectiveBackground;
+        if (hasActualImage)
+        {
+            effectiveBackground = background;
+        }
+        else
+        {
+            // For placeholders, use user's background if set (not transparent), otherwise default gray
+            effectiveBackground = !isTransparentBg ? background : new SolidColorBrush(Color.Parse("#F0F0F0"));
+        }
 
         return new Border
         {

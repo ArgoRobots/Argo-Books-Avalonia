@@ -237,6 +237,15 @@ public class ReportRenderer : IDisposable
     {
         var rect = GetScaledRect(chart);
 
+        // Draw solid white background for chart (matching design canvas)
+        var bgPaint = new SKPaint
+        {
+            Color = SKColors.White,
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        };
+        canvas.DrawRect(rect, bgPaint);
+
         // Draw border if configured
         if (chart.BorderThickness > 0)
         {
@@ -260,13 +269,21 @@ public class ReportRenderer : IDisposable
             canvas.DrawText(title, rect.MidX, rect.Top + 20 * _renderScale, SKTextAlign.Center, titleFont, titlePaint);
         }
 
-        // Chart area (no background fill to allow transparency/layering like in design canvas)
+        // Chart area with light gray placeholder background
         var chartArea = new SKRect(
             rect.Left + 10 * _renderScale,
             rect.Top + (chart.ShowTitle ? 35 : 10) * _renderScale,
             rect.Right - 10 * _renderScale,
             rect.Bottom - 10 * _renderScale
         );
+
+        var placeholderPaint = new SKPaint
+        {
+            Color = new SKColor(232, 232, 232), // #E8E8E8 matching design canvas
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        };
+        canvas.DrawRect(chartArea, placeholderPaint);
 
         // Draw chart type indicator text
         using var typeFont = new SKFont(_defaultTypeface, 12 * _renderScale);
