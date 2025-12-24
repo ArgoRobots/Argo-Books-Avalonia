@@ -41,6 +41,11 @@ public partial class QuickActionsViewModel : ViewModelBase
     public Thickness ModalMargin => new(CenterOffset, 100, 0, 0);
 
     /// <summary>
+    /// Gets the dropdown margin with dynamic center offset based on sidebar width.
+    /// </summary>
+    public Thickness DropdownMargin => new(CenterOffset, 60, 0, 0);
+
+    /// <summary>
     /// Filtered quick actions based on search query.
     /// </summary>
     public ObservableCollection<QuickActionItem> QuickActions { get; } = [];
@@ -106,6 +111,7 @@ public partial class QuickActionsViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(CenterOffset));
                 OnPropertyChanged(nameof(ModalMargin));
+                OnPropertyChanged(nameof(DropdownMargin));
             }
         };
     }

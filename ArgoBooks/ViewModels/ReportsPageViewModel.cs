@@ -1387,24 +1387,31 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (ReportTemplateFactory.IsBuiltInTemplate(templateName))
         {
             Configuration = ReportTemplateFactory.CreateFromTemplate(templateName);
+            ApplyConfigurationToPageSettings();
         }
         else
         {
-            // Try to load custom template
+            // Try to load custom template asynchronously
             Task.Run(async () =>
             {
                 var config = await _templateStorage.LoadTemplateAsync(templateName);
-                if (config != null)
+                // Update configuration and page settings on UI thread
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    Configuration = config;
-                }
-                else
-                {
-                    Configuration = new ReportConfiguration();
-                }
+                    Configuration = config ?? new ReportConfiguration();
+                    ApplyConfigurationToPageSettings();
+                    // Fire event to refresh canvas after template loads
+                    TemplateLoaded?.Invoke(this, EventArgs.Empty);
+                });
             });
         }
+    }
 
+    /// <summary>
+    /// Applies the current configuration settings to the page setting properties.
+    /// </summary>
+    private void ApplyConfigurationToPageSettings()
+    {
         // Update page settings from configuration
         PageSize = Configuration.PageSize;
         PageOrientation = Configuration.PageOrientation;

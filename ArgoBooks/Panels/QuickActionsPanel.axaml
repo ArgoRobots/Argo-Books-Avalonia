@@ -202,7 +202,7 @@
             <Border Background="Transparent"
                     PointerPressed="Backdrop_PointerPressed" />
 
-            <!-- Centered Panel Container with animation -->
+            <!-- Centered Panel Container with animation - positioned dynamically based on sidebar width -->
             <Border x:Name="ModalBorder"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -212,7 +212,7 @@
                     MaxHeight="500"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"
-                    Margin="0,100,0,0"
+                    Margin="{Binding ModalMargin}"
                     BoxShadow="0 8 32 0 #40000000"
                     Opacity="0"
                     RenderTransformOrigin="0.5,0.5">
@@ -236,7 +236,7 @@
             <Border Background="Transparent"
                     PointerPressed="Backdrop_PointerPressed" />
 
-            <!-- Dropdown Panel Container with animation -->
+            <!-- Dropdown Panel Container with animation - positioned dynamically based on sidebar width -->
             <Border x:Name="DropdownBorder"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -246,7 +246,7 @@
                     MaxHeight="400"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top"
-                    Margin="0,60,0,0"
+                    Margin="{Binding DropdownMargin}"
                     BoxShadow="0 4 16 0 #30000000"
                     Opacity="0"
                     RenderTransformOrigin="0.5,0">
