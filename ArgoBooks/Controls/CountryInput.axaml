@@ -6,6 +6,7 @@
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="40"
              x:Class="ArgoBooks.Controls.CountryInput"
              x:DataType="controls:CountryInput"
+             x:Name="Root"
              Focusable="True">
 
     <Grid>
@@ -15,7 +16,7 @@
                 BorderThickness="1"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
-                Classes.focused="{Binding IsDropdownOpen}">
+                Classes.focused="{Binding #Root.IsDropdownOpen}">
             <Border.Styles>
                 <Style Selector="Border.focused">
                     <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
@@ -28,17 +29,17 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <!-- Flag Image -->
                 <Image Grid.Column="0"
-                       Source="{Binding SelectedCountryFlag}"
+                       Source="{Binding #Root.SelectedCountryFlag}"
                        Width="20" Height="14"
                        Stretch="UniformToFill"
                        VerticalAlignment="Center"
                        Margin="12,0,8,0"
-                       IsVisible="{Binding SelectedCountryFlag, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                       IsVisible="{Binding #Root.SelectedCountryFlag, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
                 <!-- Search/Display TextBox -->
                 <TextBox x:Name="CountrySearchBox"
                          Grid.Column="1"
-                         Text="{Binding SearchText, Mode=TwoWay}"
+                         Text="{Binding #Root.SearchText, Mode=TwoWay}"
                          Watermark="Select country"
                          Background="Transparent"
                          BorderThickness="0"
@@ -55,7 +56,7 @@
                         Padding="0"
                         CornerRadius="4"
                         Cursor="Hand"
-                        Command="{Binding ToggleDropdownCommand}">
+                        Command="{Binding #Root.ToggleDropdownCommand}">
                     <PathIcon Data="M7 10l5 5 5-5z"
                               Width="12" Height="12"
                               Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -65,7 +66,7 @@
 
         <!-- Country Dropdown Popup -->
         <Popup x:Name="CountryDropdownPopup"
-               IsOpen="{Binding IsDropdownOpen, Mode=TwoWay}"
+               IsOpen="{Binding #Root.IsDropdownOpen, Mode=TwoWay}"
                PlacementTarget="{Binding #CountryDropdownBorder}"
                Placement="Bottom"
                PlacementGravity="BottomLeft"
@@ -89,17 +90,17 @@
                                Foreground="{DynamicResource TextTertiaryBrush}"
                                Padding="12,16"
                                HorizontalAlignment="Center"
-                               IsVisible="{Binding !HasFilteredCountries}" />
+                               IsVisible="{Binding !#Root.HasFilteredCountries}" />
 
                     <!-- Filtered Items -->
                     <ListBox Grid.Row="1"
                              x:Name="CountryListBox"
-                             ItemsSource="{Binding FilteredCountries}"
-                             SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                             ItemsSource="{Binding #Root.FilteredCountries}"
+                             SelectedIndex="{Binding #Root.SelectedIndex, Mode=TwoWay}"
                              Background="Transparent"
                              BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             IsVisible="{Binding HasFilteredCountries}">
+                             IsVisible="{Binding #Root.HasFilteredCountries}">
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
                                 <Setter Property="Padding" Value="10,8" />

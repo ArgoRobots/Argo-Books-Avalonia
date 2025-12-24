@@ -87,7 +87,7 @@
                                               DataContext="{Binding UndoRedoViewModel}" />
 
                 <!-- Save Button with Asterisk and Status Indicator -->
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel x:Name="SaveButtonContainer" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Save Button -->
                     <Button Classes="header-icon"
                             Command="{Binding SaveCommand}"
@@ -96,14 +96,7 @@
                                   Width="18" Height="18" />
                     </Button>
 
-                    <!-- Unsaved Changes Asterisk (to the right of save button) -->
-                    <TextBlock Text="*"
-                               FontSize="16"
-                               FontWeight="Bold"
-                               Foreground="{DynamicResource TextSecondaryBrush}"
-                               VerticalAlignment="Center"
-                               Margin="-8,0,0,0"
-                               IsVisible="{Binding HasUnsavedChanges}" />
+                    <!-- Asterisk placeholder - added dynamically via code-behind when needed -->
 
                     <!-- Status Indicator Container - fixed width to prevent layout shift -->
                     <Border Width="105" VerticalAlignment="Center" Margin="4,0,0,0">

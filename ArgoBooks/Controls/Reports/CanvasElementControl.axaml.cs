@@ -431,9 +431,9 @@ public partial class CanvasElementControl : UserControl
                 newY = Math.Round(newY / SnapGridSize) * SnapGridSize;
             }
 
-            // Constrain to canvas bounds
-            newX = Math.Max(0, Math.Min(newX, canvas.Bounds.Width - Width));
-            newY = Math.Max(0, Math.Min(newY, canvas.Bounds.Height - Height));
+            // Constrain to canvas bounds and round to integers
+            newX = Math.Round(Math.Max(0, Math.Min(newX, canvas.Bounds.Width - Width)));
+            newY = Math.Round(Math.Max(0, Math.Min(newY, canvas.Bounds.Height - Height)));
 
             Canvas.SetLeft(this, newX);
             Canvas.SetTop(this, newY);
@@ -530,8 +530,9 @@ public partial class CanvasElementControl : UserControl
 
         var currentX = Canvas.GetLeft(this);
         var currentY = Canvas.GetTop(this);
-        var newX = Math.Max(0, Math.Min(currentX + deltaX, canvas.Bounds.Width - Width));
-        var newY = Math.Max(0, Math.Min(currentY + deltaY, canvas.Bounds.Height - Height));
+        // Constrain to canvas bounds and round to integers
+        var newX = Math.Round(Math.Max(0, Math.Min(currentX + deltaX, canvas.Bounds.Width - Width)));
+        var newY = Math.Round(Math.Max(0, Math.Min(currentY + deltaY, canvas.Bounds.Height - Height)));
 
         Canvas.SetLeft(this, newX);
         Canvas.SetTop(this, newY);
@@ -681,11 +682,11 @@ public partial class CanvasElementControl : UserControl
             newHeight = Math.Round(newHeight / SnapGridSize) * SnapGridSize;
         }
 
-        // Constrain to canvas bounds
-        newX = Math.Max(0, newX);
-        newY = Math.Max(0, newY);
-        newWidth = Math.Min(newWidth, canvas.Bounds.Width - newX);
-        newHeight = Math.Min(newHeight, canvas.Bounds.Height - newY);
+        // Constrain to canvas bounds and round to integers
+        newX = Math.Round(Math.Max(0, newX));
+        newY = Math.Round(Math.Max(0, newY));
+        newWidth = Math.Round(Math.Min(newWidth, canvas.Bounds.Width - newX));
+        newHeight = Math.Round(Math.Min(newHeight, canvas.Bounds.Height - newY));
 
         // Apply changes
         Canvas.SetLeft(this, newX);

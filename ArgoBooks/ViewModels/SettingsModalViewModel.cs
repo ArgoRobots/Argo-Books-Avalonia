@@ -215,6 +215,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     // Flag to prevent recursive updates when syncing FileEncryptionEnabled with HasPassword
     private bool _isUpdatingEncryption;
 
+    // Flag to prevent firing AutoLockSettingsChanged when syncing UI with company settings
+    private bool _isLoadingAutoLock;
+
     /// <summary>
     /// Called when FileEncryptionEnabled changes - opens appropriate password modal.
     /// </summary>
@@ -249,7 +252,21 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     partial void OnSelectedAutoLockChanged(string value)
     {
+        // Don't fire event when loading from company settings
+        if (_isLoadingAutoLock) return;
+
         AutoLockSettingsChanged?.Invoke(this, new AutoLockSettingsEventArgs(value));
+    }
+
+    /// <summary>
+    /// Sets the auto-lock value without triggering the change event.
+    /// Used when syncing UI with company settings on load.
+    /// </summary>
+    public void SetAutoLockWithoutNotify(string value)
+    {
+        _isLoadingAutoLock = true;
+        SelectedAutoLock = value;
+        _isLoadingAutoLock = false;
     }
 
     /// <summary>

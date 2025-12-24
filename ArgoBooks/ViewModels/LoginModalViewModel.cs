@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -24,7 +25,7 @@ public partial class LoginModalViewModel : ViewModelBase
     private string _accountInitials = string.Empty;
 
     [ObservableProperty]
-    private string _accountColor = "#3B82F6";
+    private Color _accountColor = Color.Parse("#3B82F6");
 
     [ObservableProperty]
     private string _password = string.Empty;
@@ -82,7 +83,7 @@ public partial class LoginModalViewModel : ViewModelBase
         AccountName = account.Name;
         AccountDescription = account.Description;
         AccountInitials = account.Initials;
-        AccountColor = account.Color;
+        AccountColor = Color.Parse(account.Color);
         Password = string.Empty;
         ErrorMessage = string.Empty;
         HasError = false;
