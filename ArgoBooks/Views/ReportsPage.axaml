@@ -628,7 +628,7 @@
                         <ScrollViewer x:Name="ToolbarScrollViewer"
                                       HorizontalScrollBarVisibility="Auto"
                                       VerticalScrollBarVisibility="Disabled">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
+                        <StackPanel x:Name="ToolbarContent" Orientation="Horizontal" Spacing="4">
                                 <!-- Undo/Redo Button Group (same as header) -->
                                 <controls:UndoRedoButtonGroup x:Name="ReportsUndoRedoGroup"
                                                               DataContext="{Binding UndoRedoViewModel}" />

@@ -15,7 +15,7 @@ public partial class ReportsPage : UserControl
     private ScrollViewer? _previewScrollViewer;
     private LayoutTransformControl? _previewZoomTransformControl;
     private ScrollViewer? _toolbarScrollViewer;
-    private Border? _toolbarBorder;
+    private StackPanel? _toolbarContent;
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
@@ -42,7 +42,7 @@ public partial class ReportsPage : UserControl
         _previewScrollViewer = this.FindControl<ScrollViewer>("PreviewScrollViewer");
         _previewZoomTransformControl = this.FindControl<LayoutTransformControl>("PreviewZoomTransformControl");
         _toolbarScrollViewer = this.FindControl<ScrollViewer>("ToolbarScrollViewer");
-        _toolbarBorder = this.FindControl<Border>("ToolbarBorder");
+        _toolbarContent = this.FindControl<StackPanel>("ToolbarContent");
 
         // Wire up toolbar scrollbar visibility detection
         if (_toolbarScrollViewer != null)
@@ -162,7 +162,7 @@ public partial class ReportsPage : UserControl
 
     private void OnToolbarLayoutUpdated(object? sender, EventArgs e)
     {
-        if (_toolbarScrollViewer == null || _toolbarBorder == null) return;
+        if (_toolbarScrollViewer == null || _toolbarContent == null) return;
 
         // Check if horizontal scrollbar is visible (extent > viewport)
         var isScrollbarVisible = _toolbarScrollViewer.Extent.Width > _toolbarScrollViewer.Viewport.Width;
@@ -171,8 +171,8 @@ public partial class ReportsPage : UserControl
         if (isScrollbarVisible != _toolbarScrollbarVisible)
         {
             _toolbarScrollbarVisible = isScrollbarVisible;
-            // Add extra bottom padding when scrollbar is visible to accommodate it
-            _toolbarBorder.Padding = isScrollbarVisible ? new Thickness(8, 8, 8, 16) : new Thickness(8);
+            // Add bottom margin to content when scrollbar is visible to make space for it
+            _toolbarContent.Margin = isScrollbarVisible ? new Thickness(0, 0, 0, 12) : new Thickness(0);
         }
     }
 
