@@ -1544,6 +1544,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         // Create chart elements for selected charts that don't already have elements
         CreateChartElementsForSelectedCharts();
+
+        // Notify view to sync canvas with new elements
+        OnPropertyChanged(nameof(Configuration));
     }
 
     /// <summary>
