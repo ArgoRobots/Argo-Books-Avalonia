@@ -68,35 +68,56 @@
                                    Classes="margin-guide"
                                    IsVisible="False"/>
 
-                        <!-- Header area indicator with title -->
+                        <!-- Header area indicator with title and separator line -->
                         <Border x:Name="HeaderArea"
                                 VerticalAlignment="Top"
-                                Background="#10000000"
+                                Background="White"
                                 IsVisible="{Binding ShowHeaderFooter, ElementName=DesignCanvas}"
                                 IsHitTestVisible="False">
-                            <TextBlock x:Name="HeaderTitleText"
-                                       Text="{Binding Configuration.Title, ElementName=DesignCanvas, FallbackValue='Report Title'}"
-                                       FontSize="16"
-                                       FontWeight="Bold"
-                                       Foreground="#333333"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Margin="0,15,0,0" />
+                            <Grid>
+                                <TextBlock x:Name="HeaderTitleText"
+                                           Text="{Binding Configuration.Title, ElementName=DesignCanvas, FallbackValue='Report Title'}"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="Black"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                                <!-- Separator line at bottom of header -->
+                                <Border x:Name="HeaderSeparator"
+                                        VerticalAlignment="Bottom"
+                                        Height="1"
+                                        Background="LightGray"
+                                        Margin="40,0,40,5" />
+                            </Grid>
                         </Border>
 
-                        <!-- Footer area indicator with page number -->
+                        <!-- Footer area indicator with timestamp and page number -->
                         <Border x:Name="FooterArea"
                                 VerticalAlignment="Bottom"
-                                Background="#10000000"
+                                Background="White"
                                 IsVisible="{Binding ShowHeaderFooter, ElementName=DesignCanvas}"
                                 IsHitTestVisible="False">
-                            <StackPanel Orientation="Horizontal"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center">
-                                <TextBlock Text="Page 1"
-                                           FontSize="10"
-                                           Foreground="#666666" />
-                            </StackPanel>
+                            <Grid>
+                                <!-- Separator line at top of footer -->
+                                <Border x:Name="FooterSeparator"
+                                        VerticalAlignment="Top"
+                                        Height="1"
+                                        Background="LightGray"
+                                        Margin="40,5,40,0" />
+                                <!-- Footer content with timestamp on left and page number on right -->
+                                <Grid x:Name="FooterContentGrid" Margin="40,0" VerticalAlignment="Center">
+                                    <TextBlock x:Name="FooterTimestamp"
+                                               Text="Generated: [Date/Time]"
+                                               FontSize="10"
+                                               Foreground="Gray"
+                                               HorizontalAlignment="Left" />
+                                    <TextBlock x:Name="FooterPageNumber"
+                                               Text="Page 1"
+                                               FontSize="10"
+                                               Foreground="Gray"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                            </Grid>
                         </Border>
 
                         <!-- Elements canvas -->

@@ -445,16 +445,48 @@ public partial class ReportDesignCanvas : UserControl
     {
         if (Configuration == null) return;
 
-        if (_headerArea != null && Configuration.ShowHeader)
+        var margins = Configuration.PageMargins;
+        var separatorMargin = new Thickness(margins.Left, 0, margins.Left, 5);
+        var footerSeparatorMargin = new Thickness(margins.Left, 5, margins.Left, 0);
+
+        if (_headerArea != null)
         {
             _headerArea.Height = PageDimensions.HeaderHeight;
-            _headerArea.IsVisible = ShowHeaderFooter;
+            _headerArea.IsVisible = ShowHeaderFooter && Configuration.ShowHeader;
+
+            // Update separator margin based on page margins
+            var headerSeparator = _headerArea.FindControl<Border>("HeaderSeparator");
+            if (headerSeparator != null)
+            {
+                headerSeparator.Margin = separatorMargin;
+            }
         }
 
-        if (_footerArea != null && Configuration.ShowFooter)
+        if (_footerArea != null)
         {
             _footerArea.Height = PageDimensions.FooterHeight;
-            _footerArea.IsVisible = ShowHeaderFooter;
+            _footerArea.IsVisible = ShowHeaderFooter && Configuration.ShowFooter;
+
+            // Update separator margin based on page margins
+            var footerSeparator = _footerArea.FindControl<Border>("FooterSeparator");
+            if (footerSeparator != null)
+            {
+                footerSeparator.Margin = footerSeparatorMargin;
+            }
+
+            // Update footer content margin based on page margins
+            var footerContentGrid = _footerArea.FindControl<Grid>("FooterContentGrid");
+            if (footerContentGrid != null)
+            {
+                footerContentGrid.Margin = new Thickness(margins.Left, 0, margins.Left, 0);
+            }
+
+            // Update page number visibility based on ShowPageNumbers setting
+            var pageNumber = _footerArea.FindControl<TextBlock>("FooterPageNumber");
+            if (pageNumber != null)
+            {
+                pageNumber.IsVisible = Configuration.ShowPageNumbers;
+            }
         }
     }
 

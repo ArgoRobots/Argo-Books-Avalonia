@@ -168,13 +168,14 @@ public partial class ReportsPage : UserControl
         if (show && _asterisk == null)
         {
             // Create asterisk dynamically only when needed
+            // Using -6 margin (scaled from header's -8 for 32px button vs 40px button)
             _asterisk = new TextBlock
             {
                 Text = "*",
-                FontSize = 16,
+                FontSize = 14,
                 FontWeight = Avalonia.Media.FontWeight.Bold,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Margin = new Avalonia.Thickness(-8, 0, 0, 0)
+                Margin = new Avalonia.Thickness(-6, -2, 0, 0)
             };
             // Insert after the save button (index 1)
             _saveButtonContainer.Children.Insert(1, _asterisk);
