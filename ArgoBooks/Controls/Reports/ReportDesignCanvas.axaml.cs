@@ -1146,27 +1146,27 @@ public partial class ReportDesignCanvas : UserControl
         // Build a list of transaction records (date, id, company, product, qty, unitPrice, total, status, accountant, shipping)
         var transactions = new List<(DateTime Date, string Id, string Company, string Product, decimal Qty, decimal UnitPrice, decimal Total, string Status, string Accountant, decimal Shipping)>();
 
-        // Get sales
-        if (transactionType == TransactionType.Sales || transactionType == TransactionType.Both)
+        // Get sales (Revenue)
+        if (transactionType == TransactionType.Revenue || transactionType == TransactionType.Both)
         {
             foreach (var sale in companyData.Sales)
             {
                 var customerName = companyData.Customers.FirstOrDefault(c => c.Id == sale.CustomerId)?.Name ?? "N/A";
-                var productName = sale.LineItems.FirstOrDefault()?.ProductName ?? sale.Description;
+                var productName = sale.LineItems.FirstOrDefault()?.Description ?? sale.Description;
                 var accountantName = companyData.Accountants.FirstOrDefault(a => a.Id == sale.AccountantId)?.Name ?? "";
                 transactions.Add((sale.Date, sale.Id, customerName, productName, sale.Quantity, sale.UnitPrice, sale.Total, sale.PaymentStatus, accountantName, sale.ShippingCost));
             }
         }
 
-        // Get purchases
-        if (transactionType == TransactionType.Purchases || transactionType == TransactionType.Both)
+        // Get purchases (Expenses)
+        if (transactionType == TransactionType.Expenses || transactionType == TransactionType.Both)
         {
             foreach (var purchase in companyData.Purchases)
             {
                 var supplierName = companyData.Suppliers.FirstOrDefault(s => s.Id == purchase.SupplierId)?.Name ?? "N/A";
-                var productName = purchase.LineItems.FirstOrDefault()?.ProductName ?? purchase.Description;
+                var productName = purchase.LineItems.FirstOrDefault()?.Description ?? purchase.Description;
                 var accountantName = companyData.Accountants.FirstOrDefault(a => a.Id == purchase.AccountantId)?.Name ?? "";
-                transactions.Add((purchase.Date, purchase.Id, supplierName, productName, purchase.Quantity, purchase.UnitPrice, purchase.Total, purchase.PaymentStatus, accountantName, purchase.ShippingCost));
+                transactions.Add((purchase.Date, purchase.Id, supplierName, productName, purchase.Quantity, purchase.UnitPrice, purchase.Total, "Paid", accountantName, purchase.ShippingCost));
             }
         }
 

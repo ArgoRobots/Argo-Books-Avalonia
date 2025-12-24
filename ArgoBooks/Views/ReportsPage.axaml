@@ -619,14 +619,15 @@
                 <!-- Center: Design Canvas -->
                 <Grid Grid.Column="1" RowDefinitions="Auto,*">
                     <!-- Toolbar -->
-                    <Border Grid.Row="0"
+                    <Border x:Name="ToolbarBorder"
+                            Grid.Row="0"
                             Background="{DynamicResource SurfaceBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1"
                             Padding="8">
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Disabled"
-                                      AllowAutoHide="True">
+                        <ScrollViewer x:Name="ToolbarScrollViewer"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                                 <!-- Undo/Redo Button Group (same as header) -->
                                 <controls:UndoRedoButtonGroup x:Name="ReportsUndoRedoGroup"

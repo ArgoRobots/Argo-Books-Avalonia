@@ -14,9 +14,12 @@ public partial class ReportsPage : UserControl
     private ReportDesignCanvas? _designCanvas;
     private ScrollViewer? _previewScrollViewer;
     private LayoutTransformControl? _previewZoomTransformControl;
+    private ScrollViewer? _toolbarScrollViewer;
+    private Border? _toolbarBorder;
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
+    private bool _toolbarScrollbarVisible;
 
     // Preview zoom level (managed here since we're not using binding anymore)
     private double _previewZoomLevel = 1.0;
@@ -38,6 +41,14 @@ public partial class ReportsPage : UserControl
         _designCanvas = this.FindControl<ReportDesignCanvas>("DesignCanvas");
         _previewScrollViewer = this.FindControl<ScrollViewer>("PreviewScrollViewer");
         _previewZoomTransformControl = this.FindControl<LayoutTransformControl>("PreviewZoomTransformControl");
+        _toolbarScrollViewer = this.FindControl<ScrollViewer>("ToolbarScrollViewer");
+        _toolbarBorder = this.FindControl<Border>("ToolbarBorder");
+
+        // Wire up toolbar scrollbar visibility detection
+        if (_toolbarScrollViewer != null)
+        {
+            _toolbarScrollViewer.LayoutUpdated += OnToolbarLayoutUpdated;
+        }
 
         // Wire up zoom, pan, and selection for the design canvas
         if (_designCanvas != null)
@@ -149,6 +160,22 @@ public partial class ReportsPage : UserControl
         _designCanvas?.RefreshPageSettings();
     }
 
+    private void OnToolbarLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (_toolbarScrollViewer == null || _toolbarBorder == null) return;
+
+        // Check if horizontal scrollbar is visible (extent > viewport)
+        var isScrollbarVisible = _toolbarScrollViewer.Extent.Width > _toolbarScrollViewer.Viewport.Width;
+
+        // Only update if visibility changed
+        if (isScrollbarVisible != _toolbarScrollbarVisible)
+        {
+            _toolbarScrollbarVisible = isScrollbarVisible;
+            // Add extra bottom padding when scrollbar is visible to accommodate it
+            _toolbarBorder.Padding = isScrollbarVisible ? new Thickness(8, 8, 8, 16) : new Thickness(8);
+        }
+    }
+
     protected override void OnUnloaded(RoutedEventArgs e)
     {
         base.OnUnloaded(e);
@@ -169,6 +196,11 @@ public partial class ReportsPage : UserControl
             _previewScrollViewer.PointerPressed -= OnPreviewPointerPressed;
             _previewScrollViewer.PointerMoved -= OnPreviewPointerMoved;
             _previewScrollViewer.PointerReleased -= OnPreviewPointerReleased;
+        }
+
+        if (_toolbarScrollViewer != null)
+        {
+            _toolbarScrollViewer.LayoutUpdated -= OnToolbarLayoutUpdated;
         }
 
         if (DataContext is ReportsPageViewModel vm)
