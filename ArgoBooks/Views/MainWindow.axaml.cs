@@ -141,7 +141,17 @@ public partial class MainWindow : Window
             {
                 return; // User cancelled, don't close
             }
-            // User confirmed, continue with rest of closing logic
+
+            // User confirmed, check for other unsaved changes before closing
+            var hasAppUnsavedChanges = App.UndoRedoManager?.IsAtSavedState == false;
+            if (!hasAppUnsavedChanges)
+            {
+                // No other unsaved changes, close the window
+                _isClosingConfirmed = true;
+                Close();
+                return;
+            }
+            // Fall through to handle app-level unsaved changes
         }
 
         // Check for unsaved changes - use UndoRedoManager's saved state tracking

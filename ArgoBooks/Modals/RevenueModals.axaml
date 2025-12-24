@@ -413,19 +413,11 @@
                     </Border>
 
                     <!-- Footer -->
-                    <Border Padding="24,0,24,20">
-                        <Grid ColumnDefinitions="*,12,*">
-                            <Button Grid.Column="0"
-                                    Classes="secondary-button"
-                                    Content="Cancel"
-                                    Command="{Binding CloseDeleteConfirmCommand}"
-                                    HorizontalAlignment="Stretch" />
-                            <Button Grid.Column="2"
-                                    Classes="danger-button"
-                                    Content="Delete"
-                                    Command="{Binding DeleteRevenueCommand}"
-                                    HorizontalAlignment="Stretch" />
-                        </Grid>
+                    <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseDeleteConfirmCommand}" />
+                            <Button Classes="danger-button" Content="Delete" Command="{Binding DeleteRevenueCommand}" />
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </Border>
@@ -647,19 +639,11 @@
                     </StackPanel>
 
                     <!-- Footer -->
-                    <Border Padding="24,0,24,20">
-                        <Grid ColumnDefinitions="*,12,*">
-                            <Button Grid.Column="0"
-                                    Classes="secondary-button"
-                                    Content="Cancel"
-                                    Command="{Binding CloseItemStatusModalCommand}"
-                                    HorizontalAlignment="Stretch" />
-                            <Button Grid.Column="2"
-                                    Classes="warning-button"
-                                    Content="{Binding ItemStatusSaveButtonText}"
-                                    Command="{Binding ConfirmItemStatusCommand}"
-                                    HorizontalAlignment="Stretch" />
-                        </Grid>
+                    <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseItemStatusModalCommand}" />
+                            <Button Classes="warning-button" Content="{Binding ItemStatusSaveButtonText}" Command="{Binding ConfirmItemStatusCommand}" />
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </Border>
