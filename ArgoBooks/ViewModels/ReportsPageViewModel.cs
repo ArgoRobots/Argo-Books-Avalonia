@@ -1150,6 +1150,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ObservableCollection<string> FontFamilies { get; } =
         ["Segoe UI", "Arial", "Times New Roman", "Calibri", "Courier New", "Georgia", "Verdana", "Trebuchet MS"];
 
+    public ObservableCollection<string> DateFormats { get; } =
+        ["MM/dd/yyyy", "dd/MM/yyyy", "yyyy-MM-dd", "MMMM d, yyyy", "MMM d, yyyy", "d MMMM yyyy", "d MMM yyyy"];
+
     // Partial methods to update Configuration immediately when page settings change
     partial void OnPageSizeChanged(PageSize value)
     {

@@ -625,7 +625,8 @@
                             BorderThickness="0,0,0,1"
                             Padding="8">
                         <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                      VerticalScrollBarVisibility="Disabled">
+                                      VerticalScrollBarVisibility="Disabled"
+                                      AllowAutoHide="True">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                                 <!-- Undo/Redo Button Group (same as header) -->
                                 <controls:UndoRedoButtonGroup x:Name="ReportsUndoRedoGroup"
@@ -940,7 +941,9 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Date Format" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedDateRangeElement.DateFormat}" Watermark="yyyy-MM-dd" />
+                                    <ComboBox ItemsSource="{Binding DateFormats}"
+                                              SelectedItem="{Binding SelectedDateRangeElement.DateFormat}"
+                                              HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1047,26 +1050,29 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
 
                                 <!-- Tab Buttons -->
-                                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,8">
-                                    <Button Grid.Column="0"
-                                            Content="General"
-                                            Classes="property-tab-button"
-                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}"
-                                            Command="{Binding SetTablePropertiesTabCommand}"
-                                            CommandParameter="0" />
-                                    <Button Grid.Column="1"
-                                            Content="Style"
-                                            Classes="property-tab-button"
-                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}"
-                                            Command="{Binding SetTablePropertiesTabCommand}"
-                                            CommandParameter="1" />
-                                    <Button Grid.Column="2"
-                                            Content="Columns"
-                                            Classes="property-tab-button"
-                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}"
-                                            Command="{Binding SetTablePropertiesTabCommand}"
-                                            CommandParameter="2" />
-                                </Grid>
+                                <StackPanel Spacing="0">
+                                    <Grid ColumnDefinitions="*,*,*">
+                                        <Button Grid.Column="0"
+                                                Content="General"
+                                                Classes="property-tab-button"
+                                                Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}"
+                                                Command="{Binding SetTablePropertiesTabCommand}"
+                                                CommandParameter="0" />
+                                        <Button Grid.Column="1"
+                                                Content="Style"
+                                                Classes="property-tab-button"
+                                                Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}"
+                                                Command="{Binding SetTablePropertiesTabCommand}"
+                                                CommandParameter="1" />
+                                        <Button Grid.Column="2"
+                                                Content="Columns"
+                                                Classes="property-tab-button"
+                                                Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}"
+                                                Command="{Binding SetTablePropertiesTabCommand}"
+                                                CommandParameter="2" />
+                                    </Grid>
+                                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,8" />
+                                </StackPanel>
 
                                 <!-- General Tab -->
                                 <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}">
