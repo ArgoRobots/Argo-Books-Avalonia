@@ -197,7 +197,7 @@ public partial class SidebarViewModel : ViewModelBase
             Text = text,
             PageName = pageName,
             IconData = iconData,
-            Command = NavigateAsyncCommand
+            Command = NavigateCommand
         };
     }
 
