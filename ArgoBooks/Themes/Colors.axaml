@@ -12,6 +12,9 @@
     <Color x:Key="PrimaryDarkColor">#1D4ED8</Color>
     <Color x:Key="PrimaryHoverColor">#2563EB</Color>
 
+    <!-- Accent Color (used in gradients) -->
+    <Color x:Key="AccentColor">#5C6AC4</Color>
+
     <!-- Semantic Colors - Success (from mockup: #28a745) -->
     <Color x:Key="SuccessColor">#28A745</Color>
     <Color x:Key="SuccessLightColor">#34D399</Color>
