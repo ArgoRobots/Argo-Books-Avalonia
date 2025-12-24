@@ -206,7 +206,7 @@
                         <Grid RowDefinitions="Auto,*">
                             <!-- Column Menu Popup (outside the scroll area) -->
                             <Popup IsOpen="{Binding IsColumnMenuOpen, Mode=TwoWay}"
-                                   PlacementMode="Pointer"
+                                   Placement="Pointer"
                                    IsLightDismissEnabled="True">
                                     <Border Background="{DynamicResource SurfaceBrush}"
                                             BorderBrush="{DynamicResource BorderBrush}"
