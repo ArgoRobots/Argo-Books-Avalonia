@@ -23,28 +23,10 @@
             <Setter Property="IsVisible" Value="False" />
             <Setter Property="Height" Value="0" />
         </Style>
-        <!-- Hide any ComboBox (HSV/HSL selector) inside the picker -->
+        <!-- Hide the HSV/HSL ComboBox inside the picker -->
         <Style Selector="colorPicker|StandardColorPicker ComboBox">
             <Setter Property="IsVisible" Value="False" />
             <Setter Property="Height" Value="0" />
-        </Style>
-        <!-- Hide ALL text blocks including the "Hex" label -->
-        <Style Selector="colorPicker|StandardColorPicker TextBlock">
-            <Setter Property="IsVisible" Value="False" />
-            <Setter Property="Height" Value="0" />
-        </Style>
-        <Style Selector="colorPicker|StandardColorPicker Label">
-            <Setter Property="IsVisible" Value="False" />
-            <Setter Property="Height" Value="0" />
-        </Style>
-        <!-- Hide the entire hex row - it's likely in a container -->
-        <Style Selector="colorPicker|StandardColorPicker StackPanel">
-            <Setter Property="IsVisible" Value="False" />
-            <Setter Property="Height" Value="0" />
-        </Style>
-        <!-- Only show the SquarePicker (main color selection area) -->
-        <Style Selector="colorPicker|StandardColorPicker colorPicker|SquarePicker">
-            <Setter Property="IsVisible" Value="True" />
         </Style>
     </UserControl.Styles>
 
