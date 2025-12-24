@@ -1784,19 +1784,37 @@ public partial class ReportDesignCanvas : UserControl
     private void OnElementPositionChanged(object? sender, ElementPositionChangedEventArgs e)
     {
         // Update other selected elements if this is part of a multi-selection drag
-        if (_selectedElements.Count > 1 && e.Element != null && !e.IsComplete)
+        if (_selectedElements.Count > 1 && e.Element != null && !e.IsComplete && _dragStartStates != null)
         {
-            var delta = e.NewPosition - e.OldPosition;
-
-            foreach (var element in _selectedElements.Where(el => el.Id != e.Element.Id))
+            // Calculate delta from the dragged element's start position
+            if (_dragStartStates.TryGetValue(e.Element.Id, out var draggedStartState))
             {
-                element.X += delta.X;
-                element.Y += delta.Y;
+                var delta = e.NewPosition - draggedStartState.Position;
 
-                if (_elementControlMap.TryGetValue(element.Id, out var control))
+                foreach (var element in _selectedElements.Where(el => el.Id != e.Element.Id))
                 {
-                    Canvas.SetLeft(control, element.X);
-                    Canvas.SetTop(control, element.Y);
+                    if (_dragStartStates.TryGetValue(element.Id, out var startState))
+                    {
+                        // Calculate new position based on start position + delta
+                        var newX = Math.Round(startState.Position.X + delta.X);
+                        var newY = Math.Round(startState.Position.Y + delta.Y);
+
+                        // Constrain to canvas bounds
+                        if (_elementsCanvas != null)
+                        {
+                            newX = Math.Max(0, Math.Min(newX, _elementsCanvas.Bounds.Width - element.Width));
+                            newY = Math.Max(0, Math.Min(newY, _elementsCanvas.Bounds.Height - element.Height));
+                        }
+
+                        element.X = newX;
+                        element.Y = newY;
+
+                        if (_elementControlMap.TryGetValue(element.Id, out var control))
+                        {
+                            Canvas.SetLeft(control, element.X);
+                            Canvas.SetTop(control, element.Y);
+                        }
+                    }
                 }
             }
         }
