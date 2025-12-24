@@ -69,6 +69,7 @@ public partial class ReportsPage : UserControl
             vm.ElementPropertyChanged += OnElementPropertyChanged;
             vm.PageSettingsRefreshRequested += OnPageSettingsRefreshRequested;
             vm.TemplateLoaded += OnTemplateLoaded;
+            vm.PreviewFitToWindowRequested += OnPreviewFitToWindowRequested;
             // Initial sync in case elements were already added
             _designCanvas?.SyncElements();
 
@@ -136,6 +137,13 @@ public partial class ReportsPage : UserControl
         _designCanvas.Opacity = 1;
     }
 
+    private async void OnPreviewFitToWindowRequested(object? sender, EventArgs e)
+    {
+        // Wait for the preview image to be rendered and layout to complete
+        await Task.Delay(100);
+        PreviewZoomToFit();
+    }
+
     private void OnPageSettingsRefreshRequested(object? sender, EventArgs e)
     {
         _designCanvas?.RefreshPageSettings();
@@ -169,6 +177,7 @@ public partial class ReportsPage : UserControl
             vm.ElementPropertyChanged -= OnElementPropertyChanged;
             vm.PageSettingsRefreshRequested -= OnPageSettingsRefreshRequested;
             vm.TemplateLoaded -= OnTemplateLoaded;
+            vm.PreviewFitToWindowRequested -= OnPreviewFitToWindowRequested;
         }
     }
 

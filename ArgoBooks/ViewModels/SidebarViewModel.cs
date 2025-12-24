@@ -197,7 +197,7 @@ public partial class SidebarViewModel : ViewModelBase
             Text = text,
             PageName = pageName,
             IconData = iconData,
-            Command = NavigateCommand
+            Command = NavigateAsyncCommand
         };
     }
 
@@ -257,7 +257,7 @@ public partial class SidebarViewModel : ViewModelBase
     /// Navigates to the specified page.
     /// </summary>
     [RelayCommand]
-    private void Navigate(string? pageName)
+    private async Task NavigateAsync(string? pageName)
     {
         if (string.IsNullOrEmpty(pageName))
             return;
@@ -265,8 +265,15 @@ public partial class SidebarViewModel : ViewModelBase
         // Raise event so panels can be closed
         NavigationRequested?.Invoke(this, EventArgs.Empty);
 
-        SetActivePage(pageName);
-        _navigationService?.NavigateTo(pageName);
+        // Use async navigation to allow navigation guards to check for unsaved changes
+        if (_navigationService != null)
+        {
+            var navigated = await _navigationService.NavigateToAsync(pageName);
+            if (navigated)
+            {
+                SetActivePage(pageName);
+            }
+        }
     }
 
     /// <summary>

@@ -21,10 +21,8 @@
         <!-- Selection rectangle style -->
         <Style Selector="Rectangle.selection-rect">
             <Setter Property="Stroke" Value="{DynamicResource PrimaryBrush}"/>
-            <Setter Property="StrokeThickness" Value="1"/>
-            <Setter Property="StrokeDashArray" Value="2,2"/>
-            <Setter Property="Fill" Value="{DynamicResource PrimaryLightBrush}"/>
-            <Setter Property="Opacity" Value="0.3"/>
+            <Setter Property="StrokeThickness" Value="2"/>
+            <Setter Property="Fill" Value="#403B82F6"/>
             <Setter Property="IsHitTestVisible" Value="False"/>
         </Style>
 

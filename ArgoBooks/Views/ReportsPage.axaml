@@ -344,7 +344,9 @@
                                                             BorderThickness="2"
                                                             BorderBrush="Transparent"
                                                             HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Left">
+                                                            HorizontalContentAlignment="Left"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
+                                                            CommandParameter="{Binding}">
                                                         <StackPanel Orientation="Horizontal" Spacing="10">
                                                             <Border Background="{DynamicResource SurfaceHoverBrush}"
                                                                     CornerRadius="8"

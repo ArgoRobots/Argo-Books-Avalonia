@@ -279,6 +279,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     public event EventHandler<ReportElementBase>? ElementPropertyChanged;
     public event EventHandler? PageSettingsRefreshRequested;
     public event EventHandler? TemplateLoaded;
+    public event EventHandler? PreviewFitToWindowRequested;
 
     partial void OnSelectedElementChanged(ReportElementBase? oldValue, ReportElementBase? newValue)
     {
@@ -358,6 +359,11 @@ public partial class ReportsPageViewModel : ViewModelBase
     private bool _isSaveTemplateOpen;
 
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
+
+    /// <summary>
+    /// Gets whether the report has unsaved changes.
+    /// </summary>
+    public bool HasUnsavedChanges => UndoRedoManager.CanUndo;
 
     /// <summary>
     /// ViewModel for the undo/redo button group control.
@@ -875,8 +881,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             using var skBitmap = renderer.CreatePreview(width * resolutionMultiplier, height * resolutionMultiplier);
             PreviewImage = ConvertToBitmap(skBitmap);
 
-            // Reset zoom to 100% when preview is regenerated
-            PreviewZoom = 1.0;
+            // Request fit-to-window after preview is generated
+            PreviewFitToWindowRequested?.Invoke(this, EventArgs.Empty);
         }
         catch
         {
@@ -1300,6 +1306,17 @@ public partial class ReportsPageViewModel : ViewModelBase
             OpenAfterExport = settings.OpenAfterExport;
             IncludeMetadata = settings.IncludeMetadata;
         }
+
+        // Set default export path to Desktop
+        var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        var extension = SelectedExportFormat switch
+        {
+            ExportFormat.PDF => ".pdf",
+            ExportFormat.PNG => ".png",
+            ExportFormat.JPEG => ".jpg",
+            _ => ".pdf"
+        };
+        ExportFilePath = Path.Combine(desktopPath, $"Report{extension}");
     }
 
     private void InitializeCollections()

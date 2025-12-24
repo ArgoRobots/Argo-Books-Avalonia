@@ -165,9 +165,19 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public RevenueModalsViewModel RevenueModalsViewModel { get; }
 
+    /// <summary>
+    /// Gets the unsaved changes dialog view model.
+    /// </summary>
+    public UnsavedChangesDialogViewModel UnsavedChangesDialogViewModel { get; }
+
     #endregion
 
     #region Navigation Properties
+
+    /// <summary>
+    /// Reference to the current ReportsPageViewModel when on Reports page.
+    /// </summary>
+    private ReportsPageViewModel? _reportsPageViewModel;
 
     [ObservableProperty]
     private object? _currentPage;
@@ -284,6 +294,15 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create revenue modals
         RevenueModalsViewModel = new RevenueModalsViewModel();
+
+        // Create unsaved changes dialog
+        UnsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
+
+        // Register navigation guard for unsaved changes check
+        if (_navigationService is Core.Services.NavigationService navService)
+        {
+            navService.RegisterNavigationGuard(CheckUnsavedChangesBeforeNavigation);
+        }
 
         // Wire up switch account modal's account selected to open login modal
         SwitchAccountModalViewModel.AccountSelected += (_, account) => LoginModalViewModel.OpenForAccount(account);
@@ -426,6 +445,48 @@ public partial class AppShellViewModel : ViewModelBase
         CurrentPageName = e.PageName;
         SidebarViewModel.SetActivePage(e.PageName);
         HeaderViewModel.SetPageTitle(e.PageName);
+
+        // Track ReportsPageViewModel when on Reports page
+        if (e.PageName == "Reports" && CurrentPage is Avalonia.Controls.Control reportsPage
+            && reportsPage.DataContext is ReportsPageViewModel reportsVm)
+        {
+            _reportsPageViewModel = reportsVm;
+        }
+        else if (e.PageName != "Reports")
+        {
+            _reportsPageViewModel = null;
+        }
+    }
+
+    /// <summary>
+    /// Navigation guard that checks for unsaved changes when leaving the Reports page.
+    /// </summary>
+    private async Task<bool> CheckUnsavedChangesBeforeNavigation(string fromPage, string toPage)
+    {
+        // Only check when leaving the Reports page
+        if (fromPage != "Reports" || _reportsPageViewModel == null)
+        {
+            return true; // Allow navigation
+        }
+
+        // Check if there are unsaved changes
+        if (!_reportsPageViewModel.HasUnsavedChanges)
+        {
+            return true; // No changes, allow navigation
+        }
+
+        // Show unsaved changes dialog
+        var result = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
+            "Unsaved Report Changes",
+            "You have unsaved changes in the report designer. Would you like to save them before leaving?");
+
+        return result switch
+        {
+            UnsavedChangesResult.Save => true, // TODO: Actually save the template first
+            UnsavedChangesResult.DontSave => true, // Discard changes and navigate
+            UnsavedChangesResult.Cancel => false, // Cancel navigation
+            _ => false // None (backdrop click) - cancel navigation
+        };
     }
 
     /// <summary>
