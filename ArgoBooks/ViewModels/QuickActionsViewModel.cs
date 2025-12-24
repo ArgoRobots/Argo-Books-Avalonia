@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Utilities;
-using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -34,17 +33,6 @@ public partial class QuickActionsViewModel : ViewModelBase
     /// Gets the sidebar width for layout positioning.
     /// </summary>
     public double SidebarWidth => _sidebarViewModel?.Width ?? 250;
-
-    /// <summary>
-    /// Gets the center offset based on sidebar width (half of sidebar width).
-    /// Used to shift a window-centered element to align with content-area center.
-    /// </summary>
-    public double CenterOffset => SidebarWidth / 2;
-
-    /// <summary>
-    /// Gets the modal margin with dynamic center offset based on sidebar width.
-    /// </summary>
-    public Thickness ModalMargin => new(CenterOffset, 100, 0, 0);
 
     /// <summary>
     /// Filtered quick actions based on search query.
@@ -111,8 +99,6 @@ public partial class QuickActionsViewModel : ViewModelBase
             if (e.PropertyName == nameof(SidebarViewModel.Width))
             {
                 OnPropertyChanged(nameof(SidebarWidth));
-                OnPropertyChanged(nameof(CenterOffset));
-                OnPropertyChanged(nameof(ModalMargin));
             }
         };
     }
