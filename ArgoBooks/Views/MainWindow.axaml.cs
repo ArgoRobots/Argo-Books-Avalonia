@@ -131,6 +131,19 @@ public partial class MainWindow : Window
             return;
         }
 
+        // Check for unsaved changes in the reports page first
+        if (App.HasReportsPageUnsavedChanges)
+        {
+            e.Cancel = true;
+
+            var shouldContinue = await App.ConfirmReportsUnsavedChangesAsync();
+            if (!shouldContinue)
+            {
+                return; // User cancelled, don't close
+            }
+            // User confirmed, continue with rest of closing logic
+        }
+
         // Check for unsaved changes - use UndoRedoManager's saved state tracking
         // which correctly handles undo back to original state
         var hasUnsavedChanges = App.UndoRedoManager?.IsAtSavedState == false;

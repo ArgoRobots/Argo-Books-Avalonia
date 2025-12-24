@@ -31,19 +31,20 @@ public partial class QuickActionsViewModel : ViewModelBase
     private int _selectedIndex;
 
     /// <summary>
-    /// Gets the center offset based on sidebar width (half of sidebar width).
+    /// Gets the sidebar width for layout positioning.
     /// </summary>
-    public double CenterOffset => (_sidebarViewModel?.Width ?? 250) / 2;
+    public double SidebarWidth => _sidebarViewModel?.Width ?? 250;
+
+    /// <summary>
+    /// Gets the center offset based on sidebar width (half of sidebar width).
+    /// Used to shift a window-centered element to align with content-area center.
+    /// </summary>
+    public double CenterOffset => SidebarWidth / 2;
 
     /// <summary>
     /// Gets the modal margin with dynamic center offset based on sidebar width.
     /// </summary>
     public Thickness ModalMargin => new(CenterOffset, 100, 0, 0);
-
-    /// <summary>
-    /// Gets the dropdown margin with dynamic center offset based on sidebar width.
-    /// </summary>
-    public Thickness DropdownMargin => new(CenterOffset, 60, 0, 0);
 
     /// <summary>
     /// Filtered quick actions based on search query.
@@ -109,9 +110,9 @@ public partial class QuickActionsViewModel : ViewModelBase
         {
             if (e.PropertyName == nameof(SidebarViewModel.Width))
             {
+                OnPropertyChanged(nameof(SidebarWidth));
                 OnPropertyChanged(nameof(CenterOffset));
                 OnPropertyChanged(nameof(ModalMargin));
-                OnPropertyChanged(nameof(DropdownMargin));
             }
         };
     }

@@ -336,17 +336,41 @@
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="x:String">
+                                                <DataTemplate x:DataType="vm:CustomTemplateOption">
                                                     <Button Margin="0,0,12,12"
                                                             Padding="16"
                                                             CornerRadius="8"
-                                                            Background="{DynamicResource SurfaceAltBrush}"
-                                                            BorderThickness="2"
-                                                            BorderBrush="Transparent"
                                                             HorizontalAlignment="Stretch"
                                                             HorizontalContentAlignment="Left"
                                                             Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
-                                                            CommandParameter="{Binding}">
+                                                            CommandParameter="{Binding Name}"
+                                                            Classes.selected="{Binding IsSelected}">
+                                                        <Button.Styles>
+                                                            <Style Selector="Button">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                                <Setter Property="BorderThickness" Value="2" />
+                                                                <Setter Property="BorderBrush" Value="Transparent" />
+                                                            </Style>
+                                                            <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button.selected">
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button.selected /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button.selected:pointerover">
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            </Style>
+                                                        </Button.Styles>
                                                         <StackPanel Orientation="Horizontal" Spacing="10">
                                                             <Border Background="{DynamicResource SurfaceHoverBrush}"
                                                                     CornerRadius="8"
@@ -355,7 +379,7 @@
                                                                           Width="20" Height="20"
                                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                                             </Border>
-                                                            <TextBlock Text="{Binding}"
+                                                            <TextBlock Text="{Binding Name}"
                                                                        FontWeight="Medium"
                                                                        VerticalAlignment="Center"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}" />

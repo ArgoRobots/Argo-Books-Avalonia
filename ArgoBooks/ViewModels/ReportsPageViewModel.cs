@@ -88,11 +88,30 @@ public partial class ReportsPageViewModel : ViewModelBase
     public bool CanGoNext => CurrentStep < 3;
     public bool IsOnFinalStep => CurrentStep == 3;
 
+    /// <summary>
+    /// Function to confirm discarding unsaved changes. Set by AppShellViewModel.
+    /// Returns true if changes should be discarded (continue), false to cancel.
+    /// </summary>
+    public Func<Task<bool>>? ConfirmDiscardChangesAsync { get; set; }
+
     [RelayCommand]
-    private void GoToPreviousStep()
+    private async Task GoToPreviousStepAsync()
     {
         if (CurrentStep > 1)
         {
+            // Check for unsaved changes when going back from step 2 (Layout Designer)
+            if (CurrentStep == 2 && HasUnsavedChanges)
+            {
+                if (ConfirmDiscardChangesAsync != null)
+                {
+                    var shouldContinue = await ConfirmDiscardChangesAsync();
+                    if (!shouldContinue)
+                    {
+                        return; // User cancelled, don't go back
+                    }
+                }
+            }
+
             // Reset completion flags when going back
             if (CurrentStep == 3)
             {
@@ -101,6 +120,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             else if (CurrentStep == 2)
             {
                 Step1Completed = false;
+                // Clear undo history when going back to step 1
+                UndoRedoManager.Clear();
             }
 
             CurrentStep--;
@@ -205,7 +226,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     private TransactionType _selectedTransactionType = TransactionType.Revenue;
 
     public ObservableCollection<string> TemplateNames { get; } = [];
-    public ObservableCollection<string> CustomTemplateNames { get; } = [];
+    public ObservableCollection<CustomTemplateOption> CustomTemplateNames { get; } = [];
     public ObservableCollection<DatePresetOption> DatePresets { get; } = [];
 
     // Chart selection - all charts in one list, use IsSelected property
@@ -240,10 +261,16 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             SelectedTemplateName = templateName;
 
-            // Update IsSelected on all template options
+            // Update IsSelected on all built-in template options
             foreach (var template in ReportTemplateOptions)
             {
                 template.IsSelected = template.TemplateName == templateName;
+            }
+
+            // Update IsSelected on all custom template options
+            foreach (var customTemplate in CustomTemplateNames)
+            {
+                customTemplate.IsSelected = customTemplate.Name == templateName;
             }
         }
     }
@@ -1346,7 +1373,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         var customNames = _templateStorage.GetSavedTemplateNames();
         foreach (var name in customNames)
         {
-            CustomTemplateNames.Add(name);
+            CustomTemplateNames.Add(new CustomTemplateOption(name));
         }
     }
 
@@ -1565,6 +1592,22 @@ public partial class ReportTemplateOption : ObservableObject
     public string IconData { get; }
     public string IconForeground { get; }
     public string IconBackground { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
+}
+
+/// <summary>
+/// Represents a custom template option for the Step 1 template grid.
+/// </summary>
+public partial class CustomTemplateOption : ObservableObject
+{
+    public CustomTemplateOption(string name)
+    {
+        Name = name;
+    }
+
+    public string Name { get; }
 
     [ObservableProperty]
     private bool _isSelected;

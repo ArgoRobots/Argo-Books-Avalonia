@@ -236,32 +236,45 @@
             <Border Background="Transparent"
                     PointerPressed="Backdrop_PointerPressed" />
 
-            <!-- Dropdown Panel Container with animation - positioned dynamically based on sidebar width -->
-            <Border x:Name="DropdownBorder"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Width="340"
-                    MaxHeight="400"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
-                    Margin="{Binding DropdownMargin}"
-                    BoxShadow="0 4 16 0 #30000000"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0">
-                <Border.RenderTransform>
-                    <TranslateTransform Y="-8" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
-                <ContentControl Content="{Binding}"
-                                ContentTemplate="{StaticResource PanelContentTemplate}" />
-            </Border>
+            <!-- Grid that mirrors main layout for proper centering in content area -->
+            <Grid ColumnDefinitions="Auto,*">
+                <!-- Spacer matching sidebar width -->
+                <Border Grid.Column="0" Width="{Binding SidebarWidth}">
+                    <Border.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                        </Transitions>
+                    </Border.Transitions>
+                </Border>
+
+                <!-- Dropdown centered in content area (matching search box position) -->
+                <Border Grid.Column="1"
+                        x:Name="DropdownBorder"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Width="340"
+                        MaxHeight="400"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        Margin="0,60,0,0"
+                        BoxShadow="0 4 16 0 #30000000"
+                        Opacity="0"
+                        RenderTransformOrigin="0.5,0">
+                    <Border.RenderTransform>
+                        <TranslateTransform Y="-8" />
+                    </Border.RenderTransform>
+                    <Border.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        </Transitions>
+                    </Border.Transitions>
+                    <ContentControl Content="{Binding}"
+                                    ContentTemplate="{StaticResource PanelContentTemplate}" />
+                </Border>
+            </Grid>
         </Panel>
     </Panel>
 

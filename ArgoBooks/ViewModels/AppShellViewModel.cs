@@ -451,11 +451,32 @@ public partial class AppShellViewModel : ViewModelBase
             && reportsPage.DataContext is ReportsPageViewModel reportsVm)
         {
             _reportsPageViewModel = reportsVm;
+            // Wire up the unsaved changes confirmation for Previous button
+            _reportsPageViewModel.ConfirmDiscardChangesAsync = ConfirmDiscardReportChangesAsync;
         }
         else if (e.PageName != "Reports")
         {
             _reportsPageViewModel = null;
         }
+    }
+
+    /// <summary>
+    /// Confirms discarding unsaved report changes when going back from Layout Designer.
+    /// </summary>
+    /// <returns>True if changes should be discarded, false to cancel.</returns>
+    private async Task<bool> ConfirmDiscardReportChangesAsync()
+    {
+        var result = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
+            "Unsaved Report Changes",
+            "You have unsaved changes in the layout designer. Would you like to discard them and go back to template selection?");
+
+        return result switch
+        {
+            UnsavedChangesResult.Save => true, // TODO: Actually save the template first
+            UnsavedChangesResult.DontSave => true, // Discard changes and go back
+            UnsavedChangesResult.Cancel => false, // Cancel, stay on current step
+            _ => false // None (backdrop click) - cancel
+        };
     }
 
     /// <summary>
@@ -522,6 +543,35 @@ public partial class AppShellViewModel : ViewModelBase
         HeaderViewModel.SetPageTitle(pageName);
         CurrentPageName = pageName;
         _navigationService?.NavigateTo(pageName);
+    }
+
+    /// <summary>
+    /// Checks if the reports page has unsaved changes.
+    /// </summary>
+    public bool HasReportsPageUnsavedChanges => _reportsPageViewModel?.HasUnsavedChanges ?? false;
+
+    /// <summary>
+    /// Shows the unsaved changes dialog for reports and returns whether to proceed.
+    /// </summary>
+    /// <returns>True if should proceed (save or discard), false if cancelled.</returns>
+    public async Task<bool> ConfirmReportsUnsavedChangesAsync()
+    {
+        if (_reportsPageViewModel == null || !_reportsPageViewModel.HasUnsavedChanges)
+        {
+            return true;
+        }
+
+        var result = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
+            "Unsaved Report Changes",
+            "You have unsaved changes in the report designer. Would you like to discard them?");
+
+        return result switch
+        {
+            UnsavedChangesResult.Save => true,
+            UnsavedChangesResult.DontSave => true,
+            UnsavedChangesResult.Cancel => false,
+            _ => false
+        };
     }
 
     /// <summary>

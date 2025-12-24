@@ -109,6 +109,19 @@ public partial class App : Application
     public static UnsavedChangesDialogViewModel? UnsavedChangesDialog => _unsavedChangesDialogViewModel;
 
     /// <summary>
+    /// Checks if the reports page has unsaved changes.
+    /// </summary>
+    public static bool HasReportsPageUnsavedChanges => _appShellViewModel?.HasReportsPageUnsavedChanges ?? false;
+
+    /// <summary>
+    /// Shows a confirmation dialog for reports unsaved changes and returns whether to proceed.
+    /// </summary>
+    public static Task<bool> ConfirmReportsUnsavedChangesAsync()
+    {
+        return _appShellViewModel?.ConfirmReportsUnsavedChangesAsync() ?? Task.FromResult(true);
+    }
+
+    /// <summary>
     /// Gets the change tracking service for aggregating changes from all sources.
     /// </summary>
     public static ChangeTrackingService? ChangeTrackingService => _changeTrackingService;
