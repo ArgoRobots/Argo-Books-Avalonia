@@ -780,19 +780,19 @@
                                 <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,8,Auto">
                                     <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4">
                                         <TextBlock Text="X" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <NumericUpDown Value="{Binding SelectedElement.X}" Minimum="0" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedElement.X}" Minimum="0" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Grid.Row="0" Spacing="4">
                                         <TextBlock Text="Y" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <NumericUpDown Value="{Binding SelectedElement.Y}" Minimum="0" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedElement.Y}" Minimum="0" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="2" Spacing="4">
                                         <TextBlock Text="Width" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <NumericUpDown Value="{Binding SelectedElement.Width}" Minimum="20" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedElement.Width}" Minimum="20" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Grid.Row="2" Spacing="4">
                                         <TextBlock Text="Height" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <NumericUpDown Value="{Binding SelectedElement.Height}" Minimum="20" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedElement.Height}" Minimum="20" />
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -820,11 +820,11 @@
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Text="Title Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <NumericUpDown Value="{Binding SelectedChartElement.TitleFontSize}" Minimum="6" Maximum="36" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.TitleFontSize}" Minimum="6" Maximum="36" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
                                         <TextBlock Text="Legend Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <NumericUpDown Value="{Binding SelectedChartElement.LegendFontSize}" Minimum="6" Maximum="24" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendFontSize}" Minimum="6" Maximum="24" />
                                     </StackPanel>
                                 </Grid>
                                 <StackPanel Spacing="4">
@@ -833,7 +833,7 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Border Thickness" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedChartElement.BorderThickness}" Minimum="0" Maximum="10" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.BorderThickness}" Minimum="0" Maximum="10" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -855,7 +855,7 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedLabelElement.FontSize}" Minimum="6" Maximum="72" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedLabelElement.FontSize}" Minimum="6" Maximum="72" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -913,17 +913,16 @@
                                                 Minimum="0" Maximum="100"
                                                 VerticalAlignment="Center" />
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
-                                            <NumericUpDown Value="{Binding SelectedImageElement.Opacity}"
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedImageElement.Opacity}"
                                                            Minimum="0" Maximum="100"
                                                            Width="70"
-                                                           FormatString="F0"
                                                            Increment="1" />
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Corner Radius (%)" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedImageElement.CornerRadiusPercent}" Minimum="0" Maximum="50" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedImageElement.CornerRadiusPercent}" Minimum="0" Maximum="50" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Background Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -935,7 +934,7 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Border Thickness" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedImageElement.BorderThickness}" Minimum="0" Maximum="20" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedImageElement.BorderThickness}" Minimum="0" Maximum="20" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -959,7 +958,7 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedDateRangeElement.FontSize}" Minimum="6" Maximum="72" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedDateRangeElement.FontSize}" Minimum="6" Maximum="72" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1018,7 +1017,7 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedSummaryElement.FontSize}" Minimum="6" Maximum="24" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedSummaryElement.FontSize}" Minimum="6" Maximum="24" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Background Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1030,7 +1029,7 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Border Thickness" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <NumericUpDown Value="{Binding SelectedSummaryElement.BorderThickness}" Minimum="0" Maximum="10" />
+                                    <controls:ArgoNumericUpDown Value="{Binding SelectedSummaryElement.BorderThickness}" Minimum="0" Maximum="10" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
@@ -1098,7 +1097,7 @@
                                     </StackPanel>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="Max Rows" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <NumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="50" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="50" />
                                     </StackPanel>
                                 </StackPanel>
 
@@ -1122,7 +1121,7 @@
                                     <Grid ColumnDefinitions="*,8,*">
                                         <StackPanel Grid.Column="0" Spacing="4">
                                             <TextBlock Text="Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <NumericUpDown Value="{Binding SelectedTableElement.FontSize}" Minimum="6" Maximum="24" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.FontSize}" Minimum="6" Maximum="24" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Spacing="4">
                                             <TextBlock Text="Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1140,16 +1139,16 @@
                                     <Grid ColumnDefinitions="*,8,*">
                                         <StackPanel Grid.Column="0" Spacing="4">
                                             <TextBlock Text="Header" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <NumericUpDown Value="{Binding SelectedTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Spacing="4">
                                             <TextBlock Text="Data" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <NumericUpDown Value="{Binding SelectedTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
+                                            <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
                                         </StackPanel>
                                     </Grid>
                                     <StackPanel Spacing="4">
                                         <TextBlock Text="Cell Padding" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <NumericUpDown Value="{Binding SelectedTableElement.CellPadding}" Minimum="0" Maximum="20" />
+                                        <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.CellPadding}" Minimum="0" Maximum="20" />
                                     </StackPanel>
 
                                     <TextBlock Text="Colors"
@@ -1665,47 +1664,5 @@
             <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
         </Style>
 
-        <!-- NumericUpDown Styling with stacked up/down spinner buttons -->
-        <Style Selector="NumericUpDown">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="MinHeight" Value="32" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="ShowButtonSpinner" Value="True" />
-            <Setter Property="ButtonSpinnerLocation" Value="Right" />
-        </Style>
-        <Style Selector="NumericUpDown:focus /template/ Border#PART_BorderElement">
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <!-- Style the spinner buttons container -->
-        <Style Selector="NumericUpDown /template/ ButtonSpinner">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <!-- Style individual spinner buttons -->
-        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="4,0" />
-            <Setter Property="MinWidth" Value="20" />
-        </Style>
-        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-        </Style>
-        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pressed">
-            <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
-        </Style>
-        <!-- Style the arrow paths in spinner buttons -->
-        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton /template/ PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-            <Setter Property="Width" Value="8" />
-            <Setter Property="Height" Value="8" />
-        </Style>
-        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pointerover /template/ PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        </Style>
     </UserControl.Styles>
 </UserControl>
