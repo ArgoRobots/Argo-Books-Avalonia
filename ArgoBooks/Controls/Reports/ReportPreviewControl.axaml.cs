@@ -58,7 +58,7 @@ public partial class ReportPreviewControl : UserControl
     public double ZoomLevel
     {
         get => GetValue(ZoomLevelProperty);
-        set => SetValue(ZoomLevelProperty, Math.Clamp(value, 0.25, 4.0));
+        set => SetValue(ZoomLevelProperty, Math.Clamp(value, ReportDesignCanvas.MinZoom, ReportDesignCanvas.MaxZoom));
     }
 
     /// <summary>
@@ -371,12 +371,55 @@ public partial class ReportPreviewControl : UserControl
 
     private void OnZoomInClick(object? sender, RoutedEventArgs e)
     {
-        ZoomLevel = Math.Min(ZoomLevel + 0.25, 4.0);
+        ZoomTowardsCenter(true);
     }
 
     private void OnZoomOutClick(object? sender, RoutedEventArgs e)
     {
-        ZoomLevel = Math.Max(ZoomLevel - 0.25, 0.25);
+        ZoomTowardsCenter(false);
+    }
+
+    /// <summary>
+    /// Zooms towards the center of the viewport.
+    /// </summary>
+    /// <param name="zoomIn">True to zoom in, false to zoom out.</param>
+    private void ZoomTowardsCenter(bool zoomIn)
+    {
+        if (_previewScrollViewer == null || _zoomTransformControl == null) return;
+
+        var oldZoom = ZoomLevel;
+        var newZoom = zoomIn
+            ? Math.Min(oldZoom + ReportDesignCanvas.ZoomStep, ReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - ReportDesignCanvas.ZoomStep, ReportDesignCanvas.MinZoom);
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        // Get the center point of the viewport
+        var viewportCenterX = _previewScrollViewer.Viewport.Width / 2;
+        var viewportCenterY = _previewScrollViewer.Viewport.Height / 2;
+
+        // Calculate the content point at the center of the viewport
+        var contentCenterX = (_previewScrollViewer.Offset.X + viewportCenterX) / oldZoom;
+        var contentCenterY = (_previewScrollViewer.Offset.Y + viewportCenterY) / oldZoom;
+
+        // Apply the zoom
+        ZoomLevel = newZoom;
+
+        // Force layout to update so we get accurate extent/viewport values
+        _zoomTransformControl.UpdateLayout();
+
+        // Calculate new offset to keep the same content point at center
+        var newOffsetX = contentCenterX * newZoom - viewportCenterX;
+        var newOffsetY = contentCenterY * newZoom - viewportCenterY;
+
+        // Use actual extent and viewport after layout update
+        var maxX = Math.Max(0, _previewScrollViewer.Extent.Width - _previewScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _previewScrollViewer.Extent.Height - _previewScrollViewer.Viewport.Height);
+
+        _previewScrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
     }
 
     public void OnZoomSelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
@@ -459,8 +502,8 @@ public partial class ReportPreviewControl : UserControl
 
         var oldZoom = ZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + 0.25, 4.0)
-            : Math.Max(oldZoom - 0.25, 0.25);
+            ? Math.Min(oldZoom + ReportDesignCanvas.ZoomStep, ReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - ReportDesignCanvas.ZoomStep, ReportDesignCanvas.MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 

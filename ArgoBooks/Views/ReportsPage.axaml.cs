@@ -68,9 +68,72 @@ public partial class ReportsPage : UserControl
             vm.PropertyChanged += OnViewModelPropertyChanged;
             vm.ElementPropertyChanged += OnElementPropertyChanged;
             vm.PageSettingsRefreshRequested += OnPageSettingsRefreshRequested;
+            vm.TemplateLoaded += OnTemplateLoaded;
             // Initial sync in case elements were already added
             _designCanvas?.SyncElements();
+
+            // Trigger initial fit-to-window (template was already loaded in ViewModel constructor)
+            TriggerInitialZoomToFit();
         }
+    }
+
+    private async void TriggerInitialZoomToFit()
+    {
+        if (_designCanvas == null) return;
+
+        // Hide canvas during initial load to prevent flash of unzoomed content
+        _designCanvas.Opacity = 0;
+
+        // Wait for layout to stabilize - the ScrollViewer inside the canvas
+        // needs time for its Viewport to be calculated
+        var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
+
+        void OnLayoutUpdated(object? sender, EventArgs args)
+        {
+            if (_designCanvas.Bounds.Width > 0 && _designCanvas.Bounds.Height > 0)
+            {
+                _designCanvas.LayoutUpdated -= OnLayoutUpdated;
+                tcs.TrySetResult(true);
+            }
+        }
+
+        if (_designCanvas.Bounds.Width > 0 && _designCanvas.Bounds.Height > 0)
+        {
+            tcs.TrySetResult(true);
+        }
+        else
+        {
+            _designCanvas.LayoutUpdated += OnLayoutUpdated;
+        }
+
+        // Wait for layout to complete
+        await tcs.Task;
+
+        // Additional delay to ensure ScrollViewer's Viewport is calculated
+        await Task.Delay(50);
+
+        _designCanvas?.ZoomToFit();
+
+        // Show canvas after zoom is applied
+        if (_designCanvas != null)
+        {
+            _designCanvas.Opacity = 1;
+        }
+    }
+
+    private async void OnTemplateLoaded(object? sender, EventArgs e)
+    {
+        if (_designCanvas == null) return;
+
+        // Hide canvas during template load to prevent flash of unzoomed content
+        _designCanvas.Opacity = 0;
+
+        // Wait a frame for layout to complete before fitting to window
+        await Task.Delay(50);
+        _designCanvas.ZoomToFit();
+
+        // Show canvas after zoom is applied
+        _designCanvas.Opacity = 1;
     }
 
     private void OnPageSettingsRefreshRequested(object? sender, EventArgs e)
@@ -105,6 +168,7 @@ public partial class ReportsPage : UserControl
             vm.PropertyChanged -= OnViewModelPropertyChanged;
             vm.ElementPropertyChanged -= OnElementPropertyChanged;
             vm.PageSettingsRefreshRequested -= OnPageSettingsRefreshRequested;
+            vm.TemplateLoaded -= OnTemplateLoaded;
         }
     }
 
@@ -173,8 +237,8 @@ public partial class ReportsPage : UserControl
 
         var oldZoom = _previewZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + 0.25, 4.0)
-            : Math.Max(oldZoom - 0.25, 0.25);
+            ? Math.Min(oldZoom + Controls.Reports.ReportDesignCanvas.ZoomStep, Controls.Reports.ReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - Controls.Reports.ReportDesignCanvas.ZoomStep, Controls.Reports.ReportDesignCanvas.MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
@@ -192,6 +256,55 @@ public partial class ReportsPage : UserControl
         // Now calculate offset with actual post-zoom values
         var newOffsetX = unscaledX * newZoom - viewportPoint.X;
         var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
+
+        // Use actual extent and viewport after layout update
+        var maxX = Math.Max(0, _previewScrollViewer.Extent.Width - _previewScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _previewScrollViewer.Extent.Height - _previewScrollViewer.Viewport.Height);
+
+        _previewScrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
+
+        // Update the ViewModel's PreviewZoom to keep slider in sync
+        if (DataContext is ReportsPageViewModel vm)
+        {
+            vm.PreviewZoom = newZoom;
+        }
+    }
+
+    /// <summary>
+    /// Zooms the preview towards the center of the viewport.
+    /// </summary>
+    private void PreviewZoomTowardsCenter(bool zoomIn)
+    {
+        if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
+
+        var oldZoom = _previewZoomLevel;
+        var newZoom = zoomIn
+            ? Math.Min(oldZoom + Controls.Reports.ReportDesignCanvas.ZoomStep, Controls.Reports.ReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - Controls.Reports.ReportDesignCanvas.ZoomStep, Controls.Reports.ReportDesignCanvas.MinZoom);
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        // Get the center point of the viewport
+        var viewportCenterX = _previewScrollViewer.Viewport.Width / 2;
+        var viewportCenterY = _previewScrollViewer.Viewport.Height / 2;
+
+        // Calculate the content point at the center of the viewport
+        var contentCenterX = (_previewScrollViewer.Offset.X + viewportCenterX) / oldZoom;
+        var contentCenterY = (_previewScrollViewer.Offset.Y + viewportCenterY) / oldZoom;
+
+        // Apply the zoom
+        _previewZoomLevel = newZoom;
+        ApplyPreviewZoom();
+
+        // Force layout to update so we get accurate extent/viewport values
+        _previewZoomTransformControl.UpdateLayout();
+
+        // Calculate new offset to keep the same content point at center
+        var newOffsetX = contentCenterX * newZoom - viewportCenterX;
+        var newOffsetY = contentCenterY * newZoom - viewportCenterY;
 
         // Use actual extent and viewport after layout update
         var maxX = Math.Max(0, _previewScrollViewer.Extent.Width - _previewScrollViewer.Viewport.Width);
@@ -405,11 +518,43 @@ public partial class ReportsPage : UserControl
     }
 
     /// <summary>
+    /// Handles the Zoom In button click for the design canvas.
+    /// </summary>
+    public void OnZoomInClick(object? sender, RoutedEventArgs e)
+    {
+        _designCanvas?.ZoomIn();
+    }
+
+    /// <summary>
+    /// Handles the Zoom Out button click for the design canvas.
+    /// </summary>
+    public void OnZoomOutClick(object? sender, RoutedEventArgs e)
+    {
+        _designCanvas?.ZoomOut();
+    }
+
+    /// <summary>
     /// Handles the Fit to Window button click for the design canvas.
     /// </summary>
     public void OnZoomFitClick(object? sender, RoutedEventArgs e)
     {
         _designCanvas?.ZoomToFit();
+    }
+
+    /// <summary>
+    /// Handles the Zoom In button click for the preview.
+    /// </summary>
+    public void OnPreviewZoomInClick(object? sender, RoutedEventArgs e)
+    {
+        PreviewZoomTowardsCenter(true);
+    }
+
+    /// <summary>
+    /// Handles the Zoom Out button click for the preview.
+    /// </summary>
+    public void OnPreviewZoomOutClick(object? sender, RoutedEventArgs e)
+    {
+        PreviewZoomTowardsCenter(false);
     }
 
     /// <summary>

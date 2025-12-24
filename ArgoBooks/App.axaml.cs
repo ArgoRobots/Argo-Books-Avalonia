@@ -144,6 +144,11 @@ public partial class App : Application
 
             // Create app shell with navigation service
             _appShellViewModel = new AppShellViewModel(NavigationService, SettingsService);
+
+            // Ensure no unsaved changes indicator on startup
+            _mainWindowViewModel.HasUnsavedChanges = false;
+            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+
             var appShell = new AppShell
             {
                 DataContext = _appShellViewModel
@@ -286,6 +291,10 @@ public partial class App : Application
 
             // Clear undo/redo history for fresh start with new company
             UndoRedoManager?.Clear();
+
+            // Reset unsaved changes state - opening a company starts with no unsaved changes
+            _mainWindowViewModel.HasUnsavedChanges = false;
+            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
