@@ -170,14 +170,23 @@
     </Style>
 
     <!-- Global Slider Styling - Use dynamic accent color -->
-    <Style Selector="Slider /template/ Thumb">
+    <!-- The Foreground controls the filled track portion -->
+    <Style Selector="Slider">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <!-- Target the thumb in horizontal sliders -->
+    <Style Selector="Slider:horizontal /template/ Thumb">
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
     </Style>
-    <Style Selector="Slider:pointerover /template/ Thumb">
+    <Style Selector="Slider:horizontal:pointerover /template/ Thumb">
         <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
     </Style>
-    <Style Selector="Slider /template/ RepeatButton#PART_DecreaseButton">
+    <!-- Target the thumb in vertical sliders -->
+    <Style Selector="Slider:vertical /template/ Thumb">
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="Slider:vertical:pointerover /template/ Thumb">
+        <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
     </Style>
 
 </Styles>
