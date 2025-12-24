@@ -104,33 +104,5 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
 
-        <Style Selector="Button.primary-button">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="20,10" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
-        </Style>
-
-        <Style Selector="Button.secondary-button">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="20,10" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
     </UserControl.Styles>
 </UserControl>

@@ -10,6 +10,7 @@ public class NavigationService : INavigationService
     private NavigationEntry? _currentEntry;
 
     private readonly Dictionary<string, Func<object?, object>> _pageFactories = new();
+    private readonly List<NavigationGuardCallback> _navigationGuards = new();
     private Action<object>? _navigationCallback;
 
     /// <inheritdoc />
@@ -81,6 +82,50 @@ public class NavigationService : INavigationService
 
         // Navigate and notify
         PerformNavigation(previousPageName);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> NavigateToAsync(string pageName)
+    {
+        return await NavigateToAsync(pageName, null);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> NavigateToAsync(string pageName, object? parameter)
+    {
+        if (string.IsNullOrEmpty(pageName))
+            return false;
+
+        var currentPage = _currentEntry?.PageName ?? string.Empty;
+
+        // Check all navigation guards
+        foreach (var guard in _navigationGuards.ToList())
+        {
+            var canNavigate = await guard(currentPage, pageName);
+            if (!canNavigate)
+            {
+                return false; // Navigation cancelled
+            }
+        }
+
+        // Guards passed, proceed with navigation
+        NavigateTo(pageName, parameter);
+        return true;
+    }
+
+    /// <inheritdoc />
+    public void RegisterNavigationGuard(NavigationGuardCallback guard)
+    {
+        if (!_navigationGuards.Contains(guard))
+        {
+            _navigationGuards.Add(guard);
+        }
+    }
+
+    /// <inheritdoc />
+    public void UnregisterNavigationGuard(NavigationGuardCallback guard)
+    {
+        _navigationGuards.Remove(guard);
     }
 
     /// <inheritdoc />

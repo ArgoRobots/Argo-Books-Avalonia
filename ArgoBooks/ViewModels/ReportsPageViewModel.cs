@@ -88,11 +88,30 @@ public partial class ReportsPageViewModel : ViewModelBase
     public bool CanGoNext => CurrentStep < 3;
     public bool IsOnFinalStep => CurrentStep == 3;
 
+    /// <summary>
+    /// Function to confirm discarding unsaved changes. Set by AppShellViewModel.
+    /// Returns true if changes should be discarded (continue), false to cancel.
+    /// </summary>
+    public Func<Task<bool>>? ConfirmDiscardChangesAsync { get; set; }
+
     [RelayCommand]
-    private void GoToPreviousStep()
+    private async Task GoToPreviousStepAsync()
     {
         if (CurrentStep > 1)
         {
+            // Check for unsaved changes when going back from step 2 (Layout Designer)
+            if (CurrentStep == 2 && HasUnsavedChanges)
+            {
+                if (ConfirmDiscardChangesAsync != null)
+                {
+                    var shouldContinue = await ConfirmDiscardChangesAsync();
+                    if (!shouldContinue)
+                    {
+                        return; // User cancelled, don't go back
+                    }
+                }
+            }
+
             // Reset completion flags when going back
             if (CurrentStep == 3)
             {
@@ -101,6 +120,9 @@ public partial class ReportsPageViewModel : ViewModelBase
             else if (CurrentStep == 2)
             {
                 Step1Completed = false;
+                // Clear undo history and reload the template to discard changes
+                UndoRedoManager.Clear();
+                LoadTemplate(SelectedTemplateName);
             }
 
             CurrentStep--;
@@ -205,7 +227,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     private TransactionType _selectedTransactionType = TransactionType.Revenue;
 
     public ObservableCollection<string> TemplateNames { get; } = [];
-    public ObservableCollection<string> CustomTemplateNames { get; } = [];
+    public ObservableCollection<CustomTemplateOption> CustomTemplateNames { get; } = [];
     public ObservableCollection<DatePresetOption> DatePresets { get; } = [];
 
     // Chart selection - all charts in one list, use IsSelected property
@@ -240,10 +262,16 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             SelectedTemplateName = templateName;
 
-            // Update IsSelected on all template options
+            // Update IsSelected on all built-in template options
             foreach (var template in ReportTemplateOptions)
             {
                 template.IsSelected = template.TemplateName == templateName;
+            }
+
+            // Update IsSelected on all custom template options
+            foreach (var customTemplate in CustomTemplateNames)
+            {
+                customTemplate.IsSelected = customTemplate.Name == templateName;
             }
         }
     }
@@ -279,6 +307,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     public event EventHandler<ReportElementBase>? ElementPropertyChanged;
     public event EventHandler? PageSettingsRefreshRequested;
     public event EventHandler? TemplateLoaded;
+    public event EventHandler? PreviewFitToWindowRequested;
 
     partial void OnSelectedElementChanged(ReportElementBase? oldValue, ReportElementBase? newValue)
     {
@@ -358,6 +387,11 @@ public partial class ReportsPageViewModel : ViewModelBase
     private bool _isSaveTemplateOpen;
 
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
+
+    /// <summary>
+    /// Gets whether the report has unsaved changes.
+    /// </summary>
+    public bool HasUnsavedChanges => UndoRedoManager.CanUndo;
 
     /// <summary>
     /// ViewModel for the undo/redo button group control.
@@ -875,8 +909,8 @@ public partial class ReportsPageViewModel : ViewModelBase
             using var skBitmap = renderer.CreatePreview(width * resolutionMultiplier, height * resolutionMultiplier);
             PreviewImage = ConvertToBitmap(skBitmap);
 
-            // Reset zoom to 100% when preview is regenerated
-            PreviewZoom = 1.0;
+            // Request fit-to-window after preview is generated
+            PreviewFitToWindowRequested?.Invoke(this, EventArgs.Empty);
         }
         catch
         {
@@ -1116,6 +1150,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ObservableCollection<string> FontFamilies { get; } =
         ["Segoe UI", "Arial", "Times New Roman", "Calibri", "Courier New", "Georgia", "Verdana", "Trebuchet MS"];
 
+    public ObservableCollection<string> DateFormats { get; } =
+        ["MM/dd/yyyy", "dd/MM/yyyy", "yyyy-MM-dd", "MMMM d, yyyy", "MMM d, yyyy", "d MMMM yyyy", "d MMM yyyy"];
+
     // Partial methods to update Configuration immediately when page settings change
     partial void OnPageSizeChanged(PageSize value)
     {
@@ -1300,6 +1337,17 @@ public partial class ReportsPageViewModel : ViewModelBase
             OpenAfterExport = settings.OpenAfterExport;
             IncludeMetadata = settings.IncludeMetadata;
         }
+
+        // Set default export path to Desktop
+        var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        var extension = SelectedExportFormat switch
+        {
+            ExportFormat.PDF => ".pdf",
+            ExportFormat.PNG => ".png",
+            ExportFormat.JPEG => ".jpg",
+            _ => ".pdf"
+        };
+        ExportFilePath = Path.Combine(desktopPath, $"Report{extension}");
     }
 
     private void InitializeCollections()
@@ -1329,7 +1377,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         var customNames = _templateStorage.GetSavedTemplateNames();
         foreach (var name in customNames)
         {
-            CustomTemplateNames.Add(name);
+            CustomTemplateNames.Add(new CustomTemplateOption(name));
         }
     }
 
@@ -1370,24 +1418,31 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (ReportTemplateFactory.IsBuiltInTemplate(templateName))
         {
             Configuration = ReportTemplateFactory.CreateFromTemplate(templateName);
+            ApplyConfigurationToPageSettings();
         }
         else
         {
-            // Try to load custom template
+            // Try to load custom template asynchronously
             Task.Run(async () =>
             {
                 var config = await _templateStorage.LoadTemplateAsync(templateName);
-                if (config != null)
+                // Update configuration and page settings on UI thread
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    Configuration = config;
-                }
-                else
-                {
-                    Configuration = new ReportConfiguration();
-                }
+                    Configuration = config ?? new ReportConfiguration();
+                    ApplyConfigurationToPageSettings();
+                    // Fire event to refresh canvas after template loads
+                    TemplateLoaded?.Invoke(this, EventArgs.Empty);
+                });
             });
         }
+    }
 
+    /// <summary>
+    /// Applies the current configuration settings to the page setting properties.
+    /// </summary>
+    private void ApplyConfigurationToPageSettings()
+    {
         // Update page settings from configuration
         PageSize = Configuration.PageSize;
         PageOrientation = Configuration.PageOrientation;
@@ -1541,6 +1596,22 @@ public partial class ReportTemplateOption : ObservableObject
     public string IconData { get; }
     public string IconForeground { get; }
     public string IconBackground { get; }
+
+    [ObservableProperty]
+    private bool _isSelected;
+}
+
+/// <summary>
+/// Represents a custom template option for the Step 1 template grid.
+/// </summary>
+public partial class CustomTemplateOption : ObservableObject
+{
+    public CustomTemplateOption(string name)
+    {
+        Name = name;
+    }
+
+    public string Name { get; }
 
     [ObservableProperty]
     private bool _isSelected;

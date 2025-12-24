@@ -136,5 +136,8 @@
 
         <!-- Revenue Modals -->
         <modals:RevenueModals DataContext="{Binding RevenueModalsViewModel}" />
+
+        <!-- Unsaved Changes Dialog -->
+        <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}" />
     </Panel>
 </UserControl>

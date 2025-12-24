@@ -413,19 +413,11 @@
                     </Border>
 
                     <!-- Footer -->
-                    <Border Padding="24,0,24,20">
-                        <Grid ColumnDefinitions="*,12,*">
-                            <Button Grid.Column="0"
-                                    Classes="secondary-button"
-                                    Content="Cancel"
-                                    Command="{Binding CloseDeleteConfirmCommand}"
-                                    HorizontalAlignment="Stretch" />
-                            <Button Grid.Column="2"
-                                    Classes="danger-button"
-                                    Content="Delete"
-                                    Command="{Binding DeleteRevenueCommand}"
-                                    HorizontalAlignment="Stretch" />
-                        </Grid>
+                    <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseDeleteConfirmCommand}" />
+                            <Button Classes="danger-button" Content="Delete" Command="{Binding DeleteRevenueCommand}" />
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </Border>
@@ -647,19 +639,11 @@
                     </StackPanel>
 
                     <!-- Footer -->
-                    <Border Padding="24,0,24,20">
-                        <Grid ColumnDefinitions="*,12,*">
-                            <Button Grid.Column="0"
-                                    Classes="secondary-button"
-                                    Content="Cancel"
-                                    Command="{Binding CloseItemStatusModalCommand}"
-                                    HorizontalAlignment="Stretch" />
-                            <Button Grid.Column="2"
-                                    Classes="warning-button"
-                                    Content="{Binding ItemStatusSaveButtonText}"
-                                    Command="{Binding ConfirmItemStatusCommand}"
-                                    HorizontalAlignment="Stretch" />
-                        </Grid>
+                    <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseItemStatusModalCommand}" />
+                            <Button Classes="warning-button" Content="{Binding ItemStatusSaveButtonText}" Command="{Binding ConfirmItemStatusCommand}" />
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </Border>
@@ -693,41 +677,6 @@
             <Setter Property="Foreground" Value="#DC2626" />
         </Style>
 
-        <!-- Primary Button -->
-        <Style Selector="Button.primary-button">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
-        </Style>
-
-        <!-- Secondary Button -->
-        <Style Selector="Button.secondary-button">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-        </Style>
-        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-
         <!-- Text Button -->
         <Style Selector="Button.text-button">
             <Setter Property="Background" Value="Transparent" />
@@ -742,24 +691,6 @@
         </Style>
         <Style Selector="Button.text-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-
-        <!-- Danger Button -->
-        <Style Selector="Button.danger-button">
-            <Setter Property="Background" Value="#DC2626" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#DC2626" />
-        </Style>
-        <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#B91C1C" />
         </Style>
 
         <!-- Warning Button -->

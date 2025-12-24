@@ -12,7 +12,7 @@
     <UserControl.Styles>
         <!-- Margin guide style -->
         <Style Selector="Rectangle.margin-guide">
-            <Setter Property="Stroke" Value="#90CAF9"/>
+            <Setter Property="Stroke" Value="{DynamicResource PrimaryLightBrush}"/>
             <Setter Property="StrokeThickness" Value="1"/>
             <Setter Property="StrokeDashArray" Value="4,4"/>
             <Setter Property="IsHitTestVisible" Value="False"/>
@@ -20,10 +20,9 @@
 
         <!-- Selection rectangle style -->
         <Style Selector="Rectangle.selection-rect">
-            <Setter Property="Stroke" Value="#2196F3"/>
-            <Setter Property="StrokeThickness" Value="1"/>
-            <Setter Property="StrokeDashArray" Value="2,2"/>
-            <Setter Property="Fill" Value="#202196F3"/>
+            <Setter Property="Stroke" Value="{DynamicResource PrimaryBrush}"/>
+            <Setter Property="StrokeThickness" Value="2"/>
+            <Setter Property="Fill" Value="#403B82F6"/>
             <Setter Property="IsHitTestVisible" Value="False"/>
         </Style>
 

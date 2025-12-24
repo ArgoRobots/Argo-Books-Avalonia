@@ -237,6 +237,15 @@ public class ReportRenderer : IDisposable
     {
         var rect = GetScaledRect(chart);
 
+        // Draw solid white background for chart (matching design canvas)
+        var bgPaint = new SKPaint
+        {
+            Color = SKColors.White,
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        };
+        canvas.DrawRect(rect, bgPaint);
+
         // Draw border if configured
         if (chart.BorderThickness > 0)
         {
@@ -260,14 +269,7 @@ public class ReportRenderer : IDisposable
             canvas.DrawText(title, rect.MidX, rect.Top + 20 * _renderScale, SKTextAlign.Center, titleFont, titlePaint);
         }
 
-        // Draw placeholder for chart
-        var placeholderPaint = new SKPaint
-        {
-            Color = SKColors.LightGray.WithAlpha(100),
-            Style = SKPaintStyle.Fill,
-            IsAntialias = true
-        };
-
+        // Chart area with light gray placeholder background
         var chartArea = new SKRect(
             rect.Left + 10 * _renderScale,
             rect.Top + (chart.ShowTitle ? 35 : 10) * _renderScale,
@@ -275,6 +277,12 @@ public class ReportRenderer : IDisposable
             rect.Bottom - 10 * _renderScale
         );
 
+        var placeholderPaint = new SKPaint
+        {
+            Color = new SKColor(232, 232, 232), // #E8E8E8 matching design canvas
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        };
         canvas.DrawRect(chartArea, placeholderPaint);
 
         // Draw chart type indicator text
@@ -401,8 +409,11 @@ public class ReportRenderer : IDisposable
     {
         var rect = GetScaledRect(image);
 
-        // Draw background
-        if (!string.IsNullOrEmpty(image.BackgroundColor) && image.BackgroundColor != "#00FFFFFF")
+        // Check if user has set a background color (not transparent)
+        var hasUserBackground = !string.IsNullOrEmpty(image.BackgroundColor) && image.BackgroundColor != "#00FFFFFF";
+
+        // Draw background color if set
+        if (hasUserBackground)
         {
             var bgPaint = new SKPaint { Color = ParseColor(image.BackgroundColor), Style = SKPaintStyle.Fill };
             canvas.DrawRect(rect, bgPaint);
@@ -441,17 +452,17 @@ public class ReportRenderer : IDisposable
                 }
                 else
                 {
-                    DrawPlaceholder(canvas, rect, "Image not found");
+                    DrawPlaceholder(canvas, rect, "Image not found", !hasUserBackground);
                 }
             }
             catch
             {
-                DrawPlaceholder(canvas, rect, "Error loading image");
+                DrawPlaceholder(canvas, rect, "Error loading image", !hasUserBackground);
             }
         }
         else
         {
-            DrawPlaceholder(canvas, rect, "No image selected");
+            DrawPlaceholder(canvas, rect, "No image selected", !hasUserBackground);
         }
 
         // Draw border
@@ -745,10 +756,13 @@ public class ReportRenderer : IDisposable
         return "Period: All Time";
     }
 
-    private void DrawPlaceholder(SKCanvas canvas, SKRect rect, string message)
+    private void DrawPlaceholder(SKCanvas canvas, SKRect rect, string message, bool drawBackground = true)
     {
-        var bgPaint = new SKPaint { Color = new SKColor(240, 240, 240), Style = SKPaintStyle.Fill };
-        canvas.DrawRect(rect, bgPaint);
+        if (drawBackground)
+        {
+            var bgPaint = new SKPaint { Color = new SKColor(240, 240, 240), Style = SKPaintStyle.Fill };
+            canvas.DrawRect(rect, bgPaint);
+        }
 
         using var font = new SKFont(_defaultTypeface, 10 * _renderScale);
         using var textPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };

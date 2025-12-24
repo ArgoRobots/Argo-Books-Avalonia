@@ -1008,11 +1008,15 @@ public partial class ReportDesignCanvas : UserControl
         var showHeaders = element?.ShowHeaders ?? true;
         var headerBgColor = element?.HeaderBackgroundColor ?? "#E0E0E0";
         var headerTextColor = element?.HeaderTextColor ?? "#000000";
+        var dataTextColor = element?.DataRowTextColor ?? "#000000";
         var fontSize = element?.FontSize ?? 12;
         var showGridLines = element?.ShowGridLines ?? true;
         var gridLineColor = element?.GridLineColor ?? "#CCCCCC";
         var headerRowHeight = element?.HeaderRowHeight ?? 25;
         var dataRowHeight = element?.DataRowHeight ?? 20;
+        var alternateRowColors = element?.AlternateRowColors ?? true;
+        var baseRowColor = element?.BaseRowColor ?? "#FFFFFF";
+        var alternateRowColor = element?.AlternateRowColor ?? "#F8F8F8";
 
         // Check if company data is available
         var companyData = App.CompanyManager?.CompanyData;
@@ -1042,7 +1046,11 @@ public partial class ReportDesignCanvas : UserControl
 
         // Get visible columns
         var columns = GetVisibleTableColumns(element);
-        var columnCount = Math.Max(columns.Count, 3);
+        var columnCount = Math.Max(columns.Count, 1);
+
+        // Get transaction data based on type
+        var tableData = GetTableData(element, companyData!, columns);
+        var previewRowCount = Math.Min(tableData.Count, element?.MaxRows ?? 10);
 
         // Create column definitions
         for (int i = 0; i < columnCount; i++)
@@ -1050,17 +1058,15 @@ public partial class ReportDesignCanvas : UserControl
             grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
         }
 
-        // Create row definitions with proper heights - header + sample data rows
-        var dataRowCount = 3;
+        // Create row definitions with proper heights
         if (showHeaders)
         {
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(headerRowHeight) });
         }
-        for (int i = 0; i < dataRowCount; i++)
+        for (int i = 0; i < previewRowCount; i++)
         {
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(dataRowHeight) });
         }
-        var rowCount = showHeaders ? dataRowCount + 1 : dataRowCount;
 
         // Add header row
         if (showHeaders)
@@ -1089,27 +1095,35 @@ public partial class ReportDesignCanvas : UserControl
             }
         }
 
-        // Add sample data rows with placeholder
+        // Add data rows with real data
         var startRow = showHeaders ? 1 : 0;
-        for (int row = startRow; row < rowCount; row++)
+        for (int dataIndex = 0; dataIndex < previewRowCount; dataIndex++)
         {
+            var rowData = tableData[dataIndex];
+            var rowIndex = startRow + dataIndex;
+            var isAlternate = dataIndex % 2 == 1;
+            var rowBgColor = alternateRowColors && isAlternate ? alternateRowColor : baseRowColor;
+
             for (int col = 0; col < columnCount; col++)
             {
+                var cellText = col < rowData.Count ? rowData[col] : "";
                 var dataCell = new Border
                 {
+                    Background = new SolidColorBrush(Color.Parse(rowBgColor)),
                     BorderBrush = showGridLines ? new SolidColorBrush(Color.Parse(gridLineColor)) : null,
                     BorderThickness = showGridLines ? new Thickness(0, 0, 1, 1) : new Thickness(0),
                     Padding = new Thickness(4, 0),
                     Child = new TextBlock
                     {
-                        Text = "...",
+                        Text = cellText,
                         FontSize = fontSize,
-                        Foreground = Brushes.Gray,
+                        Foreground = new SolidColorBrush(Color.Parse(dataTextColor)),
                         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                        TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis
                     }
                 };
-                Grid.SetRow(dataCell, row);
+                Grid.SetRow(dataCell, rowIndex);
                 Grid.SetColumn(dataCell, col);
                 grid.Children.Add(dataCell);
             }
@@ -1122,6 +1136,77 @@ public partial class ReportDesignCanvas : UserControl
             BorderThickness = new Thickness(1),
             Child = grid
         };
+    }
+
+    private static List<List<string>> GetTableData(TableReportElement? element, Core.Data.CompanyData companyData, List<string> columns)
+    {
+        var result = new List<List<string>>();
+        var transactionType = element?.TransactionType ?? TransactionType.Both;
+
+        // Build a list of transaction records (date, id, company, product, qty, unitPrice, total, status, accountant, shipping)
+        var transactions = new List<(DateTime Date, string Id, string Company, string Product, decimal Qty, decimal UnitPrice, decimal Total, string Status, string Accountant, decimal Shipping)>();
+
+        // Get sales (Revenue)
+        if (transactionType == TransactionType.Revenue || transactionType == TransactionType.Both)
+        {
+            foreach (var sale in companyData.Sales)
+            {
+                var customerName = companyData.Customers.FirstOrDefault(c => c.Id == sale.CustomerId)?.Name ?? "N/A";
+                var productName = sale.LineItems.FirstOrDefault()?.Description ?? sale.Description;
+                var accountantName = companyData.Accountants.FirstOrDefault(a => a.Id == sale.AccountantId)?.Name ?? "";
+                transactions.Add((sale.Date, sale.Id, customerName, productName, sale.Quantity, sale.UnitPrice, sale.Total, sale.PaymentStatus, accountantName, sale.ShippingCost));
+            }
+        }
+
+        // Get purchases (Expenses)
+        if (transactionType == TransactionType.Expenses || transactionType == TransactionType.Both)
+        {
+            foreach (var purchase in companyData.Purchases)
+            {
+                var supplierName = companyData.Suppliers.FirstOrDefault(s => s.Id == purchase.SupplierId)?.Name ?? "N/A";
+                var productName = purchase.LineItems.FirstOrDefault()?.Description ?? purchase.Description;
+                var accountantName = companyData.Accountants.FirstOrDefault(a => a.Id == purchase.AccountantId)?.Name ?? "";
+                transactions.Add((purchase.Date, purchase.Id, supplierName, productName, purchase.Quantity, purchase.UnitPrice, purchase.Total, "Paid", accountantName, purchase.ShippingCost));
+            }
+        }
+
+        // Sort transactions
+        var sortOrder = element?.SortOrder ?? TableSortOrder.DateDescending;
+        transactions = sortOrder switch
+        {
+            TableSortOrder.DateAscending => transactions.OrderBy(t => t.Date).ToList(),
+            TableSortOrder.DateDescending => transactions.OrderByDescending(t => t.Date).ToList(),
+            TableSortOrder.AmountAscending => transactions.OrderBy(t => t.Total).ToList(),
+            TableSortOrder.AmountDescending => transactions.OrderByDescending(t => t.Total).ToList(),
+            _ => transactions.OrderByDescending(t => t.Date).ToList()
+        };
+
+        // Convert to row data based on visible columns
+        foreach (var trans in transactions)
+        {
+            var row = new List<string>();
+            foreach (var col in columns)
+            {
+                var value = col switch
+                {
+                    "Date" => trans.Date.ToString("MM/dd/yyyy"),
+                    "ID" => trans.Id,
+                    "Company" => trans.Company,
+                    "Product" => trans.Product,
+                    "Qty" => trans.Qty.ToString("N0"),
+                    "Unit Price" => trans.UnitPrice.ToString("C2"),
+                    "Total" => trans.Total.ToString("C2"),
+                    "Status" => trans.Status,
+                    "Accountant" => trans.Accountant,
+                    "Shipping" => trans.Shipping.ToString("C2"),
+                    _ => ""
+                };
+                row.Add(value);
+            }
+            result.Add(row);
+        }
+
+        return result;
     }
 
     private static List<string> GetVisibleTableColumns(TableReportElement? table)
@@ -1246,10 +1331,18 @@ public partial class ReportDesignCanvas : UserControl
             ? new SolidColorBrush(Color.Parse(borderColor))
             : null;
 
-        // For placeholders (when no actual image is loaded), always show the visible background
-        // For actual images, use the configured background (which may be transparent)
+        // Use user's background color if set, otherwise use default gray for placeholders
         bool hasActualImage = !string.IsNullOrEmpty(element?.ImagePath) && System.IO.File.Exists(element.ImagePath);
-        IBrush effectiveBackground = hasActualImage ? background : new SolidColorBrush(Color.Parse("#F0F0F0"));
+        IBrush effectiveBackground;
+        if (hasActualImage)
+        {
+            effectiveBackground = background;
+        }
+        else
+        {
+            // For placeholders, use user's background if set (not transparent), otherwise default gray
+            effectiveBackground = !isTransparentBg ? background : new SolidColorBrush(Color.Parse("#F0F0F0"));
+        }
 
         return new Border
         {

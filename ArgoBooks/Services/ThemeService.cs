@@ -258,6 +258,14 @@ public class ThemeService : IThemeService
         var iconBgColor = IsDarkTheme ? colors.IconBgDark : colors.IconBgLight;
         app.Resources["PrimaryIconBgColor"] = iconBgColor;
         app.Resources["PrimaryIconBgBrush"] = new SolidColorBrush(iconBgColor);
+
+        // Update FluentTheme Slider resources
+        app.Resources["SliderThumbBackground"] = new SolidColorBrush(colors.Primary);
+        app.Resources["SliderThumbBackgroundPointerOver"] = new SolidColorBrush(colors.Hover);
+        app.Resources["SliderThumbBackgroundPressed"] = new SolidColorBrush(colors.Dark);
+        app.Resources["SliderTrackValueFill"] = new SolidColorBrush(colors.Primary);
+        app.Resources["SliderTrackValueFillPointerOver"] = new SolidColorBrush(colors.Hover);
+        app.Resources["SliderTrackValueFillPressed"] = new SolidColorBrush(colors.Dark);
     }
 
     /// <summary>

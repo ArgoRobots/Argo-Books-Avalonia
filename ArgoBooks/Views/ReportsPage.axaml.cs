@@ -14,9 +14,12 @@ public partial class ReportsPage : UserControl
     private ReportDesignCanvas? _designCanvas;
     private ScrollViewer? _previewScrollViewer;
     private LayoutTransformControl? _previewZoomTransformControl;
+    private ScrollViewer? _toolbarScrollViewer;
+    private StackPanel? _toolbarContent;
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
+    private bool _toolbarScrollbarVisible;
 
     // Preview zoom level (managed here since we're not using binding anymore)
     private double _previewZoomLevel = 1.0;
@@ -38,6 +41,14 @@ public partial class ReportsPage : UserControl
         _designCanvas = this.FindControl<ReportDesignCanvas>("DesignCanvas");
         _previewScrollViewer = this.FindControl<ScrollViewer>("PreviewScrollViewer");
         _previewZoomTransformControl = this.FindControl<LayoutTransformControl>("PreviewZoomTransformControl");
+        _toolbarScrollViewer = this.FindControl<ScrollViewer>("ToolbarScrollViewer");
+        _toolbarContent = this.FindControl<StackPanel>("ToolbarContent");
+
+        // Wire up toolbar scrollbar visibility detection
+        if (_toolbarScrollViewer != null)
+        {
+            _toolbarScrollViewer.LayoutUpdated += OnToolbarLayoutUpdated;
+        }
 
         // Wire up zoom, pan, and selection for the design canvas
         if (_designCanvas != null)
@@ -69,6 +80,7 @@ public partial class ReportsPage : UserControl
             vm.ElementPropertyChanged += OnElementPropertyChanged;
             vm.PageSettingsRefreshRequested += OnPageSettingsRefreshRequested;
             vm.TemplateLoaded += OnTemplateLoaded;
+            vm.PreviewFitToWindowRequested += OnPreviewFitToWindowRequested;
             // Initial sync in case elements were already added
             _designCanvas?.SyncElements();
 
@@ -136,9 +148,32 @@ public partial class ReportsPage : UserControl
         _designCanvas.Opacity = 1;
     }
 
+    private async void OnPreviewFitToWindowRequested(object? sender, EventArgs e)
+    {
+        // Wait for the preview image to be rendered and layout to complete
+        await Task.Delay(100);
+        PreviewZoomToFit();
+    }
+
     private void OnPageSettingsRefreshRequested(object? sender, EventArgs e)
     {
         _designCanvas?.RefreshPageSettings();
+    }
+
+    private void OnToolbarLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (_toolbarScrollViewer == null || _toolbarContent == null) return;
+
+        // Check if horizontal scrollbar is visible (extent > viewport)
+        var isScrollbarVisible = _toolbarScrollViewer.Extent.Width > _toolbarScrollViewer.Viewport.Width;
+
+        // Only update if visibility changed
+        if (isScrollbarVisible != _toolbarScrollbarVisible)
+        {
+            _toolbarScrollbarVisible = isScrollbarVisible;
+            // Add bottom margin to content when scrollbar is visible to make space for it
+            _toolbarContent.Margin = isScrollbarVisible ? new Thickness(0, 0, 0, 12) : new Thickness(0);
+        }
     }
 
     protected override void OnUnloaded(RoutedEventArgs e)
@@ -163,12 +198,18 @@ public partial class ReportsPage : UserControl
             _previewScrollViewer.PointerReleased -= OnPreviewPointerReleased;
         }
 
+        if (_toolbarScrollViewer != null)
+        {
+            _toolbarScrollViewer.LayoutUpdated -= OnToolbarLayoutUpdated;
+        }
+
         if (DataContext is ReportsPageViewModel vm)
         {
             vm.PropertyChanged -= OnViewModelPropertyChanged;
             vm.ElementPropertyChanged -= OnElementPropertyChanged;
             vm.PageSettingsRefreshRequested -= OnPageSettingsRefreshRequested;
             vm.TemplateLoaded -= OnTemplateLoaded;
+            vm.PreviewFitToWindowRequested -= OnPreviewFitToWindowRequested;
         }
     }
 

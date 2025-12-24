@@ -336,15 +336,41 @@
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
+                                                <DataTemplate x:DataType="vm:CustomTemplateOption">
                                                     <Button Margin="0,0,12,12"
                                                             Padding="16"
                                                             CornerRadius="8"
-                                                            Background="{DynamicResource SurfaceAltBrush}"
-                                                            BorderThickness="2"
-                                                            BorderBrush="Transparent"
                                                             HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Left">
+                                                            HorizontalContentAlignment="Left"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
+                                                            CommandParameter="{Binding Name}"
+                                                            Classes.selected="{Binding IsSelected}">
+                                                        <Button.Styles>
+                                                            <Style Selector="Button">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                                <Setter Property="BorderThickness" Value="2" />
+                                                                <Setter Property="BorderBrush" Value="Transparent" />
+                                                            </Style>
+                                                            <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button.selected">
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button.selected /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button.selected:pointerover">
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            </Style>
+                                                            <Style Selector="Button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                            </Style>
+                                                        </Button.Styles>
                                                         <StackPanel Orientation="Horizontal" Spacing="10">
                                                             <Border Background="{DynamicResource SurfaceHoverBrush}"
                                                                     CornerRadius="8"
@@ -353,7 +379,7 @@
                                                                           Width="20" Height="20"
                                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                                             </Border>
-                                                            <TextBlock Text="{Binding}"
+                                                            <TextBlock Text="{Binding Name}"
                                                                        FontWeight="Medium"
                                                                        VerticalAlignment="Center"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -593,14 +619,16 @@
                 <!-- Center: Design Canvas -->
                 <Grid Grid.Column="1" RowDefinitions="Auto,*">
                     <!-- Toolbar -->
-                    <Border Grid.Row="0"
+                    <Border x:Name="ToolbarBorder"
+                            Grid.Row="0"
                             Background="{DynamicResource SurfaceBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1"
                             Padding="8">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <!-- Left: Main tools -->
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                        <ScrollViewer x:Name="ToolbarScrollViewer"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="ToolbarContent" Orientation="Horizontal" Spacing="4">
                                 <!-- Undo/Redo Button Group (same as header) -->
                                 <controls:UndoRedoButtonGroup x:Name="ReportsUndoRedoGroup"
                                                               DataContext="{Binding UndoRedoViewModel}" />
@@ -684,13 +712,9 @@
                                     <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
                                               Width="16" Height="16" />
                                 </Button>
-                            </StackPanel>
 
-                            <!-- Spacer -->
-                            <Panel Grid.Column="1" />
+                                <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
-                            <!-- Right: Utility buttons -->
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
                                 <!-- Grid Toggle -->
                                 <ToggleButton Classes="toolbar-toggle" IsChecked="{Binding ShowGrid}" ToolTip.Tip="Toggle Grid (Ctrl+G)">
                                     <PathIcon Data="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z"
@@ -710,8 +734,8 @@
                                     <PathIcon Data="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"
                                               Width="16" Height="16" />
                                 </Button>
-                            </StackPanel>
-                        </Grid>
+                        </StackPanel>
+                        </ScrollViewer>
                     </Border>
 
                     <!-- Canvas Area with ReportDesignCanvas -->
@@ -918,7 +942,9 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Date Format" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBox Text="{Binding SelectedDateRangeElement.DateFormat}" Watermark="yyyy-MM-dd" />
+                                    <ComboBox ItemsSource="{Binding DateFormats}"
+                                              SelectedItem="{Binding SelectedDateRangeElement.DateFormat}"
+                                              HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1025,26 +1051,29 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
 
                                 <!-- Tab Buttons -->
-                                <Grid ColumnDefinitions="*,*,*" Margin="0,0,0,8">
-                                    <Button Grid.Column="0"
-                                            Content="General"
-                                            Classes="property-tab-button"
-                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}"
-                                            Command="{Binding SetTablePropertiesTabCommand}"
-                                            CommandParameter="0" />
-                                    <Button Grid.Column="1"
-                                            Content="Style"
-                                            Classes="property-tab-button"
-                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}"
-                                            Command="{Binding SetTablePropertiesTabCommand}"
-                                            CommandParameter="1" />
-                                    <Button Grid.Column="2"
-                                            Content="Columns"
-                                            Classes="property-tab-button"
-                                            Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}"
-                                            Command="{Binding SetTablePropertiesTabCommand}"
-                                            CommandParameter="2" />
-                                </Grid>
+                                <StackPanel Spacing="0">
+                                    <Grid ColumnDefinitions="*,*,*">
+                                        <Button Grid.Column="0"
+                                                Content="General"
+                                                Classes="property-tab-button"
+                                                Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}"
+                                                Command="{Binding SetTablePropertiesTabCommand}"
+                                                CommandParameter="0" />
+                                        <Button Grid.Column="1"
+                                                Content="Style"
+                                                Classes="property-tab-button"
+                                                Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}"
+                                                Command="{Binding SetTablePropertiesTabCommand}"
+                                                CommandParameter="1" />
+                                        <Button Grid.Column="2"
+                                                Content="Columns"
+                                                Classes="property-tab-button"
+                                                Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}"
+                                                Command="{Binding SetTablePropertiesTabCommand}"
+                                                CommandParameter="2" />
+                                    </Grid>
+                                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,8" />
+                                </StackPanel>
 
                                 <!-- General Tab -->
                                 <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}">
@@ -1629,41 +1658,6 @@
         </Style>
         <Style Selector="Button.undo-redo-dropdown:disabled PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
-        </Style>
-
-        <!-- Primary Button -->
-        <Style Selector="Button.primary-button">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="20,12" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
-        </Style>
-
-        <!-- Secondary Button -->
-        <Style Selector="Button.secondary-button">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="20,12" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-        </Style>
-        <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
 
         <!-- NumericUpDown Styling - hide spinner buttons, just show text input -->
