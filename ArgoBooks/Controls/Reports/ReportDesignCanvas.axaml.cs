@@ -445,16 +445,48 @@ public partial class ReportDesignCanvas : UserControl
     {
         if (Configuration == null) return;
 
-        if (_headerArea != null && Configuration.ShowHeader)
+        var margins = Configuration.PageMargins;
+        var separatorMargin = new Thickness(margins.Left, 0, margins.Left, 5);
+        var footerSeparatorMargin = new Thickness(margins.Left, 5, margins.Left, 0);
+
+        if (_headerArea != null)
         {
             _headerArea.Height = PageDimensions.HeaderHeight;
-            _headerArea.IsVisible = ShowHeaderFooter;
+            _headerArea.IsVisible = ShowHeaderFooter && Configuration.ShowHeader;
+
+            // Update separator margin based on page margins
+            var headerSeparator = _headerArea.FindControl<Border>("HeaderSeparator");
+            if (headerSeparator != null)
+            {
+                headerSeparator.Margin = separatorMargin;
+            }
         }
 
-        if (_footerArea != null && Configuration.ShowFooter)
+        if (_footerArea != null)
         {
             _footerArea.Height = PageDimensions.FooterHeight;
-            _footerArea.IsVisible = ShowHeaderFooter;
+            _footerArea.IsVisible = ShowHeaderFooter && Configuration.ShowFooter;
+
+            // Update separator margin based on page margins
+            var footerSeparator = _footerArea.FindControl<Border>("FooterSeparator");
+            if (footerSeparator != null)
+            {
+                footerSeparator.Margin = footerSeparatorMargin;
+            }
+
+            // Update footer content margin based on page margins
+            var footerContentGrid = _footerArea.FindControl<Grid>("FooterContentGrid");
+            if (footerContentGrid != null)
+            {
+                footerContentGrid.Margin = new Thickness(margins.Left, 0, margins.Left, 0);
+            }
+
+            // Update page number visibility based on ShowPageNumbers setting
+            var pageNumber = _footerArea.FindControl<TextBlock>("FooterPageNumber");
+            if (pageNumber != null)
+            {
+                pageNumber.IsVisible = Configuration.ShowPageNumbers;
+            }
         }
     }
 
@@ -1691,6 +1723,7 @@ public partial class ReportDesignCanvas : UserControl
 
         if (e.IsMultiSelect)
         {
+            // Ctrl+click: toggle selection
             if (_selectedElements.Contains(e.Element))
             {
                 DeselectElement(e.Element);
@@ -1702,7 +1735,19 @@ public partial class ReportDesignCanvas : UserControl
         }
         else
         {
-            SelectElement(e.Element, false);
+            // Normal click: if element is already selected, keep the multi-selection intact
+            // (allows dragging multiple selected elements without clearing selection)
+            if (_selectedElements.Contains(e.Element))
+            {
+                // Element is already selected - don't change selection
+                // This allows dragging multiple elements together
+                return;
+            }
+            else
+            {
+                // Element is not selected - clear selection and select only this one
+                SelectElement(e.Element, false);
+            }
         }
     }
 
@@ -1752,19 +1797,37 @@ public partial class ReportDesignCanvas : UserControl
     private void OnElementPositionChanged(object? sender, ElementPositionChangedEventArgs e)
     {
         // Update other selected elements if this is part of a multi-selection drag
-        if (_selectedElements.Count > 1 && e.Element != null && !e.IsComplete)
+        if (_selectedElements.Count > 1 && e.Element != null && !e.IsComplete && _dragStartStates != null)
         {
-            var delta = e.NewPosition - e.OldPosition;
-
-            foreach (var element in _selectedElements.Where(el => el.Id != e.Element.Id))
+            // Calculate delta from the dragged element's start position
+            if (_dragStartStates.TryGetValue(e.Element.Id, out var draggedStartState))
             {
-                element.X += delta.X;
-                element.Y += delta.Y;
+                var delta = e.NewPosition - draggedStartState.Position;
 
-                if (_elementControlMap.TryGetValue(element.Id, out var control))
+                foreach (var element in _selectedElements.Where(el => el.Id != e.Element.Id))
                 {
-                    Canvas.SetLeft(control, element.X);
-                    Canvas.SetTop(control, element.Y);
+                    if (_dragStartStates.TryGetValue(element.Id, out var startState))
+                    {
+                        // Calculate new position based on start position + delta
+                        var newX = Math.Round(startState.Position.X + delta.X);
+                        var newY = Math.Round(startState.Position.Y + delta.Y);
+
+                        // Constrain to canvas bounds
+                        if (_elementsCanvas != null)
+                        {
+                            newX = Math.Max(0, Math.Min(newX, _elementsCanvas.Bounds.Width - element.Width));
+                            newY = Math.Max(0, Math.Min(newY, _elementsCanvas.Bounds.Height - element.Height));
+                        }
+
+                        element.X = newX;
+                        element.Y = newY;
+
+                        if (_elementControlMap.TryGetValue(element.Id, out var control))
+                        {
+                            Canvas.SetLeft(control, element.X);
+                            Canvas.SetTop(control, element.Y);
+                        }
+                    }
                 }
             }
         }

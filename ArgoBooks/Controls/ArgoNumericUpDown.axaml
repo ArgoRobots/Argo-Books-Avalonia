@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="120" d:DesignHeight="32"
+             x:Class="ArgoBooks.Controls.ArgoNumericUpDown"
+             x:DataType="controls:ArgoNumericUpDown">
+
+    <Border CornerRadius="4"
+            BorderThickness="1"
+            Background="{DynamicResource SurfaceAltBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            MinHeight="32"
+            Classes.focused="{Binding #InputTextBox.IsFocused}">
+        <Border.Styles>
+            <Style Selector="Border.focused">
+                <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            </Style>
+        </Border.Styles>
+
+        <Grid ColumnDefinitions="*,Auto">
+            <!-- Text Input -->
+            <TextBox x:Name="InputTextBox"
+                     Grid.Column="0"
+                     Text="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:ArgoNumericUpDown}, StringFormat={}{0:0}}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Padding="8,4"
+                     VerticalAlignment="Center"
+                     VerticalContentAlignment="Center" />
+
+            <!-- Vertically Stacked Up/Down Buttons -->
+            <Grid Grid.Column="1" RowDefinitions="*,*" Width="20">
+                <!-- Up Button -->
+                <RepeatButton x:Name="UpButton"
+                              Grid.Row="0"
+                              Background="Transparent"
+                              BorderThickness="0"
+                              Padding="0"
+                              MinWidth="20"
+                              MinHeight="0"
+                              VerticalAlignment="Stretch"
+                              HorizontalContentAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              Command="{Binding IncrementCommand, RelativeSource={RelativeSource AncestorType=controls:ArgoNumericUpDown}}">
+                    <RepeatButton.Styles>
+                        <Style Selector="RepeatButton:pointerover">
+                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                        </Style>
+                        <Style Selector="RepeatButton:pressed">
+                            <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+                        </Style>
+                    </RepeatButton.Styles>
+                    <PathIcon Data="M7 14l5-5 5 5z"
+                              Width="10" Height="10"
+                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                </RepeatButton>
+
+                <!-- Down Button -->
+                <RepeatButton x:Name="DownButton"
+                              Grid.Row="1"
+                              Background="Transparent"
+                              BorderThickness="0"
+                              Padding="0"
+                              MinWidth="20"
+                              MinHeight="0"
+                              VerticalAlignment="Stretch"
+                              HorizontalContentAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              Command="{Binding DecrementCommand, RelativeSource={RelativeSource AncestorType=controls:ArgoNumericUpDown}}">
+                    <RepeatButton.Styles>
+                        <Style Selector="RepeatButton:pointerover">
+                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                        </Style>
+                        <Style Selector="RepeatButton:pressed">
+                            <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+                        </Style>
+                    </RepeatButton.Styles>
+                    <PathIcon Data="M7 10l5 5 5-5z"
+                              Width="10" Height="10"
+                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                </RepeatButton>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

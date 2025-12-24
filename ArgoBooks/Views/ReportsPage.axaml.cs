@@ -16,6 +16,9 @@ public partial class ReportsPage : UserControl
     private LayoutTransformControl? _previewZoomTransformControl;
     private ScrollViewer? _toolbarScrollViewer;
     private StackPanel? _toolbarContent;
+    private Grid? _saveButtonContainer;
+    private TextBlock? _asterisk;
+    private bool _isAsteriskInitialized;
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
@@ -43,6 +46,7 @@ public partial class ReportsPage : UserControl
         _previewZoomTransformControl = this.FindControl<LayoutTransformControl>("PreviewZoomTransformControl");
         _toolbarScrollViewer = this.FindControl<ScrollViewer>("ToolbarScrollViewer");
         _toolbarContent = this.FindControl<StackPanel>("ToolbarContent");
+        _saveButtonContainer = this.FindControl<Grid>("SaveButtonContainer");
 
         // Wire up toolbar scrollbar visibility detection
         if (_toolbarScrollViewer != null)
@@ -81,8 +85,15 @@ public partial class ReportsPage : UserControl
             vm.PageSettingsRefreshRequested += OnPageSettingsRefreshRequested;
             vm.TemplateLoaded += OnTemplateLoaded;
             vm.PreviewFitToWindowRequested += OnPreviewFitToWindowRequested;
+
+            // Subscribe to UndoRedoManager state changes to update asterisk visibility
+            vm.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+
             // Initial sync in case elements were already added
             _designCanvas?.SyncElements();
+
+            // Mark asterisk as initialized after a short delay to prevent flashing on load
+            InitializeAsteriskAsync();
 
             // Trigger initial fit-to-window (template was already loaded in ViewModel constructor)
             TriggerInitialZoomToFit();
@@ -130,6 +141,51 @@ public partial class ReportsPage : UserControl
         if (_designCanvas != null)
         {
             _designCanvas.Opacity = 1;
+        }
+    }
+
+    private async void InitializeAsteriskAsync()
+    {
+        // Wait a moment for all initialization to complete before allowing asterisk to show
+        await Task.Delay(100);
+        _isAsteriskInitialized = true;
+    }
+
+    private void OnUndoRedoStateChanged(object? sender, EventArgs e)
+    {
+        if (!_isAsteriskInitialized) return;
+
+        if (DataContext is ReportsPageViewModel vm)
+        {
+            UpdateAsteriskVisibility(vm.HasUnsavedChanges);
+        }
+    }
+
+    private void UpdateAsteriskVisibility(bool show)
+    {
+        if (_saveButtonContainer == null || !_isAsteriskInitialized) return;
+
+        if (show && _asterisk == null)
+        {
+            // Create asterisk as an overlay that doesn't affect layout
+            // Positioned at top-right of the Grid container
+            _asterisk = new TextBlock
+            {
+                Text = "*",
+                FontSize = 14,
+                FontWeight = Avalonia.Media.FontWeight.Bold,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+                Margin = new Avalonia.Thickness(0, 0, -2, 0),
+                IsHitTestVisible = false
+            };
+            // Add as overlay in the Grid (won't shift other elements)
+            _saveButtonContainer.Children.Add(_asterisk);
+        }
+        else if (!show && _asterisk != null)
+        {
+            _saveButtonContainer.Children.Remove(_asterisk);
+            _asterisk = null;
         }
     }
 
@@ -210,6 +266,7 @@ public partial class ReportsPage : UserControl
             vm.PageSettingsRefreshRequested -= OnPageSettingsRefreshRequested;
             vm.TemplateLoaded -= OnTemplateLoaded;
             vm.PreviewFitToWindowRequested -= OnPreviewFitToWindowRequested;
+            vm.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         }
     }
 
