@@ -344,9 +344,63 @@ public partial class Header : UserControl
 
     #endregion
 
+    private TextBlock? _asterisk;
+    private StackPanel? _saveButtonContainer;
+    private bool _isInitialized;
+
     public Header()
     {
         InitializeComponent();
+        _saveButtonContainer = this.FindControl<StackPanel>("SaveButtonContainer");
+        Loaded += OnLoaded;
+    }
+
+    private async void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        // Wait a moment for all initialization to complete
+        await System.Threading.Tasks.Task.Delay(100);
+
+        _isInitialized = true;
+
+        if (DataContext is HeaderViewModel vm)
+        {
+            vm.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(HeaderViewModel.HasUnsavedChanges) && sender is HeaderViewModel vm)
+        {
+            if (!_isInitialized) return;
+
+            UpdateAsteriskVisibility(vm.HasUnsavedChanges);
+        }
+    }
+
+    private void UpdateAsteriskVisibility(bool show)
+    {
+        if (_saveButtonContainer == null || !_isInitialized) return;
+
+        if (show && _asterisk == null)
+        {
+            // Create asterisk dynamically only when needed
+            _asterisk = new TextBlock
+            {
+                Text = "*",
+                FontSize = 16,
+                FontWeight = Avalonia.Media.FontWeight.Bold,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Margin = new Avalonia.Thickness(-8, 0, 0, 0)
+            };
+            // Insert after the save button (index 1)
+            _saveButtonContainer.Children.Insert(1, _asterisk);
+        }
+        else if (!show && _asterisk != null)
+        {
+            _saveButtonContainer.Children.Remove(_asterisk);
+            _asterisk = null;
+        }
     }
 
     /// <summary>

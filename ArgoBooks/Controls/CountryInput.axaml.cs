@@ -171,8 +171,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
         InitializeComponent();
 
-        DataContext = this;
-
         UpdateFilteredCountries();
     }
 

@@ -182,10 +182,12 @@ public partial class App : Application
             // Wire up modal change events (separate from company manager)
             WireModalChangeEvents();
 
-            // Sync MainWindowViewModel.HasUnsavedChanges with undo/redo state
+            // Sync HasUnsavedChanges with undo/redo state (both MainWindow and Header)
             UndoRedoManager!.StateChanged += (_, _) =>
             {
-                _mainWindowViewModel.HasUnsavedChanges = !UndoRedoManager.IsAtSavedState;
+                var hasChanges = !UndoRedoManager.IsAtSavedState;
+                _mainWindowViewModel.HasUnsavedChanges = hasChanges;
+                _appShellViewModel.HeaderViewModel.HasUnsavedChanges = hasChanges;
             };
 
             // Wire up file menu events
@@ -235,6 +237,10 @@ public partial class App : Application
 
             // Share UnsavedChangesDialogViewModel with MainWindow for unsaved changes dialogs
             _mainWindowViewModel.UnsavedChangesDialogViewModel = _unsavedChangesDialogViewModel;
+
+            // Final reset of unsaved changes before window is shown - ensures clean startup state
+            _mainWindowViewModel.HasUnsavedChanges = false;
+            _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
             desktop.MainWindow = new MainWindow
             {
@@ -982,7 +988,8 @@ public partial class App : Application
                 };
                 if (_appShellViewModel?.SettingsModalViewModel != null)
                 {
-                    _appShellViewModel.SettingsModalViewModel.SelectedAutoLock = timeoutString;
+                    // Use SetAutoLockWithoutNotify to avoid triggering MarkAsChanged during load
+                    _appShellViewModel.SettingsModalViewModel.SetAutoLockWithoutNotify(timeoutString);
                 }
             }
         };
