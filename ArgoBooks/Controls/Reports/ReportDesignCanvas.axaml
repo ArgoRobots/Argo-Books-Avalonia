@@ -10,12 +10,6 @@
              ClipToBounds="True">
 
     <UserControl.Styles>
-        <!-- Page shadow style -->
-        <Style Selector="Border.page-shadow">
-            <Setter Property="BoxShadow" Value="2 2 10 0 #40000000"/>
-            <Setter Property="CornerRadius" Value="2"/>
-        </Style>
-
         <!-- Margin guide style -->
         <Style Selector="Rectangle.margin-guide">
             <Setter Property="Stroke" Value="#90CAF9"/>
@@ -58,10 +52,6 @@
             <Border x:Name="ZoomContainer"
                     Padding="40"
                     Background="#E0E0E0">
-
-            <!-- Page container with shadow -->
-            <Border x:Name="PageShadowBorder"
-                    Classes="page-shadow">
 
                 <!-- Page background -->
                 <Border x:Name="PageBackground"
@@ -134,7 +124,6 @@
                     </Grid>
                 </Border>
             </Border>
-        </Border>
         </LayoutTransformControl>
     </ScrollViewer>
 </UserControl>

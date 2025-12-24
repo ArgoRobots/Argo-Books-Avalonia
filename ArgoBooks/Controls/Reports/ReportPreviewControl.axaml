@@ -7,12 +7,6 @@
              Background="#E0E0E0">
 
     <UserControl.Styles>
-        <!-- Page shadow style -->
-        <Style Selector="Border.page-shadow">
-            <Setter Property="BoxShadow" Value="2 2 10 0 #40000000"/>
-            <Setter Property="CornerRadius" Value="2"/>
-        </Style>
-
         <!-- Zoom button style -->
         <Style Selector="Button.zoom-button">
             <Setter Property="Background" Value="White"/>
@@ -139,20 +133,15 @@
                         Padding="40"
                         Background="#E0E0E0">
 
-                    <!-- Page container with shadow -->
-                    <Border Classes="page-shadow"
-                            HorizontalAlignment="Center">
+                    <!-- Page content -->
+                    <Border x:Name="PageBorder"
+                            Background="White"
+                            ClipToBounds="True">
 
-                        <!-- Page content -->
-                        <Border x:Name="PageBorder"
-                                Background="White"
-                                ClipToBounds="True">
-
-                            <!-- Rendered preview image -->
-                            <Image x:Name="PreviewImage"
-                                   Stretch="None"
-                                   RenderOptions.BitmapInterpolationMode="HighQuality"/>
-                        </Border>
+                        <!-- Rendered preview image -->
+                        <Image x:Name="PreviewImage"
+                               Stretch="None"
+                               RenderOptions.BitmapInterpolationMode="HighQuality"/>
                     </Border>
                 </Border>
             </LayoutTransformControl>
