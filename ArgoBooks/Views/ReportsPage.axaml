@@ -1665,7 +1665,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
         </Style>
 
-        <!-- NumericUpDown Styling - hide spinner buttons, just show text input -->
+        <!-- NumericUpDown Styling with stacked up/down spinner buttons -->
         <Style Selector="NumericUpDown">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
@@ -1675,10 +1675,37 @@
             <Setter Property="MinHeight" Value="32" />
             <Setter Property="Padding" Value="8,4" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="ShowButtonSpinner" Value="False" />
+            <Setter Property="ShowButtonSpinner" Value="True" />
+            <Setter Property="ButtonSpinnerLocation" Value="Right" />
         </Style>
         <Style Selector="NumericUpDown:focus /template/ Border#PART_BorderElement">
             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <!-- Style the spinner buttons container -->
+        <Style Selector="NumericUpDown /template/ ButtonSpinner">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <!-- Style individual spinner buttons -->
+        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="MinWidth" Value="20" />
+        </Style>
+        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pressed">
+            <Setter Property="Background" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <!-- Style the arrow paths in spinner buttons -->
+        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton /template/ PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Height" Value="8" />
+        </Style>
+        <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pointerover /template/ PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>
