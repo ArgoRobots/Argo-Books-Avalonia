@@ -12,11 +12,6 @@
     <Color x:Key="PrimaryDarkColor">#1D4ED8</Color>
     <Color x:Key="PrimaryHoverColor">#2563EB</Color>
 
-    <!-- Secondary/Accent Colors (from mockup: #5c6ac4) -->
-    <Color x:Key="AccentColor">#5C6AC4</Color>
-    <Color x:Key="AccentLightColor">#A78BFA</Color>
-    <Color x:Key="AccentDarkColor">#7C3AED</Color>
-
     <!-- Semantic Colors - Success (from mockup: #28a745) -->
     <Color x:Key="SuccessColor">#28A745</Color>
     <Color x:Key="SuccessLightColor">#34D399</Color>
@@ -37,26 +32,11 @@
     <Color x:Key="InfoLightColor">#22D3EE</Color>
     <Color x:Key="InfoDarkColor">#0891B2</Color>
 
-    <!-- Chart Colors (for LiveCharts2) -->
-    <Color x:Key="Chart1Color">#2563EB</Color>
-    <Color x:Key="Chart2Color">#10B981</Color>
-    <Color x:Key="Chart3Color">#F59E0B</Color>
-    <Color x:Key="Chart4Color">#8B5CF6</Color>
-    <Color x:Key="Chart5Color">#EC4899</Color>
-    <Color x:Key="Chart6Color">#06B6D4</Color>
-    <Color x:Key="Chart7Color">#84CC16</Color>
-    <Color x:Key="Chart8Color">#F97316</Color>
-
     <!-- Solid Color Brushes - Primary -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}" />
     <SolidColorBrush x:Key="PrimaryLightBrush" Color="{StaticResource PrimaryLightColor}" />
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDarkColor}" />
     <SolidColorBrush x:Key="PrimaryHoverBrush" Color="{StaticResource PrimaryHoverColor}" />
-
-    <!-- Solid Color Brushes - Accent -->
-    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
-    <SolidColorBrush x:Key="AccentLightBrush" Color="{StaticResource AccentLightColor}" />
-    <SolidColorBrush x:Key="AccentDarkBrush" Color="{StaticResource AccentDarkColor}" />
 
     <!-- Solid Color Brushes - Semantic -->
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
@@ -80,14 +60,5 @@
     <SolidColorBrush x:Key="InfoLightBrush" Color="{StaticResource InfoLightColor}" />
     <SolidColorBrush x:Key="InfoDarkBrush" Color="{StaticResource InfoDarkColor}" />
 
-    <!-- Chart Brushes -->
-    <SolidColorBrush x:Key="Chart1Brush" Color="{StaticResource Chart1Color}" />
-    <SolidColorBrush x:Key="Chart2Brush" Color="{StaticResource Chart2Color}" />
-    <SolidColorBrush x:Key="Chart3Brush" Color="{StaticResource Chart3Color}" />
-    <SolidColorBrush x:Key="Chart4Brush" Color="{StaticResource Chart4Color}" />
-    <SolidColorBrush x:Key="Chart5Brush" Color="{StaticResource Chart5Color}" />
-    <SolidColorBrush x:Key="Chart6Brush" Color="{StaticResource Chart6Color}" />
-    <SolidColorBrush x:Key="Chart7Brush" Color="{StaticResource Chart7Color}" />
-    <SolidColorBrush x:Key="Chart8Brush" Color="{StaticResource Chart8Color}" />
 
 </ResourceDictionary>

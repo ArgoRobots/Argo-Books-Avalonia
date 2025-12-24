@@ -17,7 +17,6 @@
         <!-- Argo Books Styles -->
         <StyleInclude Source="avares://ArgoBooks/Styles/BaseStyles.axaml" />
         <StyleInclude Source="avares://ArgoBooks/Styles/ButtonStyles.axaml" />
-        <StyleInclude Source="avares://ArgoBooks/Styles/TextStyles.axaml" />
         <StyleInclude Source="avares://ArgoBooks/Styles/CardStyles.axaml" />
     </Application.Styles>
 

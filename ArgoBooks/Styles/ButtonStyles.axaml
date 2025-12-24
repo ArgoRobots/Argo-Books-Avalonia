@@ -45,6 +45,59 @@
         <Setter Property="Opacity" Value="0.5" />
     </Style>
 
+    <!-- Primary Button (page header variant) -->
+    <Style Selector="Button.primary-button">
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.primary-button /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+    </Style>
+
+    <!-- Secondary Button (page header variant) -->
+    <Style Selector="Button.secondary-button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+    </Style>
+    <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+    </Style>
+
+    <!-- Danger Button (for destructive actions) -->
+    <Style Selector="Button.danger-button">
+        <Setter Property="Background" Value="#DC2626" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="16,10" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#DC2626" />
+    </Style>
+    <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#B91C1C" />
+    </Style>
+
     <!-- Ghost Button (no border, subtle) -->
     <Style Selector="Button.ghost">
         <Setter Property="Background" Value="Transparent" />
@@ -59,48 +112,6 @@
     </Style>
     <Style Selector="Button.ghost:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
-    </Style>
-
-    <!-- Success Button -->
-    <Style Selector="Button.success">
-        <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
-        <Setter Property="Padding" Value="16,10" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Cursor" Value="Hand" />
-    </Style>
-    <Style Selector="Button.success:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SuccessDarkBrush}" />
-    </Style>
-
-    <!-- Danger Button -->
-    <Style Selector="Button.danger">
-        <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
-        <Setter Property="Padding" Value="16,10" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Cursor" Value="Hand" />
-    </Style>
-    <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource ErrorDarkBrush}" />
-    </Style>
-
-    <!-- Warning Button -->
-    <Style Selector="Button.warning">
-        <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
-        <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
-        <Setter Property="Padding" Value="16,10" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Cursor" Value="Hand" />
-    </Style>
-    <Style Selector="Button.warning:pointerover /template/ ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource WarningDarkBrush}" />
     </Style>
 
     <!-- Icon Button (square, icon only) -->
@@ -119,23 +130,6 @@
     </Style>
     <Style Selector="Button.icon:pressed /template/ ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
-    </Style>
-
-    <!-- Small Button Modifier -->
-    <Style Selector="Button.sm">
-        <Setter Property="Padding" Value="12,6" />
-        <Setter Property="FontSize" Value="{StaticResource FontSizeSm}" />
-    </Style>
-
-    <!-- Large Button Modifier -->
-    <Style Selector="Button.lg">
-        <Setter Property="Padding" Value="24,14" />
-        <Setter Property="FontSize" Value="{StaticResource FontSizeLg}" />
-    </Style>
-
-    <!-- Full Width Button Modifier -->
-    <Style Selector="Button.full-width">
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
     </Style>
 
     <!-- Link Button (looks like a hyperlink) -->
