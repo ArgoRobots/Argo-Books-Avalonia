@@ -1723,6 +1723,7 @@ public partial class ReportDesignCanvas : UserControl
 
         if (e.IsMultiSelect)
         {
+            // Ctrl+click: toggle selection
             if (_selectedElements.Contains(e.Element))
             {
                 DeselectElement(e.Element);
@@ -1734,7 +1735,19 @@ public partial class ReportDesignCanvas : UserControl
         }
         else
         {
-            SelectElement(e.Element, false);
+            // Normal click: if element is already selected, keep the multi-selection intact
+            // (allows dragging multiple selected elements without clearing selection)
+            if (_selectedElements.Contains(e.Element))
+            {
+                // Element is already selected - don't change selection
+                // This allows dragging multiple elements together
+                return;
+            }
+            else
+            {
+                // Element is not selected - clear selection and select only this one
+                SelectElement(e.Element, false);
+            }
         }
     }
 
