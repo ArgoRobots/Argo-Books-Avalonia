@@ -1542,20 +1542,36 @@ public partial class ReportsPageViewModel : ViewModelBase
             Configuration.Filters.SelectedChartTypes.Add(chart.ChartType);
         }
 
-        // Create chart elements for selected charts that don't already have elements
-        CreateChartElementsForSelectedCharts();
+        // Sync chart elements with selection (add new, remove deselected)
+        SyncChartElementsWithSelection();
 
         // Notify view to sync canvas with new elements
         OnPropertyChanged(nameof(Configuration));
     }
 
     /// <summary>
-    /// Creates ChartReportElement objects for any selected charts that don't already
-    /// have corresponding elements in the configuration.
+    /// Syncs ChartReportElement objects with the selected chart types.
+    /// Creates elements for newly selected charts and removes elements for deselected charts.
     /// </summary>
-    private void CreateChartElementsForSelectedCharts()
+    private void SyncChartElementsWithSelection()
     {
-        // Get chart types that already have elements
+        var selectedChartTypes = Configuration.Filters.SelectedChartTypes.ToHashSet();
+
+        // Get existing chart elements
+        var existingChartElements = Configuration.Elements
+            .OfType<ChartReportElement>()
+            .ToList();
+
+        // Remove chart elements for deselected charts
+        foreach (var chartElement in existingChartElements)
+        {
+            if (!selectedChartTypes.Contains(chartElement.ChartType))
+            {
+                Configuration.RemoveElement(chartElement.Id);
+            }
+        }
+
+        // Get chart types that already have elements (after removal)
         var existingChartTypes = Configuration.Elements
             .OfType<ChartReportElement>()
             .Select(e => e.ChartType)
