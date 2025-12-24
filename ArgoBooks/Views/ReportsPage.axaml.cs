@@ -16,7 +16,7 @@ public partial class ReportsPage : UserControl
     private LayoutTransformControl? _previewZoomTransformControl;
     private ScrollViewer? _toolbarScrollViewer;
     private StackPanel? _toolbarContent;
-    private StackPanel? _saveButtonContainer;
+    private Grid? _saveButtonContainer;
     private TextBlock? _asterisk;
     private bool _isAsteriskInitialized;
     private bool _isPanning;
@@ -46,7 +46,7 @@ public partial class ReportsPage : UserControl
         _previewZoomTransformControl = this.FindControl<LayoutTransformControl>("PreviewZoomTransformControl");
         _toolbarScrollViewer = this.FindControl<ScrollViewer>("ToolbarScrollViewer");
         _toolbarContent = this.FindControl<StackPanel>("ToolbarContent");
-        _saveButtonContainer = this.FindControl<StackPanel>("SaveButtonContainer");
+        _saveButtonContainer = this.FindControl<Grid>("SaveButtonContainer");
 
         // Wire up toolbar scrollbar visibility detection
         if (_toolbarScrollViewer != null)
@@ -167,18 +167,20 @@ public partial class ReportsPage : UserControl
 
         if (show && _asterisk == null)
         {
-            // Create asterisk dynamically only when needed
-            // Using -6 margin (scaled from header's -8 for 32px button vs 40px button)
+            // Create asterisk as an overlay that doesn't affect layout
+            // Positioned at top-right of the Grid container
             _asterisk = new TextBlock
             {
                 Text = "*",
                 FontSize = 14,
                 FontWeight = Avalonia.Media.FontWeight.Bold,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Margin = new Avalonia.Thickness(-6, -2, 0, 0)
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+                Margin = new Avalonia.Thickness(0, 0, -2, 0),
+                IsHitTestVisible = false
             };
-            // Insert after the save button (index 1)
-            _saveButtonContainer.Children.Insert(1, _asterisk);
+            // Add as overlay in the Grid (won't shift other elements)
+            _saveButtonContainer.Children.Add(_asterisk);
         }
         else if (!show && _asterisk != null)
         {
