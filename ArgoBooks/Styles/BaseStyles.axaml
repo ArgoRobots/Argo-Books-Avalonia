@@ -143,4 +143,41 @@
         <Setter Property="MinWidth" Value="40" />
     </Style>
 
+    <!-- Global CheckBox Styling - Use dynamic accent color -->
+    <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="CheckBox:checked:pointerover /template/ Border#NormalRectangle">
+        <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHoverBrush}" />
+    </Style>
+
+    <!-- Global RadioButton Styling - Use dynamic accent color -->
+    <Style Selector="RadioButton:checked /template/ Ellipse#OuterEllipse">
+        <Setter Property="Stroke" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="RadioButton:checked /template/ Ellipse#CheckOuterEllipse">
+        <Setter Property="Fill" Value="{DynamicResource PrimaryBrush}" />
+        <Setter Property="Stroke" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="RadioButton:checked:pointerover /template/ Ellipse#OuterEllipse">
+        <Setter Property="Stroke" Value="{DynamicResource PrimaryHoverBrush}" />
+    </Style>
+    <Style Selector="RadioButton:checked:pointerover /template/ Ellipse#CheckOuterEllipse">
+        <Setter Property="Fill" Value="{DynamicResource PrimaryHoverBrush}" />
+        <Setter Property="Stroke" Value="{DynamicResource PrimaryHoverBrush}" />
+    </Style>
+
+    <!-- Global Slider Styling - Use dynamic accent color -->
+    <Style Selector="Slider /template/ Thumb">
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="Slider:pointerover /template/ Thumb">
+        <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+    </Style>
+    <Style Selector="Slider /template/ RepeatButton#PART_DecreaseButton">
+        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+
 </Styles>
