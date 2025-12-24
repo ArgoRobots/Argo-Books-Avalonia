@@ -120,7 +120,11 @@ public partial class ReportsPageViewModel : ViewModelBase
             else if (CurrentStep == 2)
             {
                 Step1Completed = false;
-                // Clear undo history and reload the template to discard changes
+                // Preserve chart selections before reloading template
+                // (will be restored in ApplyConfigurationToPageSettings after template loads)
+                _chartTypesToPreserve = Configuration.Filters.SelectedChartTypes.ToList();
+
+                // Clear undo history and reload the template to discard layout changes
                 UndoRedoManager.Clear();
                 LoadTemplate(SelectedTemplateName);
             }
@@ -128,6 +132,22 @@ public partial class ReportsPageViewModel : ViewModelBase
             CurrentStep--;
             NotifyStepChanged();
         }
+    }
+
+    /// <summary>
+    /// Restores chart selections from a list of chart types.
+    /// </summary>
+    private void RestoreChartSelections(List<ChartDataType> chartTypes)
+    {
+        Configuration.Filters.SelectedChartTypes.Clear();
+        Configuration.Filters.SelectedChartTypes.AddRange(chartTypes);
+
+        foreach (var chart in AvailableCharts)
+        {
+            chart.IsSelected = chartTypes.Contains(chart.ChartType);
+        }
+
+        OnPropertyChanged(nameof(HasSelectedCharts));
     }
 
     private void NotifyStepChanged()
@@ -210,6 +230,11 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _reportName = "Untitled Report";
+
+    /// <summary>
+    /// Chart types to preserve during template reload (when going back from step 2).
+    /// </summary>
+    private List<ChartDataType>? _chartTypesToPreserve;
 
     [ObservableProperty]
     private string _selectedDatePreset = DatePresetNames.ThisMonth;
@@ -1470,10 +1495,19 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Update transaction type
         SelectedTransactionType = Configuration.Filters.TransactionType;
 
-        // Update selected charts - reset all and mark selected ones
-        foreach (var chart in AvailableCharts)
+        // Check if we need to restore preserved chart selections (when going back from step 2)
+        if (_chartTypesToPreserve != null)
         {
-            chart.IsSelected = Configuration.Filters.SelectedChartTypes.Contains(chart.ChartType);
+            RestoreChartSelections(_chartTypesToPreserve);
+            _chartTypesToPreserve = null;
+        }
+        else
+        {
+            // Update selected charts - reset all and mark selected ones from configuration
+            foreach (var chart in AvailableCharts)
+            {
+                chart.IsSelected = Configuration.Filters.SelectedChartTypes.Contains(chart.ChartType);
+            }
         }
 
         UpdateCanvasDimensions();
@@ -1506,6 +1540,70 @@ public partial class ReportsPageViewModel : ViewModelBase
         foreach (var chart in AvailableCharts.Where(c => c.IsSelected))
         {
             Configuration.Filters.SelectedChartTypes.Add(chart.ChartType);
+        }
+
+        // Create chart elements for selected charts that don't already have elements
+        CreateChartElementsForSelectedCharts();
+    }
+
+    /// <summary>
+    /// Creates ChartReportElement objects for any selected charts that don't already
+    /// have corresponding elements in the configuration.
+    /// </summary>
+    private void CreateChartElementsForSelectedCharts()
+    {
+        // Get chart types that already have elements
+        var existingChartTypes = Configuration.Elements
+            .OfType<ChartReportElement>()
+            .Select(e => e.ChartType)
+            .ToHashSet();
+
+        // Get selected charts that need elements created
+        var chartsNeedingElements = Configuration.Filters.SelectedChartTypes
+            .Where(ct => !existingChartTypes.Contains(ct))
+            .ToList();
+
+        if (chartsNeedingElements.Count == 0)
+            return;
+
+        // Calculate layout for new charts using a grid layout
+        var (pageWidth, pageHeight) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
+        const double margin = PageDimensions.Margin;
+        const double headerHeight = PageDimensions.HeaderHeight;
+        const double footerHeight = PageDimensions.FooterHeight;
+        const double spacing = 10;
+
+        var contentWidth = pageWidth - (margin * 2);
+        var contentHeight = pageHeight - headerHeight - footerHeight - (margin * 2);
+        var startY = headerHeight + margin;
+
+        // Determine grid dimensions based on number of charts
+        var chartCount = chartsNeedingElements.Count;
+        int columns = chartCount <= 2 ? chartCount : (chartCount <= 4 ? 2 : 3);
+        int rows = (int)Math.Ceiling((double)chartCount / columns);
+
+        var cellWidth = (contentWidth - (spacing * (columns - 1))) / columns;
+        var cellHeight = (contentHeight - (spacing * (rows - 1))) / rows;
+
+        // Create chart elements in a grid layout
+        for (int i = 0; i < chartsNeedingElements.Count; i++)
+        {
+            int row = i / columns;
+            int col = i % columns;
+
+            var x = margin + (col * (cellWidth + spacing));
+            var y = startY + (row * (cellHeight + spacing));
+
+            var chartElement = new ChartReportElement
+            {
+                ChartType = chartsNeedingElements[i],
+                X = x,
+                Y = y,
+                Width = cellWidth,
+                Height = cellHeight
+            };
+
+            Configuration.AddElement(chartElement);
         }
     }
 
