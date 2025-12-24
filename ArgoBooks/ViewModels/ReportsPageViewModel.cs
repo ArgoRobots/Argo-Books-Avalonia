@@ -120,8 +120,9 @@ public partial class ReportsPageViewModel : ViewModelBase
             else if (CurrentStep == 2)
             {
                 Step1Completed = false;
-                // Clear undo history when going back to step 1
+                // Clear undo history and reload the template to discard changes
                 UndoRedoManager.Clear();
+                LoadTemplate(SelectedTemplateName);
             }
 
             CurrentStep--;
