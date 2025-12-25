@@ -1,0 +1,86 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="ArgoBooks.Controls.Reports.SkiaReportDesignCanvas"
+             x:Name="DesignCanvas"
+             Focusable="True"
+             Background="Transparent">
+
+    <UserControl.Styles>
+        <!-- Selection rectangle style for multi-select -->
+        <Style Selector="Rectangle.selection-rect">
+            <Setter Property="Stroke" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Fill" Value="#203B82F6" />
+            <Setter Property="StrokeDashArray" Value="4,2" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        <!-- Scroll viewer for the canvas -->
+        <ScrollViewer x:Name="CanvasScrollViewer"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      Background="{DynamicResource SurfaceAltBrush}">
+
+            <!-- Zoom transform control -->
+            <Border x:Name="ZoomContainer"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Margin="40"
+                    BoxShadow="0 4 20 0 #40000000">
+
+                <Border.RenderTransform>
+                    <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                </Border.RenderTransform>
+
+                <!-- The SkiaSharp rendered image -->
+                <Grid x:Name="CanvasContainer">
+                    <Image x:Name="CanvasImage"
+                           Stretch="None"
+                           RenderOptions.BitmapInterpolationMode="HighQuality" />
+
+                    <!-- Selection rectangle overlay (for multi-select) -->
+                    <Canvas x:Name="OverlayCanvas"
+                            IsHitTestVisible="False">
+                        <Rectangle x:Name="SelectionRectangle"
+                                   Classes="selection-rect"
+                                   IsVisible="False" />
+                    </Canvas>
+                </Grid>
+            </Border>
+        </ScrollViewer>
+
+        <!-- Zoom controls overlay -->
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Margin="16"
+                    Spacing="8">
+            <Button x:Name="ZoomOutButton"
+                    Content="-"
+                    Width="32" Height="32"
+                    FontSize="16"
+                    ToolTip.Tip="Zoom Out" />
+            <TextBlock x:Name="ZoomLevelText"
+                       Text="100%"
+                       VerticalAlignment="Center"
+                       FontSize="12"
+                       MinWidth="45"
+                       TextAlignment="Center" />
+            <Button x:Name="ZoomInButton"
+                    Content="+"
+                    Width="32" Height="32"
+                    FontSize="16"
+                    ToolTip.Tip="Zoom In" />
+            <Button x:Name="ZoomResetButton"
+                    Content="Reset"
+                    Height="32"
+                    Padding="12,0"
+                    FontSize="12"
+                    ToolTip.Tip="Reset Zoom" />
+        </StackPanel>
+    </Grid>
+</UserControl>

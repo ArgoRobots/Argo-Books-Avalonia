@@ -11,7 +11,7 @@ namespace ArgoBooks.Views;
 
 public partial class ReportsPage : UserControl
 {
-    private ReportDesignCanvas? _designCanvas;
+    private SkiaReportDesignCanvas? _designCanvas;
     private ScrollViewer? _previewScrollViewer;
     private LayoutTransformControl? _previewZoomTransformControl;
     private ScrollViewer? _toolbarScrollViewer;
@@ -42,7 +42,7 @@ public partial class ReportsPage : UserControl
     {
         base.OnLoaded(e);
 
-        _designCanvas = this.FindControl<ReportDesignCanvas>("DesignCanvas");
+        _designCanvas = this.FindControl<SkiaReportDesignCanvas>("DesignCanvas");
         _previewScrollViewer = this.FindControl<ScrollViewer>("PreviewScrollViewer");
         _previewZoomTransformControl = this.FindControl<LayoutTransformControl>("PreviewZoomTransformControl");
         _toolbarScrollViewer = this.FindControl<ScrollViewer>("ToolbarScrollViewer");
@@ -350,8 +350,8 @@ public partial class ReportsPage : UserControl
 
         var oldZoom = _previewZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + Controls.Reports.ReportDesignCanvas.ZoomStep, Controls.Reports.ReportDesignCanvas.MaxZoom)
-            : Math.Max(oldZoom - Controls.Reports.ReportDesignCanvas.ZoomStep, Controls.Reports.ReportDesignCanvas.MinZoom);
+            ? Math.Min(oldZoom + Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
@@ -395,8 +395,8 @@ public partial class ReportsPage : UserControl
 
         var oldZoom = _previewZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + Controls.Reports.ReportDesignCanvas.ZoomStep, Controls.Reports.ReportDesignCanvas.MaxZoom)
-            : Math.Max(oldZoom - Controls.Reports.ReportDesignCanvas.ZoomStep, Controls.Reports.ReportDesignCanvas.MinZoom);
+            ? Math.Min(oldZoom + Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 

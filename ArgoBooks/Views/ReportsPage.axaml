@@ -758,18 +758,18 @@
                         </ScrollViewer>
                     </Border>
 
-                    <!-- Canvas Area with ReportDesignCanvas -->
+                    <!-- Canvas Area with SkiaReportDesignCanvas (unified SkiaSharp rendering) -->
                     <!-- Wrapped in Grid to allow save confirmation overlay -->
                     <Grid Grid.Row="1">
                         <!-- Starts with Opacity=0 to prevent flash before fit-to-window is applied -->
-                        <reports:ReportDesignCanvas x:Name="DesignCanvas"
-                                                    Opacity="0"
-                                                    Configuration="{Binding Configuration}"
-                                                    ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
-                                                    ShowGrid="{Binding ShowGrid}"
-                                                    GridSize="{Binding GridSize}"
-                                                    SnapToGrid="{Binding SnapToGrid}"
-                                                    UndoRedoManager="{Binding UndoRedoManager}" />
+                        <reports:SkiaReportDesignCanvas x:Name="DesignCanvas"
+                                                        Opacity="0"
+                                                        Configuration="{Binding Configuration}"
+                                                        ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
+                                                        ShowGrid="{Binding ShowGrid}"
+                                                        GridSize="{Binding GridSize}"
+                                                        SnapToGrid="{Binding SnapToGrid}"
+                                                        UndoRedoManager="{Binding UndoRedoManager}" />
 
                         <!-- Save Confirmation Overlay -->
                         <Border x:Name="SaveConfirmationBorder"

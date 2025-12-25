@@ -113,6 +113,22 @@ public class ReportRenderer : IDisposable
     }
 
     /// <summary>
+    /// Renders only the elements to a canvas (for design mode).
+    /// Does not clear the canvas or render header/footer.
+    /// </summary>
+    public void RenderElementsToCanvas(SKCanvas canvas)
+    {
+        // Render elements sorted by Z-order
+        foreach (var element in _config.GetElementsByZOrder())
+        {
+            if (!element.IsVisible)
+                continue;
+
+            RenderElement(canvas, element);
+        }
+    }
+
+    /// <summary>
     /// Exports the report to an image file.
     /// </summary>
     public async Task<bool> ExportToImageAsync(string filePath, ExportFormat format, int quality = 95)
