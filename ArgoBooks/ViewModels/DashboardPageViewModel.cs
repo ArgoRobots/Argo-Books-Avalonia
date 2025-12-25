@@ -338,8 +338,8 @@ public partial class DashboardPageViewModel : ViewModelBase
     private void CreateInvoice()
     {
         App.NavigationService?.NavigateTo("Invoices");
-        // Open the add invoice modal after navigation
-        App.InvoiceModalsViewModel?.OpenAddModal();
+        // Open the create invoice modal after navigation
+        App.InvoiceModalsViewModel?.OpenCreateModal();
     }
 
     [RelayCommand]
