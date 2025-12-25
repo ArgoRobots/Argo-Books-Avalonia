@@ -31,7 +31,7 @@
                                     VerticalAlignment="Center"
                                     Margin="40">
                 <LayoutTransformControl.LayoutTransform>
-                    <ScaleTransform x:Name="ZoomScaleTransform" ScaleX="1" ScaleY="1" />
+                    <ScaleTransform ScaleX="1" ScaleY="1" />
                 </LayoutTransformControl.LayoutTransform>
                 <Border x:Name="ZoomContainer"
                         BoxShadow="0 4 20 0 #40000000">
