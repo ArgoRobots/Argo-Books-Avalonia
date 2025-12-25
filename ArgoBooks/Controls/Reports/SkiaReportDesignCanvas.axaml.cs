@@ -624,10 +624,7 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        // Only handle zoom when Ctrl is held
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
-            return;
-
+        // Zoom with scroll wheel (no modifier key required)
         if (_scrollViewer == null || _canvasImage == null)
             return;
 
