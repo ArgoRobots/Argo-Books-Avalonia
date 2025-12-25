@@ -501,13 +501,21 @@ public partial class AppShellViewModel : ViewModelBase
             "Unsaved Report Changes",
             "You have unsaved changes in the report designer. Would you like to save them before leaving?");
 
-        return result switch
+        switch (result)
         {
-            UnsavedChangesResult.Save => true, // TODO: Actually save the template first
-            UnsavedChangesResult.DontSave => true, // Discard changes and navigate
-            UnsavedChangesResult.Cancel => false, // Cancel navigation
-            _ => false // None (backdrop click) - cancel navigation
-        };
+            case UnsavedChangesResult.Save:
+                // Open the save template modal and wait for it to complete
+                var saved = await _reportsPageViewModel.OpenSaveTemplateAndWaitAsync();
+                // If user cancelled the save modal, don't proceed with navigation
+                return saved;
+
+            case UnsavedChangesResult.DontSave:
+                return true; // Discard changes and navigate
+
+            case UnsavedChangesResult.Cancel:
+            default:
+                return false; // Cancel navigation
+        }
     }
 
     /// <summary>
