@@ -861,9 +861,36 @@ public partial class ReportsPageViewModel : ViewModelBase
         PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    [RelayCommand]
-    private void OpenSaveTemplate()
+    /// <summary>
+    /// Returns true if we are editing an existing custom template (not a built-in template).
+    /// </summary>
+    private bool IsEditingCustomTemplate =>
+        !string.IsNullOrEmpty(SelectedTemplateName) &&
+        !ReportTemplateFactory.IsBuiltInTemplate(SelectedTemplateName);
+
+    /// <summary>
+    /// Saves the current configuration to the current custom template.
+    /// </summary>
+    private async Task<bool> SaveToCurrentTemplateAsync()
     {
+        var success = await _templateStorage.SaveTemplateAsync(Configuration, SelectedTemplateName);
+        if (success)
+        {
+            LoadCustomTemplates();
+        }
+        return success;
+    }
+
+    [RelayCommand]
+    private async Task OpenSaveTemplate()
+    {
+        // If editing an existing custom template, save directly without showing modal
+        if (IsEditingCustomTemplate)
+        {
+            await SaveToCurrentTemplateAsync();
+            return;
+        }
+
         IsSaveTemplateOpen = true;
     }
 
@@ -880,11 +907,17 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// Opens the save template modal and waits for it to close.
     /// Returns true if template was saved successfully, false if cancelled.
     /// </summary>
-    public Task<bool> OpenSaveTemplateAndWaitAsync()
+    public async Task<bool> OpenSaveTemplateAndWaitAsync()
     {
+        // If editing an existing custom template, save directly without showing modal
+        if (IsEditingCustomTemplate)
+        {
+            return await SaveToCurrentTemplateAsync();
+        }
+
         _saveTemplateCompletionSource = new TaskCompletionSource<bool>();
         IsSaveTemplateOpen = true;
-        return _saveTemplateCompletionSource.Task;
+        return await _saveTemplateCompletionSource.Task;
     }
 
     #endregion
