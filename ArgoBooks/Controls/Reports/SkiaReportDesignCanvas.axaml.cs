@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -8,6 +7,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
@@ -515,12 +515,34 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         if (_renderBitmap == null || _canvasImage == null) return;
 
-        using var image = SKImage.FromBitmap(_renderBitmap);
-        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-        using var stream = new MemoryStream(data.ToArray());
+        // Convert SKBitmap to Avalonia WriteableBitmap directly (faster than PNG encoding)
+        var info = _renderBitmap.Info;
+        var writeableBitmap = new WriteableBitmap(
+            new PixelSize(info.Width, info.Height),
+            new Vector(96, 96),
+            Avalonia.Platform.PixelFormat.Bgra8888,
+            AlphaFormat.Premul);
 
-        var bitmap = new Bitmap(stream);
-        _canvasImage.Source = bitmap;
+        using (var frameBuffer = writeableBitmap.Lock())
+        {
+            var srcPtr = _renderBitmap.GetPixels();
+            var dstPtr = frameBuffer.Address;
+            var rowBytes = info.RowBytes;
+
+            unsafe
+            {
+                for (int y = 0; y < info.Height; y++)
+                {
+                    Buffer.MemoryCopy(
+                        (void*)(srcPtr + y * rowBytes),
+                        (void*)(dstPtr + y * frameBuffer.RowBytes),
+                        frameBuffer.RowBytes,
+                        rowBytes);
+                }
+            }
+        }
+
+        _canvasImage.Source = writeableBitmap;
 
         // Set display size to base dimensions (zoom transform will scale it)
         _canvasImage.Width = displayWidth;
@@ -1244,11 +1266,51 @@ public partial class SkiaReportDesignCanvas : UserControl
     }
 
     /// <summary>
-    /// Syncs elements (compatibility method - just refreshes).
+    /// Syncs elements with the current configuration.
+    /// Validates selection by removing any elements that no longer exist in the configuration.
     /// </summary>
     public void SyncElements()
     {
+        ValidateSelection();
         InvalidateCanvas();
+    }
+
+    /// <summary>
+    /// Validates the current selection by removing any elements that no longer exist in Configuration.Elements.
+    /// </summary>
+    private void ValidateSelection()
+    {
+        if (Configuration == null)
+        {
+            if (_selectedElements.Count > 0)
+            {
+                _selectedElements.Clear();
+                _hoveredElement = null;
+                NotifySelectionChanged();
+            }
+            return;
+        }
+
+        // Get the set of valid element IDs
+        var validIds = Configuration.Elements.Select(e => e.Id).ToHashSet();
+
+        // Remove any selected elements that are no longer in the configuration
+        var staleElements = _selectedElements.Where(e => !validIds.Contains(e.Id)).ToList();
+        if (staleElements.Count > 0)
+        {
+            foreach (var stale in staleElements)
+            {
+                _selectedElements.Remove(stale);
+            }
+
+            // Clear hovered element if it was deleted
+            if (_hoveredElement != null && !validIds.Contains(_hoveredElement.Id))
+            {
+                _hoveredElement = null;
+            }
+
+            NotifySelectionChanged();
+        }
     }
 
     /// <summary>

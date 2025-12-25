@@ -39,7 +39,7 @@
                 <!-- The SkiaSharp rendered image -->
                 <Grid x:Name="CanvasContainer">
                     <Image x:Name="CanvasImage"
-                           Stretch="None"
+                           Stretch="Uniform"
                            RenderOptions.BitmapInterpolationMode="HighQuality" />
 
                     <!-- Selection rectangle overlay (for multi-select) -->
