@@ -193,7 +193,7 @@ public partial class DashboardPageViewModel : ViewModelBase
         OutstandingInvoices = FormatCurrency(outstandingAmount);
 
         // Calculate active rentals
-        var activeRentals = data.RentalRecords
+        var activeRentals = data.Rentals
             .Where(r => r.Status == RentalStatus.Active)
             .ToList();
 
@@ -279,7 +279,7 @@ public partial class DashboardPageViewModel : ViewModelBase
 
     private void LoadActiveRentals(CompanyData data)
     {
-        var activeRentals = data.RentalRecords
+        var activeRentals = data.Rentals
             .Where(r => r.Status == RentalStatus.Active)
             .OrderBy(r => r.DueDate)
             .Take(10)
