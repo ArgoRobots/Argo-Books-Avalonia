@@ -457,7 +457,7 @@
                                                                 ToolTip.Tip="View Receipt"
                                                                 Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ViewReceiptCommand}"
                                                                 CommandParameter="{Binding}"
-                                                                IsEnabled="{Binding HasReceipt}">
+                                                                IsVisible="{Binding HasReceipt}">
                                                             <PathIcon Data="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z"
                                                                       Width="16" Height="16" />
                                                         </Button>
@@ -640,7 +640,7 @@
                         Padding="24,16"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1">
-                    <Grid ColumnDefinitions="*,Auto,Auto">
+                    <Grid ColumnDefinitions="*,Auto">
                         <StackPanel>
                             <TextBlock Text="{Binding PreviewReceiptId, StringFormat='Receipt for {0}'}"
                                        FontSize="18"
@@ -648,14 +648,6 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                         </StackPanel>
                         <Button Grid.Column="1"
-                                Classes="icon-button"
-                                ToolTip.Tip="Toggle Fullscreen"
-                                Command="{Binding ToggleReceiptFullscreenCommand}"
-                                Margin="0,0,8,0">
-                            <PathIcon Data="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
-                                      Width="16" Height="16" />
-                        </Button>
-                        <Button Grid.Column="2"
                                 Classes="icon-button"
                                 Command="{Binding CloseReceiptPreviewCommand}">
                             <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
@@ -669,7 +661,7 @@
                         Background="{DynamicResource SurfaceAltBrush}"
                         Margin="16">
                     <Panel>
-                        <Image Source="{Binding PreviewReceiptPath}"
+                        <Image Source="{Binding PreviewReceiptPath, Converter={x:Static local:BoolConverters.ToImageSource}}"
                                Stretch="Uniform"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center" />
@@ -694,13 +686,22 @@
                         Padding="24,12"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,1,0,0">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="{Binding PreviewReceiptPath}"
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Button Grid.Column="0"
+                                Classes="icon-button"
+                                ToolTip.Tip="Toggle Fullscreen"
+                                Command="{Binding ToggleReceiptFullscreenCommand}">
+                            <PathIcon Data="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
+                                      Width="16" Height="16" />
+                        </Button>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding PreviewReceiptPath}"
                                    FontSize="12"
                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                    VerticalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis" />
-                        <Button Grid.Column="1"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="12,0" />
+                        <Button Grid.Column="2"
                                 Content="Close"
                                 Classes="secondary-button"
                                 Command="{Binding CloseReceiptPreviewCommand}" />

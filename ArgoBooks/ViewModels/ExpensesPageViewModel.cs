@@ -651,13 +651,50 @@ public partial class ExpensesPageViewModel : ViewModelBase
     [RelayCommand]
     private void ViewReceipt(ExpenseDisplayItem? item)
     {
-        if (item == null || !item.HasReceipt || string.IsNullOrEmpty(item.ReceiptFilePath))
+        if (item == null || !item.HasReceipt)
             return;
 
-        PreviewReceiptPath = item.ReceiptFilePath;
+        // Try to get the receipt path - check if file exists, otherwise load from stored data
+        var receiptPath = GetReceiptImagePath(item.Id, item.ReceiptFilePath);
+        if (string.IsNullOrEmpty(receiptPath))
+            return;
+
+        PreviewReceiptPath = receiptPath;
         PreviewReceiptId = item.Id;
         IsReceiptPreviewOpen = true;
         IsReceiptFullscreen = false;
+    }
+
+    private string? GetReceiptImagePath(string expenseId, string? originalPath)
+    {
+        // First try the original path
+        if (!string.IsNullOrEmpty(originalPath) && System.IO.File.Exists(originalPath))
+            return originalPath;
+
+        // Otherwise, look up the receipt in company data and use stored FileData
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return null;
+
+        var expense = companyData.Purchases.FirstOrDefault(p => p.Id == expenseId);
+        if (expense == null || string.IsNullOrEmpty(expense.ReceiptId)) return null;
+
+        var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
+        if (receipt == null || string.IsNullOrEmpty(receipt.FileData)) return null;
+
+        try
+        {
+            // Create temp file from Base64 data
+            var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ArgoBooks", "Receipts");
+            System.IO.Directory.CreateDirectory(tempDir);
+            var tempPath = System.IO.Path.Combine(tempDir, receipt.FileName);
+            var bytes = Convert.FromBase64String(receipt.FileData);
+            System.IO.File.WriteAllBytes(tempPath, bytes);
+            return tempPath;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     [RelayCommand]

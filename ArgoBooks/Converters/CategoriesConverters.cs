@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using ArgoBooks.Controls;
 
 namespace ArgoBooks.Converters;
@@ -108,17 +109,54 @@ public static class BoolConverters
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal width.
-    /// Fullscreen = auto (stretch), Normal = 600px.
+    /// Fullscreen = 95% of window, Normal = 600px.
     /// </summary>
     public static readonly IValueConverter ToFullscreenWidth =
-        new FuncValueConverter<bool, double>(value => value ? double.NaN : 600);
+        new FuncValueConverter<bool, double>(value => value ? 1200 : 600);
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal height.
-    /// Fullscreen = auto (stretch), Normal = 500px.
+    /// Fullscreen = 95% of window, Normal = 500px.
     /// </summary>
     public static readonly IValueConverter ToFullscreenHeight =
-        new FuncValueConverter<bool, double>(value => value ? double.NaN : 500);
+        new FuncValueConverter<bool, double>(value => value ? 800 : 500);
+
+    /// <summary>
+    /// Converts a file path string to a Bitmap image.
+    /// Returns null if the file doesn't exist or can't be loaded.
+    /// </summary>
+    public static readonly IValueConverter ToImageSource = new FilePathToImageConverter();
+}
+
+/// <summary>
+/// Converter that loads a Bitmap image from a file path.
+/// </summary>
+public class FilePathToImageConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not string filePath || string.IsNullOrEmpty(filePath))
+            return null;
+
+        try
+        {
+            if (System.IO.File.Exists(filePath))
+            {
+                return new Bitmap(filePath);
+            }
+        }
+        catch
+        {
+            // Failed to load image
+        }
+
+        return null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 /// <summary>

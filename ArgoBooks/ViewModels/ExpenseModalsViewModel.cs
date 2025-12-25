@@ -737,6 +737,21 @@ public partial class ExpenseModalsViewModel : ViewModelBase
                 _ => "application/octet-stream"
             };
 
+            // Read file contents and store as Base64
+            string? fileData = null;
+            if (fileInfo.Exists)
+            {
+                try
+                {
+                    var bytes = System.IO.File.ReadAllBytes(_receiptFilePath);
+                    fileData = Convert.ToBase64String(bytes);
+                }
+                catch
+                {
+                    // Failed to read file, continue without file data
+                }
+            }
+
             receipt = new Core.Models.Tracking.Receipt
             {
                 Id = receiptId,
@@ -745,6 +760,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
                 FileName = fileInfo.Name,
                 FileType = fileType,
                 FileSize = fileInfo.Exists ? fileInfo.Length : 0,
+                FileData = fileData,
+                OriginalFilePath = _receiptFilePath,
                 Amount = Total,
                 Date = ModalDate?.DateTime ?? DateTime.Now,
                 Vendor = SelectedSupplier?.Name ?? "",
