@@ -880,11 +880,15 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// Opens the save template modal and waits for it to close.
     /// Returns true if template was saved successfully, false if cancelled.
     /// </summary>
-    public Task<bool> OpenSaveTemplateAndWaitAsync()
+    public async Task<bool> OpenSaveTemplateAndWaitAsync()
     {
         _saveTemplateCompletionSource = new TaskCompletionSource<bool>();
         IsSaveTemplateOpen = true;
-        return _saveTemplateCompletionSource.Task;
+
+        // Yield to allow UI to update and show the modal
+        await Task.Yield();
+
+        return await _saveTemplateCompletionSource.Task;
     }
 
     #endregion
