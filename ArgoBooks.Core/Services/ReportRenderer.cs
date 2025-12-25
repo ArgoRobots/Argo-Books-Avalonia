@@ -237,10 +237,10 @@ public class ReportRenderer : IDisposable
     {
         var rect = GetScaledRect(chart);
 
-        // Draw solid white background for chart (matching design canvas)
+        // Draw background for chart using the element's background color
         var bgPaint = new SKPaint
         {
-            Color = SKColors.White,
+            Color = ParseColor(chart.BackgroundColor),
             Style = SKPaintStyle.Fill,
             IsAntialias = true
         };

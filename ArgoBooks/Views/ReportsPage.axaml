@@ -342,7 +342,7 @@
                                                             CornerRadius="8"
                                                             HorizontalAlignment="Stretch"
                                                             HorizontalContentAlignment="Stretch"
-                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).OpenCustomTemplateCommand}"
                                                             CommandParameter="{Binding Name}"
                                                             Classes.selected="{Binding IsSelected}">
                                                         <Button.Styles>

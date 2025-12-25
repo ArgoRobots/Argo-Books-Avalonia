@@ -947,6 +947,7 @@ public partial class ReportDesignCanvas : UserControl
         var borderThickness = element?.BorderThickness ?? 0;
         var showTitle = element?.ShowTitle ?? true;
         var titleFontSize = element?.TitleFontSize ?? 14;
+        var backgroundColor = element?.BackgroundColor ?? "#FFFFFF";
 
         var grid = new Grid
         {
@@ -991,9 +992,17 @@ public partial class ReportDesignCanvas : UserControl
             ? new SolidColorBrush(Color.Parse(element.BorderColor))
             : Brushes.Gray;
 
+        // Parse the background color
+        IBrush bgBrush = Brushes.White;
+        try
+        {
+            bgBrush = new SolidColorBrush(Color.Parse(backgroundColor));
+        }
+        catch { /* Use white as fallback */ }
+
         return new Border
         {
-            Background = Brushes.White,
+            Background = bgBrush,
             BorderBrush = borderBrush,
             BorderThickness = new Thickness(borderThickness > 0 ? borderThickness : 1),
             Child = grid

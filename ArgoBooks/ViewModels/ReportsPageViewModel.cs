@@ -302,6 +302,31 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task OpenCustomTemplateAsync(string? templateName)
+    {
+        if (string.IsNullOrEmpty(templateName)) return;
+
+        // Load the custom template
+        SelectedTemplateName = templateName;
+
+        // Wait briefly for template to load asynchronously
+        await Task.Delay(50);
+
+        // Set the report name to the template name
+        ReportName = templateName;
+        Configuration.Title = templateName;
+
+        // Clear any unsaved changes indicator
+        UndoRedoManager.Clear();
+
+        // Go directly to step 2 (Layout Designer)
+        Step1Completed = true;
+        ApplyFiltersToConfiguration();
+        CurrentStep = 2;
+        NotifyStepChanged();
+    }
+
+    [RelayCommand]
     private void SelectDatePreset(DatePresetOption? preset)
     {
         if (preset != null)
