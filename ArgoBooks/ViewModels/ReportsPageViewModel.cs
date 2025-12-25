@@ -1397,6 +1397,52 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Delete Template Properties
+
+    [ObservableProperty]
+    private bool _isDeleteTemplateOpen;
+
+    [ObservableProperty]
+    private string _templateToDelete = string.Empty;
+
+    [RelayCommand]
+    private void OpenDeleteTemplate(string templateName)
+    {
+        TemplateToDelete = templateName;
+        IsDeleteTemplateOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseDeleteTemplate()
+    {
+        IsDeleteTemplateOpen = false;
+        TemplateToDelete = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmDeleteTemplate()
+    {
+        if (string.IsNullOrEmpty(TemplateToDelete)) return;
+
+        var success = _templateStorage.DeleteTemplate(TemplateToDelete);
+        if (success)
+        {
+            // If we're deleting the currently selected template, switch to blank
+            if (SelectedTemplateName == TemplateToDelete)
+            {
+                SelectedTemplateName = ReportTemplateFactory.TemplateNames.Custom;
+            }
+
+            // Refresh custom templates list
+            LoadCustomTemplates();
+        }
+
+        IsDeleteTemplateOpen = false;
+        TemplateToDelete = string.Empty;
+    }
+
+    #endregion
+
     #region Constructor & Initialization
 
     private readonly ReportTemplateStorage _templateStorage = new();
