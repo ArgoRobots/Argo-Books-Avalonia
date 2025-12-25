@@ -53,16 +53,16 @@
                 Padding="15"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,0">
-            <Grid ColumnDefinitions="*,Auto">
-                <!-- Company Header Content -->
-                <Panel Grid.Column="0">
-                    <!-- Expanded Header with Button -->
-                    <Button Classes="sidebar-header"
+            <Panel>
+                <!-- Expanded Header Layout -->
+                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsCollapsed}">
+                    <!-- Company Header Content -->
+                    <Button Grid.Column="0"
+                            Classes="sidebar-header"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Stretch"
-                            IsVisible="{Binding !IsCollapsed}"
                             Command="{Binding OpenCompanySwitcherCommand}">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
+                        <Grid ColumnDefinitions="Auto,*">
                             <!-- Logo (40px square) -->
                             <Border Grid.Column="0"
                                     Width="40" Height="40"
@@ -102,20 +102,30 @@
                                        Margin="12,0,0,0"
                                        MaxWidth="110"
                                        TextTrimming="CharacterEllipsis" />
-
-                            <!-- Chevron Down Icon for company switcher -->
-                            <PathIcon Grid.Column="2"
-                                      Data="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
-                                      Width="14" Height="14"
-                                      Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                      VerticalAlignment="Center"
-                                      Margin="4,0,0,0" />
                         </Grid>
                     </Button>
 
-                    <!-- Collapsed Logo Only - Clickable to open company switcher -->
+                    <!-- Sidebar Toggle Button with Animated Arrow -->
+                    <Button Grid.Column="1"
+                            Classes="sidebar-toggle"
+                            Command="{Binding ToggleCollapseCommand}"
+                            ToolTip.Tip="{Binding CollapseTooltip}"
+                            Width="28" Height="28"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center">
+                        <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                  Width="18" Height="18"
+                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                  Classes="toggle-arrow" />
+                    </Button>
+                </Grid>
+
+                <!-- Collapsed Header Layout - Logo on top, toggle below -->
+                <StackPanel IsVisible="{Binding IsCollapsed}"
+                            HorizontalAlignment="Center"
+                            Spacing="8">
+                    <!-- Collapsed Logo - Clickable to open company switcher -->
                     <Button Classes="sidebar-header-collapsed"
-                            IsVisible="{Binding IsCollapsed}"
                             Command="{Binding OpenCompanySwitcherCommand}"
                             ToolTip.Tip="{Binding CompanyName}"
                             HorizontalAlignment="Center">
@@ -146,40 +156,20 @@
                             </Panel>
                         </Border>
                     </Button>
-                </Panel>
 
-                <!-- Sidebar Toggle Button with Animated Arrow -->
-                <Button Grid.Column="1"
-                        Classes="sidebar-toggle"
-                        Command="{Binding ToggleCollapseCommand}"
-                        ToolTip.Tip="{Binding CollapseTooltip}"
-                        Width="28" Height="28"
-                        Margin="8,0,0,0"
-                        VerticalAlignment="Center"
-                        IsVisible="{Binding !IsCollapsed}">
-                    <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
-                              Width="18" Height="18"
-                              Foreground="{DynamicResource SidebarTextMutedBrush}"
-                              Classes="toggle-arrow"
-                              Classes.collapsed="{Binding IsCollapsed}" />
-                </Button>
-
-                <!-- Toggle button when collapsed (centered) -->
-                <Button Grid.Column="1"
-                        Classes="sidebar-toggle"
-                        Command="{Binding ToggleCollapseCommand}"
-                        ToolTip.Tip="Expand sidebar"
-                        Width="28" Height="28"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Center"
-                        IsVisible="{Binding IsCollapsed}"
-                        Margin="-40,0,0,0">
-                    <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
-                              Width="18" Height="18"
-                              Foreground="{DynamicResource SidebarTextMutedBrush}"
-                              Classes="toggle-arrow collapsed" />
-                </Button>
-            </Grid>
+                    <!-- Toggle button below logo when collapsed -->
+                    <Button Classes="sidebar-toggle"
+                            Command="{Binding ToggleCollapseCommand}"
+                            ToolTip.Tip="Expand sidebar"
+                            Width="28" Height="28"
+                            HorizontalAlignment="Center">
+                        <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                  Width="18" Height="18"
+                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                  Classes="toggle-arrow collapsed" />
+                    </Button>
+                </StackPanel>
+            </Panel>
         </Border>
 
         <!-- Navigation Sections -->
