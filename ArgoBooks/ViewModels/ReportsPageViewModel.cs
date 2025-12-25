@@ -451,9 +451,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
 
     /// <summary>
-    /// Gets whether the report has unsaved changes.
+    /// Gets whether the report has unsaved changes (changes since last save).
     /// </summary>
-    public bool HasUnsavedChanges => UndoRedoManager.CanUndo;
+    public bool HasUnsavedChanges => UndoRedoManager.HasUnsavedChanges;
 
     /// <summary>
     /// ViewModel for the undo/redo button group control.
@@ -948,6 +948,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (success)
         {
             LoadCustomTemplates();
+            // Mark save point so asterisk disappears
+            UndoRedoManager.MarkSaved();
             // Show save confirmation message
             ShowSaveConfirmation = true;
             await Task.Delay(2000);
@@ -1464,6 +1466,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             // Refresh custom templates list
             LoadCustomTemplates();
+
+            // Mark save point so asterisk disappears
+            UndoRedoManager.MarkSaved();
 
             // Show the "Saved" overlay notification
             ShowSaveConfirmation = true;

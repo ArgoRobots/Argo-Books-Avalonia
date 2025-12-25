@@ -487,8 +487,8 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (Configuration == null) return;
 
         // Draw the hover highlight OUTSIDE the element bounds
-        // Offset by 1 pixel to avoid overlapping with the element's own border
-        const float offset = 1f;
+        // Offset by 2 pixels to avoid overlapping with the element's own border
+        const float offset = 2f;
         var rect = new SKRect(
             (float)element.X - offset,
             (float)element.Y - offset,
@@ -496,10 +496,12 @@ public partial class SkiaReportDesignCanvas : UserControl
             (float)(element.Y + element.Height) + offset
         );
 
-        // Get elements with higher Z-order that might overlap
+        // Get elements with higher Z-order that might overlap with the hover rect
         var higherZOrderElements = Configuration.Elements
             .Where(e => e.ZOrder > element.ZOrder && e.IsVisible)
             .ToList();
+
+        Console.WriteLine($"[Hover] Element: {element.DisplayName} (Z:{element.ZOrder}), HigherZ elements: {higherZOrderElements.Count}");
 
         // Save canvas state
         canvas.Save();
@@ -513,15 +515,17 @@ public partial class SkiaReportDesignCanvas : UserControl
             var (pageWidth, pageHeight) = GetPageDimensions();
             clipPath.AddRect(new SKRect(0, 0, pageWidth, pageHeight));
 
-            // Subtract each higher Z-order element's bounds
+            // Subtract each higher Z-order element's bounds (with small expansion to fully cover)
             foreach (var higherElement in higherZOrderElements)
             {
                 var higherRect = new SKRect(
-                    (float)higherElement.X,
-                    (float)higherElement.Y,
-                    (float)(higherElement.X + higherElement.Width),
-                    (float)(higherElement.Y + higherElement.Height)
+                    (float)higherElement.X - 1,
+                    (float)higherElement.Y - 1,
+                    (float)(higherElement.X + higherElement.Width) + 1,
+                    (float)(higherElement.Y + higherElement.Height) + 1
                 );
+
+                Console.WriteLine($"[Hover]   Subtracting: {higherElement.DisplayName} (Z:{higherElement.ZOrder}) at ({higherRect.Left}, {higherRect.Top}, {higherRect.Right}, {higherRect.Bottom})");
 
                 using var subtractPath = new SKPath();
                 subtractPath.AddRect(higherRect);
@@ -533,9 +537,9 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         using var borderPaint = new SKPaint
         {
-            Color = new SKColor(59, 130, 246, 128), // Semi-transparent blue
+            Color = new SKColor(59, 130, 246, 180), // Semi-transparent blue (slightly more opaque)
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1,
+            StrokeWidth = 2,
             IsAntialias = true
         };
 
@@ -633,6 +637,8 @@ public partial class SkiaReportDesignCanvas : UserControl
         var mousePosInCanvas = e.GetPosition(_canvasImage);
         var mousePosInScrollViewer = e.GetPosition(_scrollViewer);
 
+        Console.WriteLine($"[Zoom] MouseInCanvas: ({mousePosInCanvas.X:F1}, {mousePosInCanvas.Y:F1}), MouseInScrollViewer: ({mousePosInScrollViewer.X:F1}, {mousePosInScrollViewer.Y:F1})");
+
         // Get the current zoom
         var oldZoom = ZoomLevel;
 
@@ -643,17 +649,21 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (Math.Abs(newZoom - oldZoom) < 0.001)
             return;
 
+        Console.WriteLine($"[Zoom] OldZoom: {oldZoom:F2}, NewZoom: {newZoom:F2}");
+
         // Calculate the zoom ratio
         var zoomRatio = newZoom / oldZoom;
 
         // Get the current scroll offset before zooming
         var oldOffset = _scrollViewer.Offset;
+        Console.WriteLine($"[Zoom] OldOffset: ({oldOffset.X:F1}, {oldOffset.Y:F1})");
 
         // Apply the new zoom level
         ZoomLevel = newZoom;
 
         // Get page dimensions for calculating expected extent
         var (pageWidth, pageHeight) = GetPageDimensions();
+        Console.WriteLine($"[Zoom] PageDimensions: {pageWidth}x{pageHeight}");
 
         // Schedule the scroll adjustment after layout is updated
         Dispatcher.UIThread.Post(() =>
@@ -674,25 +684,38 @@ public partial class SkiaReportDesignCanvas : UserControl
             var expectedExtentWidth = pageWidth * newZoom + margin * 2;
             var expectedExtentHeight = pageHeight * newZoom + margin * 2;
 
+            Console.WriteLine($"[Zoom] Viewport: {viewportWidth:F1}x{viewportHeight:F1}, ExpectedExtent: {expectedExtentWidth:F1}x{expectedExtentHeight:F1}");
+
             // If content is smaller than viewport, it's centered (no scrolling possible)
             if (expectedExtentWidth <= viewportWidth && expectedExtentHeight <= viewportHeight)
+            {
+                Console.WriteLine("[Zoom] Content smaller than viewport, skipping scroll adjustment");
                 return;
+            }
 
             // Calculate the new scroll position to keep the canvas point under the cursor
             // The canvas point in the new extent = canvasPoint * newZoom + margin
             var pointInNewExtentX = canvasPoint.X * newZoom + margin;
             var pointInNewExtentY = canvasPoint.Y * newZoom + margin;
 
+            Console.WriteLine($"[Zoom] PointInNewExtent: ({pointInNewExtentX:F1}, {pointInNewExtentY:F1})");
+
             // New scroll offset = point position in extent - mouse position in viewport
             var newScrollX = pointInNewExtentX - mousePosInScrollViewer.X;
             var newScrollY = pointInNewExtentY - mousePosInScrollViewer.Y;
+
+            Console.WriteLine($"[Zoom] Raw NewScroll: ({newScrollX:F1}, {newScrollY:F1})");
 
             // Clamp to valid scroll range using expected extent
             var maxScrollX = Math.Max(0, expectedExtentWidth - viewportWidth);
             var maxScrollY = Math.Max(0, expectedExtentHeight - viewportHeight);
 
+            Console.WriteLine($"[Zoom] MaxScroll: ({maxScrollX:F1}, {maxScrollY:F1})");
+
             newScrollX = Math.Clamp(newScrollX, 0, maxScrollX);
             newScrollY = Math.Clamp(newScrollY, 0, maxScrollY);
+
+            Console.WriteLine($"[Zoom] Final NewScroll: ({newScrollX:F1}, {newScrollY:F1})");
 
             _scrollViewer.Offset = new Vector(newScrollX, newScrollY);
         }, DispatcherPriority.Render);
