@@ -487,8 +487,8 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (Configuration == null) return;
 
         // Draw the hover highlight OUTSIDE the element bounds
-        // Offset by 2 pixels to avoid overlapping with the element's own border
-        const float offset = 2f;
+        // Offset by 1 pixel to avoid overlapping with the element's own border
+        const float offset = 1f;
         var rect = new SKRect(
             (float)element.X - offset,
             (float)element.Y - offset,
