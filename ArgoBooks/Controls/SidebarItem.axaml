@@ -98,7 +98,7 @@
 
         <!-- Collapsed State -->
         <Style Selector="Button.sidebar-item.collapsed">
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="Padding" Value="10" />
         </Style>
     </UserControl.Styles>
