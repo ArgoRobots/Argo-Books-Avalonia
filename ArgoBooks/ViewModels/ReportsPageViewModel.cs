@@ -120,7 +120,11 @@ public partial class ReportsPageViewModel : ViewModelBase
             else if (CurrentStep == 2)
             {
                 Step1Completed = false;
-                // Clear undo history and reload the template to discard changes
+                // Preserve chart selections before reloading template
+                // (will be restored in ApplyConfigurationToPageSettings after template loads)
+                _chartTypesToPreserve = Configuration.Filters.SelectedChartTypes.ToList();
+
+                // Clear undo history and reload the template to discard layout changes
                 UndoRedoManager.Clear();
                 LoadTemplate(SelectedTemplateName);
             }
@@ -128,6 +132,22 @@ public partial class ReportsPageViewModel : ViewModelBase
             CurrentStep--;
             NotifyStepChanged();
         }
+    }
+
+    /// <summary>
+    /// Restores chart selections from a list of chart types.
+    /// </summary>
+    private void RestoreChartSelections(List<ChartDataType> chartTypes)
+    {
+        Configuration.Filters.SelectedChartTypes.Clear();
+        Configuration.Filters.SelectedChartTypes.AddRange(chartTypes);
+
+        foreach (var chart in AvailableCharts)
+        {
+            chart.IsSelected = chartTypes.Contains(chart.ChartType);
+        }
+
+        OnPropertyChanged(nameof(HasSelectedCharts));
     }
 
     private void NotifyStepChanged()
@@ -210,6 +230,11 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _reportName = "Untitled Report";
+
+    /// <summary>
+    /// Chart types to preserve during template reload (when going back from step 2).
+    /// </summary>
+    private List<ChartDataType>? _chartTypesToPreserve;
 
     [ObservableProperty]
     private string _selectedDatePreset = DatePresetNames.ThisMonth;
@@ -836,9 +861,36 @@ public partial class ReportsPageViewModel : ViewModelBase
         PageSettingsRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    [RelayCommand]
-    private void OpenSaveTemplate()
+    /// <summary>
+    /// Returns true if we are editing an existing custom template (not a built-in template).
+    /// </summary>
+    private bool IsEditingCustomTemplate =>
+        !string.IsNullOrEmpty(SelectedTemplateName) &&
+        !ReportTemplateFactory.IsBuiltInTemplate(SelectedTemplateName);
+
+    /// <summary>
+    /// Saves the current configuration to the current custom template.
+    /// </summary>
+    private async Task<bool> SaveToCurrentTemplateAsync()
     {
+        var success = await _templateStorage.SaveTemplateAsync(Configuration, SelectedTemplateName);
+        if (success)
+        {
+            LoadCustomTemplates();
+        }
+        return success;
+    }
+
+    [RelayCommand]
+    private async Task OpenSaveTemplate()
+    {
+        // If editing an existing custom template, save directly without showing modal
+        if (IsEditingCustomTemplate)
+        {
+            await SaveToCurrentTemplateAsync();
+            return;
+        }
+
         IsSaveTemplateOpen = true;
     }
 
@@ -846,6 +898,26 @@ public partial class ReportsPageViewModel : ViewModelBase
     private void CloseSaveTemplate()
     {
         IsSaveTemplateOpen = false;
+        _saveTemplateCompletionSource?.TrySetResult(false);
+    }
+
+    private TaskCompletionSource<bool>? _saveTemplateCompletionSource;
+
+    /// <summary>
+    /// Opens the save template modal and waits for it to close.
+    /// Returns true if template was saved successfully, false if cancelled.
+    /// </summary>
+    public async Task<bool> OpenSaveTemplateAndWaitAsync()
+    {
+        // If editing an existing custom template, save directly without showing modal
+        if (IsEditingCustomTemplate)
+        {
+            return await SaveToCurrentTemplateAsync();
+        }
+
+        _saveTemplateCompletionSource = new TaskCompletionSource<bool>();
+        IsSaveTemplateOpen = true;
+        return await _saveTemplateCompletionSource.Task;
     }
 
     #endregion
@@ -1304,6 +1376,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             // Refresh custom templates list
             LoadCustomTemplates();
+
+            // Signal successful save to any waiting callers
+            _saveTemplateCompletionSource?.TrySetResult(true);
         }
         else
         {
@@ -1443,6 +1518,12 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     private void ApplyConfigurationToPageSettings()
     {
+        // Update report name from configuration
+        if (!string.IsNullOrEmpty(Configuration.Title))
+        {
+            ReportName = Configuration.Title;
+        }
+
         // Update page settings from configuration
         PageSize = Configuration.PageSize;
         PageOrientation = Configuration.PageOrientation;
@@ -1470,10 +1551,19 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Update transaction type
         SelectedTransactionType = Configuration.Filters.TransactionType;
 
-        // Update selected charts - reset all and mark selected ones
-        foreach (var chart in AvailableCharts)
+        // Check if we need to restore preserved chart selections (when going back from step 2)
+        if (_chartTypesToPreserve != null)
         {
-            chart.IsSelected = Configuration.Filters.SelectedChartTypes.Contains(chart.ChartType);
+            RestoreChartSelections(_chartTypesToPreserve);
+            _chartTypesToPreserve = null;
+        }
+        else
+        {
+            // Update selected charts - reset all and mark selected ones from configuration
+            foreach (var chart in AvailableCharts)
+            {
+                chart.IsSelected = Configuration.Filters.SelectedChartTypes.Contains(chart.ChartType);
+            }
         }
 
         UpdateCanvasDimensions();
@@ -1506,6 +1596,105 @@ public partial class ReportsPageViewModel : ViewModelBase
         foreach (var chart in AvailableCharts.Where(c => c.IsSelected))
         {
             Configuration.Filters.SelectedChartTypes.Add(chart.ChartType);
+        }
+
+        // Sync chart elements with selection (add new, remove deselected)
+        SyncChartElementsWithSelection();
+
+        // Notify view to sync canvas with new elements
+        OnPropertyChanged(nameof(Configuration));
+    }
+
+    /// <summary>
+    /// Syncs ChartReportElement objects with the selected chart types.
+    /// Creates elements for newly selected charts, removes elements for deselected charts,
+    /// and rearranges all chart elements in a grid layout.
+    /// </summary>
+    private void SyncChartElementsWithSelection()
+    {
+        var selectedChartTypes = Configuration.Filters.SelectedChartTypes.ToHashSet();
+
+        // Get existing chart elements
+        var existingChartElements = Configuration.Elements
+            .OfType<ChartReportElement>()
+            .ToList();
+
+        // Remove chart elements for deselected charts
+        foreach (var chartElement in existingChartElements)
+        {
+            if (!selectedChartTypes.Contains(chartElement.ChartType))
+            {
+                Configuration.RemoveElement(chartElement.Id);
+            }
+        }
+
+        // Get chart types that already have elements (after removal)
+        var existingChartTypes = Configuration.Elements
+            .OfType<ChartReportElement>()
+            .Select(e => e.ChartType)
+            .ToHashSet();
+
+        // Add new chart elements for selected charts that don't have elements yet
+        foreach (var chartType in Configuration.Filters.SelectedChartTypes)
+        {
+            if (!existingChartTypes.Contains(chartType))
+            {
+                Configuration.AddElement(new ChartReportElement
+                {
+                    ChartType = chartType,
+                    X = 0,
+                    Y = 0,
+                    Width = 200,
+                    Height = 150
+                });
+            }
+        }
+
+        // Rearrange all chart elements in a grid layout
+        RearrangeChartElements();
+    }
+
+    /// <summary>
+    /// Rearranges all chart elements in a grid layout.
+    /// </summary>
+    private void RearrangeChartElements()
+    {
+        var chartElements = Configuration.Elements
+            .OfType<ChartReportElement>()
+            .ToList();
+
+        if (chartElements.Count == 0)
+            return;
+
+        // Calculate layout for charts using a grid layout
+        var (pageWidth, pageHeight) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
+        const double margin = PageDimensions.Margin;
+        const double headerHeight = PageDimensions.HeaderHeight;
+        const double footerHeight = PageDimensions.FooterHeight;
+        const double spacing = 10;
+
+        var contentWidth = pageWidth - (margin * 2);
+        var contentHeight = pageHeight - headerHeight - footerHeight - (margin * 2);
+        var startY = headerHeight + margin;
+
+        // Determine grid dimensions based on number of charts
+        var chartCount = chartElements.Count;
+        int columns = chartCount <= 2 ? chartCount : (chartCount <= 4 ? 2 : 3);
+        int rows = (int)Math.Ceiling((double)chartCount / columns);
+
+        var cellWidth = (contentWidth - (spacing * (columns - 1))) / columns;
+        var cellHeight = (contentHeight - (spacing * (rows - 1))) / rows;
+
+        // Position each chart element in the grid
+        for (int i = 0; i < chartElements.Count; i++)
+        {
+            int row = i / columns;
+            int col = i % columns;
+
+            chartElements[i].X = margin + (col * (cellWidth + spacing));
+            chartElements[i].Y = startY + (row * (cellHeight + spacing));
+            chartElements[i].Width = cellWidth;
+            chartElements[i].Height = cellHeight;
         }
     }
 

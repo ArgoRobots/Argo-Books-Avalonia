@@ -403,7 +403,7 @@
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate x:DataType="vm:ChartOption">
                                                 <Border Margin="0,0,12,12"
                                                         Padding="12"
                                                         CornerRadius="8"
@@ -418,7 +418,7 @@
                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                         </Style>
                                                     </Border.Styles>
-                                                    <CheckBox IsChecked="{Binding IsSelected}"
+                                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                               HorizontalAlignment="Stretch">
                                                         <StackPanel Spacing="4">
                                                             <StackPanel Orientation="Horizontal" Spacing="10">
