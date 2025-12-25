@@ -678,6 +678,24 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             return;
         }
 
+        // Validate that all line items have a product selected
+        var hasProductErrors = false;
+        foreach (var lineItem in LineItems)
+        {
+            if (lineItem.SelectedProduct == null)
+            {
+                lineItem.HasProductError = true;
+                hasProductErrors = true;
+            }
+        }
+
+        if (hasProductErrors)
+        {
+            ValidationMessage = "Please select a product for all line items";
+            HasValidationMessage = true;
+            return;
+        }
+
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
@@ -1147,6 +1165,9 @@ public partial class ExpenseLineItem : ObservableObject
     [ObservableProperty]
     private decimal _unitPrice;
 
+    [ObservableProperty]
+    private bool _hasProductError;
+
     public decimal Amount => Quantity * UnitPrice;
     public string AmountFormatted => $"${Amount:N2}";
 
@@ -1156,6 +1177,7 @@ public partial class ExpenseLineItem : ObservableObject
         {
             Description = value.Name;
             UnitPrice = value.UnitPrice;
+            HasProductError = false;
         }
     }
 
