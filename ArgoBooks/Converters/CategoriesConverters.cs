@@ -71,6 +71,26 @@ public static class BoolConverters
         new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(24, 0, 0, 0) : new Thickness(0));
 
     /// <summary>
+    /// Converts bool (isActive) to view toggle button background.
+    /// Active = surface hover color, Inactive = transparent.
+    /// </summary>
+    public static readonly IValueConverter ToViewToggleBackground =
+        new FuncValueConverter<bool, IBrush>(value =>
+        {
+            if (value)
+            {
+                if (Application.Current?.Resources != null &&
+                    Application.Current.Resources.TryGetResource("SurfaceHoverBrush", Application.Current.ActualThemeVariant, out var resource) &&
+                    resource is IBrush brush)
+                {
+                    return brush;
+                }
+                return new SolidColorBrush(Color.Parse("#F3F4F6"));
+            }
+            return Brushes.Transparent;
+        });
+
+    /// <summary>
     /// Converts bool (isActive) to status badge background color.
     /// Active = green (#DCFCE7), Inactive = gray (#F3F4F6).
     /// </summary>
