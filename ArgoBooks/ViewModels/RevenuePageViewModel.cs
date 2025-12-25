@@ -136,6 +136,9 @@ public partial class RevenuePageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showStatusColumn = true;
 
+    [ObservableProperty]
+    private bool _showReceiptColumn = true;
+
     [RelayCommand]
     private void ToggleColumnMenu()
     {
@@ -442,6 +445,9 @@ public partial class RevenuePageViewModel : ViewModelBase
             var accountant = companyData?.GetAccountant(sale.AccountantId ?? "");
             var statusDisplay = GetStatusDisplay(sale, companyData);
 
+            var hasReceipt = !string.IsNullOrEmpty(sale.ReceiptId);
+            var receiptFilePath = sale.ReferenceNumber;
+
             return new RevenueDisplayItem
             {
                 Id = sale.Id,
@@ -462,7 +468,9 @@ public partial class RevenuePageViewModel : ViewModelBase
                 Discount = sale.Discount,
                 Quantity = (int)sale.Quantity,
                 UnitPrice = sale.UnitPrice,
-                PaymentMethod = sale.PaymentMethod
+                PaymentMethod = sale.PaymentMethod,
+                HasReceipt = hasReceipt,
+                ReceiptFilePath = receiptFilePath
             };
         }).ToList();
 
@@ -611,6 +619,48 @@ public partial class RevenuePageViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Receipt Preview Modal
+
+    [ObservableProperty]
+    private bool _isReceiptPreviewOpen;
+
+    [ObservableProperty]
+    private string _previewReceiptPath = string.Empty;
+
+    [ObservableProperty]
+    private string _previewReceiptId = string.Empty;
+
+    [ObservableProperty]
+    private bool _isReceiptFullscreen;
+
+    [RelayCommand]
+    private void ViewReceipt(RevenueDisplayItem? item)
+    {
+        if (item == null || !item.HasReceipt || string.IsNullOrEmpty(item.ReceiptFilePath))
+            return;
+
+        PreviewReceiptPath = item.ReceiptFilePath;
+        PreviewReceiptId = item.Id;
+        IsReceiptPreviewOpen = true;
+        IsReceiptFullscreen = false;
+    }
+
+    [RelayCommand]
+    private void CloseReceiptPreview()
+    {
+        IsReceiptPreviewOpen = false;
+        IsReceiptFullscreen = false;
+        PreviewReceiptPath = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ToggleReceiptFullscreen()
+    {
+        IsReceiptFullscreen = !IsReceiptFullscreen;
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -703,6 +753,12 @@ public partial class RevenueDisplayItem : ObservableObject
 
     public bool IsReturned => StatusDisplay == "Returned";
     public bool IsPartialReturn => StatusDisplay == "Partial Return";
+
+    [ObservableProperty]
+    private bool _hasReceipt;
+
+    [ObservableProperty]
+    private string _receiptFilePath = string.Empty;
 }
 
 /// <summary>

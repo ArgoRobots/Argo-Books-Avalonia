@@ -460,6 +460,7 @@ public partial class ExpensesPageViewModel : ViewModelBase
             var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
             var statusDisplay = GetStatusDisplay(purchase, companyData);
             var hasReceipt = !string.IsNullOrEmpty(purchase.ReceiptId);
+            var receiptFilePath = purchase.ReferenceNumber;
 
             return new ExpenseDisplayItem
             {
@@ -471,6 +472,7 @@ public partial class ExpensesPageViewModel : ViewModelBase
                 Date = purchase.Date,
                 Total = purchase.Total,
                 HasReceipt = hasReceipt,
+                ReceiptFilePath = receiptFilePath,
                 StatusDisplay = statusDisplay,
                 Notes = purchase.Notes,
                 SupplierId = purchase.SupplierId,
@@ -631,6 +633,48 @@ public partial class ExpensesPageViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Receipt Preview Modal
+
+    [ObservableProperty]
+    private bool _isReceiptPreviewOpen;
+
+    [ObservableProperty]
+    private string _previewReceiptPath = string.Empty;
+
+    [ObservableProperty]
+    private string _previewReceiptId = string.Empty;
+
+    [ObservableProperty]
+    private bool _isReceiptFullscreen;
+
+    [RelayCommand]
+    private void ViewReceipt(ExpenseDisplayItem? item)
+    {
+        if (item == null || !item.HasReceipt || string.IsNullOrEmpty(item.ReceiptFilePath))
+            return;
+
+        PreviewReceiptPath = item.ReceiptFilePath;
+        PreviewReceiptId = item.Id;
+        IsReceiptPreviewOpen = true;
+        IsReceiptFullscreen = false;
+    }
+
+    [RelayCommand]
+    private void CloseReceiptPreview()
+    {
+        IsReceiptPreviewOpen = false;
+        IsReceiptFullscreen = false;
+        PreviewReceiptPath = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ToggleReceiptFullscreen()
+    {
+        IsReceiptFullscreen = !IsReceiptFullscreen;
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -661,6 +705,9 @@ public partial class ExpenseDisplayItem : ObservableObject
 
     [ObservableProperty]
     private bool _hasReceipt;
+
+    [ObservableProperty]
+    private string _receiptFilePath = string.Empty;
 
     [ObservableProperty]
     private string _statusDisplay = string.Empty;

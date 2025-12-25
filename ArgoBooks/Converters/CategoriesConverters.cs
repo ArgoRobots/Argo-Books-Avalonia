@@ -105,6 +105,20 @@ public static class BoolConverters
     public static readonly IValueConverter ToStatusForeground =
         new FuncValueConverter<bool, IBrush>(value =>
             new SolidColorBrush(Color.Parse(value ? "#166534" : "#4B5563")));
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal width.
+    /// Fullscreen = auto (stretch), Normal = 600px.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenWidth =
+        new FuncValueConverter<bool, double>(value => value ? double.NaN : 600);
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal height.
+    /// Fullscreen = auto (stretch), Normal = 500px.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenHeight =
+        new FuncValueConverter<bool, double>(value => value ? double.NaN : 500);
 }
 
 /// <summary>

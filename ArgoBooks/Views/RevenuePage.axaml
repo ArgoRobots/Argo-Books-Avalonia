@@ -13,12 +13,14 @@
         <local:SortIndicatorConverter x:Key="SortIndicatorConverter" />
         <local:PageActiveBackgroundConverter x:Key="PageActiveBackgroundConverter" />
         <local:PageActiveForegroundConverter x:Key="PageActiveForegroundConverter" />
+        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
     </UserControl.Resources>
 
     <Design.DataContext>
         <vm:RevenuePageViewModel />
     </Design.DataContext>
 
+    <Panel>
     <!-- Main Content -->
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
@@ -232,6 +234,7 @@
                                             <CheckBox IsChecked="{Binding ShowDiscountColumn}" Content="Discount" Classes="column-toggle" />
                                             <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="Total" Classes="column-toggle" />
                                             <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
+                                            <CheckBox IsChecked="{Binding ShowReceiptColumn}" Content="Receipt" Classes="column-toggle" />
                                         </StackPanel>
                                     </Border>
                                 </Popup>
@@ -291,8 +294,13 @@
                                     <TextBlock Text="Status" Width="80" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                IsVisible="{Binding ShowStatusColumn}" />
+                                    <!-- Receipt -->
+                                    <TextBlock Text="Receipt" Width="60" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Center"
+                                               IsVisible="{Binding ShowReceiptColumn}" />
                                     <!-- Actions -->
-                                    <TextBlock Text="Actions" Width="140" FontSize="12" FontWeight="SemiBold"
+                                    <TextBlock Text="Actions" Width="180" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                HorizontalAlignment="Right" />
                                 </StackPanel>
@@ -426,11 +434,33 @@
                                                                    Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToRevenueStatusForeground}}" />
                                                     </Border>
 
+                                                    <!-- Receipt Icon -->
+                                                    <Panel Width="60" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowReceiptColumn}">
+                                                        <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                                  Width="16" Height="16"
+                                                                  Foreground="#22C55E"
+                                                                  IsVisible="{Binding HasReceipt}" />
+                                                        <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                                  Width="16" Height="16"
+                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                  IsVisible="{Binding !HasReceipt}" />
+                                                    </Panel>
+
                                                     <!-- Actions -->
-                                                    <StackPanel Width="140"
+                                                    <StackPanel Width="180"
                                                                 Orientation="Horizontal"
                                                                 HorizontalAlignment="Right"
                                                                 Spacing="4">
+                                                        <!-- View Receipt Button -->
+                                                        <Button Classes="icon-button"
+                                                                ToolTip.Tip="View Receipt"
+                                                                Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ViewReceiptCommand}"
+                                                                CommandParameter="{Binding}"
+                                                                IsEnabled="{Binding HasReceipt}">
+                                                            <PathIcon Data="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z"
+                                                                      Width="16" Height="16" />
+                                                        </Button>
                                                         <Button Classes="icon-button"
                                                                 ToolTip.Tip="Edit"
                                                                 Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).OpenEditModalCommand}"
@@ -593,6 +623,93 @@
             </Border>
         </Grid>
     </ScrollViewer>
+
+    <!-- Receipt Preview Modal Overlay -->
+    <Border Background="#80000000"
+            IsVisible="{Binding IsReceiptPreviewOpen}">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                Width="{Binding IsReceiptFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}}"
+                Height="{Binding IsReceiptFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BoxShadow="0 8 32 0 #40000000">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Modal Header -->
+                <Border Grid.Row="0"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+                        <StackPanel>
+                            <TextBlock Text="{Binding PreviewReceiptId, StringFormat='Receipt for {0}'}"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Classes="icon-button"
+                                ToolTip.Tip="Toggle Fullscreen"
+                                Command="{Binding ToggleReceiptFullscreenCommand}"
+                                Margin="0,0,8,0">
+                            <PathIcon Data="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
+                                      Width="16" Height="16" />
+                        </Button>
+                        <Button Grid.Column="2"
+                                Classes="icon-button"
+                                Command="{Binding CloseReceiptPreviewCommand}">
+                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                      Width="20" Height="20" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Receipt Image Preview -->
+                <Border Grid.Row="1"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        Margin="16">
+                    <Panel>
+                        <Image Source="{Binding PreviewReceiptPath}"
+                               Stretch="Uniform"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                        <!-- Fallback for when image can't load -->
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="16"
+                                    IsVisible="{Binding PreviewReceiptPath, Converter={x:Static StringConverters.IsNullOrEmpty}}">
+                            <PathIcon Data="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z"
+                                      Width="48" Height="48"
+                                      Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Text="Receipt preview not available"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Panel>
+                </Border>
+
+                <!-- Modal Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding PreviewReceiptPath}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+                        <Button Grid.Column="1"
+                                Content="Close"
+                                Classes="secondary-button"
+                                Command="{Binding CloseReceiptPreviewCommand}" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
+    </Panel>
 
     <UserControl.Styles>
         <!-- Search Input -->
