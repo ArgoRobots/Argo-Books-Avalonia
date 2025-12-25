@@ -434,6 +434,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     private double _zoomLevel = 1.0;
 
     [ObservableProperty]
+    private bool _isElementPanelExpanded = true;
+
+    [ObservableProperty]
     private bool _isPageSettingsOpen;
 
     [ObservableProperty]

@@ -25,6 +25,10 @@ public partial class ReportsPage : UserControl
     private Vector _panStartOffset;
     private bool _toolbarScrollbarVisible;
 
+    // Element panel collapse animation
+    private Border? _elementToolbox;
+    private RotateTransform? _elementPanelChevron;
+
     // Preview zoom level (managed here since we're not using binding anymore)
     private double _previewZoomLevel = 1.0;
 
@@ -49,6 +53,8 @@ public partial class ReportsPage : UserControl
         _toolbarContent = this.FindControl<StackPanel>("ToolbarContent");
         _saveButtonContainer = this.FindControl<Grid>("SaveButtonContainer");
         _saveConfirmationBorder = this.FindControl<Border>("SaveConfirmationBorder");
+        _elementToolbox = this.FindControl<Border>("ElementToolbox");
+        _elementPanelChevron = this.FindControl<RotateTransform>("ElementPanelChevron");
 
         // Wire up toolbar scrollbar visibility detection
         if (_toolbarScrollViewer != null)
@@ -321,16 +327,63 @@ public partial class ReportsPage : UserControl
 
     private void OnCanvasPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        // Always zoom with scroll wheel (no CTRL required)
-        if (DataContext is ReportsPageViewModel vm)
+        // Zoom at cursor position
+        if (_designCanvas != null && DataContext is ReportsPageViewModel vm)
         {
-            if (e.Delta.Y > 0)
-                vm.ZoomInCommand.Execute(null);
-            else if (e.Delta.Y < 0)
-                vm.ZoomOutCommand.Execute(null);
+            var scrollViewer = _designCanvas.FindControl<ScrollViewer>("CanvasScrollViewer");
+            var zoomContainer = _designCanvas.FindControl<Border>("ZoomContainer");
+
+            if (scrollViewer != null && zoomContainer != null)
+            {
+                CanvasZoomAtPoint(e.Delta.Y > 0, e.GetPosition(scrollViewer), e.GetPosition(zoomContainer), scrollViewer, vm);
+            }
+            else
+            {
+                // Fallback to center zoom
+                if (e.Delta.Y > 0)
+                    vm.ZoomInCommand.Execute(null);
+                else if (e.Delta.Y < 0)
+                    vm.ZoomOutCommand.Execute(null);
+            }
 
             e.Handled = true;
         }
+    }
+
+    /// <summary>
+    /// Zooms the design canvas at a specific point, keeping that point fixed on screen.
+    /// </summary>
+    private void CanvasZoomAtPoint(bool zoomIn, Point viewportPoint, Point scaledContentPoint, ScrollViewer scrollViewer, ReportsPageViewModel vm)
+    {
+        var oldZoom = vm.ZoomLevel;
+        var newZoom = zoomIn
+            ? Math.Min(oldZoom + Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MinZoom);
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        // Convert scaled content point to unscaled coordinates
+        var unscaledX = scaledContentPoint.X / oldZoom;
+        var unscaledY = scaledContentPoint.Y / oldZoom;
+
+        // Apply the zoom
+        vm.ZoomLevel = newZoom;
+
+        // Force layout update
+        scrollViewer.UpdateLayout();
+
+        // Calculate new offset to keep the same content point under cursor
+        var newOffsetX = unscaledX * newZoom - viewportPoint.X;
+        var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
+
+        // Clamp to valid scroll range
+        var maxX = Math.Max(0, scrollViewer.Extent.Width - scrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
+
+        scrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
     }
 
     private void OnPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)
@@ -767,5 +820,45 @@ public partial class ReportsPage : UserControl
                 e.Handled = true;
                 break;
         }
+    }
+
+    /// <summary>
+    /// Handles the element panel collapse/expand toggle.
+    /// </summary>
+    private async void OnToggleElementPanelClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not ReportsPageViewModel vm || _elementToolbox == null) return;
+
+        vm.IsElementPanelExpanded = !vm.IsElementPanelExpanded;
+
+        // Animate width
+        var targetWidth = vm.IsElementPanelExpanded ? 160.0 : 40.0;
+        var startWidth = _elementToolbox.Width;
+        if (double.IsNaN(startWidth)) startWidth = vm.IsElementPanelExpanded ? 40.0 : 160.0;
+
+        const int steps = 10;
+        const int delayMs = 16;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            double t = i / (double)steps;
+            double easeOut = 1 - Math.Pow(1 - t, 3);
+            _elementToolbox.Width = startWidth + (targetWidth - startWidth) * easeOut;
+
+            // Animate chevron rotation
+            if (_elementPanelChevron != null)
+            {
+                var targetAngle = vm.IsElementPanelExpanded ? 0 : 180;
+                var startAngle = vm.IsElementPanelExpanded ? 180 : 0;
+                _elementPanelChevron.Angle = startAngle + (targetAngle - startAngle) * easeOut;
+            }
+
+            await Task.Delay(delayMs);
+        }
+
+        // Ensure final state
+        _elementToolbox.Width = targetWidth;
+        if (_elementPanelChevron != null)
+            _elementPanelChevron.Angle = vm.IsElementPanelExpanded ? 0 : 180;
     }
 }

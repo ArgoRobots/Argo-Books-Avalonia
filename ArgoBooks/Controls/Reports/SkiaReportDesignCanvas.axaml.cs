@@ -167,6 +167,23 @@ public partial class SkiaReportDesignCanvas : UserControl
     public event EventHandler<ReportElementBase>? ElementRemoved;
     public event EventHandler<SelectionChangedEventArgs>? SelectionChanged;
 
+    /// <summary>
+    /// Notifies listeners about selection changes.
+    /// </summary>
+    private void NotifySelectionChanged()
+    {
+        var args = new SelectionChangedEventArgs(
+            _selectedElements.FirstOrDefault(),
+            _selectedElements.ToList().AsReadOnly()
+        );
+        SelectionChanged?.Invoke(this, args);
+
+        if (_selectedElements.Count > 0)
+            ElementSelected?.Invoke(this, _selectedElements[0]);
+        else
+            SelectionCleared?.Invoke(this, EventArgs.Empty);
+    }
+
     #endregion
 
     #region Constructor
@@ -246,23 +263,33 @@ public partial class SkiaReportDesignCanvas : UserControl
         Dispatcher.UIThread.Post(RenderCanvas, DispatcherPriority.Render);
     }
 
+    // Render at 2x resolution for better quality when zoomed
+    private const float RenderScale = 2.0f;
+
     private void RenderCanvas()
     {
         if (!_needsRender || _canvasImage == null || Configuration == null) return;
         _needsRender = false;
 
-        var (width, height) = GetPageDimensions();
+        var (baseWidth, baseHeight) = GetPageDimensions();
 
-        if (width <= 0 || height <= 0) return;
+        if (baseWidth <= 0 || baseHeight <= 0) return;
+
+        // Render at higher resolution for better quality
+        var renderWidth = (int)(baseWidth * RenderScale);
+        var renderHeight = (int)(baseHeight * RenderScale);
 
         // Create or resize bitmap
-        if (_renderBitmap == null || _renderBitmap.Width != width || _renderBitmap.Height != height)
+        if (_renderBitmap == null || _renderBitmap.Width != renderWidth || _renderBitmap.Height != renderHeight)
         {
             _renderBitmap?.Dispose();
-            _renderBitmap = new SKBitmap(width, height);
+            _renderBitmap = new SKBitmap(renderWidth, renderHeight);
         }
 
         using var canvas = new SKCanvas(_renderBitmap);
+
+        // Scale canvas for high-resolution rendering
+        canvas.Scale(RenderScale, RenderScale);
 
         // Clear with page background
         var bgColor = SKColor.Parse(Configuration.BackgroundColor);
@@ -271,13 +298,13 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Draw grid if enabled
         if (ShowGrid)
         {
-            DrawGrid(canvas, width, height);
+            DrawGrid(canvas, baseWidth, baseHeight);
         }
 
         // Draw header/footer areas if enabled
         if (ShowHeaderFooter)
         {
-            DrawHeaderFooter(canvas, width, height);
+            DrawHeaderFooter(canvas, baseWidth, baseHeight);
         }
 
         // Render all elements using the shared renderer
@@ -294,7 +321,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
 
         // Convert SKBitmap to Avalonia Bitmap
-        UpdateCanvasImage();
+        UpdateCanvasImage(baseWidth, baseHeight);
     }
 
     private void DrawGrid(SKCanvas canvas, int width, int height)
@@ -484,7 +511,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         };
     }
 
-    private void UpdateCanvasImage()
+    private void UpdateCanvasImage(int displayWidth, int displayHeight)
     {
         if (_renderBitmap == null || _canvasImage == null) return;
 
@@ -492,7 +519,12 @@ public partial class SkiaReportDesignCanvas : UserControl
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         using var stream = new MemoryStream(data.ToArray());
 
-        _canvasImage.Source = new Bitmap(stream);
+        var bitmap = new Bitmap(stream);
+        _canvasImage.Source = bitmap;
+
+        // Set display size to base dimensions (zoom transform will scale it)
+        _canvasImage.Width = displayWidth;
+        _canvasImage.Height = displayHeight;
     }
 
     #endregion
@@ -614,13 +646,13 @@ public partial class SkiaReportDesignCanvas : UserControl
 
                 // Start drag
                 StartDrag(point);
-                ElementSelected?.Invoke(this, element);
+                NotifySelectionChanged();
             }
             else
             {
                 // Clicked on empty space - start selection rectangle
                 _selectedElements.Clear();
-                SelectionCleared?.Invoke(this, EventArgs.Empty);
+                NotifySelectionChanged();
                 StartSelectionRectangle(point);
             }
 
@@ -743,23 +775,35 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void EndDrag()
     {
-        // Record undo actions for moved elements
-        if (UndoRedoManager != null && Configuration != null)
+        // Record undo action for moved elements (as a single batch action)
+        if (UndoRedoManager != null && Configuration != null && _selectedElements.Count > 0)
         {
+            var oldBounds = new Dictionary<string, (double X, double Y, double Width, double Height)>();
+            var newBounds = new Dictionary<string, (double X, double Y, double Width, double Height)>();
+            var hasMoved = false;
+
             foreach (var element in _selectedElements)
             {
                 if (_multiDragStartBounds.TryGetValue(element.Id, out var startBounds))
                 {
-                    var oldBounds = (startBounds.Position.X, startBounds.Position.Y, startBounds.Size.Width, startBounds.Size.Height);
-                    var newBounds = (element.X, element.Y, element.Width, element.Height);
+                    var old = (startBounds.Position.X, startBounds.Position.Y, startBounds.Size.Width, startBounds.Size.Height);
+                    var current = (element.X, element.Y, element.Width, element.Height);
 
-                    // Only record if position actually changed
-                    if (Math.Abs(oldBounds.Item1 - newBounds.Item1) > 0.1 || Math.Abs(oldBounds.Item2 - newBounds.Item2) > 0.1)
+                    // Check if position actually changed
+                    if (Math.Abs(old.Item1 - current.Item1) > 0.1 || Math.Abs(old.Item2 - current.Item2) > 0.1)
                     {
-                        var action = new MoveResizeElementAction(Configuration, element.Id, oldBounds, newBounds, isResize: false);
-                        UndoRedoManager.RecordAction(action);
+                        oldBounds[element.Id] = old;
+                        newBounds[element.Id] = current;
+                        hasMoved = true;
                     }
                 }
+            }
+
+            if (hasMoved)
+            {
+                var description = _selectedElements.Count > 1 ? $"Move {_selectedElements.Count} elements" : "Move element";
+                var action = new BatchMoveResizeAction(Configuration, oldBounds, newBounds, description);
+                UndoRedoManager.RecordAction(action);
             }
         }
 
@@ -962,10 +1006,7 @@ public partial class SkiaReportDesignCanvas : UserControl
             _selectionRectangle.IsVisible = false;
         }
 
-        if (_selectedElements.Count > 0)
-        {
-            ElementSelected?.Invoke(this, _selectedElements[0]);
-        }
+        NotifySelectionChanged();
     }
 
     #endregion
@@ -1060,7 +1101,8 @@ public partial class SkiaReportDesignCanvas : UserControl
     public void ClearSelection()
     {
         _selectedElements.Clear();
-        SelectionCleared?.Invoke(this, EventArgs.Empty);
+        _hoveredElement = null;
+        NotifySelectionChanged();
         InvalidateCanvas();
     }
 
@@ -1075,7 +1117,8 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
 
         _selectedElements.Clear();
-        SelectionCleared?.Invoke(this, EventArgs.Empty);
+        _hoveredElement = null;
+        NotifySelectionChanged();
         InvalidateCanvas();
     }
 
@@ -1182,6 +1225,22 @@ public partial class SkiaReportDesignCanvas : UserControl
         var scaleY = viewportHeight / pageHeight;
 
         ZoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, MaxZoom);
+
+        // Center the canvas after fitting
+        Dispatcher.UIThread.Post(() =>
+        {
+            scrollViewer.UpdateLayout();
+
+            // Calculate centered offset
+            var scaledWidth = pageWidth * ZoomLevel;
+            var scaledHeight = pageHeight * ZoomLevel;
+            var actualViewportWidth = scrollViewer.Viewport.Width;
+            var actualViewportHeight = scrollViewer.Viewport.Height;
+
+            // Content is centered by the Border's HorizontalAlignment/VerticalAlignment,
+            // so we just need to reset scroll to origin for centering to work
+            scrollViewer.Offset = new Vector(0, 0);
+        }, DispatcherPriority.Render);
     }
 
     /// <summary>
