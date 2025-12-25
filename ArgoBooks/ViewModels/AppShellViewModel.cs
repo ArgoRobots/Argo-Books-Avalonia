@@ -468,15 +468,26 @@ public partial class AppShellViewModel : ViewModelBase
     {
         var result = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
             "Unsaved Report Changes",
-            "You have unsaved changes in the layout designer. Would you like to discard them and go back to template selection?");
+            "You have unsaved changes in the layout designer. Would you like to save them?");
 
-        return result switch
+        switch (result)
         {
-            UnsavedChangesResult.Save => true, // TODO: Actually save the template first
-            UnsavedChangesResult.DontSave => true, // Discard changes and go back
-            UnsavedChangesResult.Cancel => false, // Cancel, stay on current step
-            _ => false // None (backdrop click) - cancel
-        };
+            case UnsavedChangesResult.Save:
+                // Open the save template modal and wait for it to complete
+                if (_reportsPageViewModel != null)
+                {
+                    var saved = await _reportsPageViewModel.OpenSaveTemplateAndWaitAsync();
+                    return saved;
+                }
+                return false;
+
+            case UnsavedChangesResult.DontSave:
+                return true; // Discard changes and go back
+
+            case UnsavedChangesResult.Cancel:
+            default:
+                return false; // Cancel, stay on current step
+        }
     }
 
     /// <summary>
