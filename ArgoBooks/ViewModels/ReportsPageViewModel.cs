@@ -1620,7 +1620,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (settings != null)
         {
             settings.Ui.ReportsElementPanelCollapsed = !value;
-            App.SettingsService?.SaveSettings();
+            _ = App.SettingsService?.SaveGlobalSettingsAsync();
         }
     }
 
