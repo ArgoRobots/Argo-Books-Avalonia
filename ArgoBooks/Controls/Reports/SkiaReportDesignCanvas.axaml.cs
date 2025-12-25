@@ -217,9 +217,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
 
         // Wire up pointer wheel for zoom-to-cursor
+        // Use AddHandler with handledEventsToo to intercept events that ScrollViewer handles
         if (_scrollViewer != null)
         {
-            _scrollViewer.PointerWheelChanged += OnPointerWheelChanged;
+            _scrollViewer.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Bubble, handledEventsToo: true);
         }
 
         // Wire up keyboard events
