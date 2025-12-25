@@ -108,18 +108,50 @@ public static class BoolConverters
             new SolidColorBrush(Color.Parse(value ? "#166534" : "#4B5563")));
 
     /// <summary>
+    /// Converts bool (isFullscreen) to modal horizontal alignment.
+    /// Fullscreen = Stretch, Normal = Center.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenHorizontalAlignment =
+        new FuncValueConverter<bool, Avalonia.Layout.HorizontalAlignment>(value =>
+            value ? Avalonia.Layout.HorizontalAlignment.Stretch : Avalonia.Layout.HorizontalAlignment.Center);
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal vertical alignment.
+    /// Fullscreen = Stretch, Normal = Center.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenVerticalAlignment =
+        new FuncValueConverter<bool, Avalonia.Layout.VerticalAlignment>(value =>
+            value ? Avalonia.Layout.VerticalAlignment.Stretch : Avalonia.Layout.VerticalAlignment.Center);
+
+    /// <summary>
     /// Converts bool (isFullscreen) to modal width.
-    /// Fullscreen = 95% of window, Normal = 600px.
+    /// Fullscreen = NaN (stretch), Normal = 600px.
     /// </summary>
     public static readonly IValueConverter ToFullscreenWidth =
-        new FuncValueConverter<bool, double>(value => value ? 1200 : 600);
+        new FuncValueConverter<bool, double>(value => value ? double.NaN : 600);
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal height.
-    /// Fullscreen = 95% of window, Normal = 500px.
+    /// Fullscreen = NaN (stretch), Normal = 500px.
     /// </summary>
     public static readonly IValueConverter ToFullscreenHeight =
-        new FuncValueConverter<bool, double>(value => value ? 800 : 500);
+        new FuncValueConverter<bool, double>(value => value ? double.NaN : 500);
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal margin.
+    /// Fullscreen = 24px margin, Normal = 0.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenMargin =
+        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(24) : new Thickness(0));
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to fullscreen icon path data.
+    /// Fullscreen = exit fullscreen icon, Normal = enter fullscreen icon.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenIcon =
+        new FuncValueConverter<bool, string>(value => value
+            ? "M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"  // Exit fullscreen
+            : "M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"); // Enter fullscreen
 
     /// <summary>
     /// Converts a file path string to a Bitmap image.

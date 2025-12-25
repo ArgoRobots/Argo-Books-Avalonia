@@ -653,11 +653,7 @@ public partial class RevenuePageViewModel : ViewModelBase
 
     private string? GetReceiptImagePath(string saleId, string? originalPath)
     {
-        // First try the original path
-        if (!string.IsNullOrEmpty(originalPath) && System.IO.File.Exists(originalPath))
-            return originalPath;
-
-        // Otherwise, look up the receipt in company data and use stored FileData
+        // Always load from company file to ensure consistency
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return null;
 
@@ -669,7 +665,7 @@ public partial class RevenuePageViewModel : ViewModelBase
 
         try
         {
-            // Create temp file from Base64 data
+            // Create temp file from Base64 data stored in company file
             var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ArgoBooks", "Receipts");
             System.IO.Directory.CreateDirectory(tempDir);
             var tempPath = System.IO.Path.Combine(tempDir, receipt.FileName);

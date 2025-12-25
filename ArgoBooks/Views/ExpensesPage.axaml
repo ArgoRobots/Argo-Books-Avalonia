@@ -635,8 +635,9 @@
                 CornerRadius="12"
                 Width="{Binding IsReceiptFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}}"
                 Height="{Binding IsReceiptFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}}"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
+                Margin="{Binding IsReceiptFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenMargin}}"
+                HorizontalAlignment="{Binding IsReceiptFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHorizontalAlignment}}"
+                VerticalAlignment="{Binding IsReceiptFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenVerticalAlignment}}"
                 BoxShadow="0 8 32 0 #40000000">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Modal Header -->
@@ -695,16 +696,9 @@
                                 Classes="icon-button"
                                 ToolTip.Tip="Toggle Fullscreen"
                                 Command="{Binding ToggleReceiptFullscreenCommand}">
-                            <PathIcon Data="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"
+                            <PathIcon Data="{Binding IsReceiptFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
                                       Width="16" Height="16" />
                         </Button>
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding PreviewReceiptPath}"
-                                   FontSize="12"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   VerticalAlignment="Center"
-                                   TextTrimming="CharacterEllipsis"
-                                   Margin="12,0" />
                         <Button Grid.Column="2"
                                 Content="Close"
                                 Classes="secondary-button"
