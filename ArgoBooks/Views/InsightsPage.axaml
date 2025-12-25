@@ -302,7 +302,13 @@
                                     <DataTemplate DataType="vm:InsightItem">
                                         <Border Padding="20"
                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="0,0,0,1">
+                                                BorderThickness="0,0,0,1"
+                                                Classes.last-item="{Binding IsLastItem}">
+                                            <Border.Styles>
+                                                <Style Selector="Border.last-item">
+                                                    <Setter Property="BorderThickness" Value="0" />
+                                                </Style>
+                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -365,7 +371,13 @@
                                     <DataTemplate DataType="vm:InsightItem">
                                         <Border Padding="20"
                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="0,0,0,1">
+                                                BorderThickness="0,0,0,1"
+                                                Classes.last-item="{Binding IsLastItem}">
+                                            <Border.Styles>
+                                                <Style Selector="Border.last-item">
+                                                    <Setter Property="BorderThickness" Value="0" />
+                                                </Style>
+                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -431,7 +443,13 @@
                                     <DataTemplate DataType="vm:InsightItem">
                                         <Border Padding="20"
                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="0,0,0,1">
+                                                BorderThickness="0,0,0,1"
+                                                Classes.last-item="{Binding IsLastItem}">
+                                            <Border.Styles>
+                                                <Style Selector="Border.last-item">
+                                                    <Setter Property="BorderThickness" Value="0" />
+                                                </Style>
+                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -494,7 +512,13 @@
                                     <DataTemplate DataType="vm:InsightItem">
                                         <Border Padding="20"
                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="0,0,0,1">
+                                                BorderThickness="0,0,0,1"
+                                                Classes.last-item="{Binding IsLastItem}">
+                                            <Border.Styles>
+                                                <Style Selector="Border.last-item">
+                                                    <Setter Property="BorderThickness" Value="0" />
+                                                </Style>
+                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
