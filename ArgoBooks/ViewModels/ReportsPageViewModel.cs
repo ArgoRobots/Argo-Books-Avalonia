@@ -1551,7 +1551,8 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     /// <summary>
     /// Syncs ChartReportElement objects with the selected chart types.
-    /// Creates elements for newly selected charts and removes elements for deselected charts.
+    /// Creates elements for newly selected charts, removes elements for deselected charts,
+    /// and rearranges all chart elements in a grid layout.
     /// </summary>
     private void SyncChartElementsWithSelection()
     {
@@ -1577,15 +1578,39 @@ public partial class ReportsPageViewModel : ViewModelBase
             .Select(e => e.ChartType)
             .ToHashSet();
 
-        // Get selected charts that need elements created
-        var chartsNeedingElements = Configuration.Filters.SelectedChartTypes
-            .Where(ct => !existingChartTypes.Contains(ct))
+        // Add new chart elements for selected charts that don't have elements yet
+        foreach (var chartType in Configuration.Filters.SelectedChartTypes)
+        {
+            if (!existingChartTypes.Contains(chartType))
+            {
+                Configuration.AddElement(new ChartReportElement
+                {
+                    ChartType = chartType,
+                    X = 0,
+                    Y = 0,
+                    Width = 200,
+                    Height = 150
+                });
+            }
+        }
+
+        // Rearrange all chart elements in a grid layout
+        RearrangeChartElements();
+    }
+
+    /// <summary>
+    /// Rearranges all chart elements in a grid layout.
+    /// </summary>
+    private void RearrangeChartElements()
+    {
+        var chartElements = Configuration.Elements
+            .OfType<ChartReportElement>()
             .ToList();
 
-        if (chartsNeedingElements.Count == 0)
+        if (chartElements.Count == 0)
             return;
 
-        // Calculate layout for new charts using a grid layout
+        // Calculate layout for charts using a grid layout
         var (pageWidth, pageHeight) = PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
         const double margin = PageDimensions.Margin;
         const double headerHeight = PageDimensions.HeaderHeight;
@@ -1597,32 +1622,23 @@ public partial class ReportsPageViewModel : ViewModelBase
         var startY = headerHeight + margin;
 
         // Determine grid dimensions based on number of charts
-        var chartCount = chartsNeedingElements.Count;
+        var chartCount = chartElements.Count;
         int columns = chartCount <= 2 ? chartCount : (chartCount <= 4 ? 2 : 3);
         int rows = (int)Math.Ceiling((double)chartCount / columns);
 
         var cellWidth = (contentWidth - (spacing * (columns - 1))) / columns;
         var cellHeight = (contentHeight - (spacing * (rows - 1))) / rows;
 
-        // Create chart elements in a grid layout
-        for (int i = 0; i < chartsNeedingElements.Count; i++)
+        // Position each chart element in the grid
+        for (int i = 0; i < chartElements.Count; i++)
         {
             int row = i / columns;
             int col = i % columns;
 
-            var x = margin + (col * (cellWidth + spacing));
-            var y = startY + (row * (cellHeight + spacing));
-
-            var chartElement = new ChartReportElement
-            {
-                ChartType = chartsNeedingElements[i],
-                X = x,
-                Y = y,
-                Width = cellWidth,
-                Height = cellHeight
-            };
-
-            Configuration.AddElement(chartElement);
+            chartElements[i].X = margin + (col * (cellWidth + spacing));
+            chartElements[i].Y = startY + (row * (cellHeight + spacing));
+            chartElements[i].Width = cellWidth;
+            chartElements[i].Height = cellHeight;
         }
     }
 
