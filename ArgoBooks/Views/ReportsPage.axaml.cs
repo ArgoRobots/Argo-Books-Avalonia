@@ -18,6 +18,7 @@ public partial class ReportsPage : UserControl
     private StackPanel? _toolbarContent;
     private Grid? _saveButtonContainer;
     private TextBlock? _asterisk;
+    private Border? _saveConfirmationBorder;
     private bool _isAsteriskInitialized;
     private bool _isPanning;
     private Point _panStartPoint;
@@ -47,6 +48,7 @@ public partial class ReportsPage : UserControl
         _toolbarScrollViewer = this.FindControl<ScrollViewer>("ToolbarScrollViewer");
         _toolbarContent = this.FindControl<StackPanel>("ToolbarContent");
         _saveButtonContainer = this.FindControl<Grid>("SaveButtonContainer");
+        _saveConfirmationBorder = this.FindControl<Border>("SaveConfirmationBorder");
 
         // Wire up toolbar scrollbar visibility detection
         if (_toolbarScrollViewer != null)
@@ -283,6 +285,19 @@ public partial class ReportsPage : UserControl
         {
             SyncPreviewZoomFromViewModel();
         }
+        // Animate the save confirmation overlay
+        else if (e.PropertyName == nameof(ReportsPageViewModel.ShowSaveConfirmation))
+        {
+            AnimateSaveConfirmation();
+        }
+    }
+
+    private void AnimateSaveConfirmation()
+    {
+        if (_saveConfirmationBorder == null || DataContext is not ReportsPageViewModel vm) return;
+
+        // Animate opacity based on visibility state
+        _saveConfirmationBorder.Opacity = vm.ShowSaveConfirmation ? 1 : 0;
     }
 
     private void OnElementPropertyChanged(object? sender, ArgoBooks.Core.Models.Reports.ReportElementBase element)

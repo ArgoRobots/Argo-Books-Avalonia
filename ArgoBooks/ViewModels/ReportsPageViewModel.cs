@@ -1665,9 +1665,14 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     /// <summary>
     /// Rearranges all chart elements in a grid layout.
+    /// Only rearranges if HasManualChartLayout is false (no manual positioning has been done).
     /// </summary>
     private void RearrangeChartElements()
     {
+        // Skip rearranging if user has manually positioned elements
+        if (Configuration.HasManualChartLayout)
+            return;
+
         var chartElements = Configuration.Elements
             .OfType<ChartReportElement>()
             .ToList();

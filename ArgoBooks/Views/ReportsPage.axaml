@@ -757,14 +757,21 @@
                                                     UndoRedoManager="{Binding UndoRedoManager}" />
 
                         <!-- Save Confirmation Overlay -->
-                        <Border IsVisible="{Binding ShowSaveConfirmation}"
+                        <Border x:Name="SaveConfirmationBorder"
+                                IsVisible="{Binding ShowSaveConfirmation}"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top"
                                 Margin="16,16,0,0"
                                 Padding="12,8"
                                 CornerRadius="4"
                                 Background="{DynamicResource SuccessBrush}"
-                                IsHitTestVisible="False">
+                                IsHitTestVisible="False"
+                                Opacity="0">
+                            <Border.Transitions>
+                                <Transitions>
+                                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                                </Transitions>
+                            </Border.Transitions>
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                           Width="16" Height="16"
