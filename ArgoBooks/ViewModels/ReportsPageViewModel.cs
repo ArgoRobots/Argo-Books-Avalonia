@@ -445,12 +445,15 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showSaveConfirmation;
 
+    [ObservableProperty]
+    private bool _showNoChangesMessage;
+
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
 
     /// <summary>
-    /// Gets whether the report has unsaved changes.
+    /// Gets whether the report has unsaved changes (changes since last save).
     /// </summary>
-    public bool HasUnsavedChanges => UndoRedoManager.CanUndo;
+    public bool HasUnsavedChanges => UndoRedoManager.HasUnsavedChanges;
 
     /// <summary>
     /// ViewModel for the undo/redo button group control.
@@ -945,8 +948,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (success)
         {
             LoadCustomTemplates();
-            // Clear undo/redo to remove unsaved changes indicator (asterisk)
-            UndoRedoManager.Clear();
+            // Mark save point so asterisk disappears
+            UndoRedoManager.MarkSaved();
             // Show save confirmation message
             ShowSaveConfirmation = true;
             await Task.Delay(2000);
@@ -961,6 +964,16 @@ public partial class ReportsPageViewModel : ViewModelBase
         // If editing an existing custom template, save directly without showing modal
         if (IsEditingCustomTemplate)
         {
+            // Check if there are unsaved changes
+            if (!HasUnsavedChanges)
+            {
+                // Show "No changes" message
+                ShowNoChangesMessage = true;
+                await Task.Delay(2000);
+                ShowNoChangesMessage = false;
+                return;
+            }
+
             await SaveToCurrentTemplateAsync();
             return;
         }
@@ -1447,8 +1460,15 @@ public partial class ReportsPageViewModel : ViewModelBase
             IsSaveTemplateOpen = false;
             SaveTemplateMessage = null;
 
+            // Update SelectedTemplateName to the new template name so subsequent saves
+            // will save to this template directly (without showing the save modal)
+            SelectedTemplateName = SaveTemplateName;
+
             // Refresh custom templates list
             LoadCustomTemplates();
+
+            // Mark save point so asterisk disappears
+            UndoRedoManager.MarkSaved();
 
             // Show the "Saved" overlay notification
             ShowSaveConfirmation = true;
@@ -1579,9 +1599,29 @@ public partial class ReportsPageViewModel : ViewModelBase
         UndoRedoViewModel = new ReportsUndoRedoButtonGroupViewModel(UndoRedoManager);
         UndoRedoViewModel.ActionPerformed += (_, _) => OnPropertyChanged(nameof(Configuration));
 
+        // Load element panel state from settings
+        var uiSettings = App.SettingsService?.GlobalSettings?.Ui;
+        if (uiSettings != null)
+        {
+            _isElementPanelExpanded = !uiSettings.ReportsElementPanelCollapsed;
+        }
+
         InitializeCollections();
         LoadTemplate(SelectedTemplateName);
         InitializeExportSettings();
+    }
+
+    /// <summary>
+    /// Saves the element panel state when it changes.
+    /// </summary>
+    partial void OnIsElementPanelExpandedChanged(bool value)
+    {
+        var settings = App.SettingsService?.GlobalSettings;
+        if (settings != null)
+        {
+            settings.Ui.ReportsElementPanelCollapsed = !value;
+            _ = App.SettingsService?.SaveGlobalSettingsAsync();
+        }
     }
 
     private void InitializeExportSettings()

@@ -19,6 +19,7 @@ public partial class ReportsPage : UserControl
     private Grid? _saveButtonContainer;
     private TextBlock? _asterisk;
     private Border? _saveConfirmationBorder;
+    private Border? _noChangesBorder;
     private bool _isAsteriskInitialized;
     private bool _isPanning;
     private Point _panStartPoint;
@@ -52,6 +53,7 @@ public partial class ReportsPage : UserControl
         _toolbarContent = this.FindControl<StackPanel>("ToolbarContent");
         _saveButtonContainer = this.FindControl<Grid>("SaveButtonContainer");
         _saveConfirmationBorder = this.FindControl<Border>("SaveConfirmationBorder");
+        _noChangesBorder = this.FindControl<Border>("NoChangesBorder");
         _elementToolbox = this.FindControl<Border>("ElementToolbox");
 
         // Wire up toolbar scrollbar visibility detection
@@ -304,6 +306,11 @@ public partial class ReportsPage : UserControl
         {
             AnimateSaveConfirmation();
         }
+        // Animate the no changes message overlay
+        else if (e.PropertyName == nameof(ReportsPageViewModel.ShowNoChangesMessage))
+        {
+            AnimateNoChangesMessage();
+        }
     }
 
     /// <summary>
@@ -331,6 +338,14 @@ public partial class ReportsPage : UserControl
 
         // Animate opacity based on visibility state
         _saveConfirmationBorder.Opacity = vm.ShowSaveConfirmation ? 1 : 0;
+    }
+
+    private void AnimateNoChangesMessage()
+    {
+        if (_noChangesBorder == null || DataContext is not ReportsPageViewModel vm) return;
+
+        // Animate opacity based on visibility state
+        _noChangesBorder.Opacity = vm.ShowNoChangesMessage ? 1 : 0;
     }
 
     private void OnElementPropertyChanged(object? sender, ArgoBooks.Core.Models.Reports.ReportElementBase element)

@@ -22,6 +22,7 @@ public class ReportUndoRedoManager : INotifyPropertyChanged
     private readonly Stack<IReportUndoableAction> _redoStack = new();
     private readonly int _maxStackSize;
     private bool _isUndoingOrRedoing;
+    private int _savePointDepth = 0; // Tracks the undo stack depth at save time
 
     /// <summary>
     /// Fired when a property changes.
@@ -47,6 +48,11 @@ public class ReportUndoRedoManager : INotifyPropertyChanged
     /// Gets whether redo is available.
     /// </summary>
     public bool CanRedo => _redoStack.Count > 0;
+
+    /// <summary>
+    /// Gets whether there are unsaved changes (changes since last save point).
+    /// </summary>
+    public bool HasUnsavedChanges => _undoStack.Count != _savePointDepth;
 
     /// <summary>
     /// Gets the description of the next undo action.
@@ -148,6 +154,16 @@ public class ReportUndoRedoManager : INotifyPropertyChanged
     {
         _undoStack.Clear();
         _redoStack.Clear();
+        _savePointDepth = 0;
+        NotifyStateChanged();
+    }
+
+    /// <summary>
+    /// Marks the current state as saved. HasUnsavedChanges will return false until new changes are made.
+    /// </summary>
+    public void MarkSaved()
+    {
+        _savePointDepth = _undoStack.Count;
         NotifyStateChanged();
     }
 
@@ -156,6 +172,7 @@ public class ReportUndoRedoManager : INotifyPropertyChanged
         StateChanged?.Invoke(this, EventArgs.Empty);
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanUndo)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanRedo)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasUnsavedChanges)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UndoDescription)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RedoDescription)));
     }

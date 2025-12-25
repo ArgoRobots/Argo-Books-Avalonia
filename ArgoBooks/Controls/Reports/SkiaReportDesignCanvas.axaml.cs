@@ -195,15 +195,18 @@ public partial class SkiaReportDesignCanvas : UserControl
         Unloaded += OnUnloaded;
     }
 
+    private ScrollViewer? _scrollViewer;
+
     private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         _canvasImage = this.FindControl<Image>("CanvasImage");
         _overlayCanvas = this.FindControl<Canvas>("OverlayCanvas");
         _selectionRectangle = this.FindControl<Rectangle>("SelectionRectangle");
+        _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
 
-        // Get the ScaleTransform from the ZoomContainer border
-        var zoomContainer = this.FindControl<Border>("ZoomContainer");
-        _zoomTransform = zoomContainer?.RenderTransform as ScaleTransform;
+        // Get the ScaleTransform from the LayoutTransformControl
+        var zoomTransformControl = this.FindControl<LayoutTransformControl>("ZoomTransformControl");
+        _zoomTransform = zoomTransformControl?.LayoutTransform as ScaleTransform;
 
         // Wire up pointer events on the canvas image
         if (_canvasImage != null)
@@ -211,6 +214,13 @@ public partial class SkiaReportDesignCanvas : UserControl
             _canvasImage.PointerPressed += OnCanvasPointerPressed;
             _canvasImage.PointerMoved += OnCanvasPointerMoved;
             _canvasImage.PointerReleased += OnCanvasPointerReleased;
+        }
+
+        // Wire up pointer wheel for zoom-to-cursor
+        // Use AddHandler with handledEventsToo to intercept events that ScrollViewer handles
+        if (_scrollViewer != null)
+        {
+            _scrollViewer.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Bubble, handledEventsToo: true);
         }
 
         // Wire up keyboard events
@@ -313,14 +323,14 @@ public partial class SkiaReportDesignCanvas : UserControl
         using var renderer = new ReportRenderer(Configuration, companyData);
         renderer.RenderElementsToCanvas(canvas);
 
-        // Draw selection visuals on top
-        DrawSelectionVisuals(canvas);
-
-        // Draw hover highlight
+        // Draw hover highlight after elements, but clipped to avoid rendering over higher Z-order elements
         if (_hoveredElement != null && !_selectedElements.Contains(_hoveredElement))
         {
-            DrawHoverHighlight(canvas, _hoveredElement);
+            DrawHoverHighlightClipped(canvas, _hoveredElement);
         }
+
+        // Draw selection visuals on top
+        DrawSelectionVisuals(canvas);
 
         // Convert SKBitmap to Avalonia Bitmap
         UpdateCanvasImage(baseWidth, baseHeight);
@@ -473,24 +483,53 @@ public partial class SkiaReportDesignCanvas : UserControl
         canvas.DrawText(typeName, (float)element.X + 5, (float)element.Y - 5, SKTextAlign.Left, font, textPaint);
     }
 
-    private void DrawHoverHighlight(SKCanvas canvas, ReportElementBase element)
+    private void DrawHoverHighlightClipped(SKCanvas canvas, ReportElementBase element)
     {
+        if (Configuration == null) return;
+
+        // Draw the hover highlight OUTSIDE the element bounds
+        // Offset by 1 pixel to avoid overlapping with the element's own border
+        const float offset = 1f;
         var rect = new SKRect(
-            (float)element.X,
-            (float)element.Y,
-            (float)(element.X + element.Width),
-            (float)(element.Y + element.Height)
+            (float)element.X - offset,
+            (float)element.Y - offset,
+            (float)(element.X + element.Width) + offset,
+            (float)(element.Y + element.Height) + offset
         );
+
+        // Get elements with higher Z-order that might overlap with the hover rect
+        var higherZOrderElements = Configuration.Elements
+            .Where(e => e.ZOrder > element.ZOrder && e.IsVisible)
+            .ToList();
+
+        // Save canvas state
+        canvas.Save();
+
+        // Exclude each higher Z-order element from the clip region using Difference
+        foreach (var higherElement in higherZOrderElements)
+        {
+            var higherRect = new SKRect(
+                (float)higherElement.X,
+                (float)higherElement.Y,
+                (float)(higherElement.X + higherElement.Width),
+                (float)(higherElement.Y + higherElement.Height)
+            );
+
+            canvas.ClipRect(higherRect, SKClipOperation.Difference);
+        }
 
         using var borderPaint = new SKPaint
         {
-            Color = new SKColor(59, 130, 246, 128), // Semi-transparent blue
+            Color = new SKColor(59, 130, 246, 180), // Semi-transparent blue
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1,
+            StrokeWidth = 2,
             IsAntialias = true
         };
 
         canvas.DrawRect(rect, borderPaint);
+
+        // Restore canvas state
+        canvas.Restore();
     }
 
     private Dictionary<ResizeHandle, Point> GetResizeHandlePositions(ReportElementBase element)
@@ -564,6 +603,110 @@ public partial class SkiaReportDesignCanvas : UserControl
             _zoomTransform.ScaleX = ZoomLevel;
             _zoomTransform.ScaleY = ZoomLevel;
         }
+    }
+
+    private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        // Zoom with scroll wheel (no modifier key required)
+        if (_scrollViewer == null || _canvasImage == null)
+            return;
+
+        e.Handled = true;
+
+        // Get mouse position relative to the scroll viewer (viewport coordinates)
+        var mousePosInViewport = e.GetPosition(_scrollViewer);
+
+        // Get current scroll offset, extent, and zoom
+        var oldOffset = _scrollViewer.Offset;
+        var oldExtent = _scrollViewer.Extent;
+        var viewportWidth = _scrollViewer.Viewport.Width;
+        var viewportHeight = _scrollViewer.Viewport.Height;
+        var oldZoom = ZoomLevel;
+
+        // Apply zoom change
+        var delta = e.Delta.Y > 0 ? ZoomStep : -ZoomStep;
+        var newZoom = Math.Clamp(ZoomLevel + delta, MinZoom, MaxZoom);
+
+        if (Math.Abs(newZoom - oldZoom) < 0.001)
+            return;
+
+        // When content is smaller than viewport, it's centered (due to HorizontalAlignment/VerticalAlignment="Center")
+        // We need to account for this centering offset when converting viewport coords to content coords
+        var centeringOffsetX = oldExtent.Width < viewportWidth
+            ? (viewportWidth - oldExtent.Width) / 2
+            : 0;
+        var centeringOffsetY = oldExtent.Height < viewportHeight
+            ? (viewportHeight - oldExtent.Height) / 2
+            : 0;
+
+        // Calculate the mouse position in content space
+        // When scrolled: add scroll offset
+        // When centered: subtract centering offset (scroll offset is 0)
+        var mousePosInContent = new Point(
+            mousePosInViewport.X + oldOffset.X - centeringOffsetX,
+            mousePosInViewport.Y + oldOffset.Y - centeringOffsetY
+        );
+
+        // Convert content position to canvas coordinates (accounting for margin and zoom)
+        const double margin = 40;
+        var canvasX = (mousePosInContent.X - margin) / oldZoom;
+        var canvasY = (mousePosInContent.Y - margin) / oldZoom;
+
+        Console.WriteLine($"[Zoom] MouseInViewport: ({mousePosInViewport.X:F1}, {mousePosInViewport.Y:F1}), CenteringOffset: ({centeringOffsetX:F1}, {centeringOffsetY:F1})");
+        Console.WriteLine($"[Zoom] MouseInContent: ({mousePosInContent.X:F1}, {mousePosInContent.Y:F1}), CanvasCoord: ({canvasX:F1}, {canvasY:F1})");
+        Console.WriteLine($"[Zoom] OldZoom: {oldZoom:F2} -> NewZoom: {newZoom:F2}");
+
+        // Apply the new zoom level
+        ZoomLevel = newZoom;
+
+        // Get page dimensions
+        var (pageWidth, pageHeight) = GetPageDimensions();
+
+        // Schedule the scroll adjustment after layout is updated
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_scrollViewer == null) return;
+
+            var newViewportWidth = _scrollViewer.Viewport.Width;
+            var newViewportHeight = _scrollViewer.Viewport.Height;
+            var newExtentWidth = pageWidth * newZoom + margin * 2;
+            var newExtentHeight = pageHeight * newZoom + margin * 2;
+
+            // Calculate where the canvas point is in the new content space
+            var newContentX = canvasX * newZoom + margin;
+            var newContentY = canvasY * newZoom + margin;
+
+            // Calculate new centering offset (after zoom)
+            var newCenteringOffsetX = newExtentWidth < newViewportWidth
+                ? (newViewportWidth - newExtentWidth) / 2
+                : 0;
+            var newCenteringOffsetY = newExtentHeight < newViewportHeight
+                ? (newViewportHeight - newExtentHeight) / 2
+                : 0;
+
+            // If content will be centered after zoom, no scroll adjustment needed
+            if (newExtentWidth <= newViewportWidth && newExtentHeight <= newViewportHeight)
+            {
+                Console.WriteLine("[Zoom] Content fits in viewport, no scroll adjustment needed");
+                return;
+            }
+
+            // New scroll offset = new content position - (viewport position - new centering offset)
+            // But when there's a new centering offset, scroll offset should be 0 for that axis
+            var newScrollX = newCenteringOffsetX > 0 ? 0 : newContentX - mousePosInViewport.X;
+            var newScrollY = newCenteringOffsetY > 0 ? 0 : newContentY - mousePosInViewport.Y;
+
+            // Clamp to valid scroll range
+            var maxScrollX = Math.Max(0, newExtentWidth - newViewportWidth);
+            var maxScrollY = Math.Max(0, newExtentHeight - newViewportHeight);
+
+            newScrollX = Math.Clamp(newScrollX, 0, maxScrollX);
+            newScrollY = Math.Clamp(newScrollY, 0, maxScrollY);
+
+            Console.WriteLine($"[Zoom] NewScroll: ({newScrollX:F1}, {newScrollY:F1}), MaxScroll: ({maxScrollX:F1}, {maxScrollY:F1})");
+
+            _scrollViewer.Offset = new Vector(newScrollX, newScrollY);
+        }, DispatcherPriority.Render);
     }
 
     #endregion
@@ -1235,9 +1378,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         var viewportWidth = scrollViewer.Viewport.Width > 0 ? scrollViewer.Viewport.Width : scrollViewer.Bounds.Width;
         var viewportHeight = scrollViewer.Viewport.Height > 0 ? scrollViewer.Viewport.Height : scrollViewer.Bounds.Height;
 
-        // Account for margins
-        viewportWidth -= 80;
-        viewportHeight -= 80;
+        // Account for margins - use smaller value to maximize canvas visibility
+        // The LayoutTransformControl has 40px margin but we don't need to reserve all of it
+        viewportWidth -= 20;
+        viewportHeight -= 20;
 
         if (viewportWidth <= 0 || viewportHeight <= 0) return;
 
@@ -1253,15 +1397,17 @@ public partial class SkiaReportDesignCanvas : UserControl
         {
             scrollViewer.UpdateLayout();
 
-            // Calculate centered offset
-            var scaledWidth = pageWidth * ZoomLevel;
-            var scaledHeight = pageHeight * ZoomLevel;
+            // Calculate the extent size (content size including margins)
+            var extentWidth = scrollViewer.Extent.Width;
+            var extentHeight = scrollViewer.Extent.Height;
             var actualViewportWidth = scrollViewer.Viewport.Width;
             var actualViewportHeight = scrollViewer.Viewport.Height;
 
-            // Content is centered by the Border's HorizontalAlignment/VerticalAlignment,
-            // so we just need to reset scroll to origin for centering to work
-            scrollViewer.Offset = new Vector(0, 0);
+            // Calculate centered offset - center the content within the scrollable area
+            var centerOffsetX = Math.Max(0, (extentWidth - actualViewportWidth) / 2);
+            var centerOffsetY = Math.Max(0, (extentHeight - actualViewportHeight) / 2);
+
+            scrollViewer.Offset = new Vector(centerOffsetX, centerOffsetY);
         }, DispatcherPriority.Render);
     }
 
