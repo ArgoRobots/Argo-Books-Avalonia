@@ -107,7 +107,6 @@
                                    IconColor="Success"
                                    ChangeValue="{Binding RevenueChangeValue}"
                                    ChangeText="{Binding RevenueChangeText}"
-                                   SecondaryText="vs last month"
                                    Margin="0,0,12,0" />
 
                 <!-- Total Expenses -->
@@ -117,7 +116,6 @@
                                    IconColor="Danger"
                                    ChangeValue="{Binding ExpenseChangeValue}"
                                    ChangeText="{Binding ExpenseChangeText}"
-                                   SecondaryText="vs last month"
                                    Margin="0,0,12,0" />
 
                 <!-- Outstanding Invoices -->
@@ -482,28 +480,28 @@
                                                         Classes.neutral="{Binding IsStatusNeutral}">
                                                     <Border.Styles>
                                                         <Style Selector="Border.success">
-                                                            <Setter Property="Background" Value="{DynamicResource SuccessLightBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
                                                         </Style>
                                                         <Style Selector="Border.success TextBlock">
-                                                            <Setter Property="Foreground" Value="{DynamicResource SuccessDarkBrush}" />
+                                                            <Setter Property="Foreground" Value="White" />
                                                         </Style>
                                                         <Style Selector="Border.warning">
-                                                            <Setter Property="Background" Value="{DynamicResource WarningLightBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
                                                         </Style>
                                                         <Style Selector="Border.warning TextBlock">
-                                                            <Setter Property="Foreground" Value="{DynamicResource WarningDarkBrush}" />
+                                                            <Setter Property="Foreground" Value="White" />
                                                         </Style>
                                                         <Style Selector="Border.error">
-                                                            <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
                                                         </Style>
                                                         <Style Selector="Border.error TextBlock">
-                                                            <Setter Property="Foreground" Value="{DynamicResource ErrorDarkBrush}" />
+                                                            <Setter Property="Foreground" Value="White" />
                                                         </Style>
                                                         <Style Selector="Border.info">
-                                                            <Setter Property="Background" Value="{DynamicResource InfoLightBrush}" />
+                                                            <Setter Property="Background" Value="{DynamicResource InfoBrush}" />
                                                         </Style>
                                                         <Style Selector="Border.info TextBlock">
-                                                            <Setter Property="Foreground" Value="{DynamicResource InfoDarkBrush}" />
+                                                            <Setter Property="Foreground" Value="White" />
                                                         </Style>
                                                         <Style Selector="Border.neutral">
                                                             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />

@@ -25,7 +25,7 @@ public partial class DashboardPageViewModel : ViewModelBase
     private double _revenueChangeValue;
 
     [ObservableProperty]
-    private string _revenueChangeText = "+0.0%";
+    private string _revenueChangeText = "0.0%";
 
     [ObservableProperty]
     private string _totalExpenses = "$0.00";
@@ -34,7 +34,7 @@ public partial class DashboardPageViewModel : ViewModelBase
     private double _expenseChangeValue;
 
     [ObservableProperty]
-    private string _expenseChangeText = "+0.0%";
+    private string _expenseChangeText = "0.0%";
 
     [ObservableProperty]
     private string _outstandingInvoices = "$0.00";
@@ -59,7 +59,7 @@ public partial class DashboardPageViewModel : ViewModelBase
     private double _profitChangeValue;
 
     [ObservableProperty]
-    private string _profitChangeText = "+0.0%";
+    private string _profitChangeText = "0.0%";
 
     [ObservableProperty]
     private bool _isProfitPositive = true;
@@ -228,8 +228,8 @@ public partial class DashboardPageViewModel : ViewModelBase
                 AmountValue = s.Total,
                 Date = s.Date,
                 DateFormatted = FormatDate(s.Date),
-                Status = s.PaymentStatus,
-                StatusVariant = GetStatusVariant(s.PaymentStatus),
+                Status = "Completed",
+                StatusVariant = "success",
                 IsIncome = true,
                 CustomerName = GetCustomerName(data, s.CustomerId)
             });
@@ -270,8 +270,8 @@ public partial class DashboardPageViewModel : ViewModelBase
                 AmountValue = i.Total,
                 Date = i.IssueDate,
                 DateFormatted = FormatDate(i.IssueDate),
-                Status = i.Status.ToString(),
-                StatusVariant = GetInvoiceStatusVariant(i.Status),
+                Status = "Completed",
+                StatusVariant = "success",
                 IsIncome = true,
                 CustomerName = GetCustomerName(data, i.CustomerId)
             });
@@ -406,8 +406,8 @@ public partial class DashboardPageViewModel : ViewModelBase
 
     private static string FormatPercentageChange(double change)
     {
-        var prefix = change >= 0 ? "+" : "";
-        return $"{prefix}{change:F1}%";
+        // Use absolute value since the arrow indicates direction
+        return $"{Math.Abs(change):F1}%";
     }
 
     private static string GetStatusVariant(string status)

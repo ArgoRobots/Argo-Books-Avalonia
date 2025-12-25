@@ -7,11 +7,20 @@
              x:Class="ArgoBooks.Controls.StatCard"
              x:DataType="controls:StatCard">
 
-    <Border Background="{DynamicResource SurfaceBrush}"
-            BorderBrush="{DynamicResource BorderBrush}"
+    <Border BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="1"
             CornerRadius="{StaticResource RadiusMd}"
-            Padding="20">
+            Padding="20"
+            Classes.alt-bg="{Binding UseAltBackground, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
+        <Border.Styles>
+            <Style Selector="Border">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            </Style>
+            <Style Selector="Border.alt-bg">
+                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
+        </Border.Styles>
         <Grid ColumnDefinitions="Auto,*">
             <!-- Icon Container -->
             <Border Grid.Column="0"
@@ -72,81 +81,93 @@
 
             <!-- Content -->
             <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                <!-- Main Value -->
+                <TextBlock Text="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                           FontSize="{StaticResource FontSize2xl}"
+                           FontWeight="Bold"
+                           Classes.value-success="{Binding IsValueColorSuccess, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                           Classes.value-danger="{Binding IsValueColorDanger, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
+                    <TextBlock.Styles>
+                        <Style Selector="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                        </Style>
+                        <Style Selector="TextBlock.value-success">
+                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                        </Style>
+                        <Style Selector="TextBlock.value-danger">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </Style>
+                    </TextBlock.Styles>
+                </TextBlock>
+
                 <!-- Label -->
                 <TextBlock Text="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                            FontSize="{StaticResource FontSizeSm}"
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            IsVisible="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
-                <!-- Value Row -->
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                    <!-- Main Value -->
-                    <TextBlock Text="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                               FontSize="{StaticResource FontSize2xl}"
-                               FontWeight="Bold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
-
-                    <!-- Change Indicator -->
-                    <Border CornerRadius="{StaticResource RadiusSm}"
-                            Padding="6,2"
-                            VerticalAlignment="Center"
-                            IsVisible="{Binding ShowChange, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                            Classes.positive="{Binding IsPositiveTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                            Classes.negative="{Binding IsNegativeTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                            Classes.neutral="{Binding IsNeutralTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                        <Border.Styles>
-                            <Style Selector="Border.positive">
-                                <Setter Property="Background" Value="{DynamicResource SuccessIconBgBrush}" />
+                <!-- Trend Line: arrow + percentage + "from last month" -->
+                <StackPanel Orientation="Horizontal" Spacing="4"
+                            IsVisible="{Binding ShowChange, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
+                    <!-- Trend Arrow -->
+                    <TextBlock VerticalAlignment="Center"
+                               FontSize="{StaticResource FontSizeSm}"
+                               Classes.up="{Binding IsTrendUp, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                               Classes.down="{Binding IsTrendDown, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                               Classes.flat="{Binding IsTrendFlat, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
+                        <TextBlock.Styles>
+                            <Style Selector="TextBlock.up">
+                                <Setter Property="Text" Value="↑" />
+                                <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
                             </Style>
-                            <Style Selector="Border.negative">
-                                <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
+                            <Style Selector="TextBlock.down">
+                                <Setter Property="Text" Value="↓" />
+                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
                             </Style>
-                            <Style Selector="Border.neutral">
-                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                            <Style Selector="TextBlock.flat">
+                                <Setter Property="Text" Value="→" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
                             </Style>
-                        </Border.Styles>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <!-- Trend Arrow -->
-                            <PathIcon Width="12" Height="12"
-                                      Classes.up="{Binding IsTrendUp, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                                      Classes.down="{Binding IsTrendDown, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                                      Classes.flat="{Binding IsTrendFlat, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                                <PathIcon.Styles>
-                                    <Style Selector="PathIcon.up">
-                                        <Setter Property="Data" Value="M7 14l5-5 5 5z" />
-                                        <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
-                                    </Style>
-                                    <Style Selector="PathIcon.down">
-                                        <Setter Property="Data" Value="M7 10l5 5 5-5z" />
-                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                                    </Style>
-                                    <Style Selector="PathIcon.flat">
-                                        <Setter Property="Data" Value="M4 12h16" />
-                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                    </Style>
-                                </PathIcon.Styles>
-                            </PathIcon>
-                            <!-- Change Text -->
-                            <TextBlock Text="{Binding ChangeText, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                                       FontSize="{StaticResource FontSizeXs}"
-                                       FontWeight="SemiBold"
-                                       Classes.positive="{Binding IsPositiveTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                                       Classes.negative="{Binding IsNegativeTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                                       Classes.neutral="{Binding IsNeutralTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                                <TextBlock.Styles>
-                                    <Style Selector="TextBlock.positive">
-                                        <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
-                                    </Style>
-                                    <Style Selector="TextBlock.negative">
-                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                                    </Style>
-                                    <Style Selector="TextBlock.neutral">
-                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                                    </Style>
-                                </TextBlock.Styles>
-                            </TextBlock>
-                        </StackPanel>
-                    </Border>
+                        </TextBlock.Styles>
+                    </TextBlock>
+                    <!-- Change Percentage -->
+                    <TextBlock Text="{Binding ChangeText, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                               FontSize="{StaticResource FontSizeSm}"
+                               VerticalAlignment="Center"
+                               Classes.positive="{Binding IsPositiveTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                               Classes.negative="{Binding IsNegativeTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                               Classes.neutral="{Binding IsNeutralTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
+                        <TextBlock.Styles>
+                            <Style Selector="TextBlock.positive">
+                                <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                            </Style>
+                            <Style Selector="TextBlock.negative">
+                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                            </Style>
+                            <Style Selector="TextBlock.neutral">
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                            </Style>
+                        </TextBlock.Styles>
+                    </TextBlock>
+                    <!-- "from last month" text -->
+                    <TextBlock Text="from last month"
+                               FontSize="{StaticResource FontSizeSm}"
+                               VerticalAlignment="Center"
+                               Classes.positive="{Binding IsPositiveTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                               Classes.negative="{Binding IsNegativeTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                               Classes.neutral="{Binding IsNeutralTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
+                        <TextBlock.Styles>
+                            <Style Selector="TextBlock.positive">
+                                <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                            </Style>
+                            <Style Selector="TextBlock.negative">
+                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                            </Style>
+                            <Style Selector="TextBlock.neutral">
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                            </Style>
+                        </TextBlock.Styles>
+                    </TextBlock>
                 </StackPanel>
 
                 <!-- Secondary Text -->

@@ -22,6 +22,9 @@ public partial class InsightItem : ObservableObject
     [ObservableProperty]
     private IBrush _statusColor = Brushes.Gray;
 
+    [ObservableProperty]
+    private bool _isLastItem;
+
     public bool HasRecommendation => !string.IsNullOrEmpty(Recommendation);
 }
 
@@ -55,25 +58,37 @@ public partial class InsightsPageViewModel : ViewModelBase
     private string _forecastedRevenue = "$48,500";
 
     [ObservableProperty]
-    private string _revenueGrowth = "+12.3%";
+    private double _revenueGrowthValue = 12.3;
+
+    [ObservableProperty]
+    private string _revenueGrowth = "12.3%";
 
     [ObservableProperty]
     private string _forecastedExpenses = "$32,200";
 
     [ObservableProperty]
-    private string _expenseGrowth = "+5.8%";
+    private double _expenseGrowthValue = -5.8;  // Negative because increased expenses is bad
+
+    [ObservableProperty]
+    private string _expenseGrowth = "5.8%";
 
     [ObservableProperty]
     private string _forecastedProfit = "$16,300";
 
     [ObservableProperty]
-    private string _profitGrowth = "+24.1%";
+    private double _profitGrowthValue = 24.1;
+
+    [ObservableProperty]
+    private string _profitGrowth = "24.1%";
 
     [ObservableProperty]
     private string _forecastedCustomers = "28";
 
     [ObservableProperty]
-    private string _customerGrowth = "+18.5%";
+    private double _customerGrowthValue = 18.5;
+
+    [ObservableProperty]
+    private string _customerGrowth = "18.5%";
 
     [ObservableProperty]
     private string _predictionConfidence = "87% High";
@@ -123,7 +138,8 @@ public partial class InsightsPageViewModel : ViewModelBase
         {
             Title = "Weekend Sales Performance",
             Description = "Weekend sales are 40% higher than weekday sales on average.",
-            StatusColor = new SolidColorBrush(Color.Parse("#22C55E"))
+            StatusColor = new SolidColorBrush(Color.Parse("#22C55E")),
+            IsLastItem = true
         });
 
         // Anomalies
@@ -140,7 +156,8 @@ public partial class InsightsPageViewModel : ViewModelBase
             Title = "Customer Returns Above Normal",
             Description = "Return rate is 8% higher than usual this month. Most returns are for Product Category: Electronics.",
             Recommendation = "Investigate product quality or description accuracy for electronics items.",
-            StatusColor = new SolidColorBrush(Color.Parse("#EF4444"))
+            StatusColor = new SolidColorBrush(Color.Parse("#EF4444")),
+            IsLastItem = true
         });
 
         // Forecasts
@@ -163,7 +180,8 @@ public partial class InsightsPageViewModel : ViewModelBase
             Title = "Inventory Depletion Alert",
             Description = "At current sales velocity, 3 products will reach reorder point within 2 weeks.",
             Recommendation = "Review and place orders for low-stock items.",
-            StatusColor = new SolidColorBrush(Color.Parse("#F59E0B"))
+            StatusColor = new SolidColorBrush(Color.Parse("#F59E0B")),
+            IsLastItem = true
         });
 
         // Recommendations
@@ -196,7 +214,8 @@ public partial class InsightsPageViewModel : ViewModelBase
             Title = "Supplier Optimization",
             Description = "Switching to Supplier B for raw materials could save approximately $200/month based on recent price comparisons.",
             Recommendation = "Review supplier contracts and consider renegotiation.",
-            StatusColor = new SolidColorBrush(Color.Parse("#22C55E"))
+            StatusColor = new SolidColorBrush(Color.Parse("#22C55E")),
+            IsLastItem = true
         });
     }
 
