@@ -220,12 +220,12 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
         foreach (var supplier in companyData.Suppliers)
         {
-            SupplierOptions.Add(supplier.CompanyName);
+            SupplierOptions.Add(supplier.Name);
         }
 
         foreach (var customer in companyData.Customers)
         {
-            CustomerOptions.Add(customer.DisplayName);
+            CustomerOptions.Add(customer.Name);
         }
     }
 
@@ -367,8 +367,8 @@ public partial class ReturnsPageViewModel : ViewModelBase
             var purchase = companyData.Purchases.FirstOrDefault(p => p.Id == returnRecord.OriginalTransactionId);
             if (purchase != null)
             {
-                var supplier = companyData.GetSupplier(purchase.SupplierId);
-                return supplier?.CompanyName ?? "Unknown Supplier";
+                var supplier = companyData.GetSupplier(purchase.SupplierId ?? "");
+                return supplier?.Name ?? "Unknown Supplier";
             }
             return "Unknown Supplier";
         }
@@ -376,7 +376,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
         {
             // For customer returns, look up the customer
             var customer = companyData.GetCustomer(returnRecord.CustomerId);
-            return customer?.DisplayName ?? "Unknown Customer";
+            return customer?.Name ?? "Unknown Customer";
         }
     }
 
@@ -395,7 +395,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
         {
             // For customer returns, the ProcessedBy is typically an accountant
             var accountant = companyData.GetAccountant(returnRecord.ProcessedBy ?? "");
-            return accountant?.FullName ?? returnRecord.ProcessedBy ?? "Unknown";
+            return accountant?.Name ?? returnRecord.ProcessedBy ?? "Unknown";
         }
     }
 
