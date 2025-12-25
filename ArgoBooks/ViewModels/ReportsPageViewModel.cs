@@ -632,6 +632,35 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void DuplicateSelectedElements()
+    {
+        if (SelectedElements.Count == 0) return;
+
+        var newElements = new List<ReportElementBase>();
+        const double offset = 20; // Offset for duplicated elements
+
+        foreach (var element in SelectedElements.ToList())
+        {
+            var clone = element.Clone();
+            clone.X += offset;
+            clone.Y += offset;
+            Configuration.AddElement(clone);
+            UndoRedoManager.RecordAction(new AddElementAction(Configuration, clone));
+            newElements.Add(clone);
+        }
+
+        // Select the duplicated elements
+        SelectedElements.Clear();
+        foreach (var element in newElements)
+        {
+            SelectedElements.Add(element);
+        }
+        SelectedElement = newElements.FirstOrDefault();
+        NotifySelectionChanged();
+        OnPropertyChanged(nameof(Configuration));
+    }
+
+    [RelayCommand]
     private void Undo()
     {
         if (UndoRedoManager.CanUndo)

@@ -282,11 +282,17 @@ public partial class ReportsPage : UserControl
 
     private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // When Configuration changes, sync the canvas elements
+        // When Configuration changes, sync the canvas elements and selection
         if (e.PropertyName == nameof(ReportsPageViewModel.Configuration))
         {
             _designCanvas?.SyncElements();
             _designCanvas?.RefreshAllElements();
+            SyncSelectionToCanvas();
+        }
+        // When SelectedElement changes, sync to canvas
+        else if (e.PropertyName == nameof(ReportsPageViewModel.SelectedElement))
+        {
+            SyncSelectionToCanvas();
         }
         // When PreviewZoom changes from slider/buttons, sync to our local zoom
         else if (e.PropertyName == nameof(ReportsPageViewModel.PreviewZoom))
@@ -297,6 +303,25 @@ public partial class ReportsPage : UserControl
         else if (e.PropertyName == nameof(ReportsPageViewModel.ShowSaveConfirmation))
         {
             AnimateSaveConfirmation();
+        }
+    }
+
+    /// <summary>
+    /// Syncs selection from ViewModel to canvas.
+    /// </summary>
+    private void SyncSelectionToCanvas()
+    {
+        if (_designCanvas == null || DataContext is not ReportsPageViewModel vm) return;
+
+        // Only sync if canvas selection doesn't match ViewModel selection
+        var canvasSelected = _designCanvas.GetSelectedElement();
+        if (canvasSelected?.Id != vm.SelectedElement?.Id && vm.SelectedElement != null)
+        {
+            _designCanvas.SelectElement(vm.SelectedElement);
+        }
+        else if (vm.SelectedElement == null && canvasSelected != null)
+        {
+            _designCanvas.ClearSelection();
         }
     }
 
@@ -815,6 +840,12 @@ public partial class ReportsPage : UserControl
             case Key.Y when e.KeyModifiers.HasFlag(KeyModifiers.Control):
                 // Redo
                 vm.RedoCommand.Execute(null);
+                e.Handled = true;
+                break;
+
+            case Key.D when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                // Duplicate selected elements
+                vm.DuplicateSelectedElementsCommand.Execute(null);
                 e.Handled = true;
                 break;
         }

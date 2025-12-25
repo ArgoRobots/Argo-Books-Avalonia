@@ -301,14 +301,16 @@ public partial class SkiaReportDesignCanvas : UserControl
             DrawGrid(canvas, baseWidth, baseHeight);
         }
 
-        // Draw header/footer areas if enabled
-        if (ShowHeaderFooter)
+        // Draw header/footer areas if enabled (use Configuration's settings)
+        if (Configuration.ShowHeader || Configuration.ShowFooter)
         {
             DrawHeaderFooter(canvas, baseWidth, baseHeight);
         }
 
         // Render all elements using the shared renderer
-        using var renderer = new ReportRenderer(Configuration, null);
+        // Pass company data so tables render with actual data in designer
+        var companyData = App.CompanyManager?.CompanyData;
+        using var renderer = new ReportRenderer(Configuration, companyData);
         renderer.RenderElementsToCanvas(canvas);
 
         // Draw selection visuals on top

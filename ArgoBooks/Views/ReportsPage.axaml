@@ -473,10 +473,12 @@
                             Background="{DynamicResource SurfaceBrush}"
                             CornerRadius="12"
                             BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            Padding="24">
-                        <StackPanel Spacing="20">
-                            <TextBlock Text="Report Settings"
+                            BorderThickness="1">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      Padding="24">
+                            <StackPanel Spacing="20">
+                                <TextBlock Text="Report Settings"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -555,7 +557,8 @@
                                 </Border>
                             </StackPanel>
 
-                        </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
 
@@ -828,9 +831,9 @@
                         <!-- Save Confirmation Overlay -->
                         <Border x:Name="SaveConfirmationBorder"
                                 IsVisible="{Binding ShowSaveConfirmation}"
-                                HorizontalAlignment="Left"
+                                HorizontalAlignment="Center"
                                 VerticalAlignment="Top"
-                                Margin="16,16,0,0"
+                                Margin="0,16,0,0"
                                 Padding="12,8"
                                 CornerRadius="4"
                                 Background="{DynamicResource SuccessBrush}"
