@@ -244,8 +244,8 @@ public partial class StatCard : UserControl
             // Auto-generate ChangeText if only ChangeValue is set
             if (change.Property == ChangeValueProperty && ChangeValue.HasValue && string.IsNullOrEmpty(ChangeText))
             {
-                var prefix = ChangeValue.Value >= 0 ? "+" : "";
-                ChangeText = $"{prefix}{ChangeValue.Value:N1}%";
+                // Use absolute value since the arrow indicates direction
+                ChangeText = $"{Math.Abs(ChangeValue.Value):N1}%";
             }
 
             // Update trend computed properties

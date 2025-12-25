@@ -216,24 +216,23 @@
                                 Padding="16"
                                 Margin="0,0,8,0">
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Next Month Revenue"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBlock Text="{Binding ForecastedRevenue}"
                                            FontSize="24"
                                            FontWeight="Bold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="Next Month Revenue"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <PathIcon Data="M7 14l5-5 5 5z"
-                                              Width="12" Height="12"
-                                              Foreground="#22C55E" />
+                                    <TextBlock Text="↑"
+                                               FontSize="13"
+                                               Foreground="#22C55E" />
                                     <TextBlock Text="{Binding RevenueGrowth}"
                                                FontSize="13"
-                                               FontWeight="Medium"
                                                Foreground="#22C55E" />
-                                    <TextBlock Text="vs last month"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="from last month"
+                                               FontSize="13"
+                                               Foreground="#22C55E" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -245,24 +244,23 @@
                                 Padding="16"
                                 Margin="8,0">
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Next Month Expenses"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBlock Text="{Binding ForecastedExpenses}"
                                            FontSize="24"
                                            FontWeight="Bold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="Next Month Expenses"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <PathIcon Data="M7 10l5 5 5-5z"
-                                              Width="12" Height="12"
-                                              Foreground="#EF4444" />
+                                    <TextBlock Text="↑"
+                                               FontSize="13"
+                                               Foreground="#EF4444" />
                                     <TextBlock Text="{Binding ExpenseGrowth}"
                                                FontSize="13"
-                                               FontWeight="Medium"
                                                Foreground="#EF4444" />
-                                    <TextBlock Text="vs last month"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="from last month"
+                                               FontSize="13"
+                                               Foreground="#EF4444" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -274,24 +272,23 @@
                                 Padding="16"
                                 Margin="8,0">
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Projected Profit"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBlock Text="{Binding ForecastedProfit}"
                                            FontSize="24"
                                            FontWeight="Bold"
                                            Foreground="#22C55E" />
+                                <TextBlock Text="Projected Profit"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <PathIcon Data="M7 14l5-5 5 5z"
-                                              Width="12" Height="12"
-                                              Foreground="#22C55E" />
+                                    <TextBlock Text="↑"
+                                               FontSize="13"
+                                               Foreground="#22C55E" />
                                     <TextBlock Text="{Binding ProfitGrowth}"
                                                FontSize="13"
-                                               FontWeight="Medium"
                                                Foreground="#22C55E" />
-                                    <TextBlock Text="vs last month"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="from last month"
+                                               FontSize="13"
+                                               Foreground="#22C55E" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -303,24 +300,23 @@
                                 Padding="16"
                                 Margin="8,0,0,0">
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Expected New Customers"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBlock Text="{Binding ForecastedCustomers}"
                                            FontSize="24"
                                            FontWeight="Bold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="Expected New Customers"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <PathIcon Data="M7 14l5-5 5 5z"
-                                              Width="12" Height="12"
-                                              Foreground="#22C55E" />
+                                    <TextBlock Text="↑"
+                                               FontSize="13"
+                                               Foreground="#22C55E" />
                                     <TextBlock Text="{Binding CustomerGrowth}"
                                                FontSize="13"
-                                               FontWeight="Medium"
                                                Foreground="#22C55E" />
-                                    <TextBlock Text="vs last month"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="from last month"
+                                               FontSize="13"
+                                               Foreground="#22C55E" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>

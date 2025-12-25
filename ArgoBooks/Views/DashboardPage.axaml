@@ -107,7 +107,6 @@
                                    IconColor="Success"
                                    ChangeValue="{Binding RevenueChangeValue}"
                                    ChangeText="{Binding RevenueChangeText}"
-                                   SecondaryText="vs last month"
                                    Margin="0,0,12,0" />
 
                 <!-- Total Expenses -->
@@ -117,7 +116,6 @@
                                    IconColor="Danger"
                                    ChangeValue="{Binding ExpenseChangeValue}"
                                    ChangeText="{Binding ExpenseChangeText}"
-                                   SecondaryText="vs last month"
                                    Margin="0,0,12,0" />
 
                 <!-- Outstanding Invoices -->
