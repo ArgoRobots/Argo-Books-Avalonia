@@ -316,17 +316,17 @@ public partial class SkiaReportDesignCanvas : UserControl
             DrawHeaderFooter(canvas, baseWidth, baseHeight);
         }
 
-        // Draw hover highlight BEFORE elements so it doesn't render above higher Z-order elements
-        if (_hoveredElement != null && !_selectedElements.Contains(_hoveredElement))
-        {
-            DrawHoverHighlight(canvas, _hoveredElement);
-        }
-
         // Render all elements using the shared renderer
         // Pass company data so tables render with actual data in designer
         var companyData = App.CompanyManager?.CompanyData;
         using var renderer = new ReportRenderer(Configuration, companyData);
         renderer.RenderElementsToCanvas(canvas);
+
+        // Draw hover highlight after elements, but clipped to avoid rendering over higher Z-order elements
+        if (_hoveredElement != null && !_selectedElements.Contains(_hoveredElement))
+        {
+            DrawHoverHighlightClipped(canvas, _hoveredElement);
+        }
 
         // Draw selection visuals on top
         DrawSelectionVisuals(canvas);
@@ -482,14 +482,51 @@ public partial class SkiaReportDesignCanvas : UserControl
         canvas.DrawText(typeName, (float)element.X + 5, (float)element.Y - 5, SKTextAlign.Left, font, textPaint);
     }
 
-    private void DrawHoverHighlight(SKCanvas canvas, ReportElementBase element)
+    private void DrawHoverHighlightClipped(SKCanvas canvas, ReportElementBase element)
     {
+        if (Configuration == null) return;
+
         var rect = new SKRect(
             (float)element.X,
             (float)element.Y,
             (float)(element.X + element.Width),
             (float)(element.Y + element.Height)
         );
+
+        // Get elements with higher Z-order that might overlap
+        var higherZOrderElements = Configuration.Elements
+            .Where(e => e.ZOrder > element.ZOrder && e.IsVisible)
+            .ToList();
+
+        // Save canvas state
+        canvas.Save();
+
+        // Create a clip path that excludes higher Z-order elements
+        if (higherZOrderElements.Count > 0)
+        {
+            using var clipPath = new SKPath();
+
+            // Start with the full canvas area
+            var (pageWidth, pageHeight) = GetPageDimensions();
+            clipPath.AddRect(new SKRect(0, 0, pageWidth, pageHeight));
+
+            // Subtract each higher Z-order element's bounds
+            foreach (var higherElement in higherZOrderElements)
+            {
+                var higherRect = new SKRect(
+                    (float)higherElement.X,
+                    (float)higherElement.Y,
+                    (float)(higherElement.X + higherElement.Width),
+                    (float)(higherElement.Y + higherElement.Height)
+                );
+
+                using var subtractPath = new SKPath();
+                subtractPath.AddRect(higherRect);
+                clipPath.Op(subtractPath, SKPathOp.Difference);
+            }
+
+            canvas.ClipPath(clipPath);
+        }
 
         using var borderPaint = new SKPaint
         {
@@ -500,6 +537,9 @@ public partial class SkiaReportDesignCanvas : UserControl
         };
 
         canvas.DrawRect(rect, borderPaint);
+
+        // Restore canvas state
+        canvas.Restore();
     }
 
     private Dictionary<ResizeHandle, Point> GetResizeHandlePositions(ReportElementBase element)
@@ -581,23 +621,17 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
             return;
 
-        if (_scrollViewer == null)
+        if (_scrollViewer == null || _canvasImage == null)
             return;
 
         e.Handled = true;
 
-        // Get the mouse position relative to the scroll viewer viewport
-        var mousePos = e.GetPosition(_scrollViewer);
+        // Get the mouse position relative to the canvas image (the actual content)
+        var mousePosInCanvas = e.GetPosition(_canvasImage);
+        var mousePosInScrollViewer = e.GetPosition(_scrollViewer);
 
-        // Get the current scroll offset and zoom
+        // Get the current zoom
         var oldZoom = ZoomLevel;
-        var scrollOffset = _scrollViewer.Offset;
-
-        // Point relative to the scroll extent content origin
-        var pointInExtent = new Point(
-            mousePos.X + scrollOffset.X,
-            mousePos.Y + scrollOffset.Y
-        );
 
         // Apply zoom change
         var delta = e.Delta.Y > 0 ? ZoomStep : -ZoomStep;
@@ -609,28 +643,55 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Calculate the zoom ratio
         var zoomRatio = newZoom / oldZoom;
 
+        // Get the current scroll offset before zooming
+        var oldOffset = _scrollViewer.Offset;
+
         // Apply the new zoom level
         ZoomLevel = newZoom;
 
-        // Schedule the scroll adjustment after the zoom transform is applied
+        // Schedule the scroll adjustment after layout is updated
         Dispatcher.UIThread.Post(() =>
         {
             if (_scrollViewer == null) return;
 
-            // Calculate new scroll offset to keep the point under cursor stationary
-            // The point in the content that was under the cursor should stay there
-            var newScrollX = (pointInExtent.X * zoomRatio) - mousePos.X;
-            var newScrollY = (pointInExtent.Y * zoomRatio) - mousePos.Y;
+            // After zoom, the content size changes. We need to find where the point
+            // that was under the cursor is now, and scroll to keep it there.
+
+            // The point in the unzoomed canvas space
+            var canvasPoint = mousePosInCanvas;
+
+            // After zoom, this point's position in the scroll extent has moved by the zoom ratio
+            // We need to scroll so that this new position is at the same screen location
+
+            // Calculate the content offset (how much the centered content is offset from scroll origin)
+            var viewportWidth = _scrollViewer.Viewport.Width;
+            var viewportHeight = _scrollViewer.Viewport.Height;
+            var extentWidth = _scrollViewer.Extent.Width;
+            var extentHeight = _scrollViewer.Extent.Height;
+
+            // If content is smaller than viewport, it's centered (no scrolling possible)
+            if (extentWidth <= viewportWidth && extentHeight <= viewportHeight)
+                return;
+
+            // Calculate the new scroll position to keep the canvas point under the cursor
+            // The canvas point in the new extent = canvasPoint * newZoom + margin (40px)
+            const double margin = 40;
+            var pointInNewExtentX = canvasPoint.X * newZoom + margin;
+            var pointInNewExtentY = canvasPoint.Y * newZoom + margin;
+
+            // New scroll offset = point position in extent - mouse position in viewport
+            var newScrollX = pointInNewExtentX - mousePosInScrollViewer.X;
+            var newScrollY = pointInNewExtentY - mousePosInScrollViewer.Y;
 
             // Clamp to valid scroll range
-            var maxScrollX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
-            var maxScrollY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+            var maxScrollX = Math.Max(0, extentWidth - viewportWidth);
+            var maxScrollY = Math.Max(0, extentHeight - viewportHeight);
 
             newScrollX = Math.Clamp(newScrollX, 0, maxScrollX);
             newScrollY = Math.Clamp(newScrollY, 0, maxScrollY);
 
             _scrollViewer.Offset = new Vector(newScrollX, newScrollY);
-        }, DispatcherPriority.Render);
+        }, DispatcherPriority.Layout);
     }
 
     #endregion
@@ -1302,7 +1363,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         var viewportWidth = scrollViewer.Viewport.Width > 0 ? scrollViewer.Viewport.Width : scrollViewer.Bounds.Width;
         var viewportHeight = scrollViewer.Viewport.Height > 0 ? scrollViewer.Viewport.Height : scrollViewer.Bounds.Height;
 
-        // Account for margins
+        // Account for margins (40px on each side)
         viewportWidth -= 80;
         viewportHeight -= 80;
 
@@ -1320,15 +1381,17 @@ public partial class SkiaReportDesignCanvas : UserControl
         {
             scrollViewer.UpdateLayout();
 
-            // Calculate centered offset
-            var scaledWidth = pageWidth * ZoomLevel;
-            var scaledHeight = pageHeight * ZoomLevel;
+            // Calculate the extent size (content size including margins)
+            var extentWidth = scrollViewer.Extent.Width;
+            var extentHeight = scrollViewer.Extent.Height;
             var actualViewportWidth = scrollViewer.Viewport.Width;
             var actualViewportHeight = scrollViewer.Viewport.Height;
 
-            // Content is centered by the Border's HorizontalAlignment/VerticalAlignment,
-            // so we just need to reset scroll to origin for centering to work
-            scrollViewer.Offset = new Vector(0, 0);
+            // Calculate centered offset - center the content within the scrollable area
+            var centerOffsetX = Math.Max(0, (extentWidth - actualViewportWidth) / 2);
+            var centerOffsetY = Math.Max(0, (extentHeight - actualViewportHeight) / 2);
+
+            scrollViewer.Offset = new Vector(centerOffsetX, centerOffsetY);
         }, DispatcherPriority.Render);
     }
 

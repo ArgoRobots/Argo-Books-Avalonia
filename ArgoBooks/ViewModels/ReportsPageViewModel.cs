@@ -445,6 +445,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showSaveConfirmation;
 
+    [ObservableProperty]
+    private bool _showNoChangesMessage;
+
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
 
     /// <summary>
@@ -961,6 +964,16 @@ public partial class ReportsPageViewModel : ViewModelBase
         // If editing an existing custom template, save directly without showing modal
         if (IsEditingCustomTemplate)
         {
+            // Check if there are unsaved changes
+            if (!HasUnsavedChanges)
+            {
+                // Show "No changes" message
+                ShowNoChangesMessage = true;
+                await Task.Delay(2000);
+                ShowNoChangesMessage = false;
+                return;
+            }
+
             await SaveToCurrentTemplateAsync();
             return;
         }

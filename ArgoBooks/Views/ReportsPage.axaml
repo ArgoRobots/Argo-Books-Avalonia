@@ -853,6 +853,28 @@
                                            VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
+
+                        <!-- No Changes Message Overlay -->
+                        <Border x:Name="NoChangesBorder"
+                                IsVisible="{Binding ShowNoChangesMessage}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Margin="0,16,0,0"
+                                Padding="12,8"
+                                CornerRadius="4"
+                                Background="#6B7280"
+                                IsHitTestVisible="False"
+                                Opacity="0">
+                            <Border.Transitions>
+                                <Transitions>
+                                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                                </Transitions>
+                            </Border.Transitions>
+                            <TextBlock Text="No changes to save"
+                                       Foreground="White"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center" />
+                        </Border>
                     </Grid>
                 </Grid>
 
