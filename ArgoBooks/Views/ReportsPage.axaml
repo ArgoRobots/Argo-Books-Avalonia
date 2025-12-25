@@ -744,16 +744,38 @@
                     </Border>
 
                     <!-- Canvas Area with ReportDesignCanvas -->
-                    <!-- Starts with Opacity=0 to prevent flash before fit-to-window is applied -->
-                    <reports:ReportDesignCanvas x:Name="DesignCanvas"
-                                                Grid.Row="1"
-                                                Opacity="0"
-                                                Configuration="{Binding Configuration}"
-                                                ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
-                                                ShowGrid="{Binding ShowGrid}"
-                                                GridSize="{Binding GridSize}"
-                                                SnapToGrid="{Binding SnapToGrid}"
-                                                UndoRedoManager="{Binding UndoRedoManager}" />
+                    <!-- Wrapped in Grid to allow save confirmation overlay -->
+                    <Grid Grid.Row="1">
+                        <!-- Starts with Opacity=0 to prevent flash before fit-to-window is applied -->
+                        <reports:ReportDesignCanvas x:Name="DesignCanvas"
+                                                    Opacity="0"
+                                                    Configuration="{Binding Configuration}"
+                                                    ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
+                                                    ShowGrid="{Binding ShowGrid}"
+                                                    GridSize="{Binding GridSize}"
+                                                    SnapToGrid="{Binding SnapToGrid}"
+                                                    UndoRedoManager="{Binding UndoRedoManager}" />
+
+                        <!-- Save Confirmation Overlay -->
+                        <Border IsVisible="{Binding ShowSaveConfirmation}"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="16,16,0,0"
+                                Padding="12,8"
+                                CornerRadius="4"
+                                Background="{DynamicResource SuccessBrush}"
+                                IsHitTestVisible="False">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                          Width="16" Height="16"
+                                          Foreground="White" />
+                                <TextBlock Text="Saved"
+                                           Foreground="White"
+                                           FontWeight="Medium"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
 
                 <!-- Right Panel: Properties -->

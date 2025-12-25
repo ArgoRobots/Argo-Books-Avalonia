@@ -411,6 +411,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isSaveTemplateOpen;
 
+    [ObservableProperty]
+    private bool _showSaveConfirmation;
+
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
 
     /// <summary>
@@ -877,6 +880,12 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (success)
         {
             LoadCustomTemplates();
+            // Clear undo/redo to remove unsaved changes indicator (asterisk)
+            UndoRedoManager.Clear();
+            // Show save confirmation message
+            ShowSaveConfirmation = true;
+            await Task.Delay(2000);
+            ShowSaveConfirmation = false;
         }
         return success;
     }
