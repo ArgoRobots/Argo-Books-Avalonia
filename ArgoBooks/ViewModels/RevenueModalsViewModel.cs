@@ -441,19 +441,39 @@ public partial class RevenueModalsViewModel : ViewModelBase
         var sale = companyData.Sales.FirstOrDefault(s => s.Id == _deleteRevenueIdInternal);
         if (sale == null) return;
 
+        // Find and remove associated receipt
+        Core.Models.Tracking.Receipt? deletedReceipt = null;
+        if (!string.IsNullOrEmpty(sale.ReceiptId))
+        {
+            deletedReceipt = companyData.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
+            if (deletedReceipt != null)
+            {
+                companyData.Receipts.Remove(deletedReceipt);
+            }
+        }
+
         // Create undo action
         var deletedSale = sale;
+        var capturedReceipt = deletedReceipt;
         var action = new RevenueDeleteAction(
             $"Delete sale {sale.Id}",
             deletedSale,
             () =>
             {
                 companyData.Sales.Add(deletedSale);
+                if (capturedReceipt != null)
+                {
+                    companyData.Receipts.Add(capturedReceipt);
+                }
                 RevenueDeleted?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
                 companyData.Sales.Remove(deletedSale);
+                if (capturedReceipt != null)
+                {
+                    companyData.Receipts.Remove(capturedReceipt);
+                }
                 RevenueDeleted?.Invoke(this, EventArgs.Empty);
             });
 

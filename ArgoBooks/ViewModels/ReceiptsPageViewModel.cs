@@ -195,19 +195,30 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [ObservableProperty]
     private ReceiptDisplayItem? _previewReceipt;
 
+    [ObservableProperty]
+    private bool _isPreviewFullscreen;
+
     [RelayCommand]
     private void OpenPreview(ReceiptDisplayItem? receipt)
     {
         if (receipt == null) return;
         PreviewReceipt = receipt;
         IsPreviewModalOpen = true;
+        IsPreviewFullscreen = false;
     }
 
     [RelayCommand]
     private void ClosePreview()
     {
         IsPreviewModalOpen = false;
+        IsPreviewFullscreen = false;
         PreviewReceipt = null;
+    }
+
+    [RelayCommand]
+    private void TogglePreviewFullscreen()
+    {
+        IsPreviewFullscreen = !IsPreviewFullscreen;
     }
 
     #endregion
@@ -345,7 +356,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
             Vendor = receipt.Vendor,
             Source = receipt.Source,
             IsAiScanned = receipt.IsAiScanned,
-            CreatedAt = receipt.CreatedAt
+            CreatedAt = receipt.CreatedAt,
+            ImagePath = GetReceiptImagePath(receipt)
         }).ToList();
 
         // Calculate pagination
@@ -422,6 +434,27 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     {
         SelectedCount = Receipts.Count(r => r.IsSelected);
         HasSelectedReceipts = SelectedCount > 0;
+    }
+
+    private static string GetReceiptImagePath(Receipt receipt)
+    {
+        if (string.IsNullOrEmpty(receipt.FileData))
+            return string.Empty;
+
+        try
+        {
+            // Create temp file from Base64 data stored in company file
+            var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ArgoBooks", "Receipts");
+            System.IO.Directory.CreateDirectory(tempDir);
+            var tempPath = System.IO.Path.Combine(tempDir, receipt.FileName);
+            var bytes = Convert.FromBase64String(receipt.FileData);
+            System.IO.File.WriteAllBytes(tempPath, bytes);
+            return tempPath;
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     #endregion
@@ -558,6 +591,9 @@ public partial class ReceiptDisplayItem : ObservableObject
     [ObservableProperty]
     private bool _isSelected;
 
+    [ObservableProperty]
+    private string _imagePath = string.Empty;
+
     // Computed properties for display
     public string DateFormatted => Date.ToString("MMM d, yyyy");
     public string AmountFormatted => $"${Amount:N2}";
@@ -573,6 +609,8 @@ public partial class ReceiptDisplayItem : ObservableObject
 
     public bool IsPdf => FileType.Contains("pdf", StringComparison.OrdinalIgnoreCase) ||
                          FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+
+    public bool HasImage => !string.IsNullOrEmpty(ImagePath);
 
     public string TypeBadgeText => TransactionType;
 

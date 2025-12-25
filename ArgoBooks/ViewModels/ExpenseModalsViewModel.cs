@@ -443,19 +443,39 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         var expense = companyData.Purchases.FirstOrDefault(p => p.Id == _deleteExpenseIdInternal);
         if (expense == null) return;
 
+        // Find and remove associated receipt
+        Core.Models.Tracking.Receipt? deletedReceipt = null;
+        if (!string.IsNullOrEmpty(expense.ReceiptId))
+        {
+            deletedReceipt = companyData.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
+            if (deletedReceipt != null)
+            {
+                companyData.Receipts.Remove(deletedReceipt);
+            }
+        }
+
         // Create undo action
         var deletedExpense = expense;
+        var capturedReceipt = deletedReceipt;
         var action = new ExpenseDeleteAction(
             $"Delete expense {expense.Id}",
             deletedExpense,
             () =>
             {
                 companyData.Purchases.Add(deletedExpense);
+                if (capturedReceipt != null)
+                {
+                    companyData.Receipts.Add(capturedReceipt);
+                }
                 ExpenseDeleted?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
                 companyData.Purchases.Remove(deletedExpense);
+                if (capturedReceipt != null)
+                {
+                    companyData.Receipts.Remove(capturedReceipt);
+                }
                 ExpenseDeleted?.Invoke(this, EventArgs.Empty);
             });
 

@@ -267,7 +267,8 @@
                                                     CornerRadius="8"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="1"
-                                                    Cursor="Hand">
+                                                    Cursor="Hand"
+                                                    PointerPressed="OnReceiptCardPressed">
                                                 <Border.Styles>
                                                     <Style Selector="Border:pointerover">
                                                         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
@@ -276,19 +277,20 @@
                                                 <Grid RowDefinitions="Auto,Auto">
                                                     <!-- File Preview Area -->
                                                     <Border Grid.Row="0"
-                                                            Height="120"
+                                                            Height="140"
                                                             Background="{DynamicResource SurfaceBrush}"
-                                                            CornerRadius="8,8,0,0">
+                                                            CornerRadius="8,8,0,0"
+                                                            ClipToBounds="True">
                                                         <Panel>
-                                                            <!-- Checkbox (top-left) -->
-                                                            <CheckBox IsChecked="{Binding IsSelected}"
-                                                                      HorizontalAlignment="Left"
-                                                                      VerticalAlignment="Top"
-                                                                      Margin="12,12,0,0" />
+                                                            <!-- Receipt Image (if available) -->
+                                                            <Image Source="{Binding ImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                                                   Stretch="UniformToFill"
+                                                                   IsVisible="{Binding HasImage}" />
 
-                                                            <!-- File Type Icon (center) -->
+                                                            <!-- File Type Icon fallback (center) - shown when no image -->
                                                             <Panel HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center">
+                                                                   VerticalAlignment="Center"
+                                                                   IsVisible="{Binding !HasImage}">
                                                                 <!-- Image Icon -->
                                                                 <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
                                                                           Width="40" Height="40"
@@ -300,6 +302,12 @@
                                                                           Foreground="#DC2626"
                                                                           IsVisible="{Binding IsPdf}" />
                                                             </Panel>
+
+                                                            <!-- Checkbox (top-left) -->
+                                                            <CheckBox IsChecked="{Binding IsSelected}"
+                                                                      HorizontalAlignment="Left"
+                                                                      VerticalAlignment="Top"
+                                                                      Margin="12,12,0,0" />
 
                                                             <!-- AI Badge (top-right) -->
                                                             <Border Background="#F3E8FF"
@@ -794,15 +802,16 @@
                 IsVisible="{Binding IsPreviewModalOpen}">
             <Border Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    Width="600"
-                    Height="500"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
+                    Width="{Binding IsPreviewFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}}"
+                    Height="{Binding IsPreviewFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHeight}}"
+                    Margin="{Binding IsPreviewFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenMargin}}"
+                    HorizontalAlignment="{Binding IsPreviewFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHorizontalAlignment}}"
+                    VerticalAlignment="{Binding IsPreviewFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenVerticalAlignment}}"
                     BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
                     <Border Grid.Row="0"
-                            Padding="24,20"
+                            Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
@@ -827,54 +836,53 @@
                     <!-- Preview Content -->
                     <Border Grid.Row="1"
                             Background="{DynamicResource SurfaceAltBrush}"
-                            Margin="24">
-                        <StackPanel HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Spacing="16">
-                            <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
-                                      Width="64" Height="64"
-                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                            <TextBlock Text="Receipt preview will be displayed here"
-                                       FontSize="14"
-                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                       HorizontalAlignment="Center" />
-                            <TextBlock Text="Zoom and pan functionality available"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                       HorizontalAlignment="Center" />
-                        </StackPanel>
+                            Margin="16">
+                        <Panel>
+                            <Image Source="{Binding PreviewReceipt.ImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                   Stretch="Uniform"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                            <!-- Fallback for when image can't load -->
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="16"
+                                        IsVisible="{Binding PreviewReceipt.HasImage, Converter={x:Static BoolConverters.Not}}">
+                                <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                                          Width="64" Height="64"
+                                          Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Text="Receipt preview not available"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Panel>
                     </Border>
 
                     <!-- Modal Footer -->
                     <Border Grid.Row="2"
-                            Padding="24,16"
+                            Padding="24,12"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0">
-                        <Grid ColumnDefinitions="*,Auto,Auto">
-                            <!-- Receipt Info -->
-                            <StackPanel Grid.Column="0" Spacing="4">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Button Grid.Column="0"
+                                    Classes="icon-button"
+                                    ToolTip.Tip="Toggle Fullscreen"
+                                    Command="{Binding TogglePreviewFullscreenCommand}">
+                                <PathIcon Data="{Binding IsPreviewFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
+                                          Width="16" Height="16" />
+                            </Button>
+                            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center" Margin="16,0">
                                 <TextBlock FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Amount: " />
                                     <Run Text="{Binding PreviewReceipt.AmountFormatted}" FontWeight="SemiBold" />
-                                </TextBlock>
-                                <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}">
-                                    <Run Text="Date: " />
+                                    <Run Text=" | Date: " />
                                     <Run Text="{Binding PreviewReceipt.DateFormatted}" />
-                                    <Run Text=" | File: " />
-                                    <Run Text="{Binding PreviewReceipt.FileName}" />
                                 </TextBlock>
                             </StackPanel>
                             <Button Grid.Column="2"
-                                    Classes="primary-button"
-                                    Command="{Binding DownloadReceiptCommand}"
-                                    CommandParameter="{Binding PreviewReceipt}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <PathIcon Data="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"
-                                              Width="16" Height="16"
-                                              Foreground="White" />
-                                    <TextBlock Text="Download" />
-                                </StackPanel>
-                            </Button>
+                                    Content="Close"
+                                    Classes="secondary-button"
+                                    Command="{Binding ClosePreviewCommand}" />
                         </Grid>
                     </Border>
                 </Grid>
