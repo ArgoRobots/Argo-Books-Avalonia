@@ -195,11 +195,14 @@ public partial class SkiaReportDesignCanvas : UserControl
         Unloaded += OnUnloaded;
     }
 
+    private ScrollViewer? _scrollViewer;
+
     private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         _canvasImage = this.FindControl<Image>("CanvasImage");
         _overlayCanvas = this.FindControl<Canvas>("OverlayCanvas");
         _selectionRectangle = this.FindControl<Rectangle>("SelectionRectangle");
+        _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
 
         // Get the ScaleTransform from the ZoomContainer border
         var zoomContainer = this.FindControl<Border>("ZoomContainer");
@@ -211,6 +214,12 @@ public partial class SkiaReportDesignCanvas : UserControl
             _canvasImage.PointerPressed += OnCanvasPointerPressed;
             _canvasImage.PointerMoved += OnCanvasPointerMoved;
             _canvasImage.PointerReleased += OnCanvasPointerReleased;
+        }
+
+        // Wire up pointer wheel for zoom-to-cursor
+        if (_scrollViewer != null)
+        {
+            _scrollViewer.PointerWheelChanged += OnPointerWheelChanged;
         }
 
         // Wire up keyboard events
@@ -307,6 +316,12 @@ public partial class SkiaReportDesignCanvas : UserControl
             DrawHeaderFooter(canvas, baseWidth, baseHeight);
         }
 
+        // Draw hover highlight BEFORE elements so it doesn't render above higher Z-order elements
+        if (_hoveredElement != null && !_selectedElements.Contains(_hoveredElement))
+        {
+            DrawHoverHighlight(canvas, _hoveredElement);
+        }
+
         // Render all elements using the shared renderer
         // Pass company data so tables render with actual data in designer
         var companyData = App.CompanyManager?.CompanyData;
@@ -315,12 +330,6 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         // Draw selection visuals on top
         DrawSelectionVisuals(canvas);
-
-        // Draw hover highlight
-        if (_hoveredElement != null && !_selectedElements.Contains(_hoveredElement))
-        {
-            DrawHoverHighlight(canvas, _hoveredElement);
-        }
 
         // Convert SKBitmap to Avalonia Bitmap
         UpdateCanvasImage(baseWidth, baseHeight);
@@ -564,6 +573,64 @@ public partial class SkiaReportDesignCanvas : UserControl
             _zoomTransform.ScaleX = ZoomLevel;
             _zoomTransform.ScaleY = ZoomLevel;
         }
+    }
+
+    private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        // Only handle zoom when Ctrl is held
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+            return;
+
+        if (_scrollViewer == null)
+            return;
+
+        e.Handled = true;
+
+        // Get the mouse position relative to the scroll viewer viewport
+        var mousePos = e.GetPosition(_scrollViewer);
+
+        // Get the current scroll offset and zoom
+        var oldZoom = ZoomLevel;
+        var scrollOffset = _scrollViewer.Offset;
+
+        // Point relative to the scroll extent content origin
+        var pointInExtent = new Point(
+            mousePos.X + scrollOffset.X,
+            mousePos.Y + scrollOffset.Y
+        );
+
+        // Apply zoom change
+        var delta = e.Delta.Y > 0 ? ZoomStep : -ZoomStep;
+        var newZoom = Math.Clamp(ZoomLevel + delta, MinZoom, MaxZoom);
+
+        if (Math.Abs(newZoom - oldZoom) < 0.001)
+            return;
+
+        // Calculate the zoom ratio
+        var zoomRatio = newZoom / oldZoom;
+
+        // Apply the new zoom level
+        ZoomLevel = newZoom;
+
+        // Schedule the scroll adjustment after the zoom transform is applied
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_scrollViewer == null) return;
+
+            // Calculate new scroll offset to keep the point under cursor stationary
+            // The point in the content that was under the cursor should stay there
+            var newScrollX = (pointInExtent.X * zoomRatio) - mousePos.X;
+            var newScrollY = (pointInExtent.Y * zoomRatio) - mousePos.Y;
+
+            // Clamp to valid scroll range
+            var maxScrollX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+            var maxScrollY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+
+            newScrollX = Math.Clamp(newScrollX, 0, maxScrollX);
+            newScrollY = Math.Clamp(newScrollY, 0, maxScrollY);
+
+            _scrollViewer.Offset = new Vector(newScrollX, newScrollY);
+        }, DispatcherPriority.Render);
     }
 
     #endregion

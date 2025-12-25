@@ -1447,8 +1447,15 @@ public partial class ReportsPageViewModel : ViewModelBase
             IsSaveTemplateOpen = false;
             SaveTemplateMessage = null;
 
+            // Update SelectedTemplateName to the new template name so subsequent saves
+            // will save to this template directly (without showing the save modal)
+            SelectedTemplateName = SaveTemplateName;
+
             // Refresh custom templates list
             LoadCustomTemplates();
+
+            // Clear undo/redo to remove unsaved changes indicator
+            UndoRedoManager.Clear();
 
             // Show the "Saved" overlay notification
             ShowSaveConfirmation = true;
