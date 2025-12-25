@@ -52,35 +52,5 @@
                 </Grid>
             </Border>
         </ScrollViewer>
-
-        <!-- Zoom controls overlay -->
-        <StackPanel Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom"
-                    Margin="16"
-                    Spacing="8">
-            <Button x:Name="ZoomOutButton"
-                    Content="-"
-                    Width="32" Height="32"
-                    FontSize="16"
-                    ToolTip.Tip="Zoom Out" />
-            <TextBlock x:Name="ZoomLevelText"
-                       Text="100%"
-                       VerticalAlignment="Center"
-                       FontSize="12"
-                       MinWidth="45"
-                       TextAlignment="Center" />
-            <Button x:Name="ZoomInButton"
-                    Content="+"
-                    Width="32" Height="32"
-                    FontSize="16"
-                    ToolTip.Tip="Zoom In" />
-            <Button x:Name="ZoomResetButton"
-                    Content="Reset"
-                    Height="32"
-                    Padding="12,0"
-                    FontSize="12"
-                    ToolTip.Tip="Reset Zoom" />
-        </StackPanel>
     </Grid>
 </UserControl>

@@ -127,7 +127,6 @@ public partial class SkiaReportDesignCanvas : UserControl
     private Canvas? _overlayCanvas;
     private Rectangle? _selectionRectangle;
     private ScaleTransform? _zoomTransform;
-    private TextBlock? _zoomLevelText;
 
     // Selection state
     private readonly List<ReportElementBase> _selectedElements = new();
@@ -140,7 +139,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     private Point _elementStartPosition;
     private Size _elementStartSize;
     private ResizeHandle _activeResizeHandle = ResizeHandle.None;
-    private Dictionary<string, Point> _multiDragStartPositions = new();
+    private Dictionary<string, (Point Position, Size Size)> _multiDragStartBounds = new();
 
     // Render state
     private SKBitmap? _renderBitmap;
@@ -184,20 +183,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         _canvasImage = this.FindControl<Image>("CanvasImage");
         _overlayCanvas = this.FindControl<Canvas>("OverlayCanvas");
         _selectionRectangle = this.FindControl<Rectangle>("SelectionRectangle");
-        _zoomLevelText = this.FindControl<TextBlock>("ZoomLevelText");
 
         // Get the ScaleTransform from the ZoomContainer border
         var zoomContainer = this.FindControl<Border>("ZoomContainer");
         _zoomTransform = zoomContainer?.RenderTransform as ScaleTransform;
-
-        // Wire up zoom buttons
-        var zoomInButton = this.FindControl<Button>("ZoomInButton");
-        var zoomOutButton = this.FindControl<Button>("ZoomOutButton");
-        var zoomResetButton = this.FindControl<Button>("ZoomResetButton");
-
-        if (zoomInButton != null) zoomInButton.Click += (_, _) => ZoomIn();
-        if (zoomOutButton != null) zoomOutButton.Click += (_, _) => ZoomOut();
-        if (zoomResetButton != null) zoomResetButton.Click += (_, _) => ResetZoom();
 
         // Wire up pointer events on the canvas image
         if (_canvasImage != null)
@@ -521,11 +510,6 @@ public partial class SkiaReportDesignCanvas : UserControl
             _zoomTransform.ScaleX = ZoomLevel;
             _zoomTransform.ScaleY = ZoomLevel;
         }
-
-        if (_zoomLevelText != null)
-        {
-            _zoomLevelText.Text = $"{ZoomLevel * 100:0}%";
-        }
     }
 
     #endregion
@@ -712,11 +696,11 @@ public partial class SkiaReportDesignCanvas : UserControl
         _interactionMode = InteractionMode.Dragging;
         _interactionStartPoint = point;
 
-        // Store start positions for all selected elements
-        _multiDragStartPositions.Clear();
+        // Store start bounds for all selected elements
+        _multiDragStartBounds.Clear();
         foreach (var element in _selectedElements)
         {
-            _multiDragStartPositions[element.Id] = new Point(element.X, element.Y);
+            _multiDragStartBounds[element.Id] = (new Point(element.X, element.Y), new Size(element.Width, element.Height));
         }
     }
 
@@ -726,13 +710,13 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         foreach (var element in _selectedElements)
         {
-            if (_multiDragStartPositions.TryGetValue(element.Id, out var startPos))
+            if (_multiDragStartBounds.TryGetValue(element.Id, out var startBounds))
             {
-                var newX = startPos.X + delta.X;
-                var newY = startPos.Y + delta.Y;
+                var newX = startBounds.Position.X + delta.X;
+                var newY = startBounds.Position.Y + delta.Y;
 
-                // Apply grid snapping
-                if (SnapToGrid)
+                // Apply grid snapping only when grid is visible
+                if (SnapToGrid && ShowGrid)
                 {
                     newX = Math.Round(newX / GridSize) * GridSize;
                     newY = Math.Round(newY / GridSize) * GridSize;
@@ -759,9 +743,27 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void EndDrag()
     {
-        // Record undo action if positions changed
-        // TODO: Implement undo/redo recording
-        _multiDragStartPositions.Clear();
+        // Record undo actions for moved elements
+        if (UndoRedoManager != null && Configuration != null)
+        {
+            foreach (var element in _selectedElements)
+            {
+                if (_multiDragStartBounds.TryGetValue(element.Id, out var startBounds))
+                {
+                    var oldBounds = (startBounds.Position.X, startBounds.Position.Y, startBounds.Size.Width, startBounds.Size.Height);
+                    var newBounds = (element.X, element.Y, element.Width, element.Height);
+
+                    // Only record if position actually changed
+                    if (Math.Abs(oldBounds.Item1 - newBounds.Item1) > 0.1 || Math.Abs(oldBounds.Item2 - newBounds.Item2) > 0.1)
+                    {
+                        var action = new MoveResizeElementAction(Configuration, element.Id, oldBounds, newBounds, isResize: false);
+                        UndoRedoManager.RecordAction(action);
+                    }
+                }
+            }
+        }
+
+        _multiDragStartBounds.Clear();
     }
 
     #endregion
@@ -855,8 +857,8 @@ public partial class SkiaReportDesignCanvas : UserControl
             newHeight = minSize;
         }
 
-        // Apply grid snapping
-        if (SnapToGrid)
+        // Apply grid snapping only when grid is visible
+        if (SnapToGrid && ShowGrid)
         {
             newX = Math.Round(newX / GridSize) * GridSize;
             newY = Math.Round(newY / GridSize) * GridSize;
@@ -880,8 +882,25 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void EndResize()
     {
+        // Record undo action for resized element
+        if (UndoRedoManager != null && Configuration != null && _selectedElements.Count == 1)
+        {
+            var element = _selectedElements[0];
+            var oldBounds = (_elementStartPosition.X, _elementStartPosition.Y, _elementStartSize.Width, _elementStartSize.Height);
+            var newBounds = (element.X, element.Y, element.Width, element.Height);
+
+            // Only record if bounds actually changed
+            if (Math.Abs(oldBounds.Item1 - newBounds.Item1) > 0.1 ||
+                Math.Abs(oldBounds.Item2 - newBounds.Item2) > 0.1 ||
+                Math.Abs(oldBounds.Item3 - newBounds.Item3) > 0.1 ||
+                Math.Abs(oldBounds.Item4 - newBounds.Item4) > 0.1)
+            {
+                var action = new MoveResizeElementAction(Configuration, element.Id, oldBounds, newBounds, isResize: true);
+                UndoRedoManager.RecordAction(action);
+            }
+        }
+
         _activeResizeHandle = ResizeHandle.None;
-        // TODO: Record undo action
     }
 
     #endregion
@@ -1147,8 +1166,13 @@ public partial class SkiaReportDesignCanvas : UserControl
         var scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
         if (scrollViewer == null) return;
 
-        var viewportWidth = scrollViewer.Viewport.Width - 80; // Account for margins
-        var viewportHeight = scrollViewer.Viewport.Height - 80;
+        // Use Bounds if Viewport is not yet calculated (layout not complete)
+        var viewportWidth = scrollViewer.Viewport.Width > 0 ? scrollViewer.Viewport.Width : scrollViewer.Bounds.Width;
+        var viewportHeight = scrollViewer.Viewport.Height > 0 ? scrollViewer.Viewport.Height : scrollViewer.Bounds.Height;
+
+        // Account for margins
+        viewportWidth -= 80;
+        viewportHeight -= 80;
 
         if (viewportWidth <= 0 || viewportHeight <= 0) return;
 

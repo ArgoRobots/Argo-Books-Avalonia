@@ -417,8 +417,35 @@ public class ReportRenderer : IDisposable
     {
         var result = new List<List<string>>();
 
+        // Return sample data for design mode when no data provider is available
         if (_companyData == null)
+        {
+            var maxRows = table.MaxRows > 0 ? table.MaxRows : 10;
+            for (int i = 0; i < Math.Min(5, maxRows); i++)
+            {
+                var row = new List<string>();
+                foreach (var col in columns)
+                {
+                    var sampleValue = col switch
+                    {
+                        "Date" => DateTime.Now.AddDays(-i).ToString("MM/dd/yyyy"),
+                        "ID" => $"INV-{1000 + i}",
+                        "Company" => $"Sample Company {i + 1}",
+                        "Product" => $"Product {i + 1}",
+                        "Qty" => (10 + i * 5).ToString("N0"),
+                        "Unit Price" => (99.99m + i * 10).ToString("C2"),
+                        "Total" => ((99.99m + i * 10) * (10 + i * 5)).ToString("C2"),
+                        "Status" => i % 2 == 0 ? "Paid" : "Pending",
+                        "Accountant" => $"Accountant {i + 1}",
+                        "Shipping" => (9.99m + i).ToString("C2"),
+                        _ => "Sample"
+                    };
+                    row.Add(sampleValue);
+                }
+                result.Add(row);
+            }
             return result;
+        }
 
         var transactionType = table.TransactionType;
 

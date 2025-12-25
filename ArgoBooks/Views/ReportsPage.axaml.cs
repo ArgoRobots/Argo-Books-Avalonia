@@ -59,12 +59,16 @@ public partial class ReportsPage : UserControl
         // Wire up zoom, pan, and selection for the design canvas
         if (_designCanvas != null)
         {
-            _designCanvas.PointerWheelChanged += OnCanvasPointerWheelChanged;
+            // Use tunnel routing to intercept scroll wheel before ScrollViewer handles it
+            _designCanvas.AddHandler(PointerWheelChangedEvent, OnCanvasPointerWheelChanged, RoutingStrategies.Tunnel);
             _designCanvas.PointerPressed += OnCanvasPointerPressed;
             _designCanvas.PointerMoved += OnCanvasPointerMoved;
             _designCanvas.PointerReleased += OnCanvasPointerReleased;
             _designCanvas.SelectionChanged += OnCanvasSelectionChanged;
         }
+
+        // Wire up keyboard shortcuts
+        KeyDown += OnKeyDown;
 
         // Wire up zoom-to-cursor and right-click pan with rubberband for the preview
         if (_previewScrollViewer != null)
@@ -720,6 +724,48 @@ public partial class ReportsPage : UserControl
                 _previewZoomLevel = vm.PreviewZoom;
                 ApplyPreviewZoom();
             }
+        }
+    }
+
+    /// <summary>
+    /// Handles keyboard shortcuts.
+    /// </summary>
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not ReportsPageViewModel vm) return;
+
+        // Only handle shortcuts when no text input is focused
+        if (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is TextBox)
+            return;
+
+        switch (e.Key)
+        {
+            case Key.G when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                // Toggle grid
+                vm.ShowGrid = !vm.ShowGrid;
+                e.Handled = true;
+                break;
+
+            case Key.S when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                // Save template
+                vm.OpenSaveTemplateCommand.Execute(null);
+                e.Handled = true;
+                break;
+
+            case Key.Z when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                // Undo
+                if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+                    vm.RedoCommand.Execute(null);
+                else
+                    vm.UndoCommand.Execute(null);
+                e.Handled = true;
+                break;
+
+            case Key.Y when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                // Redo
+                vm.RedoCommand.Execute(null);
+                e.Handled = true;
+                break;
         }
     }
 }
