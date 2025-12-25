@@ -136,6 +136,9 @@ public partial class RevenuePageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showStatusColumn = true;
 
+    [ObservableProperty]
+    private bool _showReceiptColumn = true;
+
     [RelayCommand]
     private void ToggleColumnMenu()
     {
@@ -442,6 +445,9 @@ public partial class RevenuePageViewModel : ViewModelBase
             var accountant = companyData?.GetAccountant(sale.AccountantId ?? "");
             var statusDisplay = GetStatusDisplay(sale, companyData);
 
+            var hasReceipt = !string.IsNullOrEmpty(sale.ReceiptId);
+            var receiptFilePath = sale.ReferenceNumber;
+
             return new RevenueDisplayItem
             {
                 Id = sale.Id,
@@ -462,7 +468,9 @@ public partial class RevenuePageViewModel : ViewModelBase
                 Discount = sale.Discount,
                 Quantity = (int)sale.Quantity,
                 UnitPrice = sale.UnitPrice,
-                PaymentMethod = sale.PaymentMethod
+                PaymentMethod = sale.PaymentMethod,
+                HasReceipt = hasReceipt,
+                ReceiptFilePath = receiptFilePath
             };
         }).ToList();
 
@@ -611,6 +619,81 @@ public partial class RevenuePageViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Receipt Preview Modal
+
+    [ObservableProperty]
+    private bool _isReceiptPreviewOpen;
+
+    [ObservableProperty]
+    private string _previewReceiptPath = string.Empty;
+
+    [ObservableProperty]
+    private string _previewReceiptId = string.Empty;
+
+    [ObservableProperty]
+    private bool _isReceiptFullscreen;
+
+    [RelayCommand]
+    private void ViewReceipt(RevenueDisplayItem? item)
+    {
+        if (item == null || !item.HasReceipt)
+            return;
+
+        // Try to get the receipt path - check if file exists, otherwise load from stored data
+        var receiptPath = GetReceiptImagePath(item.Id, item.ReceiptFilePath);
+        if (string.IsNullOrEmpty(receiptPath))
+            return;
+
+        PreviewReceiptPath = receiptPath;
+        PreviewReceiptId = item.Id;
+        IsReceiptPreviewOpen = true;
+        IsReceiptFullscreen = false;
+    }
+
+    private string? GetReceiptImagePath(string saleId, string? originalPath)
+    {
+        // Always load from company file to ensure consistency
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return null;
+
+        var sale = companyData.Sales.FirstOrDefault(s => s.Id == saleId);
+        if (sale == null || string.IsNullOrEmpty(sale.ReceiptId)) return null;
+
+        var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
+        if (receipt == null || string.IsNullOrEmpty(receipt.FileData)) return null;
+
+        try
+        {
+            // Create temp file from Base64 data stored in company file
+            var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ArgoBooks", "Receipts");
+            System.IO.Directory.CreateDirectory(tempDir);
+            var tempPath = System.IO.Path.Combine(tempDir, receipt.FileName);
+            var bytes = Convert.FromBase64String(receipt.FileData);
+            System.IO.File.WriteAllBytes(tempPath, bytes);
+            return tempPath;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    [RelayCommand]
+    private void CloseReceiptPreview()
+    {
+        IsReceiptPreviewOpen = false;
+        IsReceiptFullscreen = false;
+        PreviewReceiptPath = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ToggleReceiptFullscreen()
+    {
+        IsReceiptFullscreen = !IsReceiptFullscreen;
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -703,6 +786,12 @@ public partial class RevenueDisplayItem : ObservableObject
 
     public bool IsReturned => StatusDisplay == "Returned";
     public bool IsPartialReturn => StatusDisplay == "Partial Return";
+
+    [ObservableProperty]
+    private bool _hasReceipt;
+
+    [ObservableProperty]
+    private string _receiptFilePath = string.Empty;
 }
 
 /// <summary>

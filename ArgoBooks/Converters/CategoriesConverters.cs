@@ -2,6 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using ArgoBooks.Controls;
 
 namespace ArgoBooks.Converters;
@@ -71,6 +72,26 @@ public static class BoolConverters
         new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(24, 0, 0, 0) : new Thickness(0));
 
     /// <summary>
+    /// Converts bool (isActive) to view toggle button background.
+    /// Active = surface hover color, Inactive = transparent.
+    /// </summary>
+    public static readonly IValueConverter ToViewToggleBackground =
+        new FuncValueConverter<bool, IBrush>(value =>
+        {
+            if (value)
+            {
+                if (Application.Current?.Resources != null &&
+                    Application.Current.Resources.TryGetResource("SurfaceHoverBrush", Application.Current.ActualThemeVariant, out var resource) &&
+                    resource is IBrush brush)
+                {
+                    return brush;
+                }
+                return new SolidColorBrush(Color.Parse("#F3F4F6"));
+            }
+            return Brushes.Transparent;
+        });
+
+    /// <summary>
     /// Converts bool (isActive) to status badge background color.
     /// Active = green (#DCFCE7), Inactive = gray (#F3F4F6).
     /// </summary>
@@ -85,6 +106,89 @@ public static class BoolConverters
     public static readonly IValueConverter ToStatusForeground =
         new FuncValueConverter<bool, IBrush>(value =>
             new SolidColorBrush(Color.Parse(value ? "#166534" : "#4B5563")));
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal horizontal alignment.
+    /// Fullscreen = Stretch, Normal = Center.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenHorizontalAlignment =
+        new FuncValueConverter<bool, Avalonia.Layout.HorizontalAlignment>(value =>
+            value ? Avalonia.Layout.HorizontalAlignment.Stretch : Avalonia.Layout.HorizontalAlignment.Center);
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal vertical alignment.
+    /// Fullscreen = Stretch, Normal = Center.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenVerticalAlignment =
+        new FuncValueConverter<bool, Avalonia.Layout.VerticalAlignment>(value =>
+            value ? Avalonia.Layout.VerticalAlignment.Stretch : Avalonia.Layout.VerticalAlignment.Center);
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal width.
+    /// Fullscreen = NaN (stretch), Normal = 600px.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenWidth =
+        new FuncValueConverter<bool, double>(value => value ? double.NaN : 600);
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal height.
+    /// Fullscreen = NaN (stretch), Normal = 500px.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenHeight =
+        new FuncValueConverter<bool, double>(value => value ? double.NaN : 500);
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to modal margin.
+    /// Fullscreen = 24px margin, Normal = 0.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenMargin =
+        new FuncValueConverter<bool, Thickness>(value => value ? new Thickness(24) : new Thickness(0));
+
+    /// <summary>
+    /// Converts bool (isFullscreen) to fullscreen icon path data.
+    /// Fullscreen = exit fullscreen icon, Normal = enter fullscreen icon.
+    /// </summary>
+    public static readonly IValueConverter ToFullscreenIcon =
+        new FuncValueConverter<bool, string>(value => value
+            ? "M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"  // Exit fullscreen
+            : "M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"); // Enter fullscreen
+
+    /// <summary>
+    /// Converts a file path string to a Bitmap image.
+    /// Returns null if the file doesn't exist or can't be loaded.
+    /// </summary>
+    public static readonly IValueConverter ToImageSource = new FilePathToImageConverter();
+}
+
+/// <summary>
+/// Converter that loads a Bitmap image from a file path.
+/// </summary>
+public class FilePathToImageConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not string filePath || string.IsNullOrEmpty(filePath))
+            return null;
+
+        try
+        {
+            if (System.IO.File.Exists(filePath))
+            {
+                return new Bitmap(filePath);
+            }
+        }
+        catch
+        {
+            // Failed to load image
+        }
+
+        return null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
 }
 
 /// <summary>

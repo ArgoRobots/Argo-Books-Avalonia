@@ -68,6 +68,19 @@ public class Receipt
     public string Source { get; set; } = "Manual";
 
     /// <summary>
+    /// Base64 encoded file data stored in the company file.
+    /// This ensures the receipt is saved even if the original file is moved.
+    /// </summary>
+    [JsonPropertyName("fileData")]
+    public string? FileData { get; set; }
+
+    /// <summary>
+    /// Original file path (for reference, may not exist if file was moved).
+    /// </summary>
+    [JsonPropertyName("originalFilePath")]
+    public string? OriginalFilePath { get; set; }
+
+    /// <summary>
     /// OCR extracted data (if AI scanned).
     /// </summary>
     [JsonPropertyName("ocrData")]

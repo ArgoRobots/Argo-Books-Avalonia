@@ -443,19 +443,39 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         var expense = companyData.Purchases.FirstOrDefault(p => p.Id == _deleteExpenseIdInternal);
         if (expense == null) return;
 
+        // Find and remove associated receipt
+        Core.Models.Tracking.Receipt? deletedReceipt = null;
+        if (!string.IsNullOrEmpty(expense.ReceiptId))
+        {
+            deletedReceipt = companyData.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
+            if (deletedReceipt != null)
+            {
+                companyData.Receipts.Remove(deletedReceipt);
+            }
+        }
+
         // Create undo action
         var deletedExpense = expense;
+        var capturedReceipt = deletedReceipt;
         var action = new ExpenseDeleteAction(
             $"Delete expense {expense.Id}",
             deletedExpense,
             () =>
             {
                 companyData.Purchases.Add(deletedExpense);
+                if (capturedReceipt != null)
+                {
+                    companyData.Receipts.Add(capturedReceipt);
+                }
                 ExpenseDeleted?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
                 companyData.Purchases.Remove(deletedExpense);
+                if (capturedReceipt != null)
+                {
+                    companyData.Receipts.Remove(capturedReceipt);
+                }
                 ExpenseDeleted?.Invoke(this, EventArgs.Empty);
             });
 
@@ -720,7 +740,61 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             UpdatedAt = DateTime.Now
         };
 
+        // Create Receipt if file was attached
+        Core.Models.Tracking.Receipt? receipt = null;
+        if (!string.IsNullOrEmpty(_receiptFilePath))
+        {
+            companyData.IdCounters.Receipt++;
+            var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
+
+            var fileInfo = new System.IO.FileInfo(_receiptFilePath);
+            var fileType = System.IO.Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
+            {
+                ".pdf" => "application/pdf",
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                _ => "application/octet-stream"
+            };
+
+            // Read file contents and store as Base64
+            string? fileData = null;
+            if (fileInfo.Exists)
+            {
+                try
+                {
+                    var bytes = System.IO.File.ReadAllBytes(_receiptFilePath);
+                    fileData = Convert.ToBase64String(bytes);
+                }
+                catch
+                {
+                    // Failed to read file, continue without file data
+                }
+            }
+
+            receipt = new Core.Models.Tracking.Receipt
+            {
+                Id = receiptId,
+                TransactionId = expenseId,
+                TransactionType = "Expense",
+                FileName = fileInfo.Name,
+                FileType = fileType,
+                FileSize = fileInfo.Exists ? fileInfo.Length : 0,
+                FileData = fileData,
+                OriginalFilePath = _receiptFilePath,
+                Amount = Total,
+                Date = ModalDate?.DateTime ?? DateTime.Now,
+                Vendor = SelectedSupplier?.Name ?? "",
+                Source = "Manual",
+                CreatedAt = DateTime.Now
+            };
+
+            expense.ReceiptId = receiptId;
+            companyData.Receipts.Add(receipt);
+        }
+
         // Create undo action
+        var capturedReceipt = receipt;
         var action = new ExpenseAddAction(
             $"Add expense {expenseId}",
             expense,
@@ -728,12 +802,22 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             {
                 companyData.Purchases.Remove(expense);
                 companyData.IdCounters.Purchase--;
+                if (capturedReceipt != null)
+                {
+                    companyData.Receipts.Remove(capturedReceipt);
+                    companyData.IdCounters.Receipt--;
+                }
                 ExpenseSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
                 companyData.Purchases.Add(expense);
                 companyData.IdCounters.Purchase++;
+                if (capturedReceipt != null)
+                {
+                    companyData.Receipts.Add(capturedReceipt);
+                    companyData.IdCounters.Receipt++;
+                }
                 ExpenseSaved?.Invoke(this, EventArgs.Empty);
             });
 
@@ -769,6 +853,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         var originalPaymentMethod = expense.PaymentMethod;
         var originalNotes = expense.Notes;
         var originalReferenceNumber = expense.ReferenceNumber;
+        var originalReceiptId = expense.ReceiptId;
 
         // Create description and line items from UI
         var description = LineItems.Count == 1
@@ -806,6 +891,53 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         expense.ReferenceNumber = _receiptFilePath ?? string.Empty;
         expense.UpdatedAt = DateTime.Now;
 
+        // Handle receipt - create new receipt if file was attached and expense doesn't have one
+        Core.Models.Tracking.Receipt? newReceipt = null;
+        if (!string.IsNullOrEmpty(_receiptFilePath) && string.IsNullOrEmpty(originalReceiptId))
+        {
+            companyData.IdCounters.Receipt++;
+            var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
+
+            var fileInfo = new System.IO.FileInfo(_receiptFilePath);
+            var fileType = System.IO.Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
+            {
+                ".pdf" => "application/pdf",
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                _ => "application/octet-stream"
+            };
+
+            newReceipt = new Core.Models.Tracking.Receipt
+            {
+                Id = receiptId,
+                TransactionId = expense.Id,
+                TransactionType = "Expense",
+                FileName = fileInfo.Name,
+                FileType = fileType,
+                FileSize = fileInfo.Exists ? fileInfo.Length : 0,
+                Amount = Total,
+                Date = ModalDate?.DateTime ?? DateTime.Now,
+                Vendor = SelectedSupplier?.Name ?? "",
+                Source = "Manual",
+                CreatedAt = DateTime.Now
+            };
+
+            expense.ReceiptId = receiptId;
+            companyData.Receipts.Add(newReceipt);
+        }
+        else if (!string.IsNullOrEmpty(_receiptFilePath) && !string.IsNullOrEmpty(originalReceiptId))
+        {
+            // Update existing receipt's file reference
+            var existingReceipt = companyData.Receipts.FirstOrDefault(r => r.Id == originalReceiptId);
+            if (existingReceipt != null)
+            {
+                var fileInfo = new System.IO.FileInfo(_receiptFilePath);
+                existingReceipt.FileName = fileInfo.Name;
+                existingReceipt.FileSize = fileInfo.Exists ? fileInfo.Length : 0;
+            }
+        }
+
         // Create undo action (capture current values for redo)
         var newDescription = description;
         var newLineItems = modelLineItems;
@@ -817,6 +949,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         var newShippingCost = ModalShipping;
         var newDiscount = ModalDiscount;
         var newTotal = Total;
+        var capturedNewReceipt = newReceipt;
 
         var action = new ExpenseEditAction(
             $"Edit expense {_editingExpenseId}",
@@ -839,6 +972,12 @@ public partial class ExpenseModalsViewModel : ViewModelBase
                 expense.PaymentMethod = originalPaymentMethod;
                 expense.Notes = originalNotes;
                 expense.ReferenceNumber = originalReferenceNumber;
+                expense.ReceiptId = originalReceiptId;
+                if (capturedNewReceipt != null)
+                {
+                    companyData.Receipts.Remove(capturedNewReceipt);
+                    companyData.IdCounters.Receipt--;
+                }
                 ExpenseSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
@@ -859,6 +998,12 @@ public partial class ExpenseModalsViewModel : ViewModelBase
                 expense.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
                 expense.Notes = ModalNotes;
                 expense.ReferenceNumber = _receiptFilePath ?? string.Empty;
+                if (capturedNewReceipt != null)
+                {
+                    expense.ReceiptId = capturedNewReceipt.Id;
+                    companyData.Receipts.Add(capturedNewReceipt);
+                    companyData.IdCounters.Receipt++;
+                }
                 ExpenseSaved?.Invoke(this, EventArgs.Empty);
             });
 

@@ -1372,6 +1372,11 @@ public partial class App : Application
         navigationService.RegisterPage("RentalInventory", _ => new RentalInventoryPage { DataContext = new RentalInventoryPageViewModel() });
         navigationService.RegisterPage("RentalRecords", _ => new RentalRecordsPage { DataContext = new RentalRecordsPageViewModel() });
 
+        // Tracking Section
+        navigationService.RegisterPage("Returns", _ => CreatePlaceholderPage("Returns", "Manage product returns"));
+        navigationService.RegisterPage("LostDamaged", _ => CreatePlaceholderPage("Lost/Damaged", "Track lost and damaged items"));
+        navigationService.RegisterPage("Receipts", _ => new ReceiptsPage { DataContext = new ReceiptsPageViewModel() });
+
         // Settings and Help
         navigationService.RegisterPage("Settings", _ => CreatePlaceholderPage("Settings", "Configure application settings"));
         navigationService.RegisterPage("Help", _ => CreatePlaceholderPage("Help", "Get help and documentation"));
