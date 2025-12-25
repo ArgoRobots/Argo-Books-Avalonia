@@ -21,10 +21,22 @@ public class Return
     public string OriginalTransactionId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Customer ID.
+    /// Return type: "Customer" or "Expense".
+    /// </summary>
+    [JsonPropertyName("returnType")]
+    public string ReturnType { get; set; } = "Customer";
+
+    /// <summary>
+    /// Customer ID (for customer returns).
     /// </summary>
     [JsonPropertyName("customerId")]
     public string CustomerId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Supplier ID (for expense returns).
+    /// </summary>
+    [JsonPropertyName("supplierId")]
+    public string SupplierId { get; set; } = string.Empty;
 
     /// <summary>
     /// Date of return.

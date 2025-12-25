@@ -1,0 +1,562 @@
+using System.Collections.ObjectModel;
+using ArgoBooks.Controls;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Tracking;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+namespace ArgoBooks.ViewModels;
+
+/// <summary>
+/// ViewModel for the Returns page displaying expense and customer returns.
+/// </summary>
+public partial class ReturnsPageViewModel : ViewModelBase
+{
+    #region Statistics
+
+    [ObservableProperty]
+    private int _totalReturns;
+
+    [ObservableProperty]
+    private int _expenseReturns;
+
+    [ObservableProperty]
+    private int _customerReturns;
+
+    [ObservableProperty]
+    private string _totalRefunded = "$0.00";
+
+    #endregion
+
+    #region Tabs
+
+    [ObservableProperty]
+    private bool _isExpenseTabActive = true;
+
+    [ObservableProperty]
+    private bool _isCustomerTabActive;
+
+    partial void OnIsExpenseTabActiveChanged(bool value)
+    {
+        if (value)
+        {
+            IsCustomerTabActive = false;
+            CurrentPage = 1;
+            FilterReturns();
+        }
+    }
+
+    partial void OnIsCustomerTabActiveChanged(bool value)
+    {
+        if (value)
+        {
+            IsExpenseTabActive = false;
+            CurrentPage = 1;
+            FilterReturns();
+        }
+    }
+
+    [RelayCommand]
+    private void SwitchToExpenseTab()
+    {
+        IsExpenseTabActive = true;
+    }
+
+    [RelayCommand]
+    private void SwitchToCustomerTab()
+    {
+        IsCustomerTabActive = true;
+    }
+
+    #endregion
+
+    #region Search and Filter
+
+    [ObservableProperty]
+    private string? _searchQuery;
+
+    partial void OnSearchQueryChanged(string? value)
+    {
+        CurrentPage = 1;
+        FilterReturns();
+    }
+
+    [ObservableProperty]
+    private string _filterStatus = "All";
+
+    [ObservableProperty]
+    private string _filterReason = "All";
+
+    [ObservableProperty]
+    private string? _filterSupplierCustomer;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterDateFrom;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterDateTo;
+
+    [ObservableProperty]
+    private bool _isFilterModalOpen;
+
+    public ObservableCollection<string> StatusOptions { get; } = ["All", "Pending", "Approved", "Completed", "Rejected"];
+    public ObservableCollection<string> ReasonOptions { get; } = ["All", "Defective Product", "Wrong Item", "Changed Mind", "Shipping Damage", "Not as Described", "Other"];
+    public ObservableCollection<string> SupplierOptions { get; } = [];
+    public ObservableCollection<string> CustomerOptions { get; } = [];
+
+    #endregion
+
+    #region Returns Collection
+
+    private readonly List<Return> _allReturns = [];
+
+    public ObservableCollection<ReturnDisplayItem> Returns { get; } = [];
+
+    #endregion
+
+    #region Pagination
+
+    [ObservableProperty]
+    private int _currentPage = 1;
+
+    [ObservableProperty]
+    private int _totalPages = 1;
+
+    [ObservableProperty]
+    private int _pageSize = 10;
+
+    public ObservableCollection<int> PageSizeOptions { get; } = [5, 10, 15, 25, 50];
+
+    partial void OnPageSizeChanged(int value)
+    {
+        CurrentPage = 1;
+        FilterReturns();
+    }
+
+    [ObservableProperty]
+    private string _paginationText = "0 returns";
+
+    public ObservableCollection<int> PageNumbers { get; } = [];
+
+    public bool CanGoToPreviousPage => CurrentPage > 1;
+    public bool CanGoToNextPage => CurrentPage < TotalPages;
+
+    partial void OnCurrentPageChanged(int value)
+    {
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        FilterReturns();
+    }
+
+    [RelayCommand]
+    private void GoToPreviousPage()
+    {
+        if (CanGoToPreviousPage)
+            CurrentPage--;
+    }
+
+    [RelayCommand]
+    private void GoToNextPage()
+    {
+        if (CanGoToNextPage)
+            CurrentPage++;
+    }
+
+    [RelayCommand]
+    private void GoToPage(int page)
+    {
+        if (page >= 1 && page <= TotalPages)
+            CurrentPage = page;
+    }
+
+    #endregion
+
+    #region Constructor
+
+    public ReturnsPageViewModel()
+    {
+        LoadReturns();
+
+        // Subscribe to undo/redo state changes to refresh UI
+        if (App.UndoRedoManager != null)
+        {
+            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+        }
+    }
+
+    private void OnUndoRedoStateChanged(object? sender, EventArgs e)
+    {
+        LoadReturns();
+    }
+
+    #endregion
+
+    #region Data Loading
+
+    private void LoadReturns()
+    {
+        _allReturns.Clear();
+        Returns.Clear();
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Returns == null)
+            return;
+
+        _allReturns.AddRange(companyData.Returns);
+        LoadFilterOptions();
+        UpdateStatistics();
+        FilterReturns();
+    }
+
+    private void LoadFilterOptions()
+    {
+        SupplierOptions.Clear();
+        SupplierOptions.Add("All");
+        CustomerOptions.Clear();
+        CustomerOptions.Add("All");
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        foreach (var supplier in companyData.Suppliers)
+        {
+            SupplierOptions.Add(supplier.CompanyName);
+        }
+
+        foreach (var customer in companyData.Customers)
+        {
+            CustomerOptions.Add(customer.DisplayName);
+        }
+    }
+
+    private void UpdateStatistics()
+    {
+        TotalReturns = _allReturns.Count;
+        ExpenseReturns = _allReturns.Count(r => r.ReturnType == "Expense");
+        CustomerReturns = _allReturns.Count(r => r.ReturnType == "Customer");
+        var totalRefundedValue = _allReturns.Sum(r => r.NetRefund);
+        TotalRefunded = $"${totalRefundedValue:N2}";
+    }
+
+    [RelayCommand]
+    private void RefreshReturns()
+    {
+        LoadReturns();
+    }
+
+    private void FilterReturns()
+    {
+        Returns.Clear();
+
+        var filtered = _allReturns.ToList();
+
+        // Filter by tab (expense vs customer)
+        var returnType = IsExpenseTabActive ? "Expense" : "Customer";
+        filtered = filtered.Where(r => r.ReturnType == returnType).ToList();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            var query = SearchQuery.ToLowerInvariant();
+            filtered = filtered.Where(r =>
+                r.Id.ToLowerInvariant().Contains(query) ||
+                r.OriginalTransactionId.ToLowerInvariant().Contains(query) ||
+                GetProductNames(r).ToLowerInvariant().Contains(query) ||
+                GetSupplierOrCustomerName(r).ToLowerInvariant().Contains(query)
+            ).ToList();
+        }
+
+        // Apply status filter
+        if (FilterStatus != "All")
+        {
+            filtered = filtered.Where(r => r.Status.ToString() == FilterStatus).ToList();
+        }
+
+        // Apply reason filter
+        if (FilterReason != "All")
+        {
+            filtered = filtered.Where(r =>
+                r.Items.Any(item => item.Reason.Equals(FilterReason, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+        }
+
+        // Apply date filter
+        if (FilterDateFrom.HasValue)
+        {
+            filtered = filtered.Where(r => r.ReturnDate >= FilterDateFrom.Value.DateTime).ToList();
+        }
+        if (FilterDateTo.HasValue)
+        {
+            filtered = filtered.Where(r => r.ReturnDate <= FilterDateTo.Value.DateTime).ToList();
+        }
+
+        // Sort by date descending (newest first)
+        filtered = filtered.OrderByDescending(r => r.ReturnDate).ToList();
+
+        // Create display items
+        var displayItems = filtered.Select(CreateDisplayItem).ToList();
+
+        // Calculate pagination
+        var totalCount = displayItems.Count;
+        TotalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / PageSize));
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        UpdatePageNumbers();
+        UpdatePaginationText(totalCount);
+
+        // Apply pagination and add to collection
+        var pagedReturns = displayItems
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize);
+
+        foreach (var item in pagedReturns)
+        {
+            Returns.Add(item);
+        }
+    }
+
+    private ReturnDisplayItem CreateDisplayItem(Return returnRecord)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        var productNames = GetProductNames(returnRecord);
+        var supplierOrCustomerName = GetSupplierOrCustomerName(returnRecord);
+        var processedByName = GetProcessedByName(returnRecord);
+        var reason = returnRecord.Items.FirstOrDefault()?.Reason ?? "Not specified";
+
+        return new ReturnDisplayItem
+        {
+            Id = returnRecord.Id,
+            OriginalTransactionId = returnRecord.OriginalTransactionId,
+            ReturnType = returnRecord.ReturnType,
+            ProductNames = productNames,
+            SupplierOrCustomerName = supplierOrCustomerName,
+            ReturnDate = returnRecord.ReturnDate,
+            Reason = reason,
+            ProcessedBy = processedByName,
+            RefundAmount = returnRecord.NetRefund,
+            Status = returnRecord.Status,
+            Notes = returnRecord.Notes,
+            ItemCount = returnRecord.Items.Sum(i => i.Quantity)
+        };
+    }
+
+    private string GetProductNames(Return returnRecord)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return "Unknown";
+
+        var productNames = returnRecord.Items
+            .Select(item => companyData.GetProduct(item.ProductId)?.Name ?? "Unknown Product")
+            .Distinct()
+            .ToList();
+
+        return productNames.Count > 2
+            ? $"{productNames[0]}, {productNames[1]} +{productNames.Count - 2} more"
+            : string.Join(", ", productNames);
+    }
+
+    private string GetSupplierOrCustomerName(Return returnRecord)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return "Unknown";
+
+        if (returnRecord.ReturnType == "Expense")
+        {
+            // For expense returns, look up the supplier from the original purchase
+            var purchase = companyData.Purchases.FirstOrDefault(p => p.Id == returnRecord.OriginalTransactionId);
+            if (purchase != null)
+            {
+                var supplier = companyData.GetSupplier(purchase.SupplierId);
+                return supplier?.CompanyName ?? "Unknown Supplier";
+            }
+            return "Unknown Supplier";
+        }
+        else
+        {
+            // For customer returns, look up the customer
+            var customer = companyData.GetCustomer(returnRecord.CustomerId);
+            return customer?.DisplayName ?? "Unknown Customer";
+        }
+    }
+
+    private string GetProcessedByName(Return returnRecord)
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return "Unknown";
+
+        if (returnRecord.ReturnType == "Expense")
+        {
+            // For expense returns, the ProcessedBy is typically an employee
+            var employee = companyData.GetEmployee(returnRecord.ProcessedBy ?? "");
+            return employee?.FullName ?? returnRecord.ProcessedBy ?? "Unknown";
+        }
+        else
+        {
+            // For customer returns, the ProcessedBy is typically an accountant
+            var accountant = companyData.GetAccountant(returnRecord.ProcessedBy ?? "");
+            return accountant?.FullName ?? returnRecord.ProcessedBy ?? "Unknown";
+        }
+    }
+
+    private void UpdatePageNumbers()
+    {
+        PageNumbers.Clear();
+        var startPage = Math.Max(1, CurrentPage - 2);
+        var endPage = Math.Min(TotalPages, startPage + 4);
+        startPage = Math.Max(1, endPage - 4);
+
+        for (var i = startPage; i <= endPage; i++)
+        {
+            PageNumbers.Add(i);
+        }
+    }
+
+    private void UpdatePaginationText(int totalCount)
+    {
+        if (totalCount == 0)
+        {
+            PaginationText = "0 returns";
+            return;
+        }
+
+        if (TotalPages <= 1)
+        {
+            PaginationText = totalCount == 1 ? "1 return" : $"{totalCount} returns";
+        }
+        else
+        {
+            var start = (CurrentPage - 1) * PageSize + 1;
+            var end = Math.Min(CurrentPage * PageSize, totalCount);
+            PaginationText = $"{start}-{end} of {totalCount} returns";
+        }
+    }
+
+    #endregion
+
+    #region Filter Modal Commands
+
+    [RelayCommand]
+    private void OpenFilterModal()
+    {
+        IsFilterModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseFilterModal()
+    {
+        IsFilterModalOpen = false;
+    }
+
+    [RelayCommand]
+    private void ApplyFilters()
+    {
+        CurrentPage = 1;
+        FilterReturns();
+        IsFilterModalOpen = false;
+    }
+
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        FilterStatus = "All";
+        FilterReason = "All";
+        FilterSupplierCustomer = null;
+        FilterDateFrom = null;
+        FilterDateTo = null;
+        SearchQuery = null;
+        CurrentPage = 1;
+        FilterReturns();
+        IsFilterModalOpen = false;
+    }
+
+    #endregion
+
+    #region Action Commands
+
+    [RelayCommand]
+    private void ViewReturnDetails(ReturnDisplayItem? item)
+    {
+        if (item == null) return;
+        // TODO: Open detail modal
+    }
+
+    [RelayCommand]
+    private void UndoReturn(ReturnDisplayItem? item)
+    {
+        if (item == null) return;
+        // TODO: Implement undo return with confirmation
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Display model for returns in the UI.
+/// </summary>
+public partial class ReturnDisplayItem : ObservableObject
+{
+    [ObservableProperty]
+    private string _id = string.Empty;
+
+    [ObservableProperty]
+    private string _originalTransactionId = string.Empty;
+
+    [ObservableProperty]
+    private string _returnType = string.Empty;
+
+    [ObservableProperty]
+    private string _productNames = string.Empty;
+
+    [ObservableProperty]
+    private string _supplierOrCustomerName = string.Empty;
+
+    [ObservableProperty]
+    private DateTime _returnDate;
+
+    [ObservableProperty]
+    private string _reason = string.Empty;
+
+    [ObservableProperty]
+    private string _processedBy = string.Empty;
+
+    [ObservableProperty]
+    private decimal _refundAmount;
+
+    [ObservableProperty]
+    private ReturnStatus _status;
+
+    [ObservableProperty]
+    private string _notes = string.Empty;
+
+    [ObservableProperty]
+    private int _itemCount;
+
+    // Computed properties for display
+    public string DateFormatted => ReturnDate.ToString("MMM d, yyyy");
+    public string RefundAmountFormatted => $"${RefundAmount:N2}";
+    public string StatusText => Status.ToString();
+
+    public bool IsPending => Status == ReturnStatus.Pending;
+    public bool IsApproved => Status == ReturnStatus.Approved;
+    public bool IsCompleted => Status == ReturnStatus.Completed;
+    public bool IsRejected => Status == ReturnStatus.Rejected;
+
+    public string StatusBadgeBackground => Status switch
+    {
+        ReturnStatus.Pending => "#FEF3C7",
+        ReturnStatus.Approved => "#DBEAFE",
+        ReturnStatus.Completed => "#DCFCE7",
+        ReturnStatus.Rejected => "#FEE2E2",
+        _ => "#F3F4F6"
+    };
+
+    public string StatusBadgeForeground => Status switch
+    {
+        ReturnStatus.Pending => "#D97706",
+        ReturnStatus.Approved => "#2563EB",
+        ReturnStatus.Completed => "#16A34A",
+        ReturnStatus.Rejected => "#DC2626",
+        _ => "#6B7280"
+    };
+}
