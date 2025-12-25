@@ -52,19 +52,12 @@
                              Padding="12,10" />
                 </StackPanel>
 
-                <!-- Message -->
+                <!-- Error Message (only shown for validation errors) -->
                 <TextBlock Text="{Binding SaveTemplateMessage}"
                            FontSize="13"
                            TextWrapping="Wrap"
-                           IsVisible="{Binding SaveTemplateMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                    <TextBlock.Foreground>
-                        <Binding Path="SaveTemplateMessage">
-                            <Binding.Converter>
-                                <x:Static Member="StringConverters.IsNullOrEmpty" />
-                            </Binding.Converter>
-                        </Binding>
-                    </TextBlock.Foreground>
-                </TextBlock>
+                           Foreground="{DynamicResource DangerBrush}"
+                           IsVisible="{Binding SaveTemplateMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
             </StackPanel>
 
             <!-- Footer -->

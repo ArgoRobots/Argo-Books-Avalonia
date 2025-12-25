@@ -475,9 +475,8 @@
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1">
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Disabled"
-                                      Padding="24">
-                            <StackPanel Spacing="20">
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Spacing="20" Margin="24">
                                 <TextBlock Text="Report Settings"
                                        FontSize="18"
                                        FontWeight="SemiBold"
@@ -651,8 +650,8 @@
                         <!-- Collapsed Content (Icon-only buttons) -->
                         <StackPanel Grid.Row="1"
                                     Spacing="4"
-                                    Margin="4,8,4,12"
-                                    HorizontalAlignment="Center"
+                                    Margin="8,8,8,12"
+                                    HorizontalAlignment="Left"
                                     IsVisible="{Binding !IsElementPanelExpanded}">
                             <Button Classes="icon-button" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="Add Chart">
                                 <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"

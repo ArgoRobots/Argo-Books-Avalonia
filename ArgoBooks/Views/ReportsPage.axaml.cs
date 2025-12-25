@@ -392,21 +392,22 @@ public partial class ReportsPage : UserControl
         // Apply the zoom
         vm.ZoomLevel = newZoom;
 
-        // Force layout update
-        scrollViewer.UpdateLayout();
+        // Post the offset adjustment to run after layout has updated
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            // Calculate new offset to keep the same content point under cursor
+            var newOffsetX = unscaledX * newZoom - viewportPoint.X;
+            var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
 
-        // Calculate new offset to keep the same content point under cursor
-        var newOffsetX = unscaledX * newZoom - viewportPoint.X;
-        var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
+            // Clamp to valid scroll range
+            var maxX = Math.Max(0, scrollViewer.Extent.Width - scrollViewer.Viewport.Width);
+            var maxY = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
 
-        // Clamp to valid scroll range
-        var maxX = Math.Max(0, scrollViewer.Extent.Width - scrollViewer.Viewport.Width);
-        var maxY = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
-
-        scrollViewer.Offset = new Vector(
-            Math.Clamp(newOffsetX, 0, maxX),
-            Math.Clamp(newOffsetY, 0, maxY)
-        );
+            scrollViewer.Offset = new Vector(
+                Math.Clamp(newOffsetX, 0, maxX),
+                Math.Clamp(newOffsetY, 0, maxY)
+            );
+        }, Avalonia.Threading.DispatcherPriority.Render);
     }
 
     private void OnPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)

@@ -644,6 +644,11 @@ public partial class ReportsPageViewModel : ViewModelBase
             var clone = element.Clone();
             clone.X += offset;
             clone.Y += offset;
+
+            // Clamp position to stay within canvas bounds
+            clone.X = Math.Max(0, Math.Min(clone.X, CanvasWidth - clone.Width));
+            clone.Y = Math.Max(0, Math.Min(clone.Y, CanvasHeight - clone.Height));
+
             Configuration.AddElement(clone);
             UndoRedoManager.RecordAction(new AddElementAction(Configuration, clone));
             newElements.Add(clone);
@@ -1438,13 +1443,17 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         if (success)
         {
-            SaveTemplateMessage = "Template saved successfully!";
-            await Task.Delay(1500);
+            // Close modal immediately
             IsSaveTemplateOpen = false;
             SaveTemplateMessage = null;
 
             // Refresh custom templates list
             LoadCustomTemplates();
+
+            // Show the "Saved" overlay notification
+            ShowSaveConfirmation = true;
+            await Task.Delay(2000);
+            ShowSaveConfirmation = false;
 
             // Signal successful save to any waiting callers
             _saveTemplateCompletionSource?.TrySetResult(true);
