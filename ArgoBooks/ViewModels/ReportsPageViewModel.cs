@@ -1468,6 +1468,12 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// </summary>
     private void ApplyConfigurationToPageSettings()
     {
+        // Update report name from configuration
+        if (!string.IsNullOrEmpty(Configuration.Title))
+        {
+            ReportName = Configuration.Title;
+        }
+
         // Update page settings from configuration
         PageSize = Configuration.PageSize;
         PageOrientation = Configuration.PageOrientation;
