@@ -177,18 +177,17 @@
         <!-- Main Content Area -->
         <Panel Grid.Row="1">
             <!-- Step 1: Template & Settings -->
-            <ScrollViewer IsVisible="{Binding IsStep1}"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <Grid ColumnDefinitions="*,400" Margin="24">
-                    <!-- Left: Templates with Tab Navigation -->
-                    <Border Grid.Column="0"
-                            Background="{DynamicResource SurfaceBrush}"
-                            CornerRadius="12"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            Margin="0,0,24,0">
-                        <Grid RowDefinitions="Auto,*">
+            <Grid IsVisible="{Binding IsStep1}"
+                  ColumnDefinitions="*,400"
+                  Margin="24">
+                <!-- Left: Templates with Tab Navigation -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        Margin="0,0,24,0">
+                    <Grid RowDefinitions="Auto,*">
                             <!-- Tab Navigation -->
                             <Border Grid.Row="0"
                                     BorderBrush="{DynamicResource BorderBrush}"
@@ -248,10 +247,13 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Tab Content -->
-                            <Panel Grid.Row="1" Margin="24">
-                                <!-- Templates Tab Content -->
-                                <StackPanel Spacing="16" IsVisible="{Binding IsTemplatesTabSelected}">
+                            <!-- Tab Content (Scrollable) -->
+                            <ScrollViewer Grid.Row="1"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <Panel Margin="24">
+                                    <!-- Templates Tab Content -->
+                                    <StackPanel Spacing="16" IsVisible="{Binding IsTemplatesTabSelected}">
                                     <!-- Built-in Templates Grid -->
                                     <ItemsControl ItemsSource="{Binding ReportTemplateOptions}">
                                         <ItemsControl.ItemsPanel>
@@ -461,7 +463,8 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </StackPanel>
-                            </Panel>
+                                </Panel>
+                            </ScrollViewer>
                         </Grid>
                     </Border>
 
@@ -555,7 +558,6 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-            </ScrollViewer>
 
             <!-- Step 2: Layout Designer -->
             <Grid IsVisible="{Binding IsStep2}"

@@ -527,18 +527,16 @@ public partial class SkiaReportDesignCanvas : UserControl
         {
             var srcPtr = _renderBitmap.GetPixels();
             var dstPtr = frameBuffer.Address;
-            var rowBytes = info.RowBytes;
+            var srcRowBytes = info.RowBytes;
+            var dstRowBytes = frameBuffer.RowBytes;
 
-            unsafe
+            // Use a row buffer to copy without unsafe code
+            var rowBuffer = new byte[srcRowBytes];
+            for (int y = 0; y < info.Height; y++)
             {
-                for (int y = 0; y < info.Height; y++)
-                {
-                    Buffer.MemoryCopy(
-                        (void*)(srcPtr + y * rowBytes),
-                        (void*)(dstPtr + y * frameBuffer.RowBytes),
-                        frameBuffer.RowBytes,
-                        rowBytes);
-                }
+                // Copy from source to buffer, then buffer to destination
+                System.Runtime.InteropServices.Marshal.Copy(srcPtr + y * srcRowBytes, rowBuffer, 0, srcRowBytes);
+                System.Runtime.InteropServices.Marshal.Copy(rowBuffer, 0, dstPtr + y * dstRowBytes, srcRowBytes);
             }
         }
 
