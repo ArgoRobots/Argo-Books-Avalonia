@@ -871,6 +871,20 @@ public partial class ReportsPageViewModel : ViewModelBase
     private void CloseSaveTemplate()
     {
         IsSaveTemplateOpen = false;
+        _saveTemplateCompletionSource?.TrySetResult(false);
+    }
+
+    private TaskCompletionSource<bool>? _saveTemplateCompletionSource;
+
+    /// <summary>
+    /// Opens the save template modal and waits for it to close.
+    /// Returns true if template was saved successfully, false if cancelled.
+    /// </summary>
+    public Task<bool> OpenSaveTemplateAndWaitAsync()
+    {
+        _saveTemplateCompletionSource = new TaskCompletionSource<bool>();
+        IsSaveTemplateOpen = true;
+        return _saveTemplateCompletionSource.Task;
     }
 
     #endregion
@@ -1329,6 +1343,9 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             // Refresh custom templates list
             LoadCustomTemplates();
+
+            // Signal successful save to any waiting callers
+            _saveTemplateCompletionSource?.TrySetResult(true);
         }
         else
         {
