@@ -228,8 +228,8 @@ public partial class DashboardPageViewModel : ViewModelBase
                 AmountValue = s.Total,
                 Date = s.Date,
                 DateFormatted = FormatDate(s.Date),
-                Status = s.PaymentStatus,
-                StatusVariant = GetStatusVariant(s.PaymentStatus),
+                Status = "Completed",
+                StatusVariant = "success",
                 IsIncome = true,
                 CustomerName = GetCustomerName(data, s.CustomerId)
             });
@@ -270,8 +270,8 @@ public partial class DashboardPageViewModel : ViewModelBase
                 AmountValue = i.Total,
                 Date = i.IssueDate,
                 DateFormatted = FormatDate(i.IssueDate),
-                Status = i.Status.ToString(),
-                StatusVariant = GetInvoiceStatusVariant(i.Status),
+                Status = "Completed",
+                StatusVariant = "success",
                 IsIncome = true,
                 CustomerName = GetCustomerName(data, i.CustomerId)
             });
