@@ -33,7 +33,7 @@
                     BoxShadow="0 4 20 0 #40000000">
 
                 <Border.RenderTransform>
-                    <ScaleTransform x:Name="ZoomTransform" ScaleX="1" ScaleY="1" />
+                    <ScaleTransform ScaleX="1" ScaleY="1" />
                 </Border.RenderTransform>
 
                 <!-- The SkiaSharp rendered image -->
