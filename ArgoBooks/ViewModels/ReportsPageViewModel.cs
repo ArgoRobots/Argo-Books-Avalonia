@@ -1599,9 +1599,29 @@ public partial class ReportsPageViewModel : ViewModelBase
         UndoRedoViewModel = new ReportsUndoRedoButtonGroupViewModel(UndoRedoManager);
         UndoRedoViewModel.ActionPerformed += (_, _) => OnPropertyChanged(nameof(Configuration));
 
+        // Load element panel state from settings
+        var uiSettings = App.SettingsService?.GlobalSettings?.Ui;
+        if (uiSettings != null)
+        {
+            _isElementPanelExpanded = !uiSettings.ReportsElementPanelCollapsed;
+        }
+
         InitializeCollections();
         LoadTemplate(SelectedTemplateName);
         InitializeExportSettings();
+    }
+
+    /// <summary>
+    /// Saves the element panel state when it changes.
+    /// </summary>
+    partial void OnIsElementPanelExpandedChanged(bool value)
+    {
+        var settings = App.SettingsService?.GlobalSettings;
+        if (settings != null)
+        {
+            settings.Ui.ReportsElementPanelCollapsed = !value;
+            App.SettingsService?.SaveSettings();
+        }
     }
 
     private void InitializeExportSettings()

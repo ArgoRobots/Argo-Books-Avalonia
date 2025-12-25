@@ -616,8 +616,11 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Get mouse position relative to the scroll viewer (viewport coordinates)
         var mousePosInViewport = e.GetPosition(_scrollViewer);
 
-        // Get current scroll offset and zoom
+        // Get current scroll offset, extent, and zoom
         var oldOffset = _scrollViewer.Offset;
+        var oldExtent = _scrollViewer.Extent;
+        var viewportWidth = _scrollViewer.Viewport.Width;
+        var viewportHeight = _scrollViewer.Viewport.Height;
         var oldZoom = ZoomLevel;
 
         // Apply zoom change
@@ -627,11 +630,21 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (Math.Abs(newZoom - oldZoom) < 0.001)
             return;
 
-        // Calculate the mouse position in the content/extent space (before zoom change)
-        // Content space = viewport position + scroll offset
+        // When content is smaller than viewport, it's centered (due to HorizontalAlignment/VerticalAlignment="Center")
+        // We need to account for this centering offset when converting viewport coords to content coords
+        var centeringOffsetX = oldExtent.Width < viewportWidth
+            ? (viewportWidth - oldExtent.Width) / 2
+            : 0;
+        var centeringOffsetY = oldExtent.Height < viewportHeight
+            ? (viewportHeight - oldExtent.Height) / 2
+            : 0;
+
+        // Calculate the mouse position in content space
+        // When scrolled: add scroll offset
+        // When centered: subtract centering offset (scroll offset is 0)
         var mousePosInContent = new Point(
-            mousePosInViewport.X + oldOffset.X,
-            mousePosInViewport.Y + oldOffset.Y
+            mousePosInViewport.X + oldOffset.X - centeringOffsetX,
+            mousePosInViewport.Y + oldOffset.Y - centeringOffsetY
         );
 
         // Convert content position to canvas coordinates (accounting for margin and zoom)
@@ -639,7 +652,8 @@ public partial class SkiaReportDesignCanvas : UserControl
         var canvasX = (mousePosInContent.X - margin) / oldZoom;
         var canvasY = (mousePosInContent.Y - margin) / oldZoom;
 
-        Console.WriteLine($"[Zoom] MouseInViewport: ({mousePosInViewport.X:F1}, {mousePosInViewport.Y:F1}), CanvasCoord: ({canvasX:F1}, {canvasY:F1})");
+        Console.WriteLine($"[Zoom] MouseInViewport: ({mousePosInViewport.X:F1}, {mousePosInViewport.Y:F1}), CenteringOffset: ({centeringOffsetX:F1}, {centeringOffsetY:F1})");
+        Console.WriteLine($"[Zoom] MouseInContent: ({mousePosInContent.X:F1}, {mousePosInContent.Y:F1}), CanvasCoord: ({canvasX:F1}, {canvasY:F1})");
         Console.WriteLine($"[Zoom] OldZoom: {oldZoom:F2} -> NewZoom: {newZoom:F2}");
 
         // Apply the new zoom level
@@ -653,34 +667,43 @@ public partial class SkiaReportDesignCanvas : UserControl
         {
             if (_scrollViewer == null) return;
 
-            var viewportWidth = _scrollViewer.Viewport.Width;
-            var viewportHeight = _scrollViewer.Viewport.Height;
-            var expectedExtentWidth = pageWidth * newZoom + margin * 2;
-            var expectedExtentHeight = pageHeight * newZoom + margin * 2;
-
-            // If content is smaller than viewport, no scrolling needed
-            if (expectedExtentWidth <= viewportWidth && expectedExtentHeight <= viewportHeight)
-            {
-                Console.WriteLine("[Zoom] Content fits in viewport, no scroll adjustment needed");
-                return;
-            }
+            var newViewportWidth = _scrollViewer.Viewport.Width;
+            var newViewportHeight = _scrollViewer.Viewport.Height;
+            var newExtentWidth = pageWidth * newZoom + margin * 2;
+            var newExtentHeight = pageHeight * newZoom + margin * 2;
 
             // Calculate where the canvas point is in the new content space
             var newContentX = canvasX * newZoom + margin;
             var newContentY = canvasY * newZoom + margin;
 
-            // New scroll offset = new content position - viewport position (to keep mouse over same canvas point)
-            var newScrollX = newContentX - mousePosInViewport.X;
-            var newScrollY = newContentY - mousePosInViewport.Y;
+            // Calculate new centering offset (after zoom)
+            var newCenteringOffsetX = newExtentWidth < newViewportWidth
+                ? (newViewportWidth - newExtentWidth) / 2
+                : 0;
+            var newCenteringOffsetY = newExtentHeight < newViewportHeight
+                ? (newViewportHeight - newExtentHeight) / 2
+                : 0;
+
+            // If content will be centered after zoom, no scroll adjustment needed
+            if (newExtentWidth <= newViewportWidth && newExtentHeight <= newViewportHeight)
+            {
+                Console.WriteLine("[Zoom] Content fits in viewport, no scroll adjustment needed");
+                return;
+            }
+
+            // New scroll offset = new content position - (viewport position - new centering offset)
+            // But when there's a new centering offset, scroll offset should be 0 for that axis
+            var newScrollX = newCenteringOffsetX > 0 ? 0 : newContentX - mousePosInViewport.X;
+            var newScrollY = newCenteringOffsetY > 0 ? 0 : newContentY - mousePosInViewport.Y;
 
             // Clamp to valid scroll range
-            var maxScrollX = Math.Max(0, expectedExtentWidth - viewportWidth);
-            var maxScrollY = Math.Max(0, expectedExtentHeight - viewportHeight);
+            var maxScrollX = Math.Max(0, newExtentWidth - newViewportWidth);
+            var maxScrollY = Math.Max(0, newExtentHeight - newViewportHeight);
 
             newScrollX = Math.Clamp(newScrollX, 0, maxScrollX);
             newScrollY = Math.Clamp(newScrollY, 0, maxScrollY);
 
-            Console.WriteLine($"[Zoom] NewScroll: ({newScrollX:F1}, {newScrollY:F1})");
+            Console.WriteLine($"[Zoom] NewScroll: ({newScrollX:F1}, {newScrollY:F1}), MaxScroll: ({maxScrollX:F1}, {maxScrollY:F1})");
 
             _scrollViewer.Offset = new Vector(newScrollX, newScrollY);
         }, DispatcherPriority.Render);
