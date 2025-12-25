@@ -1319,7 +1319,15 @@ public partial class App : Application
         navigationService.RegisterPage("Welcome", _ => new WelcomeScreen { DataContext = _welcomeScreenViewModel });
 
         // Main Section
-        navigationService.RegisterPage("Dashboard", _ => CreatePlaceholderPage("Dashboard", "Welcome to the Dashboard"));
+        navigationService.RegisterPage("Dashboard", _ =>
+        {
+            var viewModel = new DashboardPageViewModel();
+            if (CompanyManager?.IsCompanyOpen == true)
+            {
+                viewModel.Initialize(CompanyManager);
+            }
+            return new DashboardPage { DataContext = viewModel };
+        });
         navigationService.RegisterPage("Analytics", _ => new AnalyticsPage { DataContext = new AnalyticsPageViewModel() });
         navigationService.RegisterPage("Insights", _ => new InsightsPage { DataContext = new InsightsPageViewModel() });
         navigationService.RegisterPage("Reports", _ => new ReportsPage { DataContext = new ReportsPageViewModel() });

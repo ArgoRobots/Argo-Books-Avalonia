@@ -1,0 +1,698 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
+             x:Class="ArgoBooks.Views.DashboardPage"
+             x:DataType="vm:DashboardPageViewModel">
+
+    <Design.DataContext>
+        <vm:DashboardPageViewModel />
+    </Design.DataContext>
+
+    <UserControl.Styles>
+        <!-- Quick Action Button Style -->
+        <Style Selector="Button.quick-action">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="20,16" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.quick-action:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.quick-action:pressed">
+            <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
+        </Style>
+
+        <!-- Card Style -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+
+        <!-- Table Header Style -->
+        <Style Selector="Border.table-header">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="Padding" Value="16,12" />
+        </Style>
+
+        <!-- Table Row Style -->
+        <Style Selector="Border.table-row">
+            <Setter Property="Padding" Value="16,14" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+        <Style Selector="Border.table-row:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- Main Content -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Background="{DynamicResource BackgroundSecondaryBrush}">
+        <StackPanel Margin="24" Spacing="24">
+            <!-- Page Header -->
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Dashboard"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="Welcome back! Here's an overview of your business."
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                </StackPanel>
+
+                <!-- Quick Stats Summary -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="16"
+                            VerticalAlignment="Center">
+                    <Button Classes="secondary-button"
+                            Command="{Binding NavigateToAnalyticsCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                      Width="16" Height="16" />
+                            <TextBlock Text="View Analytics" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="primary-button"
+                            Command="{Binding NavigateToReportsCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                      Width="16" Height="16"
+                                      Foreground="White" />
+                            <TextBlock Text="Generate Report" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Statistics Cards Row -->
+            <UniformGrid Columns="4" Rows="1">
+                <!-- Total Revenue -->
+                <controls:StatCard Label="Total Revenue"
+                                   Value="{Binding TotalRevenue}"
+                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
+                                   IconColor="Success"
+                                   ChangeValue="{Binding RevenueChangeValue}"
+                                   ChangeText="{Binding RevenueChangeText}"
+                                   SecondaryText="vs last month"
+                                   Margin="0,0,12,0" />
+
+                <!-- Total Expenses -->
+                <controls:StatCard Label="Total Expenses"
+                                   Value="{Binding TotalExpenses}"
+                                   Icon="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z"
+                                   IconColor="Danger"
+                                   ChangeValue="{Binding ExpenseChangeValue}"
+                                   ChangeText="{Binding ExpenseChangeText}"
+                                   SecondaryText="vs last month"
+                                   Margin="0,0,12,0" />
+
+                <!-- Outstanding Invoices -->
+                <controls:StatCard Label="Outstanding Invoices"
+                                   Value="{Binding OutstandingInvoices}"
+                                   Icon="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                   IconColor="Warning"
+                                   SecondaryText="{Binding OutstandingInvoiceCount, StringFormat='{}{0} invoices pending'}"
+                                   Margin="0,0,12,0" />
+
+                <!-- Active Rentals -->
+                <controls:StatCard Label="Active Rentals"
+                                   Value="{Binding ActiveRentals}"
+                                   Icon="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
+                                   IconColor="Info"
+                                   SecondaryText="{Binding OverdueRentalCount, StringFormat='{}{0} overdue'}" />
+            </UniformGrid>
+
+            <!-- Quick Actions Section -->
+            <Border Classes="card" Padding="20">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Quick Actions"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                    <Grid ColumnDefinitions="*,*,*,*">
+                        <!-- New Expense -->
+                        <Button Grid.Column="0"
+                                Classes="quick-action"
+                                Margin="0,0,6,0"
+                                Command="{Binding AddExpenseCommand}"
+                                HorizontalAlignment="Stretch">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Border Grid.Column="0"
+                                        Width="44" Height="44"
+                                        CornerRadius="10"
+                                        Background="{DynamicResource DangerIconBgBrush}"
+                                        Margin="0,0,14,0">
+                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                              Width="22" Height="22"
+                                              Foreground="{DynamicResource DangerBrush}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="New Expense"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Record a purchase"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+
+                        <!-- Record Sale -->
+                        <Button Grid.Column="1"
+                                Classes="quick-action"
+                                Margin="6,0,6,0"
+                                Command="{Binding RecordSaleCommand}"
+                                HorizontalAlignment="Stretch">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Border Grid.Column="0"
+                                        Width="44" Height="44"
+                                        CornerRadius="10"
+                                        Background="{DynamicResource SuccessIconBgBrush}"
+                                        Margin="0,0,14,0">
+                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
+                                              Width="22" Height="22"
+                                              Foreground="{DynamicResource SuccessBrush}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="Record Sale"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Add revenue entry"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+
+                        <!-- Create Invoice -->
+                        <Button Grid.Column="2"
+                                Classes="quick-action"
+                                Margin="6,0,6,0"
+                                Command="{Binding CreateInvoiceCommand}"
+                                HorizontalAlignment="Stretch">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Border Grid.Column="0"
+                                        Width="44" Height="44"
+                                        CornerRadius="10"
+                                        Background="{DynamicResource PrimaryIconBgBrush}"
+                                        Margin="0,0,14,0">
+                                    <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                              Width="22" Height="22"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="Create Invoice"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Bill a customer"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+
+                        <!-- New Rental -->
+                        <Button Grid.Column="3"
+                                Classes="quick-action"
+                                Margin="6,0,0,0"
+                                Command="{Binding NewRentalCommand}"
+                                HorizontalAlignment="Stretch">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <Border Grid.Column="0"
+                                        Width="44" Height="44"
+                                        CornerRadius="10"
+                                        Background="{DynamicResource InfoIconBgBrush}"
+                                        Margin="0,0,14,0">
+                                    <PathIcon Data="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
+                                              Width="22" Height="22"
+                                              Foreground="{DynamicResource InfoBrush}" />
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="New Rental"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Start a rental"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Charts Section -->
+            <Grid ColumnDefinitions="*,*" Height="320">
+                <!-- Revenue Overview Chart -->
+                <Border Grid.Column="0"
+                        Classes="card"
+                        Margin="0,0,12,0">
+                    <Grid RowDefinitions="Auto,*">
+                        <Border Grid.Row="0"
+                                Padding="20,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="Revenue Overview"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Border Background="{DynamicResource SuccessIconBgBrush}"
+                                            CornerRadius="4"
+                                            Padding="8,4">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Ellipse Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" />
+                                            <TextBlock Text="Revenue"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="1" Padding="20">
+                            <!-- Chart Placeholder -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="12">
+                                    <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
+                                              Width="48" Height="48"
+                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="Revenue trend chart"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="Data visualization coming soon"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Expense Breakdown Chart -->
+                <Border Grid.Column="1"
+                        Classes="card"
+                        Margin="12,0,0,0">
+                    <Grid RowDefinitions="Auto,*">
+                        <Border Grid.Row="0"
+                                Padding="20,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="Expense Breakdown"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                    <Border Background="{DynamicResource DangerIconBgBrush}"
+                                            CornerRadius="4"
+                                            Padding="8,4">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <Ellipse Width="8" Height="8" Fill="{DynamicResource DangerBrush}" />
+                                            <TextBlock Text="Expenses"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border Grid.Row="1" Padding="20">
+                            <!-- Chart Placeholder -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="12">
+                                    <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
+                                              Width="48" Height="48"
+                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="Expense distribution"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="Data visualization coming soon"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Tables Section -->
+            <Grid ColumnDefinitions="*,*">
+                <!-- Recent Transactions Table -->
+                <Border Grid.Column="0"
+                        Classes="card"
+                        Margin="0,0,12,0">
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- Header -->
+                        <Border Grid.Row="0"
+                                Padding="20,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="Recent Transactions"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="1"
+                                        Classes="ghost-button"
+                                        Command="{Binding NavigateToRevenueCommand}">
+                                    <TextBlock Text="View All" FontSize="13" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Table Content -->
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto"
+                                      MaxHeight="400"
+                                      IsVisible="{Binding HasRecentTransactions}">
+                            <ItemsControl ItemsSource="{Binding RecentTransactions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:RecentTransactionItem">
+                                        <Border Classes="table-row">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                <!-- Type Icon -->
+                                                <Border Grid.Column="0"
+                                                        Width="36" Height="36"
+                                                        CornerRadius="8"
+                                                        Margin="0,0,12,0"
+                                                        Classes.income="{Binding IsIncome}"
+                                                        Classes.expense="{Binding !IsIncome}">
+                                                    <Border.Styles>
+                                                        <Style Selector="Border.income">
+                                                            <Setter Property="Background" Value="{DynamicResource SuccessIconBgBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.expense">
+                                                            <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
+                                                        </Style>
+                                                    </Border.Styles>
+                                                    <PathIcon Width="18" Height="18"
+                                                              Classes.income="{Binding IsIncome}"
+                                                              Classes.expense="{Binding !IsIncome}">
+                                                        <PathIcon.Styles>
+                                                            <Style Selector="PathIcon.income">
+                                                                <Setter Property="Data" Value="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                                            </Style>
+                                                            <Style Selector="PathIcon.expense">
+                                                                <Setter Property="Data" Value="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a.9959.9959 0 00-1.41 0L1.29 18.96c-.39.39-.39 1.02 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05c.39-.39.39-1.02 0-1.41l-2.33-2.35z" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                            </Style>
+                                                        </PathIcon.Styles>
+                                                    </PathIcon>
+                                                </Border>
+
+                                                <!-- Description & Customer -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding Description}"
+                                                               FontSize="13"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               MaxWidth="180" />
+                                                    <TextBlock Text="{Binding CustomerName}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               MaxWidth="180" />
+                                                </StackPanel>
+
+                                                <!-- Amount -->
+                                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0" HorizontalAlignment="Right">
+                                                    <TextBlock Text="{Binding Amount}"
+                                                               FontSize="13"
+                                                               FontWeight="SemiBold"
+                                                               HorizontalAlignment="Right"
+                                                               Classes.income="{Binding IsIncome}"
+                                                               Classes.expense="{Binding !IsIncome}">
+                                                        <TextBlock.Styles>
+                                                            <Style Selector="TextBlock.income">
+                                                                <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                                            </Style>
+                                                            <Style Selector="TextBlock.expense">
+                                                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                            </Style>
+                                                        </TextBlock.Styles>
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding DateFormatted}"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               HorizontalAlignment="Right" />
+                                                </StackPanel>
+
+                                                <!-- Status Badge -->
+                                                <Border Grid.Column="3"
+                                                        CornerRadius="12"
+                                                        Padding="8,4"
+                                                        VerticalAlignment="Center"
+                                                        Classes.success="{Binding IsStatusSuccess}"
+                                                        Classes.warning="{Binding IsStatusWarning}"
+                                                        Classes.error="{Binding IsStatusError}"
+                                                        Classes.info="{Binding IsStatusInfo}"
+                                                        Classes.neutral="{Binding IsStatusNeutral}">
+                                                    <Border.Styles>
+                                                        <Style Selector="Border.success">
+                                                            <Setter Property="Background" Value="{DynamicResource SuccessLightBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.success TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource SuccessDarkBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.warning">
+                                                            <Setter Property="Background" Value="{DynamicResource WarningLightBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.warning TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource WarningDarkBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.error">
+                                                            <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.error TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource ErrorDarkBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.info">
+                                                            <Setter Property="Background" Value="{DynamicResource InfoLightBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.info TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource InfoDarkBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.neutral">
+                                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.neutral TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                                        </Style>
+                                                    </Border.Styles>
+                                                    <TextBlock Text="{Binding Status}"
+                                                               FontSize="11"
+                                                               FontWeight="Medium" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Empty State -->
+                        <Border Grid.Row="1"
+                                Padding="40"
+                                IsVisible="{Binding HasNoRecentTransactions}">
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="12">
+                                <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                                          Width="48" Height="48"
+                                          Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Text="No recent transactions"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Record a sale or expense to see it here"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Active Rentals Table -->
+                <Border Grid.Column="1"
+                        Classes="card"
+                        Margin="12,0,0,0">
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- Header -->
+                        <Border Grid.Row="0"
+                                Padding="20,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           Text="Active Rentals"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="1"
+                                        Classes="ghost-button"
+                                        Command="{Binding NavigateToRentalsCommand}">
+                                    <TextBlock Text="View All" FontSize="13" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Table Content -->
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto"
+                                      MaxHeight="400"
+                                      IsVisible="{Binding HasActiveRentals}">
+                            <ItemsControl ItemsSource="{Binding ActiveRentalsList}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ActiveRentalItem">
+                                        <Border Classes="table-row">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                                <!-- Status Indicator -->
+                                                <Border Grid.Column="0"
+                                                        Width="36" Height="36"
+                                                        CornerRadius="8"
+                                                        Margin="0,0,12,0"
+                                                        Classes.active="{Binding !IsOverdue}"
+                                                        Classes.overdue="{Binding IsOverdue}">
+                                                    <Border.Styles>
+                                                        <Style Selector="Border.active">
+                                                            <Setter Property="Background" Value="{DynamicResource InfoIconBgBrush}" />
+                                                        </Style>
+                                                        <Style Selector="Border.overdue">
+                                                            <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
+                                                        </Style>
+                                                    </Border.Styles>
+                                                    <PathIcon Data="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
+                                                              Width="18" Height="18"
+                                                              Classes.active="{Binding !IsOverdue}"
+                                                              Classes.overdue="{Binding IsOverdue}">
+                                                        <PathIcon.Styles>
+                                                            <Style Selector="PathIcon.active">
+                                                                <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+                                                            </Style>
+                                                            <Style Selector="PathIcon.overdue">
+                                                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                            </Style>
+                                                        </PathIcon.Styles>
+                                                    </PathIcon>
+                                                </Border>
+
+                                                <!-- Item & Customer -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                    <TextBlock Text="{Binding ItemName}"
+                                                               FontSize="13"
+                                                               FontWeight="Medium"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               MaxWidth="160" />
+                                                    <TextBlock Text="{Binding CustomerName}"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               MaxWidth="160" />
+                                                </StackPanel>
+
+                                                <!-- Due Date & Days Remaining -->
+                                                <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0" HorizontalAlignment="Right">
+                                                    <TextBlock Text="{Binding DueDateFormatted}"
+                                                               FontSize="13"
+                                                               FontWeight="Medium"
+                                                               HorizontalAlignment="Right"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding DaysRemainingText}"
+                                                               FontSize="11"
+                                                               HorizontalAlignment="Right"
+                                                               Classes.active="{Binding !IsOverdue}"
+                                                               Classes.overdue="{Binding IsOverdue}">
+                                                        <TextBlock.Styles>
+                                                            <Style Selector="TextBlock.active">
+                                                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                                                            </Style>
+                                                            <Style Selector="TextBlock.overdue">
+                                                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                            </Style>
+                                                        </TextBlock.Styles>
+                                                    </TextBlock>
+                                                </StackPanel>
+
+                                                <!-- Rate -->
+                                                <StackPanel Grid.Column="3" VerticalAlignment="Center" MinWidth="80" HorizontalAlignment="Right">
+                                                    <TextBlock Text="{Binding RateAmount}"
+                                                               FontSize="13"
+                                                               FontWeight="SemiBold"
+                                                               HorizontalAlignment="Right"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding RateType}"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               HorizontalAlignment="Right" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Empty State -->
+                        <Border Grid.Row="1"
+                                Padding="40"
+                                IsVisible="{Binding HasNoActiveRentals}">
+                            <StackPanel HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="12">
+                                <PathIcon Data="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
+                                          Width="48" Height="48"
+                                          Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Text="No active rentals"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="Start a new rental to see it here"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Bottom Spacing -->
+            <Border Height="24" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

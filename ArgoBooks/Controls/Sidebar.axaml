@@ -13,23 +13,123 @@
         <vm:SidebarViewModel />
     </Design.DataContext>
 
+    <UserControl.Styles>
+        <!-- Toggle button rotation animation -->
+        <Style Selector="PathIcon.toggle-arrow">
+            <Setter Property="RenderTransform" Value="rotate(0deg)" />
+            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseInOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="PathIcon.toggle-arrow.collapsed">
+            <Setter Property="RenderTransform" Value="rotate(180deg)" />
+        </Style>
+
+        <!-- Sidebar toggle button style -->
+        <Style Selector="Button.sidebar-toggle">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.sidebar-toggle:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SidebarHoverBrush}" />
+        </Style>
+        <Style Selector="Button.sidebar-toggle:pointerover PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
+        </Style>
+        <Style Selector="Button.sidebar-toggle:pressed">
+            <Setter Property="Background" Value="{DynamicResource SidebarActiveBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <DockPanel>
-        <!-- Header: Logo and Company Name -->
+        <!-- Header: Logo and Company Name with Toggle -->
         <Border DockPanel.Dock="Top"
                 Padding="15"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,0">
             <Panel>
-                <!-- Expanded Header with Button -->
-                <Button Classes="sidebar-header"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Stretch"
-                        IsVisible="{Binding !IsCollapsed}"
-                        Command="{Binding OpenCompanySwitcherCommand}">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <!-- Logo (40px square) -->
-                        <Border Grid.Column="0"
-                                Width="40" Height="40"
+                <!-- Expanded Header Layout -->
+                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsCollapsed}">
+                    <!-- Company Header Content -->
+                    <Button Grid.Column="0"
+                            Classes="sidebar-header"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            Command="{Binding OpenCompanySwitcherCommand}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <!-- Logo (40px square) -->
+                            <Border Grid.Column="0"
+                                    Width="40" Height="40"
+                                    CornerRadius="8"
+                                    ClipToBounds="True"
+                                    Background="{DynamicResource SurfaceAltBrush}">
+                                <Panel>
+                                    <Image Source="{Binding CompanyLogo}"
+                                           Stretch="UniformToFill"
+                                           IsVisible="{Binding HasCompanyLogo}" />
+                                    <!-- Gradient background for initial only -->
+                                    <Border CornerRadius="8"
+                                            IsVisible="{Binding !HasCompanyLogo}">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                                <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
+                                                <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <TextBlock Text="{Binding CompanyInitial}"
+                                                   FontSize="18"
+                                                   FontWeight="Bold"
+                                                   Foreground="White"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                </Panel>
+                            </Border>
+
+                            <!-- Brand Name -->
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding CompanyName}"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SidebarTextBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="12,0,0,0"
+                                       MaxWidth="110"
+                                       TextTrimming="CharacterEllipsis" />
+                        </Grid>
+                    </Button>
+
+                    <!-- Sidebar Toggle Button with Animated Arrow -->
+                    <Button Grid.Column="1"
+                            Classes="sidebar-toggle"
+                            Command="{Binding ToggleCollapseCommand}"
+                            ToolTip.Tip="{Binding CollapseTooltip}"
+                            Width="28" Height="28"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center">
+                        <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                  Width="18" Height="18"
+                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                  Classes="toggle-arrow" />
+                    </Button>
+                </Grid>
+
+                <!-- Collapsed Header Layout - Logo on top, toggle below -->
+                <StackPanel IsVisible="{Binding IsCollapsed}"
+                            HorizontalAlignment="Center"
+                            Spacing="8">
+                    <!-- Collapsed Logo - Clickable to open company switcher -->
+                    <Button Classes="sidebar-header-collapsed"
+                            Command="{Binding OpenCompanySwitcherCommand}"
+                            ToolTip.Tip="{Binding CompanyName}"
+                            HorizontalAlignment="Center">
+                        <Border Width="40" Height="40"
                                 CornerRadius="8"
                                 ClipToBounds="True"
                                 Background="{DynamicResource SurfaceAltBrush}">
@@ -55,61 +155,20 @@
                                 </Border>
                             </Panel>
                         </Border>
+                    </Button>
 
-                        <!-- Brand Name -->
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding CompanyName}"
-                                   FontSize="15"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource SidebarTextBrush}"
-                                   VerticalAlignment="Center"
-                                   Margin="12,0,0,0"
-                                   MaxWidth="140"
-                                   TextTrimming="CharacterEllipsis" />
-
-                        <!-- Chevron Down Icon -->
-                        <PathIcon Grid.Column="2"
-                                  Data="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
-                                  Width="16" Height="16"
+                    <!-- Toggle button below logo when collapsed -->
+                    <Button Classes="sidebar-toggle"
+                            Command="{Binding ToggleCollapseCommand}"
+                            ToolTip.Tip="Expand sidebar"
+                            Width="28" Height="28"
+                            HorizontalAlignment="Center">
+                        <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
+                                  Width="18" Height="18"
                                   Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                  VerticalAlignment="Center"
-                                  Margin="8,0,0,0" />
-                    </Grid>
-                </Button>
-
-                <!-- Collapsed Logo Only - Clickable to open company switcher -->
-                <Button Classes="sidebar-header-collapsed"
-                        IsVisible="{Binding IsCollapsed}"
-                        Command="{Binding OpenCompanySwitcherCommand}"
-                        ToolTip.Tip="{Binding CompanyName}"
-                        HorizontalAlignment="Center">
-                    <Border Width="40" Height="40"
-                            CornerRadius="8"
-                            ClipToBounds="True"
-                            Background="{DynamicResource SurfaceAltBrush}">
-                        <Panel>
-                            <Image Source="{Binding CompanyLogo}"
-                                   Stretch="UniformToFill"
-                                   IsVisible="{Binding HasCompanyLogo}" />
-                            <!-- Gradient background for initial only -->
-                            <Border CornerRadius="8"
-                                    IsVisible="{Binding !HasCompanyLogo}">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                        <GradientStop Color="{DynamicResource PrimaryColor}" Offset="0" />
-                                        <GradientStop Color="{DynamicResource AccentColor}" Offset="1" />
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                                <TextBlock Text="{Binding CompanyInitial}"
-                                           FontSize="18"
-                                           FontWeight="Bold"
-                                           Foreground="White"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" />
-                            </Border>
-                        </Panel>
-                    </Border>
-                </Button>
+                                  Classes="toggle-arrow collapsed" />
+                    </Button>
+                </StackPanel>
             </Panel>
         </Border>
 

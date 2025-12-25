@@ -17,7 +17,7 @@
             BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="0,0,0,1"
             Height="60"
-            Padding="12,0,12,0">
+            Padding="16,0,16,0">
         <Panel>
             <!-- Center Section: Search Box (absolutely centered) -->
             <Border Width="280"
@@ -61,19 +61,11 @@
                 </Grid>
             </Border>
 
-            <!-- Left Section: Menu Toggle, File, Undo, Redo, Save -->
+            <!-- Left Section: File, Undo, Redo, Save -->
             <StackPanel HorizontalAlignment="Left"
                         Orientation="Horizontal"
                         VerticalAlignment="Center"
                         Spacing="4">
-                <!-- Menu Toggle (hamburger) -->
-                <Button Classes="header-icon"
-                        Command="{Binding ToggleSidebarCommand}"
-                        ToolTip.Tip="Toggle Sidebar">
-                    <PathIcon Data="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"
-                              Width="20" Height="20" />
-                </Button>
-
                 <!-- File Menu Button -->
                 <Button Classes="header-icon"
                         Command="{Binding OpenFileMenuCommand}"

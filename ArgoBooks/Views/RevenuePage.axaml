@@ -201,110 +201,107 @@
                         </Grid>
                     </Border>
 
-                    <!-- Table Content -->
-                    <ScrollViewer Grid.Row="1"
-                                  HorizontalScrollBarVisibility="Auto"
-                                  VerticalScrollBarVisibility="Disabled">
-                        <Grid RowDefinitions="Auto,*">
-                            <!-- Column Menu Popup (outside the scroll area) -->
-                            <Popup IsOpen="{Binding IsColumnMenuOpen, Mode=TwoWay}"
-                                   Placement="Pointer"
-                                   IsLightDismissEnabled="True">
-                                    <Border Background="{DynamicResource SurfaceBrush}"
-                                            BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="8"
-                                            Padding="8"
-                                            BoxShadow="0 4 16 0 #20000000">
-                                        <StackPanel Spacing="4" Width="180">
-                                            <TextBlock Text="Show Columns"
-                                                       FontSize="13"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                       Margin="8,4,8,8" />
-                                            <CheckBox IsChecked="{Binding ShowIdColumn}" Content="ID" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="Customer" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowProductColumn}" Content="Product" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowDateColumn}" Content="Date" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="Quantity" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowUnitPriceColumn}" Content="Unit Price" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="Amount" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowTaxColumn}" Content="Tax" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowShippingColumn}" Content="Shipping" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowDiscountColumn}" Content="Discount" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="Total" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
-                                            <CheckBox IsChecked="{Binding ShowReceiptColumn}" Content="Receipt" Classes="column-toggle" />
-                                        </StackPanel>
-                                    </Border>
-                                </Popup>
-
-                            <!-- Table Header -->
-                            <Border Grid.Row="0"
-                                    Background="{DynamicResource SurfaceAltBrush}"
-                                    Padding="24,12"
-                                    PointerPressed="OnTableHeaderPointerPressed">
-                                <!-- Column Headers -->
-                                <StackPanel Orientation="Horizontal">
-                                    <!-- ID -->
-                                    <TextBlock Text="ID" Width="80" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowIdColumn}" />
-                                    <!-- Customer -->
-                                    <TextBlock Text="Customer" Width="140" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowCustomerColumn}" />
-                                    <!-- Product -->
-                                    <TextBlock Text="Product" Width="180" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowProductColumn}" />
-                                    <!-- Date -->
-                                    <TextBlock Text="Date" Width="90" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowDateColumn}" />
-                                    <!-- Qty -->
-                                    <TextBlock Text="Qty" Width="50" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowQuantityColumn}" />
-                                    <!-- Unit Price -->
-                                    <TextBlock Text="Unit Price" Width="80" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowUnitPriceColumn}" />
-                                    <!-- Amount -->
-                                    <TextBlock Text="Amount" Width="80" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowAmountColumn}" />
-                                    <!-- Tax -->
-                                    <TextBlock Text="Tax" Width="70" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowTaxColumn}" />
-                                    <!-- Shipping -->
-                                    <TextBlock Text="Shipping" Width="70" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowShippingColumn}" />
-                                    <!-- Discount -->
-                                    <TextBlock Text="Discount" Width="70" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowDiscountColumn}" />
-                                    <!-- Total -->
-                                    <TextBlock Text="Total" Width="80" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowTotalColumn}" />
-                                    <!-- Status -->
-                                    <TextBlock Text="Status" Width="80" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowStatusColumn}" />
-                                    <!-- Receipt -->
-                                    <TextBlock Text="Receipt" Width="60" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               HorizontalAlignment="Center"
-                                               IsVisible="{Binding ShowReceiptColumn}" />
-                                    <!-- Actions -->
-                                    <TextBlock Text="Actions" Width="180" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               HorizontalAlignment="Right" />
+                    <!-- Column Menu Popup (outside the scroll area) -->
+                    <Popup IsOpen="{Binding IsColumnMenuOpen, Mode=TwoWay}"
+                           Placement="Pointer"
+                           IsLightDismissEnabled="True">
+                            <Border Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="8"
+                                    BoxShadow="0 4 16 0 #20000000">
+                                <StackPanel Spacing="4" Width="180">
+                                    <TextBlock Text="Show Columns"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="8,4,8,8" />
+                                    <CheckBox IsChecked="{Binding ShowIdColumn}" Content="ID" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="Customer" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowProductColumn}" Content="Product" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowDateColumn}" Content="Date" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="Quantity" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowUnitPriceColumn}" Content="Unit Price" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="Amount" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowTaxColumn}" Content="Tax" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowShippingColumn}" Content="Shipping" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowDiscountColumn}" Content="Discount" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="Total" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
+                                    <CheckBox IsChecked="{Binding ShowReceiptColumn}" Content="Receipt" Classes="column-toggle" />
                                 </StackPanel>
                             </Border>
+                        </Popup>
+
+                    <!-- Table Content -->
+                    <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                        <!-- Table Header -->
+                        <Border Grid.Row="0"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                Padding="24,12"
+                                PointerPressed="OnTableHeaderPointerPressed">
+                            <!-- Column Headers with proportional widths -->
+                            <Grid ColumnDefinitions="0.8*,1.2*,1.5*,0.9*,0.5*,0.8*,0.8*,0.7*,0.7*,0.7*,0.8*,0.8*,0.6*,140">
+                                <!-- ID -->
+                                <TextBlock Grid.Column="0" Text="ID" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowIdColumn}" />
+                                <!-- Customer -->
+                                <TextBlock Grid.Column="1" Text="Customer" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowCustomerColumn}" />
+                                <!-- Product -->
+                                <TextBlock Grid.Column="2" Text="Product" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowProductColumn}" />
+                                <!-- Date -->
+                                <TextBlock Grid.Column="3" Text="Date" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowDateColumn}" />
+                                <!-- Qty -->
+                                <TextBlock Grid.Column="4" Text="Qty" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowQuantityColumn}" />
+                                <!-- Unit Price -->
+                                <TextBlock Grid.Column="5" Text="Unit Price" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowUnitPriceColumn}" />
+                                <!-- Amount -->
+                                <TextBlock Grid.Column="6" Text="Amount" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowAmountColumn}" />
+                                <!-- Tax -->
+                                <TextBlock Grid.Column="7" Text="Tax" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowTaxColumn}" />
+                                <!-- Shipping -->
+                                <TextBlock Grid.Column="8" Text="Shipping" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowShippingColumn}" />
+                                <!-- Discount -->
+                                <TextBlock Grid.Column="9" Text="Discount" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowDiscountColumn}" />
+                                <!-- Total -->
+                                <TextBlock Grid.Column="10" Text="Total" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowTotalColumn}" />
+                                <!-- Status -->
+                                <TextBlock Grid.Column="11" Text="Status" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           IsVisible="{Binding ShowStatusColumn}" />
+                                <!-- Receipt -->
+                                <TextBlock Grid.Column="12" Text="Receipt" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           IsVisible="{Binding ShowReceiptColumn}" />
+                                <!-- Actions -->
+                                <TextBlock Grid.Column="13" Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
 
                         <!-- Table Content (scrollable) -->
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -316,9 +313,9 @@
                                             <Border Padding="24,16"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <StackPanel Orientation="Horizontal">
+                                                <Grid ColumnDefinitions="0.8*,1.2*,1.5*,0.9*,0.5*,0.8*,0.8*,0.7*,0.7*,0.7*,0.8*,0.8*,0.6*,140">
                                                     <!-- ID -->
-                                                    <TextBlock Width="80"
+                                                    <TextBlock Grid.Column="0"
                                                                Text="{Binding Id}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
@@ -328,7 +325,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowIdColumn}" />
 
                                                     <!-- Customer with Avatar -->
-                                                    <StackPanel Width="140" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"
                                                                 IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowCustomerColumn}">
                                                         <Border Width="32" Height="32" CornerRadius="16"
                                                                 Background="{DynamicResource PrimaryBrush}">
@@ -347,7 +344,7 @@
                                                     </StackPanel>
 
                                                     <!-- Product -->
-                                                    <TextBlock Width="180"
+                                                    <TextBlock Grid.Column="2"
                                                                Text="{Binding ProductDescription}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
@@ -356,7 +353,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowProductColumn}" />
 
                                                     <!-- Date -->
-                                                    <TextBlock Width="90"
+                                                    <TextBlock Grid.Column="3"
                                                                Text="{Binding DateFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -364,7 +361,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowDateColumn}" />
 
                                                     <!-- Quantity -->
-                                                    <TextBlock Width="50"
+                                                    <TextBlock Grid.Column="4"
                                                                Text="{Binding Quantity}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -372,7 +369,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowQuantityColumn}" />
 
                                                     <!-- Unit Price -->
-                                                    <TextBlock Width="80"
+                                                    <TextBlock Grid.Column="5"
                                                                Text="{Binding UnitPriceFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -380,7 +377,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowUnitPriceColumn}" />
 
                                                     <!-- Amount -->
-                                                    <TextBlock Width="80"
+                                                    <TextBlock Grid.Column="6"
                                                                Text="{Binding AmountFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -388,7 +385,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowAmountColumn}" />
 
                                                     <!-- Tax -->
-                                                    <TextBlock Width="70"
+                                                    <TextBlock Grid.Column="7"
                                                                Text="{Binding TaxAmountFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -396,7 +393,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowTaxColumn}" />
 
                                                     <!-- Shipping -->
-                                                    <TextBlock Width="70"
+                                                    <TextBlock Grid.Column="8"
                                                                Text="{Binding ShippingCostFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -404,7 +401,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowShippingColumn}" />
 
                                                     <!-- Discount -->
-                                                    <TextBlock Width="70"
+                                                    <TextBlock Grid.Column="9"
                                                                Text="{Binding DiscountFormatted}"
                                                                FontSize="14"
                                                                Foreground="#22C55E"
@@ -412,7 +409,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowDiscountColumn}" />
 
                                                     <!-- Total -->
-                                                    <TextBlock Width="80"
+                                                    <TextBlock Grid.Column="10"
                                                                Text="{Binding TotalFormatted}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
@@ -421,7 +418,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowTotalColumn}" />
 
                                                     <!-- Status Badge -->
-                                                    <Border Width="80"
+                                                    <Border Grid.Column="11"
                                                             VerticalAlignment="Center"
                                                             HorizontalAlignment="Left"
                                                             Padding="8,4"
@@ -435,7 +432,7 @@
                                                     </Border>
 
                                                     <!-- Receipt Icon -->
-                                                    <Panel Width="60" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    <Panel Grid.Column="12" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowReceiptColumn}">
                                                         <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                                                   Width="16" Height="16"
@@ -448,7 +445,7 @@
                                                     </Panel>
 
                                                     <!-- Actions -->
-                                                    <StackPanel Width="180"
+                                                    <StackPanel Grid.Column="13"
                                                                 Orientation="Horizontal"
                                                                 HorizontalAlignment="Right"
                                                                 Spacing="4">
@@ -490,7 +487,7 @@
                                                                       Width="16" Height="16" />
                                                         </Button>
                                                     </StackPanel>
-                                                </StackPanel>
+                                                </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -538,7 +535,6 @@
                             </Panel>
                         </ScrollViewer>
                     </Grid>
-                    </ScrollViewer>
 
                     <!-- Pagination Footer -->
                     <Border Grid.Row="2"
