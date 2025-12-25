@@ -948,8 +948,6 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (success)
         {
             LoadCustomTemplates();
-            // Clear undo/redo to remove unsaved changes indicator (asterisk)
-            UndoRedoManager.Clear();
             // Show save confirmation message
             ShowSaveConfirmation = true;
             await Task.Delay(2000);
@@ -1466,9 +1464,6 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             // Refresh custom templates list
             LoadCustomTemplates();
-
-            // Clear undo/redo to remove unsaved changes indicator
-            UndoRedoManager.Clear();
 
             // Show the "Saved" overlay notification
             ShowSaveConfirmation = true;

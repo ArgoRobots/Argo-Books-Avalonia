@@ -26,31 +26,32 @@
                       Background="{DynamicResource SurfaceAltBrush}">
 
             <!-- Zoom transform control -->
-            <Border x:Name="ZoomContainer"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Margin="40"
-                    BoxShadow="0 4 20 0 #40000000">
+            <LayoutTransformControl x:Name="ZoomTransformControl"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Margin="40">
+                <LayoutTransformControl.LayoutTransform>
+                    <ScaleTransform x:Name="ZoomScaleTransform" ScaleX="1" ScaleY="1" />
+                </LayoutTransformControl.LayoutTransform>
+                <Border x:Name="ZoomContainer"
+                        BoxShadow="0 4 20 0 #40000000">
 
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="1" ScaleY="1" />
-                </Border.RenderTransform>
+                    <!-- The SkiaSharp rendered image -->
+                    <Grid x:Name="CanvasContainer">
+                        <Image x:Name="CanvasImage"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapInterpolationMode="HighQuality" />
 
-                <!-- The SkiaSharp rendered image -->
-                <Grid x:Name="CanvasContainer">
-                    <Image x:Name="CanvasImage"
-                           Stretch="Uniform"
-                           RenderOptions.BitmapInterpolationMode="HighQuality" />
-
-                    <!-- Selection rectangle overlay (for multi-select) -->
-                    <Canvas x:Name="OverlayCanvas"
-                            IsHitTestVisible="False">
-                        <Rectangle x:Name="SelectionRectangle"
-                                   Classes="selection-rect"
-                                   IsVisible="False" />
-                    </Canvas>
-                </Grid>
-            </Border>
+                        <!-- Selection rectangle overlay (for multi-select) -->
+                        <Canvas x:Name="OverlayCanvas"
+                                IsHitTestVisible="False">
+                            <Rectangle x:Name="SelectionRectangle"
+                                       Classes="selection-rect"
+                                       IsVisible="False" />
+                        </Canvas>
+                    </Grid>
+                </Border>
+            </LayoutTransformControl>
         </ScrollViewer>
     </Grid>
 </UserControl>

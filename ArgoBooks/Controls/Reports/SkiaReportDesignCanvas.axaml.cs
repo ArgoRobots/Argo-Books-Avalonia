@@ -204,9 +204,9 @@ public partial class SkiaReportDesignCanvas : UserControl
         _selectionRectangle = this.FindControl<Rectangle>("SelectionRectangle");
         _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
 
-        // Get the ScaleTransform from the ZoomContainer border
-        var zoomContainer = this.FindControl<Border>("ZoomContainer");
-        _zoomTransform = zoomContainer?.RenderTransform as ScaleTransform;
+        // Get the ScaleTransform from the LayoutTransformControl
+        var zoomTransformControl = this.FindControl<LayoutTransformControl>("ZoomTransformControl");
+        _zoomTransform = zoomTransformControl?.LayoutTransform as ScaleTransform;
 
         // Wire up pointer events on the canvas image
         if (_canvasImage != null)
@@ -691,7 +691,7 @@ public partial class SkiaReportDesignCanvas : UserControl
             newScrollY = Math.Clamp(newScrollY, 0, maxScrollY);
 
             _scrollViewer.Offset = new Vector(newScrollX, newScrollY);
-        }, DispatcherPriority.Layout);
+        }, DispatcherPriority.Render);
     }
 
     #endregion
