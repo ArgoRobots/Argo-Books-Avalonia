@@ -341,7 +341,7 @@
                                                             Padding="16"
                                                             CornerRadius="8"
                                                             HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Left"
+                                                            HorizontalContentAlignment="Stretch"
                                                             Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
                                                             CommandParameter="{Binding Name}"
                                                             Classes.selected="{Binding IsSelected}">
