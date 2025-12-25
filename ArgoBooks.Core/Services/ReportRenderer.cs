@@ -294,20 +294,35 @@ public class ReportRenderer : IDisposable
     private void RenderTable(SKCanvas canvas, TableReportElement table)
     {
         var rect = GetScaledRect(table);
+        var columns = GetVisibleColumns(table);
+        var columnCount = Math.Max(columns.Count, 1);
+        var columnWidth = rect.Width / columnCount;
+
+        // Get table data
+        var tableData = GetTableData(table, columns);
+        var maxRows = table.MaxRows > 0 ? table.MaxRows : 10;
+        var dataRowCount = Math.Min(tableData.Count, maxRows);
+
+        var headerRowHeight = table.HeaderRowHeight * _renderScale;
+        var dataRowHeight = table.DataRowHeight * _renderScale;
+
+        // Calculate total height needed
+        var totalHeight = (table.ShowHeaders ? headerRowHeight : 0) + (dataRowCount * dataRowHeight);
+        var tableRect = new SKRect(rect.Left, rect.Top, rect.Right, rect.Top + (float)totalHeight);
 
         // Draw table background
-        canvas.DrawRect(rect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
+        canvas.DrawRect(tableRect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
+
+        var currentY = rect.Top;
 
         // Draw header row
         if (table.ShowHeaders)
         {
-            var headerRect = new SKRect(rect.Left, rect.Top, rect.Right, rect.Top + table.HeaderRowHeight * _renderScale);
+            var headerRect = new SKRect(rect.Left, currentY, rect.Right, currentY + (float)headerRowHeight);
             var headerFill = new SKPaint { Color = ParseColor(table.HeaderBackgroundColor), Style = SKPaintStyle.Fill };
             canvas.DrawRect(headerRect, headerFill);
 
             // Draw column headers
-            var columns = GetVisibleColumns(table);
-            var columnWidth = rect.Width / columns.Count;
             using var headerFont = new SKFont(_boldTypeface, (float)table.FontSize * _renderScale);
             using var headerTextPaint = new SKPaint { Color = ParseColor(table.HeaderTextColor), IsAntialias = true };
 
@@ -316,25 +331,145 @@ public class ReportRenderer : IDisposable
                 var x = rect.Left + (i * columnWidth) + (columnWidth / 2);
                 var y = headerRect.MidY + (float)(table.FontSize * _renderScale) / 3;
                 canvas.DrawText(columns[i], x, y, SKTextAlign.Center, headerFont, headerTextPaint);
+
+                // Draw vertical grid line
+                if (table.ShowGridLines && i > 0)
+                {
+                    var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                    canvas.DrawLine(rect.Left + (i * columnWidth), headerRect.Top, rect.Left + (i * columnWidth), headerRect.Bottom, gridPaint);
+                }
+            }
+
+            // Draw header bottom border
+            if (table.ShowGridLines)
+            {
+                var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                canvas.DrawLine(rect.Left, headerRect.Bottom, rect.Right, headerRect.Bottom, gridPaint);
+            }
+
+            currentY += (float)headerRowHeight;
+        }
+
+        // Draw data rows
+        using var dataFont = new SKFont(_defaultTypeface, (float)table.FontSize * _renderScale);
+        using var dataTextPaint = new SKPaint { Color = ParseColor(table.DataRowTextColor), IsAntialias = true };
+
+        for (int rowIndex = 0; rowIndex < dataRowCount; rowIndex++)
+        {
+            var rowData = tableData[rowIndex];
+            var rowRect = new SKRect(rect.Left, currentY, rect.Right, currentY + (float)dataRowHeight);
+
+            // Alternate row colors
+            var isAlternate = rowIndex % 2 == 1;
+            var rowBgColor = table.AlternateRowColors && isAlternate
+                ? ParseColor(table.AlternateRowColor)
+                : ParseColor(table.BaseRowColor);
+            canvas.DrawRect(rowRect, new SKPaint { Color = rowBgColor, Style = SKPaintStyle.Fill });
+
+            // Draw cell data
+            for (int colIndex = 0; colIndex < columns.Count; colIndex++)
+            {
+                var cellText = colIndex < rowData.Count ? rowData[colIndex] : "";
+                var x = rect.Left + (colIndex * columnWidth) + (columnWidth / 2);
+                var y = rowRect.MidY + (float)(table.FontSize * _renderScale) / 3;
+                canvas.DrawText(cellText, x, y, SKTextAlign.Center, dataFont, dataTextPaint);
+
+                // Draw vertical grid line
+                if (table.ShowGridLines && colIndex > 0)
+                {
+                    var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                    canvas.DrawLine(rect.Left + (colIndex * columnWidth), rowRect.Top, rect.Left + (colIndex * columnWidth), rowRect.Bottom, gridPaint);
+                }
+            }
+
+            // Draw row bottom border
+            if (table.ShowGridLines)
+            {
+                var gridPaint = new SKPaint { Color = ParseColor(table.GridLineColor), Style = SKPaintStyle.Stroke, StrokeWidth = 1 * _renderScale };
+                canvas.DrawLine(rect.Left, rowRect.Bottom, rect.Right, rowRect.Bottom, gridPaint);
+            }
+
+            currentY += (float)dataRowHeight;
+        }
+
+        // Draw outer border
+        _borderPaint.Color = ParseColor(table.GridLineColor);
+        canvas.DrawRect(tableRect, _borderPaint);
+    }
+
+    private List<List<string>> GetTableData(TableReportElement table, List<string> columns)
+    {
+        var result = new List<List<string>>();
+
+        if (_companyData == null)
+            return result;
+
+        var transactionType = table.TransactionType;
+
+        // Build a list of transaction records
+        var transactions = new List<(DateTime Date, string Id, string Company, string Product, decimal Qty, decimal UnitPrice, decimal Total, string Status, string Accountant, decimal Shipping)>();
+
+        // Get sales (Revenue)
+        if (transactionType == TransactionType.Revenue || transactionType == TransactionType.Both)
+        {
+            foreach (var sale in _companyData.Sales)
+            {
+                var customerName = _companyData.Customers.FirstOrDefault(c => c.Id == sale.CustomerId)?.Name ?? "N/A";
+                var productName = sale.LineItems.FirstOrDefault()?.Description ?? sale.Description;
+                var accountantName = _companyData.Accountants.FirstOrDefault(a => a.Id == sale.AccountantId)?.Name ?? "";
+                transactions.Add((sale.Date, sale.Id, customerName, productName, sale.Quantity, sale.UnitPrice, sale.Total, sale.PaymentStatus, accountantName, sale.ShippingCost));
             }
         }
 
-        // Draw grid lines
-        if (table.ShowGridLines)
+        // Get purchases (Expenses)
+        if (transactionType == TransactionType.Expenses || transactionType == TransactionType.Both)
         {
-            var gridPaint = new SKPaint
+            foreach (var purchase in _companyData.Purchases)
             {
-                Color = ParseColor(table.GridLineColor),
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = 1 * _renderScale,
-                IsAntialias = true
-            };
-            canvas.DrawRect(rect, gridPaint);
+                var supplierName = _companyData.Suppliers.FirstOrDefault(s => s.Id == purchase.SupplierId)?.Name ?? "N/A";
+                var productName = purchase.LineItems.FirstOrDefault()?.Description ?? purchase.Description;
+                var accountantName = _companyData.Accountants.FirstOrDefault(a => a.Id == purchase.AccountantId)?.Name ?? "";
+                transactions.Add((purchase.Date, purchase.Id, supplierName, productName, purchase.Quantity, purchase.UnitPrice, purchase.Total, "Paid", accountantName, purchase.ShippingCost));
+            }
         }
 
-        // Draw border
-        _borderPaint.Color = ParseColor(table.GridLineColor);
-        canvas.DrawRect(rect, _borderPaint);
+        // Sort transactions
+        var sortOrder = table.SortOrder;
+        transactions = sortOrder switch
+        {
+            TableSortOrder.DateAscending => transactions.OrderBy(t => t.Date).ToList(),
+            TableSortOrder.DateDescending => transactions.OrderByDescending(t => t.Date).ToList(),
+            TableSortOrder.AmountAscending => transactions.OrderBy(t => t.Total).ToList(),
+            TableSortOrder.AmountDescending => transactions.OrderByDescending(t => t.Total).ToList(),
+            _ => transactions.OrderByDescending(t => t.Date).ToList()
+        };
+
+        // Convert to row data based on visible columns
+        foreach (var trans in transactions)
+        {
+            var row = new List<string>();
+            foreach (var col in columns)
+            {
+                var value = col switch
+                {
+                    "Date" => trans.Date.ToString("MM/dd/yyyy"),
+                    "ID" => trans.Id,
+                    "Company" => trans.Company,
+                    "Product" => trans.Product,
+                    "Qty" => trans.Qty.ToString("N0"),
+                    "Unit Price" => trans.UnitPrice.ToString("C2"),
+                    "Total" => trans.Total.ToString("C2"),
+                    "Status" => trans.Status,
+                    "Accountant" => trans.Accountant,
+                    "Shipping" => trans.Shipping.ToString("C2"),
+                    _ => ""
+                };
+                row.Add(value);
+            }
+            result.Add(row);
+        }
+
+        return result;
     }
 
     private void RenderLabel(SKCanvas canvas, LabelReportElement label)
