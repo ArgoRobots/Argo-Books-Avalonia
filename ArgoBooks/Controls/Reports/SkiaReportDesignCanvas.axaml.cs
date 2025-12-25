@@ -486,11 +486,14 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         if (Configuration == null) return;
 
+        // Draw the hover highlight OUTSIDE the element bounds
+        // Offset by 1 pixel to avoid overlapping with the element's own border
+        const float offset = 1f;
         var rect = new SKRect(
-            (float)element.X,
-            (float)element.Y,
-            (float)(element.X + element.Width),
-            (float)(element.Y + element.Height)
+            (float)element.X - offset,
+            (float)element.Y - offset,
+            (float)(element.X + element.Width) + offset,
+            (float)(element.Y + element.Height) + offset
         );
 
         // Get elements with higher Z-order that might overlap
@@ -649,6 +652,9 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Apply the new zoom level
         ZoomLevel = newZoom;
 
+        // Get page dimensions for calculating expected extent
+        var (pageWidth, pageHeight) = GetPageDimensions();
+
         // Schedule the scroll adjustment after layout is updated
         Dispatcher.UIThread.Post(() =>
         {
@@ -660,22 +666,20 @@ public partial class SkiaReportDesignCanvas : UserControl
             // The point in the unzoomed canvas space
             var canvasPoint = mousePosInCanvas;
 
-            // After zoom, this point's position in the scroll extent has moved by the zoom ratio
-            // We need to scroll so that this new position is at the same screen location
-
-            // Calculate the content offset (how much the centered content is offset from scroll origin)
+            // Calculate the expected extent size based on zoom
+            // This is more reliable than reading from scrollViewer.Extent which may not be updated yet
+            const double margin = 40;
             var viewportWidth = _scrollViewer.Viewport.Width;
             var viewportHeight = _scrollViewer.Viewport.Height;
-            var extentWidth = _scrollViewer.Extent.Width;
-            var extentHeight = _scrollViewer.Extent.Height;
+            var expectedExtentWidth = pageWidth * newZoom + margin * 2;
+            var expectedExtentHeight = pageHeight * newZoom + margin * 2;
 
             // If content is smaller than viewport, it's centered (no scrolling possible)
-            if (extentWidth <= viewportWidth && extentHeight <= viewportHeight)
+            if (expectedExtentWidth <= viewportWidth && expectedExtentHeight <= viewportHeight)
                 return;
 
             // Calculate the new scroll position to keep the canvas point under the cursor
-            // The canvas point in the new extent = canvasPoint * newZoom + margin (40px)
-            const double margin = 40;
+            // The canvas point in the new extent = canvasPoint * newZoom + margin
             var pointInNewExtentX = canvasPoint.X * newZoom + margin;
             var pointInNewExtentY = canvasPoint.Y * newZoom + margin;
 
@@ -683,9 +687,9 @@ public partial class SkiaReportDesignCanvas : UserControl
             var newScrollX = pointInNewExtentX - mousePosInScrollViewer.X;
             var newScrollY = pointInNewExtentY - mousePosInScrollViewer.Y;
 
-            // Clamp to valid scroll range
-            var maxScrollX = Math.Max(0, extentWidth - viewportWidth);
-            var maxScrollY = Math.Max(0, extentHeight - viewportHeight);
+            // Clamp to valid scroll range using expected extent
+            var maxScrollX = Math.Max(0, expectedExtentWidth - viewportWidth);
+            var maxScrollY = Math.Max(0, expectedExtentHeight - viewportHeight);
 
             newScrollX = Math.Clamp(newScrollX, 0, maxScrollX);
             newScrollY = Math.Clamp(newScrollY, 0, maxScrollY);
@@ -1363,9 +1367,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         var viewportWidth = scrollViewer.Viewport.Width > 0 ? scrollViewer.Viewport.Width : scrollViewer.Bounds.Width;
         var viewportHeight = scrollViewer.Viewport.Height > 0 ? scrollViewer.Viewport.Height : scrollViewer.Bounds.Height;
 
-        // Account for margins (40px on each side)
-        viewportWidth -= 80;
-        viewportHeight -= 80;
+        // Account for margins - use smaller value to maximize canvas visibility
+        // The LayoutTransformControl has 40px margin but we don't need to reserve all of it
+        viewportWidth -= 20;
+        viewportHeight -= 20;
 
         if (viewportWidth <= 0 || viewportHeight <= 0) return;
 

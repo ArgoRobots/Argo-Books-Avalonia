@@ -648,9 +648,10 @@
                         </StackPanel>
 
                         <!-- Collapsed Content (Icon-only buttons) -->
+                        <!-- Margin left = 14px to align with expanded buttons: 8 (expanded margin) + 1 (border) + 12 (padding) - 7 (icon center offset in 32px button) = 14 -->
                         <StackPanel Grid.Row="1"
                                     Spacing="4"
-                                    Margin="13,8,8,12"
+                                    Margin="14,8,8,12"
                                     HorizontalAlignment="Left"
                                     IsVisible="{Binding !IsElementPanelExpanded}">
                             <Button Classes="icon-button" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="Add Chart">
