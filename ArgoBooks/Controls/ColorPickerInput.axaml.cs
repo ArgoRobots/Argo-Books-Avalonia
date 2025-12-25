@@ -73,6 +73,11 @@ public partial class ColorPickerInput : UserControl
     /// </summary>
     private string _originalColorValue = "#000000";
 
+    /// <summary>
+    /// Tracks if the color was explicitly applied (vs light dismiss cancel).
+    /// </summary>
+    private bool _wasApplied;
+
     public ColorPickerInput()
     {
         TogglePickerCommand = new RelayCommand(TogglePicker);
@@ -97,6 +102,17 @@ public partial class ColorPickerInput : UserControl
         {
             UpdateColorBrush();
             UpdatePickerColor();
+        }
+        else if (change.Property == IsPickerOpenProperty)
+        {
+            // Handle light dismiss (popup closed without Apply being clicked)
+            if (change.OldValue is true && change.NewValue is false && !_wasApplied)
+            {
+                // Revert to original color
+                ColorValue = _originalColorValue;
+                UpdateColorBrush();
+            }
+            _wasApplied = false;
         }
     }
 
@@ -170,6 +186,7 @@ public partial class ColorPickerInput : UserControl
 
     private void ApplyColor()
     {
+        _wasApplied = true;
         IsPickerOpen = false;
     }
 

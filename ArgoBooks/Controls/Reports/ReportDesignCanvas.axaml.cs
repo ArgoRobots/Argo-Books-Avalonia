@@ -949,10 +949,12 @@ public partial class ReportDesignCanvas : UserControl
         var titleFontSize = element?.TitleFontSize ?? 14;
         var backgroundColor = element?.BackgroundColor ?? "#FFFFFF";
 
+        // Calculate title row height based on font size plus margins
+        var titleRowHeight = titleFontSize + 16; // font + top margin (8) + bottom margin (4) + padding
         var grid = new Grid
         {
             RowDefinitions = showTitle
-                ? new RowDefinitions("Auto,*")
+                ? new RowDefinitions($"{titleRowHeight},*")
                 : new RowDefinitions("*")
         };
 
@@ -964,7 +966,9 @@ public partial class ReportDesignCanvas : UserControl
                 Text = title,
                 FontSize = titleFontSize,
                 FontWeight = FontWeight.Bold,
+                Foreground = Brushes.Black,
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                 Margin = new Thickness(0, 8, 0, 4)
             };
             Grid.SetRow(titleBlock, 0);

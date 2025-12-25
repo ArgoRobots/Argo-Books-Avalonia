@@ -316,6 +316,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         ReportName = templateName;
         Configuration.Title = templateName;
 
+        // Notify UI of configuration change (needed because ReportConfiguration doesn't implement INPC)
+        OnPropertyChanged(nameof(Configuration));
+
         // Clear any unsaved changes indicator
         UndoRedoManager.Clear();
 
@@ -1464,6 +1467,63 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         IsDeleteTemplateOpen = false;
         TemplateToDelete = string.Empty;
+    }
+
+    #endregion
+
+    #region Rename Template
+
+    [ObservableProperty]
+    private bool _isRenameTemplateOpen;
+
+    [ObservableProperty]
+    private string _templateToRename = string.Empty;
+
+    [ObservableProperty]
+    private string _renameTemplateNewName = string.Empty;
+
+    [RelayCommand]
+    private void OpenRenameTemplate(string templateName)
+    {
+        TemplateToRename = templateName;
+        RenameTemplateNewName = templateName;
+        IsRenameTemplateOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseRenameTemplate()
+    {
+        IsRenameTemplateOpen = false;
+        TemplateToRename = string.Empty;
+        RenameTemplateNewName = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmRenameTemplate()
+    {
+        if (string.IsNullOrEmpty(TemplateToRename) || string.IsNullOrEmpty(RenameTemplateNewName)) return;
+        if (TemplateToRename == RenameTemplateNewName)
+        {
+            CloseRenameTemplate();
+            return;
+        }
+
+        var success = _templateStorage.RenameTemplate(TemplateToRename, RenameTemplateNewName);
+        if (success)
+        {
+            // If we're renaming the currently selected template, update the selection
+            if (SelectedTemplateName == TemplateToRename)
+            {
+                SelectedTemplateName = RenameTemplateNewName;
+            }
+
+            // Refresh custom templates list
+            LoadCustomTemplates();
+        }
+
+        IsRenameTemplateOpen = false;
+        TemplateToRename = string.Empty;
+        RenameTemplateNewName = string.Empty;
     }
 
     #endregion

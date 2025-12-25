@@ -353,6 +353,11 @@
                                                             </Style>
                                                             <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                                <Setter Property="Transitions">
+                                                                    <Transitions>
+                                                                        <BrushTransition Property="Background" Duration="0:0:0.15" />
+                                                                    </Transitions>
+                                                                </Setter>
                                                             </Style>
                                                             <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
@@ -371,13 +376,21 @@
                                                                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                             </Style>
                                                         </Button.Styles>
-                                                        <Grid ColumnDefinitions="*,Auto">
+                                                        <Grid ColumnDefinitions="*,Auto,Auto">
                                                             <TextBlock Grid.Column="0"
                                                                        Text="{Binding Name}"
                                                                        FontWeight="Medium"
                                                                        VerticalAlignment="Center"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                                             <Button Grid.Column="1"
+                                                                    Classes="icon-button"
+                                                                    ToolTip.Tip="Rename template"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).OpenRenameTemplateCommand}"
+                                                                    CommandParameter="{Binding Name}">
+                                                                <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                                          Width="14" Height="14" />
+                                                            </Button>
+                                                            <Button Grid.Column="2"
                                                                     Classes="icon-button danger"
                                                                     ToolTip.Tip="Delete template"
                                                                     Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).OpenDeleteTemplateCommand}"
@@ -1591,6 +1604,71 @@
                         <Button Classes="danger-button"
                                 Content="Delete"
                                 Command="{Binding ConfirmDeleteTemplateCommand}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
+
+    <!-- Rename Template Modal Overlay -->
+    <Border Background="#80000000"
+            IsVisible="{Binding IsRenameTemplateOpen}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                Width="400"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="12,12,0,0"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="Rename Template"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <Button Grid.Column="1"
+                                Classes="close-button"
+                                Command="{Binding CloseRenameTemplateCommand}">
+                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                      Width="16" Height="16" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
+                <StackPanel Grid.Row="1" Spacing="16" Margin="24">
+                    <TextBlock Text="Enter a new name for the template:"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBox Text="{Binding RenameTemplateNewName}"
+                             Watermark="Template name..."
+                             Padding="12,10" />
+                </StackPanel>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="0,0,12,12"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="12">
+                        <Button Classes="secondary-button"
+                                Content="Cancel"
+                                Command="{Binding CloseRenameTemplateCommand}" />
+                        <Button Classes="primary-button"
+                                Content="Rename"
+                                Command="{Binding ConfirmRenameTemplateCommand}" />
                     </StackPanel>
                 </Border>
             </Grid>
