@@ -1,0 +1,523 @@
+using System.Collections.ObjectModel;
+using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+namespace ArgoBooks.ViewModels;
+
+/// <summary>
+/// ViewModel for the Dashboard page.
+/// Provides an overview of key business metrics, recent transactions, and quick actions.
+/// </summary>
+public partial class DashboardPageViewModel : ViewModelBase
+{
+    #region Statistics Properties
+
+    [ObservableProperty]
+    private string _totalRevenue = "$0.00";
+
+    [ObservableProperty]
+    private double _revenueChangeValue;
+
+    [ObservableProperty]
+    private string _revenueChangeText = "+0.0%";
+
+    [ObservableProperty]
+    private string _totalExpenses = "$0.00";
+
+    [ObservableProperty]
+    private double _expenseChangeValue;
+
+    [ObservableProperty]
+    private string _expenseChangeText = "+0.0%";
+
+    [ObservableProperty]
+    private string _outstandingInvoices = "$0.00";
+
+    [ObservableProperty]
+    private int _outstandingInvoiceCount;
+
+    [ObservableProperty]
+    private string _activeRentals = "0";
+
+    [ObservableProperty]
+    private int _overdueRentalCount;
+
+    #endregion
+
+    #region Net Profit Properties
+
+    [ObservableProperty]
+    private string _netProfit = "$0.00";
+
+    [ObservableProperty]
+    private double _profitChangeValue;
+
+    [ObservableProperty]
+    private string _profitChangeText = "+0.0%";
+
+    [ObservableProperty]
+    private bool _isProfitPositive = true;
+
+    #endregion
+
+    #region Recent Transactions
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRecentTransactions))]
+    [NotifyPropertyChangedFor(nameof(HasNoRecentTransactions))]
+    private ObservableCollection<RecentTransactionItem> _recentTransactions = [];
+
+    public bool HasRecentTransactions => RecentTransactions.Count > 0;
+    public bool HasNoRecentTransactions => RecentTransactions.Count == 0;
+
+    #endregion
+
+    #region Active Rentals
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveRentals))]
+    [NotifyPropertyChangedFor(nameof(HasNoActiveRentals))]
+    private ObservableCollection<ActiveRentalItem> _activeRentalsList = [];
+
+    public bool HasActiveRentals => ActiveRentalsList.Count > 0;
+    public bool HasNoActiveRentals => ActiveRentalsList.Count == 0;
+
+    #endregion
+
+    #region Company Data Reference
+
+    private CompanyManager? _companyManager;
+
+    #endregion
+
+    #region Constructor
+
+    public DashboardPageViewModel()
+    {
+        // Initialize with empty data - will be populated when company is loaded
+        RecentTransactions = [];
+        ActiveRentalsList = [];
+    }
+
+    #endregion
+
+    #region Data Loading
+
+    /// <summary>
+    /// Initializes the ViewModel with the company manager.
+    /// </summary>
+    public void Initialize(CompanyManager companyManager)
+    {
+        _companyManager = companyManager;
+        LoadDashboardData();
+
+        // Subscribe to data change events
+        _companyManager.CompanyDataChanged += OnCompanyDataChanged;
+    }
+
+    /// <summary>
+    /// Cleans up event subscriptions.
+    /// </summary>
+    public void Cleanup()
+    {
+        if (_companyManager != null)
+        {
+            _companyManager.CompanyDataChanged -= OnCompanyDataChanged;
+        }
+    }
+
+    private void OnCompanyDataChanged(object? sender, EventArgs e)
+    {
+        LoadDashboardData();
+    }
+
+    /// <summary>
+    /// Loads all dashboard data from the company data.
+    /// </summary>
+    public void LoadDashboardData()
+    {
+        var data = _companyManager?.CompanyData;
+        if (data == null) return;
+
+        LoadStatistics(data);
+        LoadRecentTransactions(data);
+        LoadActiveRentals(data);
+    }
+
+    private void LoadStatistics(CompanyData data)
+    {
+        var now = DateTime.Now;
+        var thisMonth = new DateTime(now.Year, now.Month, 1);
+        var lastMonth = thisMonth.AddMonths(-1);
+        var lastMonthEnd = thisMonth.AddDays(-1);
+
+        // Calculate this month's revenue
+        var thisMonthRevenue = data.Sales
+            .Where(s => s.Date >= thisMonth && s.Date <= now)
+            .Sum(s => s.Total);
+
+        // Calculate last month's revenue for comparison
+        var lastMonthRevenue = data.Sales
+            .Where(s => s.Date >= lastMonth && s.Date <= lastMonthEnd)
+            .Sum(s => s.Total);
+
+        TotalRevenue = FormatCurrency(thisMonthRevenue);
+        RevenueChangeValue = CalculatePercentageChange(lastMonthRevenue, thisMonthRevenue);
+        RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
+
+        // Calculate this month's expenses
+        var thisMonthExpenses = data.Purchases
+            .Where(p => p.Date >= thisMonth && p.Date <= now)
+            .Sum(p => p.Total);
+
+        // Calculate last month's expenses for comparison
+        var lastMonthExpenses = data.Purchases
+            .Where(p => p.Date >= lastMonth && p.Date <= lastMonthEnd)
+            .Sum(p => p.Total);
+
+        TotalExpenses = FormatCurrency(thisMonthExpenses);
+        ExpenseChangeValue = CalculatePercentageChange(lastMonthExpenses, thisMonthExpenses);
+        ExpenseChangeText = FormatPercentageChange(ExpenseChangeValue);
+
+        // Calculate net profit
+        var netProfitValue = thisMonthRevenue - thisMonthExpenses;
+        var lastMonthProfit = lastMonthRevenue - lastMonthExpenses;
+        NetProfit = FormatCurrency(Math.Abs(netProfitValue));
+        IsProfitPositive = netProfitValue >= 0;
+        ProfitChangeValue = CalculatePercentageChange(lastMonthProfit, netProfitValue);
+        ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
+
+        // Calculate outstanding invoices
+        var outstandingInvoices = data.Invoices
+            .Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
+            .ToList();
+
+        OutstandingInvoiceCount = outstandingInvoices.Count;
+        var outstandingAmount = outstandingInvoices.Sum(i => i.Balance);
+        OutstandingInvoices = FormatCurrency(outstandingAmount);
+
+        // Calculate active rentals
+        var activeRentals = data.Rentals
+            .Where(r => r.Status == RentalStatus.Active)
+            .ToList();
+
+        ActiveRentals = activeRentals.Count.ToString();
+        OverdueRentalCount = activeRentals.Count(r => r.IsOverdue);
+    }
+
+    private void LoadRecentTransactions(CompanyData data)
+    {
+        var recentItems = new List<RecentTransactionItem>();
+
+        // Get recent sales
+        var recentSales = data.Sales
+            .OrderByDescending(s => s.Date)
+            .Take(5)
+            .Select(s => new RecentTransactionItem
+            {
+                Id = s.Id,
+                Type = "Sale",
+                Description = string.IsNullOrEmpty(s.Description) ? "Sale Transaction" : s.Description,
+                Amount = FormatCurrency(s.Total),
+                AmountValue = s.Total,
+                Date = s.Date,
+                DateFormatted = FormatDate(s.Date),
+                Status = s.PaymentStatus,
+                StatusVariant = GetStatusVariant(s.PaymentStatus),
+                IsIncome = true,
+                CustomerName = GetCustomerName(data, s.CustomerId)
+            });
+
+        recentItems.AddRange(recentSales);
+
+        // Get recent purchases/expenses
+        var recentPurchases = data.Purchases
+            .OrderByDescending(p => p.Date)
+            .Take(5)
+            .Select(p => new RecentTransactionItem
+            {
+                Id = p.Id,
+                Type = "Expense",
+                Description = string.IsNullOrEmpty(p.Description) ? "Purchase Transaction" : p.Description,
+                Amount = FormatCurrency(p.Total),
+                AmountValue = p.Total,
+                Date = p.Date,
+                DateFormatted = FormatDate(p.Date),
+                Status = "Completed",
+                StatusVariant = "success",
+                IsIncome = false,
+                CustomerName = GetSupplierName(data, p.SupplierId)
+            });
+
+        recentItems.AddRange(recentPurchases);
+
+        // Get recent invoices
+        var recentInvoices = data.Invoices
+            .OrderByDescending(i => i.IssueDate)
+            .Take(5)
+            .Select(i => new RecentTransactionItem
+            {
+                Id = i.Id,
+                Type = "Invoice",
+                Description = $"Invoice {i.InvoiceNumber}",
+                Amount = FormatCurrency(i.Total),
+                AmountValue = i.Total,
+                Date = i.IssueDate,
+                DateFormatted = FormatDate(i.IssueDate),
+                Status = i.Status.ToString(),
+                StatusVariant = GetInvoiceStatusVariant(i.Status),
+                IsIncome = true,
+                CustomerName = GetCustomerName(data, i.CustomerId)
+            });
+
+        recentItems.AddRange(recentInvoices);
+
+        // Sort by date and take top 10
+        var sortedItems = recentItems
+            .OrderByDescending(t => t.Date)
+            .Take(10)
+            .ToList();
+
+        RecentTransactions = new ObservableCollection<RecentTransactionItem>(sortedItems);
+    }
+
+    private void LoadActiveRentals(CompanyData data)
+    {
+        var activeRentals = data.Rentals
+            .Where(r => r.Status == RentalStatus.Active)
+            .OrderBy(r => r.DueDate)
+            .Take(10)
+            .Select(r => new ActiveRentalItem
+            {
+                Id = r.Id,
+                ItemName = GetRentalItemName(data, r.RentalItemId),
+                CustomerName = GetCustomerName(data, r.CustomerId),
+                StartDate = r.StartDate,
+                StartDateFormatted = FormatDate(r.StartDate),
+                DueDate = r.DueDate,
+                DueDateFormatted = FormatDate(r.DueDate),
+                RateAmount = FormatCurrency(r.RateAmount),
+                RateType = r.RateType.ToString(),
+                Status = r.IsOverdue ? "Overdue" : "Active",
+                StatusVariant = r.IsOverdue ? "error" : "success",
+                DaysRemaining = CalculateDaysRemaining(r.DueDate),
+                IsOverdue = r.IsOverdue
+            })
+            .ToList();
+
+        ActiveRentalsList = new ObservableCollection<ActiveRentalItem>(activeRentals);
+    }
+
+    #endregion
+
+    #region Quick Actions
+
+    [RelayCommand]
+    private void AddExpense()
+    {
+        App.NavigationService?.NavigateTo("Expenses");
+        // Open the add expense modal after navigation
+        App.ExpenseModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void RecordSale()
+    {
+        App.NavigationService?.NavigateTo("Revenue");
+        // Open the add revenue modal after navigation
+        App.RevenueModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void CreateInvoice()
+    {
+        App.NavigationService?.NavigateTo("Invoices");
+        // Open the create invoice modal after navigation
+        App.InvoiceModalsViewModel?.OpenCreateModal();
+    }
+
+    [RelayCommand]
+    private void NewRental()
+    {
+        App.NavigationService?.NavigateTo("RentalRecords");
+        // Open the add rental modal after navigation
+        App.RentalRecordsModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NavigateToAnalytics()
+    {
+        App.NavigationService?.NavigateTo("Analytics");
+    }
+
+    [RelayCommand]
+    private void NavigateToReports()
+    {
+        App.NavigationService?.NavigateTo("Reports");
+    }
+
+    [RelayCommand]
+    private void NavigateToRevenue()
+    {
+        App.NavigationService?.NavigateTo("Revenue");
+    }
+
+    [RelayCommand]
+    private void NavigateToRentals()
+    {
+        App.NavigationService?.NavigateTo("RentalRecords");
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private static string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C2");
+    }
+
+    private static string FormatDate(DateTime date)
+    {
+        var now = DateTime.Now;
+        if (date.Date == now.Date)
+            return "Today";
+        if (date.Date == now.Date.AddDays(-1))
+            return "Yesterday";
+        if (date.Date > now.Date.AddDays(-7))
+            return date.ToString("dddd");
+        return date.ToString("MMM dd, yyyy");
+    }
+
+    private static double CalculatePercentageChange(decimal previous, decimal current)
+    {
+        if (previous == 0)
+        {
+            return current > 0 ? 100 : 0;
+        }
+        return (double)((current - previous) / previous * 100);
+    }
+
+    private static string FormatPercentageChange(double change)
+    {
+        var prefix = change >= 0 ? "+" : "";
+        return $"{prefix}{change:F1}%";
+    }
+
+    private static string GetStatusVariant(string status)
+    {
+        return status.ToLowerInvariant() switch
+        {
+            "paid" => "success",
+            "pending" => "warning",
+            "overdue" => "error",
+            "completed" => "success",
+            _ => "neutral"
+        };
+    }
+
+    private static string GetInvoiceStatusVariant(InvoiceStatus status)
+    {
+        return status switch
+        {
+            InvoiceStatus.Paid => "success",
+            InvoiceStatus.Sent => "info",
+            InvoiceStatus.Viewed => "info",
+            InvoiceStatus.Partial => "warning",
+            InvoiceStatus.Pending => "warning",
+            InvoiceStatus.Draft => "neutral",
+            InvoiceStatus.Cancelled => "error",
+            InvoiceStatus.Overdue => "error",
+            _ => "neutral"
+        };
+    }
+
+    private static string GetCustomerName(CompanyData data, string? customerId)
+    {
+        if (string.IsNullOrEmpty(customerId)) return "Unknown";
+        var customer = data.Customers.FirstOrDefault(c => c.Id == customerId);
+        return customer?.Name ?? "Unknown";
+    }
+
+    private static string GetSupplierName(CompanyData data, string? supplierId)
+    {
+        if (string.IsNullOrEmpty(supplierId)) return "Unknown";
+        var supplier = data.Suppliers.FirstOrDefault(s => s.Id == supplierId);
+        return supplier?.Name ?? "Unknown";
+    }
+
+    private static string GetRentalItemName(CompanyData data, string rentalItemId)
+    {
+        var item = data.RentalInventory.FirstOrDefault(r => r.Id == rentalItemId);
+        return item?.Name ?? "Unknown Item";
+    }
+
+    private static int CalculateDaysRemaining(DateTime dueDate)
+    {
+        var days = (dueDate.Date - DateTime.Now.Date).Days;
+        return days;
+    }
+
+    #endregion
+}
+
+#region View Models for Lists
+
+/// <summary>
+/// Represents a recent transaction item for display.
+/// </summary>
+public class RecentTransactionItem
+{
+    public string Id { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Amount { get; set; } = string.Empty;
+    public decimal AmountValue { get; set; }
+    public DateTime Date { get; set; }
+    public string DateFormatted { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string StatusVariant { get; set; } = "neutral";
+    public bool IsIncome { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+
+    // Helper properties for status variant styling
+    public bool IsStatusSuccess => StatusVariant == "success";
+    public bool IsStatusWarning => StatusVariant == "warning";
+    public bool IsStatusError => StatusVariant == "error";
+    public bool IsStatusInfo => StatusVariant == "info";
+    public bool IsStatusNeutral => StatusVariant == "neutral" || string.IsNullOrEmpty(StatusVariant);
+}
+
+/// <summary>
+/// Represents an active rental item for display.
+/// </summary>
+public class ActiveRentalItem
+{
+    public string Id { get; set; } = string.Empty;
+    public string ItemName { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public DateTime StartDate { get; set; }
+    public string StartDateFormatted { get; set; } = string.Empty;
+    public DateTime DueDate { get; set; }
+    public string DueDateFormatted { get; set; } = string.Empty;
+    public string RateAmount { get; set; } = string.Empty;
+    public string RateType { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string StatusVariant { get; set; } = "success";
+    public int DaysRemaining { get; set; }
+    public bool IsOverdue { get; set; }
+
+    public string DaysRemainingText => IsOverdue
+        ? $"{Math.Abs(DaysRemaining)} days overdue"
+        : DaysRemaining == 0
+            ? "Due today"
+            : $"{DaysRemaining} days left";
+}
+
+#endregion

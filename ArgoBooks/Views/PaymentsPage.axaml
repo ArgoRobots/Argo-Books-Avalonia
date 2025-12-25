@@ -21,7 +21,7 @@
 
     <Grid RowDefinitions="*">
         <!-- Main Content -->
-        <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
+        <Grid Grid.Row="0" RowDefinitions="Auto,Auto,*" Margin="24">
             <!-- Statistics Cards (Row 0) -->
             <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
                 <Grid.Styles>
@@ -131,8 +131,85 @@
                 </Border>
             </Grid>
 
-            <!-- Main Content Card (Row 1) -->
+            <!-- Payment Portal Section (Row 1) -->
             <Border Grid.Row="1"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    Padding="20"
+                    Margin="0,0,0,24">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Portal Icon -->
+                    <Border Grid.Column="0"
+                            Width="48" Height="48"
+                            CornerRadius="10"
+                            Background="{DynamicResource PrimaryIconBgBrush}"
+                            Margin="0,0,16,0"
+                            VerticalAlignment="Center">
+                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+                                  Width="24" Height="24"
+                                  Foreground="{DynamicResource PrimaryBrush}" />
+                    </Border>
+
+                    <!-- Portal Info -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Payment Portal"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Border Background="{DynamicResource SuccessIconBgBrush}"
+                                    CornerRadius="4"
+                                    Padding="8,2">
+                                <TextBlock Text="Connected"
+                                           FontSize="11"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource SuccessBrush}" />
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="When customers receive invoices, they can pay through your online portal. Payments sync automatically."
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+                            <PathIcon Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                                      Width="14" Height="14"
+                                      Foreground="{DynamicResource TextTertiaryBrush}" />
+                            <TextBlock Text="{Binding LastSyncTime, StringFormat='Last synced: {0}'}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Portal Actions -->
+                    <StackPanel Grid.Column="2"
+                                Orientation="Horizontal"
+                                Spacing="12"
+                                VerticalAlignment="Center">
+                        <Button Classes="secondary-button"
+                                Command="{Binding SyncPortalCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
+                                          Width="16" Height="16" />
+                                <TextBlock Text="Sync Now" />
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="primary-button"
+                                Command="{Binding OpenPortalCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"
+                                          Width="16" Height="16"
+                                          Foreground="White" />
+                                <TextBlock Text="Open Portal" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Main Content Card (Row 2) -->
+            <Border Grid.Row="2"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BorderBrush="{DynamicResource BorderBrush}"

@@ -30,6 +30,56 @@ public partial class PaymentsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Payment Portal
+
+    [ObservableProperty]
+    private string _lastSyncTime = "2 minutes ago";
+
+    [ObservableProperty]
+    private bool _isPortalConnected = true;
+
+    [ObservableProperty]
+    private bool _isSyncing;
+
+    /// <summary>
+    /// Syncs the payment portal data.
+    /// </summary>
+    [RelayCommand]
+    private async Task SyncPortal()
+    {
+        if (IsSyncing) return;
+
+        IsSyncing = true;
+        try
+        {
+            // Simulate sync delay
+            await Task.Delay(1500);
+            LastSyncTime = "Just now";
+            LoadPayments();
+        }
+        finally
+        {
+            IsSyncing = false;
+        }
+    }
+
+    /// <summary>
+    /// Opens the payment portal in the default browser.
+    /// </summary>
+    [RelayCommand]
+    private void OpenPortal()
+    {
+        // In a real implementation, this would open the payment portal URL
+        // For now, we'll just show a message or open a placeholder URL
+        // System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        // {
+        //     FileName = "https://portal.argobooks.com",
+        //     UseShellExecute = true
+        // });
+    }
+
+    #endregion
+
     #region Search and Filter
 
     [ObservableProperty]
