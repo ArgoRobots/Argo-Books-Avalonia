@@ -35,6 +35,21 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     #endregion
 
+    #region Helper Methods
+
+    /// <summary>
+    /// Gets the page dimensions in pixels based on the current configuration.
+    /// </summary>
+    private (int Width, int Height) GetPageDimensions()
+    {
+        if (Configuration == null)
+            return (800, 1000);
+
+        return PageDimensions.GetDimensions(Configuration.PageSize, Configuration.PageOrientation);
+    }
+
+    #endregion
+
     #region Styled Properties
 
     public static readonly StyledProperty<ReportConfiguration?> ConfigurationProperty =
@@ -169,8 +184,11 @@ public partial class SkiaReportDesignCanvas : UserControl
         _canvasImage = this.FindControl<Image>("CanvasImage");
         _overlayCanvas = this.FindControl<Canvas>("OverlayCanvas");
         _selectionRectangle = this.FindControl<Rectangle>("SelectionRectangle");
-        _zoomTransform = this.FindControl<ScaleTransform>("ZoomTransform");
         _zoomLevelText = this.FindControl<TextBlock>("ZoomLevelText");
+
+        // Get the ScaleTransform from the ZoomContainer border
+        var zoomContainer = this.FindControl<Border>("ZoomContainer");
+        _zoomTransform = zoomContainer?.RenderTransform as ScaleTransform;
 
         // Wire up zoom buttons
         var zoomInButton = this.FindControl<Button>("ZoomInButton");
@@ -244,8 +262,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (!_needsRender || _canvasImage == null || Configuration == null) return;
         _needsRender = false;
 
-        var width = (int)Configuration.PageWidthPixels;
-        var height = (int)Configuration.PageHeightPixels;
+        var (width, height) = GetPageDimensions();
 
         if (width <= 0 || height <= 0) return;
 
@@ -722,11 +739,9 @@ public partial class SkiaReportDesignCanvas : UserControl
                 }
 
                 // Constrain to canvas bounds
-                if (Configuration != null)
-                {
-                    newX = Math.Max(0, Math.Min(newX, Configuration.PageWidthPixels - element.Width));
-                    newY = Math.Max(0, Math.Min(newY, Configuration.PageHeightPixels - element.Height));
-                }
+                var (pageWidth, pageHeight) = GetPageDimensions();
+                newX = Math.Max(0, Math.Min(newX, pageWidth - element.Width));
+                newY = Math.Max(0, Math.Min(newY, pageHeight - element.Height));
 
                 element.X = newX;
                 element.Y = newY;
@@ -1047,6 +1062,8 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     public void MoveSelectedElements(Key direction, double distance)
     {
+        var (pageWidth, pageHeight) = GetPageDimensions();
+
         foreach (var element in _selectedElements)
         {
             switch (direction)
@@ -1055,13 +1072,13 @@ public partial class SkiaReportDesignCanvas : UserControl
                     element.Y = Math.Max(0, element.Y - distance);
                     break;
                 case Key.Down:
-                    element.Y = Math.Min((Configuration?.PageHeightPixels ?? 1000) - element.Height, element.Y + distance);
+                    element.Y = Math.Min(pageHeight - element.Height, element.Y + distance);
                     break;
                 case Key.Left:
                     element.X = Math.Max(0, element.X - distance);
                     break;
                 case Key.Right:
-                    element.X = Math.Min((Configuration?.PageWidthPixels ?? 800) - element.Width, element.X + distance);
+                    element.X = Math.Min(pageWidth - element.Width, element.X + distance);
                     break;
             }
         }
@@ -1135,8 +1152,7 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         if (viewportWidth <= 0 || viewportHeight <= 0) return;
 
-        var pageWidth = Configuration.PageWidthPixels;
-        var pageHeight = Configuration.PageHeightPixels;
+        var (pageWidth, pageHeight) = GetPageDimensions();
 
         var scaleX = viewportWidth / pageWidth;
         var scaleY = viewportHeight / pageHeight;
