@@ -13,19 +13,18 @@
     </Design.DataContext>
 
     <UserControl.Styles>
-        <!-- Quick Action Button Style -->
+        <!-- Quick Action Button Style - Transparent with colored accent -->
         <Style Selector="Button.quick-action">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Padding" Value="20,16" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,14" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.quick-action:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
         </Style>
         <Style Selector="Button.quick-action:pressed">
             <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
@@ -143,56 +142,58 @@
                                Foreground="{DynamicResource TextPrimaryBrush}" />
 
                     <Grid ColumnDefinitions="*,*,*,*">
-                        <!-- New Expense -->
+                        <!-- Record Sale (swapped to first position) -->
                         <Button Grid.Column="0"
                                 Classes="quick-action"
                                 Margin="0,0,6,0"
-                                Command="{Binding AddExpenseCommand}"
+                                Command="{Binding RecordSaleCommand}"
                                 HorizontalAlignment="Stretch">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Border Grid.Column="0"
-                                        Width="44" Height="44"
-                                        CornerRadius="10"
-                                        Background="{DynamicResource DangerIconBgBrush}"
-                                        Margin="0,0,14,0">
-                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-                                              Width="22" Height="22"
-                                              Foreground="{DynamicResource DangerBrush}" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="New Expense"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Record a purchase"
+                                        Width="4"
+                                        CornerRadius="2"
+                                        Background="{DynamicResource SuccessBrush}"
+                                        Margin="0,0,14,0" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource SuccessBrush}" />
+                                        <TextBlock Text="Record Sale"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <TextBlock Text="Add revenue entry"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
                             </Grid>
                         </Button>
 
-                        <!-- Record Sale -->
+                        <!-- New Expense (swapped to second position) -->
                         <Button Grid.Column="1"
                                 Classes="quick-action"
                                 Margin="6,0,6,0"
-                                Command="{Binding RecordSaleCommand}"
+                                Command="{Binding AddExpenseCommand}"
                                 HorizontalAlignment="Stretch">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Border Grid.Column="0"
-                                        Width="44" Height="44"
-                                        CornerRadius="10"
-                                        Background="{DynamicResource SuccessIconBgBrush}"
-                                        Margin="0,0,14,0">
-                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
-                                              Width="22" Height="22"
-                                              Foreground="{DynamicResource SuccessBrush}" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="Record Sale"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Add revenue entry"
+                                        Width="4"
+                                        CornerRadius="2"
+                                        Background="{DynamicResource DangerBrush}"
+                                        Margin="0,0,14,0" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource DangerBrush}" />
+                                        <TextBlock Text="New Expense"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <TextBlock Text="Record a purchase"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
@@ -207,19 +208,20 @@
                                 HorizontalAlignment="Stretch">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Border Grid.Column="0"
-                                        Width="44" Height="44"
-                                        CornerRadius="10"
-                                        Background="{DynamicResource PrimaryIconBgBrush}"
-                                        Margin="0,0,14,0">
-                                    <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
-                                              Width="22" Height="22"
-                                              Foreground="{DynamicResource PrimaryBrush}" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="Create Invoice"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        Width="4"
+                                        CornerRadius="2"
+                                        Background="{DynamicResource PrimaryBrush}"
+                                        Margin="0,0,14,0" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource PrimaryBrush}" />
+                                        <TextBlock Text="Create Invoice"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
                                     <TextBlock Text="Bill a customer"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -235,19 +237,20 @@
                                 HorizontalAlignment="Stretch">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Border Grid.Column="0"
-                                        Width="44" Height="44"
-                                        CornerRadius="10"
-                                        Background="{DynamicResource InfoIconBgBrush}"
-                                        Margin="0,0,14,0">
-                                    <PathIcon Data="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
-                                              Width="22" Height="22"
-                                              Foreground="{DynamicResource InfoBrush}" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="New Rental"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        Width="4"
+                                        CornerRadius="2"
+                                        Background="{DynamicResource InfoBrush}"
+                                        Margin="0,0,14,0" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
+                                                  Width="18" Height="18"
+                                                  Foreground="{DynamicResource InfoBrush}" />
+                                        <TextBlock Text="New Rental"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </StackPanel>
                                     <TextBlock Text="Start a rental"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
