@@ -66,6 +66,12 @@ public partial class StatCard : UserControl
     public static readonly StyledProperty<bool> ShowChangeProperty =
         AvaloniaProperty.Register<StatCard, bool>(nameof(ShowChange));
 
+    public static readonly StyledProperty<bool> UseAltBackgroundProperty =
+        AvaloniaProperty.Register<StatCard, bool>(nameof(UseAltBackground));
+
+    public static readonly StyledProperty<StatCardColor?> ValueColorProperty =
+        AvaloniaProperty.Register<StatCard, StatCardColor?>(nameof(ValueColor));
+
     #endregion
 
     #region Computed Properties for Class Binding
@@ -120,6 +126,13 @@ public partial class StatCard : UserControl
 
     /// <summary>Gets whether icon color is Info.</summary>
     public bool IsInfoColor => IconColor == StatCardColor.Info;
+
+    // Value Color Classes
+    /// <summary>Gets whether value color is Success.</summary>
+    public bool IsValueColorSuccess => ValueColor == StatCardColor.Success;
+
+    /// <summary>Gets whether value color is Danger.</summary>
+    public bool IsValueColorDanger => ValueColor == StatCardColor.Danger;
 
     /// <summary>Gets whether trend is positive (value > 0).</summary>
     public bool IsPositiveTrend => ChangeValue.HasValue && ChangeValue.Value > 0;
@@ -213,6 +226,24 @@ public partial class StatCard : UserControl
     {
         get => GetValue(ShowChangeProperty);
         set => SetValue(ShowChangeProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether to use the alternate (darker) background.
+    /// </summary>
+    public bool UseAltBackground
+    {
+        get => GetValue(UseAltBackgroundProperty);
+        set => SetValue(UseAltBackgroundProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the color for the main value text (optional).
+    /// </summary>
+    public StatCardColor? ValueColor
+    {
+        get => GetValue(ValueColorProperty);
+        set => SetValue(ValueColorProperty, value);
     }
 
     #endregion

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.InsightsPage"
              x:DataType="vm:InsightsPageViewModel">
@@ -207,120 +208,34 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- Forecast Cards -->
-                    <Grid ColumnDefinitions="*,*,*,*">
-                        <!-- Next Month Revenue -->
-                        <Border Grid.Column="0"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                CornerRadius="10"
-                                Padding="16"
-                                Margin="0,0,8,0">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="{Binding ForecastedRevenue}"
-                                           FontSize="24"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Next Month Revenue"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="↑"
-                                               FontSize="13"
-                                               Foreground="#22C55E" />
-                                    <TextBlock Text="{Binding RevenueGrowth}"
-                                               FontSize="13"
-                                               Foreground="#22C55E" />
-                                    <TextBlock Text="from last month"
-                                               FontSize="13"
-                                               Foreground="#22C55E" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Next Month Expenses -->
-                        <Border Grid.Column="1"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                CornerRadius="10"
-                                Padding="16"
-                                Margin="8,0">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="{Binding ForecastedExpenses}"
-                                           FontSize="24"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Next Month Expenses"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="↑"
-                                               FontSize="13"
-                                               Foreground="#EF4444" />
-                                    <TextBlock Text="{Binding ExpenseGrowth}"
-                                               FontSize="13"
-                                               Foreground="#EF4444" />
-                                    <TextBlock Text="from last month"
-                                               FontSize="13"
-                                               Foreground="#EF4444" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Projected Profit -->
-                        <Border Grid.Column="2"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                CornerRadius="10"
-                                Padding="16"
-                                Margin="8,0">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="{Binding ForecastedProfit}"
-                                           FontSize="24"
-                                           FontWeight="Bold"
-                                           Foreground="#22C55E" />
-                                <TextBlock Text="Projected Profit"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="↑"
-                                               FontSize="13"
-                                               Foreground="#22C55E" />
-                                    <TextBlock Text="{Binding ProfitGrowth}"
-                                               FontSize="13"
-                                               Foreground="#22C55E" />
-                                    <TextBlock Text="from last month"
-                                               FontSize="13"
-                                               Foreground="#22C55E" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Customer Growth -->
-                        <Border Grid.Column="3"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                CornerRadius="10"
-                                Padding="16"
-                                Margin="8,0,0,0">
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="{Binding ForecastedCustomers}"
-                                           FontSize="24"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Expected New Customers"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <TextBlock Text="↑"
-                                               FontSize="13"
-                                               Foreground="#22C55E" />
-                                    <TextBlock Text="{Binding CustomerGrowth}"
-                                               FontSize="13"
-                                               Foreground="#22C55E" />
-                                    <TextBlock Text="from last month"
-                                               FontSize="13"
-                                               Foreground="#22C55E" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
+                    <!-- Forecast Cards using StatCard control -->
+                    <UniformGrid Columns="4" Rows="1">
+                        <controls:StatCard Label="Next Month Revenue"
+                                           Value="{Binding ForecastedRevenue}"
+                                           ChangeValue="{Binding RevenueGrowthValue}"
+                                           ChangeText="{Binding RevenueGrowth}"
+                                           UseAltBackground="True"
+                                           Margin="0,0,8,0" />
+                        <controls:StatCard Label="Next Month Expenses"
+                                           Value="{Binding ForecastedExpenses}"
+                                           ChangeValue="{Binding ExpenseGrowthValue}"
+                                           ChangeText="{Binding ExpenseGrowth}"
+                                           UseAltBackground="True"
+                                           Margin="8,0" />
+                        <controls:StatCard Label="Projected Profit"
+                                           Value="{Binding ForecastedProfit}"
+                                           ChangeValue="{Binding ProfitGrowthValue}"
+                                           ChangeText="{Binding ProfitGrowth}"
+                                           ValueColor="Success"
+                                           UseAltBackground="True"
+                                           Margin="8,0" />
+                        <controls:StatCard Label="Expected New Customers"
+                                           Value="{Binding ForecastedCustomers}"
+                                           ChangeValue="{Binding CustomerGrowthValue}"
+                                           ChangeText="{Binding CustomerGrowth}"
+                                           UseAltBackground="True"
+                                           Margin="8,0,0,0" />
+                    </UniformGrid>
 
                     <!-- Confidence Indicator -->
                     <Border Background="{DynamicResource SurfaceAltBrush}"

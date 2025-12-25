@@ -55,25 +55,37 @@ public partial class InsightsPageViewModel : ViewModelBase
     private string _forecastedRevenue = "$48,500";
 
     [ObservableProperty]
-    private string _revenueGrowth = "+12.3%";
+    private double _revenueGrowthValue = 12.3;
+
+    [ObservableProperty]
+    private string _revenueGrowth = "12.3%";
 
     [ObservableProperty]
     private string _forecastedExpenses = "$32,200";
 
     [ObservableProperty]
-    private string _expenseGrowth = "+5.8%";
+    private double _expenseGrowthValue = -5.8;  // Negative because increased expenses is bad
+
+    [ObservableProperty]
+    private string _expenseGrowth = "5.8%";
 
     [ObservableProperty]
     private string _forecastedProfit = "$16,300";
 
     [ObservableProperty]
-    private string _profitGrowth = "+24.1%";
+    private double _profitGrowthValue = 24.1;
+
+    [ObservableProperty]
+    private string _profitGrowth = "24.1%";
 
     [ObservableProperty]
     private string _forecastedCustomers = "28";
 
     [ObservableProperty]
-    private string _customerGrowth = "+18.5%";
+    private double _customerGrowthValue = 18.5;
+
+    [ObservableProperty]
+    private string _customerGrowth = "18.5%";
 
     [ObservableProperty]
     private string _predictionConfidence = "87% High";

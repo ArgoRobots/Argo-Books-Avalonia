@@ -7,11 +7,20 @@
              x:Class="ArgoBooks.Controls.StatCard"
              x:DataType="controls:StatCard">
 
-    <Border Background="{DynamicResource SurfaceBrush}"
-            BorderBrush="{DynamicResource BorderBrush}"
+    <Border BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="1"
             CornerRadius="{StaticResource RadiusMd}"
-            Padding="20">
+            Padding="20"
+            Classes.alt-bg="{Binding UseAltBackground, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
+        <Border.Styles>
+            <Style Selector="Border">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            </Style>
+            <Style Selector="Border.alt-bg">
+                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
+        </Border.Styles>
         <Grid ColumnDefinitions="Auto,*">
             <!-- Icon Container -->
             <Border Grid.Column="0"
@@ -76,7 +85,20 @@
                 <TextBlock Text="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                            FontSize="{StaticResource FontSize2xl}"
                            FontWeight="Bold"
-                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                           Classes.value-success="{Binding IsValueColorSuccess, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
+                           Classes.value-danger="{Binding IsValueColorDanger, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
+                    <TextBlock.Styles>
+                        <Style Selector="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                        </Style>
+                        <Style Selector="TextBlock.value-success">
+                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                        </Style>
+                        <Style Selector="TextBlock.value-danger">
+                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                        </Style>
+                    </TextBlock.Styles>
+                </TextBlock>
 
                 <!-- Label -->
                 <TextBlock Text="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
