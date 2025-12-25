@@ -502,43 +502,25 @@ public partial class SkiaReportDesignCanvas : UserControl
             .Where(e => e.ZOrder > element.ZOrder && e.IsVisible)
             .ToList();
 
-        Console.WriteLine($"[Hover] Element: {element.DisplayName} (Z:{element.ZOrder}), HigherZ elements: {higherZOrderElements.Count}");
-
         // Save canvas state
         canvas.Save();
 
-        // Create a clip path that excludes higher Z-order elements
-        if (higherZOrderElements.Count > 0)
+        // Exclude each higher Z-order element from the clip region using Difference
+        foreach (var higherElement in higherZOrderElements)
         {
-            using var clipPath = new SKPath();
+            var higherRect = new SKRect(
+                (float)higherElement.X,
+                (float)higherElement.Y,
+                (float)(higherElement.X + higherElement.Width),
+                (float)(higherElement.Y + higherElement.Height)
+            );
 
-            // Start with the full canvas area
-            var (pageWidth, pageHeight) = GetPageDimensions();
-            clipPath.AddRect(new SKRect(0, 0, pageWidth, pageHeight));
-
-            // Subtract each higher Z-order element's bounds (with small expansion to fully cover)
-            foreach (var higherElement in higherZOrderElements)
-            {
-                var higherRect = new SKRect(
-                    (float)higherElement.X - 1,
-                    (float)higherElement.Y - 1,
-                    (float)(higherElement.X + higherElement.Width) + 1,
-                    (float)(higherElement.Y + higherElement.Height) + 1
-                );
-
-                Console.WriteLine($"[Hover]   Subtracting: {higherElement.DisplayName} (Z:{higherElement.ZOrder}) at ({higherRect.Left}, {higherRect.Top}, {higherRect.Right}, {higherRect.Bottom})");
-
-                using var subtractPath = new SKPath();
-                subtractPath.AddRect(higherRect);
-                clipPath.Op(subtractPath, SKPathOp.Difference);
-            }
-
-            canvas.ClipPath(clipPath);
+            canvas.ClipRect(higherRect, SKClipOperation.Difference);
         }
 
         using var borderPaint = new SKPaint
         {
-            Color = new SKColor(59, 130, 246, 180), // Semi-transparent blue (slightly more opaque)
+            Color = new SKColor(59, 130, 246, 180), // Semi-transparent blue
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 2,
             IsAntialias = true
