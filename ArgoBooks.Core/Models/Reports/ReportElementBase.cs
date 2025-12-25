@@ -165,6 +165,7 @@ public class ChartReportElement : ReportElementBase
     private double _legendFontSize = 11;
     private string _borderColor = "#808080";
     private int _borderThickness = 1;
+    private string _backgroundColor = "#FFFFFF";
 
     [JsonPropertyName("chartType")]
     public ChartDataType ChartType
@@ -222,6 +223,13 @@ public class ChartReportElement : ReportElementBase
         set => SetField(ref _borderThickness, value);
     }
 
+    [JsonPropertyName("backgroundColor")]
+    public string BackgroundColor
+    {
+        get => _backgroundColor;
+        set => SetField(ref _backgroundColor, value);
+    }
+
     public override double MinimumSize => 80;
     public override string DisplayName => "Chart";
     public override ReportElementType GetElementType() => ReportElementType.Chart;
@@ -244,7 +252,8 @@ public class ChartReportElement : ReportElementBase
             TitleFontSize = TitleFontSize,
             LegendFontSize = LegendFontSize,
             BorderColor = BorderColor,
-            BorderThickness = BorderThickness
+            BorderThickness = BorderThickness,
+            BackgroundColor = BackgroundColor
         };
     }
 }

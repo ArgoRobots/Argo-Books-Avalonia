@@ -302,6 +302,34 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task OpenCustomTemplateAsync(string? templateName)
+    {
+        if (string.IsNullOrEmpty(templateName)) return;
+
+        // Load the custom template
+        SelectedTemplateName = templateName;
+
+        // Wait briefly for template to load asynchronously
+        await Task.Delay(50);
+
+        // Set the report name to the template name
+        ReportName = templateName;
+        Configuration.Title = templateName;
+
+        // Notify UI of configuration change (needed because ReportConfiguration doesn't implement INPC)
+        OnPropertyChanged(nameof(Configuration));
+
+        // Clear any unsaved changes indicator
+        UndoRedoManager.Clear();
+
+        // Go directly to step 2 (Layout Designer)
+        Step1Completed = true;
+        ApplyFiltersToConfiguration();
+        CurrentStep = 2;
+        NotifyStepChanged();
+    }
+
+    [RelayCommand]
     private void SelectDatePreset(DatePresetOption? preset)
     {
         if (preset != null)
@@ -406,10 +434,16 @@ public partial class ReportsPageViewModel : ViewModelBase
     private double _zoomLevel = 1.0;
 
     [ObservableProperty]
+    private bool _isElementPanelExpanded = true;
+
+    [ObservableProperty]
     private bool _isPageSettingsOpen;
 
     [ObservableProperty]
     private bool _isSaveTemplateOpen;
+
+    [ObservableProperty]
+    private bool _showSaveConfirmation;
 
     public ReportUndoRedoManager UndoRedoManager { get; } = new();
 
@@ -598,6 +632,40 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void DuplicateSelectedElements()
+    {
+        if (SelectedElements.Count == 0) return;
+
+        var newElements = new List<ReportElementBase>();
+        const double offset = 20; // Offset for duplicated elements
+
+        foreach (var element in SelectedElements.ToList())
+        {
+            var clone = element.Clone();
+            clone.X += offset;
+            clone.Y += offset;
+
+            // Clamp position to stay within canvas bounds
+            clone.X = Math.Max(0, Math.Min(clone.X, CanvasWidth - clone.Width));
+            clone.Y = Math.Max(0, Math.Min(clone.Y, CanvasHeight - clone.Height));
+
+            Configuration.AddElement(clone);
+            UndoRedoManager.RecordAction(new AddElementAction(Configuration, clone));
+            newElements.Add(clone);
+        }
+
+        // Select the duplicated elements
+        SelectedElements.Clear();
+        foreach (var element in newElements)
+        {
+            SelectedElements.Add(element);
+        }
+        SelectedElement = newElements.FirstOrDefault();
+        NotifySelectionChanged();
+        OnPropertyChanged(nameof(Configuration));
+    }
+
+    [RelayCommand]
     private void Undo()
     {
         if (UndoRedoManager.CanUndo)
@@ -767,13 +835,13 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void ZoomIn()
     {
-        ZoomLevel = Math.Min(Controls.Reports.ReportDesignCanvas.MaxZoom, ZoomLevel + 0.1);
+        ZoomLevel = Math.Min(Controls.Reports.SkiaReportDesignCanvas.MaxZoom, ZoomLevel + 0.1);
     }
 
     [RelayCommand]
     private void ZoomOut()
     {
-        ZoomLevel = Math.Max(Controls.Reports.ReportDesignCanvas.MinZoom, ZoomLevel - 0.1);
+        ZoomLevel = Math.Max(Controls.Reports.SkiaReportDesignCanvas.MinZoom, ZoomLevel - 0.1);
     }
 
     [RelayCommand]
@@ -877,6 +945,12 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (success)
         {
             LoadCustomTemplates();
+            // Clear undo/redo to remove unsaved changes indicator (asterisk)
+            UndoRedoManager.Clear();
+            // Show save confirmation message
+            ShowSaveConfirmation = true;
+            await Task.Delay(2000);
+            ShowSaveConfirmation = false;
         }
         return success;
     }
@@ -993,13 +1067,13 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void PreviewZoomIn()
     {
-        PreviewZoom = Math.Min(Controls.Reports.ReportDesignCanvas.MaxZoom, PreviewZoom + Controls.Reports.ReportDesignCanvas.ZoomStep);
+        PreviewZoom = Math.Min(Controls.Reports.SkiaReportDesignCanvas.MaxZoom, PreviewZoom + Controls.Reports.SkiaReportDesignCanvas.ZoomStep);
     }
 
     [RelayCommand]
     private void PreviewZoomOut()
     {
-        PreviewZoom = Math.Max(Controls.Reports.ReportDesignCanvas.MinZoom, PreviewZoom - Controls.Reports.ReportDesignCanvas.ZoomStep);
+        PreviewZoom = Math.Max(Controls.Reports.SkiaReportDesignCanvas.MinZoom, PreviewZoom - Controls.Reports.SkiaReportDesignCanvas.ZoomStep);
     }
 
     [RelayCommand]
@@ -1369,13 +1443,17 @@ public partial class ReportsPageViewModel : ViewModelBase
 
         if (success)
         {
-            SaveTemplateMessage = "Template saved successfully!";
-            await Task.Delay(1500);
+            // Close modal immediately
             IsSaveTemplateOpen = false;
             SaveTemplateMessage = null;
 
             // Refresh custom templates list
             LoadCustomTemplates();
+
+            // Show the "Saved" overlay notification
+            ShowSaveConfirmation = true;
+            await Task.Delay(2000);
+            ShowSaveConfirmation = false;
 
             // Signal successful save to any waiting callers
             _saveTemplateCompletionSource?.TrySetResult(true);
@@ -1384,6 +1462,109 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             SaveTemplateMessage = "Failed to save template. Please try again.";
         }
+    }
+
+    #endregion
+
+    #region Delete Template Properties
+
+    [ObservableProperty]
+    private bool _isDeleteTemplateOpen;
+
+    [ObservableProperty]
+    private string _templateToDelete = string.Empty;
+
+    [RelayCommand]
+    private void OpenDeleteTemplate(string templateName)
+    {
+        TemplateToDelete = templateName;
+        IsDeleteTemplateOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseDeleteTemplate()
+    {
+        IsDeleteTemplateOpen = false;
+        TemplateToDelete = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmDeleteTemplate()
+    {
+        if (string.IsNullOrEmpty(TemplateToDelete)) return;
+
+        var success = _templateStorage.DeleteTemplate(TemplateToDelete);
+        if (success)
+        {
+            // If we're deleting the currently selected template, switch to blank
+            if (SelectedTemplateName == TemplateToDelete)
+            {
+                SelectedTemplateName = ReportTemplateFactory.TemplateNames.Custom;
+            }
+
+            // Refresh custom templates list
+            LoadCustomTemplates();
+        }
+
+        IsDeleteTemplateOpen = false;
+        TemplateToDelete = string.Empty;
+    }
+
+    #endregion
+
+    #region Rename Template
+
+    [ObservableProperty]
+    private bool _isRenameTemplateOpen;
+
+    [ObservableProperty]
+    private string _templateToRename = string.Empty;
+
+    [ObservableProperty]
+    private string _renameTemplateNewName = string.Empty;
+
+    [RelayCommand]
+    private void OpenRenameTemplate(string templateName)
+    {
+        TemplateToRename = templateName;
+        RenameTemplateNewName = templateName;
+        IsRenameTemplateOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseRenameTemplate()
+    {
+        IsRenameTemplateOpen = false;
+        TemplateToRename = string.Empty;
+        RenameTemplateNewName = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmRenameTemplate()
+    {
+        if (string.IsNullOrEmpty(TemplateToRename) || string.IsNullOrEmpty(RenameTemplateNewName)) return;
+        if (TemplateToRename == RenameTemplateNewName)
+        {
+            CloseRenameTemplate();
+            return;
+        }
+
+        var success = _templateStorage.RenameTemplate(TemplateToRename, RenameTemplateNewName);
+        if (success)
+        {
+            // If we're renaming the currently selected template, update the selection
+            if (SelectedTemplateName == TemplateToRename)
+            {
+                SelectedTemplateName = RenameTemplateNewName;
+            }
+
+            // Refresh custom templates list
+            LoadCustomTemplates();
+        }
+
+        IsRenameTemplateOpen = false;
+        TemplateToRename = string.Empty;
+        RenameTemplateNewName = string.Empty;
     }
 
     #endregion
@@ -1656,9 +1837,14 @@ public partial class ReportsPageViewModel : ViewModelBase
 
     /// <summary>
     /// Rearranges all chart elements in a grid layout.
+    /// Only rearranges if HasManualChartLayout is false (no manual positioning has been done).
     /// </summary>
     private void RearrangeChartElements()
     {
+        // Skip rearranging if user has manually positioned elements
+        if (Configuration.HasManualChartLayout)
+            return;
+
         var chartElements = Configuration.Elements
             .OfType<ChartReportElement>()
             .ToList();

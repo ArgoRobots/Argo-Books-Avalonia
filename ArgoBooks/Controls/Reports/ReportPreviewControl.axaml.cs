@@ -58,7 +58,7 @@ public partial class ReportPreviewControl : UserControl
     public double ZoomLevel
     {
         get => GetValue(ZoomLevelProperty);
-        set => SetValue(ZoomLevelProperty, Math.Clamp(value, ReportDesignCanvas.MinZoom, ReportDesignCanvas.MaxZoom));
+        set => SetValue(ZoomLevelProperty, Math.Clamp(value, SkiaReportDesignCanvas.MinZoom, SkiaReportDesignCanvas.MaxZoom));
     }
 
     /// <summary>
@@ -389,8 +389,8 @@ public partial class ReportPreviewControl : UserControl
 
         var oldZoom = ZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + ReportDesignCanvas.ZoomStep, ReportDesignCanvas.MaxZoom)
-            : Math.Max(oldZoom - ReportDesignCanvas.ZoomStep, ReportDesignCanvas.MinZoom);
+            ? Math.Min(oldZoom + SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
@@ -502,8 +502,8 @@ public partial class ReportPreviewControl : UserControl
 
         var oldZoom = ZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + ReportDesignCanvas.ZoomStep, ReportDesignCanvas.MaxZoom)
-            : Math.Max(oldZoom - ReportDesignCanvas.ZoomStep, ReportDesignCanvas.MinZoom);
+            ? Math.Min(oldZoom + SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 

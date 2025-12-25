@@ -76,7 +76,7 @@
                     </Border>
 
                     <!-- Preview and Hex Input Row -->
-                    <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Grid ColumnDefinitions="Auto,*">
                         <Border Grid.Column="0" Width="36" Height="36" CornerRadius="4"
                                 Background="{Binding #Root.ColorBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
@@ -84,16 +84,23 @@
                         <TextBox Grid.Column="1"
                                  Text="{Binding #Root.ColorValue, Mode=TwoWay}"
                                  VerticalAlignment="Center"
-                                 Margin="8,0"
+                                 Margin="8,0,0,0"
                                  FontFamily="Consolas,Menlo,monospace"
                                  FontSize="13"
                                  Padding="6,4" />
-                        <Button Grid.Column="2"
-                                Content="Apply"
-                                Classes="primary"
-                                MinWidth="60"
-                                Command="{Binding #Root.ApplyColorCommand}" />
                     </Grid>
+
+                    <!-- Action Buttons Row -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button Content="Cancel"
+                                Classes="secondary"
+                                MinWidth="70"
+                                Command="{Binding #Root.CancelColorCommand}" />
+                        <Button Content="Apply"
+                                Classes="primary"
+                                MinWidth="70"
+                                Command="{Binding #Root.ApplyColorCommand}" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Popup>

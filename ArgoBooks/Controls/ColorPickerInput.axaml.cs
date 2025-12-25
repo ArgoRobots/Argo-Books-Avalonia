@@ -64,13 +64,25 @@ public partial class ColorPickerInput : UserControl
 
     public IRelayCommand TogglePickerCommand { get; }
     public IRelayCommand ApplyColorCommand { get; }
+    public IRelayCommand CancelColorCommand { get; }
 
     #endregion
+
+    /// <summary>
+    /// Stores the original color value when the picker opens, for cancel functionality.
+    /// </summary>
+    private string _originalColorValue = "#000000";
+
+    /// <summary>
+    /// Tracks if the color was explicitly applied (vs light dismiss cancel).
+    /// </summary>
+    private bool _wasApplied;
 
     public ColorPickerInput()
     {
         TogglePickerCommand = new RelayCommand(TogglePicker);
         ApplyColorCommand = new RelayCommand(ApplyColor);
+        CancelColorCommand = new RelayCommand(CancelColor);
 
         InitializeComponent();
         UpdateColorBrush();
@@ -90,6 +102,17 @@ public partial class ColorPickerInput : UserControl
         {
             UpdateColorBrush();
             UpdatePickerColor();
+        }
+        else if (change.Property == IsPickerOpenProperty)
+        {
+            // Handle light dismiss (popup closed without Apply being clicked)
+            if (change.OldValue is true && change.NewValue is false && !_wasApplied)
+            {
+                // Revert to original color
+                ColorValue = _originalColorValue;
+                UpdateColorBrush();
+            }
+            _wasApplied = false;
         }
     }
 
@@ -150,6 +173,12 @@ public partial class ColorPickerInput : UserControl
 
     private void TogglePicker()
     {
+        if (!IsPickerOpen)
+        {
+            // Store original color when opening
+            _originalColorValue = ColorValue;
+        }
+
         // Update picker color before opening
         UpdatePickerColor();
         IsPickerOpen = !IsPickerOpen;
@@ -157,6 +186,15 @@ public partial class ColorPickerInput : UserControl
 
     private void ApplyColor()
     {
+        _wasApplied = true;
+        IsPickerOpen = false;
+    }
+
+    private void CancelColor()
+    {
+        // Revert to original color
+        ColorValue = _originalColorValue;
+        UpdateColorBrush();
         IsPickerOpen = false;
     }
 }

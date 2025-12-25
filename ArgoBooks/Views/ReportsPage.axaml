@@ -177,18 +177,17 @@
         <!-- Main Content Area -->
         <Panel Grid.Row="1">
             <!-- Step 1: Template & Settings -->
-            <ScrollViewer IsVisible="{Binding IsStep1}"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <Grid ColumnDefinitions="*,400" Margin="24">
-                    <!-- Left: Templates with Tab Navigation -->
-                    <Border Grid.Column="0"
-                            Background="{DynamicResource SurfaceBrush}"
-                            CornerRadius="12"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            Margin="0,0,24,0">
-                        <Grid RowDefinitions="Auto,*">
+            <Grid IsVisible="{Binding IsStep1}"
+                  ColumnDefinitions="*,400"
+                  Margin="24">
+                <!-- Left: Templates with Tab Navigation -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        Margin="0,0,24,0">
+                    <Grid RowDefinitions="Auto,*">
                             <!-- Tab Navigation -->
                             <Border Grid.Row="0"
                                     BorderBrush="{DynamicResource BorderBrush}"
@@ -248,10 +247,13 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Tab Content -->
-                            <Panel Grid.Row="1" Margin="24">
-                                <!-- Templates Tab Content -->
-                                <StackPanel Spacing="16" IsVisible="{Binding IsTemplatesTabSelected}">
+                            <!-- Tab Content (Scrollable) -->
+                            <ScrollViewer Grid.Row="1"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <Panel Margin="24">
+                                    <!-- Templates Tab Content -->
+                                    <StackPanel Spacing="16" IsVisible="{Binding IsTemplatesTabSelected}">
                                     <!-- Built-in Templates Grid -->
                                     <ItemsControl ItemsSource="{Binding ReportTemplateOptions}">
                                         <ItemsControl.ItemsPanel>
@@ -341,8 +343,8 @@
                                                             Padding="16"
                                                             CornerRadius="8"
                                                             HorizontalAlignment="Stretch"
-                                                            HorizontalContentAlignment="Left"
-                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
+                                                            HorizontalContentAlignment="Stretch"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).OpenCustomTemplateCommand}"
                                                             CommandParameter="{Binding Name}"
                                                             Classes.selected="{Binding IsSelected}">
                                                         <Button.Styles>
@@ -353,6 +355,11 @@
                                                             </Style>
                                                             <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                                <Setter Property="Transitions">
+                                                                    <Transitions>
+                                                                        <BrushTransition Property="Background" Duration="0:0:0.15" />
+                                                                    </Transitions>
+                                                                </Setter>
                                                             </Style>
                                                             <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
@@ -371,19 +378,29 @@
                                                                 <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                             </Style>
                                                         </Button.Styles>
-                                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                                            <Border Background="{DynamicResource SurfaceHoverBrush}"
-                                                                    CornerRadius="8"
-                                                                    Padding="8">
-                                                                <PathIcon Data="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"
-                                                                          Width="20" Height="20"
-                                                                          Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                            </Border>
-                                                            <TextBlock Text="{Binding Name}"
+                                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                                            <TextBlock Grid.Column="0"
+                                                                       Text="{Binding Name}"
                                                                        FontWeight="Medium"
                                                                        VerticalAlignment="Center"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                        </StackPanel>
+                                                            <Button Grid.Column="1"
+                                                                    Classes="icon-button"
+                                                                    ToolTip.Tip="Rename template"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).OpenRenameTemplateCommand}"
+                                                                    CommandParameter="{Binding Name}">
+                                                                <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                                          Width="14" Height="14" />
+                                                            </Button>
+                                                            <Button Grid.Column="2"
+                                                                    Classes="icon-button danger"
+                                                                    ToolTip.Tip="Delete template"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).OpenDeleteTemplateCommand}"
+                                                                    CommandParameter="{Binding Name}">
+                                                                <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                          Width="14" Height="14" />
+                                                            </Button>
+                                                        </Grid>
                                                     </Button>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -446,7 +463,8 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </StackPanel>
-                            </Panel>
+                                </Panel>
+                            </ScrollViewer>
                         </Grid>
                     </Border>
 
@@ -455,10 +473,11 @@
                             Background="{DynamicResource SurfaceBrush}"
                             CornerRadius="12"
                             BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            Padding="24">
-                        <StackPanel Spacing="20">
-                            <TextBlock Text="Report Settings"
+                            BorderThickness="1">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Spacing="20" Margin="24">
+                                <TextBlock Text="Report Settings"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -537,83 +556,135 @@
                                 </Border>
                             </StackPanel>
 
-                        </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
-            </ScrollViewer>
 
             <!-- Step 2: Layout Designer -->
             <Grid IsVisible="{Binding IsStep2}"
-                  ColumnDefinitions="160,*,260">
+                  ColumnDefinitions="Auto,*,260">
 
-                <!-- Left Panel: Element Toolbox -->
-                <Border Grid.Column="0"
+                <!-- Left Panel: Element Toolbox (Collapsible) -->
+                <Border x:Name="ElementToolbox"
+                        Grid.Column="0"
                         Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,1,0"
-                        Padding="12">
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Elements"
-                                   FontSize="14"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                   Margin="0,0,0,8" />
+                        ClipToBounds="True">
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- Header with Toggle -->
+                        <Grid Grid.Row="0" Margin="8,8,8,0">
+                            <TextBlock Text="Elements"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       IsVisible="{Binding IsElementPanelExpanded}"
+                                       VerticalAlignment="Center" />
+                            <Button Classes="icon-button"
+                                    HorizontalAlignment="Right"
+                                    Width="24" Height="24"
+                                    Click="OnToggleElementPanelClick"
+                                    ToolTip.Tip="Toggle Panel">
+                                <PathIcon Width="12" Height="12"
+                                          Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                            </Button>
+                        </Grid>
 
-                        <!-- Element Buttons -->
-                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Chart">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                        <!-- Expanded Content (Full buttons) -->
+                        <StackPanel x:Name="ElementPanelContent"
+                                    Grid.Row="1"
+                                    Spacing="8"
+                                    Margin="8,8,8,12"
+                                    IsVisible="{Binding IsElementPanelExpanded}">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="Add Chart">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
+                                              Width="18" Height="18"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="Chart" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Label" ToolTip.Tip="Add Label">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M5 4v3h5.5v12h3V7H19V4z"
+                                              Width="18" Height="18"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="Label" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="DateRange" ToolTip.Tip="Add Date Range">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
+                                              Width="18" Height="18"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="Date Range" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Summary" ToolTip.Tip="Add Summary">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                              Width="18" Height="18"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="Summary" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Table" ToolTip.Tip="Add Table">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z"
+                                              Width="18" Height="18"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="Table" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Image" ToolTip.Tip="Add Image">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                                              Width="18" Height="18"
+                                              Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="Image" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Collapsed Content (Icon-only buttons) -->
+                        <StackPanel Grid.Row="1"
+                                    Spacing="4"
+                                    Margin="8,8,8,12"
+                                    HorizontalAlignment="Left"
+                                    IsVisible="{Binding !IsElementPanelExpanded}">
+                            <Button Classes="icon-button" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="Add Chart">
                                 <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
-                                <TextBlock Text="Chart" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Label">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                            </Button>
+                            <Button Classes="icon-button" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Label" ToolTip.Tip="Add Label">
                                 <PathIcon Data="M5 4v3h5.5v12h3V7H19V4z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
-                                <TextBlock Text="Label" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="DateRange">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                            </Button>
+                            <Button Classes="icon-button" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="DateRange" ToolTip.Tip="Add Date Range">
                                 <PathIcon Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
-                                <TextBlock Text="Date Range" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Summary">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                            </Button>
+                            <Button Classes="icon-button" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Summary" ToolTip.Tip="Add Summary">
                                 <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
-                                <TextBlock Text="Summary" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Table">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                            </Button>
+                            <Button Classes="icon-button" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Table" ToolTip.Tip="Add Table">
                                 <PathIcon Data="M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
-                                <TextBlock Text="Table" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-
-                        <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Image">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                            </Button>
+                            <Button Classes="icon-button" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Image" ToolTip.Tip="Add Image">
                                 <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
-                                <TextBlock Text="Image" VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
                 </Border>
 
                 <!-- Center: Design Canvas -->
@@ -743,17 +814,46 @@
                         </ScrollViewer>
                     </Border>
 
-                    <!-- Canvas Area with ReportDesignCanvas -->
-                    <!-- Starts with Opacity=0 to prevent flash before fit-to-window is applied -->
-                    <reports:ReportDesignCanvas x:Name="DesignCanvas"
-                                                Grid.Row="1"
-                                                Opacity="0"
-                                                Configuration="{Binding Configuration}"
-                                                ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
-                                                ShowGrid="{Binding ShowGrid}"
-                                                GridSize="{Binding GridSize}"
-                                                SnapToGrid="{Binding SnapToGrid}"
-                                                UndoRedoManager="{Binding UndoRedoManager}" />
+                    <!-- Canvas Area with SkiaReportDesignCanvas (unified SkiaSharp rendering) -->
+                    <!-- Wrapped in Grid to allow save confirmation overlay -->
+                    <Grid Grid.Row="1">
+                        <!-- Starts with Opacity=0 to prevent flash before fit-to-window is applied -->
+                        <reports:SkiaReportDesignCanvas x:Name="DesignCanvas"
+                                                        Opacity="0"
+                                                        Configuration="{Binding Configuration}"
+                                                        ZoomLevel="{Binding ZoomLevel, Mode=TwoWay}"
+                                                        ShowGrid="{Binding ShowGrid}"
+                                                        GridSize="{Binding GridSize}"
+                                                        SnapToGrid="{Binding SnapToGrid}"
+                                                        UndoRedoManager="{Binding UndoRedoManager}" />
+
+                        <!-- Save Confirmation Overlay -->
+                        <Border x:Name="SaveConfirmationBorder"
+                                IsVisible="{Binding ShowSaveConfirmation}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Top"
+                                Margin="0,16,0,0"
+                                Padding="12,8"
+                                CornerRadius="4"
+                                Background="{DynamicResource SuccessBrush}"
+                                IsHitTestVisible="False"
+                                Opacity="0">
+                            <Border.Transitions>
+                                <Transitions>
+                                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                                </Transitions>
+                            </Border.Transitions>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                          Width="16" Height="16"
+                                          Foreground="White" />
+                                <TextBlock Text="Saved"
+                                           Foreground="White"
+                                           FontWeight="Medium"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
 
                 <!-- Right Panel: Properties -->
@@ -1499,6 +1599,137 @@
                                          HorizontalAlignment="Center"
                                          VerticalAlignment="Center" />
     </Border>
+
+    <!-- Delete Template Confirmation Modal Overlay -->
+    <Border Background="#80000000"
+            IsVisible="{Binding IsDeleteTemplateOpen}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                Width="400"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="12,12,0,0"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="Delete Template"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <Button Grid.Column="1"
+                                Classes="close-button"
+                                Command="{Binding CloseDeleteTemplateCommand}">
+                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                      Width="16" Height="16" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
+                <StackPanel Grid.Row="1" Spacing="16" Margin="24">
+                    <TextBlock TextWrapping="Wrap"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}">
+                        <Run Text="Are you sure you want to delete the template" />
+                        <Run Text="{Binding TemplateToDelete}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <Run Text="? This action cannot be undone." />
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="0,0,12,12"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="12">
+                        <Button Classes="secondary-button"
+                                Content="Cancel"
+                                Command="{Binding CloseDeleteTemplateCommand}" />
+                        <Button Classes="danger-button"
+                                Content="Delete"
+                                Command="{Binding ConfirmDeleteTemplateCommand}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
+
+    <!-- Rename Template Modal Overlay -->
+    <Border Background="#80000000"
+            IsVisible="{Binding IsRenameTemplateOpen}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="12"
+                Width="400"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="12,12,0,0"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                   Text="Rename Template"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <Button Grid.Column="1"
+                                Classes="close-button"
+                                Command="{Binding CloseRenameTemplateCommand}">
+                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                      Width="16" Height="16" />
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
+                <StackPanel Grid.Row="1" Spacing="16" Margin="24">
+                    <TextBlock Text="Enter a new name for the template:"
+                               FontSize="14"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBox Text="{Binding RenameTemplateNewName}"
+                             Watermark="Template name..."
+                             Padding="12,10" />
+                </StackPanel>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="0,0,12,12"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="12">
+                        <Button Classes="secondary-button"
+                                Content="Cancel"
+                                Command="{Binding CloseRenameTemplateCommand}" />
+                        <Button Classes="primary-button"
+                                Content="Rename"
+                                Command="{Binding ConfirmRenameTemplateCommand}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
     </Panel>
 
     <UserControl.Styles>
@@ -1662,6 +1893,48 @@
         </Style>
         <Style Selector="Button.undo-redo-dropdown:disabled PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        </Style>
+
+        <!-- Icon Button -->
+        <Style Selector="Button.icon-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FEE2E2" />
+        </Style>
+        <Style Selector="Button.icon-button.danger:pointerover PathIcon">
+            <Setter Property="Foreground" Value="#DC2626" />
+        </Style>
+
+        <!-- Close Button (for modals) -->
+        <Style Selector="Button.close-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.close-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.close-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
 
     </UserControl.Styles>
