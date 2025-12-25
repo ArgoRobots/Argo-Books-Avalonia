@@ -27,7 +27,6 @@ public partial class ReportsPage : UserControl
 
     // Element panel collapse animation
     private Border? _elementToolbox;
-    private RotateTransform? _elementPanelChevron;
 
     // Preview zoom level (managed here since we're not using binding anymore)
     private double _previewZoomLevel = 1.0;
@@ -54,7 +53,6 @@ public partial class ReportsPage : UserControl
         _saveButtonContainer = this.FindControl<Grid>("SaveButtonContainer");
         _saveConfirmationBorder = this.FindControl<Border>("SaveConfirmationBorder");
         _elementToolbox = this.FindControl<Border>("ElementToolbox");
-        _elementPanelChevron = this.FindControl<RotateTransform>("ElementPanelChevron");
 
         // Wire up toolbar scrollbar visibility detection
         if (_toolbarScrollViewer != null)
@@ -844,21 +842,10 @@ public partial class ReportsPage : UserControl
             double t = i / (double)steps;
             double easeOut = 1 - Math.Pow(1 - t, 3);
             _elementToolbox.Width = startWidth + (targetWidth - startWidth) * easeOut;
-
-            // Animate chevron rotation
-            if (_elementPanelChevron != null)
-            {
-                var targetAngle = vm.IsElementPanelExpanded ? 0 : 180;
-                var startAngle = vm.IsElementPanelExpanded ? 180 : 0;
-                _elementPanelChevron.Angle = startAngle + (targetAngle - startAngle) * easeOut;
-            }
-
             await Task.Delay(delayMs);
         }
 
         // Ensure final state
         _elementToolbox.Width = targetWidth;
-        if (_elementPanelChevron != null)
-            _elementPanelChevron.Angle = vm.IsElementPanelExpanded ? 0 : 180;
     }
 }

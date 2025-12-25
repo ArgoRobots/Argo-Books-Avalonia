@@ -583,11 +583,7 @@
                                     Click="OnToggleElementPanelClick"
                                     ToolTip.Tip="Toggle Panel">
                                 <PathIcon Width="12" Height="12"
-                                          Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z">
-                                    <PathIcon.RenderTransform>
-                                        <RotateTransform x:Name="ElementPanelChevron" Angle="0" />
-                                    </PathIcon.RenderTransform>
-                                </PathIcon>
+                                          Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
                             </Button>
                         </Grid>
 
