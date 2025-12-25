@@ -798,13 +798,13 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void ZoomIn()
     {
-        ZoomLevel = Math.Min(Controls.Reports.ReportDesignCanvas.MaxZoom, ZoomLevel + 0.1);
+        ZoomLevel = Math.Min(Controls.Reports.SkiaReportDesignCanvas.MaxZoom, ZoomLevel + 0.1);
     }
 
     [RelayCommand]
     private void ZoomOut()
     {
-        ZoomLevel = Math.Max(Controls.Reports.ReportDesignCanvas.MinZoom, ZoomLevel - 0.1);
+        ZoomLevel = Math.Max(Controls.Reports.SkiaReportDesignCanvas.MinZoom, ZoomLevel - 0.1);
     }
 
     [RelayCommand]
@@ -1030,13 +1030,13 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void PreviewZoomIn()
     {
-        PreviewZoom = Math.Min(Controls.Reports.ReportDesignCanvas.MaxZoom, PreviewZoom + Controls.Reports.ReportDesignCanvas.ZoomStep);
+        PreviewZoom = Math.Min(Controls.Reports.SkiaReportDesignCanvas.MaxZoom, PreviewZoom + Controls.Reports.SkiaReportDesignCanvas.ZoomStep);
     }
 
     [RelayCommand]
     private void PreviewZoomOut()
     {
-        PreviewZoom = Math.Max(Controls.Reports.ReportDesignCanvas.MinZoom, PreviewZoom - Controls.Reports.ReportDesignCanvas.ZoomStep);
+        PreviewZoom = Math.Max(Controls.Reports.SkiaReportDesignCanvas.MinZoom, PreviewZoom - Controls.Reports.SkiaReportDesignCanvas.ZoomStep);
     }
 
     [RelayCommand]
