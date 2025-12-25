@@ -613,13 +613,11 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         e.Handled = true;
 
-        // Get the mouse position relative to the canvas image (the actual content)
-        var mousePosInCanvas = e.GetPosition(_canvasImage);
-        var mousePosInScrollViewer = e.GetPosition(_scrollViewer);
+        // Get mouse position relative to the scroll viewer (viewport coordinates)
+        var mousePosInViewport = e.GetPosition(_scrollViewer);
 
-        Console.WriteLine($"[Zoom] MouseInCanvas: ({mousePosInCanvas.X:F1}, {mousePosInCanvas.Y:F1}), MouseInScrollViewer: ({mousePosInScrollViewer.X:F1}, {mousePosInScrollViewer.Y:F1})");
-
-        // Get the current zoom
+        // Get current scroll offset and zoom
+        var oldOffset = _scrollViewer.Offset;
         var oldZoom = ZoomLevel;
 
         // Apply zoom change
@@ -629,73 +627,60 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (Math.Abs(newZoom - oldZoom) < 0.001)
             return;
 
-        Console.WriteLine($"[Zoom] OldZoom: {oldZoom:F2}, NewZoom: {newZoom:F2}");
+        // Calculate the mouse position in the content/extent space (before zoom change)
+        // Content space = viewport position + scroll offset
+        var mousePosInContent = new Point(
+            mousePosInViewport.X + oldOffset.X,
+            mousePosInViewport.Y + oldOffset.Y
+        );
 
-        // Calculate the zoom ratio
-        var zoomRatio = newZoom / oldZoom;
+        // Convert content position to canvas coordinates (accounting for margin and zoom)
+        const double margin = 40;
+        var canvasX = (mousePosInContent.X - margin) / oldZoom;
+        var canvasY = (mousePosInContent.Y - margin) / oldZoom;
 
-        // Get the current scroll offset before zooming
-        var oldOffset = _scrollViewer.Offset;
-        Console.WriteLine($"[Zoom] OldOffset: ({oldOffset.X:F1}, {oldOffset.Y:F1})");
+        Console.WriteLine($"[Zoom] MouseInViewport: ({mousePosInViewport.X:F1}, {mousePosInViewport.Y:F1}), CanvasCoord: ({canvasX:F1}, {canvasY:F1})");
+        Console.WriteLine($"[Zoom] OldZoom: {oldZoom:F2} -> NewZoom: {newZoom:F2}");
 
         // Apply the new zoom level
         ZoomLevel = newZoom;
 
-        // Get page dimensions for calculating expected extent
+        // Get page dimensions
         var (pageWidth, pageHeight) = GetPageDimensions();
-        Console.WriteLine($"[Zoom] PageDimensions: {pageWidth}x{pageHeight}");
 
         // Schedule the scroll adjustment after layout is updated
         Dispatcher.UIThread.Post(() =>
         {
             if (_scrollViewer == null) return;
 
-            // After zoom, the content size changes. We need to find where the point
-            // that was under the cursor is now, and scroll to keep it there.
-
-            // The point in the unzoomed canvas space
-            var canvasPoint = mousePosInCanvas;
-
-            // Calculate the expected extent size based on zoom
-            // This is more reliable than reading from scrollViewer.Extent which may not be updated yet
-            const double margin = 40;
             var viewportWidth = _scrollViewer.Viewport.Width;
             var viewportHeight = _scrollViewer.Viewport.Height;
             var expectedExtentWidth = pageWidth * newZoom + margin * 2;
             var expectedExtentHeight = pageHeight * newZoom + margin * 2;
 
-            Console.WriteLine($"[Zoom] Viewport: {viewportWidth:F1}x{viewportHeight:F1}, ExpectedExtent: {expectedExtentWidth:F1}x{expectedExtentHeight:F1}");
-
-            // If content is smaller than viewport, it's centered (no scrolling possible)
+            // If content is smaller than viewport, no scrolling needed
             if (expectedExtentWidth <= viewportWidth && expectedExtentHeight <= viewportHeight)
             {
-                Console.WriteLine("[Zoom] Content smaller than viewport, skipping scroll adjustment");
+                Console.WriteLine("[Zoom] Content fits in viewport, no scroll adjustment needed");
                 return;
             }
 
-            // Calculate the new scroll position to keep the canvas point under the cursor
-            // The canvas point in the new extent = canvasPoint * newZoom + margin
-            var pointInNewExtentX = canvasPoint.X * newZoom + margin;
-            var pointInNewExtentY = canvasPoint.Y * newZoom + margin;
+            // Calculate where the canvas point is in the new content space
+            var newContentX = canvasX * newZoom + margin;
+            var newContentY = canvasY * newZoom + margin;
 
-            Console.WriteLine($"[Zoom] PointInNewExtent: ({pointInNewExtentX:F1}, {pointInNewExtentY:F1})");
+            // New scroll offset = new content position - viewport position (to keep mouse over same canvas point)
+            var newScrollX = newContentX - mousePosInViewport.X;
+            var newScrollY = newContentY - mousePosInViewport.Y;
 
-            // New scroll offset = point position in extent - mouse position in viewport
-            var newScrollX = pointInNewExtentX - mousePosInScrollViewer.X;
-            var newScrollY = pointInNewExtentY - mousePosInScrollViewer.Y;
-
-            Console.WriteLine($"[Zoom] Raw NewScroll: ({newScrollX:F1}, {newScrollY:F1})");
-
-            // Clamp to valid scroll range using expected extent
+            // Clamp to valid scroll range
             var maxScrollX = Math.Max(0, expectedExtentWidth - viewportWidth);
             var maxScrollY = Math.Max(0, expectedExtentHeight - viewportHeight);
-
-            Console.WriteLine($"[Zoom] MaxScroll: ({maxScrollX:F1}, {maxScrollY:F1})");
 
             newScrollX = Math.Clamp(newScrollX, 0, maxScrollX);
             newScrollY = Math.Clamp(newScrollY, 0, maxScrollY);
 
-            Console.WriteLine($"[Zoom] Final NewScroll: ({newScrollX:F1}, {newScrollY:F1})");
+            Console.WriteLine($"[Zoom] NewScroll: ({newScrollX:F1}, {newScrollY:F1})");
 
             _scrollViewer.Offset = new Vector(newScrollX, newScrollY);
         }, DispatcherPriority.Render);
