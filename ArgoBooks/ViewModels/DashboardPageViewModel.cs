@@ -69,14 +69,24 @@ public partial class DashboardPageViewModel : ViewModelBase
     #region Recent Transactions
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRecentTransactions))]
+    [NotifyPropertyChangedFor(nameof(HasNoRecentTransactions))]
     private ObservableCollection<RecentTransactionItem> _recentTransactions = [];
+
+    public bool HasRecentTransactions => RecentTransactions.Count > 0;
+    public bool HasNoRecentTransactions => RecentTransactions.Count == 0;
 
     #endregion
 
     #region Active Rentals
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasActiveRentals))]
+    [NotifyPropertyChangedFor(nameof(HasNoActiveRentals))]
     private ObservableCollection<ActiveRentalItem> _activeRentalsList = [];
+
+    public bool HasActiveRentals => ActiveRentalsList.Count > 0;
+    public bool HasNoActiveRentals => ActiveRentalsList.Count == 0;
 
     #endregion
 
@@ -309,27 +319,35 @@ public partial class DashboardPageViewModel : ViewModelBase
     #region Quick Actions
 
     [RelayCommand]
-    private void NavigateToExpenses()
+    private void AddExpense()
     {
         App.NavigationService?.NavigateTo("Expenses");
+        // Open the add expense modal after navigation
+        App.ExpenseModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
-    private void NavigateToRevenue()
+    private void RecordSale()
     {
         App.NavigationService?.NavigateTo("Revenue");
+        // Open the add revenue modal after navigation
+        App.RevenueModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
-    private void NavigateToInvoices()
+    private void CreateInvoice()
     {
         App.NavigationService?.NavigateTo("Invoices");
+        // Open the add invoice modal after navigation
+        App.InvoiceModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
-    private void NavigateToRentals()
+    private void NewRental()
     {
         App.NavigationService?.NavigateTo("RentalRecords");
+        // Open the add rental modal after navigation
+        App.RentalRecordsModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
@@ -342,6 +360,18 @@ public partial class DashboardPageViewModel : ViewModelBase
     private void NavigateToReports()
     {
         App.NavigationService?.NavigateTo("Reports");
+    }
+
+    [RelayCommand]
+    private void NavigateToRevenue()
+    {
+        App.NavigationService?.NavigateTo("Revenue");
+    }
+
+    [RelayCommand]
+    private void NavigateToRentals()
+    {
+        App.NavigationService?.NavigateTo("RentalRecords");
     }
 
     #endregion

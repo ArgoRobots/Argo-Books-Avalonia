@@ -144,11 +144,13 @@
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimaryBrush}" />
 
-                    <UniformGrid Columns="4" Rows="1">
+                    <Grid ColumnDefinitions="*,*,*,*">
                         <!-- New Expense -->
-                        <Button Classes="quick-action"
-                                Margin="0,0,12,0"
-                                Command="{Binding NavigateToExpensesCommand}">
+                        <Button Grid.Column="0"
+                                Classes="quick-action"
+                                Margin="0,0,6,0"
+                                Command="{Binding AddExpenseCommand}"
+                                HorizontalAlignment="Stretch">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Border Grid.Column="0"
                                         Width="44" Height="44"
@@ -172,9 +174,11 @@
                         </Button>
 
                         <!-- Record Sale -->
-                        <Button Classes="quick-action"
-                                Margin="0,0,12,0"
-                                Command="{Binding NavigateToRevenueCommand}">
+                        <Button Grid.Column="1"
+                                Classes="quick-action"
+                                Margin="6,0,6,0"
+                                Command="{Binding RecordSaleCommand}"
+                                HorizontalAlignment="Stretch">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Border Grid.Column="0"
                                         Width="44" Height="44"
@@ -198,9 +202,11 @@
                         </Button>
 
                         <!-- Create Invoice -->
-                        <Button Classes="quick-action"
-                                Margin="0,0,12,0"
-                                Command="{Binding NavigateToInvoicesCommand}">
+                        <Button Grid.Column="2"
+                                Classes="quick-action"
+                                Margin="6,0,6,0"
+                                Command="{Binding CreateInvoiceCommand}"
+                                HorizontalAlignment="Stretch">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Border Grid.Column="0"
                                         Width="44" Height="44"
@@ -224,8 +230,11 @@
                         </Button>
 
                         <!-- New Rental -->
-                        <Button Classes="quick-action"
-                                Command="{Binding NavigateToRentalsCommand}">
+                        <Button Grid.Column="3"
+                                Classes="quick-action"
+                                Margin="6,0,0,0"
+                                Command="{Binding NewRentalCommand}"
+                                HorizontalAlignment="Stretch">
                             <Grid ColumnDefinitions="Auto,*">
                                 <Border Grid.Column="0"
                                         Width="44" Height="44"
@@ -247,7 +256,7 @@
                                 </StackPanel>
                             </Grid>
                         </Button>
-                    </UniformGrid>
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -385,7 +394,8 @@
                         <!-- Table Content -->
                         <ScrollViewer Grid.Row="1"
                                       VerticalScrollBarVisibility="Auto"
-                                      MaxHeight="400">
+                                      MaxHeight="400"
+                                      IsVisible="{Binding HasRecentTransactions}">
                             <ItemsControl ItemsSource="{Binding RecentTransactions}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:RecentTransactionItem">
@@ -516,7 +526,7 @@
                         <!-- Empty State -->
                         <Border Grid.Row="1"
                                 Padding="40"
-                                IsVisible="{Binding RecentTransactions.Count, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=0}">
+                                IsVisible="{Binding HasNoRecentTransactions}">
                             <StackPanel HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Spacing="12">
@@ -527,7 +537,7 @@
                                            FontSize="14"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="Your transactions will appear here"
+                                <TextBlock Text="Record a sale or expense to see it here"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Center" />
@@ -563,7 +573,8 @@
                         <!-- Table Content -->
                         <ScrollViewer Grid.Row="1"
                                       VerticalScrollBarVisibility="Auto"
-                                      MaxHeight="400">
+                                      MaxHeight="400"
+                                      IsVisible="{Binding HasActiveRentals}">
                             <ItemsControl ItemsSource="{Binding ActiveRentalsList}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:ActiveRentalItem">
@@ -659,7 +670,7 @@
                         <!-- Empty State -->
                         <Border Grid.Row="1"
                                 Padding="40"
-                                IsVisible="{Binding ActiveRentalsList.Count, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=0}">
+                                IsVisible="{Binding HasNoActiveRentals}">
                             <StackPanel HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Spacing="12">
@@ -670,7 +681,7 @@
                                            FontSize="14"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="Active rentals will appear here"
+                                <TextBlock Text="Start a new rental to see it here"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Center" />
