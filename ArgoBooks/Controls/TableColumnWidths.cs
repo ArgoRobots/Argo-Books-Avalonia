@@ -101,7 +101,7 @@ public partial class TableColumnWidths : ObservableObject
         _columns["Total"] = new ColumnDef { Name = "Total", StarValue = 0.8, MinWidth = 70, PreferredWidth = 110 };
         _columns["Receipt"] = new ColumnDef { Name = "Receipt", StarValue = 0.5, MinWidth = 50, PreferredWidth = 80 };
         _columns["Status"] = new ColumnDef { Name = "Status", StarValue = 0.9, MinWidth = 80, PreferredWidth = 110 };
-        _columns["Actions"] = new ColumnDef { Name = "Actions", IsFixed = true, FixedWidth = 160, MinWidth = 120 };
+        _columns["Actions"] = new ColumnDef { Name = "Actions", IsFixed = true, FixedWidth = 160, MinWidth = 160 };
     }
 
     /// <summary>
