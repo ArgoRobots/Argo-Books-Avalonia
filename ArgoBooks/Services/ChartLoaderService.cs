@@ -128,75 +128,75 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads revenue overview chart data as a column series.
+    /// Loads expenses overview chart data as a column series.
     /// </summary>
     /// <param name="companyData">The company data to load from.</param>
     /// <param name="startDate">Optional start date filter.</param>
     /// <param name="endDate">Optional end date filter.</param>
     /// <returns>A tuple containing the series collection and X-axis labels.</returns>
-    public (ObservableCollection<ISeries> Series, string[] Labels, decimal TotalRevenue) LoadRevenueOverviewChart(
+    public (ObservableCollection<ISeries> Series, string[] Labels, decimal TotalExpenses) LoadExpensesOverviewChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
-        decimal totalRevenue = 0;
+        decimal totalExpenses = 0;
 
-        if (companyData?.Sales == null || companyData.Sales.Count == 0)
+        if (companyData?.Purchases == null || companyData.Purchases.Count == 0)
         {
             // Store empty export data
             CurrentExportData = new ChartExportData
             {
-                ChartTitle = "Revenue Overview",
-                ChartType = ChartType.Revenue,
+                ChartTitle = "Expenses Overview",
+                ChartType = ChartType.Expense,
                 Labels = [],
                 Values = [],
-                SeriesName = "Revenue"
+                SeriesName = "Expenses"
             };
-            return (series, labels, totalRevenue);
+            return (series, labels, totalExpenses);
         }
 
         // Default date range: last 30 days
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        // Group sales by date
-        var salesByDate = companyData.Sales
-            .Where(s => s.Date >= start && s.Date <= end)
-            .GroupBy(s => s.Date.Date)
+        // Group purchases/expenses by date
+        var expensesByDate = companyData.Purchases
+            .Where(p => p.Date >= start && p.Date <= end)
+            .GroupBy(p => p.Date.Date)
             .OrderBy(g => g.Key)
             .Select(g => new
             {
                 Date = g.Key,
-                Total = g.Sum(s => s.Total)
+                Total = g.Sum(p => p.Total)
             })
             .ToList();
 
-        if (salesByDate.Count == 0)
+        if (expensesByDate.Count == 0)
         {
             CurrentExportData = new ChartExportData
             {
-                ChartTitle = "Revenue Overview",
-                ChartType = ChartType.Revenue,
+                ChartTitle = "Expenses Overview",
+                ChartType = ChartType.Expense,
                 Labels = [],
                 Values = [],
-                SeriesName = "Revenue"
+                SeriesName = "Expenses"
             };
-            return (series, labels, totalRevenue);
+            return (series, labels, totalExpenses);
         }
 
         // Create labels and values
-        labels = salesByDate.Select(s => s.Date.ToString("yyyy-MM-dd")).ToArray();
-        var values = salesByDate.Select(s => (double)s.Total).ToArray();
-        totalRevenue = salesByDate.Sum(s => s.Total);
+        labels = expensesByDate.Select(e => e.Date.ToString("yyyy-MM-dd")).ToArray();
+        var values = expensesByDate.Select(e => (double)e.Total).ToArray();
+        totalExpenses = expensesByDate.Sum(e => e.Total);
 
         // Create column series with WinForms-style appearance
         var columnSeries = new ColumnSeries<double>
         {
             Values = values,
-            Name = "Revenue",
-            Fill = new SolidColorPaint(RevenueColor),
+            Name = "Expenses",
+            Fill = new SolidColorPaint(RevenueColor), // Using the blue color like WinForms
             Stroke = null,
             MaxBarWidth = double.MaxValue,
             Padding = 2
@@ -207,17 +207,17 @@ public class ChartLoaderService
         // Store export data for Google Sheets/Excel export
         CurrentExportData = new ChartExportData
         {
-            ChartTitle = "Revenue Overview",
-            ChartType = ChartType.Revenue,
+            ChartTitle = "Expenses Overview",
+            ChartType = ChartType.Expense,
             Labels = labels,
             Values = values,
-            SeriesName = "Revenue",
-            TotalValue = (double)totalRevenue,
+            SeriesName = "Expenses",
+            TotalValue = (double)totalExpenses,
             StartDate = start,
             EndDate = end
         };
 
-        return (series, labels, totalRevenue);
+        return (series, labels, totalExpenses);
     }
 
     /// <summary>

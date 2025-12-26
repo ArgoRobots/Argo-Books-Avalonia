@@ -38,7 +38,7 @@ public partial class DashboardPage : UserControl
     /// </summary>
     private async void OnSaveChartImageRequested(object? sender, EventArgs e)
     {
-        var chart = this.FindControl<CartesianChart>("RevenueChart");
+        var chart = this.FindControl<CartesianChart>("ExpensesChart");
         if (chart == null) return;
 
         // Get the top-level window for the file picker
@@ -49,7 +49,7 @@ public partial class DashboardPage : UserControl
         var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Save Chart as Image",
-            SuggestedFileName = $"Revenue_Chart_{DateTime.Now:yyyy-MM-dd}",
+            SuggestedFileName = $"Expenses_Chart_{DateTime.Now:yyyy-MM-dd}",
             DefaultExtension = "png",
             FileTypeChoices = new[]
             {

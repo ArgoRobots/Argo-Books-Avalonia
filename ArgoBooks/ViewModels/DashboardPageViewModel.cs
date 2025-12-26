@@ -93,24 +93,24 @@ public partial class DashboardPageViewModel : ViewModelBase
 
     #endregion
 
-    #region Revenue Overview Chart
+    #region Expenses Overview Chart
 
     private readonly ChartLoaderService _chartLoaderService = new();
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> _revenueChartSeries = [];
+    private ObservableCollection<ISeries> _expensesChartSeries = [];
 
     [ObservableProperty]
-    private Axis[] _revenueChartXAxes = [];
+    private Axis[] _expensesChartXAxes = [];
 
     [ObservableProperty]
-    private Axis[] _revenueChartYAxes = [];
+    private Axis[] _expensesChartYAxes = [];
 
     [ObservableProperty]
-    private string _revenueChartTitle = "Total revenue: $0.00";
+    private string _expensesChartTitle = "Total expenses: $0.00";
 
     [ObservableProperty]
-    private bool _hasRevenueChartData;
+    private bool _hasExpensesChartData;
 
     [ObservableProperty]
     private bool _isChartContextMenuOpen;
@@ -181,7 +181,7 @@ public partial class DashboardPageViewModel : ViewModelBase
         LoadStatistics(data);
         LoadRecentTransactions(data);
         LoadActiveRentals(data);
-        LoadRevenueChart(data);
+        LoadExpensesChart(data);
     }
 
     private void LoadStatistics(CompanyData data)
@@ -348,19 +348,19 @@ public partial class DashboardPageViewModel : ViewModelBase
         ActiveRentalsList = new ObservableCollection<ActiveRentalItem>(activeRentals);
     }
 
-    private void LoadRevenueChart(CompanyData data)
+    private void LoadExpensesChart(CompanyData data)
     {
         // Update theme colors based on current theme
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
 
-        // Load revenue chart data for the last 30 days
-        var (series, labels, totalRevenue) = _chartLoaderService.LoadRevenueOverviewChart(data);
+        // Load expenses chart data for the last 30 days
+        var (series, labels, totalExpenses) = _chartLoaderService.LoadExpensesOverviewChart(data);
 
-        RevenueChartSeries = series;
-        RevenueChartXAxes = _chartLoaderService.CreateXAxes(labels);
-        RevenueChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
-        RevenueChartTitle = $"Total revenue: {FormatCurrency(totalRevenue)}";
-        HasRevenueChartData = series.Count > 0 && labels.Length > 0;
+        ExpensesChartSeries = series;
+        ExpensesChartXAxes = _chartLoaderService.CreateXAxes(labels);
+        ExpensesChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        ExpensesChartTitle = $"Total expenses: {FormatCurrency(totalExpenses)}";
+        HasExpensesChartData = series.Count > 0 && labels.Length > 0;
     }
 
     #endregion
@@ -394,7 +394,7 @@ public partial class DashboardPageViewModel : ViewModelBase
     [RelayCommand]
     private void ResetChartZoom()
     {
-        ChartLoaderService.ResetZoom(RevenueChartXAxes, RevenueChartYAxes);
+        ChartLoaderService.ResetZoom(ExpensesChartXAxes, ExpensesChartYAxes);
         IsChartContextMenuOpen = false;
     }
 

@@ -264,7 +264,7 @@
 
             <!-- Charts Section -->
             <Grid ColumnDefinitions="*,*" Height="320">
-                <!-- Revenue Overview Chart -->
+                <!-- Expenses Overview Chart -->
                 <Border Grid.Column="0"
                         Classes="card"
                         Margin="0,0,12,0">
@@ -273,53 +273,38 @@
                                 Padding="20,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Text="{Binding RevenueChartTitle}"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                    <Border Background="{DynamicResource SuccessIconBgBrush}"
-                                            CornerRadius="4"
-                                            Padding="8,4">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <Ellipse Width="8" Height="8" Fill="#6495ED" />
-                                            <TextBlock Text="Revenue"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
+                            <TextBlock Text="{Binding ExpensesChartTitle}"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                         </Border>
                         <Border Grid.Row="1" Padding="8">
                             <Grid>
                                 <!-- Chart with data -->
                                 <lvc:CartesianChart
-                                    x:Name="RevenueChart"
-                                    Series="{Binding RevenueChartSeries}"
-                                    XAxes="{Binding RevenueChartXAxes}"
-                                    YAxes="{Binding RevenueChartYAxes}"
+                                    x:Name="ExpensesChart"
+                                    Series="{Binding ExpensesChartSeries}"
+                                    XAxes="{Binding ExpensesChartXAxes}"
+                                    YAxes="{Binding ExpensesChartYAxes}"
                                     ZoomMode="Both"
                                     TooltipPosition="Top"
-                                    IsVisible="{Binding HasRevenueChartData}"
+                                    IsVisible="{Binding HasExpensesChartData}"
                                     PointerPressed="OnChartPointerPressed" />
 
                                 <!-- Empty state placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
-                                        IsVisible="{Binding !HasRevenueChartData}">
+                                        IsVisible="{Binding !HasExpensesChartData}">
                                     <StackPanel HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
                                                 Spacing="12">
                                         <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
                                                   Width="48" Height="48"
                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Text="No revenue data"
+                                        <TextBlock Text="No expenses data"
                                                    FontSize="14"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Text="Record sales to see the chart"
+                                        <TextBlock Text="Add expenses to see the chart"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
                                     </StackPanel>
@@ -437,25 +422,10 @@
                                 Padding="20,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Text="Expense Breakdown"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                    <Border Background="{DynamicResource DangerIconBgBrush}"
-                                            CornerRadius="4"
-                                            Padding="8,4">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <Ellipse Width="8" Height="8" Fill="{DynamicResource DangerBrush}" />
-                                            <TextBlock Text="Expenses"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
+                            <TextBlock Text="Distribution of expenses"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                         </Border>
                         <Border Grid.Row="1" Padding="20">
                             <!-- Chart Placeholder -->
