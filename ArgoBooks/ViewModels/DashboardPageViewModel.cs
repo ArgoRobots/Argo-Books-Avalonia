@@ -5,8 +5,11 @@ using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
 
 namespace ArgoBooks.ViewModels;
 
@@ -90,6 +93,36 @@ public partial class DashboardPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Revenue Overview Chart
+
+    private readonly ChartLoaderService _chartLoaderService = new();
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _revenueChartSeries = [];
+
+    [ObservableProperty]
+    private Axis[] _revenueChartXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _revenueChartYAxes = [];
+
+    [ObservableProperty]
+    private string _revenueChartTitle = "Total revenue: $0.00";
+
+    [ObservableProperty]
+    private bool _hasRevenueChartData;
+
+    [ObservableProperty]
+    private bool _isChartContextMenuOpen;
+
+    [ObservableProperty]
+    private double _chartContextMenuX;
+
+    [ObservableProperty]
+    private double _chartContextMenuY;
+
+    #endregion
+
     #region Company Data Reference
 
     private CompanyManager? _companyManager;
@@ -148,6 +181,7 @@ public partial class DashboardPageViewModel : ViewModelBase
         LoadStatistics(data);
         LoadRecentTransactions(data);
         LoadActiveRentals(data);
+        LoadRevenueChart(data);
     }
 
     private void LoadStatistics(CompanyData data)
@@ -313,6 +347,103 @@ public partial class DashboardPageViewModel : ViewModelBase
 
         ActiveRentalsList = new ObservableCollection<ActiveRentalItem>(activeRentals);
     }
+
+    private void LoadRevenueChart(CompanyData data)
+    {
+        // Update theme colors based on current theme
+        _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
+
+        // Load revenue chart data for the last 30 days
+        var (series, labels, totalRevenue) = _chartLoaderService.LoadRevenueOverviewChart(data);
+
+        RevenueChartSeries = series;
+        RevenueChartXAxes = _chartLoaderService.CreateXAxes(labels);
+        RevenueChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        RevenueChartTitle = $"Total revenue: {FormatCurrency(totalRevenue)}";
+        HasRevenueChartData = series.Count > 0 && labels.Length > 0;
+    }
+
+    #endregion
+
+    #region Chart Context Menu Commands
+
+    /// <summary>
+    /// Shows the chart context menu at the specified position.
+    /// </summary>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    public void ShowChartContextMenu(double x, double y)
+    {
+        ChartContextMenuX = x;
+        ChartContextMenuY = y;
+        IsChartContextMenuOpen = true;
+    }
+
+    /// <summary>
+    /// Hides the chart context menu.
+    /// </summary>
+    [RelayCommand]
+    private void HideChartContextMenu()
+    {
+        IsChartContextMenuOpen = false;
+    }
+
+    /// <summary>
+    /// Resets the zoom on the revenue chart.
+    /// </summary>
+    [RelayCommand]
+    private void ResetChartZoom()
+    {
+        ChartLoaderService.ResetZoom(RevenueChartXAxes, RevenueChartYAxes);
+        IsChartContextMenuOpen = false;
+    }
+
+    /// <summary>
+    /// Exports the chart data to Google Sheets.
+    /// </summary>
+    [RelayCommand]
+    private void ExportToGoogleSheets()
+    {
+        IsChartContextMenuOpen = false;
+
+        var exportData = _chartLoaderService.GetGoogleSheetsExportData();
+        if (exportData.Count == 0)
+        {
+            // No data to export
+            return;
+        }
+
+        // TODO: Implement Google Sheets export using Google.Apis.Sheets.v4
+        // The data is already formatted in exportData as List<List<object>>
+        // For now, this is a placeholder - the data structure is ready for export
+        System.Diagnostics.Debug.WriteLine($"Google Sheets export: {exportData.Count - 1} rows ready for export.");
+    }
+
+    /// <summary>
+    /// Exports the chart data to Microsoft Excel.
+    /// </summary>
+    [RelayCommand]
+    private void ExportToExcel()
+    {
+        IsChartContextMenuOpen = false;
+
+        var exportData = _chartLoaderService.GetExcelExportData();
+        if (exportData.Rows.Count == 0)
+        {
+            // No data to export
+            return;
+        }
+
+        // TODO: Implement Excel export using ClosedXML or EPPlus
+        // The data is already formatted in exportData with headers, rows, and total
+        // For now, this is a placeholder - the data structure is ready for export
+        System.Diagnostics.Debug.WriteLine($"Excel export: {exportData.Rows.Count} rows ready for export.");
+    }
+
+    /// <summary>
+    /// Gets the chart loader service for external use (e.g., report generation).
+    /// </summary>
+    public ChartLoaderService ChartLoaderService => _chartLoaderService;
 
     #endregion
 
