@@ -206,6 +206,14 @@ public static class BoolConverters
     /// </summary>
     public static readonly IValueConverter ToLostOrDamagedHeader =
         new FuncValueConverter<bool, string>(value => value ? "Lost" : "Damaged");
+
+    /// <summary>
+    /// Converts bool to ScrollBarVisibility.
+    /// True = Auto (show when needed), False = Disabled.
+    /// </summary>
+    public static readonly IValueConverter ToScrollBarVisibility =
+        new FuncValueConverter<bool, Avalonia.Controls.Primitives.ScrollBarVisibility>(value =>
+            value ? Avalonia.Controls.Primitives.ScrollBarVisibility.Auto : Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled);
 }
 
 /// <summary>

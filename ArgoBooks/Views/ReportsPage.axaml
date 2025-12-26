@@ -1747,7 +1747,8 @@
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <TextBox Text="{Binding RenameTemplateNewName}"
                              Watermark="Template name..."
-                             Padding="12,10" />
+                             Padding="12,10"
+                             KeyDown="OnRenameTemplateKeyDown" />
                 </StackPanel>
 
                 <!-- Footer -->
