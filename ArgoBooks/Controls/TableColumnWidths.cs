@@ -126,17 +126,82 @@ public partial class TableColumnWidths : ObservableObject
 
     /// <summary>
     /// Adjusts a column width by a delta amount (from resize drag).
+    /// Redistributes the width change to columns on the right.
     /// </summary>
     public void ResizeColumn(string columnName, double delta)
     {
         if (!_columns.TryGetValue(columnName, out var col)) return;
         if (!col.IsVisible || col.IsFixed) return;
+        if (Math.Abs(delta) < 0.5) return;
 
-        var newWidth = col.CurrentWidth + delta;
-        newWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, newWidth));
-        col.CurrentWidth = newWidth;
+        // Get ordered list of visible, non-fixed columns
+        var columnOrder = new[] { "Id", "Accountant", "Product", "Supplier", "Date", "Quantity",
+            "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status" };
 
-        ApplyWidthToProperty(columnName, newWidth);
+        var visibleColumns = columnOrder
+            .Where(name => _columns.TryGetValue(name, out var c) && c.IsVisible && !c.IsFixed)
+            .ToList();
+
+        var columnIndex = visibleColumns.IndexOf(columnName);
+        if (columnIndex < 0) return;
+
+        // Get columns to the right of the resized column
+        var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
+        if (columnsToRight.Count == 0)
+        {
+            // No columns to the right - just resize within bounds
+            var newWidth = col.CurrentWidth + delta;
+            newWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, newWidth));
+            col.CurrentWidth = newWidth;
+            ApplyWidthToProperty(columnName, newWidth);
+            return;
+        }
+
+        // Calculate how much the resized column can actually change
+        var newColWidth = col.CurrentWidth + delta;
+        newColWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, newColWidth));
+        var actualDelta = newColWidth - col.CurrentWidth;
+
+        if (Math.Abs(actualDelta) < 0.5) return;
+
+        // Calculate total available width that can be taken from/given to columns on the right
+        double totalRightWidth = columnsToRight.Sum(name => _columns[name].CurrentWidth);
+        double totalRightMinWidth = columnsToRight.Sum(name => _columns[name].MinWidth);
+
+        // When expanding the resized column (positive delta), we need to shrink columns to the right
+        // When shrinking the resized column (negative delta), we need to expand columns to the right
+        if (actualDelta > 0)
+        {
+            // Expanding - check if we can shrink right columns enough
+            double maxShrink = totalRightWidth - totalRightMinWidth;
+            if (actualDelta > maxShrink)
+            {
+                actualDelta = maxShrink;
+                newColWidth = col.CurrentWidth + actualDelta;
+            }
+        }
+
+        if (Math.Abs(actualDelta) < 0.5) return;
+
+        // Apply the change to the resized column
+        col.CurrentWidth = newColWidth;
+        ApplyWidthToProperty(columnName, newColWidth);
+
+        // Distribute the inverse delta proportionally to columns on the right
+        double remainingDelta = -actualDelta;
+
+        foreach (var rightColName in columnsToRight)
+        {
+            var rightCol = _columns[rightColName];
+            double proportion = rightCol.CurrentWidth / totalRightWidth;
+            double colDelta = remainingDelta * proportion;
+
+            double newRightWidth = rightCol.CurrentWidth + colDelta;
+            newRightWidth = Math.Max(rightCol.MinWidth, Math.Min(rightCol.MaxWidth, newRightWidth));
+
+            rightCol.CurrentWidth = newRightWidth;
+            ApplyWidthToProperty(rightColName, newRightWidth);
+        }
     }
 
     /// <summary>
