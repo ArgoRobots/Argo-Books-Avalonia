@@ -399,6 +399,22 @@ public partial class DashboardPageViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Event raised when a chart image should be saved.
+    /// The View should subscribe to this and handle the actual save dialog.
+    /// </summary>
+    public event EventHandler? SaveChartImageRequested;
+
+    /// <summary>
+    /// Saves the chart as an image file.
+    /// </summary>
+    [RelayCommand]
+    private void SaveChartAsImage()
+    {
+        IsChartContextMenuOpen = false;
+        SaveChartImageRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// Exports the chart data to Google Sheets.
     /// </summary>
     [RelayCommand]
