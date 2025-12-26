@@ -685,11 +685,8 @@ public partial class RevenueModalsViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
         CloseItemStatusModal();
 
-        // Refresh the revenue page
-        if (App.CurrentPageViewModel is RevenuePageViewModel revenueVm)
-        {
-            revenueVm.RefreshRevenueCommand.Execute(null);
-        }
+        // Notify that revenue data has changed
+        RevenueSaved?.Invoke(this, EventArgs.Empty);
     }
 
     private void CreateLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Sale sale)

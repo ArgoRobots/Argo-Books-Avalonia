@@ -688,11 +688,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
         CloseItemStatusModal();
 
-        // Refresh the expenses page
-        if (App.CurrentPageViewModel is ExpensesPageViewModel expensesVm)
-        {
-            expensesVm.RefreshExpensesCommand.Execute(null);
-        }
+        // Notify that expense data has changed
+        ExpenseSaved?.Invoke(this, EventArgs.Empty);
     }
 
     private void CreateLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Purchase purchase)
