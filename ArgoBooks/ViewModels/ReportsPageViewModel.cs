@@ -1560,7 +1560,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ConfirmRenameTemplate()
+    private async Task ConfirmRenameTemplateAsync()
     {
         if (string.IsNullOrEmpty(TemplateToRename) || string.IsNullOrEmpty(RenameTemplateNewName)) return;
         if (TemplateToRename == RenameTemplateNewName)
@@ -1569,7 +1569,7 @@ public partial class ReportsPageViewModel : ViewModelBase
             return;
         }
 
-        var success = _templateStorage.RenameTemplate(TemplateToRename, RenameTemplateNewName);
+        var success = await _templateStorage.RenameTemplateAsync(TemplateToRename, RenameTemplateNewName);
         if (success)
         {
             // If we're renaming the currently selected template, update the selection
