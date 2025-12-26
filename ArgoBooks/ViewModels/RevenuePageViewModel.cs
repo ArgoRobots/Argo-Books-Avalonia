@@ -533,6 +533,13 @@ public partial class RevenuePageViewModel : ViewModelBase
 
     private static string GetStatusDisplay(Sale sale, Core.Data.CompanyData? companyData)
     {
+        // Check for lost/damaged related to this sale
+        var relatedLostDamaged = companyData?.LostDamaged?.FirstOrDefault(ld => ld.InventoryItemId == sale.Id);
+        if (relatedLostDamaged != null)
+        {
+            return "Lost/Damaged";
+        }
+
         // Check for returns related to this sale
         var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
 
@@ -610,6 +617,18 @@ public partial class RevenuePageViewModel : ViewModelBase
     private void MarkAsReturned(RevenueDisplayItem? item)
     {
         App.RevenueModalsViewModel?.OpenMarkAsReturnedModal(item);
+    }
+
+    [RelayCommand]
+    private void UndoLostDamaged(RevenueDisplayItem? item)
+    {
+        App.RevenueModalsViewModel?.OpenUndoLostDamagedModal(item);
+    }
+
+    [RelayCommand]
+    private void UndoReturn(RevenueDisplayItem? item)
+    {
+        App.RevenueModalsViewModel?.OpenUndoReturnedModal(item);
     }
 
     [RelayCommand]
@@ -786,6 +805,9 @@ public partial class RevenueDisplayItem : ObservableObject
 
     public bool IsReturned => StatusDisplay == "Returned";
     public bool IsPartialReturn => StatusDisplay == "Partial Return";
+    public bool IsLostDamaged => StatusDisplay == "Lost/Damaged";
+    public bool CanMarkAsReturned => !IsReturned && !IsLostDamaged;
+    public bool CanMarkAsLostDamaged => !IsReturned && !IsLostDamaged;
 
     [ObservableProperty]
     private bool _hasReceipt;

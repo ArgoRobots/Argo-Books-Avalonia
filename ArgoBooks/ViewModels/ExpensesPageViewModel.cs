@@ -547,6 +547,13 @@ public partial class ExpensesPageViewModel : ViewModelBase
 
     private static string GetStatusDisplay(Purchase purchase, Core.Data.CompanyData? companyData)
     {
+        // Check for lost/damaged related to this purchase
+        var relatedLostDamaged = companyData?.LostDamaged?.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
+        if (relatedLostDamaged != null)
+        {
+            return "Lost/Damaged";
+        }
+
         // Check for returns related to this purchase
         var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
 
@@ -624,6 +631,18 @@ public partial class ExpensesPageViewModel : ViewModelBase
     private void MarkAsReturned(ExpenseDisplayItem? item)
     {
         App.ExpenseModalsViewModel?.OpenMarkAsReturnedModal(item);
+    }
+
+    [RelayCommand]
+    private void UndoLostDamaged(ExpenseDisplayItem? item)
+    {
+        App.ExpenseModalsViewModel?.OpenUndoLostDamagedModal(item);
+    }
+
+    [RelayCommand]
+    private void UndoReturn(ExpenseDisplayItem? item)
+    {
+        App.ExpenseModalsViewModel?.OpenUndoReturnedModal(item);
     }
 
     [RelayCommand]
@@ -790,6 +809,9 @@ public partial class ExpenseDisplayItem : ObservableObject
 
     public bool IsReturned => StatusDisplay == "Returned";
     public bool IsPartialReturn => StatusDisplay == "Partial Return";
+    public bool IsLostDamaged => StatusDisplay == "Lost/Damaged";
+    public bool CanMarkAsReturned => !IsReturned && !IsLostDamaged;
+    public bool CanMarkAsLostDamaged => !IsReturned && !IsLostDamaged;
 }
 
 /// <summary>

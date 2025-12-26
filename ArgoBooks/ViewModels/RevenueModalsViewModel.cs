@@ -73,6 +73,12 @@ public partial class RevenueModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _itemStatusSaveButtonText = "Confirm";
 
+    [ObservableProperty]
+    private bool _hasItemStatusReasonError;
+
+    [ObservableProperty]
+    private string _itemStatusReasonErrorMessage = string.Empty;
+
     public ObservableCollection<string> LostDamagedReasonOptions { get; } =
     [
         "Damaged in transit",
@@ -641,14 +647,148 @@ public partial class RevenueModalsViewModel : ViewModelBase
         ItemStatusAction = string.Empty;
         SelectedItemStatusReason = null;
         ItemStatusNotes = string.Empty;
+        HasItemStatusReasonError = false;
+        ItemStatusReasonErrorMessage = string.Empty;
     }
 
     [RelayCommand]
     private void ConfirmItemStatus()
     {
-        // TODO: Implement the actual status change logic when backend is ready
-        // For now, just close the modal
+        if (_itemStatusItem == null)
+        {
+            CloseItemStatusModal();
+            return;
+        }
+
+        // Validate reason is selected
+        if (string.IsNullOrEmpty(SelectedItemStatusReason))
+        {
+            HasItemStatusReasonError = true;
+            ItemStatusReasonErrorMessage = "Please select a reason";
+            return;
+        }
+
+        HasItemStatusReasonError = false;
+        ItemStatusReasonErrorMessage = string.Empty;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+        {
+            CloseItemStatusModal();
+            return;
+        }
+
+        var sale = companyData.Sales.FirstOrDefault(s => s.Id == _itemStatusItem.Id);
+        if (sale == null)
+        {
+            CloseItemStatusModal();
+            return;
+        }
+
+        switch (ItemStatusAction)
+        {
+            case "LostDamaged":
+                CreateLostDamagedRecord(companyData, sale);
+                break;
+            case "Returned":
+                CreateReturnRecord(companyData, sale);
+                break;
+            case "UndoLostDamaged":
+                RemoveLostDamagedRecord(companyData, sale);
+                break;
+            case "UndoReturned":
+                RemoveReturnRecord(companyData, sale);
+                break;
+        }
+
+        App.CompanyManager?.MarkAsChanged();
         CloseItemStatusModal();
+
+        // Notify that revenue data has changed
+        RevenueSaved?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void CreateLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Sale sale)
+    {
+        var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
+        var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
+        var valueLost = sale.Total;
+
+        var lostDamaged = new Core.Models.Tracking.LostDamaged
+        {
+            Id = $"LOST-{++companyData.IdCounters.LostDamaged:D3}",
+            ProductId = productId,
+            InventoryItemId = sale.Id,
+            Quantity = (int)sale.Quantity,
+            Reason = reason,
+            DateDiscovered = DateTime.UtcNow,
+            ValueLost = valueLost,
+            Notes = $"From sale {sale.Id}. {ItemStatusNotes}".Trim(),
+            InsuranceClaim = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        companyData.LostDamaged.Add(lostDamaged);
+    }
+
+    private void CreateReturnRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Sale sale)
+    {
+        var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
+
+        var returnRecord = new Core.Models.Tracking.Return
+        {
+            Id = $"RET-{++companyData.IdCounters.Return:D3}",
+            OriginalTransactionId = sale.Id,
+            ReturnType = "Customer",
+            SupplierId = "",
+            CustomerId = sale.CustomerId ?? "",
+            ReturnDate = DateTime.UtcNow,
+            Items =
+            [
+                new Core.Models.Common.ReturnItem
+                {
+                    ProductId = productId,
+                    Quantity = (int)sale.Quantity,
+                    Reason = SelectedItemStatusReason ?? "Other"
+                }
+            ],
+            RefundAmount = sale.Total,
+            RestockingFee = 0,
+            Status = Core.Enums.ReturnStatus.Completed,
+            Notes = ItemStatusNotes,
+            ProcessedBy = sale.AccountantId ?? "",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        companyData.Returns.Add(returnRecord);
+    }
+
+    private static void RemoveLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Sale sale)
+    {
+        var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == sale.Id);
+        if (record != null)
+        {
+            companyData.LostDamaged.Remove(record);
+        }
+    }
+
+    private static void RemoveReturnRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Sale sale)
+    {
+        var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
+        if (record != null)
+        {
+            companyData.Returns.Remove(record);
+        }
+    }
+
+    private static Core.Enums.LostDamagedReason MapToLostDamagedReason(string reason)
+    {
+        return reason.ToLowerInvariant() switch
+        {
+            "damaged in transit" or "damaged during storage" or "defective product" or "customer damaged" => Core.Enums.LostDamagedReason.Damaged,
+            "lost in warehouse" => Core.Enums.LostDamagedReason.Lost,
+            _ => Core.Enums.LostDamagedReason.Other
+        };
     }
 
     #endregion

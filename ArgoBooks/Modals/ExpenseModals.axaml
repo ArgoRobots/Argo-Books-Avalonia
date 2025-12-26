@@ -635,7 +635,12 @@
                                       SelectedItem="{Binding SelectedItemStatusReason}"
                                       Classes="form-combobox"
                                       HorizontalAlignment="Stretch"
-                                      PlaceholderText="Select a reason..." />
+                                      PlaceholderText="Select a reason..."
+                                      BorderBrush="{Binding HasItemStatusReasonError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}" />
+                            <TextBlock Text="{Binding ItemStatusReasonErrorMessage}"
+                                       IsVisible="{Binding HasItemStatusReasonError}"
+                                       FontSize="12"
+                                       Foreground="#dc2626" />
                         </StackPanel>
 
                         <!-- Notes -->

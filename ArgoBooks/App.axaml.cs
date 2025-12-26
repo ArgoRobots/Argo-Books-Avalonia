@@ -1373,8 +1373,8 @@ public partial class App : Application
         navigationService.RegisterPage("RentalRecords", _ => new RentalRecordsPage { DataContext = new RentalRecordsPageViewModel() });
 
         // Tracking Section
-        navigationService.RegisterPage("Returns", _ => CreatePlaceholderPage("Returns", "Manage product returns"));
-        navigationService.RegisterPage("LostDamaged", _ => CreatePlaceholderPage("Lost/Damaged", "Track lost and damaged items"));
+        navigationService.RegisterPage("Returns", _ => new ReturnsPage { DataContext = new ReturnsPageViewModel() });
+        navigationService.RegisterPage("LostDamaged", _ => new LostDamagedPage { DataContext = new LostDamagedPageViewModel() });
         navigationService.RegisterPage("Receipts", _ => new ReceiptsPage { DataContext = new ReceiptsPageViewModel() });
 
         // Settings and Help

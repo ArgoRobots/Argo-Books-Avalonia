@@ -100,6 +100,26 @@ public static class BoolConverters
             new SolidColorBrush(Color.Parse(value ? "#DCFCE7" : "#F3F4F6")));
 
     /// <summary>
+    /// Converts bool (hasError) to border brush.
+    /// Error = red (#dc2626), No error = transparent.
+    /// </summary>
+    public static readonly IValueConverter ToErrorBorderBrush =
+        new FuncValueConverter<bool, IBrush>(value =>
+        {
+            if (value)
+            {
+                if (Application.Current?.Resources != null &&
+                    Application.Current.Resources.TryGetResource("ErrorBrush", Application.Current.ActualThemeVariant, out var resource) &&
+                    resource is IBrush brush)
+                {
+                    return brush;
+                }
+                return new SolidColorBrush(Color.Parse("#dc2626"));
+            }
+            return Brushes.Transparent;
+        });
+
+    /// <summary>
     /// Converts bool (isActive) to status badge foreground color.
     /// Active = green (#166534), Inactive = gray (#4B5563).
     /// </summary>
@@ -158,6 +178,34 @@ public static class BoolConverters
     /// Returns null if the file doesn't exist or can't be loaded.
     /// </summary>
     public static readonly IValueConverter ToImageSource = new FilePathToImageConverter();
+
+    /// <summary>
+    /// Converts bool (isExpenseTab) to table title for returns page.
+    /// True = "Expense Returns", False = "Customer Returns".
+    /// </summary>
+    public static readonly IValueConverter ToReturnTableTitle =
+        new FuncValueConverter<bool, string>(value => value ? "Expense Returns" : "Customer Returns");
+
+    /// <summary>
+    /// Converts bool (isExpenseTab) to column header.
+    /// True = "Supplier", False = "Customer".
+    /// </summary>
+    public static readonly IValueConverter ToSupplierOrCustomerHeader =
+        new FuncValueConverter<bool, string>(value => value ? "Supplier" : "Customer");
+
+    /// <summary>
+    /// Converts bool (isExpenseTab) to column header.
+    /// True = "Returned By", False = "Processed By".
+    /// </summary>
+    public static readonly IValueConverter ToReturnedByOrProcessedByHeader =
+        new FuncValueConverter<bool, string>(value => value ? "Returned By" : "Processed By");
+
+    /// <summary>
+    /// Converts bool (isExpenseTab) to column header.
+    /// True = "Lost", False = "Damaged".
+    /// </summary>
+    public static readonly IValueConverter ToLostOrDamagedHeader =
+        new FuncValueConverter<bool, string>(value => value ? "Lost" : "Damaged");
 }
 
 /// <summary>
@@ -214,6 +262,12 @@ public static class IntConverters
     /// </summary>
     public static readonly IValueConverter IsGreaterThanOne =
         new FuncValueConverter<int, bool>(value => value > 1);
+
+    /// <summary>
+    /// Returns true if the integer is not zero.
+    /// </summary>
+    public static readonly IValueConverter IsNotZero =
+        new FuncValueConverter<int, bool>(value => value != 0);
 }
 
 /// <summary>
@@ -833,6 +887,71 @@ public class BoolToStringConverter : IValueConverter
             return string.Empty;
 
         return boolValue ? parts[0] : parts[1];
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converter that returns tab button background based on active state.
+/// Active = primary color, Inactive = transparent.
+/// </summary>
+public class BoolToTabBackgroundConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not bool isActive)
+            return Brushes.Transparent;
+
+        if (isActive)
+        {
+            if (Application.Current?.Resources != null &&
+                Application.Current.Resources.TryGetResource("PrimaryBrush", Application.Current.ActualThemeVariant, out var resource) &&
+                resource is IBrush brush)
+            {
+                return brush;
+            }
+            return new SolidColorBrush(Color.Parse("#3B82F6"));
+        }
+        return Brushes.Transparent;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converter that returns tab button foreground based on active state.
+/// Active = white, Inactive = secondary text color.
+/// </summary>
+public class BoolToTabForegroundConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not bool isActive)
+            return GetDefaultTextBrush();
+
+        if (isActive)
+        {
+            return Brushes.White;
+        }
+        return GetDefaultTextBrush();
+    }
+
+    private static IBrush GetDefaultTextBrush()
+    {
+        if (Application.Current?.Resources != null &&
+            Application.Current.Resources.TryGetResource("TextSecondaryBrush", Application.Current.ActualThemeVariant, out var resource) &&
+            resource is IBrush brush)
+        {
+            return brush;
+        }
+        return new SolidColorBrush(Color.Parse("#6B7280"));
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
