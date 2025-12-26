@@ -27,6 +27,8 @@ public partial class TableColumnWidths : ObservableObject
         public bool IsFixed { get; set; }
         public double FixedWidth { get; set; } = 100;
         public double CurrentWidth { get; set; }
+        public double PreferredWidth { get; set; } = 120; // Default comfortable width for auto-size
+        public double MeasuredContentWidth { get; set; } // Max measured content width
     }
 
     #region Column Width Properties
@@ -85,20 +87,20 @@ public partial class TableColumnWidths : ObservableObject
 
     private void InitializeColumns()
     {
-        _columns["Id"] = new ColumnDef { Name = "Id", StarValue = 1.2, MinWidth = 80 };
-        _columns["Accountant"] = new ColumnDef { Name = "Accountant", StarValue = 1.0, MinWidth = 70 };
-        _columns["Product"] = new ColumnDef { Name = "Product", StarValue = 1.5, MinWidth = 100 };
-        _columns["Supplier"] = new ColumnDef { Name = "Supplier", StarValue = 1.2, MinWidth = 80 };
-        _columns["Date"] = new ColumnDef { Name = "Date", StarValue = 1.0, MinWidth = 80 };
-        _columns["Quantity"] = new ColumnDef { Name = "Quantity", StarValue = 0.5, MinWidth = 40 };
-        _columns["UnitPrice"] = new ColumnDef { Name = "UnitPrice", StarValue = 0.8, MinWidth = 60 };
-        _columns["Amount"] = new ColumnDef { Name = "Amount", StarValue = 0.8, MinWidth = 60 };
-        _columns["Tax"] = new ColumnDef { Name = "Tax", StarValue = 0.6, MinWidth = 50 };
-        _columns["Shipping"] = new ColumnDef { Name = "Shipping", StarValue = 0.7, MinWidth = 60 };
-        _columns["Discount"] = new ColumnDef { Name = "Discount", StarValue = 0.7, MinWidth = 60 };
-        _columns["Total"] = new ColumnDef { Name = "Total", StarValue = 0.8, MinWidth = 70 };
-        _columns["Receipt"] = new ColumnDef { Name = "Receipt", StarValue = 0.5, MinWidth = 50 };
-        _columns["Status"] = new ColumnDef { Name = "Status", StarValue = 0.9, MinWidth = 80 };
+        _columns["Id"] = new ColumnDef { Name = "Id", StarValue = 1.2, MinWidth = 60, PreferredWidth = 100 };
+        _columns["Accountant"] = new ColumnDef { Name = "Accountant", StarValue = 1.0, MinWidth = 70, PreferredWidth = 120 };
+        _columns["Product"] = new ColumnDef { Name = "Product", StarValue = 1.5, MinWidth = 100, PreferredWidth = 200 };
+        _columns["Supplier"] = new ColumnDef { Name = "Supplier", StarValue = 1.2, MinWidth = 80, PreferredWidth = 150 };
+        _columns["Date"] = new ColumnDef { Name = "Date", StarValue = 1.0, MinWidth = 80, PreferredWidth = 110 };
+        _columns["Quantity"] = new ColumnDef { Name = "Quantity", StarValue = 0.5, MinWidth = 40, PreferredWidth = 70 };
+        _columns["UnitPrice"] = new ColumnDef { Name = "UnitPrice", StarValue = 0.8, MinWidth = 60, PreferredWidth = 100 };
+        _columns["Amount"] = new ColumnDef { Name = "Amount", StarValue = 0.8, MinWidth = 60, PreferredWidth = 100 };
+        _columns["Tax"] = new ColumnDef { Name = "Tax", StarValue = 0.6, MinWidth = 50, PreferredWidth = 80 };
+        _columns["Shipping"] = new ColumnDef { Name = "Shipping", StarValue = 0.7, MinWidth = 60, PreferredWidth = 90 };
+        _columns["Discount"] = new ColumnDef { Name = "Discount", StarValue = 0.7, MinWidth = 60, PreferredWidth = 90 };
+        _columns["Total"] = new ColumnDef { Name = "Total", StarValue = 0.8, MinWidth = 70, PreferredWidth = 110 };
+        _columns["Receipt"] = new ColumnDef { Name = "Receipt", StarValue = 0.5, MinWidth = 50, PreferredWidth = 80 };
+        _columns["Status"] = new ColumnDef { Name = "Status", StarValue = 0.9, MinWidth = 80, PreferredWidth = 110 };
         _columns["Actions"] = new ColumnDef { Name = "Actions", IsFixed = true, FixedWidth = 160, MinWidth = 120 };
     }
 
@@ -239,6 +241,46 @@ public partial class TableColumnWidths : ObservableObject
             return col.MinWidth;
         }
         return 50;
+    }
+
+    /// <summary>
+    /// Registers a measured content width for a column (call this for each cell to track max content).
+    /// </summary>
+    public void RegisterContentWidth(string columnName, double contentWidth)
+    {
+        if (_columns.TryGetValue(columnName, out var col))
+        {
+            // Add padding for cell margins
+            var widthWithPadding = contentWidth + 20;
+            if (widthWithPadding > col.MeasuredContentWidth)
+            {
+                col.MeasuredContentWidth = widthWithPadding;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Auto-sizes a column to fit its content or preferred width.
+    /// Adjusts columns to the right to compensate.
+    /// </summary>
+    public void AutoSizeColumn(string columnName)
+    {
+        if (!_columns.TryGetValue(columnName, out var col)) return;
+        if (!col.IsVisible || col.IsFixed) return;
+
+        // Determine target width: use measured content if available, otherwise preferred width
+        double targetWidth = col.MeasuredContentWidth > 0
+            ? Math.Max(col.MinWidth, col.MeasuredContentWidth)
+            : col.PreferredWidth;
+
+        targetWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, targetWidth));
+
+        // Calculate delta and use ResizeColumn to properly adjust columns to the right
+        var delta = targetWidth - col.CurrentWidth;
+        if (Math.Abs(delta) > 0.5)
+        {
+            ResizeColumn(columnName, delta);
+        }
     }
 
     /// <summary>

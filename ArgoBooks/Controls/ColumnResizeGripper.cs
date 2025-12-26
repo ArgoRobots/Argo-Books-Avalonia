@@ -12,8 +12,9 @@ namespace ArgoBooks.Controls;
 public class ColumnResizeGripper : Border
 {
     private bool _isDragging;
-    private Point _dragStartPoint;
-    private double _originalWidth;
+    private Point _lastDragPoint;
+    private DateTime _lastClickTime = DateTime.MinValue;
+    private const int DoubleClickThresholdMs = 300;
 
     public static readonly StyledProperty<string> ColumnNameProperty =
         AvaloniaProperty.Register<ColumnResizeGripper, string>(nameof(ColumnName), string.Empty);
@@ -72,9 +73,20 @@ public class ColumnResizeGripper : Border
 
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
+            // Check for double-click
+            var now = DateTime.Now;
+            if ((now - _lastClickTime).TotalMilliseconds < DoubleClickThresholdMs)
+            {
+                // Double-click: auto-size the column
+                AutoSizeColumn();
+                _lastClickTime = DateTime.MinValue;
+                e.Handled = true;
+                return;
+            }
+            _lastClickTime = now;
+
             _isDragging = true;
-            _dragStartPoint = e.GetPosition(this.GetVisualRoot() as Visual);
-            _originalWidth = GetCurrentColumnWidth();
+            _lastDragPoint = e.GetPosition(this.GetVisualRoot() as Visual);
             Background = new SolidColorBrush(Color.FromArgb(120, 59, 130, 246));
             e.Pointer.Capture(this);
             e.Handled = true;
@@ -88,10 +100,13 @@ public class ColumnResizeGripper : Border
         if (_isDragging)
         {
             var currentPoint = e.GetPosition(this.GetVisualRoot() as Visual);
-            var delta = currentPoint.X - _dragStartPoint.X;
-            var newWidth = Math.Max(ColumnWidths?.GetMinWidth(ColumnName) ?? 50, _originalWidth + delta);
+            var delta = currentPoint.X - _lastDragPoint.X;
 
-            ColumnWidths?.SetColumnWidth(ColumnName, newWidth);
+            if (Math.Abs(delta) >= 1)
+            {
+                ColumnWidths?.ResizeColumn(ColumnName, delta);
+                _lastDragPoint = currentPoint;
+            }
             e.Handled = true;
         }
     }
@@ -109,8 +124,8 @@ public class ColumnResizeGripper : Border
         }
     }
 
-    private double GetCurrentColumnWidth()
+    private void AutoSizeColumn()
     {
-        return ColumnWidths?.GetColumnWidth(ColumnName) ?? 100;
+        ColumnWidths?.AutoSizeColumn(ColumnName);
     }
 }
