@@ -895,4 +895,16 @@ public partial class ReportsPage : UserControl
         // Ensure final state
         _elementToolbox.Width = targetWidth;
     }
+
+    /// <summary>
+    /// Handles Enter key press in the rename template TextBox.
+    /// </summary>
+    private void OnRenameTemplateKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && DataContext is ReportsPageViewModel vm)
+        {
+            vm.ConfirmRenameTemplateCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
 }
