@@ -248,6 +248,7 @@
                                     <TextBlock Text="ID" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -256,6 +257,7 @@
                                     <TextBlock Text="Accountant" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Accountant" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -264,6 +266,7 @@
                                     <TextBlock Text="Product" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -272,6 +275,7 @@
                                     <TextBlock Text="Supplier" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -280,6 +284,7 @@
                                     <TextBlock Text="Date" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -288,6 +293,7 @@
                                     <TextBlock Text="Qty" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Quantity" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -296,6 +302,7 @@
                                     <TextBlock Text="Unit Price" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="UnitPrice" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -304,6 +311,7 @@
                                     <TextBlock Text="Amount" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Amount" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -312,6 +320,7 @@
                                     <TextBlock Text="Tax" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Tax" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -320,6 +329,7 @@
                                     <TextBlock Text="Shipping" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Shipping" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -328,6 +338,7 @@
                                     <TextBlock Text="Discount" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Discount" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -336,6 +347,7 @@
                                     <TextBlock Text="Total" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Total" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -345,6 +357,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                HorizontalAlignment="Center"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Receipt" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -353,6 +366,7 @@
                                     <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                     <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -379,129 +393,155 @@
                                                     BorderThickness="0,0,0,1">
                                                 <StackPanel Orientation="Horizontal">
                                                     <!-- ID -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
-                                                               Text="{Binding Id}"
-                                                               FontSize="14"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource PrimaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowIdColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowIdColumn}">
+                                                        <TextBlock Text="{Binding Id}"
+                                                                   FontSize="14"
+                                                                   FontWeight="Medium"
+                                                                   Foreground="{DynamicResource PrimaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Accountant -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.AccountantColumnWidth}"
-                                                               Text="{Binding AccountantName}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowAccountantColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.AccountantColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowAccountantColumn}">
+                                                        <TextBlock Text="{Binding AccountantName}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Product -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
-                                                               Text="{Binding ProductDescription}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowProductColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowProductColumn}">
+                                                        <TextBlock Text="{Binding ProductDescription}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Supplier -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
-                                                               Text="{Binding SupplierName}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowSupplierColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowSupplierColumn}">
+                                                        <TextBlock Text="{Binding SupplierName}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Date -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
-                                                               Text="{Binding DateFormatted}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowDateColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowDateColumn}">
+                                                        <TextBlock Text="{Binding DateFormatted}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Quantity -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}"
-                                                               Text="{Binding Quantity}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowQuantityColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowQuantityColumn}">
+                                                        <TextBlock Text="{Binding Quantity}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Unit Price -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.UnitPriceColumnWidth}"
-                                                               Text="{Binding UnitPriceFormatted}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowUnitPriceColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.UnitPriceColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowUnitPriceColumn}">
+                                                        <TextBlock Text="{Binding UnitPriceFormatted}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Amount -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.AmountColumnWidth}"
-                                                               Text="{Binding AmountFormatted}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowAmountColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.AmountColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowAmountColumn}">
+                                                        <TextBlock Text="{Binding AmountFormatted}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Tax -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.TaxColumnWidth}"
-                                                               Text="{Binding TaxAmountFormatted}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowTaxColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.TaxColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowTaxColumn}">
+                                                        <TextBlock Text="{Binding TaxAmountFormatted}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Shipping -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ShippingColumnWidth}"
-                                                               Text="{Binding ShippingCostFormatted}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowShippingColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ShippingColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowShippingColumn}">
+                                                        <TextBlock Text="{Binding ShippingCostFormatted}"
+                                                                   FontSize="14"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Discount -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.DiscountColumnWidth}"
-                                                               Text="{Binding DiscountFormatted}"
-                                                               FontSize="14"
-                                                               Foreground="#22C55E"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowDiscountColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.DiscountColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowDiscountColumn}">
+                                                        <TextBlock Text="{Binding DiscountFormatted}"
+                                                                   FontSize="14"
+                                                                   Foreground="#22C55E"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Total -->
-                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.TotalColumnWidth}"
-                                                               Text="{Binding TotalFormatted}"
-                                                               FontSize="14"
-                                                               FontWeight="Medium"
-                                                               Foreground="#DC2626"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowTotalColumn}" />
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.TotalColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowTotalColumn}">
+                                                        <TextBlock Text="{Binding TotalFormatted}"
+                                                                   FontSize="14"
+                                                                   FontWeight="Medium"
+                                                                   Foreground="#DC2626"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                    </Panel>
 
                                                     <!-- Receipt Icon -->
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ReceiptColumnWidth}"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowReceiptColumn}">
                                                         <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                                                   Width="16" Height="16"
                                                                   Foreground="#22C55E"
                                                                   HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"
                                                                   IsVisible="{Binding HasReceipt}" />
                                                         <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
                                                                   Width="16" Height="16"
                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                                   HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"
                                                                   IsVisible="{Binding !HasReceipt}" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                                     </Panel>
 
                                                     <!-- Status Badge -->
@@ -518,6 +558,7 @@
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusForeground}}" />
                                                         </Border>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
                                                     </Panel>
 
                                                     <!-- Actions -->
