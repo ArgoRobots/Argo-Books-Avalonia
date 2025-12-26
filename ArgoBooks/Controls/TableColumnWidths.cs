@@ -139,28 +139,29 @@ public partial class TableColumnWidths : ObservableObject
     public void SetAvailableWidth(double width)
     {
         if (Math.Abs(_availableWidth - width) < 1) return;
-        _availableWidth = width;
 
-        // If in manual overflow mode, only recalculate if window is now genuinely bigger
+        // If in manual overflow mode, don't update _availableWidth unless window is genuinely bigger
         if (_hasManualOverflow)
         {
             var totalWidth = _columns.Values
                 .Where(c => c.IsVisible)
                 .Sum(c => c.CurrentWidth) + 48;
 
-            // Use <= because when Grid expands to MinWidth, width == totalWidth
-            // We only exit overflow mode if window is genuinely larger than content
+            // Don't update _availableWidth when Grid just expanded to MinWidth
+            // Only exit overflow if new width is genuinely larger than content
             if (width <= totalWidth + 1)
             {
-                // Window still too small for current widths - keep scrolling
+                // Keep scrolling, don't update _availableWidth
                 MinimumTotalWidth = totalWidth;
                 NeedsHorizontalScroll = true;
                 return;
             }
-            // Window is now genuinely bigger than content - clear overflow and recalculate
+            // Window is now genuinely bigger than content - clear overflow
             _hasManualOverflow = false;
         }
 
+        // Only update _availableWidth after passing overflow checks
+        _availableWidth = width;
         RecalculateWidths();
     }
 
