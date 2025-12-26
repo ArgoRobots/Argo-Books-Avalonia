@@ -15,18 +15,19 @@
             CommandParameter="{Binding CommandParameter, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
             ToolTip.Tip="{Binding EffectiveTooltipText, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
             HorizontalAlignment="Stretch">
-        <Grid ColumnDefinitions="Auto,*,Auto">
-            <!-- Icon -->
+        <Grid ColumnDefinitions="30,*,Auto">
+            <!-- Icon - fixed width column so position stays constant when collapsed -->
             <PathIcon Grid.Column="0"
                       Data="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
                       Width="20" Height="20"
+                      HorizontalAlignment="Center"
                       VerticalAlignment="Center" />
 
             <!-- Text -->
             <TextBlock Grid.Column="1"
                        Text="{Binding Text, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
                        VerticalAlignment="Center"
-                       Margin="12,0,0,0"
+                       Margin="8,0,0,0"
                        IsVisible="{Binding !IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}" />
 
             <!-- Badge -->
@@ -96,10 +97,10 @@
             <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
         </Style>
 
-        <!-- Collapsed State -->
+        <!-- Collapsed State - keep same left padding so icon stays in place -->
         <Style Selector="Button.sidebar-item.collapsed">
             <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Padding" Value="10" />
+            <Setter Property="Padding" Value="15,10,10,10" />
         </Style>
     </UserControl.Styles>
 </UserControl>

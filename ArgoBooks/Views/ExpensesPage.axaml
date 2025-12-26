@@ -236,104 +236,113 @@
                         </Popup>
 
                     <!-- Table Content -->
-                    <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                    <Grid Grid.Row="1" RowDefinitions="Auto,*" x:Name="TableGrid">
                         <!-- Table Header -->
-                        <ScrollViewer Grid.Row="0"
-                                      HorizontalScrollBarVisibility="Hidden"
-                                      VerticalScrollBarVisibility="Disabled"
-                                      x:Name="HeaderScrollViewer">
-                            <Border Background="{DynamicResource SurfaceAltBrush}"
-                                    Padding="24,12"
-                                    PointerPressed="OnTableHeaderPointerPressed">
-                                <Grid MinWidth="1400">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="130" />
-                                        <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="120" />
-                                        <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="50" />
-                                        <ColumnDefinition Width="90" />
-                                        <ColumnDefinition Width="90" />
-                                        <ColumnDefinition Width="70" />
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="60" />
-                                        <ColumnDefinition Width="90" />
-                                        <ColumnDefinition Width="140" />
-                                    </Grid.ColumnDefinitions>
-                                    <!-- ID -->
-                                    <TextBlock Grid.Column="0" Text="ID" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowIdColumn}" />
-                                    <!-- Accountant -->
-                                    <TextBlock Grid.Column="1" Text="Accountant" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowAccountantColumn}" />
-                                    <!-- Product -->
-                                    <TextBlock Grid.Column="2" Text="Product" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowProductColumn}" />
-                                    <!-- Supplier -->
-                                    <TextBlock Grid.Column="3" Text="Supplier" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowSupplierColumn}" />
-                                    <!-- Date -->
-                                    <TextBlock Grid.Column="4" Text="Date" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowDateColumn}" />
-                                    <!-- Qty -->
-                                    <TextBlock Grid.Column="5" Text="Qty" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowQuantityColumn}" />
-                                    <!-- Unit Price -->
-                                    <TextBlock Grid.Column="6" Text="Unit Price" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowUnitPriceColumn}" />
-                                    <!-- Amount -->
-                                    <TextBlock Grid.Column="7" Text="Amount" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowAmountColumn}" />
-                                    <!-- Tax -->
-                                    <TextBlock Grid.Column="8" Text="Tax" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowTaxColumn}" />
-                                    <!-- Shipping -->
-                                    <TextBlock Grid.Column="9" Text="Shipping" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowShippingColumn}" />
-                                    <!-- Discount -->
-                                    <TextBlock Grid.Column="10" Text="Discount" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowDiscountColumn}" />
-                                    <!-- Total -->
-                                    <TextBlock Grid.Column="11" Text="Total" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowTotalColumn}" />
-                                    <!-- Receipt -->
-                                    <TextBlock Grid.Column="12" Text="Receipt" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               HorizontalAlignment="Center"
-                                               IsVisible="{Binding ShowReceiptColumn}" />
-                                    <!-- Status -->
-                                    <TextBlock Grid.Column="13" Text="Status" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               IsVisible="{Binding ShowStatusColumn}" />
-                                    <!-- Actions -->
-                                    <TextBlock Grid.Column="14" Text="Actions" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                               HorizontalAlignment="Right" />
-                                </Grid>
-                            </Border>
-                        </ScrollViewer>
+                        <Border Grid.Row="0"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                Padding="24,12"
+                                PointerPressed="OnTableHeaderPointerPressed">
+                            <Grid x:Name="HeaderGrid">
+                                <Grid.ColumnDefinitions>
+                                    <!-- Proportional columns - visible ones share available space -->
+                                    <ColumnDefinition Width="1.3*" MinWidth="100" />
+                                    <ColumnDefinition Width="1*" MinWidth="80" />
+                                    <ColumnDefinition Width="1.5*" MinWidth="100" />
+                                    <ColumnDefinition Width="1.2*" MinWidth="80" />
+                                    <ColumnDefinition Width="1*" MinWidth="90" />
+                                    <ColumnDefinition Width="0.5*" MinWidth="40" />
+                                    <ColumnDefinition Width="0.9*" MinWidth="70" />
+                                    <ColumnDefinition Width="0.9*" MinWidth="70" />
+                                    <ColumnDefinition Width="0.7*" MinWidth="50" />
+                                    <ColumnDefinition Width="0.8*" MinWidth="60" />
+                                    <ColumnDefinition Width="0.8*" MinWidth="60" />
+                                    <ColumnDefinition Width="0.8*" MinWidth="60" />
+                                    <ColumnDefinition Width="0.6*" MinWidth="50" />
+                                    <ColumnDefinition Width="0.9*" MinWidth="80" />
+                                    <ColumnDefinition Width="Auto" MinWidth="120" />
+                                </Grid.ColumnDefinitions>
+                                <!-- ID -->
+                                <TextBlock Grid.Column="0" Text="ID" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowIdColumn}" />
+                                <!-- Accountant -->
+                                <TextBlock Grid.Column="1" Text="Accountant" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowAccountantColumn}" />
+                                <!-- Product -->
+                                <TextBlock Grid.Column="2" Text="Product" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowProductColumn}" />
+                                <!-- Supplier -->
+                                <TextBlock Grid.Column="3" Text="Supplier" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowSupplierColumn}" />
+                                <!-- Date -->
+                                <TextBlock Grid.Column="4" Text="Date" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowDateColumn}" />
+                                <!-- Qty -->
+                                <TextBlock Grid.Column="5" Text="Qty" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowQuantityColumn}" />
+                                <!-- Unit Price -->
+                                <TextBlock Grid.Column="6" Text="Unit Price" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowUnitPriceColumn}" />
+                                <!-- Amount -->
+                                <TextBlock Grid.Column="7" Text="Amount" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowAmountColumn}" />
+                                <!-- Tax -->
+                                <TextBlock Grid.Column="8" Text="Tax" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowTaxColumn}" />
+                                <!-- Shipping -->
+                                <TextBlock Grid.Column="9" Text="Shipping" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowShippingColumn}" />
+                                <!-- Discount -->
+                                <TextBlock Grid.Column="10" Text="Discount" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowDiscountColumn}" />
+                                <!-- Total -->
+                                <TextBlock Grid.Column="11" Text="Total" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowTotalColumn}" />
+                                <!-- Receipt -->
+                                <TextBlock Grid.Column="12" Text="Receipt" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowReceiptColumn}" />
+                                <!-- Status -->
+                                <TextBlock Grid.Column="13" Text="Status" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           IsVisible="{Binding ShowStatusColumn}" />
+                                <!-- Actions -->
+                                <TextBlock Grid.Column="14" Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Right" />
+                            </Grid>
+                        </Border>
 
-                        <!-- Table Content (scrollable) -->
+                        <!-- Table Content (scrollable vertically only) -->
                         <ScrollViewer Grid.Row="1"
                                       VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Auto"
-                                      x:Name="ContentScrollViewer"
-                                      ScrollChanged="OnContentScrollChanged">
+                                      HorizontalScrollBarVisibility="Disabled">
                             <Panel>
                                 <!-- Expenses List -->
                                 <ItemsControl ItemsSource="{Binding Expenses}">
@@ -342,23 +351,24 @@
                                             <Border Padding="24,16"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <Grid MinWidth="1400">
+                                                <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="130" />
-                                                        <ColumnDefinition Width="100" />
-                                                        <ColumnDefinition Width="150" />
-                                                        <ColumnDefinition Width="120" />
-                                                        <ColumnDefinition Width="100" />
-                                                        <ColumnDefinition Width="50" />
-                                                        <ColumnDefinition Width="90" />
-                                                        <ColumnDefinition Width="90" />
-                                                        <ColumnDefinition Width="70" />
-                                                        <ColumnDefinition Width="80" />
-                                                        <ColumnDefinition Width="80" />
-                                                        <ColumnDefinition Width="80" />
-                                                        <ColumnDefinition Width="60" />
-                                                        <ColumnDefinition Width="90" />
-                                                        <ColumnDefinition Width="140" />
+                                                        <!-- Same proportional columns as header -->
+                                                        <ColumnDefinition Width="1.3*" MinWidth="100" />
+                                                        <ColumnDefinition Width="1*" MinWidth="80" />
+                                                        <ColumnDefinition Width="1.5*" MinWidth="100" />
+                                                        <ColumnDefinition Width="1.2*" MinWidth="80" />
+                                                        <ColumnDefinition Width="1*" MinWidth="90" />
+                                                        <ColumnDefinition Width="0.5*" MinWidth="40" />
+                                                        <ColumnDefinition Width="0.9*" MinWidth="70" />
+                                                        <ColumnDefinition Width="0.9*" MinWidth="70" />
+                                                        <ColumnDefinition Width="0.7*" MinWidth="50" />
+                                                        <ColumnDefinition Width="0.8*" MinWidth="60" />
+                                                        <ColumnDefinition Width="0.8*" MinWidth="60" />
+                                                        <ColumnDefinition Width="0.8*" MinWidth="60" />
+                                                        <ColumnDefinition Width="0.6*" MinWidth="50" />
+                                                        <ColumnDefinition Width="0.9*" MinWidth="80" />
+                                                        <ColumnDefinition Width="Auto" MinWidth="120" />
                                                     </Grid.ColumnDefinitions>
                                                     <!-- ID -->
                                                     <TextBlock Grid.Column="0"
