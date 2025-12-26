@@ -240,15 +240,17 @@
                         <!-- Table Header -->
                         <Border Grid.Row="0"
                                 Background="{DynamicResource SurfaceAltBrush}"
-                                Padding="24,12"
+                                Padding="24,0"
+                                MinHeight="40"
                                 PointerPressed="OnTableHeaderPointerPressed">
                             <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                 <!-- ID -->
                                 <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
                                     <TextBlock Text="ID" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -256,8 +258,9 @@
                                 <Panel Width="{Binding ColumnWidths.AccountantColumnWidth}" IsVisible="{Binding ShowAccountantColumn}">
                                     <TextBlock Text="Accountant" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Accountant" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -265,8 +268,9 @@
                                 <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
                                     <TextBlock Text="Product" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -274,8 +278,9 @@
                                 <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
                                     <TextBlock Text="Supplier" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -283,8 +288,9 @@
                                 <Panel Width="{Binding ColumnWidths.DateColumnWidth}" IsVisible="{Binding ShowDateColumn}">
                                     <TextBlock Text="Date" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -292,8 +298,9 @@
                                 <Panel Width="{Binding ColumnWidths.QuantityColumnWidth}" IsVisible="{Binding ShowQuantityColumn}">
                                     <TextBlock Text="Qty" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Quantity" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -301,8 +308,9 @@
                                 <Panel Width="{Binding ColumnWidths.UnitPriceColumnWidth}" IsVisible="{Binding ShowUnitPriceColumn}">
                                     <TextBlock Text="Unit Price" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="UnitPrice" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -310,8 +318,9 @@
                                 <Panel Width="{Binding ColumnWidths.AmountColumnWidth}" IsVisible="{Binding ShowAmountColumn}">
                                     <TextBlock Text="Amount" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Amount" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -319,8 +328,9 @@
                                 <Panel Width="{Binding ColumnWidths.TaxColumnWidth}" IsVisible="{Binding ShowTaxColumn}">
                                     <TextBlock Text="Tax" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Tax" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -328,8 +338,9 @@
                                 <Panel Width="{Binding ColumnWidths.ShippingColumnWidth}" IsVisible="{Binding ShowShippingColumn}">
                                     <TextBlock Text="Shipping" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Shipping" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -337,8 +348,9 @@
                                 <Panel Width="{Binding ColumnWidths.DiscountColumnWidth}" IsVisible="{Binding ShowDiscountColumn}">
                                     <TextBlock Text="Discount" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Discount" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -346,8 +358,9 @@
                                 <Panel Width="{Binding ColumnWidths.TotalColumnWidth}" IsVisible="{Binding ShowTotalColumn}">
                                     <TextBlock Text="Total" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Total" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -356,8 +369,9 @@
                                     <TextBlock Text="Receipt" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                HorizontalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Receipt" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -365,8 +379,9 @@
                                 <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
                                     <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                               Margin="0,12" />
+                                    <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -374,7 +389,8 @@
                                 <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
                                     <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                               HorizontalAlignment="Left" VerticalAlignment="Center"
+                                               Margin="0,12" />
                                 </Panel>
                             </StackPanel>
                         </Border>
@@ -388,7 +404,8 @@
                                 <ItemsControl ItemsSource="{Binding Expenses}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="vm:ExpenseDisplayItem">
-                                            <Border Padding="24,16"
+                                            <Border Padding="24,0"
+                                                    MinHeight="52"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <StackPanel Orientation="Horizontal">
@@ -400,8 +417,9 @@
                                                                    FontWeight="Medium"
                                                                    Foreground="{DynamicResource PrimaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Accountant -->
@@ -411,8 +429,9 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Product -->
@@ -422,8 +441,9 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Supplier -->
@@ -433,8 +453,9 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Date -->
@@ -444,8 +465,9 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Quantity -->
@@ -455,8 +477,9 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Unit Price -->
@@ -466,8 +489,9 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Amount -->
@@ -477,8 +501,9 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Tax -->
@@ -488,8 +513,9 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Shipping -->
@@ -499,8 +525,9 @@
                                                                    FontSize="14"
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Discount -->
@@ -510,8 +537,9 @@
                                                                    FontSize="14"
                                                                    Foreground="#22C55E"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Total -->
@@ -522,8 +550,9 @@
                                                                    FontWeight="Medium"
                                                                    Foreground="#DC2626"
                                                                    VerticalAlignment="Center"
+                                                                   Margin="0,16"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Receipt Icon -->
@@ -541,7 +570,7 @@
                                                                   HorizontalAlignment="Center"
                                                                   VerticalAlignment="Center"
                                                                   IsVisible="{Binding !HasReceipt}" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Status Badge -->
@@ -558,13 +587,14 @@
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusForeground}}" />
                                                         </Border>
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Actions -->
                                                     <StackPanel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
                                                                 Orientation="Horizontal"
                                                                 HorizontalAlignment="Right"
+                                                                VerticalAlignment="Center"
                                                                 Spacing="4">
                                                         <!-- View Receipt Button -->
                                                         <Button Classes="icon-button"
