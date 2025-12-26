@@ -609,22 +609,15 @@
                                 </Grid>
                             </Border>
                             <Border Grid.Row="1" Padding="10">
-                                <Panel>
-                                    <!-- GeoMap with data -->
-                                    <lvc:GeoMap Values="{Binding WorldMapData}"
-                                                MapProjection="Mercator"
-                                                IsVisible="{Binding HasWorldMapData}" />
-                                    <!-- No data placeholder -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            IsVisible="{Binding !HasWorldMapData}">
-                                        <TextBlock Text="No geographic data"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </Border>
-                                </Panel>
+                                <!-- GeoMap placeholder - requires HeatLandSeries configuration -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8">
+                                    <TextBlock Text="No geographic data"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </Border>
                             </Border>
                         </Grid>
                     </Border>
