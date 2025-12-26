@@ -147,13 +147,33 @@ public partial class TableColumnWidths : ObservableObject
         var columnIndex = visibleColumns.IndexOf(columnName);
         if (columnIndex < 0) return;
 
+        // Calculate total current width and fixed column widths
+        double totalCurrentWidth = _columns.Values
+            .Where(c => c.IsVisible)
+            .Sum(c => c.IsFixed ? c.FixedWidth : c.CurrentWidth);
+
+        // Available width minus padding (48px for left/right margins)
+        double maxTotalWidth = _availableWidth - 48;
+
         // Get columns to the right of the resized column
         var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
+
         if (columnsToRight.Count == 0)
         {
-            // No columns to the right - just resize within bounds
+            // No columns to the right - limit resize to available space
             var newWidth = col.CurrentWidth + delta;
             newWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, newWidth));
+
+            // Calculate what the total width would be
+            double projectedTotal = totalCurrentWidth - col.CurrentWidth + newWidth;
+
+            // If expanding would cause overflow, limit it
+            if (projectedTotal > maxTotalWidth && delta > 0)
+            {
+                double maxAllowedWidth = col.CurrentWidth + (maxTotalWidth - totalCurrentWidth);
+                newWidth = Math.Max(col.MinWidth, maxAllowedWidth);
+            }
+
             col.CurrentWidth = newWidth;
             ApplyWidthToProperty(columnName, newWidth);
             return;
