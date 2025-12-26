@@ -314,23 +314,31 @@ public class ReportRenderer : IDisposable
             rect.Bottom - bottomPadding
         );
 
-        // Get chart data
+        // Handle different chart types
+        if (IsGeoMapChart(chart.ChartType))
+        {
+            RenderGeoMap(canvas, chartArea, chart);
+            return;
+        }
+
+        if (IsMultiSeriesChart(chart.ChartType))
+        {
+            var seriesData = GetMultiSeriesData(chart.ChartType);
+            if (seriesData == null || seriesData.Count == 0)
+            {
+                DrawNoDataPlaceholder(canvas, chartArea);
+                return;
+            }
+            RenderMultiSeriesBarChart(canvas, chartArea, seriesData, chart);
+            return;
+        }
+
+        // Get single-series chart data
         var chartData = GetChartDataPoints(chart.ChartType);
 
         if (chartData == null || chartData.Count == 0)
         {
-            // Draw placeholder if no data
-            var placeholderPaint = new SKPaint
-            {
-                Color = new SKColor(232, 232, 232),
-                Style = SKPaintStyle.Fill,
-                IsAntialias = true
-            };
-            canvas.DrawRect(chartArea, placeholderPaint);
-
-            using var noDataFont = new SKFont(_defaultTypeface, 12 * _renderScale);
-            using var noDataPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
-            canvas.DrawText("No data available", chartArea.MidX, chartArea.MidY, SKTextAlign.Center, noDataFont, noDataPaint);
+            DrawNoDataPlaceholder(canvas, chartArea);
             return;
         }
 
@@ -346,6 +354,42 @@ public class ReportRenderer : IDisposable
     }
 
     /// <summary>
+    /// Draws a placeholder when no data is available.
+    /// </summary>
+    private void DrawNoDataPlaceholder(SKCanvas canvas, SKRect chartArea)
+    {
+        var placeholderPaint = new SKPaint
+        {
+            Color = new SKColor(232, 232, 232),
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true
+        };
+        canvas.DrawRect(chartArea, placeholderPaint);
+
+        using var noDataFont = new SKFont(_defaultTypeface, 12 * _renderScale);
+        using var noDataPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+        canvas.DrawText("No data available", chartArea.MidX, chartArea.MidY, SKTextAlign.Center, noDataFont, noDataPaint);
+    }
+
+    /// <summary>
+    /// Checks if the chart type is a GeoMap.
+    /// </summary>
+    private static bool IsGeoMapChart(ChartDataType chartType)
+    {
+        return chartType == ChartDataType.WorldMap;
+    }
+
+    /// <summary>
+    /// Checks if the chart type requires multi-series rendering.
+    /// </summary>
+    private static bool IsMultiSeriesChart(ChartDataType chartType)
+    {
+        return chartType is ChartDataType.SalesVsExpenses
+            or ChartDataType.PurchaseVsSaleReturns
+            or ChartDataType.PurchaseVsSaleLosses;
+    }
+
+    /// <summary>
     /// Checks if the chart type should be rendered as a pie chart.
     /// </summary>
     private static bool IsDistributionChart(ChartDataType chartType)
@@ -355,7 +399,13 @@ public class ReportRenderer : IDisposable
             or ChartDataType.ReturnReasons
             or ChartDataType.LossReasons
             or ChartDataType.ReturnsByCategory
-            or ChartDataType.LossesByCategory;
+            or ChartDataType.LossesByCategory
+            or ChartDataType.ReturnsByProduct
+            or ChartDataType.LossesByProduct
+            or ChartDataType.CountriesOfOrigin
+            or ChartDataType.CountriesOfDestination
+            or ChartDataType.CompaniesOfOrigin
+            or ChartDataType.AccountantsTransactions;
     }
 
     /// <summary>
@@ -370,6 +420,38 @@ public class ReportRenderer : IDisposable
 
         if (data is List<ChartDataPoint> dataPoints)
             return dataPoints;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets multi-series chart data.
+    /// </summary>
+    private List<ChartSeriesData>? GetMultiSeriesData(ChartDataType chartType)
+    {
+        if (_chartDataService == null)
+            return null;
+
+        var data = _chartDataService.GetChartData(chartType);
+
+        if (data is List<ChartSeriesData> seriesData)
+            return seriesData;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets world map data for GeoMap chart.
+    /// </summary>
+    private Dictionary<string, double>? GetWorldMapData()
+    {
+        if (_chartDataService == null)
+            return null;
+
+        var data = _chartDataService.GetChartData(ChartDataType.WorldMap);
+
+        if (data is Dictionary<string, double> mapData)
+            return mapData;
 
         return null;
     }
@@ -599,6 +681,238 @@ public class ReportRenderer : IDisposable
             }
 
             startAngle += sweepAngle;
+        }
+    }
+
+    /// <summary>
+    /// Renders a multi-series bar chart (e.g., Sales vs Expenses).
+    /// </summary>
+    private void RenderMultiSeriesBarChart(SKCanvas canvas, SKRect chartArea, List<ChartSeriesData> seriesData, ChartReportElement chart)
+    {
+        if (seriesData.Count == 0) return;
+
+        // Get all data points and find max value
+        var allDataPoints = seriesData.SelectMany(s => s.DataPoints).ToList();
+        if (allDataPoints.Count == 0) return;
+
+        var maxValue = allDataPoints.Max(p => Math.Abs(p.Value));
+        var minValue = allDataPoints.Min(p => p.Value);
+        if (maxValue == 0) maxValue = 1;
+
+        var hasNegatives = minValue < 0;
+        var baselineY = hasNegatives
+            ? chartArea.Top + chartArea.Height * (float)(maxValue / (maxValue - minValue))
+            : chartArea.Bottom;
+
+        // Draw grid lines
+        using var gridPaint = new SKPaint
+        {
+            Color = ChartGridColor,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1 * _renderScale,
+            IsAntialias = true
+        };
+
+        var gridLineCount = 5;
+        for (int i = 0; i <= gridLineCount; i++)
+        {
+            var y = chartArea.Top + (chartArea.Height * i / gridLineCount);
+            canvas.DrawLine(chartArea.Left, y, chartArea.Right, y, gridPaint);
+
+            var value = maxValue - (maxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
+            using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+            using var yLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+            canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
+        }
+
+        // Draw axes
+        using var axisPaint = new SKPaint
+        {
+            Color = ChartAxisColor,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1 * _renderScale,
+            IsAntialias = true
+        };
+        canvas.DrawLine(chartArea.Left, chartArea.Top, chartArea.Left, chartArea.Bottom, axisPaint);
+        canvas.DrawLine(chartArea.Left, baselineY, chartArea.Right, baselineY, axisPaint);
+
+        // Get unique labels (X-axis categories)
+        var labels = seriesData.First().DataPoints.Select(p => p.Label).ToList();
+        var categoryCount = labels.Count;
+        var seriesCount = seriesData.Count;
+
+        // Calculate bar dimensions
+        var categoryWidth = chartArea.Width / categoryCount;
+        var barSpacing = 2 * _renderScale;
+        var maxBarWidth = 30 * _renderScale;
+        var barWidth = Math.Min(maxBarWidth, (categoryWidth - (barSpacing * (seriesCount + 1))) / seriesCount);
+
+        using var xLabelFont = new SKFont(_defaultTypeface, 8 * _renderScale);
+        using var xLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+
+        // Draw bars for each category
+        for (int categoryIndex = 0; categoryIndex < categoryCount; categoryIndex++)
+        {
+            var categoryStartX = chartArea.Left + (categoryIndex * categoryWidth);
+            var totalBarsWidth = (barWidth * seriesCount) + (barSpacing * (seriesCount - 1));
+            var barStartX = categoryStartX + (categoryWidth - totalBarsWidth) / 2;
+
+            // Draw bars for each series
+            for (int seriesIndex = 0; seriesIndex < seriesCount; seriesIndex++)
+            {
+                var series = seriesData[seriesIndex];
+                if (categoryIndex >= series.DataPoints.Count) continue;
+
+                var point = series.DataPoints[categoryIndex];
+                var x = barStartX + (seriesIndex * (barWidth + barSpacing));
+
+                var valueRatio = (float)(point.Value / maxValue);
+                var barHeight = chartArea.Height * Math.Abs(valueRatio);
+
+                var barColor = SKColor.Parse(series.Color);
+                using var barPaint = new SKPaint
+                {
+                    Color = barColor,
+                    Style = SKPaintStyle.Fill,
+                    IsAntialias = true
+                };
+
+                SKRect barRect;
+                if (point.Value >= 0)
+                {
+                    barRect = new SKRect(x, baselineY - barHeight, x + barWidth, baselineY);
+                }
+                else
+                {
+                    barRect = new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
+                }
+
+                canvas.DrawRect(barRect, barPaint);
+            }
+
+            // Draw X-axis label
+            var label = labels[categoryIndex];
+            if (label.Length > 8) label = label[..8] + "...";
+
+            var labelX = categoryStartX + categoryWidth / 2;
+            var labelY = chartArea.Bottom + 15 * _renderScale;
+
+            if (categoryCount > 6)
+            {
+                canvas.Save();
+                canvas.RotateDegrees(-45, labelX, labelY);
+                canvas.DrawText(label, labelX, labelY, SKTextAlign.Right, xLabelFont, xLabelPaint);
+                canvas.Restore();
+            }
+            else
+            {
+                canvas.DrawText(label, labelX, labelY, SKTextAlign.Center, xLabelFont, xLabelPaint);
+            }
+        }
+
+        // Draw legend
+        if (chart.ShowLegend)
+        {
+            var legendY = chartArea.Top - 5 * _renderScale;
+            var legendX = chartArea.Left;
+
+            using var legendFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+            using var legendPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+
+            foreach (var series in seriesData)
+            {
+                var seriesColor = SKColor.Parse(series.Color);
+                using var boxPaint = new SKPaint { Color = seriesColor, Style = SKPaintStyle.Fill };
+
+                var boxSize = 10 * _renderScale;
+                canvas.DrawRect(legendX, legendY - boxSize, legendX + boxSize, legendY, boxPaint);
+                canvas.DrawText(series.Name, legendX + boxSize + 5 * _renderScale, legendY - 2 * _renderScale, SKTextAlign.Left, legendFont, legendPaint);
+
+                legendX += legendFont.MeasureText(series.Name) + boxSize + 20 * _renderScale;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Renders a simplified GeoMap chart showing country data.
+    /// Since we can't use LiveChartsCore GeoMap in the Core project, we render a data summary.
+    /// </summary>
+    private void RenderGeoMap(SKCanvas canvas, SKRect chartArea, ChartReportElement chart)
+    {
+        var mapData = GetWorldMapData();
+
+        if (mapData == null || mapData.Count == 0)
+        {
+            DrawNoDataPlaceholder(canvas, chartArea);
+            return;
+        }
+
+        // Sort by value descending
+        var sortedData = mapData.OrderByDescending(kvp => kvp.Value).ToList();
+        var maxValue = sortedData.Max(kvp => kvp.Value);
+        if (maxValue == 0) maxValue = 1;
+
+        // Draw a horizontal bar chart representation of the world map data
+        var barHeight = Math.Min(25 * _renderScale, (chartArea.Height - 20 * _renderScale) / Math.Min(sortedData.Count, 10));
+        var maxBarWidth = chartArea.Width * 0.6f;
+        var labelWidth = chartArea.Width * 0.25f;
+        var valueWidth = chartArea.Width * 0.15f;
+
+        using var labelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
+        using var valueFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+        using var labelPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+        using var valuePaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+
+        // Color gradient from light to dark blue
+        var startColor = SKColor.Parse("#93C5FD"); // Light blue
+        var endColor = SKColor.Parse("#1D4ED8");   // Dark blue
+
+        var currentY = chartArea.Top + 10 * _renderScale;
+        var displayCount = Math.Min(sortedData.Count, 10);
+
+        for (int i = 0; i < displayCount; i++)
+        {
+            var kvp = sortedData[i];
+            var ratio = (float)(kvp.Value / maxValue);
+
+            // Interpolate color based on value
+            var colorRatio = (float)i / Math.Max(displayCount - 1, 1);
+            var barColor = new SKColor(
+                (byte)(startColor.Red + (endColor.Red - startColor.Red) * colorRatio),
+                (byte)(startColor.Green + (endColor.Green - startColor.Green) * colorRatio),
+                (byte)(startColor.Blue + (endColor.Blue - startColor.Blue) * colorRatio)
+            );
+
+            using var barPaint = new SKPaint
+            {
+                Color = barColor,
+                Style = SKPaintStyle.Fill,
+                IsAntialias = true
+            };
+
+            // Draw country name
+            var countryName = kvp.Key;
+            if (countryName.Length > 15) countryName = countryName[..15] + "...";
+            canvas.DrawText(countryName, chartArea.Left, currentY + barHeight * 0.7f, SKTextAlign.Left, labelFont, labelPaint);
+
+            // Draw bar
+            var barStartX = chartArea.Left + labelWidth;
+            var barEndX = barStartX + (maxBarWidth * ratio);
+            var barRect = new SKRect(barStartX, currentY + 2 * _renderScale, barEndX, currentY + barHeight - 2 * _renderScale);
+            canvas.DrawRect(barRect, barPaint);
+
+            // Draw value
+            canvas.DrawText($"${kvp.Value:N0}", chartArea.Right - 5 * _renderScale, currentY + barHeight * 0.7f, SKTextAlign.Right, valueFont, valuePaint);
+
+            currentY += barHeight + 3 * _renderScale;
+        }
+
+        // Show "and X more..." if there are more countries
+        if (sortedData.Count > 10)
+        {
+            using var moreFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+            using var morePaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+            canvas.DrawText($"and {sortedData.Count - 10} more countries...", chartArea.Left, currentY + 10 * _renderScale, SKTextAlign.Left, moreFont, morePaint);
         }
     }
 
