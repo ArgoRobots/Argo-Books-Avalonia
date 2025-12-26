@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.AnalyticsPage"
              x:DataType="vm:AnalyticsPageViewModel">
@@ -180,21 +181,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <!-- Chart Placeholder -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding ExpensesTrendsSeries}"
+                                                            XAxes="{Binding ExpensesTrendsXAxes}"
+                                                            YAxes="{Binding ExpensesTrendsYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasExpensesTrendsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasExpensesTrendsData}">
+                                            <TextBlock Text="No purchase data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -217,21 +222,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <!-- Chart Placeholder -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart with data -->
+                                        <lvc:PieChart Series="{Binding ExpensesDistributionSeries}"
+                                                      IsVisible="{Binding HasExpensesDistributionData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasExpensesDistributionData}">
+                                            <TextBlock Text="No distribution data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -257,20 +263,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding RevenueTrendsSeries}"
+                                                            XAxes="{Binding RevenueTrendsXAxes}"
+                                                            YAxes="{Binding RevenueTrendsYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasRevenueTrendsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasRevenueTrendsData}">
+                                            <TextBlock Text="No sales data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -293,20 +304,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart with data -->
+                                        <lvc:PieChart Series="{Binding RevenueDistributionSeries}"
+                                                      IsVisible="{Binding HasRevenueDistributionData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasRevenueDistributionData}">
+                                            <TextBlock Text="No distribution data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -332,20 +345,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding ProfitTrendsSeries}"
+                                                            XAxes="{Binding ProfitTrendsXAxes}"
+                                                            YAxes="{Binding ProfitTrendsYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasProfitTrendsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasProfitTrendsData}">
+                                            <TextBlock Text="No profit data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -368,20 +386,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-5h2v5zm4 0h-2v-3h2v3zm0-5h-2v-2h2v2zm4 5h-2V7h2v10z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding SalesVsExpensesSeries}"
+                                                            XAxes="{Binding SalesVsExpensesXAxes}"
+                                                            YAxes="{Binding SalesVsExpensesYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasSalesVsExpensesData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasSalesVsExpensesData}">
+                                            <TextBlock Text="No comparison data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -411,20 +434,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart with data -->
+                                        <lvc:PieChart Series="{Binding CountriesOfOriginSeries}"
+                                                      IsVisible="{Binding HasCountriesOfOriginData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasCountriesOfOriginData}">
+                                            <TextBlock Text="No country data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -447,20 +472,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart with data -->
+                                        <lvc:PieChart Series="{Binding CompaniesOfOriginSeries}"
+                                                      IsVisible="{Binding HasCompaniesOfOriginData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasCompaniesOfOriginData}">
+                                            <TextBlock Text="No company data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -486,20 +513,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart with data -->
+                                        <lvc:PieChart Series="{Binding CountriesOfDestinationSeries}"
+                                                      IsVisible="{Binding HasCountriesOfDestinationData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasCountriesOfDestinationData}">
+                                            <TextBlock Text="No destination data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -522,20 +551,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart with data -->
+                                        <lvc:PieChart Series="{Binding CompaniesOfDestinationSeries}"
+                                                      IsVisible="{Binding HasCompaniesOfDestinationData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasCompaniesOfDestinationData}">
+                                            <TextBlock Text="No company data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -577,20 +608,23 @@
                                     </Border>
                                 </Grid>
                             </Border>
-                            <Border Grid.Row="1" Padding="20">
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8">
-                                    <StackPanel HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="12">
-                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
-                                                  Width="64" Height="64"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Text="Interactive world map will appear here"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </StackPanel>
-                                </Border>
+                            <Border Grid.Row="1" Padding="10">
+                                <Panel>
+                                    <!-- GeoMap placeholder - GeoMap is not available in all LiveCharts versions -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8">
+                                        <StackPanel HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Spacing="12">
+                                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+                                                      Width="64" Height="64"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text="Geographic heat map view"
+                                                       FontSize="14"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                </Panel>
                             </Border>
                         </Grid>
                     </Border>
@@ -648,20 +682,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart with data -->
+                                        <lvc:PieChart Series="{Binding AccountantsTransactionsSeries}"
+                                                      IsVisible="{Binding HasAccountantsTransactionsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasAccountantsTransactionsData}">
+                                            <TextBlock Text="No accountant data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -684,20 +720,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding TotalTransactionsSeries}"
+                                                            XAxes="{Binding TotalTransactionsXAxes}"
+                                                            YAxes="{Binding TotalTransactionsYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasTotalTransactionsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasTotalTransactionsData}">
+                                            <TextBlock Text="No workload data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -720,20 +761,25 @@
                                            HorizontalAlignment="Center"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                             </Border>
-                            <Border Grid.Row="1" Padding="20">
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8">
-                                    <StackPanel HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="12">
-                                        <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                                  Width="48" Height="48"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Text="Chart data will appear here"
+                            <Border Grid.Row="1" Padding="10">
+                                <Panel>
+                                    <!-- Chart with data -->
+                                    <lvc:CartesianChart Series="{Binding AvgTransactionValueSeries}"
+                                                        XAxes="{Binding AvgTransactionValueXAxes}"
+                                                        YAxes="{Binding AvgTransactionValueYAxes}"
+                                                        ZoomMode="X"
+                                                        IsVisible="{Binding HasAvgTransactionValueData}" />
+                                    <!-- No data placeholder -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8"
+                                            IsVisible="{Binding !HasAvgTransactionValueData}">
+                                        <TextBlock Text="No processing data available"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
                                                    FontSize="14"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </StackPanel>
-                                </Border>
+                                    </Border>
+                                </Panel>
                             </Border>
                         </Grid>
                     </Border>
@@ -793,20 +839,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding AvgTransactionValueSeries}"
+                                                            XAxes="{Binding AvgTransactionValueXAxes}"
+                                                            YAxes="{Binding AvgTransactionValueYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasAvgTransactionValueData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasAvgTransactionValueData}">
+                                            <TextBlock Text="No transaction data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -829,20 +880,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding TotalTransactionsSeries}"
+                                                            XAxes="{Binding TotalTransactionsXAxes}"
+                                                            YAxes="{Binding TotalTransactionsYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasTotalTransactionsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasTotalTransactionsData}">
+                                            <TextBlock Text="No transaction data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -868,20 +924,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding AvgShippingCostsSeries}"
+                                                            XAxes="{Binding AvgShippingCostsXAxes}"
+                                                            YAxes="{Binding AvgShippingCostsYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasAvgShippingCostsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasAvgShippingCostsData}">
+                                            <TextBlock Text="No shipping data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -904,20 +965,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding GrowthRatesSeries}"
+                                                            XAxes="{Binding GrowthRatesXAxes}"
+                                                            YAxes="{Binding GrowthRatesYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasGrowthRatesData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasGrowthRatesData}">
+                                            <TextBlock Text="No growth data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -978,20 +1044,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart - using Companies of Origin for top customers -->
+                                        <lvc:PieChart Series="{Binding CompaniesOfOriginSeries}"
+                                                      IsVisible="{Binding HasCompaniesOfOriginData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasCompaniesOfOriginData}">
+                                            <TextBlock Text="No customer data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1014,20 +1082,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart - using Revenue Distribution -->
+                                        <lvc:PieChart Series="{Binding RevenueDistributionSeries}"
+                                                      IsVisible="{Binding HasRevenueDistributionData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasRevenueDistributionData}">
+                                            <TextBlock Text="No payment data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1053,20 +1123,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart - using Growth Rates -->
+                                        <lvc:CartesianChart Series="{Binding GrowthRatesSeries}"
+                                                            XAxes="{Binding GrowthRatesXAxes}"
+                                                            YAxes="{Binding GrowthRatesYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasGrowthRatesData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasGrowthRatesData}">
+                                            <TextBlock Text="No growth data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1089,20 +1164,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart - using Avg Transaction Value -->
+                                        <lvc:CartesianChart Series="{Binding AvgTransactionValueSeries}"
+                                                            XAxes="{Binding AvgTransactionValueXAxes}"
+                                                            YAxes="{Binding AvgTransactionValueYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasAvgTransactionValueData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasAvgTransactionValueData}">
+                                            <TextBlock Text="No value data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1128,20 +1208,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart - using Countries of Origin -->
+                                        <lvc:PieChart Series="{Binding CountriesOfOriginSeries}"
+                                                      IsVisible="{Binding HasCountriesOfOriginData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasCountriesOfOriginData}">
+                                            <TextBlock Text="No customer activity data"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1164,20 +1246,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart - using Total Transactions -->
+                                        <lvc:CartesianChart Series="{Binding TotalTransactionsSeries}"
+                                                            XAxes="{Binding TotalTransactionsXAxes}"
+                                                            YAxes="{Binding TotalTransactionsYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasTotalTransactionsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasTotalTransactionsData}">
+                                            <TextBlock Text="No rental data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1238,20 +1325,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding ReturnsOverTimeSeries}"
+                                                            XAxes="{Binding ReturnsOverTimeXAxes}"
+                                                            YAxes="{Binding ReturnsOverTimeYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasReturnsOverTimeData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasReturnsOverTimeData}">
+                                            <TextBlock Text="No returns data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1274,20 +1366,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart with data -->
+                                        <lvc:PieChart Series="{Binding ReturnReasonsSeries}"
+                                                      IsVisible="{Binding HasReturnReasonsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasReturnReasonsData}">
+                                            <TextBlock Text="No return reasons data"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1313,20 +1407,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding ReturnFinancialImpactSeries}"
+                                                            XAxes="{Binding ReturnFinancialImpactXAxes}"
+                                                            YAxes="{Binding ReturnFinancialImpactYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasReturnFinancialImpactData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasReturnFinancialImpactData}">
+                                            <TextBlock Text="No financial impact data"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1349,20 +1448,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart - reusing Return Reasons -->
+                                        <lvc:PieChart Series="{Binding ReturnReasonsSeries}"
+                                                      IsVisible="{Binding HasReturnReasonsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasReturnReasonsData}">
+                                            <TextBlock Text="No category data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1388,20 +1489,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart - reusing Expense Distribution -->
+                                        <lvc:PieChart Series="{Binding ExpensesDistributionSeries}"
+                                                      IsVisible="{Binding HasExpensesDistributionData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasExpensesDistributionData}">
+                                            <TextBlock Text="No product data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1424,20 +1527,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart - using Sales vs Expenses -->
+                                        <lvc:CartesianChart Series="{Binding SalesVsExpensesSeries}"
+                                                            XAxes="{Binding SalesVsExpensesXAxes}"
+                                                            YAxes="{Binding SalesVsExpensesYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasSalesVsExpensesData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasSalesVsExpensesData}">
+                                            <TextBlock Text="No comparison data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1498,20 +1606,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding LossesOverTimeSeries}"
+                                                            XAxes="{Binding LossesOverTimeXAxes}"
+                                                            YAxes="{Binding LossesOverTimeYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasLossesOverTimeData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasLossesOverTimeData}">
+                                            <TextBlock Text="No losses data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1534,20 +1647,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart - reusing Return Reasons -->
+                                        <lvc:PieChart Series="{Binding ReturnReasonsSeries}"
+                                                      IsVisible="{Binding HasReturnReasonsData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasReturnReasonsData}">
+                                            <TextBlock Text="No loss reasons data"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1573,20 +1688,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart Series="{Binding LossFinancialImpactSeries}"
+                                                            XAxes="{Binding LossFinancialImpactXAxes}"
+                                                            YAxes="{Binding LossFinancialImpactYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasLossFinancialImpactData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasLossFinancialImpactData}">
+                                            <TextBlock Text="No financial impact data"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1609,20 +1729,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart - reusing Expense Distribution -->
+                                        <lvc:PieChart Series="{Binding ExpensesDistributionSeries}"
+                                                      IsVisible="{Binding HasExpensesDistributionData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasExpensesDistributionData}">
+                                            <TextBlock Text="No category data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1648,20 +1770,22 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Pie Chart - reusing Countries of Origin -->
+                                        <lvc:PieChart Series="{Binding CountriesOfOriginSeries}"
+                                                      IsVisible="{Binding HasCountriesOfOriginData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasCountriesOfOriginData}">
+                                            <TextBlock Text="No product data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>
@@ -1684,20 +1808,25 @@
                                                HorizontalAlignment="Center"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="20">
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8">
-                                        <StackPanel HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="12">
-                                            <PathIcon Data="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"
-                                                      Width="48" Height="48"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <TextBlock Text="Chart data will appear here"
+                                <Border Grid.Row="1" Padding="10">
+                                    <Panel>
+                                        <!-- Chart - using Sales vs Expenses -->
+                                        <lvc:CartesianChart Series="{Binding SalesVsExpensesSeries}"
+                                                            XAxes="{Binding SalesVsExpensesXAxes}"
+                                                            YAxes="{Binding SalesVsExpensesYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasSalesVsExpensesData}" />
+                                        <!-- No data placeholder -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding !HasSalesVsExpensesData}">
+                                            <TextBlock Text="No comparison data available"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+                                    </Panel>
                                 </Border>
                             </Grid>
                         </Border>

@@ -1328,7 +1328,15 @@ public partial class App : Application
             }
             return new DashboardPage { DataContext = viewModel };
         });
-        navigationService.RegisterPage("Analytics", _ => new AnalyticsPage { DataContext = new AnalyticsPageViewModel() });
+        navigationService.RegisterPage("Analytics", _ =>
+        {
+            var viewModel = new AnalyticsPageViewModel();
+            if (CompanyManager?.IsCompanyOpen == true)
+            {
+                viewModel.Initialize(CompanyManager);
+            }
+            return new AnalyticsPage { DataContext = viewModel };
+        });
         navigationService.RegisterPage("Insights", _ => new InsightsPage { DataContext = new InsightsPageViewModel() });
         navigationService.RegisterPage("Reports", _ => new ReportsPage { DataContext = new ReportsPageViewModel() });
 
