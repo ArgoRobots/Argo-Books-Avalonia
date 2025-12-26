@@ -10,6 +10,7 @@ public partial class TableColumnWidths : ObservableObject
 {
     private double _availableWidth = 800;
     private bool _isUpdating;
+    private bool _hasManualOverflow; // True when user resize caused columns to exceed available width
 
     // Column definitions with star values (proportion weights)
     private readonly Dictionary<string, ColumnDef> _columns = new();
@@ -260,11 +261,13 @@ public partial class TableColumnWidths : ObservableObject
         if (totalWidth > maxTotalWidth + 1)
         {
             // Columns overflow available space - enable horizontal scroll
+            _hasManualOverflow = true;
             NeedsHorizontalScroll = true;
             MinimumTotalWidth = totalWidth;
         }
         else
         {
+            _hasManualOverflow = false;
             NeedsHorizontalScroll = false;
             // Reset to actual minimum (all columns at min width)
             MinimumTotalWidth = _columns.Values
@@ -365,9 +368,28 @@ public partial class TableColumnWidths : ObservableObject
 
             // Calculate minimum total width (sum of all minimums + padding)
             double minTotalWidth = visibleColumns.Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
+
+            // If user has manually resized causing overflow, check if it still overflows
+            if (_hasManualOverflow)
+            {
+                double totalWidth = visibleColumns.Sum(c => c.CurrentWidth) + 48;
+                if (totalWidth > _availableWidth + 1)
+                {
+                    // Still overflows - preserve widths
+                    MinimumTotalWidth = totalWidth;
+                    NeedsHorizontalScroll = true;
+                    return;
+                }
+                else
+                {
+                    // Window got bigger, columns now fit - clear overflow state
+                    _hasManualOverflow = false;
+                }
+            }
+
             MinimumTotalWidth = minTotalWidth;
 
-            // Check if we need horizontal scrolling
+            // Check if we need horizontal scrolling (window too small for minimums)
             NeedsHorizontalScroll = _availableWidth < minTotalWidth;
 
             // Calculate fixed width total
