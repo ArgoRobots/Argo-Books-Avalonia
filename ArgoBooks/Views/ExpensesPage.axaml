@@ -236,14 +236,19 @@
                         </Popup>
 
                     <!-- Table Content -->
-                    <Grid Grid.Row="1" RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged">
-                        <!-- Table Header -->
-                        <Border Grid.Row="0"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                Padding="24,0"
-                                MinHeight="40"
-                                PointerPressed="OnTableHeaderPointerPressed">
-                            <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
+                    <ScrollViewer Grid.Row="1"
+                                  x:Name="HorizontalTableScroll"
+                                  HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
+                                  VerticalScrollBarVisibility="Disabled">
+                        <Grid RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
+                              MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
+                            <!-- Table Header -->
+                            <Border Grid.Row="0"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    Padding="24,0"
+                                    MinHeight="40"
+                                    PointerPressed="OnTableHeaderPointerPressed">
+                                <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                 <!-- ID -->
                                 <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
                                     <TextBlock Text="ID" FontSize="12" FontWeight="SemiBold"
@@ -706,6 +711,7 @@
                             </Panel>
                             </ScrollViewer>
                         </Grid>
+                    </ScrollViewer>
 
                     <!-- Pagination Footer -->
                     <Border Grid.Row="2"

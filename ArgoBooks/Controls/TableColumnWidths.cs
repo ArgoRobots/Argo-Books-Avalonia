@@ -14,6 +14,10 @@ public partial class TableColumnWidths : ObservableObject
     // Column definitions with star values (proportion weights)
     private readonly Dictionary<string, ColumnDef> _columns = new();
 
+    // Ordered list of all column names for consistent iteration
+    private readonly string[] _columnOrder = { "Id", "Accountant", "Product", "Supplier", "Date", "Quantity",
+        "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions" };
+
     /// <summary>
     /// Represents a column definition with its sizing properties.
     /// </summary>
@@ -78,6 +82,18 @@ public partial class TableColumnWidths : ObservableObject
     [ObservableProperty]
     private double _actionsColumnWidth = 160;
 
+    /// <summary>
+    /// Gets the minimum total width required for all visible columns.
+    /// </summary>
+    [ObservableProperty]
+    private double _minimumTotalWidth = 0;
+
+    /// <summary>
+    /// Gets whether the table needs horizontal scrolling (available width less than minimum).
+    /// </summary>
+    [ObservableProperty]
+    private bool _needsHorizontalScroll = false;
+
     #endregion
 
     public TableColumnWidths()
@@ -136,69 +152,49 @@ public partial class TableColumnWidths : ObservableObject
         if (!col.IsVisible || col.IsFixed) return;
         if (Math.Abs(delta) < 0.5) return;
 
-        // Get ordered list of visible, non-fixed columns
-        var columnOrder = new[] { "Id", "Accountant", "Product", "Supplier", "Date", "Quantity",
-            "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status" };
-
-        var visibleColumns = columnOrder
-            .Where(name => _columns.TryGetValue(name, out var c) && c.IsVisible && !c.IsFixed)
+        // Get ordered list of visible columns (including fixed)
+        var visibleColumns = _columnOrder
+            .Where(name => _columns.TryGetValue(name, out var c) && c.IsVisible)
             .ToList();
 
         var columnIndex = visibleColumns.IndexOf(columnName);
         if (columnIndex < 0) return;
 
-        // Calculate total current width and fixed column widths
-        double totalCurrentWidth = _columns.Values
-            .Where(c => c.IsVisible)
-            .Sum(c => c.IsFixed ? c.FixedWidth : c.CurrentWidth);
-
-        // Available width minus padding (48px for left/right margins)
-        double maxTotalWidth = _availableWidth - 48;
-
-        // Get columns to the right of the resized column
+        // Get all columns to the right (including fixed columns like Actions)
         var columnsToRight = visibleColumns.Skip(columnIndex + 1).ToList();
 
-        if (columnsToRight.Count == 0)
-        {
-            // No columns to the right - limit resize to available space
-            var newWidth = col.CurrentWidth + delta;
-            newWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, newWidth));
+        // Calculate current total and available space
+        double totalCurrentWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth);
+        double maxTotalWidth = _availableWidth - 48; // Subtract padding
 
-            // Calculate what the total width would be
-            double projectedTotal = totalCurrentWidth - col.CurrentWidth + newWidth;
+        // Calculate how much the right columns can shrink (only non-fixed columns)
+        double shrinkableWidth = columnsToRight
+            .Where(name => !_columns[name].IsFixed)
+            .Sum(name => _columns[name].CurrentWidth - _columns[name].MinWidth);
 
-            // If expanding would cause overflow, limit it
-            if (projectedTotal > maxTotalWidth && delta > 0)
-            {
-                double maxAllowedWidth = col.CurrentWidth + (maxTotalWidth - totalCurrentWidth);
-                newWidth = Math.Max(col.MinWidth, maxAllowedWidth);
-            }
-
-            col.CurrentWidth = newWidth;
-            ApplyWidthToProperty(columnName, newWidth);
-            return;
-        }
-
-        // Calculate how much the resized column can actually change
+        // Calculate new width for the resized column
         var newColWidth = col.CurrentWidth + delta;
         newColWidth = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, newColWidth));
         var actualDelta = newColWidth - col.CurrentWidth;
 
         if (Math.Abs(actualDelta) < 0.5) return;
 
-        // Calculate total available width that can be taken from/given to columns on the right
-        double totalRightWidth = columnsToRight.Sum(name => _columns[name].CurrentWidth);
-        double totalRightMinWidth = columnsToRight.Sum(name => _columns[name].MinWidth);
-
-        // When expanding the resized column (positive delta), we need to shrink columns to the right
-        // When shrinking the resized column (negative delta), we need to expand columns to the right
+        // If expanding, limit by how much right columns can shrink
         if (actualDelta > 0)
         {
-            // Expanding - check if we can shrink right columns enough
-            double maxShrink = totalRightWidth - totalRightMinWidth;
-            if (actualDelta > maxShrink)
+            if (actualDelta > shrinkableWidth)
             {
-                actualDelta = maxShrink;
+                actualDelta = shrinkableWidth;
+                newColWidth = col.CurrentWidth + actualDelta;
+            }
+
+            // Also limit by available space
+            double projectedTotal = totalCurrentWidth + actualDelta;
+            if (projectedTotal > maxTotalWidth)
+            {
+                double maxDelta = maxTotalWidth - totalCurrentWidth;
+                if (maxDelta < 0) maxDelta = 0;
+                actualDelta = Math.Min(actualDelta, maxDelta);
                 newColWidth = col.CurrentWidth + actualDelta;
             }
         }
@@ -209,13 +205,18 @@ public partial class TableColumnWidths : ObservableObject
         col.CurrentWidth = newColWidth;
         ApplyWidthToProperty(columnName, newColWidth);
 
-        // Distribute the inverse delta proportionally to columns on the right
-        double remainingDelta = -actualDelta;
+        // Distribute the inverse delta to columns on the right (only non-fixed columns)
+        var shrinkableColumns = columnsToRight.Where(name => !_columns[name].IsFixed).ToList();
+        if (shrinkableColumns.Count == 0) return;
 
-        foreach (var rightColName in columnsToRight)
+        double remainingDelta = -actualDelta;
+        double totalShrinkableWidth = shrinkableColumns.Sum(name => _columns[name].CurrentWidth);
+
+        // Distribute proportionally, respecting minimums
+        foreach (var rightColName in shrinkableColumns)
         {
             var rightCol = _columns[rightColName];
-            double proportion = rightCol.CurrentWidth / totalRightWidth;
+            double proportion = rightCol.CurrentWidth / totalShrinkableWidth;
             double colDelta = remainingDelta * proportion;
 
             double newRightWidth = rightCol.CurrentWidth + colDelta;
@@ -316,6 +317,13 @@ public partial class TableColumnWidths : ObservableObject
             var visibleColumns = _columns.Values.Where(c => c.IsVisible).ToList();
             if (visibleColumns.Count == 0) return;
 
+            // Calculate minimum total width (sum of all minimums + padding)
+            double minTotalWidth = visibleColumns.Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
+            MinimumTotalWidth = minTotalWidth;
+
+            // Check if we need horizontal scrolling
+            NeedsHorizontalScroll = _availableWidth < minTotalWidth;
+
             // Calculate fixed width total
             double fixedTotal = visibleColumns
                 .Where(c => c.IsFixed)
@@ -329,6 +337,19 @@ public partial class TableColumnWidths : ObservableObject
             // Calculate available width for proportional columns
             // Subtract padding (48px for left/right of 24px each)
             double availableForProportional = _availableWidth - fixedTotal - 48;
+
+            // If we need horizontal scrolling, use minimum widths
+            if (NeedsHorizontalScroll)
+            {
+                foreach (var col in visibleColumns)
+                {
+                    double width = col.IsFixed ? col.FixedWidth : col.MinWidth;
+                    col.CurrentWidth = width;
+                    ApplyWidthToProperty(col.Name, width);
+                }
+                return;
+            }
+
             if (availableForProportional < 0) availableForProportional = 100;
 
             // Calculate width per star unit
