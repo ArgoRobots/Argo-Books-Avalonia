@@ -249,7 +249,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Accountant -->
                                 <Panel Width="{Binding ColumnWidths.AccountantColumnWidth}" IsVisible="{Binding ShowAccountantColumn}">
@@ -257,7 +257,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Accountant" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Product -->
                                 <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
@@ -265,7 +265,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Supplier -->
                                 <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
@@ -273,7 +273,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Date -->
                                 <Panel Width="{Binding ColumnWidths.DateColumnWidth}" IsVisible="{Binding ShowDateColumn}">
@@ -281,7 +281,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Qty -->
                                 <Panel Width="{Binding ColumnWidths.QuantityColumnWidth}" IsVisible="{Binding ShowQuantityColumn}">
@@ -289,7 +289,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Quantity" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Unit Price -->
                                 <Panel Width="{Binding ColumnWidths.UnitPriceColumnWidth}" IsVisible="{Binding ShowUnitPriceColumn}">
@@ -297,7 +297,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="UnitPrice" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Amount -->
                                 <Panel Width="{Binding ColumnWidths.AmountColumnWidth}" IsVisible="{Binding ShowAmountColumn}">
@@ -305,7 +305,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Amount" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Tax -->
                                 <Panel Width="{Binding ColumnWidths.TaxColumnWidth}" IsVisible="{Binding ShowTaxColumn}">
@@ -313,7 +313,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Tax" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Shipping -->
                                 <Panel Width="{Binding ColumnWidths.ShippingColumnWidth}" IsVisible="{Binding ShowShippingColumn}">
@@ -321,7 +321,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Shipping" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Discount -->
                                 <Panel Width="{Binding ColumnWidths.DiscountColumnWidth}" IsVisible="{Binding ShowDiscountColumn}">
@@ -329,7 +329,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Discount" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Total -->
                                 <Panel Width="{Binding ColumnWidths.TotalColumnWidth}" IsVisible="{Binding ShowTotalColumn}">
@@ -337,7 +337,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Total" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Receipt -->
                                 <Panel Width="{Binding ColumnWidths.ReceiptColumnWidth}" IsVisible="{Binding ShowReceiptColumn}">
@@ -346,7 +346,7 @@
                                                HorizontalAlignment="Center"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Receipt" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Status -->
                                 <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
@@ -354,13 +354,13 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" />
+                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
                                 <!-- Actions -->
                                 <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
                                     <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                               HorizontalAlignment="Left" VerticalAlignment="Center" />
                                 </Panel>
                             </StackPanel>
                         </Border>

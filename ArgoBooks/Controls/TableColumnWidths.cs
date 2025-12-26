@@ -140,6 +140,43 @@ public partial class TableColumnWidths : ObservableObject
     }
 
     /// <summary>
+    /// Gets the current width of a column.
+    /// </summary>
+    public double GetColumnWidth(string columnName)
+    {
+        if (_columns.TryGetValue(columnName, out var col))
+        {
+            return col.CurrentWidth > 0 ? col.CurrentWidth : col.MinWidth;
+        }
+        return 100;
+    }
+
+    /// <summary>
+    /// Sets the width of a column directly.
+    /// </summary>
+    public void SetColumnWidth(string columnName, double width)
+    {
+        if (!_columns.TryGetValue(columnName, out var col)) return;
+        if (col.IsFixed) return;
+
+        width = Math.Max(col.MinWidth, Math.Min(col.MaxWidth, width));
+        col.CurrentWidth = width;
+        ApplyWidthToProperty(columnName, width);
+    }
+
+    /// <summary>
+    /// Gets the minimum width of a column.
+    /// </summary>
+    public double GetMinWidth(string columnName)
+    {
+        if (_columns.TryGetValue(columnName, out var col))
+        {
+            return col.MinWidth;
+        }
+        return 50;
+    }
+
+    /// <summary>
     /// Recalculates all column widths based on available space and visibility.
     /// </summary>
     public void RecalculateWidths()

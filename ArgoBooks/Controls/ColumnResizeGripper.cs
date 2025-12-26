@@ -1,20 +1,21 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 
 namespace ArgoBooks.Controls;
 
 /// <summary>
-/// A thumb control for resizing table columns via drag.
+/// A control for resizing table columns via drag.
 /// </summary>
-public class ColumnResizeGripper : Thumb
+public class ColumnResizeGripper : Border
 {
+    private bool _isDragging;
+    private Point _dragStartPoint;
     private double _originalWidth;
 
     public static readonly StyledProperty<string> ColumnNameProperty =
-        AvaloniaProperty.Register<ColumnResizeGripper, string>(nameof(ColumnName));
+        AvaloniaProperty.Register<ColumnResizeGripper, string>(nameof(ColumnName), string.Empty);
 
     public static readonly StyledProperty<TableColumnWidths?> ColumnWidthsProperty =
         AvaloniaProperty.Register<ColumnResizeGripper, TableColumnWidths?>(nameof(ColumnWidths));
@@ -37,21 +38,6 @@ public class ColumnResizeGripper : Thumb
         set => SetValue(ColumnWidthsProperty, value);
     }
 
-    /// <summary>
-    /// Event raised when a resize operation starts.
-    /// </summary>
-    public event EventHandler<string>? ResizeStarted;
-
-    /// <summary>
-    /// Event raised during resize with the delta value.
-    /// </summary>
-    public event EventHandler<(string Column, double Delta)>? Resizing;
-
-    /// <summary>
-    /// Event raised when a resize operation completes.
-    /// </summary>
-    public event EventHandler<string>? ResizeCompleted;
-
     public ColumnResizeGripper()
     {
         Width = 8;
@@ -59,66 +45,71 @@ public class ColumnResizeGripper : Thumb
         Cursor = new Cursor(StandardCursorType.SizeWestEast);
         Background = Brushes.Transparent;
         Margin = new Thickness(-4, 0, -4, 0);
-
-        DragStarted += OnDragStarted;
-        DragDelta += OnDragDelta;
-        DragCompleted += OnDragCompleted;
     }
 
     protected override void OnPointerEntered(PointerEventArgs e)
     {
         base.OnPointerEntered(e);
-        Background = new SolidColorBrush(Color.FromArgb(80, 59, 130, 246)); // Semi-transparent primary blue
+        if (!_isDragging)
+        {
+            Background = new SolidColorBrush(Color.FromArgb(80, 59, 130, 246));
+        }
     }
 
     protected override void OnPointerExited(PointerEventArgs e)
     {
         base.OnPointerExited(e);
-        Background = Brushes.Transparent;
+        if (!_isDragging)
+        {
+            Background = Brushes.Transparent;
+        }
     }
 
-    private void OnDragStarted(object? sender, VectorEventArgs e)
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
-        _originalWidth = GetCurrentColumnWidth();
-        Background = new SolidColorBrush(Color.FromArgb(120, 59, 130, 246)); // More opaque during drag
-        ResizeStarted?.Invoke(this, ColumnName);
+        base.OnPointerPressed(e);
+
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            _isDragging = true;
+            _dragStartPoint = e.GetPosition(this.GetVisualRoot() as Visual);
+            _originalWidth = GetCurrentColumnWidth();
+            Background = new SolidColorBrush(Color.FromArgb(120, 59, 130, 246));
+            e.Pointer.Capture(this);
+            e.Handled = true;
+        }
     }
 
-    private void OnDragDelta(object? sender, VectorEventArgs e)
+    protected override void OnPointerMoved(PointerEventArgs e)
     {
-        var delta = e.Vector.X;
-        ColumnWidths?.ResizeColumn(ColumnName, delta);
-        Resizing?.Invoke(this, (ColumnName, delta));
+        base.OnPointerMoved(e);
+
+        if (_isDragging)
+        {
+            var currentPoint = e.GetPosition(this.GetVisualRoot() as Visual);
+            var delta = currentPoint.X - _dragStartPoint.X;
+            var newWidth = Math.Max(ColumnWidths?.GetMinWidth(ColumnName) ?? 50, _originalWidth + delta);
+
+            ColumnWidths?.SetColumnWidth(ColumnName, newWidth);
+            e.Handled = true;
+        }
     }
 
-    private void OnDragCompleted(object? sender, VectorEventArgs e)
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
-        Background = Brushes.Transparent;
-        ResizeCompleted?.Invoke(this, ColumnName);
+        base.OnPointerReleased(e);
+
+        if (_isDragging)
+        {
+            _isDragging = false;
+            Background = Brushes.Transparent;
+            e.Pointer.Capture(null);
+            e.Handled = true;
+        }
     }
 
     private double GetCurrentColumnWidth()
     {
-        if (ColumnWidths == null) return 100;
-
-        return ColumnName switch
-        {
-            "Id" => ColumnWidths.IdColumnWidth,
-            "Accountant" => ColumnWidths.AccountantColumnWidth,
-            "Product" => ColumnWidths.ProductColumnWidth,
-            "Supplier" => ColumnWidths.SupplierColumnWidth,
-            "Date" => ColumnWidths.DateColumnWidth,
-            "Quantity" => ColumnWidths.QuantityColumnWidth,
-            "UnitPrice" => ColumnWidths.UnitPriceColumnWidth,
-            "Amount" => ColumnWidths.AmountColumnWidth,
-            "Tax" => ColumnWidths.TaxColumnWidth,
-            "Shipping" => ColumnWidths.ShippingColumnWidth,
-            "Discount" => ColumnWidths.DiscountColumnWidth,
-            "Total" => ColumnWidths.TotalColumnWidth,
-            "Receipt" => ColumnWidths.ReceiptColumnWidth,
-            "Status" => ColumnWidths.StatusColumnWidth,
-            "Actions" => ColumnWidths.ActionsColumnWidth,
-            _ => 100
-        };
+        return ColumnWidths?.GetColumnWidth(ColumnName) ?? 100;
     }
 }
