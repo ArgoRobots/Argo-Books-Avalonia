@@ -20,6 +20,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
     public event EventHandler? RevenueDeleted;
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
+    public event EventHandler? ScrollToLineItemsRequested;
 
     #endregion
 
@@ -815,6 +816,25 @@ public partial class RevenueModalsViewModel : ViewModelBase
             return;
         }
 
+        // Validate that all line items have a product selected
+        var hasProductErrors = false;
+        foreach (var lineItem in LineItems)
+        {
+            if (lineItem.SelectedProduct == null)
+            {
+                lineItem.HasProductError = true;
+                hasProductErrors = true;
+            }
+        }
+
+        if (hasProductErrors)
+        {
+            ValidationMessage = "Please select a product for all line items";
+            HasValidationMessage = true;
+            ScrollToLineItemsRequested?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
@@ -1284,6 +1304,9 @@ public partial class RevenueLineItem : ObservableObject
     [ObservableProperty]
     private decimal _unitPrice;
 
+    [ObservableProperty]
+    private bool _hasProductError;
+
     public decimal Amount => Quantity * UnitPrice;
     public string AmountFormatted => $"${Amount:N2}";
 
@@ -1293,6 +1316,7 @@ public partial class RevenueLineItem : ObservableObject
         {
             Description = value.Name;
             UnitPrice = value.UnitPrice;
+            HasProductError = false;
         }
     }
 
