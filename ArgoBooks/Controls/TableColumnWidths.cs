@@ -166,6 +166,7 @@ public partial class TableColumnWidths : ObservableObject
         // Calculate current total and available space
         double totalCurrentWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth);
         double maxTotalWidth = _availableWidth - 48; // Subtract padding
+        double extraSpace = Math.Max(0, maxTotalWidth - totalCurrentWidth);
 
         // Calculate how much the right columns can shrink (only non-fixed columns)
         double shrinkableWidth = columnsToRight
@@ -179,22 +180,13 @@ public partial class TableColumnWidths : ObservableObject
 
         if (Math.Abs(actualDelta) < 0.5) return;
 
-        // If expanding, limit by how much right columns can shrink
+        // If expanding, limit by available space + shrinkable width from right columns
         if (actualDelta > 0)
         {
-            if (actualDelta > shrinkableWidth)
+            double maxExpansion = extraSpace + shrinkableWidth;
+            if (actualDelta > maxExpansion)
             {
-                actualDelta = shrinkableWidth;
-                newColWidth = col.CurrentWidth + actualDelta;
-            }
-
-            // Also limit by available space
-            double projectedTotal = totalCurrentWidth + actualDelta;
-            if (projectedTotal > maxTotalWidth)
-            {
-                double maxDelta = maxTotalWidth - totalCurrentWidth;
-                if (maxDelta < 0) maxDelta = 0;
-                actualDelta = Math.Min(actualDelta, maxDelta);
+                actualDelta = maxExpansion;
                 newColWidth = col.CurrentWidth + actualDelta;
             }
         }
@@ -205,19 +197,25 @@ public partial class TableColumnWidths : ObservableObject
         col.CurrentWidth = newColWidth;
         ApplyWidthToProperty(columnName, newColWidth);
 
-        // Distribute the inverse delta to columns on the right (only non-fixed columns)
+        // Calculate how much we need to shrink from the right columns
+        // First use up extra space, then shrink right columns
+        double shrinkNeeded = Math.Max(0, actualDelta - extraSpace);
+
+        if (shrinkNeeded < 0.5) return;
+
+        // Distribute the shrink to columns on the right (only non-fixed columns)
         var shrinkableColumns = columnsToRight.Where(name => !_columns[name].IsFixed).ToList();
         if (shrinkableColumns.Count == 0) return;
 
-        double remainingDelta = -actualDelta;
         double totalShrinkableWidth = shrinkableColumns.Sum(name => _columns[name].CurrentWidth);
+        if (totalShrinkableWidth < 0.5) return;
 
         // Distribute proportionally, respecting minimums
         foreach (var rightColName in shrinkableColumns)
         {
             var rightCol = _columns[rightColName];
             double proportion = rightCol.CurrentWidth / totalShrinkableWidth;
-            double colDelta = remainingDelta * proportion;
+            double colDelta = -shrinkNeeded * proportion;
 
             double newRightWidth = rightCol.CurrentWidth + colDelta;
             newRightWidth = Math.Max(rightCol.MinWidth, Math.Min(rightCol.MaxWidth, newRightWidth));
