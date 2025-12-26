@@ -180,19 +180,6 @@ public partial class TableColumnWidths : ObservableObject
 
         if (Math.Abs(actualDelta) < 0.5) return;
 
-        // If expanding, limit by available space + shrinkable width from right columns
-        if (actualDelta > 0)
-        {
-            double maxExpansion = extraSpace + shrinkableWidth;
-            if (actualDelta > maxExpansion)
-            {
-                actualDelta = maxExpansion;
-                newColWidth = col.CurrentWidth + actualDelta;
-            }
-        }
-
-        if (Math.Abs(actualDelta) < 0.5) return;
-
         // Apply the change to the resized column
         col.CurrentWidth = newColWidth;
         ApplyWidthToProperty(columnName, newColWidth);
@@ -201,11 +188,19 @@ public partial class TableColumnWidths : ObservableObject
         // First use up extra space, then shrink right columns
         double shrinkNeeded = Math.Max(0, actualDelta - extraSpace);
 
-        if (shrinkNeeded < 0.5) return;
+        if (shrinkNeeded < 0.5)
+        {
+            UpdateScrollState(visibleColumns);
+            return;
+        }
 
         // Distribute the shrink to columns on the right (only non-fixed columns)
         var shrinkableColumns = columnsToRight.Where(name => !_columns[name].IsFixed).ToList();
-        if (shrinkableColumns.Count == 0) return;
+        if (shrinkableColumns.Count == 0)
+        {
+            UpdateScrollState(visibleColumns);
+            return;
+        }
 
         // Multi-pass distribution: keep redistributing until all shrink is absorbed
         // or all columns are at their minimum
@@ -248,6 +243,33 @@ public partial class TableColumnWidths : ObservableObject
             }
 
             remainingShrink -= shrinkAppliedThisPass;
+        }
+
+        // Update scroll state after resize
+        UpdateScrollState(visibleColumns);
+    }
+
+    /// <summary>
+    /// Updates the horizontal scroll state based on current column widths.
+    /// </summary>
+    private void UpdateScrollState(List<string> visibleColumns)
+    {
+        double totalWidth = visibleColumns.Sum(name => _columns[name].CurrentWidth) + 48; // Add padding
+        double maxTotalWidth = _availableWidth;
+
+        if (totalWidth > maxTotalWidth + 1)
+        {
+            // Columns overflow available space - enable horizontal scroll
+            NeedsHorizontalScroll = true;
+            MinimumTotalWidth = totalWidth;
+        }
+        else
+        {
+            NeedsHorizontalScroll = false;
+            // Reset to actual minimum (all columns at min width)
+            MinimumTotalWidth = _columns.Values
+                .Where(c => c.IsVisible)
+                .Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
         }
     }
 
