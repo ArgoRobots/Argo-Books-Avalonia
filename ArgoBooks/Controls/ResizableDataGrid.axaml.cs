@@ -11,6 +11,8 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml.Templates;
 using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace ArgoBooks.Controls;
 
@@ -474,7 +476,7 @@ public partial class ResizableDataGrid : UserControl, INotifyPropertyChanged
                 var dataItem = canvas.Tag ?? item;
                 UpdateRowCells(canvas, dataItem);
             }
-        }, Avalonia.Threading.DispatcherPriority.Layout);
+        }, DispatcherPriority.Loaded);
     }
 
     /// <summary>
@@ -514,9 +516,9 @@ public partial class ResizableDataGrid : UserControl, INotifyPropertyChanged
             }
 
             // Ensure width is set for custom cells too
-            if (cellControl is FrameworkElement fe)
+            if (cellControl is Control ctrl)
             {
-                fe.Width = column.Width;
+                ctrl.Width = column.Width;
             }
 
             Canvas.SetLeft(cellControl, x);
@@ -530,16 +532,19 @@ public partial class ResizableDataGrid : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Finds a descendant control of a specific type.
     /// </summary>
-    private static T? FindDescendant<T>(Control root) where T : Control
+    private static T? FindDescendant<T>(Visual root) where T : Visual
     {
         if (root is T match)
             return match;
 
-        foreach (var child in root.GetVisualChildren().OfType<Control>())
+        foreach (var child in root.GetVisualChildren())
         {
-            var result = FindDescendant<T>(child);
-            if (result != null)
-                return result;
+            if (child is Visual visual)
+            {
+                var result = FindDescendant<T>(visual);
+                if (result != null)
+                    return result;
+            }
         }
 
         return null;

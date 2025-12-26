@@ -11,7 +11,6 @@ namespace ArgoBooks.Controls;
 /// </summary>
 public class ColumnResizeGripper : Thumb
 {
-    private double _startX;
     private double _originalWidth;
 
     public static readonly StyledProperty<string> ColumnNameProperty =
@@ -80,7 +79,6 @@ public class ColumnResizeGripper : Thumb
 
     private void OnDragStarted(object? sender, VectorEventArgs e)
     {
-        _startX = 0;
         _originalWidth = GetCurrentColumnWidth();
         Background = new SolidColorBrush(Color.FromArgb(120, 59, 130, 246)); // More opaque during drag
         ResizeStarted?.Invoke(this, ColumnName);
