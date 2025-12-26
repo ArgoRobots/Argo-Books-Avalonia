@@ -472,20 +472,108 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region View Details Modal
+
+    [ObservableProperty]
+    private bool _isViewDetailsModalOpen;
+
+    [ObservableProperty]
+    private string _viewDetailsId = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsProduct = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsReason = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsNotes = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsDate = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsRefund = string.Empty;
+
+    #endregion
+
+    #region Undo Return Modal
+
+    private ReturnDisplayItem? _undoReturnItem;
+
+    [ObservableProperty]
+    private bool _isUndoReturnModalOpen;
+
+    [ObservableProperty]
+    private string _undoReturnItemDescription = string.Empty;
+
+    [ObservableProperty]
+    private string _undoReturnReason = string.Empty;
+
+    #endregion
+
     #region Action Commands
 
     [RelayCommand]
     private void ViewReturnDetails(ReturnDisplayItem? item)
     {
         if (item == null) return;
-        // TODO: Open detail modal
+
+        ViewDetailsId = item.Id;
+        ViewDetailsProduct = item.ProductNames;
+        ViewDetailsReason = item.Reason;
+        ViewDetailsNotes = string.IsNullOrWhiteSpace(item.Notes) ? "No notes provided" : item.Notes;
+        ViewDetailsDate = item.DateFormatted;
+        ViewDetailsRefund = item.RefundAmountFormatted;
+        IsViewDetailsModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseViewDetailsModal()
+    {
+        IsViewDetailsModalOpen = false;
     }
 
     [RelayCommand]
     private void UndoReturn(ReturnDisplayItem? item)
     {
         if (item == null) return;
-        // TODO: Implement undo return with confirmation
+
+        _undoReturnItem = item;
+        UndoReturnItemDescription = $"{item.Id} - {item.ProductNames}";
+        UndoReturnReason = string.Empty;
+        IsUndoReturnModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseUndoReturnModal()
+    {
+        IsUndoReturnModalOpen = false;
+        _undoReturnItem = null;
+        UndoReturnReason = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmUndoReturn()
+    {
+        if (_undoReturnItem == null) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+        {
+            CloseUndoReturnModal();
+            return;
+        }
+
+        var returnRecord = companyData.Returns.FirstOrDefault(r => r.Id == _undoReturnItem.Id);
+        if (returnRecord != null)
+        {
+            companyData.Returns.Remove(returnRecord);
+            App.CompanyManager?.MarkAsChanged();
+        }
+
+        CloseUndoReturnModal();
+        LoadReturns();
     }
 
     #endregion

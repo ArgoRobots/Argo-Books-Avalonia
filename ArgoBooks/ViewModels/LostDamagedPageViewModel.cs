@@ -389,27 +389,116 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     #endregion
 
+    #region View Details Modal
+
+    [ObservableProperty]
+    private bool _isViewDetailsModalOpen;
+
+    [ObservableProperty]
+    private string _viewDetailsId = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsProduct = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsType = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsReason = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsNotes = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsDate = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsValue = string.Empty;
+
+    [ObservableProperty]
+    private string _viewDetailsQuantity = string.Empty;
+
+    #endregion
+
+    #region Undo Item Modal
+
+    private LostDamagedDisplayItem? _undoItem;
+
+    [ObservableProperty]
+    private bool _isUndoItemModalOpen;
+
+    [ObservableProperty]
+    private string _undoItemDescription = string.Empty;
+
+    [ObservableProperty]
+    private string _undoItemReason = string.Empty;
+
+    #endregion
+
     #region Action Commands
 
     [RelayCommand]
     private void ViewItemDetails(LostDamagedDisplayItem? item)
     {
         if (item == null) return;
-        // TODO: Open detail modal
+
+        ViewDetailsId = item.Id;
+        ViewDetailsProduct = item.ProductName;
+        ViewDetailsType = item.ItemType;
+        ViewDetailsReason = item.Reason;
+        ViewDetailsNotes = string.IsNullOrWhiteSpace(item.Notes) ? "No notes provided" : item.Notes;
+        ViewDetailsDate = item.DateFormatted;
+        ViewDetailsValue = item.ValueLostFormatted;
+        ViewDetailsQuantity = item.QuantityFormatted;
+        IsViewDetailsModalOpen = true;
     }
 
     [RelayCommand]
-    private void EditItem(LostDamagedDisplayItem? item)
+    private void CloseViewDetailsModal()
     {
-        if (item == null) return;
-        // TODO: Open edit modal
+        IsViewDetailsModalOpen = false;
     }
 
     [RelayCommand]
-    private void DeleteItem(LostDamagedDisplayItem? item)
+    private void UndoItem(LostDamagedDisplayItem? item)
     {
         if (item == null) return;
-        // TODO: Implement delete with confirmation
+
+        _undoItem = item;
+        UndoItemDescription = $"{item.Id} - {item.ProductName}";
+        UndoItemReason = string.Empty;
+        IsUndoItemModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseUndoItemModal()
+    {
+        IsUndoItemModalOpen = false;
+        _undoItem = null;
+        UndoItemReason = string.Empty;
+    }
+
+    [RelayCommand]
+    private void ConfirmUndoItem()
+    {
+        if (_undoItem == null) return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+        {
+            CloseUndoItemModal();
+            return;
+        }
+
+        var lostDamagedRecord = companyData.LostDamaged.FirstOrDefault(ld => ld.Id == _undoItem.Id);
+        if (lostDamagedRecord != null)
+        {
+            companyData.LostDamaged.Remove(lostDamagedRecord);
+            App.CompanyManager?.MarkAsChanged();
+        }
+
+        CloseUndoItemModal();
+        LoadItems();
     }
 
     #endregion

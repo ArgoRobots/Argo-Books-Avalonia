@@ -283,28 +283,22 @@
                                                 Padding="24,12"
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1">
-                                            <Grid ColumnDefinitions="120,*,150,100,150,120,100,100,80">
-                                                <TextBlock Grid.Column="0" Text="Transaction ID" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="1" Text="Product" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="2" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}">
+                                            <Grid ColumnDefinitions="100,150,120,85,120,100,80,80,70">
+                                                <TextBlock Grid.Column="0" Text="ID" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Grid.Column="1" Text="Product" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Grid.Column="2" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}">
                                                     <TextBlock.Text>
                                                         <MultiBinding StringFormat="{}{0}">
                                                             <Binding Path="$parent[UserControl].((vm:ReturnsPageViewModel)DataContext).IsExpenseTabActive" Converter="{x:Static local:BoolConverters.ToSupplierOrCustomerHeader}" />
                                                         </MultiBinding>
                                                     </TextBlock.Text>
                                                 </TextBlock>
-                                                <TextBlock Grid.Column="3" Text="Return Date" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="4" Text="Reason" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="5" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}">
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0}">
-                                                            <Binding Path="$parent[UserControl].((vm:ReturnsPageViewModel)DataContext).IsExpenseTabActive" Converter="{x:Static local:BoolConverters.ToReturnedByOrProcessedByHeader}" />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                                <TextBlock Grid.Column="6" Text="Refund" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="7" Text="Status" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="8" Text="Actions" FontWeight="Medium" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
+                                                <TextBlock Grid.Column="3" Text="Date" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Grid.Column="4" Text="Reason" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Grid.Column="5" Text="Processed" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Grid.Column="6" Text="Refund" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Grid.Column="7" Text="Status" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Grid.Column="8" Text="Actions" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
                                             </Grid>
                                         </Border>
 
@@ -322,61 +316,66 @@
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                                             </Style>
                                                         </Border.Styles>
-                                                        <Grid ColumnDefinitions="120,*,150,100,150,120,100,100,80">
+                                                        <Grid ColumnDefinitions="100,150,120,85,120,100,80,80,70">
                                                             <!-- Transaction ID -->
                                                             <TextBlock Grid.Column="0"
                                                                        Text="{Binding Id}"
-                                                                       FontSize="13"
+                                                                       FontSize="12"
                                                                        FontWeight="Medium"
                                                                        Foreground="{DynamicResource PrimaryBrush}"
+                                                                       TextTrimming="CharacterEllipsis"
                                                                        VerticalAlignment="Center" />
 
                                                             <!-- Product -->
                                                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                                 <TextBlock Text="{Binding ProductNames}"
-                                                                           FontSize="13"
+                                                                           FontSize="12"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           TextTrimming="CharacterEllipsis" />
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           MaxWidth="140" />
                                                                 <TextBlock Text="{Binding ItemCount, StringFormat='{}{0} item(s)'}"
-                                                                           FontSize="11"
+                                                                           FontSize="10"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                             </StackPanel>
 
                                                             <!-- Supplier/Customer -->
                                                             <TextBlock Grid.Column="2"
                                                                        Text="{Binding SupplierOrCustomerName}"
-                                                                       FontSize="13"
+                                                                       FontSize="12"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        TextTrimming="CharacterEllipsis"
+                                                                       MaxWidth="110"
                                                                        VerticalAlignment="Center" />
 
                                                             <!-- Return Date -->
                                                             <TextBlock Grid.Column="3"
                                                                        Text="{Binding DateFormatted}"
-                                                                       FontSize="13"
+                                                                       FontSize="12"
                                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                                        VerticalAlignment="Center" />
 
                                                             <!-- Reason -->
                                                             <TextBlock Grid.Column="4"
                                                                        Text="{Binding Reason}"
-                                                                       FontSize="13"
+                                                                       FontSize="12"
                                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                                        TextTrimming="CharacterEllipsis"
+                                                                       MaxWidth="110"
                                                                        VerticalAlignment="Center" />
 
                                                             <!-- Processed By -->
                                                             <TextBlock Grid.Column="5"
                                                                        Text="{Binding ProcessedBy}"
-                                                                       FontSize="13"
+                                                                       FontSize="12"
                                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                                        TextTrimming="CharacterEllipsis"
+                                                                       MaxWidth="90"
                                                                        VerticalAlignment="Center" />
 
                                                             <!-- Refund Amount -->
                                                             <TextBlock Grid.Column="6"
                                                                        Text="{Binding RefundAmountFormatted}"
-                                                                       FontSize="13"
+                                                                       FontSize="12"
                                                                        FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center" />
@@ -384,11 +383,11 @@
                                                             <!-- Status Badge -->
                                                             <Panel Grid.Column="7" VerticalAlignment="Center">
                                                                 <Border CornerRadius="4"
-                                                                        Padding="8,4"
+                                                                        Padding="6,3"
                                                                         Background="{Binding StatusBadgeBackground}"
                                                                         HorizontalAlignment="Left">
                                                                     <TextBlock Text="{Binding StatusText}"
-                                                                               FontSize="11"
+                                                                               FontSize="10"
                                                                                FontWeight="Medium"
                                                                                Foreground="{Binding StatusBadgeForeground}" />
                                                                 </Border>
@@ -397,22 +396,22 @@
                                                             <!-- Actions -->
                                                             <StackPanel Grid.Column="8"
                                                                         Orientation="Horizontal"
-                                                                        Spacing="4"
+                                                                        Spacing="2"
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center">
-                                                                <Button Classes="icon-button"
+                                                                <Button Classes="icon-button-small"
                                                                         ToolTip.Tip="View Details"
                                                                         Command="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ViewReturnDetailsCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-                                                                              Width="16" Height="16" />
+                                                                              Width="14" Height="14" />
                                                                 </Button>
-                                                                <Button Classes="icon-button danger"
+                                                                <Button Classes="icon-button-small danger"
                                                                         ToolTip.Tip="Undo Return"
                                                                         Command="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).UndoReturnCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
-                                                                              Width="16" Height="16" />
+                                                                              Width="14" Height="14" />
                                                                 </Button>
                                                             </StackPanel>
                                                         </Grid>
@@ -639,6 +638,243 @@
                 </Grid>
             </Border>
         </Border>
+
+        <!-- View Details Modal Overlay -->
+        <Border Background="#80000000"
+                IsVisible="{Binding IsViewDetailsModalOpen}">
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    Width="500"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Modal Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Border Width="40" Height="40"
+                                        CornerRadius="8"
+                                        Background="#DBEAFE">
+                                    <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                                              Width="20" Height="20"
+                                              Foreground="#3B82F6" />
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Return Details"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding ViewDetailsId}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseViewDetailsModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Modal Content -->
+                    <ScrollViewer Grid.Row="1" Padding="24">
+                        <StackPanel Spacing="20">
+                            <!-- Product -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Product"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Text="{Binding ViewDetailsProduct}"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <!-- Date and Refund -->
+                            <Grid ColumnDefinitions="*,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Return Date"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{Binding ViewDetailsDate}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="6">
+                                    <TextBlock Text="Refund Amount"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{Binding ViewDetailsRefund}"
+                                               FontSize="14"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Reason -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Reason"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="12">
+                                    <TextBlock Text="{Binding ViewDetailsReason}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Notes -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Notes"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Padding="12"
+                                        MinHeight="80">
+                                    <TextBlock Text="{Binding ViewDetailsNotes}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </Border>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Modal Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Button Content="Close"
+                                Classes="secondary-button"
+                                HorizontalAlignment="Right"
+                                Command="{Binding CloseViewDetailsModalCommand}" />
+                    </Border>
+                </Grid>
+            </Border>
+        </Border>
+
+        <!-- Undo Return Modal Overlay -->
+        <Border Background="#80000000"
+                IsVisible="{Binding IsUndoReturnModalOpen}">
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    Width="450"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Modal Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Border Width="40" Height="40"
+                                        CornerRadius="8"
+                                        Background="#FEF3C7">
+                                    <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                                              Width="20" Height="20"
+                                              Foreground="#D97706" />
+                                </Border>
+                                <TextBlock Text="Undo Return"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseUndoReturnModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Modal Content -->
+                    <StackPanel Grid.Row="1" Spacing="16" Margin="24">
+                        <!-- Warning Message -->
+                        <Border Background="#FEF3C7"
+                                CornerRadius="8"
+                                Padding="12">
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                          Width="20" Height="20"
+                                          Foreground="#D97706" />
+                                <TextBlock Text="This action will remove the return record and cannot be undone."
+                                           FontSize="13"
+                                           Foreground="#92400E"
+                                           TextWrapping="Wrap"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Item Description -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Return to undo:"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{Binding UndoReturnItemDescription}"
+                                       FontSize="14"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                        </StackPanel>
+
+                        <!-- Reason (Optional) -->
+                        <StackPanel Spacing="8">
+                            <TextBlock FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}">
+                                <Run Text="Reason for undo" />
+                                <Run Text="(optional)" Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </TextBlock>
+                            <TextBox Text="{Binding UndoReturnReason, Mode=TwoWay}"
+                                     Watermark="Enter reason for undoing this return..."
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     MinHeight="80"
+                                     MaxHeight="120" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Modal Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <Button Grid.Column="1"
+                                    Content="Cancel"
+                                    Classes="secondary-button"
+                                    Margin="0,0,12,0"
+                                    Command="{Binding CloseUndoReturnModalCommand}" />
+                            <Button Grid.Column="2"
+                                    Content="Undo Return"
+                                    Classes="danger-button"
+                                    Command="{Binding ConfirmUndoReturnCommand}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Border>
     </Panel>
 
     <UserControl.Styles>
@@ -699,6 +935,32 @@
             <Setter Property="Foreground" Value="#DC2626" />
         </Style>
 
+        <!-- Small Icon Button -->
+        <Style Selector="Button.icon-button-small">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.icon-button-small /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.icon-button-small:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button-small PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.icon-button-small.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FEE2E2" />
+        </Style>
+        <Style Selector="Button.icon-button-small.danger:pointerover PathIcon">
+            <Setter Property="Foreground" Value="#DC2626" />
+        </Style>
+
         <!-- Page Size ComboBox -->
         <Style Selector="ComboBox.page-size-combobox">
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -708,6 +970,24 @@
             <Setter Property="Padding" Value="8,4" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="MinHeight" Value="28" />
+        </Style>
+
+        <!-- Danger Button -->
+        <Style Selector="Button.danger-button">
+            <Setter Property="Background" Value="#DC2626" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#DC2626" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#B91C1C" />
         </Style>
     </UserControl.Styles>
 </UserControl>
