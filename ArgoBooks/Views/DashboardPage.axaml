@@ -276,6 +276,7 @@
                             <TextBlock Text="{Binding ExpensesChartTitle}"
                                        FontSize="16"
                                        FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                         </Border>
                         <Border Grid.Row="1" Padding="8">
@@ -425,6 +426,7 @@
                             <TextBlock Text="Distribution of expenses"
                                        FontSize="16"
                                        FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                         </Border>
                         <Border Grid.Row="1" Padding="20">

@@ -198,7 +198,7 @@ public class ChartLoaderService
             Name = "Expenses",
             Fill = new SolidColorPaint(RevenueColor), // Using the blue color like WinForms
             Stroke = null,
-            MaxBarWidth = double.MaxValue,
+            MaxBarWidth = 50,
             Padding = 2
         };
 
