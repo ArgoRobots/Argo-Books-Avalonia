@@ -236,107 +236,133 @@
                         </Popup>
 
                     <!-- Table Content -->
-                    <Grid Grid.Row="1" RowDefinitions="Auto,*" x:Name="TableGrid">
+                    <Grid Grid.Row="1" RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged">
                         <!-- Table Header -->
                         <Border Grid.Row="0"
                                 Background="{DynamicResource SurfaceAltBrush}"
                                 Padding="24,12"
                                 PointerPressed="OnTableHeaderPointerPressed">
-                            <Grid x:Name="HeaderGrid">
-                                <Grid.ColumnDefinitions>
-                                    <!-- Proportional columns - visible ones share available space -->
-                                    <ColumnDefinition Width="1.3*" MinWidth="100" />
-                                    <ColumnDefinition Width="1*" MinWidth="80" />
-                                    <ColumnDefinition Width="1.5*" MinWidth="100" />
-                                    <ColumnDefinition Width="1.2*" MinWidth="80" />
-                                    <ColumnDefinition Width="1*" MinWidth="90" />
-                                    <ColumnDefinition Width="0.5*" MinWidth="40" />
-                                    <ColumnDefinition Width="0.9*" MinWidth="70" />
-                                    <ColumnDefinition Width="0.9*" MinWidth="70" />
-                                    <ColumnDefinition Width="0.7*" MinWidth="50" />
-                                    <ColumnDefinition Width="0.8*" MinWidth="60" />
-                                    <ColumnDefinition Width="0.8*" MinWidth="60" />
-                                    <ColumnDefinition Width="0.8*" MinWidth="60" />
-                                    <ColumnDefinition Width="0.6*" MinWidth="50" />
-                                    <ColumnDefinition Width="0.9*" MinWidth="80" />
-                                    <ColumnDefinition Width="Auto" MinWidth="120" />
-                                </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                 <!-- ID -->
-                                <TextBlock Grid.Column="0" Text="ID" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowIdColumn}" />
+                                <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
+                                    <TextBlock Text="ID" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Accountant -->
-                                <TextBlock Grid.Column="1" Text="Accountant" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowAccountantColumn}" />
+                                <Panel Width="{Binding ColumnWidths.AccountantColumnWidth}" IsVisible="{Binding ShowAccountantColumn}">
+                                    <TextBlock Text="Accountant" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Accountant" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Product -->
-                                <TextBlock Grid.Column="2" Text="Product" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowProductColumn}" />
+                                <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
+                                    <TextBlock Text="Product" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Supplier -->
-                                <TextBlock Grid.Column="3" Text="Supplier" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowSupplierColumn}" />
+                                <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
+                                    <TextBlock Text="Supplier" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Date -->
-                                <TextBlock Grid.Column="4" Text="Date" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowDateColumn}" />
+                                <Panel Width="{Binding ColumnWidths.DateColumnWidth}" IsVisible="{Binding ShowDateColumn}">
+                                    <TextBlock Text="Date" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Qty -->
-                                <TextBlock Grid.Column="5" Text="Qty" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowQuantityColumn}" />
+                                <Panel Width="{Binding ColumnWidths.QuantityColumnWidth}" IsVisible="{Binding ShowQuantityColumn}">
+                                    <TextBlock Text="Qty" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Quantity" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Unit Price -->
-                                <TextBlock Grid.Column="6" Text="Unit Price" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowUnitPriceColumn}" />
+                                <Panel Width="{Binding ColumnWidths.UnitPriceColumnWidth}" IsVisible="{Binding ShowUnitPriceColumn}">
+                                    <TextBlock Text="Unit Price" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="UnitPrice" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Amount -->
-                                <TextBlock Grid.Column="7" Text="Amount" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowAmountColumn}" />
+                                <Panel Width="{Binding ColumnWidths.AmountColumnWidth}" IsVisible="{Binding ShowAmountColumn}">
+                                    <TextBlock Text="Amount" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Amount" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Tax -->
-                                <TextBlock Grid.Column="8" Text="Tax" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowTaxColumn}" />
+                                <Panel Width="{Binding ColumnWidths.TaxColumnWidth}" IsVisible="{Binding ShowTaxColumn}">
+                                    <TextBlock Text="Tax" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Tax" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Shipping -->
-                                <TextBlock Grid.Column="9" Text="Shipping" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowShippingColumn}" />
+                                <Panel Width="{Binding ColumnWidths.ShippingColumnWidth}" IsVisible="{Binding ShowShippingColumn}">
+                                    <TextBlock Text="Shipping" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Shipping" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Discount -->
-                                <TextBlock Grid.Column="10" Text="Discount" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowDiscountColumn}" />
+                                <Panel Width="{Binding ColumnWidths.DiscountColumnWidth}" IsVisible="{Binding ShowDiscountColumn}">
+                                    <TextBlock Text="Discount" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Discount" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Total -->
-                                <TextBlock Grid.Column="11" Text="Total" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowTotalColumn}" />
+                                <Panel Width="{Binding ColumnWidths.TotalColumnWidth}" IsVisible="{Binding ShowTotalColumn}">
+                                    <TextBlock Text="Total" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Total" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Receipt -->
-                                <TextBlock Grid.Column="12" Text="Receipt" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Center"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowReceiptColumn}" />
+                                <Panel Width="{Binding ColumnWidths.ReceiptColumnWidth}" IsVisible="{Binding ShowReceiptColumn}">
+                                    <TextBlock Text="Receipt" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Receipt" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Status -->
-                                <TextBlock Grid.Column="13" Text="Status" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           TextTrimming="CharacterEllipsis"
-                                           IsVisible="{Binding ShowStatusColumn}" />
+                                <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
+                                    <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
+                                                                   HorizontalAlignment="Right" />
+                                </Panel>
                                 <!-- Actions -->
-                                <TextBlock Grid.Column="14" Text="Actions" FontSize="12" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Right" />
-                            </Grid>
+                                <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
+                                    <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                </Panel>
+                            </StackPanel>
                         </Border>
 
                         <!-- Table Content (scrollable vertically only) -->
@@ -351,27 +377,9 @@
                                             <Border Padding="24,16"
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <!-- Same proportional columns as header -->
-                                                        <ColumnDefinition Width="1.3*" MinWidth="100" />
-                                                        <ColumnDefinition Width="1*" MinWidth="80" />
-                                                        <ColumnDefinition Width="1.5*" MinWidth="100" />
-                                                        <ColumnDefinition Width="1.2*" MinWidth="80" />
-                                                        <ColumnDefinition Width="1*" MinWidth="90" />
-                                                        <ColumnDefinition Width="0.5*" MinWidth="40" />
-                                                        <ColumnDefinition Width="0.9*" MinWidth="70" />
-                                                        <ColumnDefinition Width="0.9*" MinWidth="70" />
-                                                        <ColumnDefinition Width="0.7*" MinWidth="50" />
-                                                        <ColumnDefinition Width="0.8*" MinWidth="60" />
-                                                        <ColumnDefinition Width="0.8*" MinWidth="60" />
-                                                        <ColumnDefinition Width="0.8*" MinWidth="60" />
-                                                        <ColumnDefinition Width="0.6*" MinWidth="50" />
-                                                        <ColumnDefinition Width="0.9*" MinWidth="80" />
-                                                        <ColumnDefinition Width="Auto" MinWidth="120" />
-                                                    </Grid.ColumnDefinitions>
+                                                <StackPanel Orientation="Horizontal">
                                                     <!-- ID -->
-                                                    <TextBlock Grid.Column="0"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                                Text="{Binding Id}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
@@ -381,7 +389,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowIdColumn}" />
 
                                                     <!-- Accountant -->
-                                                    <TextBlock Grid.Column="1"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.AccountantColumnWidth}"
                                                                Text="{Binding AccountantName}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -390,7 +398,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowAccountantColumn}" />
 
                                                     <!-- Product -->
-                                                    <TextBlock Grid.Column="2"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
                                                                Text="{Binding ProductDescription}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
@@ -399,7 +407,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowProductColumn}" />
 
                                                     <!-- Supplier -->
-                                                    <TextBlock Grid.Column="3"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}"
                                                                Text="{Binding SupplierName}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -408,7 +416,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowSupplierColumn}" />
 
                                                     <!-- Date -->
-                                                    <TextBlock Grid.Column="4"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.DateColumnWidth}"
                                                                Text="{Binding DateFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -417,7 +425,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowDateColumn}" />
 
                                                     <!-- Quantity -->
-                                                    <TextBlock Grid.Column="5"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.QuantityColumnWidth}"
                                                                Text="{Binding Quantity}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -426,7 +434,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowQuantityColumn}" />
 
                                                     <!-- Unit Price -->
-                                                    <TextBlock Grid.Column="6"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.UnitPriceColumnWidth}"
                                                                Text="{Binding UnitPriceFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -435,7 +443,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowUnitPriceColumn}" />
 
                                                     <!-- Amount -->
-                                                    <TextBlock Grid.Column="7"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.AmountColumnWidth}"
                                                                Text="{Binding AmountFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -444,7 +452,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowAmountColumn}" />
 
                                                     <!-- Tax -->
-                                                    <TextBlock Grid.Column="8"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.TaxColumnWidth}"
                                                                Text="{Binding TaxAmountFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -453,7 +461,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowTaxColumn}" />
 
                                                     <!-- Shipping -->
-                                                    <TextBlock Grid.Column="9"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ShippingColumnWidth}"
                                                                Text="{Binding ShippingCostFormatted}"
                                                                FontSize="14"
                                                                Foreground="{DynamicResource TextSecondaryBrush}"
@@ -462,7 +470,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowShippingColumn}" />
 
                                                     <!-- Discount -->
-                                                    <TextBlock Grid.Column="10"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.DiscountColumnWidth}"
                                                                Text="{Binding DiscountFormatted}"
                                                                FontSize="14"
                                                                Foreground="#22C55E"
@@ -471,7 +479,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowDiscountColumn}" />
 
                                                     <!-- Total -->
-                                                    <TextBlock Grid.Column="11"
+                                                    <TextBlock Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.TotalColumnWidth}"
                                                                Text="{Binding TotalFormatted}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
@@ -481,34 +489,39 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowTotalColumn}" />
 
                                                     <!-- Receipt Icon -->
-                                                    <Panel Grid.Column="12" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ReceiptColumnWidth}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowReceiptColumn}">
                                                         <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                                                   Width="16" Height="16"
                                                                   Foreground="#22C55E"
+                                                                  HorizontalAlignment="Center"
                                                                   IsVisible="{Binding HasReceipt}" />
                                                         <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
                                                                   Width="16" Height="16"
                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                  HorizontalAlignment="Center"
                                                                   IsVisible="{Binding !HasReceipt}" />
                                                     </Panel>
 
                                                     <!-- Status Badge -->
-                                                    <Border Grid.Column="13"
-                                                            VerticalAlignment="Center"
-                                                            HorizontalAlignment="Left"
-                                                            Padding="8,4"
-                                                            CornerRadius="4"
-                                                            Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusBackground}}"
-                                                            IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowStatusColumn}">
-                                                        <TextBlock Text="{Binding StatusDisplay}"
-                                                                   FontSize="12"
-                                                                   FontWeight="Medium"
-                                                                   Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusForeground}}" />
-                                                    </Border>
+                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                           IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowStatusColumn}">
+                                                        <Border VerticalAlignment="Center"
+                                                                HorizontalAlignment="Left"
+                                                                Padding="8,4"
+                                                                CornerRadius="4"
+                                                                Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusBackground}}">
+                                                            <TextBlock Text="{Binding StatusDisplay}"
+                                                                       FontSize="12"
+                                                                       FontWeight="Medium"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusForeground}}" />
+                                                        </Border>
+                                                    </Panel>
 
                                                     <!-- Actions -->
-                                                    <StackPanel Grid.Column="14"
+                                                    <StackPanel Width="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
                                                                 Orientation="Horizontal"
                                                                 HorizontalAlignment="Right"
                                                                 Spacing="4">
@@ -572,7 +585,7 @@
                                                                       Width="16" Height="16" />
                                                         </Button>
                                                     </StackPanel>
-                                                </Grid>
+                                                </StackPanel>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
