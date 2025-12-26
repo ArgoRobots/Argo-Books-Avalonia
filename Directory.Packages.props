@@ -19,7 +19,7 @@
         <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
 
         <!-- Charts -->
-        <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc3.3" />
+        <PackageVersion Include="LiveChartsCore.SkiaSharpView.Avalonia" Version="2.0.0-rc5.4" />
 
         <!-- Color Picker -->
         <PackageVersion Include="PixiEditor.ColorPicker.AvaloniaUI" Version="1.0.7" />
