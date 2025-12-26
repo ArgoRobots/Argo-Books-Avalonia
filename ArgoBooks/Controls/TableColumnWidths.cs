@@ -207,21 +207,47 @@ public partial class TableColumnWidths : ObservableObject
         var shrinkableColumns = columnsToRight.Where(name => !_columns[name].IsFixed).ToList();
         if (shrinkableColumns.Count == 0) return;
 
-        double totalShrinkableWidth = shrinkableColumns.Sum(name => _columns[name].CurrentWidth);
-        if (totalShrinkableWidth < 0.5) return;
+        // Multi-pass distribution: keep redistributing until all shrink is absorbed
+        // or all columns are at their minimum
+        double remainingShrink = shrinkNeeded;
+        const int maxIterations = 10; // Safety limit
 
-        // Distribute proportionally, respecting minimums
-        foreach (var rightColName in shrinkableColumns)
+        for (int iteration = 0; iteration < maxIterations && remainingShrink > 0.5; iteration++)
         {
-            var rightCol = _columns[rightColName];
-            double proportion = rightCol.CurrentWidth / totalShrinkableWidth;
-            double colDelta = -shrinkNeeded * proportion;
+            // Find columns that can still shrink
+            var canShrink = shrinkableColumns
+                .Where(name => _columns[name].CurrentWidth > _columns[name].MinWidth + 0.5)
+                .ToList();
 
-            double newRightWidth = rightCol.CurrentWidth + colDelta;
-            newRightWidth = Math.Max(rightCol.MinWidth, Math.Min(rightCol.MaxWidth, newRightWidth));
+            if (canShrink.Count == 0) break; // All columns at minimum
 
-            rightCol.CurrentWidth = newRightWidth;
-            ApplyWidthToProperty(rightColName, newRightWidth);
+            // Calculate total width available for proportional distribution
+            double totalCurrentWidth = canShrink.Sum(name => _columns[name].CurrentWidth);
+            if (totalCurrentWidth < 0.5) break;
+
+            double shrinkAppliedThisPass = 0;
+
+            foreach (var rightColName in canShrink)
+            {
+                var rightCol = _columns[rightColName];
+                double proportion = rightCol.CurrentWidth / totalCurrentWidth;
+                double targetShrink = remainingShrink * proportion;
+
+                // Calculate how much this column can actually shrink
+                double availableShrink = rightCol.CurrentWidth - rightCol.MinWidth;
+                double actualShrink = Math.Min(targetShrink, availableShrink);
+
+                double newRightWidth = rightCol.CurrentWidth - actualShrink;
+                newRightWidth = Math.Max(rightCol.MinWidth, newRightWidth);
+
+                double appliedShrink = rightCol.CurrentWidth - newRightWidth;
+                shrinkAppliedThisPass += appliedShrink;
+
+                rightCol.CurrentWidth = newRightWidth;
+                ApplyWidthToProperty(rightColName, newRightWidth);
+            }
+
+            remainingShrink -= shrinkAppliedThisPass;
         }
     }
 
