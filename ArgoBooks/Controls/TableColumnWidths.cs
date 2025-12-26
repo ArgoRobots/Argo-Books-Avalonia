@@ -140,6 +140,25 @@ public partial class TableColumnWidths : ObservableObject
     {
         if (Math.Abs(_availableWidth - width) < 1) return;
         _availableWidth = width;
+
+        // If in manual overflow mode, only recalculate if window is now big enough
+        if (_hasManualOverflow)
+        {
+            var totalWidth = _columns.Values
+                .Where(c => c.IsVisible)
+                .Sum(c => c.CurrentWidth) + 48;
+
+            if (width < totalWidth)
+            {
+                // Window still too small for current widths - keep scrolling
+                MinimumTotalWidth = totalWidth;
+                NeedsHorizontalScroll = true;
+                return;
+            }
+            // Window is now big enough - clear overflow and recalculate
+            _hasManualOverflow = false;
+        }
+
         RecalculateWidths();
     }
 
