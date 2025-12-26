@@ -200,6 +200,14 @@ public partial class TableColumnWidths : ObservableObject
 
         if (Math.Abs(actualDelta) < 0.5) return;
 
+        // Check if this resize will cause overflow BEFORE applying changes
+        // This prevents RecalculateWidths from resetting columns during binding updates
+        double projectedTotal = totalCurrentWidth + actualDelta;
+        if (projectedTotal > maxTotalWidth)
+        {
+            _hasManualOverflow = true;
+        }
+
         // Apply the change to the resized column
         col.CurrentWidth = newColWidth;
         ApplyWidthToProperty(columnName, newColWidth);
