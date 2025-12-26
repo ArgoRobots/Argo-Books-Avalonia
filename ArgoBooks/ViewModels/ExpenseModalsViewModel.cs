@@ -73,6 +73,12 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _itemStatusSaveButtonText = "Confirm";
 
+    [ObservableProperty]
+    private bool _hasItemStatusReasonError;
+
+    [ObservableProperty]
+    private string _itemStatusReasonErrorMessage = string.Empty;
+
     public ObservableCollection<string> LostDamagedReasonOptions { get; } =
     [
         "Damaged in transit",
@@ -644,16 +650,29 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         ItemStatusAction = string.Empty;
         SelectedItemStatusReason = null;
         ItemStatusNotes = string.Empty;
+        HasItemStatusReasonError = false;
+        ItemStatusReasonErrorMessage = string.Empty;
     }
 
     [RelayCommand]
     private void ConfirmItemStatus()
     {
-        if (_itemStatusItem == null || string.IsNullOrEmpty(SelectedItemStatusReason))
+        if (_itemStatusItem == null)
         {
             CloseItemStatusModal();
             return;
         }
+
+        // Validate reason is selected
+        if (string.IsNullOrEmpty(SelectedItemStatusReason))
+        {
+            HasItemStatusReasonError = true;
+            ItemStatusReasonErrorMessage = "Please select a reason";
+            return;
+        }
+
+        HasItemStatusReasonError = false;
+        ItemStatusReasonErrorMessage = string.Empty;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)

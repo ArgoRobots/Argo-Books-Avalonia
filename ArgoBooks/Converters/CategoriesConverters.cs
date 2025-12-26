@@ -100,6 +100,26 @@ public static class BoolConverters
             new SolidColorBrush(Color.Parse(value ? "#DCFCE7" : "#F3F4F6")));
 
     /// <summary>
+    /// Converts bool (hasError) to border brush.
+    /// Error = red (#dc2626), No error = transparent.
+    /// </summary>
+    public static readonly IValueConverter ToErrorBorderBrush =
+        new FuncValueConverter<bool, IBrush>(value =>
+        {
+            if (value)
+            {
+                if (Application.Current?.Resources != null &&
+                    Application.Current.Resources.TryGetResource("ErrorBrush", Application.Current.ActualThemeVariant, out var resource) &&
+                    resource is IBrush brush)
+                {
+                    return brush;
+                }
+                return new SolidColorBrush(Color.Parse("#dc2626"));
+            }
+            return Brushes.Transparent;
+        });
+
+    /// <summary>
     /// Converts bool (isActive) to status badge foreground color.
     /// Active = green (#166534), Inactive = gray (#4B5563).
     /// </summary>
