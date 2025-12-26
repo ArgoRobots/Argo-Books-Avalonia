@@ -210,13 +210,13 @@
                                 <Border Grid.Column="0"
                                         Width="4"
                                         CornerRadius="2"
-                                        Background="{DynamicResource PrimaryBrush}"
+                                        Background="{DynamicResource WarningBrush}"
                                         Margin="0,0,14,0" />
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
                                                   Width="18" Height="18"
-                                                  Foreground="{DynamicResource PrimaryBrush}" />
+                                                  Foreground="{DynamicResource WarningBrush}" />
                                         <TextBlock Text="Create Invoice"
                                                    FontSize="14"
                                                    FontWeight="SemiBold"

@@ -159,7 +159,7 @@
                                                         <TextBlock Text="Please select a product"
                                                                    FontSize="12"
                                                                    Foreground="#dc2626"
-                                                                   Margin="0,4,0,0"
+                                                                   Margin="0,2,0,0"
                                                                    IsVisible="{Binding HasProductError}" />
                                                     </StackPanel>
                                                     <NumericUpDown Grid.Column="1"
