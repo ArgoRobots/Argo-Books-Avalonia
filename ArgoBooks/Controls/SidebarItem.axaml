@@ -100,7 +100,7 @@
         <!-- Collapsed State - keep same left padding so icon stays in place -->
         <Style Selector="Button.sidebar-item.collapsed">
             <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Padding" Value="15,10,10,10" />
+            <Setter Property="Padding" Value="10" />
         </Style>
     </UserControl.Styles>
 </UserControl>
