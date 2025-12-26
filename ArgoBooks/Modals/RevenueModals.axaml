@@ -50,7 +50,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer x:Name="AddEditScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Date and Payment Method Row -->
                             <Grid ColumnDefinitions="*,16,*">
@@ -92,7 +92,7 @@
                             </StackPanel>
 
                             <!-- Line Items Section -->
-                            <StackPanel Spacing="12">
+                            <StackPanel x:Name="LineItemsSection" Spacing="12">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0"
                                                Text="Line Items"
@@ -145,17 +145,23 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <Grid ColumnDefinitions="*,80,90,70,Auto">
-                                                    <controls:SearchableDropdown Grid.Column="0"
-                                                             ItemsSource="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).ProductOptions}"
-                                                             SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
-                                                             DisplayMemberPath="Name"
-                                                             Placeholder="Search for a product..."
-                                                             ShowAddNew="False"
-                                                             EmptyMessage="No products found."
-                                                             EmptyCreateLinkText="Create one"
-                                                             EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).NavigateToCreateProductCommand}"
-                                                             HasError="{Binding HasProductError}"
-                                                             Margin="0,0,8,0" />
+                                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                        <controls:SearchableDropdown
+                                                                 ItemsSource="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).ProductOptions}"
+                                                                 SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                                                                 DisplayMemberPath="Name"
+                                                                 Placeholder="Search for a product..."
+                                                                 ShowAddNew="False"
+                                                                 EmptyMessage="No products found."
+                                                                 EmptyCreateLinkText="Create one"
+                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).NavigateToCreateProductCommand}"
+                                                                 HasError="{Binding HasProductError}" />
+                                                        <TextBlock Text="Please select a product"
+                                                                   FontSize="12"
+                                                                   Foreground="#dc2626"
+                                                                   Margin="0,4,0,0"
+                                                                   IsVisible="{Binding HasProductError}" />
+                                                    </StackPanel>
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay, TargetNullValue=1}"
                                                                    Minimum="1"

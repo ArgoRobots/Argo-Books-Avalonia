@@ -20,6 +20,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
     public event EventHandler? RevenueDeleted;
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
+    public event EventHandler? ScrollToLineItemsRequested;
 
     #endregion
 
@@ -690,6 +691,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
         {
             ValidationMessage = "Please select a product for all line items";
             HasValidationMessage = true;
+            ScrollToLineItemsRequested?.Invoke(this, EventArgs.Empty);
             return;
         }
 
