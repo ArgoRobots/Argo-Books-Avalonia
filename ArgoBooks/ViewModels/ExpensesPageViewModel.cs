@@ -615,15 +615,15 @@ public partial class ExpensesPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void MarkAsLostDamaged(ExpenseDisplayItem? item)
+    private void UndoLostDamaged(ExpenseDisplayItem? item)
     {
-        App.ExpenseModalsViewModel?.OpenMarkAsLostDamagedModal(item);
+        App.ExpenseModalsViewModel?.OpenUndoLostDamagedModal(item);
     }
 
     [RelayCommand]
-    private void MarkAsReturned(ExpenseDisplayItem? item)
+    private void UndoReturn(ExpenseDisplayItem? item)
     {
-        App.ExpenseModalsViewModel?.OpenMarkAsReturnedModal(item);
+        App.ExpenseModalsViewModel?.OpenUndoReturnedModal(item);
     }
 
     [RelayCommand]

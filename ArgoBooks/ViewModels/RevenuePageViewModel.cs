@@ -601,15 +601,15 @@ public partial class RevenuePageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void MarkAsLostDamaged(RevenueDisplayItem? item)
+    private void UndoLostDamaged(RevenueDisplayItem? item)
     {
-        App.RevenueModalsViewModel?.OpenMarkAsLostDamagedModal(item);
+        App.RevenueModalsViewModel?.OpenUndoLostDamagedModal(item);
     }
 
     [RelayCommand]
-    private void MarkAsReturned(RevenueDisplayItem? item)
+    private void UndoReturn(RevenueDisplayItem? item)
     {
-        App.RevenueModalsViewModel?.OpenMarkAsReturnedModal(item);
+        App.RevenueModalsViewModel?.OpenUndoReturnedModal(item);
     }
 
     [RelayCommand]
