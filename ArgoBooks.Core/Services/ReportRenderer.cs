@@ -13,6 +13,7 @@ public class ReportRenderer : IDisposable
     private readonly CompanyData? _companyData;
     private readonly ReportConfiguration _config;
     private readonly float _renderScale;
+    private readonly ReportChartDataService? _chartDataService;
 
     // Cached paints
     private readonly SKPaint _backgroundPaint;
@@ -26,11 +27,24 @@ public class ReportRenderer : IDisposable
     private readonly SKFont _defaultFont;
     private readonly SKFont _headerFont;
 
+    // Chart colors (matching ChartLoaderService)
+    private static readonly SKColor ChartBarColor = SKColor.Parse("#6495ED"); // Cornflower Blue
+    private static readonly SKColor ChartExpenseColor = SKColor.Parse("#EF4444"); // Red
+    private static readonly SKColor ChartProfitColor = SKColor.Parse("#22C55E"); // Green
+    private static readonly SKColor ChartAxisColor = SKColor.Parse("#374151"); // Gray
+    private static readonly SKColor ChartGridColor = SKColor.Parse("#E5E7EB"); // Light gray
+
     public ReportRenderer(ReportConfiguration config, CompanyData? companyData, float renderScale = 1f)
     {
         _config = config;
         _companyData = companyData;
         _renderScale = renderScale;
+
+        // Initialize chart data service for rendering actual charts
+        if (companyData != null)
+        {
+            _chartDataService = new ReportChartDataService(companyData, config.Filters);
+        }
 
         _defaultTypeface = SKTypeface.FromFamilyName("Segoe UI") ?? SKTypeface.Default;
         _boldTypeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold) ?? SKTypeface.Default;
@@ -276,35 +290,316 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw chart title
+        var titleHeight = 0f;
         if (chart.ShowTitle)
         {
             using var titleFont = new SKFont(_boldTypeface, (float)chart.TitleFontSize * _renderScale);
             using var titlePaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
 
             var title = GetChartTitle(chart.ChartType);
+            titleHeight = 25 * _renderScale;
             canvas.DrawText(title, rect.MidX, rect.Top + 20 * _renderScale, SKTextAlign.Center, titleFont, titlePaint);
         }
 
-        // Chart area with light gray placeholder background
+        // Define chart area (with padding for axes and labels)
+        var leftPadding = 60 * _renderScale;  // Space for Y-axis labels
+        var bottomPadding = 40 * _renderScale; // Space for X-axis labels
+        var rightPadding = 15 * _renderScale;
+        var topPadding = (chart.ShowTitle ? 35 : 15) * _renderScale;
+
         var chartArea = new SKRect(
-            rect.Left + 10 * _renderScale,
-            rect.Top + (chart.ShowTitle ? 35 : 10) * _renderScale,
-            rect.Right - 10 * _renderScale,
-            rect.Bottom - 10 * _renderScale
+            rect.Left + leftPadding,
+            rect.Top + topPadding,
+            rect.Right - rightPadding,
+            rect.Bottom - bottomPadding
         );
 
-        var placeholderPaint = new SKPaint
+        // Get chart data
+        var chartData = GetChartDataPoints(chart.ChartType);
+
+        if (chartData == null || chartData.Count == 0)
         {
-            Color = new SKColor(232, 232, 232), // #E8E8E8 matching design canvas
+            // Draw placeholder if no data
+            var placeholderPaint = new SKPaint
+            {
+                Color = new SKColor(232, 232, 232),
+                Style = SKPaintStyle.Fill,
+                IsAntialias = true
+            };
+            canvas.DrawRect(chartArea, placeholderPaint);
+
+            using var noDataFont = new SKFont(_defaultTypeface, 12 * _renderScale);
+            using var noDataPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+            canvas.DrawText("No data available", chartArea.MidX, chartArea.MidY, SKTextAlign.Center, noDataFont, noDataPaint);
+            return;
+        }
+
+        // Render the appropriate chart type
+        if (IsDistributionChart(chart.ChartType))
+        {
+            RenderPieChart(canvas, chartArea, chartData, chart);
+        }
+        else
+        {
+            RenderBarChart(canvas, chartArea, chartData, chart);
+        }
+    }
+
+    /// <summary>
+    /// Checks if the chart type should be rendered as a pie chart.
+    /// </summary>
+    private static bool IsDistributionChart(ChartDataType chartType)
+    {
+        return chartType is ChartDataType.RevenueDistribution
+            or ChartDataType.ExpensesDistribution
+            or ChartDataType.ReturnReasons
+            or ChartDataType.LossReasons
+            or ChartDataType.ReturnsByCategory
+            or ChartDataType.LossesByCategory;
+    }
+
+    /// <summary>
+    /// Gets chart data points for a specific chart type.
+    /// </summary>
+    private List<ChartDataPoint>? GetChartDataPoints(ChartDataType chartType)
+    {
+        if (_chartDataService == null)
+            return null;
+
+        var data = _chartDataService.GetChartData(chartType);
+
+        if (data is List<ChartDataPoint> dataPoints)
+            return dataPoints;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Renders a bar chart using SkiaSharp.
+    /// </summary>
+    private void RenderBarChart(SKCanvas canvas, SKRect chartArea, List<ChartDataPoint> dataPoints, ChartReportElement chart)
+    {
+        if (dataPoints.Count == 0) return;
+
+        // Calculate value range
+        var maxValue = dataPoints.Max(p => Math.Abs(p.Value));
+        var minValue = dataPoints.Min(p => p.Value);
+
+        // Ensure we have a sensible range
+        if (maxValue == 0) maxValue = 1;
+
+        // Determine if we have negative values
+        var hasNegatives = minValue < 0;
+        var baselineY = hasNegatives
+            ? chartArea.Top + chartArea.Height * (float)(maxValue / (maxValue - minValue))
+            : chartArea.Bottom;
+
+        // Draw grid lines
+        using var gridPaint = new SKPaint
+        {
+            Color = ChartGridColor,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1 * _renderScale,
+            IsAntialias = true
+        };
+
+        var gridLineCount = 5;
+        for (int i = 0; i <= gridLineCount; i++)
+        {
+            var y = chartArea.Top + (chartArea.Height * i / gridLineCount);
+            canvas.DrawLine(chartArea.Left, y, chartArea.Right, y, gridPaint);
+
+            // Draw Y-axis value labels
+            var value = maxValue - (maxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
+            using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+            using var yLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+            canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
+        }
+
+        // Draw Y-axis
+        using var axisPaint = new SKPaint
+        {
+            Color = ChartAxisColor,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1 * _renderScale,
+            IsAntialias = true
+        };
+        canvas.DrawLine(chartArea.Left, chartArea.Top, chartArea.Left, chartArea.Bottom, axisPaint);
+
+        // Draw X-axis (baseline)
+        canvas.DrawLine(chartArea.Left, baselineY, chartArea.Right, baselineY, axisPaint);
+
+        // Calculate bar dimensions
+        var barCount = dataPoints.Count;
+        var totalBarSpace = chartArea.Width;
+        var barSpacing = 4 * _renderScale;
+        var maxBarWidth = 50 * _renderScale;
+        var barWidth = Math.Min(maxBarWidth, (totalBarSpace - (barSpacing * (barCount + 1))) / barCount);
+
+        // Center the bars in the chart area
+        var totalBarsWidth = (barWidth * barCount) + (barSpacing * (barCount - 1));
+        var startX = chartArea.Left + (chartArea.Width - totalBarsWidth) / 2;
+
+        // Choose bar color based on chart type
+        var barColor = chart.ChartType switch
+        {
+            ChartDataType.TotalExpenses or ChartDataType.ExpensesDistribution => ChartBarColor, // Blue for expenses (matching WinForms)
+            ChartDataType.TotalRevenue or ChartDataType.RevenueDistribution => ChartProfitColor, // Green for revenue
+            ChartDataType.TotalProfits => ChartProfitColor,
+            _ => ChartBarColor
+        };
+
+        using var barPaint = new SKPaint
+        {
+            Color = barColor,
             Style = SKPaintStyle.Fill,
             IsAntialias = true
         };
-        canvas.DrawRect(chartArea, placeholderPaint);
 
-        // Draw chart type indicator text
-        using var typeFont = new SKFont(_defaultTypeface, 12 * _renderScale);
-        using var typePaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
-        canvas.DrawText($"[{chart.ChartType}]", chartArea.MidX, chartArea.MidY, SKTextAlign.Center, typeFont, typePaint);
+        using var xLabelFont = new SKFont(_defaultTypeface, 8 * _renderScale);
+        using var xLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+
+        // Draw bars
+        for (int i = 0; i < dataPoints.Count; i++)
+        {
+            var point = dataPoints[i];
+            var x = startX + (i * (barWidth + barSpacing));
+
+            // Calculate bar height based on value
+            var valueRatio = (float)(point.Value / maxValue);
+            var barHeight = chartArea.Height * Math.Abs(valueRatio);
+
+            // Handle positive vs negative values
+            SKRect barRect;
+            if (point.Value >= 0)
+            {
+                barRect = new SKRect(x, baselineY - barHeight, x + barWidth, baselineY);
+            }
+            else
+            {
+                barRect = new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
+            }
+
+            canvas.DrawRect(barRect, barPaint);
+
+            // Draw X-axis label (rotate if many bars)
+            var label = point.Label;
+            if (label.Length > 8) label = label[..8] + "...";
+
+            var labelX = x + barWidth / 2;
+            var labelY = chartArea.Bottom + 15 * _renderScale;
+
+            // Rotate labels if there are many bars
+            if (barCount > 6)
+            {
+                canvas.Save();
+                canvas.RotateDegrees(-45, labelX, labelY);
+                canvas.DrawText(label, labelX, labelY, SKTextAlign.Right, xLabelFont, xLabelPaint);
+                canvas.Restore();
+            }
+            else
+            {
+                canvas.DrawText(label, labelX, labelY, SKTextAlign.Center, xLabelFont, xLabelPaint);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Renders a pie chart using SkiaSharp.
+    /// </summary>
+    private void RenderPieChart(SKCanvas canvas, SKRect chartArea, List<ChartDataPoint> dataPoints, ChartReportElement chart)
+    {
+        if (dataPoints.Count == 0) return;
+
+        // Calculate total value for percentages
+        var total = dataPoints.Sum(p => Math.Abs(p.Value));
+        if (total == 0) return;
+
+        // Determine pie chart dimensions (smaller of width/height, with padding)
+        var pieSize = Math.Min(chartArea.Width, chartArea.Height) * 0.7f;
+        var centerX = chartArea.Left + chartArea.Width * 0.4f;
+        var centerY = chartArea.MidY;
+        var radius = pieSize / 2;
+
+        // Color palette for pie slices
+        var colors = new[]
+        {
+            SKColor.Parse("#6495ED"), // Cornflower Blue
+            SKColor.Parse("#EF4444"), // Red
+            SKColor.Parse("#22C55E"), // Green
+            SKColor.Parse("#F59E0B"), // Amber
+            SKColor.Parse("#8B5CF6"), // Purple
+            SKColor.Parse("#EC4899"), // Pink
+            SKColor.Parse("#14B8A6"), // Teal
+            SKColor.Parse("#F97316"), // Orange
+        };
+
+        var startAngle = -90f; // Start at top
+        var legendY = chartArea.Top + 10 * _renderScale;
+        var legendX = centerX + radius + 20 * _renderScale;
+
+        using var labelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
+        using var labelPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+
+        for (int i = 0; i < dataPoints.Count; i++)
+        {
+            var point = dataPoints[i];
+            var percentage = (float)(Math.Abs(point.Value) / total);
+            var sweepAngle = percentage * 360f;
+            var color = colors[i % colors.Length];
+
+            // Draw pie slice
+            using var slicePaint = new SKPaint
+            {
+                Color = color,
+                Style = SKPaintStyle.Fill,
+                IsAntialias = true
+            };
+
+            var pieRect = new SKRect(
+                centerX - radius,
+                centerY - radius,
+                centerX + radius,
+                centerY + radius
+            );
+
+            using var path = new SKPath();
+            path.MoveTo(centerX, centerY);
+            path.ArcTo(pieRect, startAngle, sweepAngle, false);
+            path.LineTo(centerX, centerY);
+            path.Close();
+            canvas.DrawPath(path, slicePaint);
+
+            // Draw slice border
+            using var borderPaint = new SKPaint
+            {
+                Color = SKColors.White,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 2 * _renderScale,
+                IsAntialias = true
+            };
+            canvas.DrawPath(path, borderPaint);
+
+            // Draw legend item (if chart has show legend enabled and there's space)
+            if (chart.ShowLegend && legendX < chartArea.Right - 50 * _renderScale)
+            {
+                // Legend color box
+                var legendBoxSize = 10 * _renderScale;
+                var legendBoxRect = new SKRect(legendX, legendY, legendX + legendBoxSize, legendY + legendBoxSize);
+                canvas.DrawRect(legendBoxRect, slicePaint);
+
+                // Legend text
+                var legendText = point.Label;
+                if (legendText.Length > 12) legendText = legendText[..12] + "...";
+                legendText = $"{legendText} ({percentage:P0})";
+
+                canvas.DrawText(legendText, legendX + legendBoxSize + 5 * _renderScale, legendY + legendBoxSize - 2 * _renderScale, SKTextAlign.Left, labelFont, labelPaint);
+
+                legendY += 18 * _renderScale;
+            }
+
+            startAngle += sweepAngle;
+        }
     }
 
     private void RenderTable(SKCanvas canvas, TableReportElement table)
