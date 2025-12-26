@@ -222,15 +222,15 @@ public partial class TableColumnWidths : ObservableObject
             if (canShrink.Count == 0) break; // All columns at minimum
 
             // Calculate total width available for proportional distribution
-            double totalCurrentWidth = canShrink.Sum(name => _columns[name].CurrentWidth);
-            if (totalCurrentWidth < 0.5) break;
+            double shrinkPoolWidth = canShrink.Sum(name => _columns[name].CurrentWidth);
+            if (shrinkPoolWidth < 0.5) break;
 
             double shrinkAppliedThisPass = 0;
 
             foreach (var rightColName in canShrink)
             {
                 var rightCol = _columns[rightColName];
-                double proportion = rightCol.CurrentWidth / totalCurrentWidth;
+                double proportion = rightCol.CurrentWidth / shrinkPoolWidth;
                 double targetShrink = remainingShrink * proportion;
 
                 // Calculate how much this column can actually shrink
