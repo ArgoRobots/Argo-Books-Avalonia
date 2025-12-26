@@ -147,9 +147,9 @@ public partial class TableColumnWidths : ObservableObject
                 .Where(c => c.IsVisible)
                 .Sum(c => c.CurrentWidth) + 48;
 
-            // Don't update _availableWidth when Grid just expanded to MinWidth
-            // Only exit overflow if new width is genuinely larger than content
-            if (width <= totalWidth + 1)
+            // Only exit overflow if width is significantly larger than content
+            // Use large tolerance because Grid may expand to MinWidth during resize
+            if (width < totalWidth + 50)
             {
                 // Keep scrolling, don't update _availableWidth
                 MinimumTotalWidth = totalWidth;
@@ -297,9 +297,10 @@ public partial class TableColumnWidths : ObservableObject
         }
         else
         {
-            _hasManualOverflow = false;
+            // Content fits - disable scroll
+            // NEVER clear _hasManualOverflow here - only SetAvailableWidth can clear it
+            // when the window genuinely gets bigger
             NeedsHorizontalScroll = false;
-            // Reset to actual minimum (all columns at min width)
             MinimumTotalWidth = _columns.Values
                 .Where(c => c.IsVisible)
                 .Sum(c => c.IsFixed ? c.FixedWidth : c.MinWidth) + 48;
@@ -403,7 +404,8 @@ public partial class TableColumnWidths : ObservableObject
             if (_hasManualOverflow)
             {
                 double totalWidth = visibleColumns.Sum(c => c.CurrentWidth) + 48;
-                if (totalWidth > _availableWidth + 1)
+                // Use large tolerance - only exit overflow if window is significantly larger
+                if (totalWidth + 50 > _availableWidth)
                 {
                     // Still overflows - preserve widths
                     MinimumTotalWidth = totalWidth;
