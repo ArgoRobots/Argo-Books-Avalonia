@@ -57,9 +57,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isFilterModalOpen;
 
-    [ObservableProperty]
-    private bool _isReportModalOpen;
-
     public ObservableCollection<string> TypeOptions { get; } = ["All", "Lost", "Damaged"];
     public ObservableCollection<string> StatusOptions { get; } = ["All", "Written Off", "Insurance Claim", "Recovered", "Pending"];
     public ObservableCollection<string> ReasonOptions { get; } = ["All", "Damaged", "Lost", "Stolen", "Expired", "Other"];
@@ -131,38 +128,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
     #endregion
 
-    #region Report Modal Fields
-
-    [ObservableProperty]
-    private string _reportType = "Damaged";
-
-    [ObservableProperty]
-    private DateTimeOffset? _reportDate = DateTimeOffset.Now;
-
-    [ObservableProperty]
-    private string _reportReason = "Damaged";
-
-    [ObservableProperty]
-    private string? _reportProductId;
-
-    [ObservableProperty]
-    private int _reportQuantity = 1;
-
-    [ObservableProperty]
-    private decimal _reportValueLost;
-
-    [ObservableProperty]
-    private string? _reportNotes;
-
-    [ObservableProperty]
-    private bool _reportInsuranceClaim;
-
-    public ObservableCollection<string> ReportTypeOptions { get; } = ["Damaged", "Lost"];
-    public ObservableCollection<string> ReportReasonOptions { get; } = ["Damaged", "Lost", "Stolen", "Expired", "Other"];
-    public ObservableCollection<string> ProductOptions { get; } = [];
-
-    #endregion
-
     #region Constructor
 
     public LostDamagedPageViewModel()
@@ -195,22 +160,8 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             return;
 
         _allItems.AddRange(companyData.LostDamaged);
-        LoadProductOptions();
         UpdateStatistics();
         FilterItems();
-    }
-
-    private void LoadProductOptions()
-    {
-        ProductOptions.Clear();
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        foreach (var product in companyData.Products)
-        {
-            ProductOptions.Add(product.Name);
-        }
     }
 
     private void UpdateStatistics()
@@ -434,43 +385,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         CurrentPage = 1;
         FilterItems();
         IsFilterModalOpen = false;
-    }
-
-    #endregion
-
-    #region Report Modal Commands
-
-    [RelayCommand]
-    private void OpenReportModal()
-    {
-        ResetReportForm();
-        IsReportModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseReportModal()
-    {
-        IsReportModalOpen = false;
-    }
-
-    private void ResetReportForm()
-    {
-        ReportType = "Damaged";
-        ReportDate = DateTimeOffset.Now;
-        ReportReason = "Damaged";
-        ReportProductId = null;
-        ReportQuantity = 1;
-        ReportValueLost = 0;
-        ReportNotes = null;
-        ReportInsuranceClaim = false;
-    }
-
-    [RelayCommand]
-    private void SubmitReport()
-    {
-        // TODO: Implement report submission with undo/redo support
-        IsReportModalOpen = false;
-        LoadItems();
     }
 
     #endregion

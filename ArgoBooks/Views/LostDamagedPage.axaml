@@ -185,17 +185,6 @@
                                             <TextBlock Text="Filter" />
                                         </StackPanel>
                                     </Button>
-
-                                    <!-- Report Button -->
-                                    <Button Classes="primary-button"
-                                            Command="{Binding OpenReportModalCommand}">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-                                                      Width="16" Height="16"
-                                                      Foreground="White" />
-                                            <TextBlock Text="Report Lost/Damaged" />
-                                        </StackPanel>
-                                    </Button>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -366,24 +355,13 @@
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    HorizontalAlignment="Center" />
-                                        <TextBlock Text="Report lost or damaged inventory items to track losses and file insurance claims."
+                                        <TextBlock Text="Items marked as lost or damaged from the Expenses or Revenue pages will appear here."
                                                    FontSize="14"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
                                                    TextAlignment="Center"
                                                    TextWrapping="Wrap"
                                                    MaxWidth="350" />
-                                        <Button Classes="primary-button"
-                                                HorizontalAlignment="Center"
-                                                Margin="0,8,0,0"
-                                                Command="{Binding OpenReportModalCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-                                                          Width="16" Height="16"
-                                                          Foreground="White" />
-                                                <TextBlock Text="Report Lost/Damaged" />
-                                            </StackPanel>
-                                        </Button>
                                     </StackPanel>
                                 </Border>
                             </Panel>
@@ -569,136 +547,6 @@
                                     Content="Apply Filters"
                                     Classes="primary-button"
                                     Command="{Binding ApplyFiltersCommand}" />
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
-        </Border>
-
-        <!-- Report Modal Overlay -->
-        <Border Background="#80000000"
-                IsVisible="{Binding IsReportModalOpen}">
-            <Border Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    Width="520"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <!-- Modal Header -->
-                    <Border Grid.Row="0"
-                            Padding="24,20"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Report Lost/Damaged Item"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <Button Grid.Column="1"
-                                    Classes="icon-button"
-                                    Command="{Binding CloseReportModalCommand}">
-                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                                          Width="20" Height="20" />
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" Padding="24">
-                        <StackPanel Spacing="16">
-                            <!-- Type Selection -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="Type"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding ReportTypeOptions}"
-                                              SelectedItem="{Binding ReportType}"
-                                              HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="Date Discovered"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <CalendarDatePicker SelectedDate="{Binding ReportDate}"
-                                                        HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Reason -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Reason"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding ReportReasonOptions}"
-                                          SelectedItem="{Binding ReportReason}"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
-
-                            <!-- Quantity and Value -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="Quantity"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <NumericUpDown Value="{Binding ReportQuantity}"
-                                                   Minimum="1"
-                                                   HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="Loss Value ($)"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <NumericUpDown Value="{Binding ReportValueLost}"
-                                                   Minimum="0"
-                                                   FormatString="N2"
-                                                   HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Notes -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Notes"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ReportNotes}"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         Height="80"
-                                         Watermark="Add any additional notes about the incident..." />
-                            </StackPanel>
-
-                            <!-- Insurance Claim -->
-                            <CheckBox IsChecked="{Binding ReportInsuranceClaim}">
-                                <TextBlock Text="File Insurance Claim"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                            </CheckBox>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- Modal Footer -->
-                    <Border Grid.Row="2"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
-                        <Grid ColumnDefinitions="*,Auto,Auto">
-                            <Button Grid.Column="1"
-                                    Content="Cancel"
-                                    Classes="secondary-button"
-                                    Margin="0,0,12,0"
-                                    Command="{Binding CloseReportModalCommand}" />
-                            <Button Grid.Column="2"
-                                    Content="Submit Report"
-                                    Classes="primary-button"
-                                    Command="{Binding SubmitReportCommand}" />
                         </Grid>
                     </Border>
                 </Grid>

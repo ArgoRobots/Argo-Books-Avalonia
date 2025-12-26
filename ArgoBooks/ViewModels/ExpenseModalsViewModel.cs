@@ -649,9 +649,134 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ConfirmItemStatus()
     {
-        // TODO: Implement the actual status change logic when backend is ready
-        // For now, just close the modal
+        if (_itemStatusItem == null || string.IsNullOrEmpty(SelectedItemStatusReason))
+        {
+            CloseItemStatusModal();
+            return;
+        }
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+        {
+            CloseItemStatusModal();
+            return;
+        }
+
+        var purchase = companyData.Purchases.FirstOrDefault(p => p.Id == _itemStatusItem.Id);
+        if (purchase == null)
+        {
+            CloseItemStatusModal();
+            return;
+        }
+
+        switch (ItemStatusAction)
+        {
+            case "LostDamaged":
+                CreateLostDamagedRecord(companyData, purchase);
+                break;
+            case "Returned":
+                CreateReturnRecord(companyData, purchase);
+                break;
+            case "UndoLostDamaged":
+                RemoveLostDamagedRecord(companyData, purchase);
+                break;
+            case "UndoReturned":
+                RemoveReturnRecord(companyData, purchase);
+                break;
+        }
+
+        App.CompanyManager?.MarkAsChanged();
         CloseItemStatusModal();
+
+        // Refresh the expenses page
+        if (App.CurrentPageViewModel is ExpensesPageViewModel expensesVm)
+        {
+            expensesVm.RefreshExpensesCommand.Execute(null);
+        }
+    }
+
+    private void CreateLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Purchase purchase)
+    {
+        var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
+        var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
+        var valueLost = purchase.Total;
+
+        var lostDamaged = new Core.Models.Tracking.LostDamaged
+        {
+            Id = $"LOST-{++companyData.IdCounters.LostDamaged:D3}",
+            ProductId = productId,
+            InventoryItemId = purchase.Id,
+            Quantity = (int)purchase.Quantity,
+            Reason = reason,
+            DateDiscovered = DateTime.UtcNow,
+            ValueLost = valueLost,
+            Notes = $"From purchase {purchase.Id}. {ItemStatusNotes}".Trim(),
+            InsuranceClaim = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        companyData.LostDamaged.Add(lostDamaged);
+    }
+
+    private void CreateReturnRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Purchase purchase)
+    {
+        var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
+
+        var returnRecord = new Core.Models.Tracking.Return
+        {
+            Id = $"RET-{++companyData.IdCounters.Return:D3}",
+            OriginalTransactionId = purchase.Id,
+            ReturnType = "Expense",
+            SupplierId = purchase.SupplierId ?? "",
+            CustomerId = "",
+            ReturnDate = DateTime.UtcNow,
+            Items =
+            [
+                new Core.Models.Common.ReturnItem
+                {
+                    ProductId = productId,
+                    Quantity = (int)purchase.Quantity,
+                    Reason = SelectedItemStatusReason ?? "Other"
+                }
+            ],
+            RefundAmount = purchase.Total,
+            RestockingFee = 0,
+            Status = Core.Enums.ReturnStatus.Completed,
+            Notes = ItemStatusNotes,
+            ProcessedBy = purchase.AccountantId ?? "",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        companyData.Returns.Add(returnRecord);
+    }
+
+    private static void RemoveLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Purchase purchase)
+    {
+        var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
+        if (record != null)
+        {
+            companyData.LostDamaged.Remove(record);
+        }
+    }
+
+    private static void RemoveReturnRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Purchase purchase)
+    {
+        var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
+        if (record != null)
+        {
+            companyData.Returns.Remove(record);
+        }
+    }
+
+    private static Core.Enums.LostDamagedReason MapToLostDamagedReason(string reason)
+    {
+        return reason.ToLowerInvariant() switch
+        {
+            "damaged in transit" or "damaged during storage" or "defective product" => Core.Enums.LostDamagedReason.Damaged,
+            "lost in warehouse" => Core.Enums.LostDamagedReason.Lost,
+            "expired" => Core.Enums.LostDamagedReason.Expired,
+            _ => Core.Enums.LostDamagedReason.Other
+        };
     }
 
     #endregion
