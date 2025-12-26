@@ -4,7 +4,9 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using LiveChartsCore;
+using LiveChartsCore.Geo;
 using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
 
 namespace ArgoBooks.ViewModels;
 
@@ -304,6 +306,9 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private Dictionary<string, double> _worldMapData = new();
+
+    [ObservableProperty]
+    private ObservableCollection<IGeoSeries> _geoMapSeries = [];
 
     [ObservableProperty]
     private bool _hasWorldMapData;
@@ -610,8 +615,34 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var data = _companyManager?.CompanyData;
         if (data == null) return;
 
-        WorldMapData = _chartLoaderService.LoadWorldMapData(data, StartDate, EndDate);
+        // Load data based on mode (origin = customers, destination = suppliers)
+        if (IsMapModeOrigin)
+        {
+            WorldMapData = _chartLoaderService.LoadWorldMapData(data, StartDate, EndDate);
+        }
+        else
+        {
+            WorldMapData = _chartLoaderService.LoadWorldMapDataBySupplier(data, StartDate, EndDate);
+        }
+
         HasWorldMapData = WorldMapData.Count > 0;
+
+        // Create HeatLandSeries for the GeoMap
+        var geoSeries = new ObservableCollection<IGeoSeries>();
+        if (HasWorldMapData)
+        {
+            var lands = WorldMapData.Select(kvp => new HeatLand
+            {
+                Name = kvp.Key,
+                Value = kvp.Value
+            }).ToArray();
+
+            geoSeries.Add(new HeatLandSeries
+            {
+                Lands = lands
+            });
+        }
+        GeoMapSeries = geoSeries;
     }
 
     private void LoadAvgTransactionValueChart(CompanyData data)

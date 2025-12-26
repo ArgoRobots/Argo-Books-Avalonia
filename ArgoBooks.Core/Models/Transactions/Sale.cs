@@ -105,6 +105,21 @@ public class Sale
     public decimal Total { get; set; }
 
     /// <summary>
+    /// Gets the effective total, calculating from line items or Amount if Total is 0.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveTotal
+    {
+        get
+        {
+            if (Total > 0) return Total;
+            if (Amount > 0) return Amount + TaxAmount + ShippingCost - Discount;
+            if (LineItems.Count > 0) return LineItems.Sum(li => li.Amount) + TaxAmount + ShippingCost - Discount;
+            return Quantity * UnitPrice + TaxAmount + ShippingCost - Discount;
+        }
+    }
+
+    /// <summary>
     /// Reference number (e.g., order number).
     /// </summary>
     [JsonPropertyName("referenceNumber")]

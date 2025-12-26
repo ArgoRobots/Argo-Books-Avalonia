@@ -609,15 +609,20 @@
                                 </Grid>
                             </Border>
                             <Border Grid.Row="1" Padding="10">
-                                <!-- GeoMap placeholder - requires HeatLandSeries configuration -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8">
-                                    <TextBlock Text="No geographic data"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
+                                <Panel>
+                                    <lvc:GeoMap Series="{Binding GeoMapSeries}"
+                                                MapProjection="Mercator"
+                                                IsVisible="{Binding HasWorldMapData}" />
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8"
+                                            IsVisible="{Binding !HasWorldMapData}">
+                                        <TextBlock Text="No geographic data available"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </Border>
+                                </Panel>
                             </Border>
                         </Grid>
                     </Border>
