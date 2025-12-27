@@ -75,22 +75,6 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Supplier Selection -->
-                            <StackPanel Spacing="6">
-                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Text="Supplier" />
-                                <controls:SearchableDropdown ItemsSource="{Binding SupplierOptions}"
-                                                            SelectedItem="{Binding SelectedSupplier}"
-                                                            DisplayMemberPath="Name"
-                                                            Placeholder="Search for a supplier..."
-                                                            HasError="{Binding HasSupplierError}"
-                                                            ErrorMessage="Please select a supplier"
-                                                            ShowAddNew="False"
-                                                            EmptyMessage="No suppliers found."
-                                                            EmptyCreateLinkText="Create one"
-                                                            EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}" />
-                            </StackPanel>
-
                             <!-- Line Items Section -->
                             <StackPanel x:Name="LineItemsSection" Spacing="12">
                                 <Grid ColumnDefinitions="*,Auto">
@@ -479,17 +463,6 @@
                                           SelectedItem="{Binding FilterStatus}"
                                           Classes="form-combobox"
                                           HorizontalAlignment="Stretch" />
-                            </StackPanel>
-
-                            <!-- Supplier -->
-                            <StackPanel Spacing="6">
-                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Text="Supplier" />
-                                <controls:SearchableDropdown ItemsSource="{Binding SupplierOptions}"
-                                                            SelectedItem="{Binding FilterSelectedSupplier}"
-                                                            DisplayMemberPath="Name"
-                                                            Placeholder="Select supplier..."
-                                                            ShowAddNew="False" />
                             </StackPanel>
 
                             <!-- Category -->
