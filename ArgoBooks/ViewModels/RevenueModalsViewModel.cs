@@ -1235,7 +1235,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
     private void NavigateToCreateProduct()
     {
         IsAddEditModalOpen = false;
-        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true } });
+        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", 1 } });
     }
 
     #endregion

@@ -1347,7 +1347,24 @@ public partial class App : Application
         navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = new PaymentsPageViewModel() });
 
         // Inventory Section
-        navigationService.RegisterPage("Products", _ => new ProductsPage { DataContext = new ProductsPageViewModel() });
+        navigationService.RegisterPage("Products", param =>
+        {
+            var viewModel = new ProductsPageViewModel();
+            if (param is Dictionary<string, object?> dict)
+            {
+                // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)
+                if (dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
+                {
+                    viewModel.SelectedTabIndex = index;
+                }
+                // Check if we should open the add modal
+                if (dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
+                {
+                    viewModel.IsAddModalOpen = true;
+                }
+            }
+            return new ProductsPage { DataContext = viewModel };
+        });
         navigationService.RegisterPage("StockLevels", _ => CreatePlaceholderPage("Stock Levels", "Monitor inventory levels"));
         navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
         navigationService.RegisterPage("Categories", param =>
