@@ -1199,15 +1199,15 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         int total = 0;
 
-        if (companyData?.Losses == null || companyData.Losses.Count == 0)
+        if (companyData?.LostDamaged == null || companyData.LostDamaged.Count == 0)
             return (series, total);
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        var distribution = companyData.Losses
-            .Where(l => l.Date >= start && l.Date <= end)
-            .GroupBy(l => l.Reason ?? "Unknown")
+        var distribution = companyData.LostDamaged
+            .Where(l => l.DateDiscovered >= start && l.DateDiscovered <= end)
+            .GroupBy(l => l.Reason.ToString())
             .Select(g => new { Reason = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
             .Take(8)
@@ -1244,16 +1244,16 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        if (companyData?.Losses == null || companyData.Losses.Count == 0)
+        if (companyData?.LostDamaged == null || companyData.LostDamaged.Count == 0)
             return (series, total);
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        var distribution = companyData.Losses
-            .Where(l => l.Date >= start && l.Date <= end)
+        var distribution = companyData.LostDamaged
+            .Where(l => l.DateDiscovered >= start && l.DateDiscovered <= end)
             .GroupBy(l => companyData.GetProduct(l.ProductId ?? "")?.Name ?? "Unknown")
-            .Select(g => new { Product = g.Key, Total = g.Sum(l => l.Value) })
+            .Select(g => new { Product = g.Key, Total = g.Sum(l => l.ValueLost) })
             .OrderByDescending(x => x.Total)
             .Take(8)
             .ToList();
