@@ -131,9 +131,9 @@ public partial class SidebarViewModel : ViewModelBase
 
         // Transactions Section (mockup: Expenses, Revenue, Invoices, Payments)
         TransactionItems.Add(CreateItem("Expenses", "Expenses",
-            "M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z")); // fa-arrow-down
+            "M20 12l-1-1L13 16V4h-2v12l-5-5L4 12l8 8 8-8z")); // fa-arrow-down (shortened wings)
         TransactionItems.Add(CreateItem("Revenue", "Revenue",
-            "M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z")); // fa-arrow-up
+            "M4 12l1 1L11 8V20h2V8l5 5L20 12l-8-8-8 8z")); // fa-arrow-up (shortened wings)
         TransactionItems.Add(CreateItem("Invoices", "Invoices",
             "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z")); // fa-file-invoice
         TransactionItems.Add(CreateItem("Payments", "Payments",
@@ -173,7 +173,7 @@ public partial class SidebarViewModel : ViewModelBase
         TeamItems.Add(CreateItem("Departments", "Departments",
             "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z")); // fa-building
         TeamItems.Add(CreateItem("Accountants", "Accountants",
-            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 10h-4v4H9v-4H5v-2h4V7h2v4h4v2z")); // fa-calculator (simplified)
+            "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 14h-2v-4H7v-2h4V7h2v4h4v2h-4v4z")); // fa-calculator (centered plus)
 
         // Tracking Section (mockup: Returns, Lost/Damaged, Receipts)
         TrackingItems.Add(CreateItem("Returns", "Returns",

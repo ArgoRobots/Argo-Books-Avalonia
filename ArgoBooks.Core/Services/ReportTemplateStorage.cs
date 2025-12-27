@@ -199,14 +199,6 @@ public class ReportTemplateStorage
     }
 
     /// <summary>
-    /// Renames a template synchronously.
-    /// </summary>
-    public bool RenameTemplate(string oldName, string newName)
-    {
-        return RenameTemplateAsync(oldName, newName).GetAwaiter().GetResult();
-    }
-
-    /// <summary>
     /// Renames a template asynchronously.
     /// </summary>
     public async Task<bool> RenameTemplateAsync(string oldName, string newName)
