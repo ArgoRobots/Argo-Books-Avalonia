@@ -271,8 +271,7 @@ public partial class StatCard : UserControl
         if (change.Property == ChangeValueProperty || change.Property == ChangeTextProperty)
         {
             // Only show change indicator when there's a meaningful change (non-zero)
-            ShowChange = (ChangeValue.HasValue && ChangeValue.Value != 0) ||
-                         (!string.IsNullOrEmpty(ChangeText) && ChangeText != "0.0%");
+            ShowChange = ChangeValue.HasValue && ChangeValue.Value != 0;
 
             // Auto-generate ChangeText if only ChangeValue is set
             if (change.Property == ChangeValueProperty && ChangeValue.HasValue && string.IsNullOrEmpty(ChangeText))
