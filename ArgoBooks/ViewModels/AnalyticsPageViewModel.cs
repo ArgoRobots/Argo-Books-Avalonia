@@ -1065,37 +1065,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private void LoadDashboardStatistics(CompanyData data)
     {
         // Filter transactions by date range
-        var expenses = data.Expenses?.Where(e => e.Date >= StartDate && e.Date <= EndDate).ToList() ?? [];
-        var revenues = data.Revenues?.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList() ?? [];
+        var purchases = data.Purchases?.Where(p => p.Date >= StartDate && p.Date <= EndDate).ToList() ?? [];
+        var sales = data.Sales?.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList() ?? [];
 
         // Calculate totals
-        var totalExpenses = expenses.Sum(e => e.TotalAmount);
-        var totalRevenues = revenues.Sum(r => r.TotalAmount);
-        var netProfit = totalRevenues - totalExpenses;
-        var margin = totalRevenues > 0 ? (netProfit / totalRevenues) * 100 : 0;
+        var totalPurchasesAmount = purchases.Sum(p => p.Total);
+        var totalSalesAmount = sales.Sum(s => s.Total);
+        var netProfit = totalSalesAmount - totalPurchasesAmount;
+        var margin = totalSalesAmount > 0 ? (netProfit / totalSalesAmount) * 100 : 0;
 
         // Calculate previous period for comparison
         var periodLength = EndDate - StartDate;
         var prevStartDate = StartDate - periodLength;
         var prevEndDate = StartDate.AddDays(-1);
 
-        var prevExpenses = data.Expenses?.Where(e => e.Date >= prevStartDate && e.Date <= prevEndDate).Sum(e => e.TotalAmount) ?? 0;
-        var prevRevenues = data.Revenues?.Where(r => r.Date >= prevStartDate && r.Date <= prevEndDate).Sum(r => r.TotalAmount) ?? 0;
-        var prevNetProfit = prevRevenues - prevExpenses;
-        var prevMargin = prevRevenues > 0 ? (prevNetProfit / prevRevenues) * 100 : 0;
+        var prevPurchases = data.Purchases?.Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate).Sum(p => p.Total) ?? 0;
+        var prevSales = data.Sales?.Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate).Sum(s => s.Total) ?? 0;
+        var prevNetProfit = prevSales - prevPurchases;
+        var prevMargin = prevSales > 0 ? (prevNetProfit / prevSales) * 100 : 0;
 
         // Calculate change percentages
-        var purchasesChange = prevExpenses > 0 ? ((totalExpenses - prevExpenses) / prevExpenses) * 100 : 0;
-        var salesChange = prevRevenues > 0 ? ((totalRevenues - prevRevenues) / prevRevenues) * 100 : 0;
+        var purchasesChange = prevPurchases > 0 ? ((totalPurchasesAmount - prevPurchases) / prevPurchases) * 100 : 0;
+        var salesChange = prevSales > 0 ? ((totalSalesAmount - prevSales) / prevSales) * 100 : 0;
         var profitChange = prevNetProfit != 0 ? ((netProfit - prevNetProfit) / Math.Abs(prevNetProfit)) * 100 : 0;
         var marginChange = margin - prevMargin;
 
         // Update properties
-        TotalPurchases = totalExpenses.ToString("C0");
+        TotalPurchases = totalPurchasesAmount.ToString("C0");
         PurchasesChangeValue = (double)purchasesChange;
         PurchasesChangeText = $"{Math.Abs(purchasesChange):F1}%";
 
-        TotalSales = totalRevenues.ToString("C0");
+        TotalSales = totalSalesAmount.ToString("C0");
         SalesChangeValue = (double)salesChange;
         SalesChangeText = $"{Math.Abs(salesChange):F1}%";
 
@@ -1110,23 +1110,23 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
     private void LoadOperationalStatistics(CompanyData data)
     {
-        // Active accountants count
-        var activeAccountants = data.Accountants?.Count(a => a.Status == Core.Enums.EntityStatus.Active) ?? 0;
-        ActiveAccountants = activeAccountants.ToString();
+        // Count all accountants (no Status property on Accountant)
+        var accountantsCount = data.Accountants?.Count ?? 0;
+        ActiveAccountants = accountantsCount.ToString();
 
         // Transactions processed in the date range
-        var expenses = data.Expenses?.Where(e => e.Date >= StartDate && e.Date <= EndDate).ToList() ?? [];
-        var revenues = data.Revenues?.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList() ?? [];
-        var totalTransactions = expenses.Count + revenues.Count;
+        var purchases = data.Purchases?.Where(p => p.Date >= StartDate && p.Date <= EndDate).ToList() ?? [];
+        var sales = data.Sales?.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList() ?? [];
+        var totalTransactions = purchases.Count + sales.Count;
 
         // Calculate previous period for comparison
         var periodLength = EndDate - StartDate;
         var prevStartDate = StartDate - periodLength;
         var prevEndDate = StartDate.AddDays(-1);
 
-        var prevExpensesCount = data.Expenses?.Count(e => e.Date >= prevStartDate && e.Date <= prevEndDate) ?? 0;
-        var prevRevenuesCount = data.Revenues?.Count(r => r.Date >= prevStartDate && r.Date <= prevEndDate) ?? 0;
-        var prevTransactions = prevExpensesCount + prevRevenuesCount;
+        var prevPurchasesCount = data.Purchases?.Count(p => p.Date >= prevStartDate && p.Date <= prevEndDate) ?? 0;
+        var prevSalesCount = data.Sales?.Count(s => s.Date >= prevStartDate && s.Date <= prevEndDate) ?? 0;
+        var prevTransactions = prevPurchasesCount + prevSalesCount;
 
         var transactionsChange = prevTransactions > 0 ? ((double)(totalTransactions - prevTransactions) / prevTransactions) * 100 : 0;
 
@@ -1147,32 +1147,32 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private void LoadPerformanceStatistics(CompanyData data)
     {
         // Filter transactions by date range
-        var revenues = data.Revenues?.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList() ?? [];
-        var expenses = data.Expenses?.Where(e => e.Date >= StartDate && e.Date <= EndDate).ToList() ?? [];
+        var sales = data.Sales?.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList() ?? [];
+        var purchases = data.Purchases?.Where(p => p.Date >= StartDate && p.Date <= EndDate).ToList() ?? [];
 
-        var totalTransactionsCount = revenues.Count + expenses.Count;
-        var allTransactionValues = revenues.Select(r => r.TotalAmount).Concat(expenses.Select(e => e.TotalAmount)).ToList();
+        var totalTransactionsCount = sales.Count + purchases.Count;
+        var allTransactionValues = sales.Select(s => s.Total).Concat(purchases.Select(p => p.Total)).ToList();
         var avgTransactionValue = allTransactionValues.Count > 0 ? allTransactionValues.Average() : 0;
 
-        // Shipping costs from expenses
-        var avgShipping = expenses.Count > 0 ? expenses.Average(e => e.ShippingCost) : 0;
+        // Shipping costs from purchases
+        var avgShipping = purchases.Count > 0 ? purchases.Average(p => p.ShippingCost) : 0;
 
         // Calculate previous period for comparison
         var periodLength = EndDate - StartDate;
         var prevStartDate = StartDate - periodLength;
         var prevEndDate = StartDate.AddDays(-1);
 
-        var prevRevenues = data.Revenues?.Where(r => r.Date >= prevStartDate && r.Date <= prevEndDate).ToList() ?? [];
-        var prevExpenses = data.Expenses?.Where(e => e.Date >= prevStartDate && e.Date <= prevEndDate).ToList() ?? [];
+        var prevSales = data.Sales?.Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate).ToList() ?? [];
+        var prevPurchases = data.Purchases?.Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate).ToList() ?? [];
 
-        var prevTotalTransactionsCount = prevRevenues.Count + prevExpenses.Count;
-        var prevAllTransactionValues = prevRevenues.Select(r => r.TotalAmount).Concat(prevExpenses.Select(e => e.TotalAmount)).ToList();
+        var prevTotalTransactionsCount = prevSales.Count + prevPurchases.Count;
+        var prevAllTransactionValues = prevSales.Select(s => s.Total).Concat(prevPurchases.Select(p => p.Total)).ToList();
         var prevAvgTransactionValue = prevAllTransactionValues.Count > 0 ? prevAllTransactionValues.Average() : 0;
-        var prevAvgShipping = prevExpenses.Count > 0 ? prevExpenses.Average(e => e.ShippingCost) : 0;
+        var prevAvgShipping = prevPurchases.Count > 0 ? prevPurchases.Average(p => p.ShippingCost) : 0;
 
         // Revenue growth (period over period)
-        var currentRevenueTotal = revenues.Sum(r => r.TotalAmount);
-        var prevRevenueTotal = prevRevenues.Sum(r => r.TotalAmount);
+        var currentRevenueTotal = sales.Sum(s => s.Total);
+        var prevRevenueTotal = prevSales.Sum(s => s.Total);
         var revenueGrowthValue = prevRevenueTotal > 0 ? ((currentRevenueTotal - prevRevenueTotal) / prevRevenueTotal) * 100 : 0;
 
         var transactionsChange = prevTotalTransactionsCount > 0 ? ((double)(totalTransactionsCount - prevTotalTransactionsCount) / prevTotalTransactionsCount) * 100 : 0;
@@ -1223,9 +1223,9 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
         // Retention rate and avg customer value are complex calculations
         // For now, calculate avg customer value based on revenue per customer
-        var revenues = data.Revenues?.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList() ?? [];
-        var customerIds = revenues.Select(r => r.CustomerId).Distinct().ToList();
-        var avgValue = customerIds.Count > 0 ? revenues.Sum(r => r.TotalAmount) / customerIds.Count : 0;
+        var sales = data.Sales?.Where(s => s.Date >= StartDate && s.Date <= EndDate).ToList() ?? [];
+        var customerIds = sales.Select(s => s.CustomerId).Distinct().ToList();
+        var avgValue = customerIds.Count > 0 ? sales.Sum(s => s.Total) / customerIds.Count : 0;
 
         RetentionRate = "N/A";
         RetentionChangeValue = 0;
@@ -1239,13 +1239,13 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private void LoadReturnsStatistics(CompanyData data)
     {
         // Filter returns by date range
-        var returns = data.Returns?.Where(r => r.DateReturned >= StartDate && r.DateReturned <= EndDate).ToList() ?? [];
+        var returns = data.Returns?.Where(r => r.ReturnDate >= StartDate && r.ReturnDate <= EndDate).ToList() ?? [];
 
         var totalReturnsCount = returns.Count;
         var financialImpact = returns.Sum(r => r.RefundAmount);
 
         // Calculate return rate (returns / total sales transactions)
-        var salesTransactions = data.Revenues?.Count(r => r.Date >= StartDate && r.Date <= EndDate) ?? 0;
+        var salesTransactions = data.Sales?.Count(s => s.Date >= StartDate && s.Date <= EndDate) ?? 0;
         var returnRate = salesTransactions > 0 ? ((double)totalReturnsCount / salesTransactions) * 100 : 0;
 
         // Calculate previous period for comparison
@@ -1253,10 +1253,10 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var prevStartDate = StartDate - periodLength;
         var prevEndDate = StartDate.AddDays(-1);
 
-        var prevReturns = data.Returns?.Where(r => r.DateReturned >= prevStartDate && r.DateReturned <= prevEndDate).ToList() ?? [];
+        var prevReturns = data.Returns?.Where(r => r.ReturnDate >= prevStartDate && r.ReturnDate <= prevEndDate).ToList() ?? [];
         var prevReturnsCount = prevReturns.Count;
         var prevFinancialImpact = prevReturns.Sum(r => r.RefundAmount);
-        var prevSalesTransactions = data.Revenues?.Count(r => r.Date >= prevStartDate && r.Date <= prevEndDate) ?? 0;
+        var prevSalesTransactions = data.Sales?.Count(s => s.Date >= prevStartDate && s.Date <= prevEndDate) ?? 0;
         var prevReturnRate = prevSalesTransactions > 0 ? ((double)prevReturnsCount / prevSalesTransactions) * 100 : 0;
 
         var returnsChange = prevReturnsCount > 0 ? ((double)(totalReturnsCount - prevReturnsCount) / prevReturnsCount) * 100 : 0;
@@ -1290,12 +1290,12 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var financialImpact = losses.Sum(l => l.ValueLost);
 
         // Calculate loss rate (losses / total transactions)
-        var totalTransactions = (data.Revenues?.Count(r => r.Date >= StartDate && r.Date <= EndDate) ?? 0) +
-                               (data.Expenses?.Count(e => e.Date >= StartDate && e.Date <= EndDate) ?? 0);
+        var totalTransactions = (data.Sales?.Count(s => s.Date >= StartDate && s.Date <= EndDate) ?? 0) +
+                               (data.Purchases?.Count(p => p.Date >= StartDate && p.Date <= EndDate) ?? 0);
         var lossRate = totalTransactions > 0 ? ((double)totalLossesCount / totalTransactions) * 100 : 0;
 
-        // Insurance claims are not tracked in the data model, use count of losses with insurance recovery
-        var insuranceClaimsCount = losses.Count(l => l.InsuranceRecovery > 0);
+        // Count losses with insurance claims filed
+        var insuranceClaimsCount = losses.Count(l => l.InsuranceClaim);
 
         // Calculate previous period for comparison
         var periodLength = EndDate - StartDate;
@@ -1305,10 +1305,10 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var prevLosses = data.LostDamaged?.Where(l => l.DateDiscovered >= prevStartDate && l.DateDiscovered <= prevEndDate).ToList() ?? [];
         var prevLossesCount = prevLosses.Count;
         var prevFinancialImpact = prevLosses.Sum(l => l.ValueLost);
-        var prevTotalTransactions = (data.Revenues?.Count(r => r.Date >= prevStartDate && r.Date <= prevEndDate) ?? 0) +
-                                    (data.Expenses?.Count(e => e.Date >= prevStartDate && e.Date <= prevEndDate) ?? 0);
+        var prevTotalTransactions = (data.Sales?.Count(s => s.Date >= prevStartDate && s.Date <= prevEndDate) ?? 0) +
+                                    (data.Purchases?.Count(p => p.Date >= prevStartDate && p.Date <= prevEndDate) ?? 0);
         var prevLossRate = prevTotalTransactions > 0 ? ((double)prevLossesCount / prevTotalTransactions) * 100 : 0;
-        var prevInsuranceClaimsCount = prevLosses.Count(l => l.InsuranceRecovery > 0);
+        var prevInsuranceClaimsCount = prevLosses.Count(l => l.InsuranceClaim);
 
         var lossesChange = prevLossesCount > 0 ? ((double)(totalLossesCount - prevLossesCount) / prevLossesCount) * 100 : 0;
         var lossRateChange = lossRate - prevLossRate;
