@@ -118,6 +118,9 @@ public partial class ExpensesPageViewModel : ViewModelBase
     private bool _showProductColumn = true;
 
     [ObservableProperty]
+    private bool _showSupplierColumn = true;
+
+    [ObservableProperty]
     private bool _showDateColumn = true;
 
     [ObservableProperty]
