@@ -432,6 +432,7 @@
                         <Border Grid.Row="1" Padding="20">
                             <Panel>
                                 <lvc:PieChart Series="{Binding ExpenseDistributionSeries}"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
                                               IsVisible="{Binding HasExpenseDistributionData}" />
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"

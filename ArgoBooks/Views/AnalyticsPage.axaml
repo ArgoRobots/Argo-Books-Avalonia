@@ -227,6 +227,7 @@
                                         <!-- Pie Chart with data -->
                                         <lvc:PieChart Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasExpensesDistributionData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -310,6 +311,7 @@
                                         <!-- Pie Chart with data -->
                                         <lvc:PieChart Series="{Binding RevenueDistributionSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasRevenueDistributionData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -441,6 +443,7 @@
                                         <!-- Pie Chart with data -->
                                         <lvc:PieChart Series="{Binding CountriesOfOriginSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCountriesOfOriginData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -480,6 +483,7 @@
                                         <!-- Pie Chart with data -->
                                         <lvc:PieChart Series="{Binding CompaniesOfOriginSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCompaniesOfOriginData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -522,6 +526,7 @@
                                         <!-- Pie Chart with data -->
                                         <lvc:PieChart Series="{Binding CountriesOfDestinationSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCountriesOfDestinationData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -561,6 +566,7 @@
                                         <!-- Pie Chart with data -->
                                         <lvc:PieChart Series="{Binding CompaniesOfDestinationSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCompaniesOfDestinationData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -691,6 +697,7 @@
                                         <!-- Pie Chart with data -->
                                         <lvc:PieChart Series="{Binding AccountantsTransactionsSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasAccountantsTransactionsData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1054,6 +1061,7 @@
                                         <!-- Pie Chart - using Companies of Origin for top customers -->
                                         <lvc:PieChart Series="{Binding CompaniesOfOriginSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCompaniesOfOriginData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1092,6 +1100,7 @@
                                     <Panel>
                                         <lvc:PieChart Series="{Binding CustomerPaymentStatusSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCustomerPaymentStatusData}" />
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
@@ -1217,6 +1226,7 @@
                                     <Panel>
                                         <lvc:PieChart Series="{Binding ActiveInactiveCustomersSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasActiveInactiveCustomersData}" />
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
@@ -1375,6 +1385,7 @@
                                         <!-- Pie Chart with data -->
                                         <lvc:PieChart Series="{Binding ReturnReasonsSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasReturnReasonsData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1458,6 +1469,7 @@
                                         <!-- Pie Chart - reusing Return Reasons -->
                                         <lvc:PieChart Series="{Binding ReturnReasonsSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasReturnReasonsData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1500,6 +1512,7 @@
                                         <!-- Pie Chart - reusing Expense Distribution -->
                                         <lvc:PieChart Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasExpensesDistributionData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1659,6 +1672,7 @@
                                         <!-- Pie Chart - Loss Reasons -->
                                         <lvc:PieChart Series="{Binding LossReasonsSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasLossReasonsData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1742,6 +1756,7 @@
                                         <!-- Pie Chart - reusing Expense Distribution -->
                                         <lvc:PieChart Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasExpensesDistributionData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1784,6 +1799,7 @@
                                         <!-- Pie Chart - Losses by Product -->
                                         <lvc:PieChart Series="{Binding LossesByProductSeries}"
                                                       LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasLossesByProductData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"

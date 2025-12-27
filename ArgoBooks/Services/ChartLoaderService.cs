@@ -30,6 +30,16 @@ public class ChartLoaderService
     private SKColor _gridColor = SKColor.Parse("#374151"); // Grid lines
     private SKColor _backgroundColor = SKColor.Parse("#1F2937"); // Chart background
 
+    /// <summary>
+    /// Gets the legend text paint based on the current theme.
+    /// </summary>
+    public static SolidColorPaint GetLegendTextPaint()
+    {
+        var isDarkTheme = ThemeService.Instance.IsDarkTheme;
+        var textColor = isDarkTheme ? SKColor.Parse("#F9FAFB") : SKColor.Parse("#1F2937");
+        return new SolidColorPaint(textColor) { FontFamily = "Segoe UI" };
+    }
+
     // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap
     private static readonly Dictionary<string, string> CountryNameToIsoCode = new(StringComparer.OrdinalIgnoreCase)
     {

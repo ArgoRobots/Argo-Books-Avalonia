@@ -316,8 +316,14 @@ public partial class RevenueModalsViewModel : ViewModelBase
         if (companyData?.Products == null)
             return;
 
+        // Filter out products that belong to Purchase (expense) categories
         foreach (var product in companyData.Products.OrderBy(p => p.Name))
         {
+            // Check if product's category is an expense category
+            var category = companyData.Categories?.FirstOrDefault(c => c.Id == product.CategoryId);
+            if (category?.Type == CategoryType.Purchase)
+                continue; // Skip expense products
+
             ProductOptions.Add(new ProductOption
             {
                 Id = product.Id,

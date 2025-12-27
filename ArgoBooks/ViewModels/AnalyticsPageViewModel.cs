@@ -7,6 +7,7 @@ using LiveChartsCore;
 using LiveChartsCore.Geo;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
+using LiveChartsCore.SkiaSharpView.Painting;
 
 namespace ArgoBooks.ViewModels;
 
@@ -481,7 +482,15 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     {
         // Initialize with default values
         UpdateDateRangeFromSelection();
+
+        // Subscribe to theme changes to update legend text color
+        ThemeService.Instance.ThemeChanged += (_, _) => OnPropertyChanged(nameof(LegendTextPaint));
     }
+
+    /// <summary>
+    /// Gets the legend text paint based on the current theme.
+    /// </summary>
+    public SolidColorPaint LegendTextPaint => ChartLoaderService.GetLegendTextPaint();
 
     #endregion
 

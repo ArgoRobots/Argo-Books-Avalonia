@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
 
 namespace ArgoBooks.ViewModels;
 
@@ -146,7 +147,15 @@ public partial class DashboardPageViewModel : ViewModelBase
         // Initialize with empty data - will be populated when company is loaded
         RecentTransactions = [];
         ActiveRentalsList = [];
+
+        // Subscribe to theme changes to update legend text color
+        ThemeService.Instance.ThemeChanged += (_, _) => OnPropertyChanged(nameof(LegendTextPaint));
     }
+
+    /// <summary>
+    /// Gets the legend text paint based on the current theme.
+    /// </summary>
+    public SolidColorPaint LegendTextPaint => ChartLoaderService.GetLegendTextPaint();
 
     #endregion
 
