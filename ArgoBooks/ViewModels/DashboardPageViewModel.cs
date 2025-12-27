@@ -123,6 +123,16 @@ public partial class DashboardPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Expense Distribution Chart
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _expenseDistributionSeries = [];
+
+    [ObservableProperty]
+    private bool _hasExpenseDistributionData;
+
+    #endregion
+
     #region Company Data Reference
 
     private CompanyManager? _companyManager;
@@ -182,6 +192,7 @@ public partial class DashboardPageViewModel : ViewModelBase
         LoadRecentTransactions(data);
         LoadActiveRentals(data);
         LoadExpensesChart(data);
+        LoadExpenseDistributionChart(data);
     }
 
     private void LoadStatistics(CompanyData data)
@@ -194,12 +205,12 @@ public partial class DashboardPageViewModel : ViewModelBase
         // Calculate this month's revenue
         var thisMonthRevenue = data.Sales
             .Where(s => s.Date >= thisMonth && s.Date <= now)
-            .Sum(s => s.Total);
+            .Sum(s => s.EffectiveTotal);
 
         // Calculate last month's revenue for comparison
         var lastMonthRevenue = data.Sales
             .Where(s => s.Date >= lastMonth && s.Date <= lastMonthEnd)
-            .Sum(s => s.Total);
+            .Sum(s => s.EffectiveTotal);
 
         TotalRevenue = FormatCurrency(thisMonthRevenue);
         RevenueChangeValue = CalculatePercentageChange(lastMonthRevenue, thisMonthRevenue);
@@ -208,12 +219,12 @@ public partial class DashboardPageViewModel : ViewModelBase
         // Calculate this month's expenses
         var thisMonthExpenses = data.Purchases
             .Where(p => p.Date >= thisMonth && p.Date <= now)
-            .Sum(p => p.Total);
+            .Sum(p => p.EffectiveTotal);
 
         // Calculate last month's expenses for comparison
         var lastMonthExpenses = data.Purchases
             .Where(p => p.Date >= lastMonth && p.Date <= lastMonthEnd)
-            .Sum(p => p.Total);
+            .Sum(p => p.EffectiveTotal);
 
         TotalExpenses = FormatCurrency(thisMonthExpenses);
         ExpenseChangeValue = CalculatePercentageChange(lastMonthExpenses, thisMonthExpenses);
@@ -361,6 +372,13 @@ public partial class DashboardPageViewModel : ViewModelBase
         ExpensesChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
         ExpensesChartTitle = $"Total expenses: {FormatCurrency(totalExpenses)}";
         HasExpensesChartData = series.Count > 0 && labels.Length > 0;
+    }
+
+    private void LoadExpenseDistributionChart(CompanyData data)
+    {
+        var (series, total) = _chartLoaderService.LoadExpenseDistributionChart(data);
+        ExpenseDistributionSeries = series;
+        HasExpenseDistributionData = series.Count > 0 && total > 0;
     }
 
     #endregion
