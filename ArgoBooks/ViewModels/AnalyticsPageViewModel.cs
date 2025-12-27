@@ -1137,11 +1137,11 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         // Processing time and accuracy rate are not tracked in the data model
         AvgProcessingTime = "N/A";
         ProcessingTimeChangeValue = 0;
-        ProcessingTimeChangeText = "N/A";
+        ProcessingTimeChangeText = "";
 
         AccuracyRate = "N/A";
         AccuracyChangeValue = 0;
-        AccuracyChangeText = "N/A";
+        AccuracyChangeText = "";
     }
 
     private void LoadPerformanceStatistics(CompanyData data)
@@ -1216,7 +1216,7 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var newCustomersChange = prevNewCustomers > 0 ? ((double)(newCustomersCount - prevNewCustomers) / prevNewCustomers) * 100 : 0;
 
         CustomersChangeValue = 0; // Total customers doesn't have a meaningful change calculation
-        CustomersChangeText = "N/A";
+        CustomersChangeText = "";
 
         NewCustomersChangeValue = newCustomersChange;
         NewCustomersChangeText = $"{(newCustomersChange >= 0 ? "+" : "")}{newCustomersChange:F1}%";
@@ -1229,11 +1229,11 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
         RetentionRate = "N/A";
         RetentionChangeValue = 0;
-        RetentionChangeText = "N/A";
+        RetentionChangeText = "";
 
         AvgCustomerValue = avgValue.ToString("C0");
         AvgCustomerValueChangeValue = 0;
-        AvgCustomerValueChangeText = "N/A";
+        AvgCustomerValueChangeText = "";
     }
 
     private void LoadReturnsStatistics(CompanyData data)
@@ -1278,7 +1278,7 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         // Resolution time is not tracked in the data model
         AvgResolutionTime = "N/A";
         ResolutionTimeChangeValue = 0;
-        ResolutionTimeChangeText = "N/A";
+        ResolutionTimeChangeText = "";
     }
 
     private void LoadLossesStatistics(CompanyData data)
