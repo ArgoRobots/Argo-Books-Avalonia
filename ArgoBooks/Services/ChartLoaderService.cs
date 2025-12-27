@@ -698,15 +698,19 @@ public class ChartLoaderService
 
         labels = growthLabels.ToArray();
 
-        series.Add(new ColumnSeries<double>
+        // Only add series if there's actual data (any non-zero growth rates)
+        if (growthRates.Any(v => v != 0))
         {
-            Values = growthRates.ToArray(),
-            Name = "Growth Rate %",
-            Fill = new SolidColorPaint(RevenueColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+            series.Add(new ColumnSeries<double>
+            {
+                Values = growthRates.ToArray(),
+                Name = "Growth Rate %",
+                Fill = new SolidColorPaint(RevenueColor),
+                Stroke = null,
+                MaxBarWidth = 50,
+                Padding = 2
+            });
+        }
 
         return (series, labels);
     }
@@ -758,15 +762,19 @@ public class ChartLoaderService
             return transactions.Count > 0 ? (double)transactions.Average() : 0;
         }).ToArray();
 
-        series.Add(new ColumnSeries<double>
+        // Only add series if there's actual data
+        if (avgValues.Any(v => v > 0))
         {
-            Values = avgValues,
-            Name = "Avg Transaction",
-            Fill = new SolidColorPaint(RevenueColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+            series.Add(new ColumnSeries<double>
+            {
+                Values = avgValues,
+                Name = "Avg Transaction",
+                Fill = new SolidColorPaint(RevenueColor),
+                Stroke = null,
+                MaxBarWidth = 50,
+                Padding = 2
+            });
+        }
 
         return (series, labels);
     }
@@ -813,15 +821,19 @@ public class ChartLoaderService
             return (double)(salesCount + purchaseCount);
         }).ToArray();
 
-        series.Add(new ColumnSeries<double>
+        // Only add series if there's actual data
+        if (countValues.Any(v => v > 0))
         {
-            Values = countValues,
-            Name = "Transactions",
-            Fill = new SolidColorPaint(RevenueColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+            series.Add(new ColumnSeries<double>
+            {
+                Values = countValues,
+                Name = "Transactions",
+                Fill = new SolidColorPaint(RevenueColor),
+                Stroke = null,
+                MaxBarWidth = 50,
+                Padding = 2
+            });
+        }
 
         return (series, labels);
     }
@@ -873,15 +885,19 @@ public class ChartLoaderService
             return shippingCosts.Count > 0 ? (double)shippingCosts.Average() : 0;
         }).ToArray();
 
-        series.Add(new ColumnSeries<double>
+        // Only add series if there's actual data
+        if (avgShipping.Any(v => v > 0))
         {
-            Values = avgShipping,
-            Name = "Avg Shipping",
-            Fill = new SolidColorPaint(RevenueColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+            series.Add(new ColumnSeries<double>
+            {
+                Values = avgShipping,
+                Name = "Avg Shipping",
+                Fill = new SolidColorPaint(RevenueColor),
+                Stroke = null,
+                MaxBarWidth = 50,
+                Padding = 2
+            });
+        }
 
         return (series, labels);
     }
@@ -1422,15 +1438,19 @@ public class ChartLoaderService
 
         totalImpact = (decimal)impactValues.Sum();
 
-        series.Add(new ColumnSeries<double>
+        // Only add series if there's actual data
+        if (impactValues.Any(v => v > 0))
         {
-            Values = impactValues,
-            Name = "Refunds",
-            Fill = new SolidColorPaint(ExpenseColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+            series.Add(new ColumnSeries<double>
+            {
+                Values = impactValues,
+                Name = "Refunds",
+                Fill = new SolidColorPaint(ExpenseColor),
+                Stroke = null,
+                MaxBarWidth = 50,
+                Padding = 2
+            });
+        }
 
         return (series, labels, totalImpact);
     }
@@ -1523,15 +1543,19 @@ public class ChartLoaderService
 
         totalImpact = (decimal)impactValues.Sum();
 
-        series.Add(new ColumnSeries<double>
+        // Only add series if there's actual data
+        if (impactValues.Any(v => v > 0))
         {
-            Values = impactValues,
-            Name = "Value Lost",
-            Fill = new SolidColorPaint(ExpenseColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+            series.Add(new ColumnSeries<double>
+            {
+                Values = impactValues,
+                Name = "Value Lost",
+                Fill = new SolidColorPaint(ExpenseColor),
+                Stroke = null,
+                MaxBarWidth = 50,
+                Padding = 2
+            });
+        }
 
         return (series, labels, totalImpact);
     }

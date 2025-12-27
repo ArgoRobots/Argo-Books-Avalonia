@@ -296,19 +296,11 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasExpensesChartData}">
-                                    <StackPanel HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="12">
-                                        <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                                  Width="48" Height="48"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Text="No expenses data"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Text="Add expenses to see the chart"
-                                                   FontSize="12"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </StackPanel>
+                                    <TextBlock Text="No expenses data"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
 
                                 <!-- Right-click context menu -->
