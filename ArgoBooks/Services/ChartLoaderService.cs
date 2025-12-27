@@ -524,8 +524,12 @@ public class ChartLoaderService
                 .Sum(p => p.Total) ?? 0);
         }).ToArray();
 
-        series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
-        series.Add(CreateTimeSeries(expenseValues, "Expenses", ExpenseColor));
+        // Only add series if there's actual data
+        if (revenueValues.Any(v => v > 0) || expenseValues.Any(v => v > 0))
+        {
+            series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
+            series.Add(CreateTimeSeries(expenseValues, "Expenses", ExpenseColor));
+        }
 
         return (series, labels);
     }
