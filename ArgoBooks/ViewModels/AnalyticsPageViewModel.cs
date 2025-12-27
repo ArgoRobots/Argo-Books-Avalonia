@@ -172,6 +172,240 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Dashboard Tab Statistics
+
+    [ObservableProperty]
+    private string _totalPurchases = "$0.00";
+
+    [ObservableProperty]
+    private double _purchasesChangeValue;
+
+    [ObservableProperty]
+    private string _purchasesChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _totalSales = "$0.00";
+
+    [ObservableProperty]
+    private double _salesChangeValue;
+
+    [ObservableProperty]
+    private string _salesChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _netProfit = "$0.00";
+
+    [ObservableProperty]
+    private double _profitChangeValue;
+
+    [ObservableProperty]
+    private string _profitChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _profitMargin = "0.0%";
+
+    [ObservableProperty]
+    private double _profitMarginChangeValue;
+
+    [ObservableProperty]
+    private string _profitMarginChangeText = "0.0%";
+
+    #endregion
+
+    #region Operational Tab Statistics
+
+    [ObservableProperty]
+    private string _activeAccountants = "0";
+
+    [ObservableProperty]
+    private string _transactionsProcessed = "0";
+
+    [ObservableProperty]
+    private double _transactionsChangeValue;
+
+    [ObservableProperty]
+    private string _transactionsChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _avgProcessingTime = "N/A";
+
+    [ObservableProperty]
+    private double _processingTimeChangeValue;
+
+    [ObservableProperty]
+    private string _processingTimeChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _accuracyRate = "N/A";
+
+    [ObservableProperty]
+    private double _accuracyChangeValue;
+
+    [ObservableProperty]
+    private string _accuracyChangeText = "0.0%";
+
+    #endregion
+
+    #region Performance Tab Statistics
+
+    [ObservableProperty]
+    private string _revenueGrowth = "0.0%";
+
+    [ObservableProperty]
+    private double _revenueGrowthChangeValue;
+
+    [ObservableProperty]
+    private string _revenueGrowthChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _totalTransactions = "0";
+
+    [ObservableProperty]
+    private double _totalTransactionsChangeValue;
+
+    [ObservableProperty]
+    private string _totalTransactionsChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _avgTransactionValue = "$0.00";
+
+    [ObservableProperty]
+    private double _avgTransactionChangeValue;
+
+    [ObservableProperty]
+    private string _avgTransactionChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _avgShippingCost = "$0.00";
+
+    [ObservableProperty]
+    private double _avgShippingChangeValue;
+
+    [ObservableProperty]
+    private string _avgShippingChangeText = "0.0%";
+
+    #endregion
+
+    #region Customers Tab Statistics
+
+    [ObservableProperty]
+    private string _totalCustomers = "0";
+
+    [ObservableProperty]
+    private double _customersChangeValue;
+
+    [ObservableProperty]
+    private string _customersChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _newCustomers = "0";
+
+    [ObservableProperty]
+    private double _newCustomersChangeValue;
+
+    [ObservableProperty]
+    private string _newCustomersChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _retentionRate = "N/A";
+
+    [ObservableProperty]
+    private double _retentionChangeValue;
+
+    [ObservableProperty]
+    private string _retentionChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _avgCustomerValue = "$0.00";
+
+    [ObservableProperty]
+    private double _avgCustomerValueChangeValue;
+
+    [ObservableProperty]
+    private string _avgCustomerValueChangeText = "0.0%";
+
+    #endregion
+
+    #region Returns Tab Statistics
+
+    [ObservableProperty]
+    private string _totalReturns = "0";
+
+    [ObservableProperty]
+    private double _returnsChangeValue;
+
+    [ObservableProperty]
+    private string _returnsChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _returnRate = "0.0%";
+
+    [ObservableProperty]
+    private double _returnRateChangeValue;
+
+    [ObservableProperty]
+    private string _returnRateChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _returnsFinancialImpact = "$0.00";
+
+    [ObservableProperty]
+    private double _returnsImpactChangeValue;
+
+    [ObservableProperty]
+    private string _returnsImpactChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _avgResolutionTime = "N/A";
+
+    [ObservableProperty]
+    private double _resolutionTimeChangeValue;
+
+    [ObservableProperty]
+    private string _resolutionTimeChangeText = "0.0%";
+
+    #endregion
+
+    #region Losses Tab Statistics
+
+    [ObservableProperty]
+    private string _totalLosses = "0";
+
+    [ObservableProperty]
+    private double _lossesChangeValue;
+
+    [ObservableProperty]
+    private string _lossesChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _lossRate = "0.0%";
+
+    [ObservableProperty]
+    private double _lossRateChangeValue;
+
+    [ObservableProperty]
+    private string _lossRateChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _lossesFinancialImpact = "$0.00";
+
+    [ObservableProperty]
+    private double _lossesImpactChangeValue;
+
+    [ObservableProperty]
+    private string _lossesImpactChangeText = "0.0%";
+
+    [ObservableProperty]
+    private string _insuranceClaims = "0";
+
+    [ObservableProperty]
+    private double _insuranceClaimsChangeValue;
+
+    [ObservableProperty]
+    private string _insuranceClaimsChangeText = "0.0%";
+
+    #endregion
+
     #region Chart Type Toggle
 
     [ObservableProperty]
@@ -540,6 +774,9 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
         _chartLoaderService.UseLineChart = UseLineChart;
 
+        // Load statistics for stat cards
+        LoadAllStatistics(data);
+
         // Dashboard charts
         LoadExpensesTrendsChart(data);
         LoadExpensesDistributionChart(data);
@@ -806,6 +1043,293 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var (series, _) = _chartLoaderService.LoadLossesByProductChart(data, StartDate, EndDate);
         LossesByProductSeries = series;
         HasLossesByProductData = series.Count > 0;
+    }
+
+    #endregion
+
+    #region Statistics Loading
+
+    /// <summary>
+    /// Loads all statistics for stat cards across all tabs.
+    /// </summary>
+    private void LoadAllStatistics(CompanyData data)
+    {
+        LoadDashboardStatistics(data);
+        LoadOperationalStatistics(data);
+        LoadPerformanceStatistics(data);
+        LoadCustomerStatistics(data);
+        LoadReturnsStatistics(data);
+        LoadLossesStatistics(data);
+    }
+
+    private void LoadDashboardStatistics(CompanyData data)
+    {
+        // Filter transactions by date range
+        var expenses = data.Expenses?.Where(e => e.Date >= StartDate && e.Date <= EndDate).ToList() ?? [];
+        var revenues = data.Revenues?.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList() ?? [];
+
+        // Calculate totals
+        var totalExpenses = expenses.Sum(e => e.TotalAmount);
+        var totalRevenues = revenues.Sum(r => r.TotalAmount);
+        var netProfit = totalRevenues - totalExpenses;
+        var margin = totalRevenues > 0 ? (netProfit / totalRevenues) * 100 : 0;
+
+        // Calculate previous period for comparison
+        var periodLength = EndDate - StartDate;
+        var prevStartDate = StartDate - periodLength;
+        var prevEndDate = StartDate.AddDays(-1);
+
+        var prevExpenses = data.Expenses?.Where(e => e.Date >= prevStartDate && e.Date <= prevEndDate).Sum(e => e.TotalAmount) ?? 0;
+        var prevRevenues = data.Revenues?.Where(r => r.Date >= prevStartDate && r.Date <= prevEndDate).Sum(r => r.TotalAmount) ?? 0;
+        var prevNetProfit = prevRevenues - prevExpenses;
+        var prevMargin = prevRevenues > 0 ? (prevNetProfit / prevRevenues) * 100 : 0;
+
+        // Calculate change percentages
+        var purchasesChange = prevExpenses > 0 ? ((totalExpenses - prevExpenses) / prevExpenses) * 100 : 0;
+        var salesChange = prevRevenues > 0 ? ((totalRevenues - prevRevenues) / prevRevenues) * 100 : 0;
+        var profitChange = prevNetProfit != 0 ? ((netProfit - prevNetProfit) / Math.Abs(prevNetProfit)) * 100 : 0;
+        var marginChange = margin - prevMargin;
+
+        // Update properties
+        TotalPurchases = totalExpenses.ToString("C0");
+        PurchasesChangeValue = (double)purchasesChange;
+        PurchasesChangeText = $"{Math.Abs(purchasesChange):F1}%";
+
+        TotalSales = totalRevenues.ToString("C0");
+        SalesChangeValue = (double)salesChange;
+        SalesChangeText = $"{Math.Abs(salesChange):F1}%";
+
+        NetProfit = netProfit.ToString("C0");
+        ProfitChangeValue = (double)profitChange;
+        ProfitChangeText = $"{Math.Abs(profitChange):F1}%";
+
+        ProfitMargin = $"{margin:F1}%";
+        ProfitMarginChangeValue = (double)marginChange;
+        ProfitMarginChangeText = $"{Math.Abs(marginChange):F1}%";
+    }
+
+    private void LoadOperationalStatistics(CompanyData data)
+    {
+        // Active accountants count
+        var activeAccountants = data.Accountants?.Count(a => a.Status == Core.Enums.EntityStatus.Active) ?? 0;
+        ActiveAccountants = activeAccountants.ToString();
+
+        // Transactions processed in the date range
+        var expenses = data.Expenses?.Where(e => e.Date >= StartDate && e.Date <= EndDate).ToList() ?? [];
+        var revenues = data.Revenues?.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList() ?? [];
+        var totalTransactions = expenses.Count + revenues.Count;
+
+        // Calculate previous period for comparison
+        var periodLength = EndDate - StartDate;
+        var prevStartDate = StartDate - periodLength;
+        var prevEndDate = StartDate.AddDays(-1);
+
+        var prevExpensesCount = data.Expenses?.Count(e => e.Date >= prevStartDate && e.Date <= prevEndDate) ?? 0;
+        var prevRevenuesCount = data.Revenues?.Count(r => r.Date >= prevStartDate && r.Date <= prevEndDate) ?? 0;
+        var prevTransactions = prevExpensesCount + prevRevenuesCount;
+
+        var transactionsChange = prevTransactions > 0 ? ((double)(totalTransactions - prevTransactions) / prevTransactions) * 100 : 0;
+
+        TransactionsProcessed = totalTransactions.ToString("N0");
+        TransactionsChangeValue = transactionsChange;
+        TransactionsChangeText = $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%";
+
+        // Processing time and accuracy rate are not tracked in the data model
+        AvgProcessingTime = "N/A";
+        ProcessingTimeChangeValue = 0;
+        ProcessingTimeChangeText = "N/A";
+
+        AccuracyRate = "N/A";
+        AccuracyChangeValue = 0;
+        AccuracyChangeText = "N/A";
+    }
+
+    private void LoadPerformanceStatistics(CompanyData data)
+    {
+        // Filter transactions by date range
+        var revenues = data.Revenues?.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList() ?? [];
+        var expenses = data.Expenses?.Where(e => e.Date >= StartDate && e.Date <= EndDate).ToList() ?? [];
+
+        var totalTransactionsCount = revenues.Count + expenses.Count;
+        var allTransactionValues = revenues.Select(r => r.TotalAmount).Concat(expenses.Select(e => e.TotalAmount)).ToList();
+        var avgTransactionValue = allTransactionValues.Count > 0 ? allTransactionValues.Average() : 0;
+
+        // Shipping costs from expenses
+        var avgShipping = expenses.Count > 0 ? expenses.Average(e => e.ShippingCost) : 0;
+
+        // Calculate previous period for comparison
+        var periodLength = EndDate - StartDate;
+        var prevStartDate = StartDate - periodLength;
+        var prevEndDate = StartDate.AddDays(-1);
+
+        var prevRevenues = data.Revenues?.Where(r => r.Date >= prevStartDate && r.Date <= prevEndDate).ToList() ?? [];
+        var prevExpenses = data.Expenses?.Where(e => e.Date >= prevStartDate && e.Date <= prevEndDate).ToList() ?? [];
+
+        var prevTotalTransactionsCount = prevRevenues.Count + prevExpenses.Count;
+        var prevAllTransactionValues = prevRevenues.Select(r => r.TotalAmount).Concat(prevExpenses.Select(e => e.TotalAmount)).ToList();
+        var prevAvgTransactionValue = prevAllTransactionValues.Count > 0 ? prevAllTransactionValues.Average() : 0;
+        var prevAvgShipping = prevExpenses.Count > 0 ? prevExpenses.Average(e => e.ShippingCost) : 0;
+
+        // Revenue growth (period over period)
+        var currentRevenueTotal = revenues.Sum(r => r.TotalAmount);
+        var prevRevenueTotal = prevRevenues.Sum(r => r.TotalAmount);
+        var revenueGrowthValue = prevRevenueTotal > 0 ? ((currentRevenueTotal - prevRevenueTotal) / prevRevenueTotal) * 100 : 0;
+
+        var transactionsChange = prevTotalTransactionsCount > 0 ? ((double)(totalTransactionsCount - prevTotalTransactionsCount) / prevTotalTransactionsCount) * 100 : 0;
+        var avgTransactionChange = prevAvgTransactionValue > 0 ? ((avgTransactionValue - prevAvgTransactionValue) / prevAvgTransactionValue) * 100 : 0;
+        var shippingChange = prevAvgShipping > 0 ? ((avgShipping - prevAvgShipping) / prevAvgShipping) * 100 : 0;
+
+        RevenueGrowth = $"{revenueGrowthValue:F1}%";
+        RevenueGrowthChangeValue = (double)revenueGrowthValue;
+        RevenueGrowthChangeText = $"{(revenueGrowthValue >= 0 ? "+" : "")}{revenueGrowthValue:F1}%";
+
+        TotalTransactions = totalTransactionsCount.ToString("N0");
+        TotalTransactionsChangeValue = transactionsChange;
+        TotalTransactionsChangeText = $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%";
+
+        AvgTransactionValue = avgTransactionValue.ToString("C0");
+        AvgTransactionChangeValue = (double)avgTransactionChange;
+        AvgTransactionChangeText = $"{(avgTransactionChange >= 0 ? "+" : "")}{avgTransactionChange:F1}%";
+
+        AvgShippingCost = avgShipping.ToString("C2");
+        AvgShippingChangeValue = (double)shippingChange;
+        AvgShippingChangeText = $"{(shippingChange >= 0 ? "+" : "")}{shippingChange:F1}%";
+    }
+
+    private void LoadCustomerStatistics(CompanyData data)
+    {
+        // Total customers
+        var totalCustomersCount = data.Customers?.Count ?? 0;
+        TotalCustomers = totalCustomersCount.ToString("N0");
+
+        // New customers (created within date range)
+        var newCustomersCount = data.Customers?.Count(c => c.CreatedAt >= StartDate && c.CreatedAt <= EndDate) ?? 0;
+        NewCustomers = newCustomersCount.ToString("N0");
+
+        // Calculate previous period for comparison
+        var periodLength = EndDate - StartDate;
+        var prevStartDate = StartDate - periodLength;
+        var prevEndDate = StartDate.AddDays(-1);
+
+        // Previous new customers
+        var prevNewCustomers = data.Customers?.Count(c => c.CreatedAt >= prevStartDate && c.CreatedAt <= prevEndDate) ?? 0;
+        var newCustomersChange = prevNewCustomers > 0 ? ((double)(newCustomersCount - prevNewCustomers) / prevNewCustomers) * 100 : 0;
+
+        CustomersChangeValue = 0; // Total customers doesn't have a meaningful change calculation
+        CustomersChangeText = "N/A";
+
+        NewCustomersChangeValue = newCustomersChange;
+        NewCustomersChangeText = $"{(newCustomersChange >= 0 ? "+" : "")}{newCustomersChange:F1}%";
+
+        // Retention rate and avg customer value are complex calculations
+        // For now, calculate avg customer value based on revenue per customer
+        var revenues = data.Revenues?.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList() ?? [];
+        var customerIds = revenues.Select(r => r.CustomerId).Distinct().ToList();
+        var avgValue = customerIds.Count > 0 ? revenues.Sum(r => r.TotalAmount) / customerIds.Count : 0;
+
+        RetentionRate = "N/A";
+        RetentionChangeValue = 0;
+        RetentionChangeText = "N/A";
+
+        AvgCustomerValue = avgValue.ToString("C0");
+        AvgCustomerValueChangeValue = 0;
+        AvgCustomerValueChangeText = "N/A";
+    }
+
+    private void LoadReturnsStatistics(CompanyData data)
+    {
+        // Filter returns by date range
+        var returns = data.Returns?.Where(r => r.DateReturned >= StartDate && r.DateReturned <= EndDate).ToList() ?? [];
+
+        var totalReturnsCount = returns.Count;
+        var financialImpact = returns.Sum(r => r.RefundAmount);
+
+        // Calculate return rate (returns / total sales transactions)
+        var salesTransactions = data.Revenues?.Count(r => r.Date >= StartDate && r.Date <= EndDate) ?? 0;
+        var returnRate = salesTransactions > 0 ? ((double)totalReturnsCount / salesTransactions) * 100 : 0;
+
+        // Calculate previous period for comparison
+        var periodLength = EndDate - StartDate;
+        var prevStartDate = StartDate - periodLength;
+        var prevEndDate = StartDate.AddDays(-1);
+
+        var prevReturns = data.Returns?.Where(r => r.DateReturned >= prevStartDate && r.DateReturned <= prevEndDate).ToList() ?? [];
+        var prevReturnsCount = prevReturns.Count;
+        var prevFinancialImpact = prevReturns.Sum(r => r.RefundAmount);
+        var prevSalesTransactions = data.Revenues?.Count(r => r.Date >= prevStartDate && r.Date <= prevEndDate) ?? 0;
+        var prevReturnRate = prevSalesTransactions > 0 ? ((double)prevReturnsCount / prevSalesTransactions) * 100 : 0;
+
+        var returnsChange = prevReturnsCount > 0 ? ((double)(totalReturnsCount - prevReturnsCount) / prevReturnsCount) * 100 : 0;
+        var returnRateChange = returnRate - prevReturnRate;
+        var impactChange = prevFinancialImpact > 0 ? ((financialImpact - prevFinancialImpact) / prevFinancialImpact) * 100 : 0;
+
+        TotalReturns = totalReturnsCount.ToString("N0");
+        ReturnsChangeValue = returnsChange;
+        ReturnsChangeText = $"{(returnsChange >= 0 ? "+" : "")}{returnsChange:F1}%";
+
+        ReturnRate = $"{returnRate:F1}%";
+        ReturnRateChangeValue = returnRateChange;
+        ReturnRateChangeText = $"{(returnRateChange >= 0 ? "+" : "")}{returnRateChange:F1}%";
+
+        ReturnsFinancialImpact = financialImpact.ToString("C0");
+        ReturnsImpactChangeValue = (double)impactChange;
+        ReturnsImpactChangeText = $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%";
+
+        // Resolution time is not tracked in the data model
+        AvgResolutionTime = "N/A";
+        ResolutionTimeChangeValue = 0;
+        ResolutionTimeChangeText = "N/A";
+    }
+
+    private void LoadLossesStatistics(CompanyData data)
+    {
+        // Filter losses by date range
+        var losses = data.LostDamaged?.Where(l => l.DateDiscovered >= StartDate && l.DateDiscovered <= EndDate).ToList() ?? [];
+
+        var totalLossesCount = losses.Count;
+        var financialImpact = losses.Sum(l => l.ValueLost);
+
+        // Calculate loss rate (losses / total transactions)
+        var totalTransactions = (data.Revenues?.Count(r => r.Date >= StartDate && r.Date <= EndDate) ?? 0) +
+                               (data.Expenses?.Count(e => e.Date >= StartDate && e.Date <= EndDate) ?? 0);
+        var lossRate = totalTransactions > 0 ? ((double)totalLossesCount / totalTransactions) * 100 : 0;
+
+        // Insurance claims are not tracked in the data model, use count of losses with insurance recovery
+        var insuranceClaimsCount = losses.Count(l => l.InsuranceRecovery > 0);
+
+        // Calculate previous period for comparison
+        var periodLength = EndDate - StartDate;
+        var prevStartDate = StartDate - periodLength;
+        var prevEndDate = StartDate.AddDays(-1);
+
+        var prevLosses = data.LostDamaged?.Where(l => l.DateDiscovered >= prevStartDate && l.DateDiscovered <= prevEndDate).ToList() ?? [];
+        var prevLossesCount = prevLosses.Count;
+        var prevFinancialImpact = prevLosses.Sum(l => l.ValueLost);
+        var prevTotalTransactions = (data.Revenues?.Count(r => r.Date >= prevStartDate && r.Date <= prevEndDate) ?? 0) +
+                                    (data.Expenses?.Count(e => e.Date >= prevStartDate && e.Date <= prevEndDate) ?? 0);
+        var prevLossRate = prevTotalTransactions > 0 ? ((double)prevLossesCount / prevTotalTransactions) * 100 : 0;
+        var prevInsuranceClaimsCount = prevLosses.Count(l => l.InsuranceRecovery > 0);
+
+        var lossesChange = prevLossesCount > 0 ? ((double)(totalLossesCount - prevLossesCount) / prevLossesCount) * 100 : 0;
+        var lossRateChange = lossRate - prevLossRate;
+        var impactChange = prevFinancialImpact > 0 ? ((financialImpact - prevFinancialImpact) / prevFinancialImpact) * 100 : 0;
+        var insuranceChange = prevInsuranceClaimsCount > 0 ? ((double)(insuranceClaimsCount - prevInsuranceClaimsCount) / prevInsuranceClaimsCount) * 100 : 0;
+
+        TotalLosses = totalLossesCount.ToString("N0");
+        LossesChangeValue = lossesChange;
+        LossesChangeText = $"{(lossesChange >= 0 ? "+" : "")}{lossesChange:F1}%";
+
+        LossRate = $"{lossRate:F1}%";
+        LossRateChangeValue = lossRateChange;
+        LossRateChangeText = $"{(lossRateChange >= 0 ? "+" : "")}{lossRateChange:F1}%";
+
+        LossesFinancialImpact = financialImpact.ToString("C0");
+        LossesImpactChangeValue = (double)impactChange;
+        LossesImpactChangeText = $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%";
+
+        InsuranceClaims = insuranceClaimsCount.ToString("N0");
+        InsuranceClaimsChangeValue = insuranceChange;
+        InsuranceClaimsChangeText = $"{(insuranceChange >= 0 ? "+" : "")}{insuranceChange:F1}%";
     }
 
     #endregion

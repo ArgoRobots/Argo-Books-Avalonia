@@ -133,32 +133,32 @@
                     <!-- Stats Grid -->
                     <UniformGrid Columns="4" Rows="1">
                         <controls:StatCard Label="Total Purchases"
-                                           Value="$45,234"
+                                           Value="{Binding TotalPurchases}"
                                            Icon="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z"
                                            IconColor="Danger"
-                                           ChangeValue="-3.2"
-                                           ChangeText="3.2%"
+                                           ChangeValue="{Binding PurchasesChangeValue}"
+                                           ChangeText="{Binding PurchasesChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Total Sales"
-                                           Value="$124,563"
+                                           Value="{Binding TotalSales}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Success"
-                                           ChangeValue="12.5"
-                                           ChangeText="12.5%"
+                                           ChangeValue="{Binding SalesChangeValue}"
+                                           ChangeText="{Binding SalesChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Net Profit"
-                                           Value="$79,329"
+                                           Value="{Binding NetProfit}"
                                            Icon="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"
                                            IconColor="Primary"
-                                           ChangeValue="18.7"
-                                           ChangeText="18.7%"
+                                           ChangeValue="{Binding ProfitChangeValue}"
+                                           ChangeText="{Binding ProfitChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Profit Margin"
-                                           Value="63.7%"
+                                           Value="{Binding ProfitMargin}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                            IconColor="Info"
-                                           ChangeValue="4.2"
-                                           ChangeText="4.2%" />
+                                           ChangeValue="{Binding ProfitMarginChangeValue}"
+                                           ChangeText="{Binding ProfitMarginChangeText}" />
                     </UniformGrid>
 
                     <!-- Charts Row 1: Purchases -->
@@ -646,30 +646,30 @@
                     <!-- Stats Grid -->
                     <UniformGrid Columns="4" Rows="1">
                         <controls:StatCard Label="Active Accountants"
-                                           Value="8"
+                                           Value="{Binding ActiveAccountants}"
                                            Icon="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                                            IconColor="Primary"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Transactions Processed"
-                                           Value="1,247"
+                                           Value="{Binding TransactionsProcessed}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"
                                            IconColor="Success"
-                                           ChangeValue="8.3"
-                                           ChangeText="+8.3%"
+                                           ChangeValue="{Binding TransactionsChangeValue}"
+                                           ChangeText="{Binding TransactionsChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Avg Processing Time"
-                                           Value="2.4 min"
+                                           Value="{Binding AvgProcessingTime}"
                                            Icon="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
                                            IconColor="Warning"
-                                           ChangeValue="-12.5"
-                                           ChangeText="-12.5%"
+                                           ChangeValue="{Binding ProcessingTimeChangeValue}"
+                                           ChangeText="{Binding ProcessingTimeChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Accuracy Rate"
-                                           Value="99.2%"
+                                           Value="{Binding AccuracyRate}"
                                            Icon="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                            IconColor="Info"
-                                           ChangeValue="0.5"
-                                           ChangeText="+0.5%" />
+                                           ChangeValue="{Binding AccuracyChangeValue}"
+                                           ChangeText="{Binding AccuracyChangeText}" />
                     </UniformGrid>
 
                     <!-- Charts -->
@@ -803,32 +803,32 @@
                     <!-- Stats Grid -->
                     <UniformGrid Columns="4" Rows="1">
                         <controls:StatCard Label="Revenue Growth"
-                                           Value="18.7%"
+                                           Value="{Binding RevenueGrowth}"
                                            Icon="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
                                            IconColor="Success"
-                                           ChangeValue="5.2"
-                                           ChangeText="+5.2%"
+                                           ChangeValue="{Binding RevenueGrowthChangeValue}"
+                                           ChangeText="{Binding RevenueGrowthChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Total Transactions"
-                                           Value="3,842"
+                                           Value="{Binding TotalTransactions}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"
                                            IconColor="Primary"
-                                           ChangeValue="12.3"
-                                           ChangeText="+12.3%"
+                                           ChangeValue="{Binding TotalTransactionsChangeValue}"
+                                           ChangeText="{Binding TotalTransactionsChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Avg Transaction Value"
-                                           Value="$324.50"
+                                           Value="{Binding AvgTransactionValue}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Info"
-                                           ChangeValue="3.8"
-                                           ChangeText="+3.8%"
+                                           ChangeValue="{Binding AvgTransactionChangeValue}"
+                                           ChangeText="{Binding AvgTransactionChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Avg Shipping Cost"
-                                           Value="$12.45"
+                                           Value="{Binding AvgShippingCost}"
                                            Icon="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
                                            IconColor="Warning"
-                                           ChangeValue="-2.1"
-                                           ChangeText="-2.1%" />
+                                           ChangeValue="{Binding AvgShippingChangeValue}"
+                                           ChangeText="{Binding AvgShippingChangeText}" />
                     </UniformGrid>
 
                     <!-- Charts Row 1 -->
@@ -1008,32 +1008,32 @@
                     <!-- Stats Grid -->
                     <UniformGrid Columns="4" Rows="1">
                         <controls:StatCard Label="Total Customers"
-                                           Value="1,234"
+                                           Value="{Binding TotalCustomers}"
                                            Icon="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
                                            IconColor="Primary"
-                                           ChangeValue="8.5"
-                                           ChangeText="+8.5%"
+                                           ChangeValue="{Binding CustomersChangeValue}"
+                                           ChangeText="{Binding CustomersChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="New Customers"
-                                           Value="147"
+                                           Value="{Binding NewCustomers}"
                                            Icon="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                                            IconColor="Success"
-                                           ChangeValue="23.1"
-                                           ChangeText="+23.1%"
+                                           ChangeValue="{Binding NewCustomersChangeValue}"
+                                           ChangeText="{Binding NewCustomersChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Retention Rate"
-                                           Value="87.3%"
+                                           Value="{Binding RetentionRate}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
                                            IconColor="Info"
-                                           ChangeValue="2.4"
-                                           ChangeText="+2.4%"
+                                           ChangeValue="{Binding RetentionChangeValue}"
+                                           ChangeText="{Binding RetentionChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Avg Customer Value"
-                                           Value="$2,847"
+                                           Value="{Binding AvgCustomerValue}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Warning"
-                                           ChangeValue="11.2"
-                                           ChangeText="+11.2%" />
+                                           ChangeValue="{Binding AvgCustomerValueChangeValue}"
+                                           ChangeText="{Binding AvgCustomerValueChangeText}" />
                     </UniformGrid>
 
                     <!-- Charts Row 1 -->
@@ -1291,32 +1291,32 @@
                     <!-- Stats Grid -->
                     <UniformGrid Columns="4" Rows="1">
                         <controls:StatCard Label="Total Returns"
-                                           Value="89"
+                                           Value="{Binding TotalReturns}"
                                            Icon="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
                                            IconColor="Warning"
-                                           ChangeValue="-5.2"
-                                           ChangeText="-5.2%"
+                                           ChangeValue="{Binding ReturnsChangeValue}"
+                                           ChangeText="{Binding ReturnsChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Return Rate"
-                                           Value="2.3%"
+                                           Value="{Binding ReturnRate}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                            IconColor="Info"
-                                           ChangeValue="-0.3"
-                                           ChangeText="-0.3%"
+                                           ChangeValue="{Binding ReturnRateChangeValue}"
+                                           ChangeText="{Binding ReturnRateChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Financial Impact"
-                                           Value="$4,521"
+                                           Value="{Binding ReturnsFinancialImpact}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Danger"
-                                           ChangeValue="-8.7"
-                                           ChangeText="-8.7%"
+                                           ChangeValue="{Binding ReturnsImpactChangeValue}"
+                                           ChangeText="{Binding ReturnsImpactChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Avg Resolution Time"
-                                           Value="1.8 days"
+                                           Value="{Binding AvgResolutionTime}"
                                            Icon="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
                                            IconColor="Success"
-                                           ChangeValue="-15.3"
-                                           ChangeText="-15.3%" />
+                                           ChangeValue="{Binding ResolutionTimeChangeValue}"
+                                           ChangeText="{Binding ResolutionTimeChangeText}" />
                     </UniformGrid>
 
                     <!-- Charts Row 1 -->
@@ -1578,32 +1578,32 @@
                     <!-- Stats Grid -->
                     <UniformGrid Columns="4" Rows="1">
                         <controls:StatCard Label="Total Losses"
-                                           Value="34"
+                                           Value="{Binding TotalLosses}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
                                            IconColor="Danger"
-                                           ChangeValue="-12.5"
-                                           ChangeText="-12.5%"
+                                           ChangeValue="{Binding LossesChangeValue}"
+                                           ChangeText="{Binding LossesChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Loss Rate"
-                                           Value="0.9%"
+                                           Value="{Binding LossRate}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                            IconColor="Info"
-                                           ChangeValue="-0.2"
-                                           ChangeText="-0.2%"
+                                           ChangeValue="{Binding LossRateChangeValue}"
+                                           ChangeText="{Binding LossRateChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Financial Impact"
-                                           Value="$2,847"
+                                           Value="{Binding LossesFinancialImpact}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Warning"
-                                           ChangeValue="-18.3"
-                                           ChangeText="-18.3%"
+                                           ChangeValue="{Binding LossesImpactChangeValue}"
+                                           ChangeText="{Binding LossesImpactChangeText}"
                                            Margin="0,0,12,0" />
                         <controls:StatCard Label="Insurance Claims"
-                                           Value="12"
+                                           Value="{Binding InsuranceClaims}"
                                            Icon="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"
                                            IconColor="Success"
-                                           ChangeValue="2"
-                                           ChangeText="+2" />
+                                           ChangeValue="{Binding InsuranceClaimsChangeValue}"
+                                           ChangeText="{Binding InsuranceClaimsChangeText}" />
                     </UniformGrid>
 
                     <!-- Charts Row 1 -->
