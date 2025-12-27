@@ -76,6 +76,18 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Chart Type Toggle
+
+    [ObservableProperty]
+    private bool _useLineChart;
+
+    partial void OnUseLineChartChanged(bool value)
+    {
+        LoadAllCharts();
+    }
+
+    #endregion
+
     #region Date Range
 
     /// <summary>
@@ -494,8 +506,9 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var data = _companyManager?.CompanyData;
         if (data == null) return;
 
-        // Update theme colors
+        // Update theme colors and chart type
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
+        _chartLoaderService.UseLineChart = UseLineChart;
 
         // Dashboard charts
         LoadExpensesTrendsChart(data);

@@ -30,11 +30,111 @@ public class ChartLoaderService
     private SKColor _gridColor = SKColor.Parse("#374151"); // Grid lines
     private SKColor _backgroundColor = SKColor.Parse("#1F2937"); // Chart background
 
+    // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap
+    private static readonly Dictionary<string, string> CountryNameToIsoCode = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "United States", "usa" }, { "USA", "usa" }, { "US", "usa" }, { "America", "usa" },
+        { "United Kingdom", "gbr" }, { "UK", "gbr" }, { "Great Britain", "gbr" }, { "England", "gbr" },
+        { "Canada", "can" }, { "CA", "can" },
+        { "Germany", "deu" }, { "DE", "deu" },
+        { "France", "fra" }, { "FR", "fra" },
+        { "Italy", "ita" }, { "IT", "ita" },
+        { "Spain", "esp" }, { "ES", "esp" },
+        { "Australia", "aus" }, { "AU", "aus" },
+        { "Japan", "jpn" }, { "JP", "jpn" },
+        { "China", "chn" }, { "CN", "chn" },
+        { "India", "ind" }, { "IN", "ind" },
+        { "Brazil", "bra" }, { "BR", "bra" },
+        { "Mexico", "mex" }, { "MX", "mex" },
+        { "Russia", "rus" }, { "RU", "rus" },
+        { "South Korea", "kor" }, { "Korea", "kor" }, { "KR", "kor" },
+        { "Netherlands", "nld" }, { "NL", "nld" },
+        { "Switzerland", "che" }, { "CH", "che" },
+        { "Sweden", "swe" }, { "SE", "swe" },
+        { "Norway", "nor" }, { "NO", "nor" },
+        { "Denmark", "dnk" }, { "DK", "dnk" },
+        { "Finland", "fin" }, { "FI", "fin" },
+        { "Poland", "pol" }, { "PL", "pol" },
+        { "Belgium", "bel" }, { "BE", "bel" },
+        { "Austria", "aut" }, { "AT", "aut" },
+        { "Ireland", "irl" }, { "IE", "irl" },
+        { "Portugal", "prt" }, { "PT", "prt" },
+        { "Greece", "grc" }, { "GR", "grc" },
+        { "New Zealand", "nzl" }, { "NZ", "nzl" },
+        { "Singapore", "sgp" }, { "SG", "sgp" },
+        { "Hong Kong", "hkg" }, { "HK", "hkg" },
+        { "Taiwan", "twn" }, { "TW", "twn" },
+        { "South Africa", "zaf" }, { "ZA", "zaf" },
+        { "Argentina", "arg" }, { "AR", "arg" },
+        { "Chile", "chl" }, { "CL", "chl" },
+        { "Colombia", "col" }, { "CO", "col" },
+        { "Indonesia", "idn" }, { "ID", "idn" },
+        { "Malaysia", "mys" }, { "MY", "mys" },
+        { "Thailand", "tha" }, { "TH", "tha" },
+        { "Vietnam", "vnm" }, { "VN", "vnm" },
+        { "Philippines", "phl" }, { "PH", "phl" },
+        { "Turkey", "tur" }, { "TR", "tur" },
+        { "Saudi Arabia", "sau" }, { "SA", "sau" },
+        { "UAE", "are" }, { "United Arab Emirates", "are" }, { "AE", "are" },
+        { "Israel", "isr" }, { "IL", "isr" },
+        { "Egypt", "egy" }, { "EG", "egy" },
+        { "Nigeria", "nga" }, { "NG", "nga" },
+        { "Kenya", "ken" }, { "KE", "ken" },
+        { "Ukraine", "ukr" }, { "UA", "ukr" },
+        { "Czech Republic", "cze" }, { "Czechia", "cze" }, { "CZ", "cze" },
+        { "Romania", "rou" }, { "RO", "rou" },
+        { "Hungary", "hun" }, { "HU", "hun" }
+    };
+
+    /// <summary>
+    /// Converts a country name to ISO 3166-1 alpha-3 code for GeoMap.
+    /// </summary>
+    private static string GetCountryIsoCode(string? countryName)
+    {
+        if (string.IsNullOrEmpty(countryName))
+            return string.Empty;
+
+        return CountryNameToIsoCode.TryGetValue(countryName, out var code) ? code : countryName.ToLowerInvariant();
+    }
+
     /// <summary>
     /// Gets or sets the current data for export functionality.
     /// This is used by Google Sheets and Excel exporters.
     /// </summary>
     public ChartExportData? CurrentExportData { get; private set; }
+
+    /// <summary>
+    /// Gets or sets whether to use line charts instead of column charts.
+    /// </summary>
+    public bool UseLineChart { get; set; }
+
+    /// <summary>
+    /// Creates a series for time-based data, either as line or column based on UseLineChart.
+    /// </summary>
+    private ISeries CreateTimeSeries(double[] values, string name, SKColor color)
+    {
+        if (UseLineChart)
+        {
+            return new LineSeries<double>
+            {
+                Values = values,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = null,
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            };
+        }
+        return new ColumnSeries<double>
+        {
+            Values = values,
+            Name = name,
+            Fill = new SolidColorPaint(color),
+            Stroke = null,
+            MaxBarWidth = 50
+        };
+    }
 
     /// <summary>
     /// Updates theme colors based on the current application theme.
@@ -191,18 +291,8 @@ public class ChartLoaderService
         var values = expensesByDate.Select(e => (double)e.Total).ToArray();
         totalExpenses = expensesByDate.Sum(e => e.Total);
 
-        // Create column series with WinForms-style appearance
-        var columnSeries = new ColumnSeries<double>
-        {
-            Values = values,
-            Name = "Expenses",
-            Fill = new SolidColorPaint(RevenueColor), // Using the blue color like WinForms
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        };
-
-        series.Add(columnSeries);
+        // Create series (column or line based on UseLineChart setting)
+        series.Add(CreateTimeSeries(values, "Expenses", RevenueColor));
 
         // Store export data for Google Sheets/Excel export
         CurrentExportData = new ChartExportData
@@ -272,17 +362,7 @@ public class ChartLoaderService
         var values = revenueByDate.Select(r => (double)r.Total).ToArray();
         totalRevenue = revenueByDate.Sum(r => r.Total);
 
-        var columnSeries = new ColumnSeries<double>
-        {
-            Values = values,
-            Name = "Revenue",
-            Fill = new SolidColorPaint(ProfitColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        };
-
-        series.Add(columnSeries);
+        series.Add(CreateTimeSeries(values, "Revenue", ProfitColor));
 
         CurrentExportData = new ChartExportData
         {
@@ -365,17 +445,7 @@ public class ChartLoaderService
         var values = profitData.Select(p => (double)p.Profit).ToArray();
         totalProfit = profitData.Sum(p => p.Profit);
 
-        var columnSeries = new ColumnSeries<double>
-        {
-            Values = values,
-            Name = "Profit",
-            Fill = new SolidColorPaint(ProfitColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        };
-
-        series.Add(columnSeries);
+        series.Add(CreateTimeSeries(values, "Profit", ProfitColor));
 
         CurrentExportData = new ChartExportData
         {
@@ -444,25 +514,8 @@ public class ChartLoaderService
                 .Sum(p => p.Total) ?? 0);
         }).ToArray();
 
-        series.Add(new ColumnSeries<double>
-        {
-            Values = revenueValues,
-            Name = "Revenue",
-            Fill = new SolidColorPaint(ProfitColor),
-            Stroke = null,
-            MaxBarWidth = 30,
-            Padding = 2
-        });
-
-        series.Add(new ColumnSeries<double>
-        {
-            Values = expenseValues,
-            Name = "Expenses",
-            Fill = new SolidColorPaint(ExpenseColor),
-            Stroke = null,
-            MaxBarWidth = 30,
-            Padding = 2
-        });
+        series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
+        series.Add(CreateTimeSeries(expenseValues, "Expenses", ExpenseColor));
 
         return (series, labels);
     }
@@ -1301,10 +1354,10 @@ public class ChartLoaderService
             .GroupBy(s =>
             {
                 var customer = companyData.GetCustomer(s.CustomerId ?? "");
-                return customer?.Address?.Country;
+                return GetCountryIsoCode(customer?.Address?.Country);
             })
-            .Where(g => g.Key != null)
-            .ToDictionary(g => g.Key!, g => (double)g.Sum(s => s.Total));
+            .Where(g => !string.IsNullOrEmpty(g.Key))
+            .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.Total));
     }
 
     /// <summary>
@@ -1328,10 +1381,10 @@ public class ChartLoaderService
             .GroupBy(p =>
             {
                 var supplier = companyData.GetSupplier(p.SupplierId ?? "");
-                return supplier?.Address?.Country;
+                return GetCountryIsoCode(supplier?.Address?.Country);
             })
-            .Where(g => g.Key != null)
-            .ToDictionary(g => g.Key!, g => (double)g.Sum(p => p.Total));
+            .Where(g => !string.IsNullOrEmpty(g.Key))
+            .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.Total));
     }
 
     /// <summary>
