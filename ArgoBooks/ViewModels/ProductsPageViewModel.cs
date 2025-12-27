@@ -406,7 +406,7 @@ public partial class ProductsPageViewModel : ViewModelBase
 
     private void OnOpenCategoriesRequested(object? sender, EventArgs e)
     {
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
+        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", SelectedTabIndex } });
     }
 
     #endregion
@@ -761,7 +761,8 @@ public partial class ProductsPageViewModel : ViewModelBase
         // Close any open modal
         IsAddModalOpen = false;
         IsEditModalOpen = false;
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
+        // Navigate to the same tab (Expenses=0, Revenue=1)
+        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", SelectedTabIndex } });
     }
 
     /// <summary>
