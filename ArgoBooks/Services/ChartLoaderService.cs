@@ -1086,6 +1086,199 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Loads customer payment status chart (Paid vs Pending vs Overdue).
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, int Total) LoadCustomerPaymentStatusChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        int total = 0;
+
+        if (companyData?.Sales == null)
+            return (series, total);
+
+        var end = endDate ?? DateTime.Now;
+        var start = startDate ?? end.AddDays(-30);
+
+        var salesInRange = companyData.Sales.Where(s => s.Date >= start && s.Date <= end).ToList();
+        if (salesInRange.Count == 0)
+            return (series, total);
+
+        var paid = salesInRange.Count(s => s.PaymentStatus == "Paid" || s.PaymentStatus == "Complete");
+        var pending = salesInRange.Count(s => s.PaymentStatus == "Pending" || string.IsNullOrEmpty(s.PaymentStatus));
+        var overdue = salesInRange.Count(s => s.PaymentStatus == "Overdue");
+
+        total = salesInRange.Count;
+
+        var statusData = new[]
+        {
+            ("Paid", paid, SKColor.Parse("#22C55E")),
+            ("Pending", pending, SKColor.Parse("#F59E0B")),
+            ("Overdue", overdue, SKColor.Parse("#EF4444"))
+        }.Where(x => x.Item2 > 0).ToList();
+
+        foreach (var (name, count, color) in statusData)
+        {
+            series.Add(new PieSeries<double>
+            {
+                Values = new[] { (double)count },
+                Name = name,
+                Fill = new SolidColorPaint(color),
+                Pushout = 0
+            });
+        }
+
+        return (series, total);
+    }
+
+    /// <summary>
+    /// Loads active vs inactive customers chart.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, int Total) LoadActiveInactiveCustomersChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        int total = 0;
+
+        if (companyData?.Customers == null || companyData.Sales == null)
+            return (series, total);
+
+        var end = endDate ?? DateTime.Now;
+        var start = startDate ?? end.AddDays(-90); // Look at 90 days for activity
+
+        var activeCustomerIds = companyData.Sales
+            .Where(s => s.Date >= start && s.Date <= end && !string.IsNullOrEmpty(s.CustomerId))
+            .Select(s => s.CustomerId)
+            .Distinct()
+            .ToHashSet();
+
+        var activeCount = activeCustomerIds.Count;
+        var inactiveCount = companyData.Customers.Count - activeCount;
+        total = companyData.Customers.Count;
+
+        if (total == 0)
+            return (series, total);
+
+        if (activeCount > 0)
+        {
+            series.Add(new PieSeries<double>
+            {
+                Values = new[] { (double)activeCount },
+                Name = "Active",
+                Fill = new SolidColorPaint(SKColor.Parse("#22C55E")),
+                Pushout = 0
+            });
+        }
+
+        if (inactiveCount > 0)
+        {
+            series.Add(new PieSeries<double>
+            {
+                Values = new[] { (double)inactiveCount },
+                Name = "Inactive",
+                Fill = new SolidColorPaint(SKColor.Parse("#6B7280")),
+                Pushout = 0
+            });
+        }
+
+        return (series, total);
+    }
+
+    /// <summary>
+    /// Loads loss reasons chart.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, int Total) LoadLossReasonsChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        int total = 0;
+
+        if (companyData?.Losses == null || companyData.Losses.Count == 0)
+            return (series, total);
+
+        var end = endDate ?? DateTime.Now;
+        var start = startDate ?? end.AddDays(-30);
+
+        var distribution = companyData.Losses
+            .Where(l => l.Date >= start && l.Date <= end)
+            .GroupBy(l => l.Reason ?? "Unknown")
+            .Select(g => new { Reason = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .Take(8)
+            .ToList();
+
+        if (distribution.Count == 0)
+            return (series, total);
+
+        total = distribution.Sum(d => d.Count);
+
+        for (int i = 0; i < distribution.Count; i++)
+        {
+            var item = distribution[i];
+            series.Add(new PieSeries<double>
+            {
+                Values = new[] { (double)item.Count },
+                Name = item.Reason,
+                Fill = new SolidColorPaint(GetColorForIndex(i)),
+                Pushout = 0
+            });
+        }
+
+        return (series, total);
+    }
+
+    /// <summary>
+    /// Loads losses by product chart.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, decimal Total) LoadLossesByProductChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        decimal total = 0;
+
+        if (companyData?.Losses == null || companyData.Losses.Count == 0)
+            return (series, total);
+
+        var end = endDate ?? DateTime.Now;
+        var start = startDate ?? end.AddDays(-30);
+
+        var distribution = companyData.Losses
+            .Where(l => l.Date >= start && l.Date <= end)
+            .GroupBy(l => companyData.GetProduct(l.ProductId ?? "")?.Name ?? "Unknown")
+            .Select(g => new { Product = g.Key, Total = g.Sum(l => l.Value) })
+            .OrderByDescending(x => x.Total)
+            .Take(8)
+            .ToList();
+
+        if (distribution.Count == 0)
+            return (series, total);
+
+        total = distribution.Sum(d => d.Total);
+
+        for (int i = 0; i < distribution.Count; i++)
+        {
+            var item = distribution[i];
+            series.Add(new PieSeries<double>
+            {
+                Values = new[] { (double)item.Total },
+                Name = item.Product,
+                Fill = new SolidColorPaint(GetColorForIndex(i)),
+                Pushout = 0
+            });
+        }
+
+        return (series, total);
+    }
+
+    /// <summary>
     /// Loads returns over time chart.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels, int TotalReturns) LoadReturnsOverTimeChart(

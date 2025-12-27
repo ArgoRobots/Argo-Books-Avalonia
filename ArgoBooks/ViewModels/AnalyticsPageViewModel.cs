@@ -76,18 +76,6 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
     #endregion
 
-    #region Chart Type Toggle
-
-    [ObservableProperty]
-    private bool _useLineChart;
-
-    partial void OnUseLineChartChanged(bool value)
-    {
-        LoadAllCharts();
-    }
-
-    #endregion
-
     #region Date Range
 
     /// <summary>
@@ -187,6 +175,11 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _useLineChart = true;
+
+    partial void OnUseLineChartChanged(bool value)
+    {
+        LoadAllCharts();
+    }
 
     #endregion
 
@@ -423,6 +416,22 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Customer Charts
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _customerPaymentStatusSeries = [];
+
+    [ObservableProperty]
+    private bool _hasCustomerPaymentStatusData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _activeInactiveCustomersSeries = [];
+
+    [ObservableProperty]
+    private bool _hasActiveInactiveCustomersData;
+
+    #endregion
+
     #region Losses Charts
 
     [ObservableProperty]
@@ -448,6 +457,18 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasLossFinancialImpactData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _lossReasonsSeries = [];
+
+    [ObservableProperty]
+    private bool _hasLossReasonsData;
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _lossesByProductSeries = [];
+
+    [ObservableProperty]
+    private bool _hasLossesByProductData;
 
     #endregion
 
@@ -534,6 +555,10 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         // Performance charts
         LoadGrowthRatesChart(data);
 
+        // Customer charts
+        LoadCustomerPaymentStatusChart(data);
+        LoadActiveInactiveCustomersChart(data);
+
         // Returns charts
         LoadReturnsOverTimeChart(data);
         LoadReturnReasonsChart(data);
@@ -542,6 +567,8 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         // Losses charts
         LoadLossesOverTimeChart(data);
         LoadLossFinancialImpactChart(data);
+        LoadLossReasonsChart(data);
+        LoadLossesByProductChart(data);
     }
 
     private void LoadExpensesTrendsChart(CompanyData data)
@@ -742,6 +769,34 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         LossFinancialImpactXAxes = _chartLoaderService.CreateXAxes(labels);
         LossFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasLossFinancialImpactData = series.Count > 0;
+    }
+
+    private void LoadCustomerPaymentStatusChart(CompanyData data)
+    {
+        var (series, _) = _chartLoaderService.LoadCustomerPaymentStatusChart(data, StartDate, EndDate);
+        CustomerPaymentStatusSeries = series;
+        HasCustomerPaymentStatusData = series.Count > 0;
+    }
+
+    private void LoadActiveInactiveCustomersChart(CompanyData data)
+    {
+        var (series, _) = _chartLoaderService.LoadActiveInactiveCustomersChart(data, StartDate, EndDate);
+        ActiveInactiveCustomersSeries = series;
+        HasActiveInactiveCustomersData = series.Count > 0;
+    }
+
+    private void LoadLossReasonsChart(CompanyData data)
+    {
+        var (series, _) = _chartLoaderService.LoadLossReasonsChart(data, StartDate, EndDate);
+        LossReasonsSeries = series;
+        HasLossReasonsData = series.Count > 0;
+    }
+
+    private void LoadLossesByProductChart(CompanyData data)
+    {
+        var (series, _) = _chartLoaderService.LoadLossesByProductChart(data, StartDate, EndDate);
+        LossesByProductSeries = series;
+        HasLossesByProductData = series.Count > 0;
     }
 
     #endregion

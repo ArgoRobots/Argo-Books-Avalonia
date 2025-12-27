@@ -1090,14 +1090,12 @@
                                 </Border>
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
-                                        <!-- Pie Chart - using Revenue Distribution -->
-                                        <lvc:PieChart Series="{Binding RevenueDistributionSeries}"
+                                        <lvc:PieChart Series="{Binding CustomerPaymentStatusSeries}"
                                                       LegendPosition="Right"
-                                                      IsVisible="{Binding HasRevenueDistributionData}" />
-                                        <!-- No data placeholder -->
+                                                      IsVisible="{Binding HasCustomerPaymentStatusData}" />
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
-                                                IsVisible="{Binding !HasRevenueDistributionData}">
+                                                IsVisible="{Binding !HasCustomerPaymentStatusData}">
                                             <TextBlock Text="No payment data available"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
@@ -1217,14 +1215,12 @@
                                 </Border>
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
-                                        <!-- Pie Chart - using Countries of Origin -->
-                                        <lvc:PieChart Series="{Binding CountriesOfOriginSeries}"
+                                        <lvc:PieChart Series="{Binding ActiveInactiveCustomersSeries}"
                                                       LegendPosition="Right"
-                                                      IsVisible="{Binding HasCountriesOfOriginData}" />
-                                        <!-- No data placeholder -->
+                                                      IsVisible="{Binding HasActiveInactiveCustomersData}" />
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
-                                                IsVisible="{Binding !HasCountriesOfOriginData}">
+                                                IsVisible="{Binding !HasActiveInactiveCustomersData}">
                                             <TextBlock Text="No customer activity data"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
@@ -1660,14 +1656,14 @@
                                 </Border>
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
-                                        <!-- Pie Chart - reusing Return Reasons -->
-                                        <lvc:PieChart Series="{Binding ReturnReasonsSeries}"
+                                        <!-- Pie Chart - Loss Reasons -->
+                                        <lvc:PieChart Series="{Binding LossReasonsSeries}"
                                                       LegendPosition="Right"
-                                                      IsVisible="{Binding HasReturnReasonsData}" />
+                                                      IsVisible="{Binding HasLossReasonsData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
-                                                IsVisible="{Binding !HasReturnReasonsData}">
+                                                IsVisible="{Binding !HasLossReasonsData}">
                                             <TextBlock Text="No loss reasons data"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
@@ -1785,14 +1781,14 @@
                                 </Border>
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
-                                        <!-- Pie Chart - reusing Countries of Origin -->
-                                        <lvc:PieChart Series="{Binding CountriesOfOriginSeries}"
+                                        <!-- Pie Chart - Losses by Product -->
+                                        <lvc:PieChart Series="{Binding LossesByProductSeries}"
                                                       LegendPosition="Right"
-                                                      IsVisible="{Binding HasCountriesOfOriginData}" />
+                                                      IsVisible="{Binding HasLossesByProductData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
-                                                IsVisible="{Binding !HasCountriesOfOriginData}">
+                                                IsVisible="{Binding !HasLossesByProductData}">
                                             <TextBlock Text="No product data available"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
