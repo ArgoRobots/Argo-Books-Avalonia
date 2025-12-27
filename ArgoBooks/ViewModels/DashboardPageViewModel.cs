@@ -205,12 +205,12 @@ public partial class DashboardPageViewModel : ViewModelBase
         // Calculate this month's revenue
         var thisMonthRevenue = data.Sales
             .Where(s => s.Date >= thisMonth && s.Date <= now)
-            .Sum(s => s.EffectiveTotal);
+            .Sum(s => s.Total);
 
         // Calculate last month's revenue for comparison
         var lastMonthRevenue = data.Sales
             .Where(s => s.Date >= lastMonth && s.Date <= lastMonthEnd)
-            .Sum(s => s.EffectiveTotal);
+            .Sum(s => s.Total);
 
         TotalRevenue = FormatCurrency(thisMonthRevenue);
         RevenueChangeValue = CalculatePercentageChange(lastMonthRevenue, thisMonthRevenue);
@@ -219,12 +219,12 @@ public partial class DashboardPageViewModel : ViewModelBase
         // Calculate this month's expenses
         var thisMonthExpenses = data.Purchases
             .Where(p => p.Date >= thisMonth && p.Date <= now)
-            .Sum(p => p.EffectiveTotal);
+            .Sum(p => p.Total);
 
         // Calculate last month's expenses for comparison
         var lastMonthExpenses = data.Purchases
             .Where(p => p.Date >= lastMonth && p.Date <= lastMonthEnd)
-            .Sum(p => p.EffectiveTotal);
+            .Sum(p => p.Total);
 
         TotalExpenses = FormatCurrency(thisMonthExpenses);
         ExpenseChangeValue = CalculatePercentageChange(lastMonthExpenses, thisMonthExpenses);

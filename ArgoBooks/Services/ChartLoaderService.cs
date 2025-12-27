@@ -169,7 +169,7 @@ public class ChartLoaderService
             .Select(g => new
             {
                 Date = g.Key,
-                Total = g.Sum(p => p.EffectiveTotal)
+                Total = g.Sum(p => p.Total)
             })
             .ToList();
 
@@ -252,7 +252,7 @@ public class ChartLoaderService
             .Where(s => s.Date >= start && s.Date <= end)
             .GroupBy(s => s.Date.Date)
             .OrderBy(g => g.Key)
-            .Select(g => new { Date = g.Key, Total = g.Sum(s => s.EffectiveTotal) })
+            .Select(g => new { Date = g.Key, Total = g.Sum(s => s.Total) })
             .ToList();
 
         if (revenueByDate.Count == 0)
@@ -331,13 +331,13 @@ public class ChartLoaderService
         var revenueByDate = companyData.Sales?
             .Where(s => s.Date >= start && s.Date <= end)
             .GroupBy(s => s.Date.Date)
-            .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveTotal)) ?? new Dictionary<DateTime, decimal>();
+            .ToDictionary(g => g.Key, g => g.Sum(s => s.Total)) ?? new Dictionary<DateTime, decimal>();
 
         // Get expenses by date
         var expensesByDate = companyData.Purchases?
             .Where(p => p.Date >= start && p.Date <= end)
             .GroupBy(p => p.Date.Date)
-            .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveTotal)) ?? new Dictionary<DateTime, decimal>();
+            .ToDictionary(g => g.Key, g => g.Sum(p => p.Total)) ?? new Dictionary<DateTime, decimal>();
 
         // Calculate profit by date
         var allDates = revenueByDate.Keys.Union(expensesByDate.Keys).OrderBy(d => d).ToList();
@@ -431,7 +431,7 @@ public class ChartLoaderService
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
             return (double)(companyData.Sales?
                 .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                .Sum(s => s.EffectiveTotal) ?? 0);
+                .Sum(s => s.Total) ?? 0);
         }).ToArray();
 
         // Calculate expenses per month
@@ -441,7 +441,7 @@ public class ChartLoaderService
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
             return (double)(companyData.Purchases?
                 .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                .Sum(p => p.EffectiveTotal) ?? 0);
+                .Sum(p => p.Total) ?? 0);
         }).ToArray();
 
         series.Add(new ColumnSeries<double>
@@ -490,7 +490,7 @@ public class ChartLoaderService
             .Select(g => new
             {
                 Category = companyData.GetCategory(g.Key)?.Name ?? "Other",
-                Total = g.Sum(s => s.EffectiveTotal)
+                Total = g.Sum(s => s.Total)
             })
             .OrderByDescending(x => x.Total)
             .Take(8)
@@ -543,7 +543,7 @@ public class ChartLoaderService
             .Select(g => new
             {
                 Category = companyData.GetCategory(g.Key)?.Name ?? "Other",
-                Total = g.Sum(p => p.EffectiveTotal)
+                Total = g.Sum(p => p.Total)
             })
             .OrderByDescending(x => x.Total)
             .Take(8)
@@ -617,11 +617,11 @@ public class ChartLoaderService
 
             var currentRevenue = companyData.Sales
                 .Where(s => s.Date >= currentMonthStart && s.Date <= currentMonthEnd)
-                .Sum(s => s.EffectiveTotal);
+                .Sum(s => s.Total);
 
             var previousRevenue = companyData.Sales
                 .Where(s => s.Date >= previousMonthStart && s.Date <= previousMonthEnd)
-                .Sum(s => s.EffectiveTotal);
+                .Sum(s => s.Total);
 
             double growthRate = 0;
             if (previousRevenue != 0)
@@ -687,10 +687,10 @@ public class ChartLoaderService
             var transactions = new List<decimal>();
             transactions.AddRange(companyData.Sales?
                 .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                .Select(s => s.EffectiveTotal) ?? []);
+                .Select(s => s.Total) ?? []);
             transactions.AddRange(companyData.Purchases?
                 .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                .Select(p => p.EffectiveTotal) ?? []);
+                .Select(p => p.Total) ?? []);
 
             return transactions.Count > 0 ? (double)transactions.Average() : 0;
         }).ToArray();
@@ -847,7 +847,7 @@ public class ChartLoaderService
                 var customer = companyData.GetCustomer(s.CustomerId ?? "");
                 return customer?.Address?.Country ?? "Unknown";
             })
-            .Select(g => new { Country = g.Key, Total = g.Sum(s => s.EffectiveTotal) })
+            .Select(g => new { Country = g.Key, Total = g.Sum(s => s.Total) })
             .OrderByDescending(x => x.Total)
             .Take(8)
             .ToList();
@@ -896,7 +896,7 @@ public class ChartLoaderService
                 var supplier = companyData.GetSupplier(p.SupplierId ?? "");
                 return supplier?.Address?.Country ?? "Unknown";
             })
-            .Select(g => new { Country = g.Key, Total = g.Sum(p => p.EffectiveTotal) })
+            .Select(g => new { Country = g.Key, Total = g.Sum(p => p.Total) })
             .OrderByDescending(x => x.Total)
             .Take(8)
             .ToList();
@@ -941,7 +941,7 @@ public class ChartLoaderService
         var distribution = companyData.Sales
             .Where(s => s.Date >= start && s.Date <= end)
             .GroupBy(s => companyData.GetCustomer(s.CustomerId ?? "")?.Name ?? "Unknown")
-            .Select(g => new { Company = g.Key, Total = g.Sum(s => s.EffectiveTotal) })
+            .Select(g => new { Company = g.Key, Total = g.Sum(s => s.Total) })
             .OrderByDescending(x => x.Total)
             .Take(8)
             .ToList();
@@ -992,7 +992,7 @@ public class ChartLoaderService
             {
                 var accountantName = companyData.GetAccountant(sale.AccountantId ?? "")?.Name ?? "Unknown";
                 accountantData.TryAdd(accountantName, 0);
-                accountantData[accountantName] += sale.EffectiveTotal;
+                accountantData[accountantName] += sale.Total;
             }
         }
 
@@ -1003,7 +1003,7 @@ public class ChartLoaderService
             {
                 var accountantName = companyData.GetAccountant(purchase.AccountantId ?? "")?.Name ?? "Unknown";
                 accountantData.TryAdd(accountantName, 0);
-                accountantData[accountantName] += purchase.EffectiveTotal;
+                accountantData[accountantName] += purchase.Total;
             }
         }
 
@@ -1304,7 +1304,7 @@ public class ChartLoaderService
                 return customer?.Address?.Country;
             })
             .Where(g => g.Key != null)
-            .ToDictionary(g => g.Key!, g => (double)g.Sum(s => s.EffectiveTotal));
+            .ToDictionary(g => g.Key!, g => (double)g.Sum(s => s.Total));
     }
 
     /// <summary>
@@ -1331,7 +1331,7 @@ public class ChartLoaderService
                 return supplier?.Address?.Country;
             })
             .Where(g => g.Key != null)
-            .ToDictionary(g => g.Key!, g => (double)g.Sum(p => p.EffectiveTotal));
+            .ToDictionary(g => g.Key!, g => (double)g.Sum(p => p.Total));
     }
 
     /// <summary>

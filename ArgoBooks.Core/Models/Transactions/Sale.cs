@@ -105,12 +105,6 @@ public class Sale
     public decimal Total { get; set; }
 
     /// <summary>
-    /// Gets the effective total for charts - uses Amount as fallback for legacy data with Total=0.
-    /// </summary>
-    [JsonIgnore]
-    public decimal EffectiveTotal => Total > 0 ? Total : Amount;
-
-    /// <summary>
     /// Reference number (e.g., order number).
     /// </summary>
     [JsonPropertyName("referenceNumber")]
