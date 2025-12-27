@@ -753,19 +753,6 @@ public partial class ProductsPageViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Navigates to the Categories page and opens the Add Category modal.
-    /// </summary>
-    [RelayCommand]
-    private void OpenCategoriesWithAddModal()
-    {
-        // Close any open modal
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        // Navigate to the same tab (Expenses=0, Revenue=1)
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", SelectedTabIndex } });
-    }
-
-    /// <summary>
     /// Saves a new product.
     /// </summary>
     [RelayCommand]
