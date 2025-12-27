@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.DashboardPage"
              x:DataType="vm:DashboardPageViewModel">
@@ -240,7 +241,7 @@
 
             <!-- Charts Section -->
             <Grid ColumnDefinitions="*,*" Height="320">
-                <!-- Revenue Overview Chart -->
+                <!-- Expenses Overview Chart -->
                 <Border Grid.Column="0"
                         Classes="card"
                         Margin="0,0,12,0">
@@ -249,44 +250,135 @@
                                 Padding="20,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Text="Revenue Overview"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                    <Border Background="{DynamicResource SuccessIconBgBrush}"
-                                            CornerRadius="4"
-                                            Padding="8,4">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <Ellipse Width="8" Height="8" Fill="{DynamicResource SuccessBrush}" />
-                                            <TextBlock Text="Revenue"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
+                            <TextBlock Text="{Binding ExpensesChartTitle}"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                         </Border>
-                        <Border Grid.Row="1" Padding="20">
-                            <!-- Chart Placeholder -->
-                            <Border Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="8">
-                                <StackPanel HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            Spacing="12">
-                                    <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
-                                              Width="48" Height="48"
-                                              Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="Revenue trend chart"
+                        <Border Grid.Row="1" Padding="8">
+                            <Grid>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart
+                                    x:Name="ExpensesChart"
+                                    Series="{Binding ExpensesChartSeries}"
+                                    XAxes="{Binding ExpensesChartXAxes}"
+                                    YAxes="{Binding ExpensesChartYAxes}"
+                                    ZoomMode="Both"
+                                    TooltipPosition="Top"
+                                    IsVisible="{Binding HasExpensesChartData}"
+                                    PointerPressed="OnChartPointerPressed" />
+
+                                <!-- Empty state placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasExpensesChartData}">
+                                    <TextBlock Text="No expenses data"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
                                                FontSize="14"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="Data visualization coming soon"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                            </Border>
+                                </Border>
+
+                                <!-- Right-click context menu -->
+                                <Border x:Name="ChartContextMenu"
+                                        Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="6"
+                                        IsVisible="{Binding IsChartContextMenuOpen}"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Top"
+                                        MinWidth="200"
+                                        ZIndex="1000"
+                                        BoxShadow="0 4 12 0 #40000000">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform X="{Binding ChartContextMenuX}"
+                                                            Y="{Binding ChartContextMenuY}" />
+                                    </Border.RenderTransform>
+                                    <Border.Styles>
+                                        <Style Selector="Button.context-menu-item">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="Padding" Value="10,8" />
+                                            <Setter Property="CornerRadius" Value="4" />
+                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                            <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                            <Setter Property="Cursor" Value="Hand" />
+                                        </Style>
+                                        <Style Selector="Button.context-menu-item:pointerover">
+                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                        </Style>
+                                        <Style Selector="Button.context-menu-item:pressed">
+                                            <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
+                                        </Style>
+                                    </Border.Styles>
+                                    <StackPanel Spacing="2">
+                                        <!-- Save as Image -->
+                                        <Button Classes="context-menu-item"
+                                                Command="{Binding SaveChartAsImageCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                                                          Width="16" Height="16"
+                                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Text="Save as Image"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Separator -->
+                                        <Border Height="1"
+                                                Background="{DynamicResource BorderBrush}"
+                                                Margin="4,4" />
+
+                                        <!-- Export to Google Sheets -->
+                                        <Button Classes="context-menu-item"
+                                                Command="{Binding ExportToGoogleSheetsCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <PathIcon Data="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"
+                                                          Width="16" Height="16"
+                                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Text="Export to Google Sheets"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Export to Excel -->
+                                        <Button Classes="context-menu-item"
+                                                Command="{Binding ExportToExcelCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                                          Width="16" Height="16"
+                                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Text="Export to Excel"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Separator -->
+                                        <Border Height="1"
+                                                Background="{DynamicResource BorderBrush}"
+                                                Margin="4,4" />
+
+                                        <!-- Reset Zoom -->
+                                        <Button Classes="context-menu-item"
+                                                Command="{Binding ResetChartZoomCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <PathIcon Data="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+                                                          Width="16" Height="16"
+                                                          Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock Text="Reset Zoom"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Border>
@@ -300,44 +392,27 @@
                                 Padding="20,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Text="Expense Breakdown"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                                    <Border Background="{DynamicResource DangerIconBgBrush}"
-                                            CornerRadius="4"
-                                            Padding="8,4">
-                                        <StackPanel Orientation="Horizontal" Spacing="6">
-                                            <Ellipse Width="8" Height="8" Fill="{DynamicResource DangerBrush}" />
-                                            <TextBlock Text="Expenses"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
+                            <TextBlock Text="Distribution of expenses"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                         </Border>
                         <Border Grid.Row="1" Padding="20">
-                            <!-- Chart Placeholder -->
-                            <Border Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="8">
-                                <StackPanel HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            Spacing="12">
-                                    <PathIcon Data="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z"
-                                              Width="48" Height="48"
-                                              Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="Expense distribution"
+                            <Panel>
+                                <lvc:PieChart Series="{Binding ExpenseDistributionSeries}"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasExpenseDistributionData}" />
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasExpenseDistributionData}">
+                                    <TextBlock Text="No expense data available"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
                                                FontSize="14"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="Data visualization coming soon"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                            </Border>
+                                </Border>
+                            </Panel>
                         </Border>
                     </Grid>
                 </Border>

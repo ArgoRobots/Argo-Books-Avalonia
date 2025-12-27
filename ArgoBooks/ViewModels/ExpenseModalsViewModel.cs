@@ -181,8 +181,10 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     public ObservableCollection<string> PaymentMethodOptions { get; } = ["Cash", "Bank Card", "Bank Transfer", "Check", "PayPal", "Other"];
     public ObservableCollection<ExpenseLineItem> LineItems { get; } = [];
 
-    // Computed totals from line items
-    public decimal Subtotal => LineItems.Sum(li => li.Amount);
+    // Computed totals from line items OR direct entry
+    public decimal Subtotal => LineItems.Count > 0
+        ? LineItems.Sum(li => li.Amount)
+        : ModalQuantity * ModalUnitPrice;
     public decimal TaxAmount => ModalTaxRate;  // Tax is entered as dollar amount
     public decimal DiscountAmount => ModalDiscount;
     public decimal ShippingAmount => ModalShipping;
@@ -193,6 +195,9 @@ public partial class ExpenseModalsViewModel : ViewModelBase
     public string DiscountAmountFormatted => $"-${DiscountAmount:N2}";
     public string ShippingAmountFormatted => $"${ShippingAmount:N2}";
     public string TotalFormatted => $"${Total:N2}";
+
+    partial void OnModalQuantityChanged(decimal value) => UpdateTotals();
+    partial void OnModalUnitPriceChanged(decimal value) => UpdateTotals();
     partial void OnModalTaxRateChanged(decimal value) => UpdateTotals();
     partial void OnModalShippingChanged(decimal value) => UpdateTotals();
     partial void OnModalDiscountChanged(decimal value) => UpdateTotals();
@@ -314,8 +319,14 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         if (companyData?.Products == null)
             return;
 
+        // Filter out products that belong to Sales (revenue) categories
         foreach (var product in companyData.Products.OrderBy(p => p.Name))
         {
+            // Check if product's category is a revenue category
+            var category = companyData.Categories?.FirstOrDefault(c => c.Id == product.CategoryId);
+            if (category?.Type == CategoryType.Sales)
+                continue; // Skip revenue products
+
             ProductOptions.Add(new ProductOption
             {
                 Id = product.Id,

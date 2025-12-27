@@ -5,8 +5,12 @@ using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
 
 namespace ArgoBooks.ViewModels;
 
@@ -90,6 +94,46 @@ public partial class DashboardPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Expenses Overview Chart
+
+    private readonly ChartLoaderService _chartLoaderService = new();
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _expensesChartSeries = [];
+
+    [ObservableProperty]
+    private Axis[] _expensesChartXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _expensesChartYAxes = [];
+
+    [ObservableProperty]
+    private string _expensesChartTitle = "Total expenses: $0.00";
+
+    [ObservableProperty]
+    private bool _hasExpensesChartData;
+
+    [ObservableProperty]
+    private bool _isChartContextMenuOpen;
+
+    [ObservableProperty]
+    private double _chartContextMenuX;
+
+    [ObservableProperty]
+    private double _chartContextMenuY;
+
+    #endregion
+
+    #region Expense Distribution Chart
+
+    [ObservableProperty]
+    private ObservableCollection<ISeries> _expenseDistributionSeries = [];
+
+    [ObservableProperty]
+    private bool _hasExpenseDistributionData;
+
+    #endregion
+
     #region Company Data Reference
 
     private CompanyManager? _companyManager;
@@ -103,7 +147,15 @@ public partial class DashboardPageViewModel : ViewModelBase
         // Initialize with empty data - will be populated when company is loaded
         RecentTransactions = [];
         ActiveRentalsList = [];
+
+        // Subscribe to theme changes to update legend text color
+        ThemeService.Instance.ThemeChanged += (_, _) => OnPropertyChanged(nameof(LegendTextPaint));
     }
+
+    /// <summary>
+    /// Gets the legend text paint based on the current theme.
+    /// </summary>
+    public SolidColorPaint LegendTextPaint => ChartLoaderService.GetLegendTextPaint();
 
     #endregion
 
@@ -148,6 +200,8 @@ public partial class DashboardPageViewModel : ViewModelBase
         LoadStatistics(data);
         LoadRecentTransactions(data);
         LoadActiveRentals(data);
+        LoadExpensesChart(data);
+        LoadExpenseDistributionChart(data);
     }
 
     private void LoadStatistics(CompanyData data)
@@ -313,6 +367,126 @@ public partial class DashboardPageViewModel : ViewModelBase
 
         ActiveRentalsList = new ObservableCollection<ActiveRentalItem>(activeRentals);
     }
+
+    private void LoadExpensesChart(CompanyData data)
+    {
+        // Update theme colors based on current theme
+        _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
+
+        // Load expenses chart data for the last 30 days
+        var (series, labels, totalExpenses) = _chartLoaderService.LoadExpensesOverviewChart(data);
+
+        ExpensesChartSeries = series;
+        ExpensesChartXAxes = _chartLoaderService.CreateXAxes(labels);
+        ExpensesChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        ExpensesChartTitle = $"Total expenses: {FormatCurrency(totalExpenses)}";
+        HasExpensesChartData = series.Count > 0 && labels.Length > 0;
+    }
+
+    private void LoadExpenseDistributionChart(CompanyData data)
+    {
+        var (series, total) = _chartLoaderService.LoadExpenseDistributionChart(data);
+        ExpenseDistributionSeries = series;
+        HasExpenseDistributionData = series.Count > 0 && total > 0;
+    }
+
+    #endregion
+
+    #region Chart Context Menu Commands
+
+    /// <summary>
+    /// Shows the chart context menu at the specified position.
+    /// </summary>
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    public void ShowChartContextMenu(double x, double y)
+    {
+        ChartContextMenuX = x;
+        ChartContextMenuY = y;
+        IsChartContextMenuOpen = true;
+    }
+
+    /// <summary>
+    /// Hides the chart context menu.
+    /// </summary>
+    [RelayCommand]
+    private void HideChartContextMenu()
+    {
+        IsChartContextMenuOpen = false;
+    }
+
+    /// <summary>
+    /// Resets the zoom on the revenue chart.
+    /// </summary>
+    [RelayCommand]
+    private void ResetChartZoom()
+    {
+        ChartLoaderService.ResetZoom(ExpensesChartXAxes, ExpensesChartYAxes);
+        IsChartContextMenuOpen = false;
+    }
+
+    /// <summary>
+    /// Event raised when a chart image should be saved.
+    /// The View should subscribe to this and handle the actual save dialog.
+    /// </summary>
+    public event EventHandler? SaveChartImageRequested;
+
+    /// <summary>
+    /// Saves the chart as an image file.
+    /// </summary>
+    [RelayCommand]
+    private void SaveChartAsImage()
+    {
+        IsChartContextMenuOpen = false;
+        SaveChartImageRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Exports the chart data to Google Sheets.
+    /// </summary>
+    [RelayCommand]
+    private void ExportToGoogleSheets()
+    {
+        IsChartContextMenuOpen = false;
+
+        var exportData = _chartLoaderService.GetGoogleSheetsExportData();
+        if (exportData.Count == 0)
+        {
+            // No data to export
+            return;
+        }
+
+        // TODO: Implement Google Sheets export using Google.Apis.Sheets.v4
+        // The data is already formatted in exportData as List<List<object>>
+        // For now, this is a placeholder - the data structure is ready for export
+        System.Diagnostics.Debug.WriteLine($"Google Sheets export: {exportData.Count - 1} rows ready for export.");
+    }
+
+    /// <summary>
+    /// Exports the chart data to Microsoft Excel.
+    /// </summary>
+    [RelayCommand]
+    private void ExportToExcel()
+    {
+        IsChartContextMenuOpen = false;
+
+        var exportData = _chartLoaderService.GetExcelExportData();
+        if (exportData.Rows.Count == 0)
+        {
+            // No data to export
+            return;
+        }
+
+        // TODO: Implement Excel export using ClosedXML or EPPlus
+        // The data is already formatted in exportData with headers, rows, and total
+        // For now, this is a placeholder - the data structure is ready for export
+        System.Diagnostics.Debug.WriteLine($"Excel export: {exportData.Rows.Count} rows ready for export.");
+    }
+
+    /// <summary>
+    /// Gets the chart loader service for external use (e.g., report generation).
+    /// </summary>
+    public ChartLoaderService ChartLoaderService => _chartLoaderService;
 
     #endregion
 

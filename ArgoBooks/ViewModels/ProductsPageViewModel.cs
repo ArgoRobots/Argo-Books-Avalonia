@@ -406,7 +406,7 @@ public partial class ProductsPageViewModel : ViewModelBase
 
     private void OnOpenCategoriesRequested(object? sender, EventArgs e)
     {
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
+        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", SelectedTabIndex } });
     }
 
     #endregion
@@ -750,18 +750,6 @@ public partial class ProductsPageViewModel : ViewModelBase
     {
         IsAddModalOpen = false;
         ClearModalFields();
-    }
-
-    /// <summary>
-    /// Navigates to the Categories page and opens the Add Category modal.
-    /// </summary>
-    [RelayCommand]
-    private void OpenCategoriesWithAddModal()
-    {
-        // Close any open modal
-        IsAddModalOpen = false;
-        IsEditModalOpen = false;
-        App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true } });
     }
 
     /// <summary>
