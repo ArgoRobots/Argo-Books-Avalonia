@@ -1948,18 +1948,14 @@
                                    FontSize="14"
                                    LineHeight="22"
                                    Foreground="{DynamicResource TextSecondaryBrush}">
-                            <Run Text="A customer is considered " />
-                            <Run Text="Active" FontWeight="SemiBold" />
-                            <Run Text=" if they have made at least one purchase within the selected date range." />
+                            <Run Text="A customer is considered active if they have made at least one purchase within the selected date range." />
                         </TextBlock>
 
                         <TextBlock TextWrapping="Wrap"
                                    FontSize="14"
                                    LineHeight="22"
                                    Foreground="{DynamicResource TextSecondaryBrush}">
-                            <Run Text="Customers with no purchases in this period are marked as " />
-                            <Run Text="Inactive" FontWeight="SemiBold" />
-                            <Run Text="." />
+                            <Run Text="Customers with no purchases in this period are marked as inactive." />
                         </TextBlock>
 
                         <Border Background="{DynamicResource SurfaceAltBrush}"
