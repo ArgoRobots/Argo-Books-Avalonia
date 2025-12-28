@@ -9,6 +9,9 @@ using Avalonia.Media;
 
 namespace ArgoBooks.Views;
 
+/// <summary>
+/// Code-behind for the Reports page, handling report designer interactions.
+/// </summary>
 public partial class ReportsPage : UserControl
 {
     private SkiaReportDesignCanvas? _designCanvas;
