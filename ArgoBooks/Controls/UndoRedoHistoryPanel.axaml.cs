@@ -47,7 +47,7 @@ public partial class UndoRedoHistoryPanel : UserControl
 
     private void HistoryItem_PointerEntered(object? sender, PointerEventArgs e)
     {
-        if (sender is Button button && button.DataContext is HistoryItemViewModel item)
+        if (sender is Button { DataContext: HistoryItemViewModel item })
         {
             if (DataContext is UndoRedoHistoryPanelViewModel vm)
             {

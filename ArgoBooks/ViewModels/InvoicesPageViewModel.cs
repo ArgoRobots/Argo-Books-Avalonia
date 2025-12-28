@@ -12,7 +12,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Invoices page.
 /// </summary>
-public partial class InvoicesPageViewModel : ViewModelBase
+public partial class InvoicesPageViewModel : SortablePageViewModelBase
 {
     #region Statistics
 
@@ -155,6 +155,9 @@ public partial class InvoicesPageViewModel : ViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
+    private bool _showAccountantColumn = true;
+
+    [ObservableProperty]
     private bool _showCustomerColumn = true;
 
     [ObservableProperty]
@@ -170,6 +173,7 @@ public partial class InvoicesPageViewModel : ViewModelBase
     private bool _showStatusColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowAccountantColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Accountant", value);
     partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
     partial void OnShowIssueDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("IssueDate", value);
     partial void OnShowDueDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("DueDate", value);
@@ -190,37 +194,6 @@ public partial class InvoicesPageViewModel : ViewModelBase
 
     #endregion
 
-    #region Sorting
-
-    [ObservableProperty]
-    private string _sortColumn = "IssueDate";
-
-    [ObservableProperty]
-    private SortDirection _sortDirection = SortDirection.Descending;
-
-    [RelayCommand]
-    private void SortBy(string column)
-    {
-        if (SortColumn == column)
-        {
-            SortDirection = SortDirection switch
-            {
-                SortDirection.None => SortDirection.Ascending,
-                SortDirection.Ascending => SortDirection.Descending,
-                SortDirection.Descending => SortDirection.None,
-                _ => SortDirection.Ascending
-            };
-        }
-        else
-        {
-            SortColumn = column;
-            SortDirection = SortDirection.Ascending;
-        }
-        FilterInvoices();
-    }
-
-    #endregion
-
     #region Invoices Collection
 
     private readonly List<Invoice> _allInvoices = [];
@@ -236,57 +209,10 @@ public partial class InvoicesPageViewModel : ViewModelBase
     #region Pagination
 
     [ObservableProperty]
-    private int _currentPage = 1;
-
-    [ObservableProperty]
-    private int _totalPages = 1;
-
-    [ObservableProperty]
-    private int _pageSize = 10;
-
-    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
-
-    partial void OnPageSizeChanged(int value)
-    {
-        CurrentPage = 1;
-        FilterInvoices();
-    }
-
-    [ObservableProperty]
     private string _paginationText = "0 invoices";
 
-    public ObservableCollection<int> PageNumbers { get; } = [];
-
-    public bool CanGoToPreviousPage => CurrentPage > 1;
-    public bool CanGoToNextPage => CurrentPage < TotalPages;
-
-    partial void OnCurrentPageChanged(int value)
-    {
-        OnPropertyChanged(nameof(CanGoToPreviousPage));
-        OnPropertyChanged(nameof(CanGoToNextPage));
-        FilterInvoices();
-    }
-
-    [RelayCommand]
-    private void GoToPreviousPage()
-    {
-        if (CanGoToPreviousPage)
-            CurrentPage--;
-    }
-
-    [RelayCommand]
-    private void GoToNextPage()
-    {
-        if (CanGoToNextPage)
-            CurrentPage++;
-    }
-
-    [RelayCommand]
-    private void GoToPage(int page)
-    {
-        if (page >= 1 && page <= TotalPages)
-            CurrentPage = page;
-    }
+    /// <inheritdoc />
+    protected override void OnSortOrPageChanged() => FilterInvoices();
 
     #endregion
 
@@ -294,6 +220,10 @@ public partial class InvoicesPageViewModel : ViewModelBase
 
     public InvoicesPageViewModel()
     {
+        // Set default sort values for invoices
+        SortColumn = "IssueDate";
+        SortDirection = SortDirection.Descending;
+
         LoadInvoices();
         LoadCustomerOptions();
 
@@ -512,12 +442,16 @@ public partial class InvoicesPageViewModel : ViewModelBase
         var displayItems = filtered.Select(invoice =>
         {
             var customer = companyData?.GetCustomer(invoice.CustomerId);
+            var accountant = !string.IsNullOrEmpty(invoice.AccountantId)
+                ? companyData?.Accountants.FirstOrDefault(a => a.Id == invoice.AccountantId)
+                : null;
             var statusDisplay = GetStatusDisplay(invoice);
 
             return new InvoiceDisplayItem
             {
                 Id = invoice.Id,
                 InvoiceNumber = invoice.InvoiceNumber,
+                AccountantName = accountant?.Name ?? "System",
                 CustomerId = invoice.CustomerId,
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 CustomerInitials = GetInitials(customer?.Name ?? "?"),
@@ -613,12 +547,12 @@ public partial class InvoicesPageViewModel : ViewModelBase
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length >= 2)
             return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
-        if (parts.Length == 1 && parts[0].Length >= 1)
+        if (parts is [{ Length: >= 1 }])
             return parts[0][0].ToString().ToUpper();
         return "?";
     }
 
-    private void UpdatePageNumbers()
+    protected override void UpdatePageNumbers()
     {
         PageNumbers.Clear();
         var startPage = Math.Max(1, CurrentPage - 2);
@@ -698,6 +632,9 @@ public partial class InvoiceDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _invoiceNumber = string.Empty;
+
+    [ObservableProperty]
+    private string _accountantName = string.Empty;
 
     [ObservableProperty]
     private string _customerId = string.Empty;

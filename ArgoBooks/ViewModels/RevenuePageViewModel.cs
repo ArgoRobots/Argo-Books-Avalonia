@@ -12,7 +12,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Revenue page displaying sale/revenue transactions.
 /// </summary>
-public partial class RevenuePageViewModel : ViewModelBase
+public partial class RevenuePageViewModel : SortablePageViewModelBase
 {
     #region Statistics
 
@@ -64,37 +64,6 @@ public partial class RevenuePageViewModel : ViewModelBase
 
     #endregion
 
-    #region Sorting
-
-    [ObservableProperty]
-    private string _sortColumn = "Date";
-
-    [ObservableProperty]
-    private SortDirection _sortDirection = SortDirection.Descending;
-
-    [RelayCommand]
-    private void SortBy(string column)
-    {
-        if (SortColumn == column)
-        {
-            SortDirection = SortDirection switch
-            {
-                SortDirection.None => SortDirection.Ascending,
-                SortDirection.Ascending => SortDirection.Descending,
-                SortDirection.Descending => SortDirection.None,
-                _ => SortDirection.Ascending
-            };
-        }
-        else
-        {
-            SortColumn = column;
-            SortDirection = SortDirection.Ascending;
-        }
-        FilterRevenue();
-    }
-
-    #endregion
-
     #region Column Visibility
 
     /// <summary>
@@ -107,6 +76,9 @@ public partial class RevenuePageViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _showIdColumn = true;
+
+    [ObservableProperty]
+    private bool _showAccountantColumn = true;
 
     [ObservableProperty]
     private bool _showCustomerColumn = true;
@@ -145,6 +117,7 @@ public partial class RevenuePageViewModel : ViewModelBase
     private bool _showReceiptColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowAccountantColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Accountant", value);
     partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
     partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
@@ -189,57 +162,10 @@ public partial class RevenuePageViewModel : ViewModelBase
     #region Pagination
 
     [ObservableProperty]
-    private int _currentPage = 1;
-
-    [ObservableProperty]
-    private int _totalPages = 1;
-
-    [ObservableProperty]
-    private int _pageSize = 10;
-
-    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
-
-    partial void OnPageSizeChanged(int value)
-    {
-        CurrentPage = 1;
-        FilterRevenue();
-    }
-
-    [ObservableProperty]
     private string _paginationText = "0 sales";
 
-    public ObservableCollection<int> PageNumbers { get; } = [];
-
-    public bool CanGoToPreviousPage => CurrentPage > 1;
-    public bool CanGoToNextPage => CurrentPage < TotalPages;
-
-    partial void OnCurrentPageChanged(int value)
-    {
-        OnPropertyChanged(nameof(CanGoToPreviousPage));
-        OnPropertyChanged(nameof(CanGoToNextPage));
-        FilterRevenue();
-    }
-
-    [RelayCommand]
-    private void GoToPreviousPage()
-    {
-        if (CanGoToPreviousPage)
-            CurrentPage--;
-    }
-
-    [RelayCommand]
-    private void GoToNextPage()
-    {
-        if (CanGoToNextPage)
-            CurrentPage++;
-    }
-
-    [RelayCommand]
-    private void GoToPage(int page)
-    {
-        if (page >= 1 && page <= TotalPages)
-            CurrentPage = page;
-    }
+    /// <inheritdoc />
+    protected override void OnSortOrPageChanged() => FilterRevenue();
 
     #endregion
 
@@ -247,6 +173,10 @@ public partial class RevenuePageViewModel : ViewModelBase
 
     public RevenuePageViewModel()
     {
+        // Set default sort values for revenue
+        SortColumn = "Date";
+        SortDirection = SortDirection.Descending;
+
         InitializeColumnVisibility();
         LoadRevenue();
         LoadDropdownOptions();
@@ -271,6 +201,7 @@ public partial class RevenuePageViewModel : ViewModelBase
     {
         // Set initial visibility for columns
         ColumnWidths.SetColumnVisibility("Id", ShowIdColumn);
+        ColumnWidths.SetColumnVisibility("Accountant", ShowAccountantColumn);
         ColumnWidths.SetColumnVisibility("Customer", ShowCustomerColumn);
         ColumnWidths.SetColumnVisibility("Product", ShowProductColumn);
         ColumnWidths.SetColumnVisibility("Date", ShowDateColumn);
@@ -584,7 +515,7 @@ public partial class RevenuePageViewModel : ViewModelBase
         // Check for returns related to this sale
         var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
 
-        if (relatedReturn != null && relatedReturn.Status == Core.Enums.ReturnStatus.Completed)
+        if (relatedReturn is { Status: Core.Enums.ReturnStatus.Completed })
         {
             return "Returned";
         }
@@ -593,7 +524,7 @@ public partial class RevenuePageViewModel : ViewModelBase
         return "Completed";
     }
 
-    private void UpdatePageNumbers()
+    protected override void UpdatePageNumbers()
     {
         PageNumbers.Clear();
         var startPage = Math.Max(1, CurrentPage - 2);

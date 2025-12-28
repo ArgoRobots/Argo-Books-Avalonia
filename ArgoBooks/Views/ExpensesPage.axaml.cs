@@ -4,6 +4,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Views;
 
+/// <summary>
+/// Code-behind for the Expenses page.
+/// </summary>
 public partial class ExpensesPage : UserControl
 {
     public ExpensesPage()

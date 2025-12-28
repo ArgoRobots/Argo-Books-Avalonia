@@ -447,8 +447,7 @@ public partial class AppShellViewModel : ViewModelBase
         HeaderViewModel.SetPageTitle(e.PageName);
 
         // Track ReportsPageViewModel when on Reports page
-        if (e.PageName == "Reports" && CurrentPage is Avalonia.Controls.Control reportsPage
-            && reportsPage.DataContext is ReportsPageViewModel reportsVm)
+        if (e.PageName == "Reports" && CurrentPage is Avalonia.Controls.Control { DataContext: ReportsPageViewModel reportsVm })
         {
             _reportsPageViewModel = reportsVm;
             // Wire up the unsaved changes confirmation for Previous button

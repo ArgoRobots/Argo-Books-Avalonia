@@ -182,8 +182,7 @@ public partial class ReportPreviewControl : UserControl
 
     private void OnScrollViewerLayoutUpdated(object? sender, EventArgs e)
     {
-        if (_pendingZoomToFit && _previewScrollViewer != null &&
-            _previewScrollViewer.Bounds.Width > 0 && _previewScrollViewer.Bounds.Height > 0)
+        if (_pendingZoomToFit && _previewScrollViewer is { Bounds: { Width: > 0, Height: > 0 } })
         {
             _pendingZoomToFit = false;
             ZoomToFitPage();

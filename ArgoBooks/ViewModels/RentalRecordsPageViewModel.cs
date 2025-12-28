@@ -12,7 +12,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Rental Records page.
 /// </summary>
-public partial class RentalRecordsPageViewModel : ViewModelBase
+public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 {
     #region Statistics
 
@@ -80,6 +80,9 @@ public partial class RentalRecordsPageViewModel : ViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
+    private bool _showAccountantColumn = true;
+
+    [ObservableProperty]
     private bool _showItemColumn = true;
 
     [ObservableProperty]
@@ -104,6 +107,7 @@ public partial class RentalRecordsPageViewModel : ViewModelBase
     private bool _showDepositColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowAccountantColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Accountant", value);
     partial void OnShowItemColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Item", value);
     partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
     partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
@@ -127,37 +131,6 @@ public partial class RentalRecordsPageViewModel : ViewModelBase
 
     #endregion
 
-    #region Sorting
-
-    [ObservableProperty]
-    private string _sortColumn = "StartDate";
-
-    [ObservableProperty]
-    private SortDirection _sortDirection = SortDirection.Descending;
-
-    [RelayCommand]
-    private void SortBy(string column)
-    {
-        if (SortColumn == column)
-        {
-            SortDirection = SortDirection switch
-            {
-                SortDirection.None => SortDirection.Ascending,
-                SortDirection.Ascending => SortDirection.Descending,
-                SortDirection.Descending => SortDirection.None,
-                _ => SortDirection.Ascending
-            };
-        }
-        else
-        {
-            SortColumn = column;
-            SortDirection = SortDirection.Ascending;
-        }
-        FilterRecords();
-    }
-
-    #endregion
-
     #region Records Collection
 
     private readonly List<RentalRecord> _allRecords = [];
@@ -171,57 +144,10 @@ public partial class RentalRecordsPageViewModel : ViewModelBase
     #region Pagination
 
     [ObservableProperty]
-    private int _currentPage = 1;
-
-    [ObservableProperty]
-    private int _totalPages = 1;
-
-    [ObservableProperty]
-    private int _pageSize = 10;
-
-    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
-
-    partial void OnPageSizeChanged(int value)
-    {
-        CurrentPage = 1;
-        FilterRecords();
-    }
-
-    [ObservableProperty]
     private string _paginationText = "0 records";
 
-    public ObservableCollection<int> PageNumbers { get; } = [];
-
-    public bool CanGoToPreviousPage => CurrentPage > 1;
-    public bool CanGoToNextPage => CurrentPage < TotalPages;
-
-    partial void OnCurrentPageChanged(int value)
-    {
-        OnPropertyChanged(nameof(CanGoToPreviousPage));
-        OnPropertyChanged(nameof(CanGoToNextPage));
-        FilterRecords();
-    }
-
-    [RelayCommand]
-    private void GoToPreviousPage()
-    {
-        if (CanGoToPreviousPage)
-            CurrentPage--;
-    }
-
-    [RelayCommand]
-    private void GoToNextPage()
-    {
-        if (CanGoToNextPage)
-            CurrentPage++;
-    }
-
-    [RelayCommand]
-    private void GoToPage(int page)
-    {
-        if (page >= 1 && page <= TotalPages)
-            CurrentPage = page;
-    }
+    /// <inheritdoc />
+    protected override void OnSortOrPageChanged() => FilterRecords();
 
     #endregion
 
@@ -229,6 +155,10 @@ public partial class RentalRecordsPageViewModel : ViewModelBase
 
     public RentalRecordsPageViewModel()
     {
+        // Set default sort values for rental records
+        SortColumn = "StartDate";
+        SortDirection = SortDirection.Descending;
+
         LoadRecords();
 
         if (App.UndoRedoManager != null)
@@ -438,10 +368,14 @@ public partial class RentalRecordsPageViewModel : ViewModelBase
         {
             var item = companyData?.RentalInventory.FirstOrDefault(i => i.Id == record.RentalItemId);
             var customer = companyData?.Customers.FirstOrDefault(c => c.Id == record.CustomerId);
+            var accountant = !string.IsNullOrEmpty(record.AccountantId)
+                ? companyData?.Accountants.FirstOrDefault(a => a.Id == record.AccountantId)
+                : null;
 
             return new RentalRecordDisplayItem
             {
                 Id = record.Id,
+                AccountantName = accountant?.Name ?? "System",
                 ItemName = item?.Name ?? "Unknown Item",
                 ItemId = record.RentalItemId,
                 CustomerName = customer?.Name ?? "Unknown Customer",
@@ -520,7 +454,7 @@ public partial class RentalRecordsPageViewModel : ViewModelBase
         }
     }
 
-    private void UpdatePageNumbers()
+    protected override void UpdatePageNumbers()
     {
         PageNumbers.Clear();
         var startPage = Math.Max(1, CurrentPage - 2);
@@ -603,6 +537,9 @@ public partial class RentalRecordDisplayItem : ObservableObject
 {
     [ObservableProperty]
     private string _id = string.Empty;
+
+    [ObservableProperty]
+    private string _accountantName = string.Empty;
 
     [ObservableProperty]
     private string _itemName = string.Empty;

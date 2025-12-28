@@ -106,7 +106,7 @@ public partial class ColorPickerInput : UserControl
         else if (change.Property == IsPickerOpenProperty)
         {
             // Handle light dismiss (popup closed without Apply being clicked)
-            if (change.OldValue is true && change.NewValue is false && !_wasApplied)
+            if (change is { OldValue: true, NewValue: false } && !_wasApplied)
             {
                 // Revert to original color
                 ColorValue = _originalColorValue;

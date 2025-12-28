@@ -138,19 +138,19 @@ public partial class StatCard : UserControl
     public bool IsValueColorDanger => ValueColor == StatCardColor.Danger;
 
     /// <summary>Gets whether trend is positive (value > 0).</summary>
-    public bool IsPositiveTrend => ChangeValue.HasValue && ChangeValue.Value > 0;
+    public bool IsPositiveTrend => ChangeValue is > 0;
 
     /// <summary>Gets whether trend is negative (value < 0).</summary>
-    public bool IsNegativeTrend => ChangeValue.HasValue && ChangeValue.Value < 0;
+    public bool IsNegativeTrend => ChangeValue is < 0;
 
     /// <summary>Gets whether trend is neutral (value == 0 or null).</summary>
     public bool IsNeutralTrend => !ChangeValue.HasValue || ChangeValue.Value == 0;
 
     /// <summary>Gets whether trend arrow should point up.</summary>
-    public bool IsTrendUp => ChangeValue.HasValue && ChangeValue.Value > 0;
+    public bool IsTrendUp => ChangeValue is > 0;
 
     /// <summary>Gets whether trend arrow should point down.</summary>
-    public bool IsTrendDown => ChangeValue.HasValue && ChangeValue.Value < 0;
+    public bool IsTrendDown => ChangeValue is < 0;
 
     /// <summary>Gets whether trend arrow should be flat.</summary>
     public bool IsTrendFlat => !ChangeValue.HasValue || ChangeValue.Value == 0;

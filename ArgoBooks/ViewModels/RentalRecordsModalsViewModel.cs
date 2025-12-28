@@ -211,7 +211,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     public string ViewStartDateFormatted => ViewStartDate.ToString("MMMM d, yyyy");
     public string ViewDueDateFormatted => ViewDueDate.ToString("MMMM d, yyyy");
     public string ViewReturnDateFormatted => ViewReturnDate?.ToString("MMMM d, yyyy") ?? "Not returned";
-    public string ViewDepositStatusFormatted => ViewDepositRefundedAmount.HasValue && ViewDepositRefundedAmount.Value > 0 ? $"Refunded (${ViewDepositRefundedAmount.Value:N2})" : "Held";
+    public string ViewDepositStatusFormatted => ViewDepositRefundedAmount is > 0 ? $"Refunded (${ViewDepositRefundedAmount.Value:N2})" : "Held";
 
     #endregion
 

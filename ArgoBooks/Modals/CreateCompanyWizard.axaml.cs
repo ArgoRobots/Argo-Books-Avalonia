@@ -69,11 +69,11 @@ public partial class CreateCompanyWizard : UserControl
                 e.Handled = true;
                 break;
             case Key.Enter:
-                if (vm.IsLastStep && vm.CanCreate)
+                if (vm is { IsLastStep: true, CanCreate: true })
                 {
                     vm.CreateCompanyCommand.Execute(null);
                 }
-                else if (vm.CanGoNext && vm.IsStep1Valid)
+                else if (vm is { CanGoNext: true, IsStep1Valid: true })
                 {
                     vm.NextStepCommand.Execute(null);
                 }

@@ -458,7 +458,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     /// <summary>
     /// ViewModel for the undo/redo button group control.
     /// </summary>
-    public ReportsUndoRedoButtonGroupViewModel UndoRedoViewModel { get; }
+    public UndoRedoButtonGroupViewModel UndoRedoViewModel { get; }
 
     [ObservableProperty]
     private bool _isUndoDropdownOpen;
@@ -1596,7 +1596,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ReportsPageViewModel()
     {
         // Initialize the undo/redo view model
-        UndoRedoViewModel = new ReportsUndoRedoButtonGroupViewModel(UndoRedoManager);
+        UndoRedoViewModel = new UndoRedoButtonGroupViewModel(UndoRedoManager);
         UndoRedoViewModel.ActionPerformed += (_, _) => OnPropertyChanged(nameof(Configuration));
 
         // Load element panel state from settings

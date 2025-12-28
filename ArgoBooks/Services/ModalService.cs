@@ -2,6 +2,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Core.Services;
 using Avalonia.Controls;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Services;
 
@@ -218,29 +219,5 @@ public class ModalService : IModalService
             "full" => ModalSize.Full,
             _ => ModalSize.Medium
         };
-    }
-
-    /// <summary>
-    /// Simple relay command for internal use.
-    /// </summary>
-    private class RelayCommand : System.Windows.Input.ICommand
-    {
-        private readonly Action _execute;
-
-        public RelayCommand(Action execute)
-        {
-            _execute = execute;
-        }
-
-        // CanExecute is always true, so we never need to raise CanExecuteChanged
-        public event EventHandler? CanExecuteChanged
-        {
-            add { }
-            remove { }
-        }
-
-        public bool CanExecute(object? parameter) => true;
-
-        public void Execute(object? parameter) => _execute();
     }
 }

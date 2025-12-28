@@ -3,6 +3,9 @@ using Avalonia.Controls;
 
 namespace ArgoBooks.Views;
 
+/// <summary>
+/// Welcome screen displayed when no company is loaded.
+/// </summary>
 public partial class WelcomeScreen : UserControl
 {
     public WelcomeScreen()

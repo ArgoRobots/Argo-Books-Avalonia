@@ -66,7 +66,7 @@ public partial class UndoRedoButtonGroup : UserControl
 
     private void UndoItem_PointerEntered(object? sender, PointerEventArgs e)
     {
-        if (sender is Border border && border.Tag is int index)
+        if (sender is Border { Tag: int index })
         {
             _currentUndoHoverIndex = index;
             UpdateUndoHighlighting();
@@ -81,7 +81,7 @@ public partial class UndoRedoButtonGroup : UserControl
 
     private void UndoItem_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is Border border && border.Tag is int index && DataContext is IUndoRedoButtonGroupViewModel vm)
+        if (sender is Border { Tag: int index } && DataContext is IUndoRedoButtonGroupViewModel vm)
         {
             vm.UndoToCommand.Execute(index);
             _undoPopup?.Close();
@@ -91,7 +91,7 @@ public partial class UndoRedoButtonGroup : UserControl
 
     private void RedoItem_PointerEntered(object? sender, PointerEventArgs e)
     {
-        if (sender is Border border && border.Tag is int index)
+        if (sender is Border { Tag: int index })
         {
             _currentRedoHoverIndex = index;
             UpdateRedoHighlighting();
@@ -106,7 +106,7 @@ public partial class UndoRedoButtonGroup : UserControl
 
     private void RedoItem_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is Border border && border.Tag is int index && DataContext is IUndoRedoButtonGroupViewModel vm)
+        if (sender is Border { Tag: int index } && DataContext is IUndoRedoButtonGroupViewModel vm)
         {
             vm.RedoToCommand.Execute(index);
             _redoPopup?.Close();
@@ -121,7 +121,7 @@ public partial class UndoRedoButtonGroup : UserControl
         for (int i = 0; i < _undoHistoryList.Items.Count; i++)
         {
             var container = _undoHistoryList.ContainerFromIndex(i);
-            if (container is ContentPresenter cp && cp.Child is Border border)
+            if (container is ContentPresenter { Child: Border border })
             {
                 // Highlight items from 0 to hoverIndex (inclusive)
                 border.Background = i <= _currentUndoHoverIndex ? HighlightBrush : TransparentBrush;
@@ -136,7 +136,7 @@ public partial class UndoRedoButtonGroup : UserControl
         for (int i = 0; i < _redoHistoryList.Items.Count; i++)
         {
             var container = _redoHistoryList.ContainerFromIndex(i);
-            if (container is ContentPresenter cp && cp.Child is Border border)
+            if (container is ContentPresenter { Child: Border border })
             {
                 // Highlight items from 0 to hoverIndex (inclusive)
                 border.Background = i <= _currentRedoHoverIndex ? HighlightBrush : TransparentBrush;

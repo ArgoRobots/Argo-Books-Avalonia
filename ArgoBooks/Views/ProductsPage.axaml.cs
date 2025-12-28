@@ -3,6 +3,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Views;
 
+/// <summary>
+/// Code-behind for the Products page.
+/// </summary>
 public partial class ProductsPage : UserControl
 {
     public ProductsPage()

@@ -12,7 +12,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Expenses page displaying purchase/expense transactions.
 /// </summary>
-public partial class ExpensesPageViewModel : ViewModelBase
+public partial class ExpensesPageViewModel : SortablePageViewModelBase
 {
     #region Statistics
 
@@ -64,37 +64,6 @@ public partial class ExpensesPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _filterReceiptStatus = "All";
-
-    #endregion
-
-    #region Sorting
-
-    [ObservableProperty]
-    private string _sortColumn = "Date";
-
-    [ObservableProperty]
-    private SortDirection _sortDirection = SortDirection.Descending;
-
-    [RelayCommand]
-    private void SortBy(string column)
-    {
-        if (SortColumn == column)
-        {
-            SortDirection = SortDirection switch
-            {
-                SortDirection.None => SortDirection.Ascending,
-                SortDirection.Ascending => SortDirection.Descending,
-                SortDirection.Descending => SortDirection.None,
-                _ => SortDirection.Ascending
-            };
-        }
-        else
-        {
-            SortColumn = column;
-            SortDirection = SortDirection.Ascending;
-        }
-        FilterExpenses();
-    }
 
     #endregion
 
@@ -196,57 +165,10 @@ public partial class ExpensesPageViewModel : ViewModelBase
     #region Pagination
 
     [ObservableProperty]
-    private int _currentPage = 1;
-
-    [ObservableProperty]
-    private int _totalPages = 1;
-
-    [ObservableProperty]
-    private int _pageSize = 10;
-
-    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
-
-    partial void OnPageSizeChanged(int value)
-    {
-        CurrentPage = 1;
-        FilterExpenses();
-    }
-
-    [ObservableProperty]
     private string _paginationText = "0 expenses";
 
-    public ObservableCollection<int> PageNumbers { get; } = [];
-
-    public bool CanGoToPreviousPage => CurrentPage > 1;
-    public bool CanGoToNextPage => CurrentPage < TotalPages;
-
-    partial void OnCurrentPageChanged(int value)
-    {
-        OnPropertyChanged(nameof(CanGoToPreviousPage));
-        OnPropertyChanged(nameof(CanGoToNextPage));
-        FilterExpenses();
-    }
-
-    [RelayCommand]
-    private void GoToPreviousPage()
-    {
-        if (CanGoToPreviousPage)
-            CurrentPage--;
-    }
-
-    [RelayCommand]
-    private void GoToNextPage()
-    {
-        if (CanGoToNextPage)
-            CurrentPage++;
-    }
-
-    [RelayCommand]
-    private void GoToPage(int page)
-    {
-        if (page >= 1 && page <= TotalPages)
-            CurrentPage = page;
-    }
+    /// <inheritdoc />
+    protected override void OnSortOrPageChanged() => FilterExpenses();
 
     #endregion
 
@@ -254,6 +176,10 @@ public partial class ExpensesPageViewModel : ViewModelBase
 
     public ExpensesPageViewModel()
     {
+        // Set default sort values for expenses
+        SortColumn = "Date";
+        SortDirection = SortDirection.Descending;
+
         // Initialize column visibility settings
         InitializeColumnVisibility();
 
@@ -603,7 +529,7 @@ public partial class ExpensesPageViewModel : ViewModelBase
         // Check for returns related to this purchase
         var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
 
-        if (relatedReturn != null && relatedReturn.Status == Core.Enums.ReturnStatus.Completed)
+        if (relatedReturn is { Status: Core.Enums.ReturnStatus.Completed })
         {
             return "Returned";
         }
@@ -612,7 +538,7 @@ public partial class ExpensesPageViewModel : ViewModelBase
         return "Completed";
     }
 
-    private void UpdatePageNumbers()
+    protected override void UpdatePageNumbers()
     {
         PageNumbers.Clear();
         var startPage = Math.Max(1, CurrentPage - 2);

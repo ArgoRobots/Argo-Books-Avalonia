@@ -73,7 +73,7 @@ public partial class DashboardPage : UserControl
             };
 
             // Determine format based on file extension
-            var extension = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+            var extension = Path.GetExtension(filePath).ToLowerInvariant();
             var format = extension switch
             {
                 ".jpg" or ".jpeg" => SKEncodedImageFormat.Jpeg,
@@ -123,7 +123,7 @@ public partial class DashboardPage : UserControl
     /// </summary>
     private void OnPagePointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (DataContext is DashboardPageViewModel viewModel && viewModel.IsChartContextMenuOpen)
+        if (DataContext is DashboardPageViewModel { IsChartContextMenuOpen: true } viewModel)
         {
             // Check if click is outside the context menu
             var contextMenu = this.FindControl<Border>("ChartContextMenu");

@@ -4,6 +4,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Views;
 
+/// <summary>
+/// Code-behind for the Revenue page.
+/// </summary>
 public partial class RevenuePage : UserControl
 {
     public RevenuePage()

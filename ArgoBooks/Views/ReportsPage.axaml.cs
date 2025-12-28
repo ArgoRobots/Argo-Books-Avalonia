@@ -1,4 +1,3 @@
-using System.Linq;
 using ArgoBooks.Controls.Reports;
 using ArgoBooks.ViewModels;
 using Avalonia;
@@ -9,6 +8,9 @@ using Avalonia.Media;
 
 namespace ArgoBooks.Views;
 
+/// <summary>
+/// Code-behind for the Reports page, handling report designer interactions.
+/// </summary>
 public partial class ReportsPage : UserControl
 {
     private SkiaReportDesignCanvas? _designCanvas;
@@ -121,18 +123,18 @@ public partial class ReportsPage : UserControl
 
         // Wait for layout to stabilize - the ScrollViewer inside the canvas
         // needs time for its Viewport to be calculated
-        var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
+        var tcs = new TaskCompletionSource<bool>();
 
         void OnLayoutUpdated(object? sender, EventArgs args)
         {
-            if (_designCanvas.Bounds.Width > 0 && _designCanvas.Bounds.Height > 0)
+            if (_designCanvas.Bounds is { Width: > 0, Height: > 0 })
             {
                 _designCanvas.LayoutUpdated -= OnLayoutUpdated;
                 tcs.TrySetResult(true);
             }
         }
 
-        if (_designCanvas.Bounds.Width > 0 && _designCanvas.Bounds.Height > 0)
+        if (_designCanvas.Bounds is { Width: > 0, Height: > 0 })
         {
             tcs.TrySetResult(true);
         }
@@ -185,10 +187,10 @@ public partial class ReportsPage : UserControl
             {
                 Text = "*",
                 FontSize = 14,
-                FontWeight = Avalonia.Media.FontWeight.Bold,
+                FontWeight = FontWeight.Bold,
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
-                Margin = new Avalonia.Thickness(0, 0, -2, 0),
+                Margin = new Thickness(0, 0, -2, 0),
                 IsHitTestVisible = false
             };
             // Add as overlay in the Grid (won't shift other elements)
@@ -348,7 +350,7 @@ public partial class ReportsPage : UserControl
         _noChangesBorder.Opacity = vm.ShowNoChangesMessage ? 1 : 0;
     }
 
-    private void OnElementPropertyChanged(object? sender, ArgoBooks.Core.Models.Reports.ReportElementBase element)
+    private void OnElementPropertyChanged(object? sender, Core.Models.Reports.ReportElementBase element)
     {
         // Refresh the specific element's content when its properties change
         _designCanvas?.RefreshElementContent(element);
@@ -395,8 +397,8 @@ public partial class ReportsPage : UserControl
     {
         var oldZoom = vm.ZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MaxZoom)
-            : Math.Max(oldZoom - Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MinZoom);
+            ? Math.Min(oldZoom + SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
@@ -446,8 +448,8 @@ public partial class ReportsPage : UserControl
 
         var oldZoom = _previewZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MaxZoom)
-            : Math.Max(oldZoom - Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MinZoom);
+            ? Math.Min(oldZoom + SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
@@ -491,8 +493,8 @@ public partial class ReportsPage : UserControl
 
         var oldZoom = _previewZoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MaxZoom)
-            : Math.Max(oldZoom - Controls.Reports.SkiaReportDesignCanvas.ZoomStep, Controls.Reports.SkiaReportDesignCanvas.MinZoom);
+            ? Math.Min(oldZoom + SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(oldZoom - SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MinZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
