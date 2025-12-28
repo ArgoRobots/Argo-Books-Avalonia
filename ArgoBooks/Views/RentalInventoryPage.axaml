@@ -544,6 +544,7 @@
                             </Panel>
                         </ScrollViewer>
                     </Grid>
+                    </ScrollViewer>
 
                     <!-- Pagination Footer -->
                     <Border Grid.Row="2"
