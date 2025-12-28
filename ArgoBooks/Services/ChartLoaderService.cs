@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
@@ -551,9 +552,12 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        var distribution = companyData.Sales
+        var salesInRange = companyData.Sales
             .Where(s => s.Date >= start && s.Date <= end)
-            .GroupBy(s => s.CategoryId ?? "Unknown")
+            .ToList();
+
+        var distribution = salesInRange
+            .GroupBy(s => GetEffectiveCategoryId(s, companyData) ?? "Unknown")
             .Select(g => new
             {
                 Category = companyData.GetCategory(g.Key)?.Name ?? "Other",
@@ -604,9 +608,12 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        var distribution = companyData.Purchases
+        var purchasesInRange = companyData.Purchases
             .Where(p => p.Date >= start && p.Date <= end)
-            .GroupBy(p => p.CategoryId ?? "Unknown")
+            .ToList();
+
+        var distribution = purchasesInRange
+            .GroupBy(p => GetEffectiveCategoryId(p, companyData) ?? "Unknown")
             .Select(g => new
             {
                 Category = companyData.GetCategory(g.Key)?.Name ?? "Other",
@@ -907,7 +914,7 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads countries of origin (sales by customer country) as a pie chart.
+    /// Loads countries of origin (sales by customer country, or product supplier country as fallback) as a pie chart.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCountriesOfOriginChart(
         CompanyData? companyData,
@@ -923,12 +930,32 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        var distribution = companyData.Sales
+        var salesInRange = companyData.Sales
             .Where(s => s.Date >= start && s.Date <= end)
+            .ToList();
+
+        var distribution = salesInRange
             .GroupBy(s =>
             {
+                // First try customer country
                 var customer = companyData.GetCustomer(s.CustomerId ?? "");
-                return customer?.Address?.Country ?? "Unknown";
+                if (customer?.Address?.Country != null && !string.IsNullOrEmpty(customer.Address.Country))
+                    return customer.Address.Country;
+
+                // Fall back to product's supplier country (origin of the product)
+                var firstProductId = s.LineItems?.FirstOrDefault()?.ProductId;
+                if (!string.IsNullOrEmpty(firstProductId))
+                {
+                    var product = companyData.GetProduct(firstProductId);
+                    if (product != null && !string.IsNullOrEmpty(product.SupplierId))
+                    {
+                        var supplier = companyData.GetSupplier(product.SupplierId);
+                        if (supplier?.Address?.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
+                            return supplier.Address.Country;
+                    }
+                }
+
+                return "Unknown";
             })
             .Select(g => new { Country = g.Key, Total = g.Sum(s => s.Total) })
             .OrderByDescending(x => x.Total)
@@ -972,12 +999,22 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        var distribution = companyData.Purchases
+        var purchasesInRange = companyData.Purchases
             .Where(p => p.Date >= start && p.Date <= end)
+            .ToList();
+
+        var distribution = purchasesInRange
             .GroupBy(p =>
             {
-                var supplier = companyData.GetSupplier(p.SupplierId ?? "");
-                return supplier?.Address?.Country ?? "Unknown";
+                // First try supplier from purchase
+                var supplierId = GetEffectiveSupplierId(p, companyData);
+                if (!string.IsNullOrEmpty(supplierId))
+                {
+                    var supplier = companyData.GetSupplier(supplierId);
+                    if (supplier?.Address?.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
+                        return supplier.Address.Country;
+                }
+                return "Unknown";
             })
             .Select(g => new { Country = g.Key, Total = g.Sum(p => p.Total) })
             .OrderByDescending(x => x.Total)
@@ -1005,7 +1042,7 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads companies of origin (sales by customer) as a pie chart.
+    /// Loads companies of origin (sales by customer, or product supplier as fallback) as a pie chart.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCompaniesOfOriginChart(
         CompanyData? companyData,
@@ -1021,9 +1058,33 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        var distribution = companyData.Sales
+        var salesInRange = companyData.Sales
             .Where(s => s.Date >= start && s.Date <= end)
-            .GroupBy(s => companyData.GetCustomer(s.CustomerId ?? "")?.Name ?? "Unknown")
+            .ToList();
+
+        var distribution = salesInRange
+            .GroupBy(s =>
+            {
+                // First try customer name
+                var customer = companyData.GetCustomer(s.CustomerId ?? "");
+                if (customer != null && !string.IsNullOrEmpty(customer.Name))
+                    return customer.Name;
+
+                // Fall back to product's supplier name (origin of the product)
+                var firstProductId = s.LineItems?.FirstOrDefault()?.ProductId;
+                if (!string.IsNullOrEmpty(firstProductId))
+                {
+                    var product = companyData.GetProduct(firstProductId);
+                    if (product != null && !string.IsNullOrEmpty(product.SupplierId))
+                    {
+                        var supplier = companyData.GetSupplier(product.SupplierId);
+                        if (supplier != null && !string.IsNullOrEmpty(supplier.Name))
+                            return supplier.Name;
+                    }
+                }
+
+                return "Unknown";
+            })
             .Select(g => new { Company = g.Key, Total = g.Sum(s => s.Total) })
             .OrderByDescending(x => x.Total)
             .Take(8)
@@ -1580,12 +1641,32 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        return companyData.Sales
+        var salesInRange = companyData.Sales
             .Where(s => s.Date >= start && s.Date <= end)
+            .ToList();
+
+        return salesInRange
             .GroupBy(s =>
             {
+                // First try customer country
                 var customer = companyData.GetCustomer(s.CustomerId ?? "");
-                return GetCountryIsoCode(customer?.Address?.Country);
+                if (customer?.Address?.Country != null && !string.IsNullOrEmpty(customer.Address.Country))
+                    return GetCountryIsoCode(customer.Address.Country);
+
+                // Fall back to product's supplier country
+                var firstProductId = s.LineItems?.FirstOrDefault()?.ProductId;
+                if (!string.IsNullOrEmpty(firstProductId))
+                {
+                    var product = companyData.GetProduct(firstProductId);
+                    if (product != null && !string.IsNullOrEmpty(product.SupplierId))
+                    {
+                        var supplier = companyData.GetSupplier(product.SupplierId);
+                        if (supplier?.Address?.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
+                            return GetCountryIsoCode(supplier.Address.Country);
+                    }
+                }
+
+                return string.Empty;
             })
             .Where(g => !string.IsNullOrEmpty(g.Key))
             .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.Total));
@@ -1607,12 +1688,21 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
-        return companyData.Purchases
+        var purchasesInRange = companyData.Purchases
             .Where(p => p.Date >= start && p.Date <= end)
+            .ToList();
+
+        return purchasesInRange
             .GroupBy(p =>
             {
-                var supplier = companyData.GetSupplier(p.SupplierId ?? "");
-                return GetCountryIsoCode(supplier?.Address?.Country);
+                var supplierId = GetEffectiveSupplierId(p, companyData);
+                if (!string.IsNullOrEmpty(supplierId))
+                {
+                    var supplier = companyData.GetSupplier(supplierId);
+                    if (supplier?.Address?.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
+                        return GetCountryIsoCode(supplier.Address.Country);
+                }
+                return string.Empty;
             })
             .Where(g => !string.IsNullOrEmpty(g.Key))
             .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.Total));
@@ -1707,6 +1797,82 @@ public class ChartLoaderService
                 axis.MaxLimit = null;
             }
         }
+    }
+
+    /// <summary>
+    /// Gets the effective category ID for a sale, checking LineItems if not set directly.
+    /// </summary>
+    private static string? GetEffectiveCategoryId(Sale sale, CompanyData companyData)
+    {
+        // First check if CategoryId is set directly on the sale
+        if (!string.IsNullOrEmpty(sale.CategoryId))
+            return sale.CategoryId;
+
+        // Otherwise, look at the first LineItem's product
+        var firstProductId = sale.LineItems?.FirstOrDefault()?.ProductId;
+        if (!string.IsNullOrEmpty(firstProductId))
+        {
+            var product = companyData.GetProduct(firstProductId);
+            if (product != null && !string.IsNullOrEmpty(product.CategoryId))
+                return product.CategoryId;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the effective category ID for a purchase, checking LineItems if not set directly.
+    /// </summary>
+    private static string? GetEffectiveCategoryId(Purchase purchase, CompanyData companyData)
+    {
+        // First check if CategoryId is set directly on the purchase
+        if (!string.IsNullOrEmpty(purchase.CategoryId))
+            return purchase.CategoryId;
+
+        // Otherwise, look at the first LineItem's product
+        var firstProductId = purchase.LineItems?.FirstOrDefault()?.ProductId;
+        if (!string.IsNullOrEmpty(firstProductId))
+        {
+            var product = companyData.GetProduct(firstProductId);
+            if (product != null && !string.IsNullOrEmpty(product.CategoryId))
+                return product.CategoryId;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the effective supplier ID for a purchase, checking LineItems if not set directly.
+    /// </summary>
+    private static string? GetEffectiveSupplierId(Purchase purchase, CompanyData companyData)
+    {
+        // First check if SupplierId is set directly on the purchase
+        if (!string.IsNullOrEmpty(purchase.SupplierId))
+            return purchase.SupplierId;
+
+        // Otherwise, look at the first LineItem's product
+        var firstProductId = purchase.LineItems?.FirstOrDefault()?.ProductId;
+        if (!string.IsNullOrEmpty(firstProductId))
+        {
+            var product = companyData.GetProduct(firstProductId);
+            if (product != null && !string.IsNullOrEmpty(product.SupplierId))
+                return product.SupplierId;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the effective customer ID for a sale, checking LineItems if not set directly.
+    /// For sales, we may look at the product's supplier as a fallback for some charts.
+    /// </summary>
+    private static string? GetEffectiveCustomerId(Sale sale, CompanyData companyData)
+    {
+        // First check if CustomerId is set directly on the sale
+        if (!string.IsNullOrEmpty(sale.CustomerId))
+            return sale.CustomerId;
+
+        return null;
     }
 
     /// <summary>
