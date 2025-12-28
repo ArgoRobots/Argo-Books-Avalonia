@@ -12,6 +12,15 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class LostDamagedPageViewModel : ViewModelBase
 {
+    #region Table Column Widths
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public LostDamagedTableColumnWidths ColumnWidths { get; } = new LostDamagedTableColumnWidths();
+
+    #endregion
+
     #region Statistics
 
     [ObservableProperty]
