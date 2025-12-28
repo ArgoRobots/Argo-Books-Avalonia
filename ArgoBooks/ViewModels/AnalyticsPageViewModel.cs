@@ -196,37 +196,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _totalPurchases = "$0.00";
 
     [ObservableProperty]
-    private double _purchasesChangeValue;
+    private double? _purchasesChangeValue;
 
     [ObservableProperty]
-    private string _purchasesChangeText = "0.0%";
+    private string? _purchasesChangeText;
 
     [ObservableProperty]
     private string _totalSales = "$0.00";
 
     [ObservableProperty]
-    private double _salesChangeValue;
+    private double? _salesChangeValue;
 
     [ObservableProperty]
-    private string _salesChangeText = "0.0%";
+    private string? _salesChangeText;
 
     [ObservableProperty]
     private string _netProfit = "$0.00";
 
     [ObservableProperty]
-    private double _profitChangeValue;
+    private double? _profitChangeValue;
 
     [ObservableProperty]
-    private string _profitChangeText = "0.0%";
+    private string? _profitChangeText;
 
     [ObservableProperty]
     private string _profitMargin = "0.0%";
 
     [ObservableProperty]
-    private double _profitMarginChangeValue;
+    private double? _profitMarginChangeValue;
 
     [ObservableProperty]
-    private string _profitMarginChangeText = "0.0%";
+    private string? _profitMarginChangeText;
 
     #endregion
 
@@ -239,28 +239,28 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _transactionsProcessed = "0";
 
     [ObservableProperty]
-    private double _transactionsChangeValue;
+    private double? _transactionsChangeValue;
 
     [ObservableProperty]
-    private string _transactionsChangeText = "0.0%";
+    private string? _transactionsChangeText;
 
     [ObservableProperty]
     private string _avgProcessingTime = "N/A";
 
     [ObservableProperty]
-    private double _processingTimeChangeValue;
+    private double? _processingTimeChangeValue;
 
     [ObservableProperty]
-    private string _processingTimeChangeText = "0.0%";
+    private string? _processingTimeChangeText;
 
     [ObservableProperty]
     private string _accuracyRate = "N/A";
 
     [ObservableProperty]
-    private double _accuracyChangeValue;
+    private double? _accuracyChangeValue;
 
     [ObservableProperty]
-    private string _accuracyChangeText = "0.0%";
+    private string? _accuracyChangeText;
 
     #endregion
 
@@ -270,37 +270,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _revenueGrowth = "0.0%";
 
     [ObservableProperty]
-    private double _revenueGrowthChangeValue;
+    private double? _revenueGrowthChangeValue;
 
     [ObservableProperty]
-    private string _revenueGrowthChangeText = "0.0%";
+    private string? _revenueGrowthChangeText;
 
     [ObservableProperty]
     private string _totalTransactions = "0";
 
     [ObservableProperty]
-    private double _totalTransactionsChangeValue;
+    private double? _totalTransactionsChangeValue;
 
     [ObservableProperty]
-    private string _totalTransactionsChangeText = "0.0%";
+    private string? _totalTransactionsChangeText;
 
     [ObservableProperty]
     private string _avgTransactionValue = "$0.00";
 
     [ObservableProperty]
-    private double _avgTransactionChangeValue;
+    private double? _avgTransactionChangeValue;
 
     [ObservableProperty]
-    private string _avgTransactionChangeText = "0.0%";
+    private string? _avgTransactionChangeText;
 
     [ObservableProperty]
     private string _avgShippingCost = "$0.00";
 
     [ObservableProperty]
-    private double _avgShippingChangeValue;
+    private double? _avgShippingChangeValue;
 
     [ObservableProperty]
-    private string _avgShippingChangeText = "0.0%";
+    private string? _avgShippingChangeText;
 
     #endregion
 
@@ -310,37 +310,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _totalCustomers = "0";
 
     [ObservableProperty]
-    private double _customersChangeValue;
+    private double? _customersChangeValue;
 
     [ObservableProperty]
-    private string _customersChangeText = "0.0%";
+    private string? _customersChangeText;
 
     [ObservableProperty]
     private string _newCustomers = "0";
 
     [ObservableProperty]
-    private double _newCustomersChangeValue;
+    private double? _newCustomersChangeValue;
 
     [ObservableProperty]
-    private string _newCustomersChangeText = "0.0%";
+    private string? _newCustomersChangeText;
 
     [ObservableProperty]
     private string _retentionRate = "N/A";
 
     [ObservableProperty]
-    private double _retentionChangeValue;
+    private double? _retentionChangeValue;
 
     [ObservableProperty]
-    private string _retentionChangeText = "0.0%";
+    private string? _retentionChangeText;
 
     [ObservableProperty]
     private string _avgCustomerValue = "$0.00";
 
     [ObservableProperty]
-    private double _avgCustomerValueChangeValue;
+    private double? _avgCustomerValueChangeValue;
 
     [ObservableProperty]
-    private string _avgCustomerValueChangeText = "0.0%";
+    private string? _avgCustomerValueChangeText;
 
     #endregion
 
@@ -350,37 +350,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _totalReturns = "0";
 
     [ObservableProperty]
-    private double _returnsChangeValue;
+    private double? _returnsChangeValue;
 
     [ObservableProperty]
-    private string _returnsChangeText = "0.0%";
+    private string? _returnsChangeText;
 
     [ObservableProperty]
     private string _returnRate = "0.0%";
 
     [ObservableProperty]
-    private double _returnRateChangeValue;
+    private double? _returnRateChangeValue;
 
     [ObservableProperty]
-    private string _returnRateChangeText = "0.0%";
+    private string? _returnRateChangeText;
 
     [ObservableProperty]
     private string _returnsFinancialImpact = "$0.00";
 
     [ObservableProperty]
-    private double _returnsImpactChangeValue;
+    private double? _returnsImpactChangeValue;
 
     [ObservableProperty]
-    private string _returnsImpactChangeText = "0.0%";
+    private string? _returnsImpactChangeText;
 
     [ObservableProperty]
     private string _avgResolutionTime = "N/A";
 
     [ObservableProperty]
-    private double _resolutionTimeChangeValue;
+    private double? _resolutionTimeChangeValue;
 
     [ObservableProperty]
-    private string _resolutionTimeChangeText = "0.0%";
+    private string? _resolutionTimeChangeText;
 
     #endregion
 
@@ -390,37 +390,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _totalLosses = "0";
 
     [ObservableProperty]
-    private double _lossesChangeValue;
+    private double? _lossesChangeValue;
 
     [ObservableProperty]
-    private string _lossesChangeText = "0.0%";
+    private string? _lossesChangeText;
 
     [ObservableProperty]
     private string _lossRate = "0.0%";
 
     [ObservableProperty]
-    private double _lossRateChangeValue;
+    private double? _lossRateChangeValue;
 
     [ObservableProperty]
-    private string _lossRateChangeText = "0.0%";
+    private string? _lossRateChangeText;
 
     [ObservableProperty]
     private string _lossesFinancialImpact = "$0.00";
 
     [ObservableProperty]
-    private double _lossesImpactChangeValue;
+    private double? _lossesImpactChangeValue;
 
     [ObservableProperty]
-    private string _lossesImpactChangeText = "0.0%";
+    private string? _lossesImpactChangeText;
 
     [ObservableProperty]
     private string _insuranceClaims = "0";
 
     [ObservableProperty]
-    private double _insuranceClaimsChangeValue;
+    private double? _insuranceClaimsChangeValue;
 
     [ObservableProperty]
-    private string _insuranceClaimsChangeText = "0.0%";
+    private string? _insuranceClaimsChangeText;
 
     #endregion
 
