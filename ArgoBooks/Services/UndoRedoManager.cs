@@ -3,6 +3,57 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace ArgoBooks.Services;
 
 /// <summary>
+/// Common interface for undo/redo managers.
+/// </summary>
+public interface IUndoRedoManager
+{
+    /// <summary>
+    /// Gets whether undo is available.
+    /// </summary>
+    bool CanUndo { get; }
+
+    /// <summary>
+    /// Gets whether redo is available.
+    /// </summary>
+    bool CanRedo { get; }
+
+    /// <summary>
+    /// Gets the description of the next undo action.
+    /// </summary>
+    string? UndoDescription { get; }
+
+    /// <summary>
+    /// Gets the description of the next redo action.
+    /// </summary>
+    string? RedoDescription { get; }
+
+    /// <summary>
+    /// Gets the undo history descriptions.
+    /// </summary>
+    IEnumerable<string> GetUndoHistory();
+
+    /// <summary>
+    /// Gets the redo history descriptions.
+    /// </summary>
+    IEnumerable<string> GetRedoHistory();
+
+    /// <summary>
+    /// Performs undo operation.
+    /// </summary>
+    void Undo();
+
+    /// <summary>
+    /// Performs redo operation.
+    /// </summary>
+    void Redo();
+
+    /// <summary>
+    /// Event raised when the undo/redo state changes.
+    /// </summary>
+    event EventHandler? StateChanged;
+}
+
+/// <summary>
 /// Interface for undoable actions.
 /// </summary>
 public interface IUndoableAction
@@ -26,7 +77,7 @@ public interface IUndoableAction
 /// <summary>
 /// Manages undo and redo operations with history tracking.
 /// </summary>
-public partial class UndoRedoManager : ObservableObject
+public partial class UndoRedoManager : ObservableObject, IUndoRedoManager
 {
     private readonly Stack<IUndoableAction> _undoStack = new();
     private readonly Stack<IUndoableAction> _redoStack = new();
@@ -103,6 +154,18 @@ public partial class UndoRedoManager : ObservableObject
     /// Gets the descriptions of all redo actions.
     /// </summary>
     public List<string> GetRedoDescriptions() => _redoStack.Select(a => a.Description).ToList();
+
+    /// <inheritdoc />
+    IEnumerable<string> IUndoRedoManager.GetUndoHistory() => GetUndoDescriptions();
+
+    /// <inheritdoc />
+    IEnumerable<string> IUndoRedoManager.GetRedoHistory() => GetRedoDescriptions();
+
+    /// <inheritdoc />
+    void IUndoRedoManager.Undo() => Undo();
+
+    /// <inheritdoc />
+    void IUndoRedoManager.Redo() => Redo();
 
     /// <summary>
     /// Records an action for undo/redo.
@@ -326,4 +389,41 @@ public class PropertyChangeAction<T> : IUndoableAction
     /// Redoes the property change.
     /// </summary>
     public void Redo() => _setter(_newValue);
+}
+
+/// <summary>
+/// A simple undoable action that uses delegate functions for undo and redo.
+/// </summary>
+public class DelegateAction : IUndoableAction
+{
+    private readonly Action _undoAction;
+    private readonly Action _redoAction;
+
+    /// <summary>
+    /// Gets the description of the action.
+    /// </summary>
+    public string Description { get; }
+
+    /// <summary>
+    /// Initializes a new delegate-based action.
+    /// </summary>
+    /// <param name="description">Description of the action.</param>
+    /// <param name="undoAction">Action to perform on undo.</param>
+    /// <param name="redoAction">Action to perform on redo.</param>
+    public DelegateAction(string description, Action undoAction, Action redoAction)
+    {
+        Description = description;
+        _undoAction = undoAction;
+        _redoAction = redoAction;
+    }
+
+    /// <summary>
+    /// Undoes the action.
+    /// </summary>
+    public void Undo() => _undoAction();
+
+    /// <summary>
+    /// Redoes the action.
+    /// </summary>
+    public void Redo() => _redoAction();
 }

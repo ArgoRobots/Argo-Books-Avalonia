@@ -16,7 +16,7 @@ public interface IReportUndoableAction
 /// <summary>
 /// Manages undo/redo operations for the report layout designer.
 /// </summary>
-public class ReportUndoRedoManager : INotifyPropertyChanged
+public class ReportUndoRedoManager : INotifyPropertyChanged, IUndoRedoManager
 {
     private readonly Stack<IReportUndoableAction> _undoStack = new();
     private readonly Stack<IReportUndoableAction> _redoStack = new();
@@ -73,6 +73,12 @@ public class ReportUndoRedoManager : INotifyPropertyChanged
     /// Gets the redo history.
     /// </summary>
     public IEnumerable<string> RedoHistory => _redoStack.Select(a => a.Description);
+
+    /// <inheritdoc />
+    IEnumerable<string> IUndoRedoManager.GetUndoHistory() => UndoHistory;
+
+    /// <inheritdoc />
+    IEnumerable<string> IUndoRedoManager.GetRedoHistory() => RedoHistory;
 
     /// <summary>
     /// Records an action for undo/redo.

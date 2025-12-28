@@ -36,10 +36,11 @@ public interface IUndoRedoButtonGroupViewModel
 
 /// <summary>
 /// ViewModel for the undo/redo button group control.
+/// Works with any IUndoRedoManager implementation.
 /// </summary>
 public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButtonGroupViewModel
 {
-    private UndoRedoManager? _undoRedoManager;
+    private IUndoRedoManager? _undoRedoManager;
 
     [ObservableProperty]
     private bool _canUndo;
@@ -86,9 +87,9 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     }
 
     /// <summary>
-    /// Constructor with UndoRedoManager.
+    /// Constructor with IUndoRedoManager.
     /// </summary>
-    public UndoRedoButtonGroupViewModel(UndoRedoManager manager)
+    public UndoRedoButtonGroupViewModel(IUndoRedoManager manager)
     {
         SetUndoRedoManager(manager);
     }
@@ -96,7 +97,7 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     /// <summary>
     /// Sets the undo/redo manager.
     /// </summary>
-    public void SetUndoRedoManager(UndoRedoManager manager)
+    public void SetUndoRedoManager(IUndoRedoManager manager)
     {
         if (_undoRedoManager != null)
         {
@@ -146,23 +147,23 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
 
         if (_undoRedoManager == null) return;
 
-        var undoDescriptions = _undoRedoManager.GetUndoDescriptions();
-        for (int i = 0; i < undoDescriptions.Count; i++)
+        int i = 0;
+        foreach (var description in _undoRedoManager.GetUndoHistory())
         {
             UndoHistory.Add(new UndoRedoHistoryItem
             {
-                Index = i,
-                Description = undoDescriptions[i]
+                Index = i++,
+                Description = description
             });
         }
 
-        var redoDescriptions = _undoRedoManager.GetRedoDescriptions();
-        for (int i = 0; i < redoDescriptions.Count; i++)
+        i = 0;
+        foreach (var description in _undoRedoManager.GetRedoHistory())
         {
             RedoHistory.Add(new UndoRedoHistoryItem
             {
-                Index = i,
-                Description = redoDescriptions[i]
+                Index = i++,
+                Description = description
             });
         }
     }
@@ -173,8 +174,9 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     [RelayCommand]
     private void Undo()
     {
-        if (_undoRedoManager?.Undo() == true)
+        if (_undoRedoManager?.CanUndo == true)
         {
+            _undoRedoManager.Undo();
             ActionPerformed?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -185,8 +187,9 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     [RelayCommand]
     private void Redo()
     {
-        if (_undoRedoManager?.Redo() == true)
+        if (_undoRedoManager?.CanRedo == true)
         {
+            _undoRedoManager.Redo();
             ActionPerformed?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -248,7 +251,7 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     /// <summary>
     /// Gets the undo/redo manager.
     /// </summary>
-    public UndoRedoManager? Manager => _undoRedoManager;
+    public IUndoRedoManager? Manager => _undoRedoManager;
 
     // Explicit interface implementation for ICommand properties
     ICommand IUndoRedoButtonGroupViewModel.UndoCommand => UndoCommand;
