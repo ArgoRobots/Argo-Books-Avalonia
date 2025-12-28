@@ -245,90 +245,90 @@
                                 <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                     <!-- Item -->
                                     <Panel Width="{Binding ColumnWidths.ItemColumnWidth}" IsVisible="{Binding ShowItemColumn}">
-                                        <TextBlock Text="Item" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   Margin="8,12,8,12" />
+                                        <controls:SortableColumnHeader Text="Item" ColumnName="Item"
+                                                                        Command="{Binding SortByCommand}"
+                                                                        SortColumn="{Binding SortColumn}"
+                                                                        SortDirection="{Binding SortDirection}" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Item" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
                                     <!-- Supplier -->
                                     <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
-                                        <TextBlock Text="Supplier" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   Margin="8,12,8,12" />
+                                        <controls:SortableColumnHeader Text="Supplier" ColumnName="Supplier"
+                                                                        Command="{Binding SortByCommand}"
+                                                                        SortColumn="{Binding SortColumn}"
+                                                                        SortDirection="{Binding SortDirection}" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
                                     <!-- Status -->
                                     <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
-                                        <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   Margin="8,12,8,12" />
+                                        <controls:SortableColumnHeader Text="Status" ColumnName="Status"
+                                                                        Command="{Binding SortByCommand}"
+                                                                        SortColumn="{Binding SortColumn}"
+                                                                        SortDirection="{Binding SortDirection}" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
                                     <!-- Total Qty -->
                                     <Panel Width="{Binding ColumnWidths.TotalQtyColumnWidth}" IsVisible="{Binding ShowTotalQtyColumn}">
-                                        <TextBlock Text="Total" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   Margin="8,12,8,12" />
+                                        <controls:SortableColumnHeader Text="Total" ColumnName="TotalQty"
+                                                                        Command="{Binding SortByCommand}"
+                                                                        SortColumn="{Binding SortColumn}"
+                                                                        SortDirection="{Binding SortDirection}" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="TotalQty" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
                                     <!-- Available -->
                                     <Panel Width="{Binding ColumnWidths.AvailableColumnWidth}" IsVisible="{Binding ShowAvailableColumn}">
-                                        <TextBlock Text="Avail." FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   Margin="8,12,8,12" />
+                                        <controls:SortableColumnHeader Text="Avail." ColumnName="Available"
+                                                                        Command="{Binding SortByCommand}"
+                                                                        SortColumn="{Binding SortColumn}"
+                                                                        SortDirection="{Binding SortDirection}" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Available" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
                                     <!-- Rented -->
                                     <Panel Width="{Binding ColumnWidths.RentedColumnWidth}" IsVisible="{Binding ShowRentedColumn}">
-                                        <TextBlock Text="Rented" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   Margin="8,12,8,12" />
+                                        <controls:SortableColumnHeader Text="Rented" ColumnName="Rented"
+                                                                        Command="{Binding SortByCommand}"
+                                                                        SortColumn="{Binding SortColumn}"
+                                                                        SortDirection="{Binding SortDirection}" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Rented" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
                                     <!-- Daily Rate -->
                                     <Panel Width="{Binding ColumnWidths.DailyRateColumnWidth}" IsVisible="{Binding ShowDailyRateColumn}">
-                                        <TextBlock Text="Daily" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   Margin="8,12,8,12" />
+                                        <controls:SortableColumnHeader Text="Daily" ColumnName="DailyRate"
+                                                                        Command="{Binding SortByCommand}"
+                                                                        SortColumn="{Binding SortColumn}"
+                                                                        SortDirection="{Binding SortDirection}" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="DailyRate" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
                                     <!-- Weekly Rate -->
                                     <Panel Width="{Binding ColumnWidths.WeeklyRateColumnWidth}" IsVisible="{Binding ShowWeeklyRateColumn}">
-                                        <TextBlock Text="Weekly" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   Margin="8,12,8,12" />
+                                        <controls:SortableColumnHeader Text="Weekly" ColumnName="WeeklyRate"
+                                                                        Command="{Binding SortByCommand}"
+                                                                        SortColumn="{Binding SortColumn}"
+                                                                        SortDirection="{Binding SortDirection}" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="WeeklyRate" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
                                     <!-- Deposit -->
                                     <Panel Width="{Binding ColumnWidths.DepositColumnWidth}" IsVisible="{Binding ShowDepositColumn}">
-                                        <TextBlock Text="Deposit" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   Margin="8,12,8,12" />
+                                        <controls:SortableColumnHeader Text="Deposit" ColumnName="Deposit"
+                                                                        Command="{Binding SortByCommand}"
+                                                                        SortColumn="{Binding SortColumn}"
+                                                                        SortDirection="{Binding SortDirection}" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Deposit" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
