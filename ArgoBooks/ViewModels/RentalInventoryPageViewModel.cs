@@ -386,7 +386,7 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
         }
     }
 
-    private void UpdatePageNumbers()
+    protected override void UpdatePageNumbers()
     {
         PageNumbers.Clear();
         var startPage = Math.Max(1, CurrentPage - 2);

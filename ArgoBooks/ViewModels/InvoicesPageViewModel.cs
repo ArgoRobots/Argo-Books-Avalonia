@@ -544,7 +544,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         return "?";
     }
 
-    private void UpdatePageNumbers()
+    protected override void UpdatePageNumbers()
     {
         PageNumbers.Clear();
         var startPage = Math.Max(1, CurrentPage - 2);

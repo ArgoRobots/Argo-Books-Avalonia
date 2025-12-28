@@ -624,7 +624,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         OnPropertyChanged(nameof(CurrentProducts));
     }
 
-    private void UpdatePageNumbers()
+    protected override void UpdatePageNumbers()
     {
         PageNumbers.Clear();
         var startPage = Math.Max(1, CurrentPage - 2);
