@@ -24,4 +24,23 @@ public partial class ReceiptsPage : UserControl
             }
         }
     }
+
+    private void OnTableHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)
+        {
+            if (DataContext is ReceiptsPageViewModel viewModel)
+            {
+                viewModel.IsColumnMenuOpen = true;
+            }
+        }
+    }
+
+    private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is ReceiptsPageViewModel viewModel && e.WidthChanged)
+        {
+            viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
+        }
+    }
 }

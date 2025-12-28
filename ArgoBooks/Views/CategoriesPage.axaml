@@ -21,6 +21,7 @@
         <local:PageActiveForegroundConverter x:Key="PageActiveForegroundConverter" />
     </UserControl.Resources>
 
+    <Panel>
     <Grid RowDefinitions="Auto,*">
         <!-- Tab Bar -->
         <Border Grid.Row="0"
@@ -95,305 +96,232 @@
                         </Grid>
                     </Border>
 
-                    <!-- Categories Table -->
-                    <Grid Grid.Row="1" RowDefinitions="Auto,*,Auto">
-                        <!-- Table Header -->
-                        <Border Grid.Row="0"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                Padding="24,0">
-                            <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,140">
-                                <!-- Category Name Header -->
-                                <Button Grid.Column="0"
-                                        Classes="column-header"
-                                        Command="{Binding SortByCommand}"
-                                        CommandParameter="Name">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Category Name"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Name:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Name:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Parent Category Header -->
-                                <Button Grid.Column="1"
-                                        Classes="column-header"
-                                        Command="{Binding SortByCommand}"
-                                        CommandParameter="Parent">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Parent Category"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Parent:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Parent:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Description Header -->
-                                <Button Grid.Column="2"
-                                        Classes="column-header"
-                                        Command="{Binding SortByCommand}"
-                                        CommandParameter="Description">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Description"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Description:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Description:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Type Header -->
-                                <Button Grid.Column="3"
-                                        Classes="column-header"
-                                        Command="{Binding SortByCommand}"
-                                        CommandParameter="Type">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Type"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Type:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Type:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Products/Services Header -->
-                                <Button Grid.Column="4"
-                                        Classes="column-header"
-                                        Command="{Binding SortByCommand}"
-                                        CommandParameter="ProductCount">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Products/Services"
-                                                   FontSize="12"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="ProductCount:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z"
-                                                      Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="ProductCount:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Actions Header (not sortable) -->
-                                <TextBlock Grid.Column="5"
-                                           Text="Actions"
-                                           FontSize="12"
+                    <!-- Column Menu Popup -->
+                    <Popup IsOpen="{Binding IsColumnMenuOpen, Mode=TwoWay}"
+                           Placement="Pointer"
+                           IsLightDismissEnabled="True">
+                        <Border Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="8"
+                                BoxShadow="0 4 16 0 #20000000">
+                            <StackPanel Spacing="4" Width="180">
+                                <TextBlock Text="Show Columns"
+                                           FontSize="13"
                                            FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Right"
-                                           VerticalAlignment="Center"
-                                           Margin="0,12" />
-                            </Grid>
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           Margin="8,4,8,8" />
+                                <CheckBox IsChecked="{Binding ShowNameColumn}" Content="Category Name" Classes="column-toggle" />
+                                <CheckBox IsChecked="{Binding ShowParentColumn}" Content="Parent Category" Classes="column-toggle" />
+                                <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="Description" Classes="column-toggle" />
+                                <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="Type" Classes="column-toggle" />
+                                <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="Products/Services" Classes="column-toggle" />
+                            </StackPanel>
                         </Border>
+                    </Popup>
 
-                        <!-- Table Content -->
-                        <ItemsControl Grid.Row="1"
-                                      ItemsSource="{Binding CurrentCategories}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="vm:CategoryDisplayItem">
-                                    <Border Padding="24,16"
-                                            BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="0,0,0,1">
-                                        <Grid ColumnDefinitions="1.5*,*,1.5*,0.8*,0.8*,140">
-                                            <!-- Category Name with Icon -->
-                                            <StackPanel Grid.Column="0"
-                                                        Orientation="Horizontal"
-                                                        Spacing="12"
-                                                        Margin="{Binding IsChild, Converter={x:Static local:BoolConverters.ToChildIndent}}">
-                                                <Border Width="36" Height="36"
-                                                        CornerRadius="8"
-                                                        Background="{DynamicResource SurfaceAltBrush}">
-                                                    <TextBlock Text="{Binding Icon}"
-                                                               FontSize="18"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center" />
+                    <!-- Categories Table -->
+                    <ScrollViewer Grid.Row="1"
+                                  x:Name="HorizontalTableScroll"
+                                  HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
+                                  VerticalScrollBarVisibility="Disabled">
+                        <Grid RowDefinitions="Auto,*,Auto" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
+                              MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
+                            <!-- Table Header -->
+                            <Border Grid.Row="0"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    Padding="24,0"
+                                    MinHeight="40"
+                                    PointerPressed="OnTableHeaderPointerPressed">
+                                <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
+                                    <!-- Category Name -->
+                                    <Panel Width="{Binding ColumnWidths.NameColumnWidth}" IsVisible="{Binding ShowNameColumn}">
+                                        <TextBlock Text="Category Name" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="Name" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Parent Category -->
+                                    <Panel Width="{Binding ColumnWidths.ParentColumnWidth}" IsVisible="{Binding ShowParentColumn}">
+                                        <TextBlock Text="Parent Category" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="Parent" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Description -->
+                                    <Panel Width="{Binding ColumnWidths.DescriptionColumnWidth}" IsVisible="{Binding ShowDescriptionColumn}">
+                                        <TextBlock Text="Description" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="Description" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Type -->
+                                    <Panel Width="{Binding ColumnWidths.TypeColumnWidth}" IsVisible="{Binding ShowTypeColumn}">
+                                        <TextBlock Text="Type" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="Type" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Products/Services -->
+                                    <Panel Width="{Binding ColumnWidths.ProductCountColumnWidth}" IsVisible="{Binding ShowProductCountColumn}">
+                                        <TextBlock Text="Products/Services" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="ProductCount" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Actions (Fixed) -->
+                                    <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
+                                        <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="8,12,8,12" />
+                                    </Panel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Table Content (scrollable) -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <Panel>
+                                    <!-- Categories List -->
+                                    <ItemsControl ItemsSource="{Binding CurrentCategories}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="vm:CategoryDisplayItem">
+                                                <Border Padding="24,0"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="0,0,0,1"
+                                                        MinHeight="56">
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <!-- Category Name with Icon -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.NameColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowNameColumn}">
+                                                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center"
+                                                                        Margin="{Binding IsChild, Converter={x:Static local:BoolConverters.ToChildIndent}}">
+                                                                <Border Width="36" Height="36"
+                                                                        CornerRadius="8"
+                                                                        Background="{DynamicResource SurfaceAltBrush}">
+                                                                    <TextBlock Text="{Binding Icon}"
+                                                                               FontSize="18"
+                                                                               HorizontalAlignment="Center"
+                                                                               VerticalAlignment="Center" />
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Name}"
+                                                                           FontSize="14"
+                                                                           FontWeight="Medium"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                           VerticalAlignment="Center"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                            </StackPanel>
+                                                        </Panel>
+
+                                                        <!-- Parent Category -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.ParentColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowParentColumn}">
+                                                            <TextBlock Text="{Binding ParentName, TargetNullValue='-', FallbackValue='-'}"
+                                                                       FontSize="14"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="8,0" />
+                                                        </Panel>
+
+                                                        <!-- Description -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowDescriptionColumn}">
+                                                            <TextBlock Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
+                                                                       FontSize="14"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="8,0" />
+                                                        </Panel>
+
+                                                        <!-- Type (Product/Service) -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowTypeColumn}">
+                                                            <TextBlock Text="{Binding ItemType}"
+                                                                       FontSize="14"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="8,0" />
+                                                        </Panel>
+
+                                                        <!-- Products/Services Count -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.ProductCountColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowProductCountColumn}">
+                                                            <TextBlock Text="{Binding ProductCount}"
+                                                                       FontSize="14"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="8,0" />
+                                                        </Panel>
+
+                                                        <!-- Actions -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
+                                                            <StackPanel Orientation="Horizontal"
+                                                                        HorizontalAlignment="Right"
+                                                                        Spacing="4"
+                                                                        Margin="8,0">
+                                                                <!-- Add Sub-category (only for parent categories) -->
+                                                                <Button Classes="icon-button"
+                                                                        ToolTip.Tip="Add Sub-category"
+                                                                        IsVisible="{Binding !IsChild}"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenAddSubCategoryModalCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                                <!-- Move to different parent/make sub-category -->
+                                                                <Button Classes="icon-button"
+                                                                        ToolTip.Tip="Move to different category"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenMoveModalCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                                <Button Classes="icon-button"
+                                                                        ToolTip.Tip="Edit"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenEditModalCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                                <Button Classes="icon-button danger"
+                                                                        ToolTip.Tip="Delete"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                            </StackPanel>
+                                                        </Panel>
+                                                    </StackPanel>
                                                 </Border>
-                                                <TextBlock Text="{Binding Name}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                           VerticalAlignment="Center" />
-                                            </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
 
-                                            <!-- Parent Category -->
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding ParentName, TargetNullValue='-', FallbackValue='-'}"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       VerticalAlignment="Center" />
-
-                                            <!-- Description -->
-                                            <TextBlock Grid.Column="2"
-                                                       Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       VerticalAlignment="Center"
-                                                       TextTrimming="CharacterEllipsis" />
-
-                                            <!-- Type (Product/Service) -->
-                                            <TextBlock Grid.Column="3"
-                                                       Text="{Binding ItemType}"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       VerticalAlignment="Center" />
-
-                                            <!-- Products/Services Count -->
-                                            <TextBlock Grid.Column="4"
-                                                       Text="{Binding ProductCount}"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                       VerticalAlignment="Center" />
-
-                                            <!-- Actions -->
-                                            <StackPanel Grid.Column="5"
-                                                        Orientation="Horizontal"
-                                                        HorizontalAlignment="Right"
-                                                        Spacing="4">
-                                                <!-- Add Sub-category (only for parent categories) -->
-                                                <Button Classes="icon-button"
-                                                        ToolTip.Tip="Add Sub-category"
-                                                        IsVisible="{Binding !IsChild}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenAddSubCategoryModalCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-                                                              Width="16" Height="16" />
-                                                </Button>
-                                                <!-- Move to different parent/make sub-category -->
-                                                <Button Classes="icon-button"
-                                                        ToolTip.Tip="Move to different category"
-                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenMoveModalCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <PathIcon Data="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
-                                                              Width="16" Height="16" />
-                                                </Button>
-                                                <Button Classes="icon-button"
-                                                        ToolTip.Tip="Edit"
-                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenEditModalCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                                                              Width="16" Height="16" />
-                                                </Button>
-                                                <Button Classes="icon-button danger"
-                                                        ToolTip.Tip="Delete"
-                                                        Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                        CommandParameter="{Binding}">
-                                                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-                                                              Width="16" Height="16" />
-                                                </Button>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <!-- Empty State -->
-                        <Border Grid.Row="1"
-                                Padding="40"
-                                IsVisible="{Binding CurrentCategories.Count, Converter={x:Static local:IntConverters.IsZero}}">
+                                    <!-- Empty State -->
+                                    <Border Padding="40"
+                                            IsVisible="{Binding CurrentCategories.Count, Converter={x:Static local:IntConverters.IsZero}}">
                             <StackPanel HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Spacing="16">
@@ -429,10 +357,12 @@
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
-                        </Border>
+                                    </Border>
+                                </Panel>
+                            </ScrollViewer>
 
-                        <!-- Pagination Footer -->
-                        <Border Grid.Row="2"
+                            <!-- Pagination Footer -->
+                            <Border Grid.Row="2"
                                 Background="{DynamicResource SurfaceAltBrush}"
                                 Padding="24,12"
                                 CornerRadius="0,0,11,11"
@@ -509,12 +439,14 @@
                                     </Button>
                                 </StackPanel>
                             </Grid>
-                        </Border>
-                    </Grid>
+                            </Border>
+                        </Grid>
+                    </ScrollViewer>
                 </Grid>
             </Border>
         </ScrollViewer>
     </Grid>
+    </Panel>
 
     <UserControl.Styles>
         <!-- TabControl - page tabs styling -->
@@ -659,6 +591,12 @@
             <Setter Property="Padding" Value="12,10" />
             <Setter Property="FontSize" Value="14" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+
+        <!-- Column Toggle CheckBox -->
+        <Style Selector="CheckBox.column-toggle">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
     </UserControl.Styles>
 </UserControl>

@@ -13,12 +13,14 @@
         <local:SortIndicatorConverter x:Key="SortIndicatorConverter" />
         <local:PageActiveBackgroundConverter x:Key="PageActiveBackgroundConverter" />
         <local:PageActiveForegroundConverter x:Key="PageActiveForegroundConverter" />
+        <local:PageEqualsConverter x:Key="PageEqualsConverter" />
     </UserControl.Resources>
 
     <Design.DataContext>
         <vm:InvoicesPageViewModel />
     </Design.DataContext>
 
+    <Panel>
     <Grid RowDefinitions="Auto,*">
         <!-- Tab Bar -->
         <Border Grid.Row="0"
@@ -215,356 +217,290 @@
                         </Grid>
                     </Border>
 
-                    <!-- Table Content -->
-                    <Grid Grid.Row="1" RowDefinitions="Auto,*">
-                        <!-- Table Header -->
-                        <Border Grid.Row="0"
-                                Background="{DynamicResource SurfaceAltBrush}"
-                                Padding="24,12">
-                            <Grid ColumnDefinitions="0.8*,1.2*,0.8*,0.8*,0.8*,0.7*,100">
-                                <!-- Invoice # Column Header -->
-                                <Button Grid.Column="0" Classes="column-header"
-                                        Command="{Binding SortByCommand}" CommandParameter="Id">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Invoice #" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Id:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Id:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Customer Column Header -->
-                                <Button Grid.Column="1" Classes="column-header"
-                                        Command="{Binding SortByCommand}" CommandParameter="Customer">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Customer" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Customer:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Customer:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Issue Date Column Header -->
-                                <Button Grid.Column="2" Classes="column-header"
-                                        Command="{Binding SortByCommand}" CommandParameter="IssueDate">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Issue Date" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="IssueDate:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="IssueDate:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Due Date Column Header -->
-                                <Button Grid.Column="3" Classes="column-header"
-                                        Command="{Binding SortByCommand}" CommandParameter="DueDate">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Due Date" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="DueDate:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="DueDate:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Amount Column Header -->
-                                <Button Grid.Column="4" Classes="column-header"
-                                        Command="{Binding SortByCommand}" CommandParameter="Amount">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Amount" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Amount:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Amount:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Status Column Header -->
-                                <Button Grid.Column="5" Classes="column-header"
-                                        Command="{Binding SortByCommand}" CommandParameter="Status">
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <Panel Width="12" Height="12">
-                                            <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Status:Ascending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                            <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}">
-                                                <PathIcon.IsVisible>
-                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                  ConverterParameter="Status:Descending">
-                                                        <Binding Path="SortColumn" />
-                                                        <Binding Path="SortDirection" />
-                                                    </MultiBinding>
-                                                </PathIcon.IsVisible>
-                                            </PathIcon>
-                                        </Panel>
-                                    </StackPanel>
-                                </Button>
-
-                                <!-- Actions - not sortable -->
-                                <TextBlock Grid.Column="6"
-                                           Text="Actions"
-                                           FontSize="12"
+                    <!-- Column Menu Popup -->
+                    <Popup IsOpen="{Binding IsColumnMenuOpen, Mode=TwoWay}"
+                           Placement="Pointer"
+                           IsLightDismissEnabled="True">
+                        <Border Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="8"
+                                BoxShadow="0 4 16 0 #20000000">
+                            <StackPanel Spacing="4" Width="180">
+                                <TextBlock Text="Show Columns"
+                                           FontSize="13"
                                            FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                           HorizontalAlignment="Right" />
-                            </Grid>
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           Margin="8,4,8,8" />
+                                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="Invoice #" Classes="column-toggle" />
+                                <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="Customer" Classes="column-toggle" />
+                                <CheckBox IsChecked="{Binding ShowIssueDateColumn}" Content="Issue Date" Classes="column-toggle" />
+                                <CheckBox IsChecked="{Binding ShowDueDateColumn}" Content="Due Date" Classes="column-toggle" />
+                                <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="Amount" Classes="column-toggle" />
+                                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
+                            </StackPanel>
                         </Border>
+                    </Popup>
 
-                        <!-- Table Content (scrollable) -->
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                            <Panel>
-                                <!-- Invoices List -->
-                                <ItemsControl ItemsSource="{Binding Invoices}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="vm:InvoiceDisplayItem">
-                                            <Border Padding="24,16"
-                                                    BorderBrush="{DynamicResource BorderBrush}"
-                                                    BorderThickness="0,0,0,1">
-                                                <Grid ColumnDefinitions="0.8*,1.2*,0.8*,0.8*,0.8*,0.7*,100">
-                                                    <!-- Invoice # -->
-                                                    <TextBlock Grid.Column="0"
-                                                               Text="{Binding Id}"
-                                                               FontSize="14"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center" />
-
-                                                    <!-- Customer with Avatar -->
-                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                                        <Border Width="32" Height="32" CornerRadius="16"
-                                                                Background="{DynamicResource PrimaryBrush}">
-                                                            <TextBlock Text="{Binding CustomerInitials}"
-                                                                       FontSize="12"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="White"
-                                                                       HorizontalAlignment="Center"
-                                                                       VerticalAlignment="Center" />
-                                                        </Border>
-                                                        <TextBlock Text="{Binding CustomerName}"
-                                                                   FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis" />
-                                                    </StackPanel>
-
-                                                    <!-- Issue Date -->
-                                                    <TextBlock Grid.Column="2"
-                                                               Text="{Binding IssueDateFormatted}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center" />
-
-                                                    <!-- Due Date -->
-                                                    <TextBlock Grid.Column="3"
-                                                               Text="{Binding DueDateFormatted}"
-                                                               FontSize="14"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                                               VerticalAlignment="Center" />
-
-                                                    <!-- Amount -->
-                                                    <TextBlock Grid.Column="4"
-                                                               Text="{Binding TotalFormatted}"
-                                                               FontSize="14"
-                                                               FontWeight="Medium"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center" />
-
-                                                    <!-- Status Badge -->
-                                                    <Border Grid.Column="5"
-                                                            VerticalAlignment="Center"
-                                                            HorizontalAlignment="Left"
-                                                            Padding="8,4"
-                                                            CornerRadius="4"
-                                                            Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToInvoiceStatusBackground}}">
-                                                        <TextBlock Text="{Binding StatusDisplay}"
-                                                                   FontSize="12"
-                                                                   FontWeight="Medium"
-                                                                   Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToInvoiceStatusForeground}}" />
-                                                    </Border>
-
-                                                    <!-- Actions -->
-                                                    <StackPanel Grid.Column="6"
-                                                                Orientation="Horizontal"
-                                                                HorizontalAlignment="Right"
-                                                                Spacing="4">
-                                                        <Button Classes="icon-button"
-                                                                ToolTip.Tip="View History"
-                                                                Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"
-                                                                CommandParameter="{Binding}">
-                                                            <PathIcon Data="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
-                                                                      Width="16" Height="16" />
-                                                        </Button>
-                                                        <Button Classes="icon-button"
-                                                                ToolTip.Tip="Edit"
-                                                                Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenEditModalCommand}"
-                                                                CommandParameter="{Binding}">
-                                                            <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                                                                      Width="16" Height="16" />
-                                                        </Button>
-                                                        <Button Classes="icon-button danger"
-                                                                ToolTip.Tip="Delete"
-                                                                Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
-                                                                CommandParameter="{Binding}">
-                                                            <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-                                                                      Width="16" Height="16" />
-                                                        </Button>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                                <!-- Empty State -->
-                                <Border Padding="40"
-                                        IsVisible="{Binding Invoices.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                    <StackPanel HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Spacing="16">
-                                        <Border Width="64" Height="64"
-                                                CornerRadius="32"
-                                                Background="{DynamicResource SurfaceAltBrush}"
-                                                HorizontalAlignment="Center">
-                                            <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
-                                                      Width="28" Height="28"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                        <TextBlock Text="{Binding EmptyStateTitle}"
-                                                   FontSize="16"
-                                                   FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                                   HorizontalAlignment="Center" />
-                                        <TextBlock Text="{Binding EmptyStateMessage}"
-                                                   FontSize="14"
+                    <!-- Table Content -->
+                    <ScrollViewer Grid.Row="1"
+                                  x:Name="HorizontalTableScroll"
+                                  HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
+                                  VerticalScrollBarVisibility="Disabled">
+                        <Grid RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
+                              MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
+                            <!-- Table Header -->
+                            <Border Grid.Row="0"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    Padding="24,0"
+                                    MinHeight="40"
+                                    PointerPressed="OnTableHeaderPointerPressed">
+                                <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
+                                    <!-- Invoice # -->
+                                    <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
+                                        <TextBlock Text="Invoice #" FontSize="12" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   TextAlignment="Center"
-                                                   TextWrapping="Wrap"
-                                                   MaxWidth="300" />
-                                        <Button Classes="primary-button"
-                                                HorizontalAlignment="Center"
-                                                Margin="0,8,0,0"
-                                                Command="{Binding OpenCreateModalCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
-                                                          Width="16" Height="16"
-                                                          Foreground="White" />
-                                                <TextBlock Text="Create Invoice" />
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                </Border>
-                            </Panel>
-                        </ScrollViewer>
-                    </Grid>
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Customer -->
+                                    <Panel Width="{Binding ColumnWidths.CustomerColumnWidth}" IsVisible="{Binding ShowCustomerColumn}">
+                                        <TextBlock Text="Customer" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="Customer" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Issue Date -->
+                                    <Panel Width="{Binding ColumnWidths.IssueDateColumnWidth}" IsVisible="{Binding ShowIssueDateColumn}">
+                                        <TextBlock Text="Issue Date" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="IssueDate" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Due Date -->
+                                    <Panel Width="{Binding ColumnWidths.DueDateColumnWidth}" IsVisible="{Binding ShowDueDateColumn}">
+                                        <TextBlock Text="Due Date" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="DueDate" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Amount -->
+                                    <Panel Width="{Binding ColumnWidths.AmountColumnWidth}" IsVisible="{Binding ShowAmountColumn}">
+                                        <TextBlock Text="Amount" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="Amount" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Status -->
+                                    <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
+                                        <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   Margin="8,12,8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                    </Panel>
+                                    <!-- Actions (Fixed) -->
+                                    <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
+                                        <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="8,12,8,12" />
+                                    </Panel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Table Content (scrollable) -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <Panel>
+                                    <!-- Invoices List -->
+                                    <ItemsControl ItemsSource="{Binding Invoices}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="vm:InvoiceDisplayItem">
+                                                <Border Padding="24,0"
+                                                        BorderBrush="{DynamicResource BorderBrush}"
+                                                        BorderThickness="0,0,0,1"
+                                                        MinHeight="56">
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <!-- Invoice # -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowIdColumn}">
+                                                            <TextBlock Text="{Binding Id}"
+                                                                       FontSize="14"
+                                                                       FontWeight="Medium"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="8,0" />
+                                                        </Panel>
+
+                                                        <!-- Customer with Avatar -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.CustomerColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowCustomerColumn}">
+                                                            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="8,0">
+                                                                <Border Width="32" Height="32" CornerRadius="16"
+                                                                        Background="{DynamicResource PrimaryBrush}">
+                                                                    <TextBlock Text="{Binding CustomerInitials}"
+                                                                               FontSize="12"
+                                                                               FontWeight="SemiBold"
+                                                                               Foreground="White"
+                                                                               HorizontalAlignment="Center"
+                                                                               VerticalAlignment="Center" />
+                                                                </Border>
+                                                                <TextBlock Text="{Binding CustomerName}"
+                                                                           FontSize="14"
+                                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                           VerticalAlignment="Center"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                            </StackPanel>
+                                                        </Panel>
+
+                                                        <!-- Issue Date -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.IssueDateColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowIssueDateColumn}">
+                                                            <TextBlock Text="{Binding IssueDateFormatted}"
+                                                                       FontSize="14"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="8,0" />
+                                                        </Panel>
+
+                                                        <!-- Due Date -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.DueDateColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowDueDateColumn}">
+                                                            <TextBlock Text="{Binding DueDateFormatted}"
+                                                                       FontSize="14"
+                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="8,0" />
+                                                        </Panel>
+
+                                                        <!-- Amount -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.AmountColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowAmountColumn}">
+                                                            <TextBlock Text="{Binding TotalFormatted}"
+                                                                       FontSize="14"
+                                                                       FontWeight="Medium"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="8,0" />
+                                                        </Panel>
+
+                                                        <!-- Status Badge -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                               IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowStatusColumn}">
+                                                            <Border VerticalAlignment="Center"
+                                                                    HorizontalAlignment="Left"
+                                                                    Padding="8,4"
+                                                                    CornerRadius="4"
+                                                                    Margin="8,0"
+                                                                    Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToInvoiceStatusBackground}}">
+                                                                <TextBlock Text="{Binding StatusDisplay}"
+                                                                           FontSize="12"
+                                                                           FontWeight="Medium"
+                                                                           Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToInvoiceStatusForeground}}" />
+                                                            </Border>
+                                                        </Panel>
+
+                                                        <!-- Actions -->
+                                                        <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
+                                                            <StackPanel Orientation="Horizontal"
+                                                                        HorizontalAlignment="Right"
+                                                                        Spacing="4"
+                                                                        Margin="8,0">
+                                                                <Button Classes="icon-button"
+                                                                        ToolTip.Tip="View History"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                                <Button Classes="icon-button"
+                                                                        ToolTip.Tip="Edit"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenEditModalCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                                <Button Classes="icon-button danger"
+                                                                        ToolTip.Tip="Delete"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                            </StackPanel>
+                                                        </Panel>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <!-- Empty State -->
+                                    <Border Padding="40"
+                                            IsVisible="{Binding Invoices.Count, Converter={x:Static local:IntConverters.IsZero}}">
+                                        <StackPanel HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Spacing="16">
+                                            <Border Width="64" Height="64"
+                                                    CornerRadius="32"
+                                                    Background="{DynamicResource SurfaceAltBrush}"
+                                                    HorizontalAlignment="Center">
+                                                <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                                          Width="28" Height="28"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </Border>
+                                            <TextBlock Text="{Binding EmptyStateTitle}"
+                                                       FontSize="16"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       HorizontalAlignment="Center" />
+                                            <TextBlock Text="{Binding EmptyStateMessage}"
+                                                       FontSize="14"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                       HorizontalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       TextWrapping="Wrap"
+                                                       MaxWidth="300" />
+                                            <Button Classes="primary-button"
+                                                    HorizontalAlignment="Center"
+                                                    Margin="0,8,0,0"
+                                                    Command="{Binding OpenCreateModalCommand}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                              Width="16" Height="16"
+                                                              Foreground="White" />
+                                                    <TextBlock Text="Create Invoice" />
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </Panel>
+                            </ScrollViewer>
+                        </Grid>
+                    </ScrollViewer>
 
                     <!-- Pagination Footer -->
                     <Border Grid.Row="2"
@@ -649,9 +585,8 @@
             </Border>
             </Grid>
         </ScrollViewer>
-
-        <!-- Note: Modals are now rendered at AppShell level for full-screen coverage -->
     </Grid>
+    </Panel>
 
     <UserControl.Styles>
         <!-- Search Input -->
@@ -766,6 +701,12 @@
         </Style>
         <Style Selector="Button.column-header:pointerover TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Column Toggle CheckBox -->
+        <Style Selector="CheckBox.column-toggle">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="FontSize" Value="13" />
         </Style>
     </UserControl.Styles>
 </UserControl>

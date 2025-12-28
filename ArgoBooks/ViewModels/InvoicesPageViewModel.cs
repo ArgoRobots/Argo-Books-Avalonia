@@ -141,6 +141,55 @@ public partial class InvoicesPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Column Visibility and Widths
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public InvoicesTableColumnWidths ColumnWidths { get; } = new InvoicesTableColumnWidths();
+
+    [ObservableProperty]
+    private bool _showIdColumn = true;
+
+    [ObservableProperty]
+    private bool _showCustomerColumn = true;
+
+    [ObservableProperty]
+    private bool _showIssueDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showDueDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showAmountColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
+    partial void OnShowIssueDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("IssueDate", value);
+    partial void OnShowDueDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("DueDate", value);
+    partial void OnShowAmountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Amount", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Sorting
 
     [ObservableProperty]

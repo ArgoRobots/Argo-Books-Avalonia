@@ -66,6 +66,67 @@ public partial class RentalRecordsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Column Visibility and Widths
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public RentalRecordsTableColumnWidths ColumnWidths { get; } = new RentalRecordsTableColumnWidths();
+
+    [ObservableProperty]
+    private bool _showIdColumn = true;
+
+    [ObservableProperty]
+    private bool _showItemColumn = true;
+
+    [ObservableProperty]
+    private bool _showCustomerColumn = true;
+
+    [ObservableProperty]
+    private bool _showQuantityColumn = true;
+
+    [ObservableProperty]
+    private bool _showStartDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showDueDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    [ObservableProperty]
+    private bool _showTotalColumn = true;
+
+    [ObservableProperty]
+    private bool _showDepositColumn = true;
+
+    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowItemColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Item", value);
+    partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
+    partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
+    partial void OnShowStartDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("StartDate", value);
+    partial void OnShowDueDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("DueDate", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+    partial void OnShowTotalColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Total", value);
+    partial void OnShowDepositColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Deposit", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Sorting
 
     [ObservableProperty]

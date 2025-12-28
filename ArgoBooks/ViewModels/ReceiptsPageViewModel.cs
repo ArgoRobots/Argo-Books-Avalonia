@@ -223,6 +223,67 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Column Management
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    public ReceiptsTableColumnWidths ColumnWidths { get; } = new();
+
+    [ObservableProperty]
+    private bool _showIdColumn = true;
+
+    [ObservableProperty]
+    private bool _showVendorColumn = true;
+
+    [ObservableProperty]
+    private bool _showDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showTypeColumn = true;
+
+    [ObservableProperty]
+    private bool _showAmountColumn = true;
+
+    partial void OnShowIdColumnChanged(bool value)
+    {
+        ColumnWidths.SetColumnVisibility("Id", value);
+    }
+
+    partial void OnShowVendorColumnChanged(bool value)
+    {
+        ColumnWidths.SetColumnVisibility("Vendor", value);
+    }
+
+    partial void OnShowDateColumnChanged(bool value)
+    {
+        ColumnWidths.SetColumnVisibility("Date", value);
+    }
+
+    partial void OnShowTypeColumnChanged(bool value)
+    {
+        ColumnWidths.SetColumnVisibility("Type", value);
+    }
+
+    partial void OnShowAmountColumnChanged(bool value)
+    {
+        ColumnWidths.SetColumnVisibility("Amount", value);
+    }
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Constructor
 
     public ReceiptsPageViewModel()

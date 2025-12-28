@@ -230,6 +230,51 @@ public partial class CategoriesPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Column Visibility and Widths
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public CategoriesTableColumnWidths ColumnWidths { get; } = new CategoriesTableColumnWidths();
+
+    [ObservableProperty]
+    private bool _showNameColumn = true;
+
+    [ObservableProperty]
+    private bool _showParentColumn = true;
+
+    [ObservableProperty]
+    private bool _showDescriptionColumn = true;
+
+    [ObservableProperty]
+    private bool _showTypeColumn = true;
+
+    [ObservableProperty]
+    private bool _showProductCountColumn = true;
+
+    partial void OnShowNameColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Name", value);
+    partial void OnShowParentColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Parent", value);
+    partial void OnShowDescriptionColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Description", value);
+    partial void OnShowTypeColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Type", value);
+    partial void OnShowProductCountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("ProductCount", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Modal Form Fields
 
     [ObservableProperty]
