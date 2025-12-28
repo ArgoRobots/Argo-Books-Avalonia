@@ -12,7 +12,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Categories page.
 /// </summary>
-public partial class CategoriesPageViewModel : ViewModelBase
+public partial class CategoriesPageViewModel : SortablePageViewModelBase
 {
     #region Tab Selection
 
@@ -51,109 +51,16 @@ public partial class CategoriesPageViewModel : ViewModelBase
 
     #endregion
 
-    #region Sorting
-
-    [ObservableProperty]
-    private string _sortColumn = "Name";
-
-    [ObservableProperty]
-    private SortDirection _sortDirection = SortDirection.None;
-
-    /// <summary>
-    /// Sorts the categories by the specified column.
-    /// </summary>
-    [RelayCommand]
-    private void SortBy(string column)
-    {
-        if (SortColumn == column)
-        {
-            // Toggle sort direction
-            SortDirection = SortDirection switch
-            {
-                SortDirection.None => SortDirection.Ascending,
-                SortDirection.Ascending => SortDirection.Descending,
-                SortDirection.Descending => SortDirection.None,
-                _ => SortDirection.Ascending
-            };
-        }
-        else
-        {
-            // New column, start with ascending
-            SortColumn = column;
-            SortDirection = SortDirection.Ascending;
-        }
-
-        FilterCategories();
-    }
-
-    /// <summary>
-    /// Gets whether the specified column is sorted ascending.
-    /// </summary>
-    public bool IsSortedAscending(string column) => SortColumn == column && SortDirection == SortDirection.Ascending;
-
-    /// <summary>
-    /// Gets whether the specified column is sorted descending.
-    /// </summary>
-    public bool IsSortedDescending(string column) => SortColumn == column && SortDirection == SortDirection.Descending;
-
-    #endregion
-
     #region Pagination
-
-    [ObservableProperty]
-    private int _currentPage = 1;
-
-    [ObservableProperty]
-    private int _totalPages = 1;
-
-    [ObservableProperty]
-    private int _pageSize = 10;
-
-    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
-
-    partial void OnPageSizeChanged(int value)
-    {
-        CurrentPage = 1;
-        FilterCategories();
-    }
 
     [ObservableProperty]
     private string _paginationText = "0 categories";
 
-    public ObservableCollection<int> PageNumbers { get; } = [];
+    /// <inheritdoc />
+    protected override void OnSortOrPageChanged() => FilterCategories();
 
-    public bool CanGoToPreviousPage => CurrentPage > 1;
-    public bool CanGoToNextPage => CurrentPage < TotalPages;
-
-    partial void OnCurrentPageChanged(int value)
-    {
-        OnPropertyChanged(nameof(CanGoToPreviousPage));
-        OnPropertyChanged(nameof(CanGoToNextPage));
-        FilterCategories();
-    }
-
-    [RelayCommand]
-    private void GoToPreviousPage()
-    {
-        if (CanGoToPreviousPage)
-            CurrentPage--;
-    }
-
-    [RelayCommand]
-    private void GoToNextPage()
-    {
-        if (CanGoToNextPage)
-            CurrentPage++;
-    }
-
-    [RelayCommand]
-    private void GoToPage(int page)
-    {
-        if (page >= 1 && page <= TotalPages)
-            CurrentPage = page;
-    }
-
-    private void UpdatePageNumbers()
+    /// <inheritdoc />
+    protected override void UpdatePageNumbers()
     {
         PageNumbers.Clear();
         var startPage = Math.Max(1, CurrentPage - 2);

@@ -12,7 +12,7 @@ namespace ArgoBooks.ViewModels;
 /// <summary>
 /// ViewModel for the Invoices page.
 /// </summary>
-public partial class InvoicesPageViewModel : ViewModelBase
+public partial class InvoicesPageViewModel : SortablePageViewModelBase
 {
     #region Statistics
 
@@ -190,37 +190,6 @@ public partial class InvoicesPageViewModel : ViewModelBase
 
     #endregion
 
-    #region Sorting
-
-    [ObservableProperty]
-    private string _sortColumn = "IssueDate";
-
-    [ObservableProperty]
-    private SortDirection _sortDirection = SortDirection.Descending;
-
-    [RelayCommand]
-    private void SortBy(string column)
-    {
-        if (SortColumn == column)
-        {
-            SortDirection = SortDirection switch
-            {
-                SortDirection.None => SortDirection.Ascending,
-                SortDirection.Ascending => SortDirection.Descending,
-                SortDirection.Descending => SortDirection.None,
-                _ => SortDirection.Ascending
-            };
-        }
-        else
-        {
-            SortColumn = column;
-            SortDirection = SortDirection.Ascending;
-        }
-        FilterInvoices();
-    }
-
-    #endregion
-
     #region Invoices Collection
 
     private readonly List<Invoice> _allInvoices = [];
@@ -236,57 +205,10 @@ public partial class InvoicesPageViewModel : ViewModelBase
     #region Pagination
 
     [ObservableProperty]
-    private int _currentPage = 1;
-
-    [ObservableProperty]
-    private int _totalPages = 1;
-
-    [ObservableProperty]
-    private int _pageSize = 10;
-
-    public ObservableCollection<int> PageSizeOptions { get; } = [10, 25, 50, 100];
-
-    partial void OnPageSizeChanged(int value)
-    {
-        CurrentPage = 1;
-        FilterInvoices();
-    }
-
-    [ObservableProperty]
     private string _paginationText = "0 invoices";
 
-    public ObservableCollection<int> PageNumbers { get; } = [];
-
-    public bool CanGoToPreviousPage => CurrentPage > 1;
-    public bool CanGoToNextPage => CurrentPage < TotalPages;
-
-    partial void OnCurrentPageChanged(int value)
-    {
-        OnPropertyChanged(nameof(CanGoToPreviousPage));
-        OnPropertyChanged(nameof(CanGoToNextPage));
-        FilterInvoices();
-    }
-
-    [RelayCommand]
-    private void GoToPreviousPage()
-    {
-        if (CanGoToPreviousPage)
-            CurrentPage--;
-    }
-
-    [RelayCommand]
-    private void GoToNextPage()
-    {
-        if (CanGoToNextPage)
-            CurrentPage++;
-    }
-
-    [RelayCommand]
-    private void GoToPage(int page)
-    {
-        if (page >= 1 && page <= TotalPages)
-            CurrentPage = page;
-    }
+    /// <inheritdoc />
+    protected override void OnSortOrPageChanged() => FilterInvoices();
 
     #endregion
 
@@ -294,6 +216,10 @@ public partial class InvoicesPageViewModel : ViewModelBase
 
     public InvoicesPageViewModel()
     {
+        // Set default sort values for invoices
+        SortColumn = "IssueDate";
+        SortDirection = SortDirection.Descending;
+
         LoadInvoices();
         LoadCustomerOptions();
 
