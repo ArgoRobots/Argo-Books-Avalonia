@@ -92,7 +92,7 @@ public partial class MainWindow : Window
             viewModel.LoadWindowState();
 
             // Apply saved position if valid
-            if (viewModel.WindowLeft >= 0 && viewModel.WindowTop >= 0)
+            if (viewModel is { WindowLeft: >= 0, WindowTop: >= 0 })
             {
                 var screens = Screens;
                 var savedBounds = new PixelRect(
@@ -120,7 +120,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private bool _isClosingConfirmed = false;
+    private bool _isClosingConfirmed;
 
     private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {
@@ -163,7 +163,7 @@ public partial class MainWindow : Window
             e.Cancel = true;
 
             // Show unsaved changes dialog
-            if (DataContext is MainWindowViewModel viewModel && viewModel.UnsavedChangesDialogViewModel != null)
+            if (DataContext is MainWindowViewModel { UnsavedChangesDialogViewModel: not null } viewModel)
             {
                 var result = await viewModel.UnsavedChangesDialogViewModel.ShowSimpleAsync(
                     "Unsaved Changes",

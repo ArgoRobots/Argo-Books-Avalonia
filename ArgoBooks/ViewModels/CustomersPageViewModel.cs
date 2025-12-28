@@ -451,7 +451,7 @@ public partial class CustomersPageViewModel : ViewModelBase
 
         // Count customers with overdue payments (those with outstanding balance and overdue status)
         // In a real scenario, this would be based on invoice/rental status
-        OverduePayments = _allCustomers.Count(c => c.TotalPurchases > 0 && c.Status == EntityStatus.Active);
+        OverduePayments = _allCustomers.Count(c => c is { TotalPurchases: > 0, Status: EntityStatus.Active });
 
         BannedCustomers = _allCustomers.Count(c => c.Status == EntityStatus.Archived);
     }
@@ -500,7 +500,7 @@ public partial class CustomersPageViewModel : ViewModelBase
             filtered = FilterPaymentStatus switch
             {
                 "Current" => filtered.Where(c => c.TotalPurchases == 0).ToList(),
-                "Overdue" => filtered.Where(c => c.TotalPurchases > 0 && c.TotalPurchases < 500).ToList(),
+                "Overdue" => filtered.Where(c => c.TotalPurchases is > 0 and < 500).ToList(),
                 "Delinquent" => filtered.Where(c => c.TotalPurchases >= 500).ToList(),
                 _ => filtered
             };
@@ -1176,9 +1176,9 @@ public partial class CustomerDisplayItem : ObservableObject
             var parts = Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length >= 2)
                 return $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant();
-            if (parts.Length == 1 && parts[0].Length >= 2)
+            if (parts is [{ Length: >= 2 }])
                 return parts[0][..2].ToUpperInvariant();
-            if (parts.Length == 1 && parts[0].Length == 1)
+            if (parts is [{ Length: 1 }])
                 return parts[0].ToUpperInvariant();
             return "?";
         }

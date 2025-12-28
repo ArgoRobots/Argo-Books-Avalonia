@@ -603,7 +603,7 @@ public partial class ExpensesPageViewModel : ViewModelBase
         // Check for returns related to this purchase
         var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
 
-        if (relatedReturn != null && relatedReturn.Status == Core.Enums.ReturnStatus.Completed)
+        if (relatedReturn is { Status: Core.Enums.ReturnStatus.Completed })
         {
             return "Returned";
         }

@@ -613,7 +613,7 @@ public partial class InvoicesPageViewModel : ViewModelBase
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length >= 2)
             return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
-        if (parts.Length == 1 && parts[0].Length >= 1)
+        if (parts is [{ Length: >= 1 }])
             return parts[0][0].ToString().ToUpper();
         return "?";
     }

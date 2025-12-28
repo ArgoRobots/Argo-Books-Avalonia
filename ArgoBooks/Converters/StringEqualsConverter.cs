@@ -77,7 +77,7 @@ public class EqualityConverter : IValueConverter
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is bool isChecked && isChecked)
+        if (value is bool and true)
             return parameter;
         return Avalonia.Data.BindingOperations.DoNothing;
     }

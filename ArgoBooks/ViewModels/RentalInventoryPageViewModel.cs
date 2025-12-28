@@ -340,9 +340,9 @@ public partial class RentalInventoryPageViewModel : ViewModelBase
         {
             filtered = FilterStatus switch
             {
-                "Available" => filtered.Where(i => i.AvailableQuantity > 0 && i.Status == EntityStatus.Active).ToList(),
+                "Available" => filtered.Where(i => i is { AvailableQuantity: > 0, Status: EntityStatus.Active }).ToList(),
                 "In Maintenance" => filtered.Where(i => i.Status == EntityStatus.Inactive).ToList(),
-                "All Rented" => filtered.Where(i => i.AvailableQuantity == 0 && i.Status == EntityStatus.Active).ToList(),
+                "All Rented" => filtered.Where(i => i is { AvailableQuantity: 0, Status: EntityStatus.Active }).ToList(),
                 _ => filtered
             };
         }

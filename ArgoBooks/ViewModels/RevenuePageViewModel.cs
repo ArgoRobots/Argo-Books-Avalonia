@@ -584,7 +584,7 @@ public partial class RevenuePageViewModel : ViewModelBase
         // Check for returns related to this sale
         var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
 
-        if (relatedReturn != null && relatedReturn.Status == Core.Enums.ReturnStatus.Completed)
+        if (relatedReturn is { Status: Core.Enums.ReturnStatus.Completed })
         {
             return "Returned";
         }

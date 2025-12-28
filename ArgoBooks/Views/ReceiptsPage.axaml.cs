@@ -19,7 +19,7 @@ public partial class ReceiptsPage : UserControl
         // Ignore if clicking on checkbox
         if (e.Source is CheckBox) return;
 
-        if (sender is Border border && border.DataContext is ReceiptDisplayItem receipt)
+        if (sender is Border { DataContext: ReceiptDisplayItem receipt })
         {
             if (DataContext is ReceiptsPageViewModel viewModel)
             {
