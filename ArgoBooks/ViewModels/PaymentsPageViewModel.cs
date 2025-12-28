@@ -69,13 +69,7 @@ public partial class PaymentsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenPortal()
     {
-        // In a real implementation, this would open the payment portal URL
-        // For now, we'll just show a message or open a placeholder URL
-        // System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        // {
-        //     FileName = "https://portal.argobooks.com",
-        //     UseShellExecute = true
-        // });
+        // TODO: Implement payment portal URL opening
     }
 
     #endregion
