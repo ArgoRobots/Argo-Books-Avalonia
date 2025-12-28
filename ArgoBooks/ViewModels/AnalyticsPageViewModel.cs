@@ -3,6 +3,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
 using LiveChartsCore.Geo;
 using LiveChartsCore.SkiaSharpView;
@@ -1330,6 +1331,25 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         InsuranceClaims = insuranceClaimsCount.ToString("N0");
         InsuranceClaimsChangeValue = insuranceChange;
         InsuranceClaimsChangeText = $"{(insuranceChange >= 0 ? "+" : "")}{insuranceChange:F1}%";
+    }
+
+    #endregion
+
+    #region Customer Activity Info Modal
+
+    [ObservableProperty]
+    private bool _isCustomerActivityInfoOpen;
+
+    [RelayCommand]
+    private void ShowCustomerActivityInfo()
+    {
+        IsCustomerActivityInfoOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseCustomerActivityInfo()
+    {
+        IsCustomerActivityInfoOpen = false;
     }
 
     #endregion

@@ -1216,11 +1216,21 @@
                                         Padding="20,16"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Active vs Inactive Customers"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
-                                               HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0"
+                                                   Text="Active vs Inactive Customers"
+                                                   FontSize="16"
+                                                   FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <Button Grid.Column="1"
+                                                Classes="info-button"
+                                                Command="{Binding ShowCustomerActivityInfoCommand}"
+                                                ToolTip.Tip="What counts as active?">
+                                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                                      Width="18" Height="18" />
+                                        </Button>
+                                    </Grid>
                                 </Border>
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
@@ -1860,6 +1870,113 @@
                 </StackPanel>
             </Panel>
         </ScrollViewer>
+
+        <!-- Customer Activity Info Modal -->
+        <Grid IsVisible="{Binding IsCustomerActivityInfoOpen}">
+            <!-- Backdrop -->
+            <Border Background="#80000000"
+                    IsHitTestVisible="True"
+                    PointerPressed="CustomerActivityInfoBackdrop_PointerPressed">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                    </Transitions>
+                </Border.Transitions>
+            </Border>
+
+            <!-- Modal Content -->
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Width="450"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                          Width="24" Height="24"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Text="Customer Activity"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Classes="info-button"
+                                    Command="{Binding CloseCustomerActivityInfoCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="18" Height="18" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Body -->
+                    <Border Grid.Row="1" Padding="24,20">
+                        <StackPanel Spacing="16">
+                            <TextBlock Text="How is customer activity determined?"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                            <TextBlock TextWrapping="Wrap"
+                                       FontSize="14"
+                                       LineHeight="22"
+                                       Foreground="{DynamicResource TextSecondaryBrush}">
+                                <Run Text="A customer is considered " />
+                                <Run Text="Active" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" />
+                                <Run Text=" if they have made at least one purchase within the selected date range." />
+                            </TextBlock>
+
+                            <TextBlock TextWrapping="Wrap"
+                                       FontSize="14"
+                                       LineHeight="22"
+                                       Foreground="{DynamicResource TextSecondaryBrush}">
+                                <Run Text="Customers with no purchases in this period are marked as " />
+                                <Run Text="Inactive" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <Run Text="." />
+                            </TextBlock>
+
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16"
+                                    Margin="0,8,0,0">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Tip"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource PrimaryBrush}" />
+                                    <TextBlock Text="Change the date range at the top of the page to see customer activity over different time periods. For example, select 'All Time' to see lifetime activity."
+                                               TextWrapping="Wrap"
+                                               FontSize="13"
+                                               LineHeight="20"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Button Classes="primary-button"
+                                Content="Got it"
+                                HorizontalAlignment="Right"
+                                Command="{Binding CloseCustomerActivityInfoCommand}" />
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 
     <UserControl.Styles>
@@ -1966,6 +2083,27 @@
         </Style>
         <Style Selector="RadioButton.segmented-button:checked">
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Info Button -->
+        <Style Selector="Button.info-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.info-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.info-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.info-button PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        </Style>
+        <Style Selector="Button.info-button:pointerover PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
     </UserControl.Styles>
