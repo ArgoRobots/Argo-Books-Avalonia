@@ -12,7 +12,7 @@ public partial class SuppliersTableColumnWidths : ObservableObject, ITableColumn
     private bool _hasManualOverflow;
 
     private readonly Dictionary<string, ColumnDef> _columns = new();
-    private readonly string[] _columnOrder = { "Supplier", "Email", "Phone", "Location", "Products", "Actions" };
+    private readonly string[] _columnOrder = { "Supplier", "Contact", "Country", "Products", "Status", "Actions" };
 
     public class ColumnDef
     {
@@ -34,16 +34,16 @@ public partial class SuppliersTableColumnWidths : ObservableObject, ITableColumn
     private double _supplierColumnWidth = 200;
 
     [ObservableProperty]
-    private double _emailColumnWidth = 150;
+    private double _contactColumnWidth = 150;
 
     [ObservableProperty]
-    private double _phoneColumnWidth = 130;
+    private double _countryColumnWidth = 130;
 
     [ObservableProperty]
-    private double _locationColumnWidth = 120;
+    private double _productsColumnWidth = 100;
 
     [ObservableProperty]
-    private double _productsColumnWidth = 90;
+    private double _statusColumnWidth = 90;
 
     [ObservableProperty]
     private double _actionsColumnWidth = 120;
@@ -64,10 +64,10 @@ public partial class SuppliersTableColumnWidths : ObservableObject, ITableColumn
     private void InitializeColumns()
     {
         _columns["Supplier"] = new ColumnDef { Name = "Supplier", StarValue = 1.5, MinWidth = 150, PreferredWidth = 200 };
-        _columns["Email"] = new ColumnDef { Name = "Email", StarValue = 1.0, MinWidth = 100, PreferredWidth = 150 };
-        _columns["Phone"] = new ColumnDef { Name = "Phone", StarValue = 1.0, MinWidth = 100, PreferredWidth = 130 };
-        _columns["Location"] = new ColumnDef { Name = "Location", StarValue = 0.8, MinWidth = 80, PreferredWidth = 120 };
-        _columns["Products"] = new ColumnDef { Name = "Products", StarValue = 0.6, MinWidth = 60, PreferredWidth = 90 };
+        _columns["Contact"] = new ColumnDef { Name = "Contact", StarValue = 1.0, MinWidth = 100, PreferredWidth = 150 };
+        _columns["Country"] = new ColumnDef { Name = "Country", StarValue = 1.0, MinWidth = 100, PreferredWidth = 130 };
+        _columns["Products"] = new ColumnDef { Name = "Products", StarValue = 0.8, MinWidth = 60, PreferredWidth = 100 };
+        _columns["Status"] = new ColumnDef { Name = "Status", StarValue = 0.6, MinWidth = 70, PreferredWidth = 90 };
         _columns["Actions"] = new ColumnDef { Name = "Actions", IsFixed = true, FixedWidth = 120, MinWidth = 120 };
     }
 
@@ -213,10 +213,10 @@ public partial class SuppliersTableColumnWidths : ObservableObject, ITableColumn
         switch (columnName)
         {
             case "Supplier": SupplierColumnWidth = width; break;
-            case "Email": EmailColumnWidth = width; break;
-            case "Phone": PhoneColumnWidth = width; break;
-            case "Location": LocationColumnWidth = width; break;
+            case "Contact": ContactColumnWidth = width; break;
+            case "Country": CountryColumnWidth = width; break;
             case "Products": ProductsColumnWidth = width; break;
+            case "Status": StatusColumnWidth = width; break;
             case "Actions": ActionsColumnWidth = width; break;
         }
     }

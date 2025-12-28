@@ -15,6 +15,15 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class SuppliersPageViewModel : ViewModelBase
 {
+    #region Table Column Widths
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public SuppliersTableColumnWidths ColumnWidths { get; } = new SuppliersTableColumnWidths();
+
+    #endregion
+
     #region Search and Filter
 
     [ObservableProperty]
