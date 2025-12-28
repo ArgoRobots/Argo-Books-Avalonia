@@ -149,10 +149,11 @@
                             </Style>
                         </TextBlock.Styles>
                     </TextBlock>
-                    <!-- "from last month" text -->
-                    <TextBlock Text="from last month"
+                    <!-- comparison label text -->
+                    <TextBlock Text="{Binding ChangeLabel, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                                FontSize="{StaticResource FontSizeSm}"
                                VerticalAlignment="Center"
+                               IsVisible="{Binding ChangeLabel, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                Classes.positive="{Binding IsPositiveTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                                Classes.negative="{Binding IsNegativeTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                                Classes.neutral="{Binding IsNeutralTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">

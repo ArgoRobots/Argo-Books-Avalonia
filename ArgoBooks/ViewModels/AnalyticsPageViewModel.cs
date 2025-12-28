@@ -109,9 +109,26 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     /// </summary>
     public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
 
+    /// <summary>
+    /// Gets the label for comparison period based on selected date range.
+    /// </summary>
+    public string ComparisonPeriodLabel => SelectedDateRange switch
+    {
+        "This Month" => "from last month",
+        "Last Month" => "from prior month",
+        "This Quarter" => "from last quarter",
+        "Last Quarter" => "from prior quarter",
+        "This Year" => "from last year",
+        "Last Year" => "from prior year",
+        "All Time" => "",
+        "Custom Range" => "from prior period",
+        _ => "from last period"
+    };
+
     partial void OnSelectedDateRangeChanged(string value)
     {
         OnPropertyChanged(nameof(IsCustomDateRange));
+        OnPropertyChanged(nameof(ComparisonPeriodLabel));
         UpdateDateRangeFromSelection();
         LoadAllCharts();
     }

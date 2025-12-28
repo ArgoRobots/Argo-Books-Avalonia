@@ -20,4 +20,10 @@ public partial class AnalyticsPage : UserControl
     {
         ViewModel?.CloseCustomerActivityInfoCommand.Execute(null);
     }
+
+    private void CustomerActivityInfoModal_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Prevent click from bubbling to backdrop
+        e.Handled = true;
+    }
 }
