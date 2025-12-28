@@ -350,6 +350,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Customer with Avatar -->
@@ -371,6 +372,7 @@
                                                                            VerticalAlignment="Center"
                                                                            TextTrimming="CharacterEllipsis" />
                                                             </StackPanel>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Issue Date -->
@@ -382,6 +384,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Due Date -->
@@ -393,6 +396,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Amount -->
@@ -405,6 +409,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Status Badge -->
@@ -421,6 +426,7 @@
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToInvoiceStatusForeground}}" />
                                                             </Border>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Actions -->

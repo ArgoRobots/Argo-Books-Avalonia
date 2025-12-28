@@ -370,6 +370,7 @@
                                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                                            TextTrimming="CharacterEllipsis" />
                                                             </StackPanel>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Supplier -->
@@ -381,6 +382,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Status -->
@@ -397,6 +399,7 @@
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding Status, Converter={x:Static local:StringConverters.ToRentalItemStatusForeground}}" />
                                                             </Border>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Total Quantity -->
@@ -408,6 +411,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Available Quantity -->
@@ -420,6 +424,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Rented Quantity -->
@@ -431,6 +436,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Daily Rate -->
@@ -442,6 +448,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Weekly Rate -->
@@ -453,6 +460,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Deposit -->
@@ -464,6 +472,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Actions -->

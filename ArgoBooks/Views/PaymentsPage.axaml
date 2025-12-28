@@ -421,6 +421,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Invoice -->
@@ -432,6 +433,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Customer -->
@@ -443,6 +445,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Date -->
@@ -454,6 +457,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Method -->
@@ -465,6 +469,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Amount -->
@@ -484,6 +489,7 @@
                                                                 </Binding>
                                                             </TextBlock.Foreground>
                                                         </TextBlock>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Status Badge -->
@@ -500,6 +506,7 @@
                                                                        FontWeight="Medium"
                                                                        Foreground="{Binding Status, Converter={x:Static local:StringConverters.ToPaymentTransactionStatusForeground}}" />
                                                         </Border>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Actions -->

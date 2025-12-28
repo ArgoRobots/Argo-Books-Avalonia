@@ -241,6 +241,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -276,6 +277,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Contact" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -311,6 +313,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Country" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -346,6 +349,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Products" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -381,6 +385,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -433,6 +438,7 @@
                                                                    TextTrimming="CharacterEllipsis" />
                                                     </StackPanel>
                                                 </StackPanel>
+                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             </Panel>
 
                                             <!-- Contact Person -->
@@ -443,6 +449,7 @@
                                                            VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis"
                                                            Margin="8,0" />
+                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             </Panel>
 
                                             <!-- Country -->
@@ -452,6 +459,7 @@
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            VerticalAlignment="Center"
                                                            Margin="8,0" />
+                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             </Panel>
 
                                             <!-- Product Count -->
@@ -461,6 +469,7 @@
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                                            VerticalAlignment="Center"
                                                            Margin="8,0" />
+                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             </Panel>
 
                                             <!-- Status Badge -->
@@ -476,6 +485,7 @@
                                                                FontWeight="Medium"
                                                                Foreground="{Binding IsActive, Converter={x:Static local:BoolConverters.ToStatusForeground}}" />
                                                 </Border>
+                                                <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             </Panel>
 
                                             <!-- Actions -->

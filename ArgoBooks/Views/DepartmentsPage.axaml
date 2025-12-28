@@ -298,6 +298,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis" />
                                                         </StackPanel>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Description -->
@@ -309,6 +310,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Employees Badge -->
@@ -325,6 +327,7 @@
                                                                        FontWeight="Medium"
                                                                        Foreground="#3B82F6" />
                                                         </Border>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Actions -->

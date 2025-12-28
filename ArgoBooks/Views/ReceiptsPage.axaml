@@ -532,6 +532,7 @@
                                                                                                Foreground="#9333EA" />
                                                                                 </Border>
                                                                             </StackPanel>
+                                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                                         </Panel>
 
                                                                         <!-- Vendor -->
@@ -543,6 +544,7 @@
                                                                                        VerticalAlignment="Center"
                                                                                        TextTrimming="CharacterEllipsis"
                                                                                        Margin="8,0" />
+                                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                                         </Panel>
 
                                                                         <!-- Date -->
@@ -554,6 +556,7 @@
                                                                                        VerticalAlignment="Center"
                                                                                        TextTrimming="CharacterEllipsis"
                                                                                        Margin="8,0" />
+                                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                                         </Panel>
 
                                                                         <!-- Type Badge -->
@@ -579,6 +582,7 @@
                                                                                                Foreground="#22C55E" />
                                                                                 </Border>
                                                                             </Panel>
+                                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                                         </Panel>
 
                                                                         <!-- Amount -->
@@ -591,6 +595,7 @@
                                                                                        VerticalAlignment="Center"
                                                                                        TextTrimming="CharacterEllipsis"
                                                                                        Margin="8,0" />
+                                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                                         </Panel>
 
                                                                         <!-- Actions -->

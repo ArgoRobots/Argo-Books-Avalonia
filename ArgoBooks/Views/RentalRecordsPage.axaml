@@ -366,6 +366,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Item -->
@@ -380,6 +381,7 @@
                                                                            FontSize="12"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                             </StackPanel>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Customer -->
@@ -391,6 +393,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Quantity -->
@@ -402,6 +405,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Start Date -->
@@ -413,6 +417,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Due Date -->
@@ -427,6 +432,7 @@
                                                                            Foreground="#DC2626"
                                                                            IsVisible="{Binding DaysOverdue, Converter={x:Static local:IntConverters.IsPositive}}" />
                                                             </StackPanel>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Status Badge -->
@@ -443,6 +449,7 @@
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding Status, Converter={x:Static local:StringConverters.ToRentalStatusForeground}}" />
                                                             </Border>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Total Cost -->
@@ -455,6 +462,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Deposit -->
@@ -466,6 +474,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Actions -->

@@ -242,6 +242,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Customer" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -277,6 +278,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Email" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -312,6 +314,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Phone" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -347,6 +350,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Address" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -382,6 +386,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="PaymentStatus" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -417,6 +422,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="Outstanding" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -452,6 +458,7 @@
                                             </Panel>
                                         </StackPanel>
                                     </Button>
+                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     <controls:ColumnResizeGripper ColumnName="LastRental" ColumnWidths="{Binding ColumnWidths}"
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
@@ -504,6 +511,7 @@
                                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                             </StackPanel>
                                                         </StackPanel>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Email -->
@@ -514,6 +522,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Phone -->
@@ -523,6 +532,7 @@
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Address -->
@@ -533,6 +543,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Payment Status Badge -->
@@ -548,6 +559,7 @@
                                                                        FontWeight="Medium"
                                                                        Foreground="{Binding PaymentStatus, Converter={x:Static local:StringConverters.ToPaymentStatusForeground}}" />
                                                         </Border>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Outstanding Amount -->
@@ -558,6 +570,7 @@
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Last Rental -->
@@ -567,6 +580,7 @@
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Actions -->

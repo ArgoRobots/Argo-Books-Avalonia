@@ -232,6 +232,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Name" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -267,6 +268,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Type" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -302,6 +304,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Description" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -337,6 +340,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Category" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -372,6 +376,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Supplier" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -407,6 +412,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Country" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -418,6 +424,7 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    Margin="8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Reorder" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -429,6 +436,7 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    Margin="8,12" />
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Overstock" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -482,6 +490,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Name" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -517,6 +526,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Type" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -552,6 +562,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Description" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -587,6 +598,7 @@
                                                 </Panel>
                                             </StackPanel>
                                         </Button>
+                                        <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Category" ColumnWidths="{Binding ColumnWidths}"
                                                                        HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                     </Panel>
@@ -627,6 +639,7 @@
                                                                            FontSize="12"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                             </StackPanel>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Type Badge -->
@@ -642,6 +655,7 @@
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
                                                             </Border>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Description -->
@@ -652,6 +666,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Category -->
@@ -662,6 +677,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Supplier -->
@@ -672,6 +688,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Country of Origin -->
@@ -681,6 +698,7 @@
                                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Reorder Point -->
@@ -690,6 +708,7 @@
                                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Overstock -->
@@ -699,6 +718,7 @@
                                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Actions -->
@@ -752,6 +772,7 @@
                                                                            FontSize="12"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                                                             </StackPanel>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Type Badge -->
@@ -767,6 +788,7 @@
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
                                                             </Border>
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Description -->
@@ -777,6 +799,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Category -->
@@ -787,6 +810,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
+                                                            <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                         </Panel>
 
                                                         <!-- Actions -->
