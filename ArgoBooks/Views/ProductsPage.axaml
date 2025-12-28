@@ -626,7 +626,7 @@
                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                         BorderThickness="0,0,0,1"
                                                         MinHeight="52">
-                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal">
                                                         <!-- Product Name with ID -->
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.NameColumnWidth}">
                                                             <StackPanel VerticalAlignment="Center" Margin="8,0">
@@ -759,7 +759,7 @@
                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                         BorderThickness="0,0,0,1"
                                                         MinHeight="52">
-                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal">
                                                         <!-- Product Name with ID -->
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.NameColumnWidth}">
                                                             <StackPanel VerticalAlignment="Center" Margin="8,0">

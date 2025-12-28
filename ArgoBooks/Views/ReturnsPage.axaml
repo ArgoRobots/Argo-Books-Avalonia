@@ -380,7 +380,7 @@
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                                             </Style>
                                                         </Border.Styles>
-                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal">
                                                             <!-- Transaction ID -->
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}">
                                                                 <TextBlock Text="{Binding Id}"

@@ -400,7 +400,7 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1"
                                                     MinHeight="52">
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
                                                     <!-- ID -->
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowIdColumn}">

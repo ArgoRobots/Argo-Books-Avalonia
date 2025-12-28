@@ -410,7 +410,7 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1"
                                                     MinHeight="56">
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
                                                     <!-- Payment ID -->
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ShowIdColumn}">

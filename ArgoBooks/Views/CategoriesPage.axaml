@@ -207,7 +207,7 @@
                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                         BorderThickness="0,0,0,1"
                                                         MinHeight="56">
-                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <StackPanel Orientation="Horizontal">
                                                         <!-- Category Name with Icon -->
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.NameColumnWidth}"
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowNameColumn}">

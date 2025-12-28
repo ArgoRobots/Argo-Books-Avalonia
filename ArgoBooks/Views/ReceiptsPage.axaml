@@ -511,7 +511,7 @@
                                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                                         BorderThickness="0,0,0,1"
                                                                         MinHeight="56">
-                                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                    <StackPanel Orientation="Horizontal">
                                                                         <!-- Receipt # -->
                                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ShowIdColumn}">

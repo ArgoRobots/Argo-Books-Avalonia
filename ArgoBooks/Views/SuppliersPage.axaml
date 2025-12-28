@@ -412,7 +412,7 @@
                                             BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="0,0,0,1"
                                             MinHeight="52">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
                                             <!-- Supplier Name with Avatar -->
                                             <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}">
                                                 <StackPanel Orientation="Horizontal" Spacing="12" Margin="8,0">
