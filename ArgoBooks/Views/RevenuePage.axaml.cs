@@ -21,4 +21,12 @@ public partial class RevenuePage : UserControl
             }
         }
     }
+
+    private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is RevenuePageViewModel viewModel && e.WidthChanged)
+        {
+            viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
+        }
+    }
 }
