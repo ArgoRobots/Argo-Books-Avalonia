@@ -23,7 +23,7 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
     /// Sorts by the specified column. Toggles direction if same column, otherwise starts ascending.
     /// </summary>
     [RelayCommand]
-    protected void SortBy(string column)
+    private void SortBy(string column)
     {
         if (SortColumn == column)
         {
@@ -104,7 +104,7 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
     /// Navigates to the previous page.
     /// </summary>
     [RelayCommand]
-    protected void GoToPreviousPage()
+    private void GoToPreviousPage()
     {
         if (CanGoToPreviousPage)
             CurrentPage--;
@@ -114,7 +114,7 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
     /// Navigates to the next page.
     /// </summary>
     [RelayCommand]
-    protected void GoToNextPage()
+    private void GoToNextPage()
     {
         if (CanGoToNextPage)
             CurrentPage++;
@@ -124,7 +124,7 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
     /// Navigates to a specific page.
     /// </summary>
     [RelayCommand]
-    protected void GoToPage(int page)
+    private void GoToPage(int page)
     {
         if (page >= 1 && page <= TotalPages && page != CurrentPage)
             CurrentPage = page;
