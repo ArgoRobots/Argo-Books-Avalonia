@@ -400,7 +400,7 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1"
                                                     MinHeight="52">
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
                                                     <!-- ID -->
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowIdColumn}">
@@ -411,6 +411,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Customer with Avatar -->
@@ -432,6 +433,7 @@
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis" />
                                                         </StackPanel>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Product -->
@@ -443,6 +445,7 @@
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Date -->
@@ -453,6 +456,7 @@
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Quantity -->
@@ -463,6 +467,7 @@
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Unit Price -->
@@ -473,6 +478,7 @@
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Amount -->
@@ -483,6 +489,7 @@
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Tax -->
@@ -493,6 +500,7 @@
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Shipping -->
@@ -503,6 +511,7 @@
                                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Discount -->
@@ -513,6 +522,7 @@
                                                                    Foreground="#22C55E"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Total -->
@@ -524,6 +534,7 @@
                                                                    Foreground="#22C55E"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Receipt Icon -->
@@ -539,6 +550,7 @@
                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                                       IsVisible="{Binding !HasReceipt}" />
                                                         </Panel>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Status Badge -->
@@ -555,6 +567,7 @@
                                                                        FontWeight="Medium"
                                                                        Foreground="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToRevenueStatusForeground}}" />
                                                         </Border>
+                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>
 
                                                     <!-- Actions -->

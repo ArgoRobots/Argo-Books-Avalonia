@@ -186,6 +186,43 @@ public partial class DepartmentsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Column Visibility and Widths
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public DepartmentsTableColumnWidths ColumnWidths { get; } = new DepartmentsTableColumnWidths();
+
+    [ObservableProperty]
+    private bool _showDepartmentColumn = true;
+
+    [ObservableProperty]
+    private bool _showDescriptionColumn = true;
+
+    [ObservableProperty]
+    private bool _showEmployeesColumn = true;
+
+    partial void OnShowDepartmentColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Department", value);
+    partial void OnShowDescriptionColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Description", value);
+    partial void OnShowEmployeesColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Employees", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Departments Collections
 
     /// <summary>

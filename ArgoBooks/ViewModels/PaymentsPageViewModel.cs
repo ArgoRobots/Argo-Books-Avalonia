@@ -69,13 +69,7 @@ public partial class PaymentsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenPortal()
     {
-        // In a real implementation, this would open the payment portal URL
-        // For now, we'll just show a message or open a placeholder URL
-        // System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        // {
-        //     FileName = "https://portal.argobooks.com",
-        //     UseShellExecute = true
-        // });
+        // TODO: Implement payment portal URL opening
     }
 
     #endregion
@@ -144,6 +138,59 @@ public partial class PaymentsPageViewModel : ViewModelBase
             SortDirection = SortDirection.Ascending;
         }
         FilterPayments();
+    }
+
+    #endregion
+
+    #region Column Visibility and Widths
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public PaymentsTableColumnWidths ColumnWidths { get; } = new PaymentsTableColumnWidths();
+
+    [ObservableProperty]
+    private bool _showIdColumn = true;
+
+    [ObservableProperty]
+    private bool _showInvoiceColumn = true;
+
+    [ObservableProperty]
+    private bool _showCustomerColumn = true;
+
+    [ObservableProperty]
+    private bool _showDateColumn = true;
+
+    [ObservableProperty]
+    private bool _showMethodColumn = true;
+
+    [ObservableProperty]
+    private bool _showAmountColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowInvoiceColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Invoice", value);
+    partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
+    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
+    partial void OnShowMethodColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Method", value);
+    partial void OnShowAmountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Amount", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
     }
 
     #endregion

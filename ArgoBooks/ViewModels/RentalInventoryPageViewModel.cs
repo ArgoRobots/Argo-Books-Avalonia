@@ -30,6 +30,67 @@ public partial class RentalInventoryPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Column Visibility and Widths
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public RentalInventoryTableColumnWidths ColumnWidths { get; } = new RentalInventoryTableColumnWidths();
+
+    [ObservableProperty]
+    private bool _showItemColumn = true;
+
+    [ObservableProperty]
+    private bool _showSupplierColumn = true;
+
+    [ObservableProperty]
+    private bool _showStatusColumn = true;
+
+    [ObservableProperty]
+    private bool _showTotalQtyColumn = true;
+
+    [ObservableProperty]
+    private bool _showAvailableColumn = true;
+
+    [ObservableProperty]
+    private bool _showRentedColumn = true;
+
+    [ObservableProperty]
+    private bool _showDailyRateColumn = true;
+
+    [ObservableProperty]
+    private bool _showWeeklyRateColumn = true;
+
+    [ObservableProperty]
+    private bool _showDepositColumn = true;
+
+    partial void OnShowItemColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Item", value);
+    partial void OnShowSupplierColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Supplier", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
+    partial void OnShowTotalQtyColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("TotalQty", value);
+    partial void OnShowAvailableColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Available", value);
+    partial void OnShowRentedColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Rented", value);
+    partial void OnShowDailyRateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("DailyRate", value);
+    partial void OnShowWeeklyRateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("WeeklyRate", value);
+    partial void OnShowDepositColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Deposit", value);
+
+    [RelayCommand]
+    private void ToggleColumnMenu()
+    {
+        IsColumnMenuOpen = !IsColumnMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseColumnMenu()
+    {
+        IsColumnMenuOpen = false;
+    }
+
+    #endregion
+
     #region Search and Filter
 
     [ObservableProperty]
