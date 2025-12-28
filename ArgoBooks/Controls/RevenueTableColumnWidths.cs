@@ -11,6 +11,9 @@ public partial class RevenueTableColumnWidths : TableColumnWidthsBase
     private double _idColumnWidth = 80;
 
     [ObservableProperty]
+    private double _accountantColumnWidth = 120;
+
+    [ObservableProperty]
     private double _customerColumnWidth = 150;
 
     [ObservableProperty]
@@ -51,9 +54,10 @@ public partial class RevenueTableColumnWidths : TableColumnWidthsBase
 
     public RevenueTableColumnWidths()
     {
-        ColumnOrder = new[] { "Id", "Customer", "Product", "Date", "Quantity", "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions" };
+        ColumnOrder = new[] { "Id", "Accountant", "Customer", "Product", "Date", "Quantity", "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions" };
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 80 }, w => IdColumnWidth = w);
+        RegisterColumn("Accountant", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 120 }, w => AccountantColumnWidth = w);
         RegisterColumn("Customer", new ColumnDef { StarValue = 1.2, MinWidth = 100, PreferredWidth = 150 }, w => CustomerColumnWidth = w);
         RegisterColumn("Product", new ColumnDef { StarValue = 1.5, MinWidth = 120, PreferredWidth = 180 }, w => ProductColumnWidth = w);
         RegisterColumn("Date", new ColumnDef { StarValue = 0.9, MinWidth = 80, PreferredWidth = 100 }, w => DateColumnWidth = w);

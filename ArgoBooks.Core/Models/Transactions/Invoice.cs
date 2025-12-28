@@ -99,6 +99,12 @@ public class Invoice
     public string? RecurringInvoiceId { get; set; }
 
     /// <summary>
+    /// ID of the accountant who created or manages this invoice.
+    /// </summary>
+    [JsonPropertyName("accountantId")]
+    public string? AccountantId { get; set; }
+
+    /// <summary>
     /// Payment reminder settings.
     /// </summary>
     [JsonPropertyName("reminderSettings")]

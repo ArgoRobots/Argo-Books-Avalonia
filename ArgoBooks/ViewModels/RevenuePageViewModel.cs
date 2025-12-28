@@ -78,6 +78,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
+    private bool _showAccountantColumn = true;
+
+    [ObservableProperty]
     private bool _showCustomerColumn = true;
 
     [ObservableProperty]
@@ -114,6 +117,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private bool _showReceiptColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowAccountantColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Accountant", value);
     partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
     partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
     partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
@@ -197,6 +201,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     {
         // Set initial visibility for columns
         ColumnWidths.SetColumnVisibility("Id", ShowIdColumn);
+        ColumnWidths.SetColumnVisibility("Accountant", ShowAccountantColumn);
         ColumnWidths.SetColumnVisibility("Customer", ShowCustomerColumn);
         ColumnWidths.SetColumnVisibility("Product", ShowProductColumn);
         ColumnWidths.SetColumnVisibility("Date", ShowDateColumn);

@@ -80,6 +80,9 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
+    private bool _showAccountantColumn = true;
+
+    [ObservableProperty]
     private bool _showItemColumn = true;
 
     [ObservableProperty]
@@ -104,6 +107,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     private bool _showDepositColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowAccountantColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Accountant", value);
     partial void OnShowItemColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Item", value);
     partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
     partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
@@ -364,10 +368,14 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
         {
             var item = companyData?.RentalInventory.FirstOrDefault(i => i.Id == record.RentalItemId);
             var customer = companyData?.Customers.FirstOrDefault(c => c.Id == record.CustomerId);
+            var accountant = !string.IsNullOrEmpty(record.AccountantId)
+                ? companyData?.Accountants.FirstOrDefault(a => a.Id == record.AccountantId)
+                : null;
 
             return new RentalRecordDisplayItem
             {
                 Id = record.Id,
+                AccountantName = accountant?.Name ?? "System",
                 ItemName = item?.Name ?? "Unknown Item",
                 ItemId = record.RentalItemId,
                 CustomerName = customer?.Name ?? "Unknown Customer",
@@ -529,6 +537,9 @@ public partial class RentalRecordDisplayItem : ObservableObject
 {
     [ObservableProperty]
     private string _id = string.Empty;
+
+    [ObservableProperty]
+    private string _accountantName = string.Empty;
 
     [ObservableProperty]
     private string _itemName = string.Empty;

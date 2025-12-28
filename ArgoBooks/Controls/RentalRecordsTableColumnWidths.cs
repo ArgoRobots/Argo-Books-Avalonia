@@ -11,6 +11,9 @@ public partial class RentalRecordsTableColumnWidths : TableColumnWidthsBase
     private double _idColumnWidth = 100;
 
     [ObservableProperty]
+    private double _accountantColumnWidth = 120;
+
+    [ObservableProperty]
     private double _itemColumnWidth = 180;
 
     [ObservableProperty]
@@ -39,9 +42,10 @@ public partial class RentalRecordsTableColumnWidths : TableColumnWidthsBase
 
     public RentalRecordsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Id", "Item", "Customer", "Quantity", "StartDate", "DueDate", "Status", "Total", "Deposit", "Actions" };
+        ColumnOrder = new[] { "Id", "Accountant", "Item", "Customer", "Quantity", "StartDate", "DueDate", "Status", "Total", "Deposit", "Actions" };
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.6, MinWidth = 80, PreferredWidth = 100 }, w => IdColumnWidth = w);
+        RegisterColumn("Accountant", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 120 }, w => AccountantColumnWidth = w);
         RegisterColumn("Item", new ColumnDef { StarValue = 1.0, MinWidth = 140, PreferredWidth = 180 }, w => ItemColumnWidth = w);
         RegisterColumn("Customer", new ColumnDef { StarValue = 1.0, MinWidth = 140, PreferredWidth = 180 }, w => CustomerColumnWidth = w);
         RegisterColumn("Quantity", new ColumnDef { StarValue = 0.4, MinWidth = 60, PreferredWidth = 80 }, w => QuantityColumnWidth = w);

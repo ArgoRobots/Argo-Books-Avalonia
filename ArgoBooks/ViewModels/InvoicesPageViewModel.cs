@@ -155,6 +155,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private bool _showIdColumn = true;
 
     [ObservableProperty]
+    private bool _showAccountantColumn = true;
+
+    [ObservableProperty]
     private bool _showCustomerColumn = true;
 
     [ObservableProperty]
@@ -170,6 +173,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private bool _showStatusColumn = true;
 
     partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowAccountantColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Accountant", value);
     partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
     partial void OnShowIssueDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("IssueDate", value);
     partial void OnShowDueDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("DueDate", value);
@@ -438,12 +442,16 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         var displayItems = filtered.Select(invoice =>
         {
             var customer = companyData?.GetCustomer(invoice.CustomerId);
+            var accountant = !string.IsNullOrEmpty(invoice.AccountantId)
+                ? companyData?.Accountants.FirstOrDefault(a => a.Id == invoice.AccountantId)
+                : null;
             var statusDisplay = GetStatusDisplay(invoice);
 
             return new InvoiceDisplayItem
             {
                 Id = invoice.Id,
                 InvoiceNumber = invoice.InvoiceNumber,
+                AccountantName = accountant?.Name ?? "System",
                 CustomerId = invoice.CustomerId,
                 CustomerName = customer?.Name ?? "Unknown Customer",
                 CustomerInitials = GetInitials(customer?.Name ?? "?"),
@@ -624,6 +632,9 @@ public partial class InvoiceDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _invoiceNumber = string.Empty;
+
+    [ObservableProperty]
+    private string _accountantName = string.Empty;
 
     [ObservableProperty]
     private string _customerId = string.Empty;
