@@ -271,121 +271,189 @@
 
                         <!-- Returns Table Content -->
                         <ScrollViewer Grid.Row="1"
-                                      VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Auto">
-                            <Panel Margin="0">
-                                <!-- Data Table -->
-                                <Grid IsVisible="{Binding Returns.Count, Converter={x:Static local:IntConverters.IsNotZero}}">
-                                    <Grid RowDefinitions="Auto,*">
-                                        <!-- Table Header -->
-                                        <Border Grid.Row="0"
-                                                Background="{DynamicResource SurfaceAltBrush}"
-                                                Padding="24,12"
-                                                BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="0,0,0,1">
-                                            <Grid ColumnDefinitions="100,150,120,85,120,100,80,80,70">
-                                                <TextBlock Grid.Column="0" Text="ID" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="1" Text="Product" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="2" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}">
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0}">
-                                                            <Binding Path="$parent[UserControl].((vm:ReturnsPageViewModel)DataContext).IsExpenseTabActive" Converter="{x:Static local:BoolConverters.ToSupplierOrCustomerHeader}" />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                                <TextBlock Grid.Column="3" Text="Date" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="4" Text="Reason" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="5" Text="Processed" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="6" Text="Refund" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="7" Text="Status" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <TextBlock Grid.Column="8" Text="Actions" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
-                                            </Grid>
-                                        </Border>
+                                      x:Name="HorizontalTableScroll"
+                                      HorizontalScrollBarVisibility="{Binding ColumnWidths.NeedsHorizontalScroll, Converter={x:Static local:BoolConverters.ToScrollBarVisibility}}"
+                                      VerticalScrollBarVisibility="Disabled">
+                            <Grid RowDefinitions="Auto,*" x:Name="TableGrid" SizeChanged="OnTableSizeChanged"
+                                  MinWidth="{Binding ColumnWidths.MinimumTotalWidth}">
+                                <!-- Table Header -->
+                                <Border Grid.Row="0"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        Padding="24,0"
+                                        MinHeight="40"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <!-- ID Column Header -->
+                                        <Panel Width="{Binding ColumnWidths.IdColumnWidth}">
+                                            <TextBlock Text="ID" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
+                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        </Panel>
+
+                                        <!-- Product Column Header -->
+                                        <Panel Width="{Binding ColumnWidths.ProductColumnWidth}">
+                                            <TextBlock Text="Product" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
+                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        </Panel>
+
+                                        <!-- Supplier/Customer Column Header -->
+                                        <Panel Width="{Binding ColumnWidths.SupplierCustomerColumnWidth}">
+                                            <TextBlock FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0}">
+                                                        <Binding Path="$parent[UserControl].((vm:ReturnsPageViewModel)DataContext).IsExpenseTabActive" Converter="{x:Static local:BoolConverters.ToSupplierOrCustomerHeader}" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                            <controls:ColumnResizeGripper ColumnName="SupplierCustomer" ColumnWidths="{Binding ColumnWidths}"
+                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        </Panel>
+
+                                        <!-- Date Column Header -->
+                                        <Panel Width="{Binding ColumnWidths.DateColumnWidth}">
+                                            <TextBlock Text="Date" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
+                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        </Panel>
+
+                                        <!-- Reason Column Header -->
+                                        <Panel Width="{Binding ColumnWidths.ReasonColumnWidth}">
+                                            <TextBlock Text="Reason" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <controls:ColumnResizeGripper ColumnName="Reason" ColumnWidths="{Binding ColumnWidths}"
+                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        </Panel>
+
+                                        <!-- Processed Column Header -->
+                                        <Panel Width="{Binding ColumnWidths.ProcessedColumnWidth}">
+                                            <TextBlock Text="Processed" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <controls:ColumnResizeGripper ColumnName="Processed" ColumnWidths="{Binding ColumnWidths}"
+                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        </Panel>
+
+                                        <!-- Refund Column Header -->
+                                        <Panel Width="{Binding ColumnWidths.RefundColumnWidth}">
+                                            <TextBlock Text="Refund" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <controls:ColumnResizeGripper ColumnName="Refund" ColumnWidths="{Binding ColumnWidths}"
+                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        </Panel>
+
+                                        <!-- Status Column Header -->
+                                        <Panel Width="{Binding ColumnWidths.StatusColumnWidth}">
+                                            <TextBlock Text="Status" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
+                                                                           HorizontalAlignment="Right" VerticalAlignment="Stretch" />
+                                        </Panel>
+
+                                        <!-- Actions Column Header -->
+                                        <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
+                                            <TextBlock Text="Actions" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" HorizontalAlignment="Center" />
+                                        </Panel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Table Content (scrollable) -->
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <Panel>
 
                                         <!-- Table Rows -->
-                                        <ItemsControl Grid.Row="1" ItemsSource="{Binding Returns}">
+                                        <ItemsControl ItemsSource="{Binding Returns}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate DataType="vm:ReturnDisplayItem">
-                                                    <Border Padding="24,16"
+                                                    <Border Padding="24,0"
                                                             BorderBrush="{DynamicResource BorderBrush}"
                                                             BorderThickness="0,0,0,1"
                                                             Background="{DynamicResource SurfaceBrush}"
+                                                            MinHeight="52"
                                                             Cursor="Hand">
                                                         <Border.Styles>
                                                             <Style Selector="Border:pointerover">
                                                                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                                             </Style>
                                                         </Border.Styles>
-                                                        <Grid ColumnDefinitions="100,150,120,85,120,100,80,80,70">
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                             <!-- Transaction ID -->
-                                                            <TextBlock Grid.Column="0"
-                                                                       Text="{Binding Id}"
-                                                                       FontSize="12"
-                                                                       FontWeight="Medium"
-                                                                       Foreground="{DynamicResource PrimaryBrush}"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       VerticalAlignment="Center" />
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}">
+                                                                <TextBlock Text="{Binding Id}"
+                                                                           FontSize="12"
+                                                                           FontWeight="Medium"
+                                                                           Foreground="{DynamicResource PrimaryBrush}"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="8,0" />
+                                                            </Panel>
 
                                                             <!-- Product -->
-                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                                <TextBlock Text="{Binding ProductNames}"
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}">
+                                                                <StackPanel VerticalAlignment="Center" Margin="8,0">
+                                                                    <TextBlock Text="{Binding ProductNames}"
+                                                                               FontSize="12"
+                                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                               TextTrimming="CharacterEllipsis" />
+                                                                    <TextBlock Text="{Binding ItemCount, StringFormat='{}{0} item(s)'}"
+                                                                               FontSize="10"
+                                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                                </StackPanel>
+                                                            </Panel>
+
+                                                            <!-- Supplier/Customer -->
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.SupplierCustomerColumnWidth}">
+                                                                <TextBlock Text="{Binding SupplierOrCustomerName}"
                                                                            FontSize="12"
                                                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
-                                                                           MaxWidth="140" />
-                                                                <TextBlock Text="{Binding ItemCount, StringFormat='{}{0} item(s)'}"
-                                                                           FontSize="10"
-                                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                            </StackPanel>
-
-                                                            <!-- Supplier/Customer -->
-                                                            <TextBlock Grid.Column="2"
-                                                                       Text="{Binding SupplierOrCustomerName}"
-                                                                       FontSize="12"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       MaxWidth="110"
-                                                                       VerticalAlignment="Center" />
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="8,0" />
+                                                            </Panel>
 
                                                             <!-- Return Date -->
-                                                            <TextBlock Grid.Column="3"
-                                                                       Text="{Binding DateFormatted}"
-                                                                       FontSize="12"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                       VerticalAlignment="Center" />
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.DateColumnWidth}">
+                                                                <TextBlock Text="{Binding DateFormatted}"
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="8,0" />
+                                                            </Panel>
 
                                                             <!-- Reason -->
-                                                            <TextBlock Grid.Column="4"
-                                                                       Text="{Binding Reason}"
-                                                                       FontSize="12"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       MaxWidth="110"
-                                                                       VerticalAlignment="Center" />
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}">
+                                                                <TextBlock Text="{Binding Reason}"
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="8,0" />
+                                                            </Panel>
 
                                                             <!-- Processed By -->
-                                                            <TextBlock Grid.Column="5"
-                                                                       Text="{Binding ProcessedBy}"
-                                                                       FontSize="12"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       MaxWidth="90"
-                                                                       VerticalAlignment="Center" />
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ProcessedColumnWidth}">
+                                                                <TextBlock Text="{Binding ProcessedBy}"
+                                                                           FontSize="12"
+                                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="8,0" />
+                                                            </Panel>
 
                                                             <!-- Refund Amount -->
-                                                            <TextBlock Grid.Column="6"
-                                                                       Text="{Binding RefundAmountFormatted}"
-                                                                       FontSize="12"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                       VerticalAlignment="Center" />
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.RefundColumnWidth}">
+                                                                <TextBlock Text="{Binding RefundAmountFormatted}"
+                                                                           FontSize="12"
+                                                                           FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="8,0" />
+                                                            </Panel>
 
                                                             <!-- Status Badge -->
-                                                            <Panel Grid.Column="7" VerticalAlignment="Center">
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}">
                                                                 <Border CornerRadius="4"
                                                                         Padding="6,3"
                                                                         Background="{Binding StatusBadgeBackground}"
-                                                                        HorizontalAlignment="Left">
+                                                                        HorizontalAlignment="Left"
+                                                                        VerticalAlignment="Center"
+                                                                        Margin="8,0">
                                                                     <TextBlock Text="{Binding StatusText}"
                                                                                FontSize="10"
                                                                                FontWeight="Medium"
@@ -394,33 +462,32 @@
                                                             </Panel>
 
                                                             <!-- Actions -->
-                                                            <StackPanel Grid.Column="8"
-                                                                        Orientation="Horizontal"
-                                                                        Spacing="2"
-                                                                        HorizontalAlignment="Center"
-                                                                        VerticalAlignment="Center">
-                                                                <Button Classes="icon-button-small"
-                                                                        ToolTip.Tip="View Details"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ViewReturnDetailsCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
-                                                                              Width="14" Height="14" />
-                                                                </Button>
-                                                                <Button Classes="icon-button-small danger"
-                                                                        ToolTip.Tip="Undo Return"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).UndoReturnCommand}"
-                                                                        CommandParameter="{Binding}">
-                                                                    <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
-                                                                              Width="14" Height="14" />
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </Grid>
+                                                            <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
+                                                                <StackPanel Orientation="Horizontal"
+                                                                            Spacing="2"
+                                                                            HorizontalAlignment="Center"
+                                                                            VerticalAlignment="Center">
+                                                                    <Button Classes="icon-button-small"
+                                                                            ToolTip.Tip="View Details"
+                                                                            Command="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ViewReturnDetailsCommand}"
+                                                                            CommandParameter="{Binding}">
+                                                                        <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                                                                                  Width="14" Height="14" />
+                                                                    </Button>
+                                                                    <Button Classes="icon-button-small danger"
+                                                                            ToolTip.Tip="Undo Return"
+                                                                            Command="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).UndoReturnCommand}"
+                                                                            CommandParameter="{Binding}">
+                                                                        <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                                                                                  Width="14" Height="14" />
+                                                                    </Button>
+                                                                </StackPanel>
+                                                            </Panel>
+                                                        </StackPanel>
                                                     </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-                                    </Grid>
-                                </Grid>
 
                                 <!-- Empty State -->
                                 <Border Padding="40"
@@ -452,6 +519,8 @@
                                 </Border>
                             </Panel>
                         </ScrollViewer>
+                        </Grid>
+                    </ScrollViewer>
 
                         <!-- Pagination Footer -->
                         <Border Grid.Row="2"

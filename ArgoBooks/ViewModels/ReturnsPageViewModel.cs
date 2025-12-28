@@ -12,6 +12,15 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class ReturnsPageViewModel : ViewModelBase
 {
+    #region Table Column Widths
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public ReturnsTableColumnWidths ColumnWidths { get; } = new ReturnsTableColumnWidths();
+
+    #endregion
+
     #region Statistics
 
     [ObservableProperty]
