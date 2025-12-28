@@ -163,10 +163,11 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Border Background="{DynamicResource SuccessIconBgBrush}"
                                     CornerRadius="4"
-                                    Padding="8,2">
+                                    Padding="8,4">
                                 <TextBlock Text="Connected"
                                            FontSize="11"
                                            FontWeight="Medium"
+                                           VerticalAlignment="Center"
                                            Foreground="{DynamicResource SuccessBrush}" />
                             </Border>
                         </StackPanel>
@@ -192,8 +193,14 @@
                         <Button Classes="secondary-button"
                                 Command="{Binding SyncPortalCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
-                                          Width="16" Height="16" />
+                                <PathIcon Classes="sync-spin-icon"
+                                          Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
+                                          Width="16" Height="16"
+                                          RenderTransformOrigin="50%,50%">
+                                    <PathIcon.RenderTransform>
+                                        <RotateTransform />
+                                    </PathIcon.RenderTransform>
+                                </PathIcon>
                                 <TextBlock Text="Sync Now" />
                             </StackPanel>
                         </Button>
@@ -735,6 +742,20 @@
         </Style>
         <Style Selector="Button.column-header:pointerover TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Sync Spin Icon Animation -->
+        <Style Selector="PathIcon.sync-spin-icon">
+            <Style.Animations>
+                <Animation Duration="0:0:1" IterationCount="Infinite">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="RotateTransform.Angle" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="RotateTransform.Angle" Value="360" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
     </UserControl.Styles>
 </UserControl>

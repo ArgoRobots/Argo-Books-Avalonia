@@ -26,19 +26,19 @@ public partial class DashboardPageViewModel : ViewModelBase
     private string _totalRevenue = "$0.00";
 
     [ObservableProperty]
-    private double _revenueChangeValue;
+    private double? _revenueChangeValue;
 
     [ObservableProperty]
-    private string _revenueChangeText = "0.0%";
+    private string? _revenueChangeText;
 
     [ObservableProperty]
     private string _totalExpenses = "$0.00";
 
     [ObservableProperty]
-    private double _expenseChangeValue;
+    private double? _expenseChangeValue;
 
     [ObservableProperty]
-    private string _expenseChangeText = "0.0%";
+    private string? _expenseChangeText;
 
     [ObservableProperty]
     private string _outstandingInvoices = "$0.00";
@@ -60,10 +60,10 @@ public partial class DashboardPageViewModel : ViewModelBase
     private string _netProfit = "$0.00";
 
     [ObservableProperty]
-    private double _profitChangeValue;
+    private double? _profitChangeValue;
 
     [ObservableProperty]
-    private string _profitChangeText = "0.0%";
+    private string? _profitChangeText;
 
     [ObservableProperty]
     private bool _isProfitPositive = true;
@@ -569,19 +569,24 @@ public partial class DashboardPageViewModel : ViewModelBase
         return date.ToString("MMM dd, yyyy");
     }
 
-    private static double CalculatePercentageChange(decimal previous, decimal current)
+    private static double? CalculatePercentageChange(decimal previous, decimal current)
     {
+        // Return null when there's no previous period data to compare against
         if (previous == 0)
         {
-            return current > 0 ? 100 : 0;
+            return null;
         }
         return (double)((current - previous) / previous * 100);
     }
 
-    private static string FormatPercentageChange(double change)
+    private static string? FormatPercentageChange(double? change)
     {
+        if (!change.HasValue)
+        {
+            return null;
+        }
         // Use absolute value since the arrow indicates direction
-        return $"{Math.Abs(change):F1}%";
+        return $"{Math.Abs(change.Value):F1}%";
     }
 
     private static string GetStatusVariant(string status)
