@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Views;
@@ -14,4 +15,15 @@ public partial class AnalyticsPage : UserControl
     }
 
     private AnalyticsPageViewModel? ViewModel => DataContext as AnalyticsPageViewModel;
+
+    private void CustomerActivityInfoBackdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        ViewModel?.CloseCustomerActivityInfoCommand.Execute(null);
+    }
+
+    private void CustomerActivityInfoModal_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Prevent click from bubbling to backdrop
+        e.Handled = true;
+    }
 }

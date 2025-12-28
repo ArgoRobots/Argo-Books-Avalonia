@@ -97,6 +97,11 @@ public partial class RevenuePageViewModel : ViewModelBase
 
     #region Column Visibility
 
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public RevenueTableColumnWidths ColumnWidths { get; } = new RevenueTableColumnWidths();
+
     [ObservableProperty]
     private bool _isColumnMenuOpen;
 
@@ -138,6 +143,20 @@ public partial class RevenuePageViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _showReceiptColumn = true;
+
+    partial void OnShowIdColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Id", value);
+    partial void OnShowCustomerColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Customer", value);
+    partial void OnShowProductColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Product", value);
+    partial void OnShowDateColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Date", value);
+    partial void OnShowQuantityColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Quantity", value);
+    partial void OnShowUnitPriceColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("UnitPrice", value);
+    partial void OnShowAmountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Amount", value);
+    partial void OnShowTaxColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Tax", value);
+    partial void OnShowShippingColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Shipping", value);
+    partial void OnShowDiscountColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Discount", value);
+    partial void OnShowTotalColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Total", value);
+    partial void OnShowReceiptColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Receipt", value);
+    partial void OnShowStatusColumnChanged(bool value) => ColumnWidths.SetColumnVisibility("Status", value);
 
     [RelayCommand]
     private void ToggleColumnMenu()
@@ -228,6 +247,7 @@ public partial class RevenuePageViewModel : ViewModelBase
 
     public RevenuePageViewModel()
     {
+        InitializeColumnVisibility();
         LoadRevenue();
         LoadDropdownOptions();
 
@@ -245,6 +265,27 @@ public partial class RevenuePageViewModel : ViewModelBase
             App.RevenueModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.RevenueModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+    }
+
+    private void InitializeColumnVisibility()
+    {
+        // Set initial visibility for columns
+        ColumnWidths.SetColumnVisibility("Id", ShowIdColumn);
+        ColumnWidths.SetColumnVisibility("Customer", ShowCustomerColumn);
+        ColumnWidths.SetColumnVisibility("Product", ShowProductColumn);
+        ColumnWidths.SetColumnVisibility("Date", ShowDateColumn);
+        ColumnWidths.SetColumnVisibility("Quantity", ShowQuantityColumn);
+        ColumnWidths.SetColumnVisibility("UnitPrice", ShowUnitPriceColumn);
+        ColumnWidths.SetColumnVisibility("Amount", ShowAmountColumn);
+        ColumnWidths.SetColumnVisibility("Tax", ShowTaxColumn);
+        ColumnWidths.SetColumnVisibility("Shipping", ShowShippingColumn);
+        ColumnWidths.SetColumnVisibility("Discount", ShowDiscountColumn);
+        ColumnWidths.SetColumnVisibility("Total", ShowTotalColumn);
+        ColumnWidths.SetColumnVisibility("Receipt", ShowReceiptColumn);
+        ColumnWidths.SetColumnVisibility("Status", ShowStatusColumn);
+        ColumnWidths.SetColumnVisibility("Actions", true);
+
+        ColumnWidths.RecalculateWidths();
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)

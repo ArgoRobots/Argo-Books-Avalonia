@@ -63,6 +63,9 @@ public partial class StatCard : UserControl
     public static readonly StyledProperty<string?> SecondaryTextProperty =
         AvaloniaProperty.Register<StatCard, string?>(nameof(SecondaryText));
 
+    public static readonly StyledProperty<string?> ChangeLabelProperty =
+        AvaloniaProperty.Register<StatCard, string?>(nameof(ChangeLabel), "from last period");
+
     public static readonly StyledProperty<bool> ShowChangeProperty =
         AvaloniaProperty.Register<StatCard, bool>(nameof(ShowChange));
 
@@ -217,6 +220,15 @@ public partial class StatCard : UserControl
     {
         get => GetValue(SecondaryTextProperty);
         set => SetValue(SecondaryTextProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the label for the change comparison (e.g., "from last month", "from last period").
+    /// </summary>
+    public string? ChangeLabel
+    {
+        get => GetValue(ChangeLabelProperty);
+        set => SetValue(ChangeLabelProperty, value);
     }
 
     /// <summary>

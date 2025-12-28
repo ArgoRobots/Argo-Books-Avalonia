@@ -15,6 +15,15 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class ProductsPageViewModel : ViewModelBase
 {
+    #region Table Column Widths
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public ProductsTableColumnWidths ColumnWidths { get; } = new ProductsTableColumnWidths();
+
+    #endregion
+
     #region Tab Selection
 
     [ObservableProperty]
@@ -34,6 +43,7 @@ public partial class ProductsPageViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsExpensesTabSelected));
         OnPropertyChanged(nameof(IsRevenueTabSelected));
+        ColumnWidths.SetTabMode(IsExpensesTabSelected);
         FilterProducts();
     }
 

@@ -19,8 +19,8 @@ public class ColumnResizeGripper : Border
     public static readonly StyledProperty<string> ColumnNameProperty =
         AvaloniaProperty.Register<ColumnResizeGripper, string>(nameof(ColumnName), string.Empty);
 
-    public static readonly StyledProperty<TableColumnWidths?> ColumnWidthsProperty =
-        AvaloniaProperty.Register<ColumnResizeGripper, TableColumnWidths?>(nameof(ColumnWidths));
+    public static readonly StyledProperty<ITableColumnWidths?> ColumnWidthsProperty =
+        AvaloniaProperty.Register<ColumnResizeGripper, ITableColumnWidths?>(nameof(ColumnWidths));
 
     /// <summary>
     /// Gets or sets the name of the column this gripper controls.
@@ -32,9 +32,9 @@ public class ColumnResizeGripper : Border
     }
 
     /// <summary>
-    /// Gets or sets the TableColumnWidths instance.
+    /// Gets or sets the table column widths instance.
     /// </summary>
-    public TableColumnWidths? ColumnWidths
+    public ITableColumnWidths? ColumnWidths
     {
         get => GetValue(ColumnWidthsProperty);
         set => SetValue(ColumnWidthsProperty, value);

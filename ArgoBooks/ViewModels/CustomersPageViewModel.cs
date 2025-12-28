@@ -30,6 +30,15 @@ public partial class CustomersPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Table Column Widths
+
+    /// <summary>
+    /// Column widths manager for the table.
+    /// </summary>
+    public CustomersTableColumnWidths ColumnWidths { get; } = new CustomersTableColumnWidths();
+
+    #endregion
+
     #region Search and Filter
 
     [ObservableProperty]

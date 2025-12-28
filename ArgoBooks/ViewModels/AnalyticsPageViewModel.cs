@@ -3,6 +3,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
 using LiveChartsCore.Geo;
 using LiveChartsCore.SkiaSharpView;
@@ -108,9 +109,26 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     /// </summary>
     public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
 
+    /// <summary>
+    /// Gets the label for comparison period based on selected date range.
+    /// </summary>
+    public string ComparisonPeriodLabel => SelectedDateRange switch
+    {
+        "This Month" => "from last month",
+        "Last Month" => "from prior month",
+        "This Quarter" => "from last quarter",
+        "Last Quarter" => "from prior quarter",
+        "This Year" => "from last year",
+        "Last Year" => "from prior year",
+        "All Time" => "",
+        "Custom Range" => "from prior period",
+        _ => "from last period"
+    };
+
     partial void OnSelectedDateRangeChanged(string value)
     {
         OnPropertyChanged(nameof(IsCustomDateRange));
+        OnPropertyChanged(nameof(ComparisonPeriodLabel));
         UpdateDateRangeFromSelection();
         LoadAllCharts();
     }
@@ -178,37 +196,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _totalPurchases = "$0.00";
 
     [ObservableProperty]
-    private double _purchasesChangeValue;
+    private double? _purchasesChangeValue;
 
     [ObservableProperty]
-    private string _purchasesChangeText = "0.0%";
+    private string? _purchasesChangeText;
 
     [ObservableProperty]
     private string _totalSales = "$0.00";
 
     [ObservableProperty]
-    private double _salesChangeValue;
+    private double? _salesChangeValue;
 
     [ObservableProperty]
-    private string _salesChangeText = "0.0%";
+    private string? _salesChangeText;
 
     [ObservableProperty]
     private string _netProfit = "$0.00";
 
     [ObservableProperty]
-    private double _profitChangeValue;
+    private double? _profitChangeValue;
 
     [ObservableProperty]
-    private string _profitChangeText = "0.0%";
+    private string? _profitChangeText;
 
     [ObservableProperty]
     private string _profitMargin = "0.0%";
 
     [ObservableProperty]
-    private double _profitMarginChangeValue;
+    private double? _profitMarginChangeValue;
 
     [ObservableProperty]
-    private string _profitMarginChangeText = "0.0%";
+    private string? _profitMarginChangeText;
 
     #endregion
 
@@ -221,28 +239,28 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _transactionsProcessed = "0";
 
     [ObservableProperty]
-    private double _transactionsChangeValue;
+    private double? _transactionsChangeValue;
 
     [ObservableProperty]
-    private string _transactionsChangeText = "0.0%";
+    private string? _transactionsChangeText;
 
     [ObservableProperty]
     private string _avgProcessingTime = "N/A";
 
     [ObservableProperty]
-    private double _processingTimeChangeValue;
+    private double? _processingTimeChangeValue;
 
     [ObservableProperty]
-    private string _processingTimeChangeText = "0.0%";
+    private string? _processingTimeChangeText;
 
     [ObservableProperty]
     private string _accuracyRate = "N/A";
 
     [ObservableProperty]
-    private double _accuracyChangeValue;
+    private double? _accuracyChangeValue;
 
     [ObservableProperty]
-    private string _accuracyChangeText = "0.0%";
+    private string? _accuracyChangeText;
 
     #endregion
 
@@ -252,37 +270,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _revenueGrowth = "0.0%";
 
     [ObservableProperty]
-    private double _revenueGrowthChangeValue;
+    private double? _revenueGrowthChangeValue;
 
     [ObservableProperty]
-    private string _revenueGrowthChangeText = "0.0%";
+    private string? _revenueGrowthChangeText;
 
     [ObservableProperty]
     private string _totalTransactions = "0";
 
     [ObservableProperty]
-    private double _totalTransactionsChangeValue;
+    private double? _totalTransactionsChangeValue;
 
     [ObservableProperty]
-    private string _totalTransactionsChangeText = "0.0%";
+    private string? _totalTransactionsChangeText;
 
     [ObservableProperty]
     private string _avgTransactionValue = "$0.00";
 
     [ObservableProperty]
-    private double _avgTransactionChangeValue;
+    private double? _avgTransactionChangeValue;
 
     [ObservableProperty]
-    private string _avgTransactionChangeText = "0.0%";
+    private string? _avgTransactionChangeText;
 
     [ObservableProperty]
     private string _avgShippingCost = "$0.00";
 
     [ObservableProperty]
-    private double _avgShippingChangeValue;
+    private double? _avgShippingChangeValue;
 
     [ObservableProperty]
-    private string _avgShippingChangeText = "0.0%";
+    private string? _avgShippingChangeText;
 
     #endregion
 
@@ -292,37 +310,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _totalCustomers = "0";
 
     [ObservableProperty]
-    private double _customersChangeValue;
+    private double? _customersChangeValue;
 
     [ObservableProperty]
-    private string _customersChangeText = "0.0%";
+    private string? _customersChangeText;
 
     [ObservableProperty]
     private string _newCustomers = "0";
 
     [ObservableProperty]
-    private double _newCustomersChangeValue;
+    private double? _newCustomersChangeValue;
 
     [ObservableProperty]
-    private string _newCustomersChangeText = "0.0%";
+    private string? _newCustomersChangeText;
 
     [ObservableProperty]
     private string _retentionRate = "N/A";
 
     [ObservableProperty]
-    private double _retentionChangeValue;
+    private double? _retentionChangeValue;
 
     [ObservableProperty]
-    private string _retentionChangeText = "0.0%";
+    private string? _retentionChangeText;
 
     [ObservableProperty]
     private string _avgCustomerValue = "$0.00";
 
     [ObservableProperty]
-    private double _avgCustomerValueChangeValue;
+    private double? _avgCustomerValueChangeValue;
 
     [ObservableProperty]
-    private string _avgCustomerValueChangeText = "0.0%";
+    private string? _avgCustomerValueChangeText;
 
     #endregion
 
@@ -332,37 +350,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _totalReturns = "0";
 
     [ObservableProperty]
-    private double _returnsChangeValue;
+    private double? _returnsChangeValue;
 
     [ObservableProperty]
-    private string _returnsChangeText = "0.0%";
+    private string? _returnsChangeText;
 
     [ObservableProperty]
     private string _returnRate = "0.0%";
 
     [ObservableProperty]
-    private double _returnRateChangeValue;
+    private double? _returnRateChangeValue;
 
     [ObservableProperty]
-    private string _returnRateChangeText = "0.0%";
+    private string? _returnRateChangeText;
 
     [ObservableProperty]
     private string _returnsFinancialImpact = "$0.00";
 
     [ObservableProperty]
-    private double _returnsImpactChangeValue;
+    private double? _returnsImpactChangeValue;
 
     [ObservableProperty]
-    private string _returnsImpactChangeText = "0.0%";
+    private string? _returnsImpactChangeText;
 
     [ObservableProperty]
     private string _avgResolutionTime = "N/A";
 
     [ObservableProperty]
-    private double _resolutionTimeChangeValue;
+    private double? _resolutionTimeChangeValue;
 
     [ObservableProperty]
-    private string _resolutionTimeChangeText = "0.0%";
+    private string? _resolutionTimeChangeText;
 
     #endregion
 
@@ -372,37 +390,37 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private string _totalLosses = "0";
 
     [ObservableProperty]
-    private double _lossesChangeValue;
+    private double? _lossesChangeValue;
 
     [ObservableProperty]
-    private string _lossesChangeText = "0.0%";
+    private string? _lossesChangeText;
 
     [ObservableProperty]
     private string _lossRate = "0.0%";
 
     [ObservableProperty]
-    private double _lossRateChangeValue;
+    private double? _lossRateChangeValue;
 
     [ObservableProperty]
-    private string _lossRateChangeText = "0.0%";
+    private string? _lossRateChangeText;
 
     [ObservableProperty]
     private string _lossesFinancialImpact = "$0.00";
 
     [ObservableProperty]
-    private double _lossesImpactChangeValue;
+    private double? _lossesImpactChangeValue;
 
     [ObservableProperty]
-    private string _lossesImpactChangeText = "0.0%";
+    private string? _lossesImpactChangeText;
 
     [ObservableProperty]
     private string _insuranceClaims = "0";
 
     [ObservableProperty]
-    private double _insuranceClaimsChangeValue;
+    private double? _insuranceClaimsChangeValue;
 
     [ObservableProperty]
-    private string _insuranceClaimsChangeText = "0.0%";
+    private string? _insuranceClaimsChangeText;
 
     #endregion
 
@@ -1084,7 +1102,10 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var prevNetProfit = prevSales - prevPurchases;
         var prevMargin = prevSales > 0 ? (prevNetProfit / prevSales) * 100 : 0;
 
-        // Calculate change percentages
+        // Check if there's any previous period data to compare against
+        var hasPrevPeriodData = prevPurchases > 0 || prevSales > 0;
+
+        // Calculate change percentages (only meaningful if there's previous data)
         var purchasesChange = prevPurchases > 0 ? ((totalPurchasesAmount - prevPurchases) / prevPurchases) * 100 : 0;
         var salesChange = prevSales > 0 ? ((totalSalesAmount - prevSales) / prevSales) * 100 : 0;
         var profitChange = prevNetProfit != 0 ? ((netProfit - prevNetProfit) / Math.Abs(prevNetProfit)) * 100 : 0;
@@ -1092,20 +1113,20 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
         // Update properties
         TotalPurchases = totalPurchasesAmount.ToString("C0");
-        PurchasesChangeValue = (double)purchasesChange;
-        PurchasesChangeText = $"{Math.Abs(purchasesChange):F1}%";
+        PurchasesChangeValue = hasPrevPeriodData && prevPurchases > 0 ? (double)purchasesChange : null;
+        PurchasesChangeText = hasPrevPeriodData && prevPurchases > 0 ? $"{Math.Abs(purchasesChange):F1}%" : null;
 
         TotalSales = totalSalesAmount.ToString("C0");
-        SalesChangeValue = (double)salesChange;
-        SalesChangeText = $"{Math.Abs(salesChange):F1}%";
+        SalesChangeValue = hasPrevPeriodData && prevSales > 0 ? (double)salesChange : null;
+        SalesChangeText = hasPrevPeriodData && prevSales > 0 ? $"{Math.Abs(salesChange):F1}%" : null;
 
         NetProfit = netProfit.ToString("C0");
-        ProfitChangeValue = (double)profitChange;
-        ProfitChangeText = $"{Math.Abs(profitChange):F1}%";
+        ProfitChangeValue = hasPrevPeriodData && prevNetProfit != 0 ? (double)profitChange : null;
+        ProfitChangeText = hasPrevPeriodData && prevNetProfit != 0 ? $"{Math.Abs(profitChange):F1}%" : null;
 
         ProfitMargin = $"{margin:F1}%";
-        ProfitMarginChangeValue = (double)marginChange;
-        ProfitMarginChangeText = $"{Math.Abs(marginChange):F1}%";
+        ProfitMarginChangeValue = hasPrevPeriodData && prevSales > 0 ? (double)marginChange : null;
+        ProfitMarginChangeText = hasPrevPeriodData && prevSales > 0 ? $"{Math.Abs(marginChange):F1}%" : null;
     }
 
     private void LoadOperationalStatistics(CompanyData data)
@@ -1128,20 +1149,21 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var prevSalesCount = data.Sales?.Count(s => s.Date >= prevStartDate && s.Date <= prevEndDate) ?? 0;
         var prevTransactions = prevPurchasesCount + prevSalesCount;
 
+        var hasPrevPeriodData = prevTransactions > 0;
         var transactionsChange = prevTransactions > 0 ? ((double)(totalTransactions - prevTransactions) / prevTransactions) * 100 : 0;
 
         TransactionsProcessed = totalTransactions.ToString("N0");
-        TransactionsChangeValue = transactionsChange;
-        TransactionsChangeText = $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%";
+        TransactionsChangeValue = hasPrevPeriodData ? transactionsChange : null;
+        TransactionsChangeText = hasPrevPeriodData ? $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%" : null;
 
         // Processing time and accuracy rate are not tracked in the data model
         AvgProcessingTime = "N/A";
-        ProcessingTimeChangeValue = 0;
-        ProcessingTimeChangeText = "";
+        ProcessingTimeChangeValue = null;
+        ProcessingTimeChangeText = null;
 
         AccuracyRate = "N/A";
-        AccuracyChangeValue = 0;
-        AccuracyChangeText = "";
+        AccuracyChangeValue = null;
+        AccuracyChangeText = null;
     }
 
     private void LoadPerformanceStatistics(CompanyData data)
@@ -1170,6 +1192,9 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var prevAvgTransactionValue = prevAllTransactionValues.Count > 0 ? prevAllTransactionValues.Average() : 0;
         var prevAvgShipping = prevPurchases.Count > 0 ? prevPurchases.Average(p => p.ShippingCost) : 0;
 
+        // Check if there's any previous period data
+        var hasPrevPeriodData = prevTotalTransactionsCount > 0;
+
         // Revenue growth (period over period)
         var currentRevenueTotal = sales.Sum(s => s.Total);
         var prevRevenueTotal = prevSales.Sum(s => s.Total);
@@ -1180,20 +1205,20 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var shippingChange = prevAvgShipping > 0 ? ((avgShipping - prevAvgShipping) / prevAvgShipping) * 100 : 0;
 
         RevenueGrowth = $"{revenueGrowthValue:F1}%";
-        RevenueGrowthChangeValue = (double)revenueGrowthValue;
-        RevenueGrowthChangeText = $"{(revenueGrowthValue >= 0 ? "+" : "")}{revenueGrowthValue:F1}%";
+        RevenueGrowthChangeValue = hasPrevPeriodData && prevRevenueTotal > 0 ? (double)revenueGrowthValue : null;
+        RevenueGrowthChangeText = hasPrevPeriodData && prevRevenueTotal > 0 ? $"{(revenueGrowthValue >= 0 ? "+" : "")}{revenueGrowthValue:F1}%" : null;
 
         TotalTransactions = totalTransactionsCount.ToString("N0");
-        TotalTransactionsChangeValue = transactionsChange;
-        TotalTransactionsChangeText = $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%";
+        TotalTransactionsChangeValue = hasPrevPeriodData ? transactionsChange : null;
+        TotalTransactionsChangeText = hasPrevPeriodData ? $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%" : null;
 
         AvgTransactionValue = avgTransactionValue.ToString("C0");
-        AvgTransactionChangeValue = (double)avgTransactionChange;
-        AvgTransactionChangeText = $"{(avgTransactionChange >= 0 ? "+" : "")}{avgTransactionChange:F1}%";
+        AvgTransactionChangeValue = hasPrevPeriodData && prevAvgTransactionValue > 0 ? (double)avgTransactionChange : null;
+        AvgTransactionChangeText = hasPrevPeriodData && prevAvgTransactionValue > 0 ? $"{(avgTransactionChange >= 0 ? "+" : "")}{avgTransactionChange:F1}%" : null;
 
         AvgShippingCost = avgShipping.ToString("C2");
-        AvgShippingChangeValue = (double)shippingChange;
-        AvgShippingChangeText = $"{(shippingChange >= 0 ? "+" : "")}{shippingChange:F1}%";
+        AvgShippingChangeValue = hasPrevPeriodData && prevAvgShipping > 0 ? (double)shippingChange : null;
+        AvgShippingChangeText = hasPrevPeriodData && prevAvgShipping > 0 ? $"{(shippingChange >= 0 ? "+" : "")}{shippingChange:F1}%" : null;
     }
 
     private void LoadCustomerStatistics(CompanyData data)
@@ -1213,13 +1238,14 @@ public partial class AnalyticsPageViewModel : ViewModelBase
 
         // Previous new customers
         var prevNewCustomers = data.Customers?.Count(c => c.CreatedAt >= prevStartDate && c.CreatedAt <= prevEndDate) ?? 0;
+        var hasPrevNewCustomers = prevNewCustomers > 0;
         var newCustomersChange = prevNewCustomers > 0 ? ((double)(newCustomersCount - prevNewCustomers) / prevNewCustomers) * 100 : 0;
 
-        CustomersChangeValue = 0; // Total customers doesn't have a meaningful change calculation
-        CustomersChangeText = "";
+        CustomersChangeValue = null; // Total customers doesn't have a meaningful change calculation
+        CustomersChangeText = null;
 
-        NewCustomersChangeValue = newCustomersChange;
-        NewCustomersChangeText = $"{(newCustomersChange >= 0 ? "+" : "")}{newCustomersChange:F1}%";
+        NewCustomersChangeValue = hasPrevNewCustomers ? newCustomersChange : null;
+        NewCustomersChangeText = hasPrevNewCustomers ? $"{(newCustomersChange >= 0 ? "+" : "")}{newCustomersChange:F1}%" : null;
 
         // Retention rate and avg customer value are complex calculations
         // For now, calculate avg customer value based on revenue per customer
@@ -1228,12 +1254,12 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var avgValue = customerIds.Count > 0 ? sales.Sum(s => s.Total) / customerIds.Count : 0;
 
         RetentionRate = "N/A";
-        RetentionChangeValue = 0;
-        RetentionChangeText = "";
+        RetentionChangeValue = null;
+        RetentionChangeText = null;
 
         AvgCustomerValue = avgValue.ToString("C0");
-        AvgCustomerValueChangeValue = 0;
-        AvgCustomerValueChangeText = "";
+        AvgCustomerValueChangeValue = null;
+        AvgCustomerValueChangeText = null;
     }
 
     private void LoadReturnsStatistics(CompanyData data)
@@ -1259,26 +1285,29 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var prevSalesTransactions = data.Sales?.Count(s => s.Date >= prevStartDate && s.Date <= prevEndDate) ?? 0;
         var prevReturnRate = prevSalesTransactions > 0 ? ((double)prevReturnsCount / prevSalesTransactions) * 100 : 0;
 
+        // Check if there's any previous period data
+        var hasPrevPeriodData = prevReturnsCount > 0 || prevSalesTransactions > 0;
+
         var returnsChange = prevReturnsCount > 0 ? ((double)(totalReturnsCount - prevReturnsCount) / prevReturnsCount) * 100 : 0;
         var returnRateChange = returnRate - prevReturnRate;
         var impactChange = prevFinancialImpact > 0 ? ((financialImpact - prevFinancialImpact) / prevFinancialImpact) * 100 : 0;
 
         TotalReturns = totalReturnsCount.ToString("N0");
-        ReturnsChangeValue = returnsChange;
-        ReturnsChangeText = $"{(returnsChange >= 0 ? "+" : "")}{returnsChange:F1}%";
+        ReturnsChangeValue = hasPrevPeriodData && prevReturnsCount > 0 ? returnsChange : null;
+        ReturnsChangeText = hasPrevPeriodData && prevReturnsCount > 0 ? $"{(returnsChange >= 0 ? "+" : "")}{returnsChange:F1}%" : null;
 
         ReturnRate = $"{returnRate:F1}%";
-        ReturnRateChangeValue = returnRateChange;
-        ReturnRateChangeText = $"{(returnRateChange >= 0 ? "+" : "")}{returnRateChange:F1}%";
+        ReturnRateChangeValue = hasPrevPeriodData && prevSalesTransactions > 0 ? returnRateChange : null;
+        ReturnRateChangeText = hasPrevPeriodData && prevSalesTransactions > 0 ? $"{(returnRateChange >= 0 ? "+" : "")}{returnRateChange:F1}%" : null;
 
         ReturnsFinancialImpact = financialImpact.ToString("C0");
-        ReturnsImpactChangeValue = (double)impactChange;
-        ReturnsImpactChangeText = $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%";
+        ReturnsImpactChangeValue = hasPrevPeriodData && prevFinancialImpact > 0 ? (double)impactChange : null;
+        ReturnsImpactChangeText = hasPrevPeriodData && prevFinancialImpact > 0 ? $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%" : null;
 
         // Resolution time is not tracked in the data model
         AvgResolutionTime = "N/A";
-        ResolutionTimeChangeValue = 0;
-        ResolutionTimeChangeText = "";
+        ResolutionTimeChangeValue = null;
+        ResolutionTimeChangeText = null;
     }
 
     private void LoadLossesStatistics(CompanyData data)
@@ -1310,26 +1339,48 @@ public partial class AnalyticsPageViewModel : ViewModelBase
         var prevLossRate = prevTotalTransactions > 0 ? ((double)prevLossesCount / prevTotalTransactions) * 100 : 0;
         var prevInsuranceClaimsCount = prevLosses.Count(l => l.InsuranceClaim);
 
+        // Check if there's any previous period data
+        var hasPrevPeriodData = prevLossesCount > 0 || prevTotalTransactions > 0;
+
         var lossesChange = prevLossesCount > 0 ? ((double)(totalLossesCount - prevLossesCount) / prevLossesCount) * 100 : 0;
         var lossRateChange = lossRate - prevLossRate;
         var impactChange = prevFinancialImpact > 0 ? ((financialImpact - prevFinancialImpact) / prevFinancialImpact) * 100 : 0;
         var insuranceChange = prevInsuranceClaimsCount > 0 ? ((double)(insuranceClaimsCount - prevInsuranceClaimsCount) / prevInsuranceClaimsCount) * 100 : 0;
 
         TotalLosses = totalLossesCount.ToString("N0");
-        LossesChangeValue = lossesChange;
-        LossesChangeText = $"{(lossesChange >= 0 ? "+" : "")}{lossesChange:F1}%";
+        LossesChangeValue = hasPrevPeriodData && prevLossesCount > 0 ? lossesChange : null;
+        LossesChangeText = hasPrevPeriodData && prevLossesCount > 0 ? $"{(lossesChange >= 0 ? "+" : "")}{lossesChange:F1}%" : null;
 
         LossRate = $"{lossRate:F1}%";
-        LossRateChangeValue = lossRateChange;
-        LossRateChangeText = $"{(lossRateChange >= 0 ? "+" : "")}{lossRateChange:F1}%";
+        LossRateChangeValue = hasPrevPeriodData && prevTotalTransactions > 0 ? lossRateChange : null;
+        LossRateChangeText = hasPrevPeriodData && prevTotalTransactions > 0 ? $"{(lossRateChange >= 0 ? "+" : "")}{lossRateChange:F1}%" : null;
 
         LossesFinancialImpact = financialImpact.ToString("C0");
-        LossesImpactChangeValue = (double)impactChange;
-        LossesImpactChangeText = $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%";
+        LossesImpactChangeValue = hasPrevPeriodData && prevFinancialImpact > 0 ? (double)impactChange : null;
+        LossesImpactChangeText = hasPrevPeriodData && prevFinancialImpact > 0 ? $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%" : null;
 
         InsuranceClaims = insuranceClaimsCount.ToString("N0");
-        InsuranceClaimsChangeValue = insuranceChange;
-        InsuranceClaimsChangeText = $"{(insuranceChange >= 0 ? "+" : "")}{insuranceChange:F1}%";
+        InsuranceClaimsChangeValue = hasPrevPeriodData && prevInsuranceClaimsCount > 0 ? insuranceChange : null;
+        InsuranceClaimsChangeText = hasPrevPeriodData && prevInsuranceClaimsCount > 0 ? $"{(insuranceChange >= 0 ? "+" : "")}{insuranceChange:F1}%" : null;
+    }
+
+    #endregion
+
+    #region Customer Activity Info Modal
+
+    [ObservableProperty]
+    private bool _isCustomerActivityInfoOpen;
+
+    [RelayCommand]
+    private void ShowCustomerActivityInfo()
+    {
+        IsCustomerActivityInfoOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseCustomerActivityInfo()
+    {
+        IsCustomerActivityInfoOpen = false;
     }
 
     #endregion
