@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using ArgoBooks.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -19,12 +20,21 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
     [ObservableProperty]
     private SortDirection _sortDirection = SortDirection.None;
 
+    private RelayCommand<string>? _sortByCommand;
+
+    /// <summary>
+    /// Command to sort by a column. Pass the column name as parameter.
+    /// </summary>
+    public ICommand SortByCommand => _sortByCommand ??= new RelayCommand<string>(SortBy);
+
     /// <summary>
     /// Sorts by the specified column. Toggles direction if same column, otherwise starts ascending.
     /// </summary>
-    [RelayCommand]
-    private void SortBy(string column)
+    private void SortBy(string? column)
     {
+        if (string.IsNullOrEmpty(column))
+            return;
+
         if (SortColumn == column)
         {
             SortDirection = SortDirection switch
