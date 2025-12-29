@@ -422,8 +422,10 @@
                                                 </StackPanel>
                                             </Border>
 
-                                            <!-- Table Content (scrollable) -->
-                                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                            <!-- Table Content (scrollable vertically only) -->
+                                            <ScrollViewer Grid.Row="1"
+                                                          VerticalScrollBarVisibility="Auto"
+                                                          HorizontalScrollBarVisibility="Disabled">
                                                 <Panel>
                                                     <!-- Receipts List -->
                                                     <ItemsControl ItemsSource="{Binding Receipts}">

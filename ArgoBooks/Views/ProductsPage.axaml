@@ -614,8 +614,10 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Table Content (scrollable) -->
-                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <!-- Table Content (scrollable vertically only) -->
+                            <ScrollViewer Grid.Row="1"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
                                 <Panel>
                                     <!-- Expenses Tab Products -->
                                     <ItemsControl ItemsSource="{Binding ExpenseProducts}"
