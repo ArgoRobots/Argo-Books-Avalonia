@@ -85,7 +85,7 @@
 
         <!-- Value text styles -->
         <Style Selector="controls|StatCard TextBlock#ValueText">
-            <Setter Property="FontSize" Value="28" />
+            <Setter Property="FontSize" Value="24" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
