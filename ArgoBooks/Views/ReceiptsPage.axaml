@@ -25,113 +25,35 @@
                       HorizontalScrollBarVisibility="Disabled">
             <Grid RowDefinitions="Auto,*" Margin="24">
                 <!-- Statistics Cards (Row 0) -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
-                    <Grid.Styles>
-                        <Style Selector="Border.stat-card">
-                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-                            <Setter Property="CornerRadius" Value="12" />
-                            <Setter Property="Padding" Value="20" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                            <Setter Property="BorderThickness" Value="1" />
-                        </Style>
-                    </Grid.Styles>
-
+                <UniformGrid Grid.Row="0" Columns="4" Rows="1" Margin="0,0,0,24">
                     <!-- Total Receipts -->
-                    <Border Grid.Column="0" Classes="stat-card" Margin="0,0,12,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="#DBEAFE"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z"
-                                          Width="24" Height="24"
-                                          Foreground="#3B82F6" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding TotalReceipts}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Total Receipts"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                    <controls:StatCard Label="Total Receipts"
+                                       Value="{Binding TotalReceipts}"
+                                       Icon="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z"
+                                       IconColor="Primary"
+                                       Margin="0,0,12,0" />
 
                     <!-- Expense Receipts -->
-                    <Border Grid.Column="1" Classes="stat-card" Margin="6,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="#FEE2E2"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
-                                          Width="24" Height="24"
-                                          Foreground="#DC2626" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding ExpenseReceipts}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Expense Receipts"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                    <controls:StatCard Label="Expense Receipts"
+                                       Value="{Binding ExpenseReceipts}"
+                                       Icon="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                                       IconColor="Danger"
+                                       Margin="6,0" />
 
                     <!-- Revenue Receipts -->
-                    <Border Grid.Column="2" Classes="stat-card" Margin="6,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="#DCFCE7"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
-                                          Width="24" Height="24"
-                                          Foreground="#22C55E" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding RevenueReceipts}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Revenue Receipts"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                    <controls:StatCard Label="Revenue Receipts"
+                                       Value="{Binding RevenueReceipts}"
+                                       Icon="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
+                                       IconColor="Success"
+                                       Margin="6,0" />
 
                     <!-- AI Scanned -->
-                    <Border Grid.Column="3" Classes="stat-card" Margin="12,0,0,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="#F3E8FF"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"
-                                          Width="24" Height="24"
-                                          Foreground="#9333EA" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding AiScannedReceipts}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="AI Scanned"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                </Grid>
+                    <controls:StatCard Label="AI Scanned"
+                                       Value="{Binding AiScannedReceipts}"
+                                       Icon="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"
+                                       IconColor="Info"
+                                       Margin="12,0,0,0" />
+                </UniformGrid>
 
                 <!-- Main Content Card (Row 1) -->
                 <Border Grid.Row="1"

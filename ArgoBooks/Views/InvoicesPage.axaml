@@ -42,113 +42,35 @@
                       HorizontalScrollBarVisibility="Disabled">
             <Grid RowDefinitions="Auto,*" Margin="24">
                 <!-- Statistics Cards (Row 0) -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
-                <Grid.Styles>
-                    <Style Selector="Border.stat-card">
-                        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-                        <Setter Property="CornerRadius" Value="12" />
-                        <Setter Property="Padding" Value="20" />
-                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                        <Setter Property="BorderThickness" Value="1" />
-                    </Style>
-                </Grid.Styles>
-
+            <UniformGrid Grid.Row="0" Columns="4" Rows="1" Margin="0,0,0,24">
                 <!-- Total Outstanding -->
-                <Border Grid.Column="0" Classes="stat-card" Margin="0,0,12,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#DBEAFE"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
-                                      Width="24" Height="24"
-                                      Foreground="#3B82F6" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding TotalOutstanding}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Total Outstanding"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                <controls:StatCard Label="Total Outstanding"
+                                   Value="{Binding TotalOutstanding}"
+                                   Icon="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                                   IconColor="Primary"
+                                   Margin="0,0,12,0" />
 
                 <!-- Paid This Month -->
-                <Border Grid.Column="1" Classes="stat-card" Margin="6,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#DCFCE7"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                                      Width="24" Height="24"
-                                      Foreground="#22C55E" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding PaidThisMonth}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Paid This Month"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                <controls:StatCard Label="Paid This Month"
+                                   Value="{Binding PaidThisMonth}"
+                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                   IconColor="Success"
+                                   Margin="6,0" />
 
                 <!-- Overdue -->
-                <Border Grid.Column="2" Classes="stat-card" Margin="6,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#FEE2E2"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                                      Width="24" Height="24"
-                                      Foreground="#DC2626" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding OverdueAmount}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Overdue"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                <controls:StatCard Label="Overdue"
+                                   Value="{Binding OverdueAmount}"
+                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                   IconColor="Danger"
+                                   Margin="6,0" />
 
                 <!-- Due This Week -->
-                <Border Grid.Column="3" Classes="stat-card" Margin="12,0,0,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#F3E8FF"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
-                                      Width="24" Height="24"
-                                      Foreground="#A855F7" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding DueThisWeekCount}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Due This Week"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </Grid>
+                <controls:StatCard Label="Due This Week"
+                                   Value="{Binding DueThisWeekCount}"
+                                   Icon="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                                   IconColor="Info"
+                                   Margin="12,0,0,0" />
+            </UniformGrid>
 
             <!-- Main Content Card (Row 1) -->
             <Border Grid.Row="1"

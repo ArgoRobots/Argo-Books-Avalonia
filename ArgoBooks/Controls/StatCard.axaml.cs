@@ -75,6 +75,14 @@ public partial class StatCard : UserControl
     public static readonly StyledProperty<StatCardColor?> ValueColorProperty =
         AvaloniaProperty.Register<StatCard, StatCardColor?>(nameof(ValueColor));
 
+    public static readonly StyledProperty<bool> IsCompactProperty =
+        AvaloniaProperty.Register<StatCard, bool>(nameof(IsCompact));
+
+    /// <summary>
+    /// The width threshold below which the card switches to compact mode.
+    /// </summary>
+    private const double CompactThreshold = 200;
+
     #endregion
 
     #region Computed Properties for Class Binding
@@ -258,11 +266,28 @@ public partial class StatCard : UserControl
         set => SetValue(ValueColorProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets whether the card is in compact mode (smaller text and icon).
+    /// This is automatically set based on the card's width.
+    /// </summary>
+    public bool IsCompact
+    {
+        get => GetValue(IsCompactProperty);
+        set => SetValue(IsCompactProperty, value);
+    }
+
     #endregion
 
     public StatCard()
     {
         InitializeComponent();
+    }
+
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        // Update compact mode based on available width
+        IsCompact = finalSize.Width < CompactThreshold;
+        return base.ArrangeOverride(finalSize);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)

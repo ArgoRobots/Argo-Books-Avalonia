@@ -17,113 +17,35 @@
                   HorizontalScrollBarVisibility="Disabled">
         <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24">
             <!-- Statistics Cards (Row 0) -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
-                <Grid.Styles>
-                    <Style Selector="Border.stat-card">
-                        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-                        <Setter Property="CornerRadius" Value="12" />
-                        <Setter Property="Padding" Value="20" />
-                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                        <Setter Property="BorderThickness" Value="1" />
-                    </Style>
-                </Grid.Styles>
-
+            <UniformGrid Grid.Row="0" Columns="4" Rows="1" Margin="0,0,0,24">
                 <!-- Total Insights -->
-                <Border Grid.Column="0" Classes="stat-card" Margin="0,0,12,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#EDE9FE"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"
-                                      Width="24" Height="24"
-                                      Foreground="#8B5CF6" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding TotalInsights}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="AI Insights"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                <controls:StatCard Label="AI Insights"
+                                   Value="{Binding TotalInsights}"
+                                   Icon="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"
+                                   IconColor="Info"
+                                   Margin="0,0,12,0" />
 
                 <!-- Trends Detected -->
-                <Border Grid.Column="1" Classes="stat-card" Margin="6,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#DCFCE7"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
-                                      Width="24" Height="24"
-                                      Foreground="#22C55E" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding TrendsDetected}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Trends Detected"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                <controls:StatCard Label="Trends Detected"
+                                   Value="{Binding TrendsDetected}"
+                                   Icon="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
+                                   IconColor="Success"
+                                   Margin="6,0" />
 
                 <!-- Anomalies -->
-                <Border Grid.Column="2" Classes="stat-card" Margin="6,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#FEF3C7"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
-                                      Width="24" Height="24"
-                                      Foreground="#F59E0B" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding AnomaliesDetected}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Anomalies"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                <controls:StatCard Label="Anomalies"
+                                   Value="{Binding AnomaliesDetected}"
+                                   Icon="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                   IconColor="Warning"
+                                   Margin="6,0" />
 
                 <!-- Opportunities -->
-                <Border Grid.Column="3" Classes="stat-card" Margin="12,0,0,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#DBEAFE"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                                      Width="24" Height="24"
-                                      Foreground="#3B82F6" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Opportunities}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Opportunities"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </Grid>
+                <controls:StatCard Label="Opportunities"
+                                   Value="{Binding Opportunities}"
+                                   Icon="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                                   IconColor="Primary"
+                                   Margin="12,0,0,0" />
+            </UniformGrid>
 
             <!-- Page Header (Row 1) -->
             <Border Grid.Row="1"
