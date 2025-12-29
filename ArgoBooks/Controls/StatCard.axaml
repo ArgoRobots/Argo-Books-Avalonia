@@ -15,7 +15,7 @@
             <Setter Property="Padding" Value="20" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+            <Setter Property="CornerRadius" Value="8" />
         </Style>
         <Style Selector="controls|StatCard.alt-bg Border#OuterBorder">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
@@ -29,7 +29,7 @@
         <Style Selector="controls|StatCard Border#IconContainer">
             <Setter Property="Width" Value="48" />
             <Setter Property="Height" Value="48" />
-            <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Margin" Value="0,0,16,0" />
         </Style>
         <Style Selector="controls|StatCard.compact Border#IconContainer">
@@ -85,7 +85,7 @@
 
         <!-- Value text styles -->
         <Style Selector="controls|StatCard TextBlock#ValueText">
-            <Setter Property="FontSize" Value="{StaticResource FontSize2xl}" />
+            <Setter Property="FontSize" Value="28" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
@@ -101,7 +101,7 @@
 
         <!-- Label text styles -->
         <Style Selector="controls|StatCard TextBlock#LabelText">
-            <Setter Property="FontSize" Value="{StaticResource FontSizeSm}" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
         <Style Selector="controls|StatCard.compact TextBlock#LabelText">
@@ -155,7 +155,7 @@
                             IsVisible="{Binding ShowChange, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
                     <!-- Trend Arrow -->
                     <TextBlock VerticalAlignment="Center"
-                               FontSize="{StaticResource FontSizeSm}"
+                               FontSize="12"
                                Classes.up="{Binding IsTrendUp, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                                Classes.down="{Binding IsTrendDown, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                                Classes.flat="{Binding IsTrendFlat, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
@@ -176,7 +176,7 @@
                     </TextBlock>
                     <!-- Change Percentage -->
                     <TextBlock Text="{Binding ChangeText, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                               FontSize="{StaticResource FontSizeSm}"
+                               FontSize="12"
                                VerticalAlignment="Center"
                                Classes.positive="{Binding IsPositiveTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                                Classes.negative="{Binding IsNegativeTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
@@ -195,7 +195,7 @@
                     </TextBlock>
                     <!-- comparison label text -->
                     <TextBlock Text="{Binding ChangeLabel, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                               FontSize="{StaticResource FontSizeSm}"
+                               FontSize="12"
                                VerticalAlignment="Center"
                                IsVisible="{Binding ChangeLabel, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                Classes.positive="{Binding IsPositiveTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
@@ -217,7 +217,7 @@
 
                 <!-- Secondary Text -->
                 <TextBlock Text="{Binding SecondaryText, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                           FontSize="{StaticResource FontSizeXs}"
+                           FontSize="10"
                            Foreground="{DynamicResource TextTertiaryBrush}"
                            IsVisible="{Binding SecondaryText, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
             </StackPanel>
