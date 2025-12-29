@@ -8,157 +8,151 @@
              x:DataType="controls:StatCard"
              x:Name="StatCardRoot">
 
-    <Border BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="1"
-            CornerRadius="{StaticResource RadiusMd}"
-            Classes.alt-bg="{Binding UseAltBackground, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-            Classes.compact="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-        <Border.Styles>
-            <Style Selector="Border">
-                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-                <Setter Property="Padding" Value="20" />
-            </Style>
-            <Style Selector="Border.alt-bg">
-                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-                <Setter Property="BorderThickness" Value="0" />
-            </Style>
-            <Style Selector="Border.compact">
-                <Setter Property="Padding" Value="12" />
-            </Style>
-        </Border.Styles>
+    <UserControl.Styles>
+        <!-- Base styles for all elements -->
+        <Style Selector="controls|StatCard Border#OuterBorder">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+        </Style>
+        <Style Selector="controls|StatCard.alt-bg Border#OuterBorder">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="controls|StatCard.compact Border#OuterBorder">
+            <Setter Property="Padding" Value="12" />
+        </Style>
+
+        <!-- Icon container base styles -->
+        <Style Selector="controls|StatCard Border#IconContainer">
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="48" />
+            <Setter Property="CornerRadius" Value="{StaticResource RadiusMd}" />
+            <Setter Property="Margin" Value="0,0,16,0" />
+        </Style>
+        <Style Selector="controls|StatCard.compact Border#IconContainer">
+            <Setter Property="Width" Value="36" />
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+
+        <!-- Icon container colors -->
+        <Style Selector="controls|StatCard.icon-primary Border#IconContainer">
+            <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.icon-success Border#IconContainer">
+            <Setter Property="Background" Value="{DynamicResource SuccessIconBgBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.icon-danger Border#IconContainer">
+            <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.icon-warning Border#IconContainer">
+            <Setter Property="Background" Value="{DynamicResource WarningIconBgBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.icon-info Border#IconContainer">
+            <Setter Property="Background" Value="{DynamicResource InfoIconBgBrush}" />
+        </Style>
+
+        <!-- PathIcon base styles -->
+        <Style Selector="controls|StatCard PathIcon#IconPath">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+        </Style>
+        <Style Selector="controls|StatCard.compact PathIcon#IconPath">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+        </Style>
+
+        <!-- PathIcon colors -->
+        <Style Selector="controls|StatCard.icon-primary PathIcon#IconPath">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.icon-success PathIcon#IconPath">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.icon-danger PathIcon#IconPath">
+            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.icon-warning PathIcon#IconPath">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.icon-info PathIcon#IconPath">
+            <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
+        </Style>
+
+        <!-- Value text styles -->
+        <Style Selector="controls|StatCard TextBlock#ValueText">
+            <Setter Property="FontSize" Value="{StaticResource FontSize2xl}" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.compact TextBlock#ValueText">
+            <Setter Property="FontSize" Value="18" />
+        </Style>
+        <Style Selector="controls|StatCard.value-success TextBlock#ValueText">
+            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.value-danger TextBlock#ValueText">
+            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+        </Style>
+
+        <!-- Label text styles -->
+        <Style Selector="controls|StatCard TextBlock#LabelText">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeSm}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="controls|StatCard.compact TextBlock#LabelText">
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+
+        <!-- Content stack panel -->
+        <Style Selector="controls|StatCard StackPanel#ContentPanel">
+            <Setter Property="Spacing" Value="4" />
+        </Style>
+        <Style Selector="controls|StatCard.compact StackPanel#ContentPanel">
+            <Setter Property="Spacing" Value="2" />
+        </Style>
+
+        <!-- Trend stack panel -->
+        <Style Selector="controls|StatCard StackPanel#TrendPanel">
+            <Setter Property="Spacing" Value="4" />
+        </Style>
+        <Style Selector="controls|StatCard.compact StackPanel#TrendPanel">
+            <Setter Property="Spacing" Value="2" />
+        </Style>
+        <Style Selector="controls|StatCard.compact StackPanel#TrendPanel TextBlock">
+            <Setter Property="FontSize" Value="10" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border x:Name="OuterBorder">
         <Grid ColumnDefinitions="Auto,*">
             <!-- Icon Container -->
             <Border Grid.Column="0"
                     x:Name="IconContainer"
-                    Width="48" Height="48"
-                    CornerRadius="{StaticResource RadiusMd}"
                     VerticalAlignment="Top"
-                    Margin="0,0,16,0"
-                    IsVisible="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static ObjectConverters.IsNotNull}}"
-                    Classes.primary="{Binding IsPrimaryColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                    Classes.success="{Binding IsSuccessColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                    Classes.danger="{Binding IsDangerColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                    Classes.warning="{Binding IsWarningColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                    Classes.info="{Binding IsInfoColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                    Classes.compact="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                <Border.Styles>
-                    <!-- Icon Background Colors based on IconColor property -->
-                    <Style Selector="Border.primary">
-                        <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
-                    </Style>
-                    <Style Selector="Border.success">
-                        <Setter Property="Background" Value="{DynamicResource SuccessIconBgBrush}" />
-                    </Style>
-                    <Style Selector="Border.danger">
-                        <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
-                    </Style>
-                    <Style Selector="Border.warning">
-                        <Setter Property="Background" Value="{DynamicResource WarningIconBgBrush}" />
-                    </Style>
-                    <Style Selector="Border.info">
-                        <Setter Property="Background" Value="{DynamicResource InfoIconBgBrush}" />
-                    </Style>
-                    <!-- Compact mode: smaller icon container -->
-                    <Style Selector="Border.compact">
-                        <Setter Property="Width" Value="36" />
-                        <Setter Property="Height" Value="36" />
-                        <Setter Property="Margin" Value="0,0,10,0" />
-                        <Setter Property="CornerRadius" Value="8" />
-                    </Style>
-                </Border.Styles>
+                    IsVisible="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static ObjectConverters.IsNotNull}}">
                 <PathIcon x:Name="IconPath"
-                          Data="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                          Width="24" Height="24"
-                          Classes.primary="{Binding IsPrimaryColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                          Classes.success="{Binding IsSuccessColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                          Classes.danger="{Binding IsDangerColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                          Classes.warning="{Binding IsWarningColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                          Classes.info="{Binding IsInfoColor, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                          Classes.compact="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                    <PathIcon.Styles>
-                        <Style Selector="PathIcon.primary">
-                            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
-                        </Style>
-                        <Style Selector="PathIcon.success">
-                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
-                        </Style>
-                        <Style Selector="PathIcon.danger">
-                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                        </Style>
-                        <Style Selector="PathIcon.warning">
-                            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
-                        </Style>
-                        <Style Selector="PathIcon.info">
-                            <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
-                        </Style>
-                        <!-- Compact mode: smaller icon -->
-                        <Style Selector="PathIcon.compact">
-                            <Setter Property="Width" Value="18" />
-                            <Setter Property="Height" Value="18" />
-                        </Style>
-                    </PathIcon.Styles>
-                </PathIcon>
+                          Data="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:StatCard}}" />
             </Border>
 
             <!-- Content -->
-            <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center"
-                        Classes.compact="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                <StackPanel.Styles>
-                    <Style Selector="StackPanel.compact">
-                        <Setter Property="Spacing" Value="2" />
-                    </Style>
-                </StackPanel.Styles>
+            <StackPanel Grid.Column="1" x:Name="ContentPanel" VerticalAlignment="Center">
                 <!-- Main Value -->
                 <TextBlock x:Name="ValueText"
-                           Text="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                           FontSize="{StaticResource FontSize2xl}"
-                           FontWeight="Bold"
-                           Classes.value-success="{Binding IsValueColorSuccess, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                           Classes.value-danger="{Binding IsValueColorDanger, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                           Classes.compact="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                    <TextBlock.Styles>
-                        <Style Selector="TextBlock">
-                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-                        </Style>
-                        <Style Selector="TextBlock.value-success">
-                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
-                        </Style>
-                        <Style Selector="TextBlock.value-danger">
-                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                        </Style>
-                        <!-- Compact mode: smaller font -->
-                        <Style Selector="TextBlock.compact">
-                            <Setter Property="FontSize" Value="18" />
-                        </Style>
-                    </TextBlock.Styles>
-                </TextBlock>
+                           Text="{Binding Value, RelativeSource={RelativeSource AncestorType=controls:StatCard}}" />
 
                 <!-- Label -->
                 <TextBlock x:Name="LabelText"
                            Text="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                           FontSize="{StaticResource FontSizeSm}"
-                           Foreground="{DynamicResource TextSecondaryBrush}"
-                           IsVisible="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                           Classes.compact="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                    <TextBlock.Styles>
-                        <Style Selector="TextBlock.compact">
-                            <Setter Property="FontSize" Value="11" />
-                        </Style>
-                    </TextBlock.Styles>
-                </TextBlock>
+                           IsVisible="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
                 <!-- Trend Line: arrow + percentage + "from last month" -->
-                <StackPanel Orientation="Horizontal" Spacing="4"
-                            IsVisible="{Binding ShowChange, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                            Classes.compact="{Binding IsCompact, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                    <StackPanel.Styles>
-                        <Style Selector="StackPanel.compact">
-                            <Setter Property="Spacing" Value="2" />
-                        </Style>
-                        <Style Selector="StackPanel.compact TextBlock">
-                            <Setter Property="FontSize" Value="10" />
-                        </Style>
-                    </StackPanel.Styles>
+                <StackPanel x:Name="TrendPanel" Orientation="Horizontal"
+                            IsVisible="{Binding ShowChange, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
                     <!-- Trend Arrow -->
                     <TextBlock VerticalAlignment="Center"
                                FontSize="{StaticResource FontSizeSm}"
