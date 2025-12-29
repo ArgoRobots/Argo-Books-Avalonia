@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using ArgoBooks.Controls;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Views;
@@ -77,7 +78,7 @@ public partial class AnalyticsPage : UserControl
     {
         if (DataContext is AnalyticsPageViewModel { IsChartContextMenuOpen: true } viewModel)
         {
-            var contextMenu = this.FindControl<Border>("ChartContextMenu");
+            var contextMenu = this.FindControl<ChartContextMenu>("ChartContextMenu");
             if (contextMenu != null)
             {
                 var position = e.GetPosition(contextMenu);
