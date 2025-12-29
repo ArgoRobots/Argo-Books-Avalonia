@@ -270,11 +270,11 @@
                                 <Panel Margin="24">
                                     <!-- Templates Tab Content -->
                                     <StackPanel Spacing="16" IsVisible="{Binding IsTemplatesTabSelected}">
-                                    <!-- Built-in Templates Grid -->
+                                    <!-- Built-in Templates Grid (responsive) -->
                                     <ItemsControl ItemsSource="{Binding ReportTemplateOptions}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <UniformGrid Columns="2" />
+                                                <WrapPanel Orientation="Horizontal" />
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
@@ -282,7 +282,7 @@
                                                 <Button Margin="0,0,12,12"
                                                         Padding="20,24"
                                                         CornerRadius="8"
-                                                        HorizontalAlignment="Stretch"
+                                                        Width="200"
                                                         HorizontalContentAlignment="Center"
                                                         Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).SelectTemplateCommand}"
                                                         CommandParameter="{Binding TemplateName}"
@@ -350,7 +350,7 @@
                                         <ItemsControl ItemsSource="{Binding CustomTemplateNames}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
-                                                    <UniformGrid Columns="2" />
+                                                    <WrapPanel Orientation="Horizontal" />
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
@@ -358,7 +358,7 @@
                                                     <Button Margin="0,0,12,12"
                                                             Padding="16"
                                                             CornerRadius="8"
-                                                            HorizontalAlignment="Stretch"
+                                                            Width="200"
                                                             HorizontalContentAlignment="Stretch"
                                                             Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).OpenCustomTemplateCommand}"
                                                             CommandParameter="{Binding Name}"
@@ -432,7 +432,7 @@
                                     <ItemsControl ItemsSource="{Binding AvailableCharts}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <UniformGrid Columns="2" />
+                                                <WrapPanel Orientation="Horizontal" />
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
@@ -440,6 +440,7 @@
                                                 <Border Margin="0,0,12,12"
                                                         Padding="12"
                                                         CornerRadius="8"
+                                                        Width="200"
                                                         Background="{DynamicResource SurfaceAltBrush}"
                                                         BorderThickness="2"
                                                         Classes.selected="{Binding IsSelected}">
@@ -1377,7 +1378,7 @@
                                       VerticalScrollBarVisibility="Auto">
                             <!-- Zoom container using LayoutTransformControl for proper scroll behavior -->
                             <LayoutTransformControl x:Name="PreviewZoomTransformControl">
-                                <Border Padding="20" Background="{DynamicResource SurfaceBrush}">
+                                <Border Padding="10" Background="{DynamicResource SurfaceBrush}">
                                     <Image x:Name="PreviewImage"
                                            Source="{Binding PreviewImage}"
                                            Width="{Binding PreviewDisplayWidth}"

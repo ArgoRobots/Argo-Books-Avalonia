@@ -189,7 +189,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding ExpensesTrendsSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesTrendsSeries}"
                                                             XAxes="{Binding ExpensesTrendsXAxes}"
                                                             YAxes="{Binding ExpensesTrendsYAxes}"
                                                             ZoomMode="X"
@@ -230,7 +230,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart with data -->
-                                        <lvc:PieChart Series="{Binding ExpensesDistributionSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasExpensesDistributionData}" />
@@ -273,7 +273,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding RevenueTrendsSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding RevenueTrendsSeries}"
                                                             XAxes="{Binding RevenueTrendsXAxes}"
                                                             YAxes="{Binding RevenueTrendsYAxes}"
                                                             ZoomMode="X"
@@ -314,7 +314,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart with data -->
-                                        <lvc:PieChart Series="{Binding RevenueDistributionSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding RevenueDistributionSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasRevenueDistributionData}" />
@@ -357,7 +357,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding ProfitTrendsSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ProfitTrendsSeries}"
                                                             XAxes="{Binding ProfitTrendsXAxes}"
                                                             YAxes="{Binding ProfitTrendsYAxes}"
                                                             ZoomMode="X"
@@ -398,7 +398,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding SalesVsExpensesSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding SalesVsExpensesSeries}"
                                                             XAxes="{Binding SalesVsExpensesXAxes}"
                                                             YAxes="{Binding SalesVsExpensesYAxes}"
                                                             ZoomMode="X"
@@ -446,7 +446,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart with data -->
-                                        <lvc:PieChart Series="{Binding CountriesOfOriginSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CountriesOfOriginSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCountriesOfOriginData}" />
@@ -486,7 +486,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart with data -->
-                                        <lvc:PieChart Series="{Binding CompaniesOfOriginSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CompaniesOfOriginSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCompaniesOfOriginData}" />
@@ -529,7 +529,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart with data -->
-                                        <lvc:PieChart Series="{Binding CountriesOfDestinationSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CountriesOfDestinationSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCountriesOfDestinationData}" />
@@ -569,7 +569,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart with data -->
-                                        <lvc:PieChart Series="{Binding CompaniesOfDestinationSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CompaniesOfDestinationSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCompaniesOfDestinationData}" />
@@ -703,7 +703,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart with data -->
-                                        <lvc:PieChart Series="{Binding AccountantsTransactionsSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding AccountantsTransactionsSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasAccountantsTransactionsData}" />
@@ -743,7 +743,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding TotalTransactionsSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding TotalTransactionsSeries}"
                                                             XAxes="{Binding TotalTransactionsXAxes}"
                                                             YAxes="{Binding TotalTransactionsYAxes}"
                                                             ZoomMode="X"
@@ -784,7 +784,7 @@
                             <Border Grid.Row="1" Padding="10">
                                 <Panel>
                                     <!-- Chart with data -->
-                                    <lvc:CartesianChart Series="{Binding AvgTransactionValueSeries}"
+                                    <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding AvgTransactionValueSeries}"
                                                         XAxes="{Binding AvgTransactionValueXAxes}"
                                                         YAxes="{Binding AvgTransactionValueYAxes}"
                                                         ZoomMode="X"
@@ -866,7 +866,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding AvgTransactionValueSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding AvgTransactionValueSeries}"
                                                             XAxes="{Binding AvgTransactionValueXAxes}"
                                                             YAxes="{Binding AvgTransactionValueYAxes}"
                                                             ZoomMode="X"
@@ -907,7 +907,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding TotalTransactionsSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding TotalTransactionsSeries}"
                                                             XAxes="{Binding TotalTransactionsXAxes}"
                                                             YAxes="{Binding TotalTransactionsYAxes}"
                                                             ZoomMode="X"
@@ -951,7 +951,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding AvgShippingCostsSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding AvgShippingCostsSeries}"
                                                             XAxes="{Binding AvgShippingCostsXAxes}"
                                                             YAxes="{Binding AvgShippingCostsYAxes}"
                                                             ZoomMode="X"
@@ -992,7 +992,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding GrowthRatesSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding GrowthRatesSeries}"
                                                             XAxes="{Binding GrowthRatesXAxes}"
                                                             YAxes="{Binding GrowthRatesYAxes}"
                                                             ZoomMode="X"
@@ -1075,7 +1075,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart - using Companies of Origin for top customers -->
-                                        <lvc:PieChart Series="{Binding CompaniesOfOriginSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CompaniesOfOriginSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCompaniesOfOriginData}" />
@@ -1114,7 +1114,7 @@
                                 </Border>
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
-                                        <lvc:PieChart Series="{Binding CustomerPaymentStatusSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CustomerPaymentStatusSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasCustomerPaymentStatusData}" />
@@ -1156,7 +1156,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart - using Growth Rates -->
-                                        <lvc:CartesianChart Series="{Binding GrowthRatesSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding GrowthRatesSeries}"
                                                             XAxes="{Binding GrowthRatesXAxes}"
                                                             YAxes="{Binding GrowthRatesYAxes}"
                                                             ZoomMode="X"
@@ -1197,7 +1197,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart - using Avg Transaction Value -->
-                                        <lvc:CartesianChart Series="{Binding AvgTransactionValueSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding AvgTransactionValueSeries}"
                                                             XAxes="{Binding AvgTransactionValueXAxes}"
                                                             YAxes="{Binding AvgTransactionValueYAxes}"
                                                             ZoomMode="X"
@@ -1250,7 +1250,7 @@
                                 </Border>
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
-                                        <lvc:PieChart Series="{Binding ActiveInactiveCustomersSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ActiveInactiveCustomersSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasActiveInactiveCustomersData}" />
@@ -1289,7 +1289,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart - using Total Transactions -->
-                                        <lvc:CartesianChart Series="{Binding TotalTransactionsSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding TotalTransactionsSeries}"
                                                             XAxes="{Binding TotalTransactionsXAxes}"
                                                             YAxes="{Binding TotalTransactionsYAxes}"
                                                             ZoomMode="X"
@@ -1372,7 +1372,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding ReturnsOverTimeSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ReturnsOverTimeSeries}"
                                                             XAxes="{Binding ReturnsOverTimeXAxes}"
                                                             YAxes="{Binding ReturnsOverTimeYAxes}"
                                                             ZoomMode="X"
@@ -1413,7 +1413,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart with data -->
-                                        <lvc:PieChart Series="{Binding ReturnReasonsSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ReturnReasonsSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasReturnReasonsData}" />
@@ -1456,7 +1456,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding ReturnFinancialImpactSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ReturnFinancialImpactSeries}"
                                                             XAxes="{Binding ReturnFinancialImpactXAxes}"
                                                             YAxes="{Binding ReturnFinancialImpactYAxes}"
                                                             ZoomMode="X"
@@ -1497,7 +1497,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart - reusing Return Reasons -->
-                                        <lvc:PieChart Series="{Binding ReturnReasonsSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ReturnReasonsSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasReturnReasonsData}" />
@@ -1540,7 +1540,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart - reusing Expense Distribution -->
-                                        <lvc:PieChart Series="{Binding ExpensesDistributionSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasExpensesDistributionData}" />
@@ -1580,7 +1580,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart - using Sales vs Expenses -->
-                                        <lvc:CartesianChart Series="{Binding SalesVsExpensesSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding SalesVsExpensesSeries}"
                                                             XAxes="{Binding SalesVsExpensesXAxes}"
                                                             YAxes="{Binding SalesVsExpensesYAxes}"
                                                             ZoomMode="X"
@@ -1663,7 +1663,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding LossesOverTimeSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding LossesOverTimeSeries}"
                                                             XAxes="{Binding LossesOverTimeXAxes}"
                                                             YAxes="{Binding LossesOverTimeYAxes}"
                                                             ZoomMode="X"
@@ -1704,7 +1704,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart - Loss Reasons -->
-                                        <lvc:PieChart Series="{Binding LossReasonsSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding LossReasonsSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasLossReasonsData}" />
@@ -1747,7 +1747,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart Series="{Binding LossFinancialImpactSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding LossFinancialImpactSeries}"
                                                             XAxes="{Binding LossFinancialImpactXAxes}"
                                                             YAxes="{Binding LossFinancialImpactYAxes}"
                                                             ZoomMode="X"
@@ -1788,7 +1788,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart - reusing Expense Distribution -->
-                                        <lvc:PieChart Series="{Binding ExpensesDistributionSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasExpensesDistributionData}" />
@@ -1831,7 +1831,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Pie Chart - Losses by Product -->
-                                        <lvc:PieChart Series="{Binding LossesByProductSeries}"
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding LossesByProductSeries}"
                                                       LegendPosition="Right"
                                                       LegendTextPaint="{Binding LegendTextPaint}"
                                                       IsVisible="{Binding HasLossesByProductData}" />
@@ -1871,7 +1871,7 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart - using Sales vs Expenses -->
-                                        <lvc:CartesianChart Series="{Binding SalesVsExpensesSeries}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding SalesVsExpensesSeries}"
                                                             XAxes="{Binding SalesVsExpensesXAxes}"
                                                             YAxes="{Binding SalesVsExpensesYAxes}"
                                                             ZoomMode="X"
@@ -1989,6 +1989,104 @@
                 </Border>
             </Grid>
         </Border>
+    </Border>
+
+    <!-- Global Chart Context Menu (rendered on top of everything) -->
+    <Border x:Name="ChartContextMenu"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="6"
+            IsVisible="{Binding IsChartContextMenuOpen}"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            MinWidth="200"
+            BoxShadow="0 4 12 0 #40000000">
+        <Border.RenderTransform>
+            <TranslateTransform X="{Binding ChartContextMenuX}"
+                                Y="{Binding ChartContextMenuY}" />
+        </Border.RenderTransform>
+        <Border.Styles>
+            <Style Selector="Button.context-menu-item">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="10,8" />
+                <Setter Property="CornerRadius" Value="4" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="Cursor" Value="Hand" />
+            </Style>
+            <Style Selector="Button.context-menu-item:pointerover">
+                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+            </Style>
+            <Style Selector="Button.context-menu-item:pressed">
+                <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
+            </Style>
+        </Border.Styles>
+        <StackPanel Spacing="2">
+            <!-- Save as Image -->
+            <Button Classes="context-menu-item"
+                    Command="{Binding SaveChartAsImageCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
+                              Width="16" Height="16"
+                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBlock Text="Save as Image"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </StackPanel>
+            </Button>
+
+            <!-- Separator -->
+            <Border Height="1"
+                    Background="{DynamicResource BorderBrush}"
+                    Margin="4,4" />
+
+            <!-- Export to Google Sheets -->
+            <Button Classes="context-menu-item"
+                    Command="{Binding ExportToGoogleSheetsCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <PathIcon Data="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"
+                              Width="16" Height="16"
+                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBlock Text="Export to Google Sheets"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </StackPanel>
+            </Button>
+
+            <!-- Export to Excel -->
+            <Button Classes="context-menu-item"
+                    Command="{Binding ExportToExcelCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                              Width="16" Height="16"
+                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBlock Text="Export to Excel"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </StackPanel>
+            </Button>
+
+            <!-- Separator -->
+            <Border Height="1"
+                    Background="{DynamicResource BorderBrush}"
+                    Margin="4,4" />
+
+            <!-- Reset Zoom -->
+            <Button Classes="context-menu-item"
+                    Command="{Binding ResetChartZoomCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <PathIcon Data="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+                              Width="16" Height="16"
+                              Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBlock Text="Reset Zoom"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
     </Border>
     </Panel>
 

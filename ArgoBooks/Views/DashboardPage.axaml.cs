@@ -102,8 +102,8 @@ public partial class DashboardPage : UserControl
         {
             if (DataContext is DashboardPageViewModel viewModel)
             {
-                // Get position relative to the chart container
-                var position = e.GetPosition(sender as Control);
+                // Get position relative to this page (the Panel container) for proper menu placement
+                var position = e.GetPosition(this);
                 viewModel.ShowChartContextMenu(position.X, position.Y);
                 e.Handled = true;
             }

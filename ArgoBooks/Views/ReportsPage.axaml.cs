@@ -790,8 +790,8 @@ public partial class ReportsPage : UserControl
 
         if (imageWidth <= 0 || imageHeight <= 0) return;
 
-        var viewportWidth = _previewScrollViewer.Bounds.Width - 40; // Account for padding
-        var viewportHeight = _previewScrollViewer.Bounds.Height - 40;
+        var viewportWidth = _previewScrollViewer.Bounds.Width - 20; // Account for 10px padding on each side
+        var viewportHeight = _previewScrollViewer.Bounds.Height - 20;
 
         if (viewportWidth <= 0 || viewportHeight <= 0) return;
 
