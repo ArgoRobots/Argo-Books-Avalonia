@@ -228,7 +228,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isColumnMenuOpen;
 
-    public ReceiptsTableColumnWidths ColumnWidths { get; } = new();
+    public ReceiptsTableColumnWidths ColumnWidths => App.ReceiptsColumnWidths;
 
     [ObservableProperty]
     private bool _showIdColumn = true;

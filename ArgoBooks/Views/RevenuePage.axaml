@@ -341,7 +341,7 @@
                                                         <TextBlock Text="{Binding Id}"
                                                                    FontSize="14"
                                                                    FontWeight="Medium"
-                                                                   Foreground="{DynamicResource PrimaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />

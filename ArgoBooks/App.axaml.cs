@@ -89,6 +89,80 @@ public partial class App : Application
     /// </summary>
     public static RevenueModalsViewModel? RevenueModalsViewModel => _appShellViewModel?.RevenueModalsViewModel;
 
+    #region Shared Table Column Widths
+
+    /// <summary>
+    /// Gets the shared column widths for the Revenue table.
+    /// </summary>
+    public static Controls.RevenueTableColumnWidths RevenueColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Expenses table.
+    /// </summary>
+    public static Controls.TableColumnWidths ExpensesColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Invoices table.
+    /// </summary>
+    public static Controls.InvoicesTableColumnWidths InvoicesColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Customers table.
+    /// </summary>
+    public static Controls.CustomersTableColumnWidths CustomersColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Suppliers table.
+    /// </summary>
+    public static Controls.SuppliersTableColumnWidths SuppliersColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Products table.
+    /// </summary>
+    public static Controls.ProductsTableColumnWidths ProductsColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Categories table.
+    /// </summary>
+    public static Controls.CategoriesTableColumnWidths CategoriesColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Departments table.
+    /// </summary>
+    public static Controls.DepartmentsTableColumnWidths DepartmentsColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Payments table.
+    /// </summary>
+    public static Controls.PaymentsTableColumnWidths PaymentsColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Receipts table.
+    /// </summary>
+    public static Controls.ReceiptsTableColumnWidths ReceiptsColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Returns table.
+    /// </summary>
+    public static Controls.ReturnsTableColumnWidths ReturnsColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Lost/Damaged table.
+    /// </summary>
+    public static Controls.LostDamagedTableColumnWidths LostDamagedColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Rental Records table.
+    /// </summary>
+    public static Controls.RentalRecordsTableColumnWidths RentalRecordsColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Rental Inventory table.
+    /// </summary>
+    public static Controls.RentalInventoryTableColumnWidths RentalInventoryColumnWidths { get; } = new();
+
+    #endregion
+
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;

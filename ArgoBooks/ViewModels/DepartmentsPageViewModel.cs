@@ -67,9 +67,9 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     private bool _isColumnMenuOpen;
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public DepartmentsTableColumnWidths ColumnWidths { get; } = new DepartmentsTableColumnWidths();
+    public DepartmentsTableColumnWidths ColumnWidths => App.DepartmentsColumnWidths;
 
     [ObservableProperty]
     private bool _showDepartmentColumn = true;

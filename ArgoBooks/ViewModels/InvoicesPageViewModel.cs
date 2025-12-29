@@ -147,9 +147,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     private bool _isColumnMenuOpen;
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public InvoicesTableColumnWidths ColumnWidths { get; } = new InvoicesTableColumnWidths();
+    public InvoicesTableColumnWidths ColumnWidths => App.InvoicesColumnWidths;
 
     [ObservableProperty]
     private bool _showIdColumn = true;

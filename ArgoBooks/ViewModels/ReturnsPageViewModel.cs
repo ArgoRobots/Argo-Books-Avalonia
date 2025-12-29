@@ -15,9 +15,9 @@ public partial class ReturnsPageViewModel : ViewModelBase
     #region Table Column Widths
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public ReturnsTableColumnWidths ColumnWidths { get; } = new ReturnsTableColumnWidths();
+    public ReturnsTableColumnWidths ColumnWidths => App.ReturnsColumnWidths;
 
     #endregion
 

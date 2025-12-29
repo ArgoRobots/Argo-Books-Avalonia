@@ -36,9 +36,9 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
     private bool _isColumnMenuOpen;
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public RentalInventoryTableColumnWidths ColumnWidths { get; } = new RentalInventoryTableColumnWidths();
+    public RentalInventoryTableColumnWidths ColumnWidths => App.RentalInventoryColumnWidths;
 
     [ObservableProperty]
     private bool _showItemColumn = true;

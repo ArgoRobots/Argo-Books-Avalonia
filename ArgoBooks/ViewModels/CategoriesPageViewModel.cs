@@ -143,9 +143,9 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     private bool _isColumnMenuOpen;
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public CategoriesTableColumnWidths ColumnWidths { get; } = new CategoriesTableColumnWidths();
+    public CategoriesTableColumnWidths ColumnWidths => App.CategoriesColumnWidths;
 
     [ObservableProperty]
     private bool _showNameColumn = true;

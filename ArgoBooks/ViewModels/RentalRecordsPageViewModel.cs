@@ -72,9 +72,9 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     private bool _isColumnMenuOpen;
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public RentalRecordsTableColumnWidths ColumnWidths { get; } = new RentalRecordsTableColumnWidths();
+    public RentalRecordsTableColumnWidths ColumnWidths => App.RentalRecordsColumnWidths;
 
     [ObservableProperty]
     private bool _showIdColumn = true;
