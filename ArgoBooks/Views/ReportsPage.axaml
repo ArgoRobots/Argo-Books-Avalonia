@@ -1394,7 +1394,7 @@
                         Background="{DynamicResource SurfaceBrush}"
                         Margin="0,24,24,24"
                         CornerRadius="12"
-                        Padding="24">
+                        Padding="0,24,24,24">
                     <StackPanel Spacing="20">
                         <TextBlock Text="Export Settings"
                                    FontSize="18"
