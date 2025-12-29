@@ -25,7 +25,9 @@ public class ColumnDef
 /// </summary>
 public abstract partial class TableColumnWidthsBase : ObservableObject, ITableColumnWidths
 {
-    private double _availableWidth = 800;
+    // Default to a reasonable desktop width to ensure proportional layout on first render
+    // before OnTableSizeChanged provides the actual width
+    private double _availableWidth = 1200;
     private bool _isUpdating;
     private bool _hasManualOverflow;
 
