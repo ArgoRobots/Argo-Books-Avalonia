@@ -277,8 +277,10 @@
                                 </StackPanel>
                         </Border>
 
-                            <!-- Table Content (scrollable) -->
-                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <!-- Table Content (scrollable vertically only) -->
+                            <ScrollViewer Grid.Row="1"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
                                 <Panel>
                                     <!-- Records List -->
                                     <ItemsControl ItemsSource="{Binding Records}">

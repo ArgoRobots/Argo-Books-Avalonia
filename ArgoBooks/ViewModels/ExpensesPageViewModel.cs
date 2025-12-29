@@ -73,9 +73,9 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private bool _isColumnMenuOpen;
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public TableColumnWidths ColumnWidths { get; } = new TableColumnWidths();
+    public TableColumnWidths ColumnWidths => App.ExpensesColumnWidths;
 
     [ObservableProperty]
     private bool _showIdColumn = true;

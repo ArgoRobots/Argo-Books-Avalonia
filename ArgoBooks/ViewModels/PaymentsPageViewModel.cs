@@ -114,9 +114,9 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
     private bool _isColumnMenuOpen;
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public PaymentsTableColumnWidths ColumnWidths { get; } = new PaymentsTableColumnWidths();
+    public PaymentsTableColumnWidths ColumnWidths => App.PaymentsColumnWidths;
 
     [ObservableProperty]
     private bool _showIdColumn = true;

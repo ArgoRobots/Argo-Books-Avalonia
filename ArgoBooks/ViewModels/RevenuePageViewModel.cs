@@ -67,9 +67,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     #region Column Visibility
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public RevenueTableColumnWidths ColumnWidths { get; } = new RevenueTableColumnWidths();
+    public RevenueTableColumnWidths ColumnWidths => App.RevenueColumnWidths;
 
     [ObservableProperty]
     private bool _isColumnMenuOpen;

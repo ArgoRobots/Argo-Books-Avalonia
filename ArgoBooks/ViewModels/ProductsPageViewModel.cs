@@ -18,9 +18,9 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     #region Table Column Widths
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public ProductsTableColumnWidths ColumnWidths { get; } = new ProductsTableColumnWidths();
+    public ProductsTableColumnWidths ColumnWidths => App.ProductsColumnWidths;
 
     #endregion
 

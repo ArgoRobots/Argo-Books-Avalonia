@@ -15,9 +15,9 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     #region Table Column Widths
 
     /// <summary>
-    /// Column widths manager for the table.
+    /// Column widths manager for the table (shared across page navigations).
     /// </summary>
-    public LostDamagedTableColumnWidths ColumnWidths { get; } = new LostDamagedTableColumnWidths();
+    public LostDamagedTableColumnWidths ColumnWidths => App.LostDamagedColumnWidths;
 
     #endregion
 

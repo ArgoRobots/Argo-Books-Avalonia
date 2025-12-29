@@ -321,8 +321,10 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Table Content (scrollable) -->
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <!-- Table Content (scrollable vertically only) -->
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
                             <Panel>
                                 <!-- Revenue List -->
                                 <ItemsControl ItemsSource="{Binding Revenue}">
@@ -339,7 +341,7 @@
                                                         <TextBlock Text="{Binding Id}"
                                                                    FontSize="14"
                                                                    FontWeight="Medium"
-                                                                   Foreground="{DynamicResource PrimaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />

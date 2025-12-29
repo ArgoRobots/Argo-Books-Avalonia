@@ -81,7 +81,7 @@ public partial class StatCard : UserControl
     /// <summary>
     /// The width threshold below which the card switches to compact mode.
     /// </summary>
-    private const double CompactThreshold = 200;
+    private const double CompactThreshold = 250;
 
     #endregion
 
