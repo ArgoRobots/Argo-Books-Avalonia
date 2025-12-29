@@ -75,6 +75,14 @@ public partial class StatCard : UserControl
     public static readonly StyledProperty<StatCardColor?> ValueColorProperty =
         AvaloniaProperty.Register<StatCard, StatCardColor?>(nameof(ValueColor));
 
+    public static readonly StyledProperty<bool> IsCompactProperty =
+        AvaloniaProperty.Register<StatCard, bool>(nameof(IsCompact));
+
+    /// <summary>
+    /// The width threshold below which the card switches to compact mode.
+    /// </summary>
+    private const double CompactThreshold = 200;
+
     #endregion
 
     #region Computed Properties for Class Binding
@@ -258,18 +266,45 @@ public partial class StatCard : UserControl
         set => SetValue(ValueColorProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets whether the card is in compact mode (smaller text and icon).
+    /// This is automatically set based on the card's width.
+    /// </summary>
+    public bool IsCompact
+    {
+        get => GetValue(IsCompactProperty);
+        set => SetValue(IsCompactProperty, value);
+    }
+
     #endregion
 
     public StatCard()
     {
         InitializeComponent();
+        UpdateIconColorClass();
+        UpdateValueColorClass();
+    }
+
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        // Update compact mode based on available width
+        var wasCompact = IsCompact;
+        var shouldBeCompact = finalSize.Width > 0 && finalSize.Width < CompactThreshold;
+
+        if (wasCompact != shouldBeCompact)
+        {
+            IsCompact = shouldBeCompact;
+            UpdateCompactClass();
+        }
+
+        return base.ArrangeOverride(finalSize);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
 
-        // Update icon color computed properties
+        // Update icon color computed properties and CSS class
         if (change.Property == IconColorProperty)
         {
             RaisePropertyChanged(IsPrimaryColorProperty, !IsPrimaryColor, IsPrimaryColor);
@@ -277,6 +312,25 @@ public partial class StatCard : UserControl
             RaisePropertyChanged(IsDangerColorProperty, !IsDangerColor, IsDangerColor);
             RaisePropertyChanged(IsWarningColorProperty, !IsWarningColor, IsWarningColor);
             RaisePropertyChanged(IsInfoColorProperty, !IsInfoColor, IsInfoColor);
+            UpdateIconColorClass();
+        }
+
+        // Update value color CSS class
+        if (change.Property == ValueColorProperty)
+        {
+            UpdateValueColorClass();
+        }
+
+        // Update alt-bg class
+        if (change.Property == UseAltBackgroundProperty)
+        {
+            UpdateAltBgClass();
+        }
+
+        // Update compact class
+        if (change.Property == IsCompactProperty)
+        {
+            UpdateCompactClass();
         }
 
         // Auto-show change indicator when ChangeValue or ChangeText is set
@@ -300,5 +354,56 @@ public partial class StatCard : UserControl
             RaisePropertyChanged(IsTrendDownProperty, !IsTrendDown, IsTrendDown);
             RaisePropertyChanged(IsTrendFlatProperty, !IsTrendFlat, IsTrendFlat);
         }
+    }
+
+    private void UpdateIconColorClass()
+    {
+        // Remove all icon color classes
+        Classes.Remove("icon-primary");
+        Classes.Remove("icon-success");
+        Classes.Remove("icon-danger");
+        Classes.Remove("icon-warning");
+        Classes.Remove("icon-info");
+
+        // Add the appropriate class
+        var className = IconColor switch
+        {
+            StatCardColor.Primary => "icon-primary",
+            StatCardColor.Success => "icon-success",
+            StatCardColor.Danger => "icon-danger",
+            StatCardColor.Warning => "icon-warning",
+            StatCardColor.Info => "icon-info",
+            _ => "icon-primary"
+        };
+        Classes.Add(className);
+    }
+
+    private void UpdateValueColorClass()
+    {
+        // Remove all value color classes
+        Classes.Remove("value-success");
+        Classes.Remove("value-danger");
+
+        // Add the appropriate class if ValueColor is set
+        if (ValueColor == StatCardColor.Success)
+            Classes.Add("value-success");
+        else if (ValueColor == StatCardColor.Danger)
+            Classes.Add("value-danger");
+    }
+
+    private void UpdateAltBgClass()
+    {
+        if (UseAltBackground)
+            Classes.Add("alt-bg");
+        else
+            Classes.Remove("alt-bg");
+    }
+
+    private void UpdateCompactClass()
+    {
+        if (IsCompact)
+            Classes.Add("compact");
+        else
+            Classes.Remove("compact");
     }
 }
