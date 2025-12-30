@@ -347,6 +347,7 @@
                                                    FontSize="14"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center"
                                                    Margin="0,8,0,0" />
                                         <ItemsControl ItemsSource="{Binding CustomTemplateNames}"
                                                       HorizontalAlignment="Center">
