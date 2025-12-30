@@ -16,7 +16,7 @@ namespace ArgoBooks.ViewModels;
 /// ViewModel for the Analytics page.
 /// Handles tab selection, date range filtering, chart type toggling, and chart data loading.
 /// </summary>
-public partial class AnalyticsPageViewModel : ViewModelBase
+public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 {
     #region Services
 
@@ -1381,90 +1381,6 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     private void CloseCustomerActivityInfo()
     {
         IsCustomerActivityInfoOpen = false;
-    }
-
-    #endregion
-
-    #region Chart Context Menu
-
-    [ObservableProperty]
-    private bool _isChartContextMenuOpen;
-
-    [ObservableProperty]
-    private double _chartContextMenuX;
-
-    [ObservableProperty]
-    private double _chartContextMenuY;
-
-    [ObservableProperty]
-    private bool _showChartResetZoom = true;
-
-    [ObservableProperty]
-    private bool _showChartExportOptions = true;
-
-    /// <summary>
-    /// Shows the chart context menu at the specified position.
-    /// </summary>
-    /// <param name="x">The X coordinate.</param>
-    /// <param name="y">The Y coordinate.</param>
-    /// <param name="isPieChart">True if the chart is a pie chart (hides reset zoom).</param>
-    /// <param name="isGeoMap">True if the chart is a geo map (only shows save as image).</param>
-    public void ShowChartContextMenu(double x, double y, bool isPieChart = false, bool isGeoMap = false)
-    {
-        ChartContextMenuX = x;
-        ChartContextMenuY = y;
-        ShowChartResetZoom = !isPieChart && !isGeoMap;
-        ShowChartExportOptions = !isGeoMap;
-        IsChartContextMenuOpen = true;
-    }
-
-    /// <summary>
-    /// Hides the chart context menu.
-    /// </summary>
-    [RelayCommand]
-    private void HideChartContextMenu()
-    {
-        IsChartContextMenuOpen = false;
-    }
-
-    /// <summary>
-    /// Saves the current chart as an image.
-    /// </summary>
-    [RelayCommand]
-    private void SaveChartAsImage()
-    {
-        HideChartContextMenu();
-        // Actual implementation will be in code-behind where we have access to the chart control
-    }
-
-    /// <summary>
-    /// Exports chart data to Google Sheets.
-    /// </summary>
-    [RelayCommand]
-    private void ExportToGoogleSheets()
-    {
-        HideChartContextMenu();
-        // TODO: Implement Google Sheets export
-    }
-
-    /// <summary>
-    /// Exports chart data to Excel.
-    /// </summary>
-    [RelayCommand]
-    private void ExportToExcel()
-    {
-        HideChartContextMenu();
-        // TODO: Implement Excel export
-    }
-
-    /// <summary>
-    /// Resets the zoom on the chart.
-    /// </summary>
-    [RelayCommand]
-    private void ResetChartZoom()
-    {
-        HideChartContextMenu();
-        // Chart zoom reset would be handled through chart properties
     }
 
     #endregion
