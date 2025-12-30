@@ -286,7 +286,7 @@ public partial class ReportPreviewControl : UserControl
                 using var skBitmap = renderer.CreatePreview(width, height);
 
                 // Convert SKBitmap to Avalonia Bitmap
-                using var stream = new System.IO.MemoryStream();
+                using var stream = new MemoryStream();
                 using var image = SkiaSharp.SKImage.FromBitmap(skBitmap);
                 using var data = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
                 data.SaveTo(stream);

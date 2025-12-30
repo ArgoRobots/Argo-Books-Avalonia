@@ -358,7 +358,7 @@ public partial class Header : UserControl
     private async void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         // Wait a moment for all initialization to complete
-        await System.Threading.Tasks.Task.Delay(100);
+        await Task.Delay(100);
 
         _isInitialized = true;
 
@@ -391,7 +391,7 @@ public partial class Header : UserControl
                 FontSize = 16,
                 FontWeight = Avalonia.Media.FontWeight.Bold,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                Margin = new Avalonia.Thickness(-8, 0, 0, 0)
+                Margin = new Thickness(-8, 0, 0, 0)
             };
             // Insert after the save button (index 1)
             _saveButtonContainer.Children.Insert(1, _asterisk);
@@ -430,7 +430,7 @@ public partial class Header : UserControl
                     {
                         textBox.Text = string.Empty;
                         // Move focus away
-                        this.Focus();
+                        Focus();
                     }
                     e.Handled = true;
                     break;

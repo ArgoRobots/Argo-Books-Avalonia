@@ -561,7 +561,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         var writeableBitmap = new WriteableBitmap(
             new PixelSize(info.Width, info.Height),
             new Vector(96, 96),
-            Avalonia.Platform.PixelFormat.Bgra8888,
+            PixelFormat.Bgra8888,
             AlphaFormat.Premul);
 
         using (var frameBuffer = writeableBitmap.Lock())

@@ -515,7 +515,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // Check for returns related to this sale
         var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
 
-        if (relatedReturn is { Status: Core.Enums.ReturnStatus.Completed })
+        if (relatedReturn is { Status: ReturnStatus.Completed })
         {
             return "Returned";
         }
@@ -657,11 +657,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         try
         {
             // Create temp file from Base64 data stored in company file
-            var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ArgoBooks", "Receipts");
-            System.IO.Directory.CreateDirectory(tempDir);
-            var tempPath = System.IO.Path.Combine(tempDir, receipt.FileName);
+            var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
+            Directory.CreateDirectory(tempDir);
+            var tempPath = Path.Combine(tempDir, receipt.FileName);
             var bytes = Convert.FromBase64String(receipt.FileData);
-            System.IO.File.WriteAllBytes(tempPath, bytes);
+            File.WriteAllBytes(tempPath, bytes);
             return tempPath;
         }
         catch

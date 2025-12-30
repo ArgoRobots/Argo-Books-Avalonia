@@ -118,7 +118,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// <summary>
     /// Category items for the searchable category input (excludes "All Categories").
     /// </summary>
-    public ObservableCollection<Controls.CategoryItem> CategoryItems { get; } = [];
+    public ObservableCollection<CategoryItem> CategoryItems { get; } = [];
 
     /// <summary>
     /// Gets whether there are any categories available.
@@ -419,7 +419,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         CategoryItems.Clear();
         foreach (var cat in categories)
         {
-            CategoryItems.Add(new Controls.CategoryItem { Id = cat.Id, Name = cat.Name });
+            CategoryItems.Add(new CategoryItem { Id = cat.Id, Name = cat.Name });
         }
         OnPropertyChanged(nameof(HasCategories));
 
@@ -995,7 +995,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         CategoryItems.Clear();
         foreach (var cat in categories)
         {
-            CategoryItems.Add(new Controls.CategoryItem { Id = cat.Id, Name = cat.Name });
+            CategoryItems.Add(new CategoryItem { Id = cat.Id, Name = cat.Name });
         }
         OnPropertyChanged(nameof(HasCategories));
 

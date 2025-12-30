@@ -54,7 +54,7 @@ public class StringEqualsConverter : IValueConverter
         return isEqual;
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }
@@ -66,7 +66,7 @@ public class StringEqualsConverter : IValueConverter
 /// </summary>
 public class EqualityConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value == null && parameter == null)
             return true;
@@ -104,7 +104,7 @@ public class EqualConverter : IValueConverter
         return value.Equals(parameter);
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }
@@ -144,7 +144,7 @@ public class ThemeBorderBrushConverter : IValueConverter
             : new SolidColorBrush(Color.Parse("#E5E7EB"));
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

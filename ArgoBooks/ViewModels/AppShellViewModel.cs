@@ -299,7 +299,7 @@ public partial class AppShellViewModel : ViewModelBase
         UnsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
 
         // Register navigation guard for unsaved changes check
-        if (_navigationService is Core.Services.NavigationService navService)
+        if (_navigationService is NavigationService navService)
         {
             navService.RegisterNavigationGuard(CheckUnsavedChangesBeforeNavigation);
         }

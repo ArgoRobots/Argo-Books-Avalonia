@@ -32,7 +32,7 @@ public partial class App : Application
     /// <summary>
     /// Gets the shared undo/redo manager instance.
     /// </summary>
-    public static Services.UndoRedoManager? UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
+    public static UndoRedoManager UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
 
     /// <summary>
     /// Gets the customer modals view model for shared access.
@@ -665,7 +665,7 @@ public partial class App : Application
                 var path = files[0].Path.LocalPath;
                 try
                 {
-                    var bitmap = new Avalonia.Media.Imaging.Bitmap(path);
+                    var bitmap = new Bitmap(path);
                     createCompany.SetLogo(path, bitmap);
                 }
                 catch
@@ -869,7 +869,7 @@ public partial class App : Application
                 var path = files[0].Path.LocalPath;
                 try
                 {
-                    var bitmap = new Avalonia.Media.Imaging.Bitmap(path);
+                    var bitmap = new Bitmap(path);
                     editCompany.SetLogo(path, bitmap);
                 }
                 catch

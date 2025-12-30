@@ -136,7 +136,7 @@ public partial class LoadingSpinner : UserControl
         }
     }
 
-    protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
         UpdateBrush();
@@ -147,7 +147,7 @@ public partial class LoadingSpinner : UserControl
         if (SpinnerBrush == null)
         {
             // Try to get the primary brush from resources
-            if (this.TryFindResource("PrimaryBrush", this.ActualThemeVariant, out var brush) && brush is IBrush primaryBrush)
+            if (this.TryFindResource("PrimaryBrush", ActualThemeVariant, out var brush) && brush is IBrush primaryBrush)
             {
                 SetCurrentValue(SpinnerBrushProperty, primaryBrush);
             }
