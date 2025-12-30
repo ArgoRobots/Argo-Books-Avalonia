@@ -418,7 +418,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
         _receiptFilePath = sale.ReferenceNumber;
         ReceiptFileName = string.IsNullOrEmpty(sale.ReferenceNumber)
             ? "No receipt attached"
-            : System.IO.Path.GetFileName(sale.ReferenceNumber);
+            : Path.GetFileName(sale.ReferenceNumber);
 
         ClearValidationErrors();
         IsAddEditModalOpen = true;
@@ -719,7 +719,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
         RevenueSaved?.Invoke(this, EventArgs.Empty);
     }
 
-    private void CreateLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Sale sale)
+    private void CreateLostDamagedRecord(CompanyData companyData, Sale sale)
     {
         var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
         var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
@@ -742,7 +742,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
         companyData.LostDamaged.Add(lostDamaged);
     }
 
-    private void CreateReturnRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Sale sale)
+    private void CreateReturnRecord(CompanyData companyData, Sale sale)
     {
         var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
 
@@ -756,7 +756,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
             ReturnDate = DateTime.UtcNow,
             Items =
             [
-                new Core.Models.Common.ReturnItem
+                new ReturnItem
                 {
                     ProductId = productId,
                     Quantity = (int)sale.Quantity,
@@ -765,7 +765,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
             ],
             RefundAmount = sale.Total,
             RestockingFee = 0,
-            Status = Core.Enums.ReturnStatus.Completed,
+            Status = ReturnStatus.Completed,
             Notes = ItemStatusNotes,
             ProcessedBy = sale.AccountantId ?? "",
             CreatedAt = DateTime.UtcNow
@@ -774,7 +774,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
         companyData.Returns.Add(returnRecord);
     }
 
-    private static void RemoveLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Sale sale)
+    private static void RemoveLostDamagedRecord(CompanyData companyData, Sale sale)
     {
         var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == sale.Id);
         if (record != null)
@@ -783,7 +783,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
         }
     }
 
-    private static void RemoveReturnRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Sale sale)
+    private static void RemoveReturnRecord(CompanyData companyData, Sale sale)
     {
         var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
         if (record != null)
@@ -792,13 +792,13 @@ public partial class RevenueModalsViewModel : ViewModelBase
         }
     }
 
-    private static Core.Enums.LostDamagedReason MapToLostDamagedReason(string reason)
+    private static LostDamagedReason MapToLostDamagedReason(string reason)
     {
         return reason.ToLowerInvariant() switch
         {
-            "damaged in transit" or "damaged during storage" or "defective product" or "customer damaged" => Core.Enums.LostDamagedReason.Damaged,
-            "lost in warehouse" => Core.Enums.LostDamagedReason.Lost,
-            _ => Core.Enums.LostDamagedReason.Other
+            "damaged in transit" or "damaged during storage" or "defective product" or "customer damaged" => LostDamagedReason.Damaged,
+            "lost in warehouse" => LostDamagedReason.Lost,
+            _ => LostDamagedReason.Other
         };
     }
 
@@ -914,8 +914,8 @@ public partial class RevenueModalsViewModel : ViewModelBase
             companyData.IdCounters.Receipt++;
             var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
 
-            var fileInfo = new System.IO.FileInfo(_receiptFilePath);
-            var fileType = System.IO.Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
+            var fileInfo = new FileInfo(_receiptFilePath);
+            var fileType = Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
             {
                 ".pdf" => "application/pdf",
                 ".png" => "image/png",
@@ -930,7 +930,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
             {
                 try
                 {
-                    var bytes = System.IO.File.ReadAllBytes(_receiptFilePath);
+                    var bytes = File.ReadAllBytes(_receiptFilePath);
                     fileData = Convert.ToBase64String(bytes);
                 }
                 catch
@@ -1065,8 +1065,8 @@ public partial class RevenueModalsViewModel : ViewModelBase
             companyData.IdCounters.Receipt++;
             var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
 
-            var fileInfo = new System.IO.FileInfo(_receiptFilePath);
-            var fileType = System.IO.Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
+            var fileInfo = new FileInfo(_receiptFilePath);
+            var fileType = Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
             {
                 ".pdf" => "application/pdf",
                 ".png" => "image/png",
@@ -1099,7 +1099,7 @@ public partial class RevenueModalsViewModel : ViewModelBase
             var existingReceipt = companyData.Receipts.FirstOrDefault(r => r.Id == originalReceiptId);
             if (existingReceipt != null)
             {
-                var fileInfo = new System.IO.FileInfo(_receiptFilePath);
+                var fileInfo = new FileInfo(_receiptFilePath);
                 existingReceipt.FileName = fileInfo.Name;
                 existingReceipt.FileSize = fileInfo.Exists ? fileInfo.Length : 0;
             }

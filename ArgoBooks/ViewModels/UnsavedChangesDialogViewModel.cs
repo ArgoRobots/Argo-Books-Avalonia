@@ -14,12 +14,12 @@ public class BoolToAngleConverter : IValueConverter
     public double TrueAngle { get; set; } = 90;
     public double FalseAngle { get; set; } = 0;
 
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         return value is true ? TrueAngle : FalseAngle;
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotSupportedException();
     }
@@ -40,7 +40,7 @@ public class ChangeTypeToVisibilityConverter : IValueConverter
         return value is ChangeType changeType && changeType == TargetType;
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotSupportedException();
     }

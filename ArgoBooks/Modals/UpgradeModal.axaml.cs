@@ -179,7 +179,7 @@ public partial class UpgradeModal : UserControl
                             Cue = new Cue(0),
                             Setters =
                             {
-                                new Setter(Visual.OpacityProperty, 0.0)
+                                new Setter(OpacityProperty, 0.0)
                             }
                         },
                         new KeyFrame
@@ -187,7 +187,7 @@ public partial class UpgradeModal : UserControl
                             Cue = new Cue(1),
                             Setters =
                             {
-                                new Setter(Visual.OpacityProperty, 1.0)
+                                new Setter(OpacityProperty, 1.0)
                             }
                         }
                     }

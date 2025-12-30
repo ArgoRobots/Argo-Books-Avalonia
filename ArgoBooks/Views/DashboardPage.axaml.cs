@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
+using ArgoBooks.Controls;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
 using LiveChartsCore.SkiaSharpView.SKCharts;
@@ -102,9 +103,10 @@ public partial class DashboardPage : UserControl
         {
             if (DataContext is DashboardPageViewModel viewModel)
             {
-                // Get position relative to the chart container
-                var position = e.GetPosition(sender as Control);
-                viewModel.ShowChartContextMenu(position.X, position.Y);
+                // Get position relative to this page (the Panel container) for proper menu placement
+                var position = e.GetPosition(this);
+                var isPieChart = sender is PieChart;
+                viewModel.ShowChartContextMenu(position.X, position.Y, isPieChart: isPieChart);
                 e.Handled = true;
             }
         }
@@ -126,7 +128,7 @@ public partial class DashboardPage : UserControl
         if (DataContext is DashboardPageViewModel { IsChartContextMenuOpen: true } viewModel)
         {
             // Check if click is outside the context menu
-            var contextMenu = this.FindControl<Border>("ChartContextMenu");
+            var contextMenu = this.FindControl<ChartContextMenu>("ChartContextMenu");
             if (contextMenu != null)
             {
                 var position = e.GetPosition(contextMenu);

@@ -464,7 +464,7 @@
                                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ShowVendorColumn}">
                                                                             <TextBlock Text="{Binding Vendor}"
                                                                                        FontSize="14"
-                                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                                        VerticalAlignment="Center"
                                                                                        TextTrimming="CharacterEllipsis"
                                                                                        Margin="8,0" />
@@ -476,7 +476,7 @@
                                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ShowDateColumn}">
                                                                             <TextBlock Text="{Binding DateFormatted}"
                                                                                        FontSize="14"
-                                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                                        VerticalAlignment="Center"
                                                                                        TextTrimming="CharacterEllipsis"
                                                                                        Margin="8,0" />

@@ -50,9 +50,9 @@ public partial class MainWindow : Window
         }
 
         // Subscribe to window events for state persistence
-        this.Opened += OnWindowOpened;
-        this.Closing += OnWindowClosing;
-        this.PositionChanged += OnPositionChanged;
+        Opened += OnWindowOpened;
+        Closing += OnWindowClosing;
+        PositionChanged += OnPositionChanged;
     }
 
     /// <summary>

@@ -561,7 +561,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         var writeableBitmap = new WriteableBitmap(
             new PixelSize(info.Width, info.Height),
             new Vector(96, 96),
-            Avalonia.Platform.PixelFormat.Bgra8888,
+            PixelFormat.Bgra8888,
             AlphaFormat.Premul);
 
         using (var frameBuffer = writeableBitmap.Lock())
@@ -648,7 +648,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         );
 
         // Convert content position to canvas coordinates (accounting for margin and zoom)
-        const double margin = 40;
+        const double margin = 10;
         var canvasX = (mousePosInContent.X - margin) / oldZoom;
         var canvasY = (mousePosInContent.Y - margin) / oldZoom;
 
@@ -1378,8 +1378,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         var viewportWidth = scrollViewer.Viewport.Width > 0 ? scrollViewer.Viewport.Width : scrollViewer.Bounds.Width;
         var viewportHeight = scrollViewer.Viewport.Height > 0 ? scrollViewer.Viewport.Height : scrollViewer.Bounds.Height;
 
-        // Account for margins - use smaller value to maximize canvas visibility
-        // The LayoutTransformControl has 40px margin but we don't need to reserve all of it
+        // Account for margins - the LayoutTransformControl has 10px margin on each side (20px total)
         viewportWidth -= 20;
         viewportHeight -= 20;
 

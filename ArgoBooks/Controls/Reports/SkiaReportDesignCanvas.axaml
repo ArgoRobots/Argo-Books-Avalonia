@@ -29,7 +29,7 @@
             <LayoutTransformControl x:Name="ZoomTransformControl"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    Margin="40">
+                                    Margin="10">
                 <LayoutTransformControl.LayoutTransform>
                     <ScaleTransform ScaleX="1" ScaleY="1" />
                 </LayoutTransformControl.LayoutTransform>

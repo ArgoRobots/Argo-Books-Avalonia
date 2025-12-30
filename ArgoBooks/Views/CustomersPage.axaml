@@ -520,7 +520,7 @@
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.EmailColumnWidth}">
                                                         <TextBlock Text="{Binding Email}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
@@ -531,7 +531,7 @@
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.PhoneColumnWidth}">
                                                         <TextBlock Text="{Binding Phone}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -541,7 +541,7 @@
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.AddressColumnWidth}">
                                                         <TextBlock Text="{Binding Address}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
@@ -579,7 +579,7 @@
                                                     <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.LastRentalColumnWidth}">
                                                         <TextBlock Text="{Binding LastRentalFormatted}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />

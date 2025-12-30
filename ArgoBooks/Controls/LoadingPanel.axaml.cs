@@ -18,7 +18,7 @@ public partial class LoadingPanel : UserControl
         AvaloniaProperty.Register<LoadingPanel, string?>(nameof(LoadingText));
 
     public static readonly StyledProperty<SpinnerSize> SpinnerSizeProperty =
-        AvaloniaProperty.Register<LoadingPanel, SpinnerSize>(nameof(SpinnerSize), Controls.SpinnerSize.Large);
+        AvaloniaProperty.Register<LoadingPanel, SpinnerSize>(nameof(SpinnerSize), SpinnerSize.Large);
 
     public static readonly StyledProperty<IBrush?> SpinnerBrushProperty =
         AvaloniaProperty.Register<LoadingPanel, IBrush?>(nameof(SpinnerBrush));

@@ -214,7 +214,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         e.Handled = true;
     }
 
-    private void OnCountryListBoxDoubleTapped(object? sender, Avalonia.Input.TappedEventArgs e)
+    private void OnCountryListBoxDoubleTapped(object? sender, TappedEventArgs e)
     {
         if (_countryListBox?.SelectedItem is CountryDialCode country)
         {

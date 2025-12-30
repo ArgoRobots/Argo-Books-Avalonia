@@ -293,7 +293,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowAccountantColumn}">
                                                             <TextBlock Text="{Binding AccountantName}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        Margin="8,16,8,16"
                                                                        TextTrimming="CharacterEllipsis" />
@@ -315,7 +315,7 @@
                                                                 </Border>
                                                                 <TextBlock Text="{Binding CustomerName}"
                                                                            FontSize="14"
-                                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            VerticalAlignment="Center"
                                                                            TextTrimming="CharacterEllipsis" />
                                                             </StackPanel>
@@ -327,7 +327,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowIssueDateColumn}">
                                                             <TextBlock Text="{Binding IssueDateFormatted}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -339,7 +339,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ShowDueDateColumn}">
                                                             <TextBlock Text="{Binding DueDateFormatted}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />

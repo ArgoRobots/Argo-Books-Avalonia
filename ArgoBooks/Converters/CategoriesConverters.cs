@@ -13,7 +13,7 @@ namespace ArgoBooks.Converters;
 /// </summary>
 public class StringToBrushConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not string colorHex || string.IsNullOrEmpty(colorHex))
             return new SolidColorBrush(Colors.Gray);
@@ -36,7 +36,7 @@ public class StringToBrushConverter : IValueConverter
         }
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }
@@ -194,20 +194,6 @@ public static class BoolConverters
         new FuncValueConverter<bool, string>(value => value ? "Supplier" : "Customer");
 
     /// <summary>
-    /// Converts bool (isExpenseTab) to column header.
-    /// True = "Returned By", False = "Processed By".
-    /// </summary>
-    public static readonly IValueConverter ToReturnedByOrProcessedByHeader =
-        new FuncValueConverter<bool, string>(value => value ? "Returned By" : "Processed By");
-
-    /// <summary>
-    /// Converts bool (isExpenseTab) to column header.
-    /// True = "Lost", False = "Damaged".
-    /// </summary>
-    public static readonly IValueConverter ToLostOrDamagedHeader =
-        new FuncValueConverter<bool, string>(value => value ? "Lost" : "Damaged");
-
-    /// <summary>
     /// Converts bool to ScrollBarVisibility.
     /// True = Auto (show when needed), False = Disabled.
     /// </summary>
@@ -228,7 +214,7 @@ public class FilePathToImageConverter : IValueConverter
 
         try
         {
-            if (System.IO.File.Exists(filePath))
+            if (File.Exists(filePath))
             {
                 return new Bitmap(filePath);
             }
@@ -241,7 +227,7 @@ public class FilePathToImageConverter : IValueConverter
         return null;
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }
@@ -648,78 +634,6 @@ public static class StringConverters
 }
 
 /// <summary>
-/// Converter for status badge colors (used in Expenses/Revenue pages).
-/// </summary>
-public static class StatusColorConverter
-{
-    /// <summary>
-    /// Converts status to badge background color.
-    /// Completed = green, Pending = yellow, Partial Return = purple, Returned = blue, Cancelled = gray.
-    /// </summary>
-    public static readonly IValueConverter BackgroundInstance =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#DCFCE7",
-                "Pending" => "#FEF3C7",
-                "Partial Return" => "#F3E8FF",
-                "Returned" => "#DBEAFE",
-                "Cancelled" => "#F3F4F6",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
-
-    /// <summary>
-    /// Converts status to badge foreground color.
-    /// Completed = green, Pending = yellow, Partial Return = purple, Returned = blue, Cancelled = gray.
-    /// </summary>
-    public static readonly IValueConverter ForegroundInstance =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#166534",
-                "Pending" => "#92400E",
-                "Partial Return" => "#7C3AED",
-                "Returned" => "#1E40AF",
-                "Cancelled" => "#4B5563",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
-}
-
-/// <summary>
-/// Converter for sort icons in table headers.
-/// </summary>
-public class SortIconConverter : IValueConverter
-{
-    public static readonly SortIconConverter Instance = new();
-
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        // Return the appropriate sort icon path based on direction
-        // This returns a path data string for ascending/descending arrows
-        if (value is string sortColumn && parameter is string columnName)
-        {
-            if (sortColumn == columnName)
-            {
-                // Return generic arrow icon (will be styled by direction)
-                return "M7 10l5 5 5-5z"; // Down arrow
-            }
-        }
-        return "M7 14l5-5 5 5z"; // Up arrow (default)
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-/// <summary>
 /// Converter that returns one of two colors based on a boolean value.
 /// </summary>
 public class BoolToColorConverter : IValueConverter
@@ -727,7 +641,7 @@ public class BoolToColorConverter : IValueConverter
     public string TrueColor { get; set; } = "#DC2626";
     public object? FalseColor { get; set; } = "#374151";
 
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not bool boolValue)
             return GetBrush(FalseColor);
@@ -763,7 +677,7 @@ public class BoolToColorConverter : IValueConverter
         return new SolidColorBrush(Color.Parse("#374151"));
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }
@@ -809,7 +723,7 @@ public class PageEqualsConverter : IMultiValueConverter
 {
     public static readonly PageEqualsConverter Instance = new();
 
-    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count < 2)
             return false;
@@ -825,7 +739,7 @@ public class PageActiveBackgroundConverter : IMultiValueConverter
 {
     public static readonly PageActiveBackgroundConverter Instance = new();
 
-    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count < 2)
             return Brushes.Transparent;
@@ -852,7 +766,7 @@ public class PageActiveForegroundConverter : IMultiValueConverter
 {
     public static readonly PageActiveForegroundConverter Instance = new();
 
-    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count < 2)
         {
@@ -885,7 +799,7 @@ public class PageActiveForegroundConverter : IMultiValueConverter
 /// </summary>
 public class BoolToStringConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not bool boolValue || parameter is not string paramString)
             return string.Empty;
@@ -897,7 +811,7 @@ public class BoolToStringConverter : IValueConverter
         return boolValue ? parts[0] : parts[1];
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }
@@ -909,7 +823,7 @@ public class BoolToStringConverter : IValueConverter
 /// </summary>
 public class BoolToTabBackgroundConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not bool isActive)
             return Brushes.Transparent;
@@ -927,7 +841,7 @@ public class BoolToTabBackgroundConverter : IValueConverter
         return Brushes.Transparent;
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }
@@ -939,7 +853,7 @@ public class BoolToTabBackgroundConverter : IValueConverter
 /// </summary>
 public class BoolToTabForegroundConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not bool isActive)
             return GetDefaultTextBrush();
@@ -962,7 +876,7 @@ public class BoolToTabForegroundConverter : IValueConverter
         return new SolidColorBrush(Color.Parse("#6B7280"));
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

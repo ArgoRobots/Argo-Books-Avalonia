@@ -285,7 +285,7 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
         e.Handled = true;
     }
 
-    private void OnCategoryListBoxDoubleTapped(object? sender, Avalonia.Input.TappedEventArgs e)
+    private void OnCategoryListBoxDoubleTapped(object? sender, TappedEventArgs e)
     {
         if (_categoryListBox?.SelectedItem is CategoryItem category)
         {

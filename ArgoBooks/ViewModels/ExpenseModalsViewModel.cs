@@ -421,7 +421,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         _receiptFilePath = expense.ReferenceNumber;
         ReceiptFileName = string.IsNullOrEmpty(expense.ReferenceNumber)
             ? "No receipt attached"
-            : System.IO.Path.GetFileName(expense.ReferenceNumber);
+            : Path.GetFileName(expense.ReferenceNumber);
 
         ClearValidationErrors();
         IsAddEditModalOpen = true;
@@ -723,7 +723,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         ExpenseSaved?.Invoke(this, EventArgs.Empty);
     }
 
-    private void CreateLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Purchase purchase)
+    private void CreateLostDamagedRecord(CompanyData companyData, Purchase purchase)
     {
         var reason = MapToLostDamagedReason(SelectedItemStatusReason ?? "Other");
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
@@ -746,7 +746,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         companyData.LostDamaged.Add(lostDamaged);
     }
 
-    private void CreateReturnRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Purchase purchase)
+    private void CreateReturnRecord(CompanyData companyData, Purchase purchase)
     {
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
 
@@ -760,7 +760,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             ReturnDate = DateTime.UtcNow,
             Items =
             [
-                new Core.Models.Common.ReturnItem
+                new ReturnItem
                 {
                     ProductId = productId,
                     Quantity = (int)purchase.Quantity,
@@ -769,7 +769,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             ],
             RefundAmount = purchase.Total,
             RestockingFee = 0,
-            Status = Core.Enums.ReturnStatus.Completed,
+            Status = ReturnStatus.Completed,
             Notes = ItemStatusNotes,
             ProcessedBy = purchase.AccountantId ?? "",
             CreatedAt = DateTime.UtcNow
@@ -778,7 +778,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         companyData.Returns.Add(returnRecord);
     }
 
-    private static void RemoveLostDamagedRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Purchase purchase)
+    private static void RemoveLostDamagedRecord(CompanyData companyData, Purchase purchase)
     {
         var record = companyData.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
         if (record != null)
@@ -787,7 +787,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         }
     }
 
-    private static void RemoveReturnRecord(Core.Data.CompanyData companyData, Core.Models.Transactions.Purchase purchase)
+    private static void RemoveReturnRecord(CompanyData companyData, Purchase purchase)
     {
         var record = companyData.Returns.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
         if (record != null)
@@ -796,14 +796,14 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         }
     }
 
-    private static Core.Enums.LostDamagedReason MapToLostDamagedReason(string reason)
+    private static LostDamagedReason MapToLostDamagedReason(string reason)
     {
         return reason.ToLowerInvariant() switch
         {
-            "damaged in transit" or "damaged during storage" or "defective product" => Core.Enums.LostDamagedReason.Damaged,
-            "lost in warehouse" => Core.Enums.LostDamagedReason.Lost,
-            "expired" => Core.Enums.LostDamagedReason.Expired,
-            _ => Core.Enums.LostDamagedReason.Other
+            "damaged in transit" or "damaged during storage" or "defective product" => LostDamagedReason.Damaged,
+            "lost in warehouse" => LostDamagedReason.Lost,
+            "expired" => LostDamagedReason.Expired,
+            _ => LostDamagedReason.Other
         };
     }
 
@@ -919,8 +919,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             companyData.IdCounters.Receipt++;
             var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
 
-            var fileInfo = new System.IO.FileInfo(_receiptFilePath);
-            var fileType = System.IO.Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
+            var fileInfo = new FileInfo(_receiptFilePath);
+            var fileType = Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
             {
                 ".pdf" => "application/pdf",
                 ".png" => "image/png",
@@ -935,7 +935,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             {
                 try
                 {
-                    var bytes = System.IO.File.ReadAllBytes(_receiptFilePath);
+                    var bytes = File.ReadAllBytes(_receiptFilePath);
                     fileData = Convert.ToBase64String(bytes);
                 }
                 catch
@@ -1070,8 +1070,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             companyData.IdCounters.Receipt++;
             var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
 
-            var fileInfo = new System.IO.FileInfo(_receiptFilePath);
-            var fileType = System.IO.Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
+            var fileInfo = new FileInfo(_receiptFilePath);
+            var fileType = Path.GetExtension(_receiptFilePath).ToLowerInvariant() switch
             {
                 ".pdf" => "application/pdf",
                 ".png" => "image/png",
@@ -1104,7 +1104,7 @@ public partial class ExpenseModalsViewModel : ViewModelBase
             var existingReceipt = companyData.Receipts.FirstOrDefault(r => r.Id == originalReceiptId);
             if (existingReceipt != null)
             {
-                var fileInfo = new System.IO.FileInfo(_receiptFilePath);
+                var fileInfo = new FileInfo(_receiptFilePath);
                 existingReceipt.FileName = fileInfo.Name;
                 existingReceipt.FileSize = fileInfo.Exists ? fileInfo.Length : 0;
             }
