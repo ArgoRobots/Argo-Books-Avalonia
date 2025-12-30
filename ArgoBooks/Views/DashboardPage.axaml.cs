@@ -53,14 +53,14 @@ public partial class DashboardPage : UserControl
             case "ExpensesChart":
                 var expensesChart = this.FindControl<CartesianChart>("ExpensesChart");
                 if (expensesChart == null) return;
-                suggestedFileName = $"Expenses_Chart_{DateTime.Now:yyyy-MM-dd}";
+                suggestedFileName = $"Total_Expenses_{DateTime.Now:yyyy-MM-dd}";
                 chartBounds = new Size(expensesChart.Bounds.Width, expensesChart.Bounds.Height);
                 break;
 
             case "ExpenseDistributionChart":
                 var pieChart = this.FindControl<PieChart>("ExpenseDistributionChart");
                 if (pieChart == null) return;
-                suggestedFileName = $"Expense_Distribution_Chart_{DateTime.Now:yyyy-MM-dd}";
+                suggestedFileName = $"Distribution_of_Expenses_{DateTime.Now:yyyy-MM-dd}";
                 chartBounds = new Size(pieChart.Bounds.Width, pieChart.Bounds.Height);
                 break;
 
@@ -152,7 +152,8 @@ public partial class DashboardPage : UserControl
                     _ => string.Empty
                 };
 
-                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart);
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart,
+                    parentWidth: Bounds.Width, parentHeight: Bounds.Height);
                 e.Handled = true;
             }
         }

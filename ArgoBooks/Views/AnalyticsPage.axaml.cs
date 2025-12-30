@@ -66,6 +66,11 @@ public partial class AnalyticsPage : UserControl
     }
 
     /// <summary>
+    /// The name of the last clicked chart for file naming.
+    /// </summary>
+    private string _clickedChartName = "Chart";
+
+    /// <summary>
     /// Handles right-click on charts to show the context menu.
     /// </summary>
     private void OnChartPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -78,6 +83,9 @@ public partial class AnalyticsPage : UserControl
             {
                 // Store reference to the clicked chart for later use in save/export operations
                 _clickedChart = sender as Control;
+
+                // Try to find the chart title from the parent container
+                _clickedChartName = GetChartTitle(sender as Control) ?? "Chart";
 
                 // Get position relative to this page (the Panel container) for proper menu placement
                 var position = e.GetPosition(this);
@@ -93,7 +101,8 @@ public partial class AnalyticsPage : UserControl
                     _ => string.Empty
                 };
 
-                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart, isGeoMap: isGeoMap);
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart, isGeoMap: isGeoMap,
+                    parentWidth: Bounds.Width, parentHeight: Bounds.Height);
                 e.Handled = true;
             }
         }
@@ -108,6 +117,69 @@ public partial class AnalyticsPage : UserControl
     }
 
     /// <summary>
+    /// Attempts to find the chart title by looking at parent containers.
+    /// </summary>
+    private static string? GetChartTitle(Control? chart)
+    {
+        if (chart == null) return null;
+
+        // Walk up the visual tree to find a Grid with a header Border containing a TextBlock
+        var parent = chart.Parent;
+        while (parent != null)
+        {
+            if (parent is Grid grid)
+            {
+                // Look for a TextBlock in the first child (header area)
+                foreach (var child in grid.Children)
+                {
+                    if (child is Border border)
+                    {
+                        var textBlock = FindTextBlock(border);
+                        if (textBlock != null && !string.IsNullOrWhiteSpace(textBlock.Text))
+                        {
+                            return textBlock.Text;
+                        }
+                    }
+                }
+            }
+            parent = parent.Parent;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Recursively finds a TextBlock within a control.
+    /// </summary>
+    private static TextBlock? FindTextBlock(Control control)
+    {
+        if (control is TextBlock tb)
+            return tb;
+
+        if (control is Panel panel)
+        {
+            foreach (var child in panel.Children)
+            {
+                if (child is Control c)
+                {
+                    var result = FindTextBlock(c);
+                    if (result != null)
+                        return result;
+                }
+            }
+        }
+        else if (control is Decorator decorator && decorator.Child is Control decoratorChild)
+        {
+            return FindTextBlock(decoratorChild);
+        }
+        else if (control is ContentControl cc && cc.Content is Control content)
+        {
+            return FindTextBlock(content);
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Handles the save chart as image request from the ViewModel.
     /// </summary>
     private async void OnSaveChartImageRequested(object? sender, SaveChartImageEventArgs e)
@@ -118,14 +190,10 @@ public partial class AnalyticsPage : UserControl
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
 
-        // Determine the suggested file name based on chart type
-        var suggestedFileName = _clickedChart switch
-        {
-            CartesianChart => $"Chart_{DateTime.Now:yyyy-MM-dd}",
-            PieChart => $"PieChart_{DateTime.Now:yyyy-MM-dd}",
-            GeoMap => $"GeoMap_{DateTime.Now:yyyy-MM-dd}",
-            _ => $"Chart_{DateTime.Now:yyyy-MM-dd}"
-        };
+        // Create file-safe name from chart title
+        var safeName = string.Join("_", _clickedChartName.Split(Path.GetInvalidFileNameChars()));
+        safeName = safeName.Replace(" ", "_");
+        var suggestedFileName = $"{safeName}_{DateTime.Now:yyyy-MM-dd}";
 
         // Show save file dialog
         var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
