@@ -18,7 +18,7 @@ namespace ArgoBooks.ViewModels;
 /// ViewModel for the Dashboard page.
 /// Provides an overview of key business metrics, recent transactions, and quick actions.
 /// </summary>
-public partial class DashboardPageViewModel : ViewModelBase
+public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 {
     #region Statistics Properties
 
@@ -65,9 +65,6 @@ public partial class DashboardPageViewModel : ViewModelBase
     [ObservableProperty]
     private string? _profitChangeText;
 
-    [ObservableProperty]
-    private bool _isProfitPositive = true;
-
     #endregion
 
     #region Recent Transactions
@@ -112,15 +109,6 @@ public partial class DashboardPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasExpensesChartData;
-
-    [ObservableProperty]
-    private bool _isChartContextMenuOpen;
-
-    [ObservableProperty]
-    private double _chartContextMenuX;
-
-    [ObservableProperty]
-    private double _chartContextMenuY;
 
     #endregion
 
@@ -243,7 +231,6 @@ public partial class DashboardPageViewModel : ViewModelBase
         var netProfitValue = thisMonthRevenue - thisMonthExpenses;
         var lastMonthProfit = lastMonthRevenue - lastMonthExpenses;
         NetProfit = FormatCurrency(Math.Abs(netProfitValue));
-        IsProfitPositive = netProfitValue >= 0;
         ProfitChangeValue = CalculatePercentageChange(lastMonthProfit, netProfitValue);
         ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
 
@@ -392,38 +379,7 @@ public partial class DashboardPageViewModel : ViewModelBase
 
     #endregion
 
-    #region Chart Context Menu Commands
-
-    /// <summary>
-    /// Shows the chart context menu at the specified position.
-    /// </summary>
-    /// <param name="x">The X coordinate.</param>
-    /// <param name="y">The Y coordinate.</param>
-    public void ShowChartContextMenu(double x, double y)
-    {
-        ChartContextMenuX = x;
-        ChartContextMenuY = y;
-        IsChartContextMenuOpen = true;
-    }
-
-    /// <summary>
-    /// Hides the chart context menu.
-    /// </summary>
-    [RelayCommand]
-    private void HideChartContextMenu()
-    {
-        IsChartContextMenuOpen = false;
-    }
-
-    /// <summary>
-    /// Resets the zoom on the revenue chart.
-    /// </summary>
-    [RelayCommand]
-    private void ResetChartZoom()
-    {
-        ChartLoaderService.ResetZoom(ExpensesChartXAxes, ExpensesChartYAxes);
-        IsChartContextMenuOpen = false;
-    }
+    #region Chart Context Menu Overrides
 
     /// <summary>
     /// Event raised when a chart image should be saved.
@@ -431,24 +387,15 @@ public partial class DashboardPageViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? SaveChartImageRequested;
 
-    /// <summary>
-    /// Saves the chart as an image file.
-    /// </summary>
-    [RelayCommand]
-    private void SaveChartAsImage()
+    /// <inheritdoc />
+    protected override void OnSaveChartAsImage()
     {
-        IsChartContextMenuOpen = false;
         SaveChartImageRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// Exports the chart data to Google Sheets.
-    /// </summary>
-    [RelayCommand]
-    private void ExportToGoogleSheets()
+    /// <inheritdoc />
+    protected override void OnExportToGoogleSheets()
     {
-        IsChartContextMenuOpen = false;
-
         var exportData = _chartLoaderService.GetGoogleSheetsExportData();
         if (exportData.Count == 0)
         {
@@ -462,14 +409,9 @@ public partial class DashboardPageViewModel : ViewModelBase
         System.Diagnostics.Debug.WriteLine($"Google Sheets export: {exportData.Count - 1} rows ready for export.");
     }
 
-    /// <summary>
-    /// Exports the chart data to Microsoft Excel.
-    /// </summary>
-    [RelayCommand]
-    private void ExportToExcel()
+    /// <inheritdoc />
+    protected override void OnExportToExcel()
     {
-        IsChartContextMenuOpen = false;
-
         var exportData = _chartLoaderService.GetExcelExportData();
         if (exportData.Rows.Count == 0)
         {
@@ -481,6 +423,12 @@ public partial class DashboardPageViewModel : ViewModelBase
         // The data is already formatted in exportData with headers, rows, and total
         // For now, this is a placeholder - the data structure is ready for export
         System.Diagnostics.Debug.WriteLine($"Excel export: {exportData.Rows.Count} rows ready for export.");
+    }
+
+    /// <inheritdoc />
+    protected override void OnResetChartZoom()
+    {
+        ChartLoaderService.ResetZoom(ExpensesChartXAxes, ExpensesChartYAxes);
     }
 
     /// <summary>
@@ -587,34 +535,6 @@ public partial class DashboardPageViewModel : ViewModelBase
         }
         // Use absolute value since the arrow indicates direction
         return $"{Math.Abs(change.Value):F1}%";
-    }
-
-    private static string GetStatusVariant(string status)
-    {
-        return status.ToLowerInvariant() switch
-        {
-            "paid" => "success",
-            "pending" => "warning",
-            "overdue" => "error",
-            "completed" => "success",
-            _ => "neutral"
-        };
-    }
-
-    private static string GetInvoiceStatusVariant(InvoiceStatus status)
-    {
-        return status switch
-        {
-            InvoiceStatus.Paid => "success",
-            InvoiceStatus.Sent => "info",
-            InvoiceStatus.Viewed => "info",
-            InvoiceStatus.Partial => "warning",
-            InvoiceStatus.Pending => "warning",
-            InvoiceStatus.Draft => "neutral",
-            InvoiceStatus.Cancelled => "error",
-            InvoiceStatus.Overdue => "error",
-            _ => "neutral"
-        };
     }
 
     private static string GetCustomerName(CompanyData data, string? customerId)

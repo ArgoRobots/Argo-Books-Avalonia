@@ -40,12 +40,10 @@ public static partial class NumericInputBehavior
         if (e.NewValue is true)
         {
             textBox.AddHandler(InputElement.TextInputEvent, OnIntegerTextInput, RoutingStrategies.Tunnel);
-            textBox.PastingFromClipboard += OnIntegerPaste;
         }
         else
         {
             textBox.RemoveHandler(InputElement.TextInputEvent, OnIntegerTextInput);
-            textBox.PastingFromClipboard -= OnIntegerPaste;
         }
     }
 
@@ -54,12 +52,10 @@ public static partial class NumericInputBehavior
         if (e.NewValue is true)
         {
             textBox.AddHandler(InputElement.TextInputEvent, OnDecimalTextInput, RoutingStrategies.Tunnel);
-            textBox.PastingFromClipboard += OnDecimalPaste;
         }
         else
         {
             textBox.RemoveHandler(InputElement.TextInputEvent, OnDecimalTextInput);
-            textBox.PastingFromClipboard -= OnDecimalPaste;
         }
     }
 
@@ -88,16 +84,6 @@ public static partial class NumericInputBehavior
         {
             e.Handled = true;
         }
-    }
-
-    private static void OnIntegerPaste(object? sender, RoutedEventArgs e)
-    {
-        // Handled at paste time - could filter paste content if needed
-    }
-
-    private static void OnDecimalPaste(object? sender, RoutedEventArgs e)
-    {
-        // Handled at paste time - could filter paste content if needed
     }
 
     private static bool IsValidDecimalInput(string text)

@@ -194,20 +194,6 @@ public static class BoolConverters
         new FuncValueConverter<bool, string>(value => value ? "Supplier" : "Customer");
 
     /// <summary>
-    /// Converts bool (isExpenseTab) to column header.
-    /// True = "Returned By", False = "Processed By".
-    /// </summary>
-    public static readonly IValueConverter ToReturnedByOrProcessedByHeader =
-        new FuncValueConverter<bool, string>(value => value ? "Returned By" : "Processed By");
-
-    /// <summary>
-    /// Converts bool (isExpenseTab) to column header.
-    /// True = "Lost", False = "Damaged".
-    /// </summary>
-    public static readonly IValueConverter ToLostOrDamagedHeader =
-        new FuncValueConverter<bool, string>(value => value ? "Lost" : "Damaged");
-
-    /// <summary>
     /// Converts bool to ScrollBarVisibility.
     /// True = Auto (show when needed), False = Disabled.
     /// </summary>
@@ -689,34 +675,6 @@ public static class StatusColorConverter
             };
             return new SolidColorBrush(Color.Parse(color));
         });
-}
-
-/// <summary>
-/// Converter for sort icons in table headers.
-/// </summary>
-public class SortIconConverter : IValueConverter
-{
-    public static readonly SortIconConverter Instance = new();
-
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        // Return the appropriate sort icon path based on direction
-        // This returns a path data string for ascending/descending arrows
-        if (value is string sortColumn && parameter is string columnName)
-        {
-            if (sortColumn == columnName)
-            {
-                // Return generic arrow icon (will be styled by direction)
-                return "M7 10l5 5 5-5z"; // Down arrow
-            }
-        }
-        return "M7 14l5-5 5 5z"; // Up arrow (default)
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
 }
 
 /// <summary>

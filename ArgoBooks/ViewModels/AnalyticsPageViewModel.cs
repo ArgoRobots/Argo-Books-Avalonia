@@ -16,7 +16,7 @@ namespace ArgoBooks.ViewModels;
 /// ViewModel for the Analytics page.
 /// Handles tab selection, date range filtering, chart type toggling, and chart data loading.
 /// </summary>
-public partial class AnalyticsPageViewModel : ViewModelBase
+public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 {
     #region Services
 

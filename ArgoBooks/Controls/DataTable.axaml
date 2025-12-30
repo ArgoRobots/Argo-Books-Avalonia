@@ -170,7 +170,7 @@
                                             <TextBlock Text="{Binding Header}"
                                                        FontWeight="SemiBold"
                                                        FontSize="{StaticResource FontSizeSm}"
-                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <!-- Sort Indicator -->
                                             <PathIcon Width="12" Height="12"
                                                       IsVisible="{Binding IsSorted}"
