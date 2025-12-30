@@ -309,7 +309,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowAccountantColumn}">
                                                             <TextBlock Text="{Binding AccountantName}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        Margin="8,16,8,16"
                                                                        TextTrimming="CharacterEllipsis" />
@@ -336,7 +336,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowCustomerColumn}">
                                                             <TextBlock Text="{Binding CustomerName}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -348,7 +348,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowQuantityColumn}">
                                                             <TextBlock Text="{Binding Quantity}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -360,7 +360,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowStartDateColumn}">
                                                             <TextBlock Text="{Binding StartDateFormatted}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -373,7 +373,7 @@
                                                             <StackPanel VerticalAlignment="Center" Margin="8,0">
                                                                 <TextBlock Text="{Binding DueDateFormatted}"
                                                                            FontSize="14"
-                                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                                 <TextBlock Text="{Binding DaysOverdueText}"
                                                                            FontSize="12"
                                                                            Foreground="#DC2626"
@@ -417,7 +417,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:RentalRecordsPageViewModel)DataContext).ShowDepositColumn}">
                                                             <TextBlock Text="{Binding DepositFormatted}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />

@@ -353,7 +353,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowAccountantColumn}">
                                                         <TextBlock Text="{Binding AccountantName}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,16,8,16"
                                                                    TextTrimming="CharacterEllipsis" />
@@ -375,7 +375,7 @@
                                                             </Border>
                                                             <TextBlock Text="{Binding CustomerName}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis" />
                                                         </StackPanel>
@@ -399,7 +399,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowDateColumn}">
                                                         <TextBlock Text="{Binding DateFormatted}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -410,7 +410,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowQuantityColumn}">
                                                         <TextBlock Text="{Binding Quantity}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -421,7 +421,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowUnitPriceColumn}">
                                                         <TextBlock Text="{Binding UnitPriceFormatted}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -432,7 +432,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowAmountColumn}">
                                                         <TextBlock Text="{Binding AmountFormatted}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -443,7 +443,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowTaxColumn}">
                                                         <TextBlock Text="{Binding TaxAmountFormatted}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -454,7 +454,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowShippingColumn}">
                                                         <TextBlock Text="{Binding ShippingCostFormatted}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />

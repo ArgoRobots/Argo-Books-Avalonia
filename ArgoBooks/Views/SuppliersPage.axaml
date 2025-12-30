@@ -447,7 +447,7 @@
                                             <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.ContactColumnWidth}">
                                                 <TextBlock Text="{Binding ContactPerson, TargetNullValue='-', FallbackValue='-'}"
                                                            FontSize="14"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                            VerticalAlignment="Center"
                                                            TextTrimming="CharacterEllipsis"
                                                            Margin="8,0" />
@@ -458,7 +458,7 @@
                                             <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.CountryColumnWidth}">
                                                 <TextBlock Text="{Binding Country, TargetNullValue='-', FallbackValue='-'}"
                                                            FontSize="14"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                            VerticalAlignment="Center"
                                                            Margin="8,0" />
                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -468,7 +468,7 @@
                                             <Panel Width="{Binding $parent[ItemsControl].((vm:SuppliersPageViewModel)DataContext).ColumnWidths.ProductsColumnWidth}">
                                                 <TextBlock Text="{Binding ProductCount}"
                                                            FontSize="14"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                            VerticalAlignment="Center"
                                                            Margin="8,0" />
                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />

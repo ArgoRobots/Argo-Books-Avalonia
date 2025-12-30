@@ -362,7 +362,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ShowInvoiceColumn}">
                                                         <TextBlock Text="{Binding InvoiceDisplay}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
@@ -374,7 +374,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ShowCustomerColumn}">
                                                         <TextBlock Text="{Binding CustomerName}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
@@ -386,7 +386,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ShowDateColumn}">
                                                         <TextBlock Text="{Binding DateFormatted}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
@@ -398,7 +398,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:PaymentsPageViewModel)DataContext).ShowMethodColumn}">
                                                         <TextBlock Text="{Binding PaymentMethodDisplay}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />

@@ -238,7 +238,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowParentColumn}">
                                                             <TextBlock Text="{Binding ParentName, TargetNullValue='-', FallbackValue='-'}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -250,7 +250,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowDescriptionColumn}">
                                                             <TextBlock Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -262,7 +262,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowTypeColumn}">
                                                             <TextBlock Text="{Binding ItemType}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -274,7 +274,7 @@
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowProductCountColumn}">
                                                             <TextBlock Text="{Binding ProductCount}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />

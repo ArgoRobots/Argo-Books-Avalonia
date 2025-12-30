@@ -308,7 +308,7 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).ShowDescriptionColumn}">
                                                         <TextBlock Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
                                                                    FontSize="14"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
                                                                    Margin="8,0" />
