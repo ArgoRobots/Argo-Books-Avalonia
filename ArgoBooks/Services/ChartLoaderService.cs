@@ -1710,6 +1710,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Gets the data for exporting to Google Sheets.
+    /// Does not include total row as it would appear as a category in the chart.
     /// </summary>
     /// <returns>Export data formatted for Google Sheets.</returns>
     public List<List<object>> GetGoogleSheetsExportData()
@@ -1723,7 +1724,7 @@ public class ChartLoaderService
             new() { "Date", CurrentExportData.SeriesName }
         };
 
-        // Data rows
+        // Data rows (no total - it would show up as a category in the chart)
         for (int i = 0; i < CurrentExportData.Labels.Length; i++)
         {
             data.Add(new List<object>
@@ -1731,12 +1732,6 @@ public class ChartLoaderService
                 CurrentExportData.Labels[i],
                 CurrentExportData.Values[i]
             });
-        }
-
-        // Total row
-        if (CurrentExportData.TotalValue.HasValue)
-        {
-            data.Add(new List<object> { "Total", CurrentExportData.TotalValue.Value });
         }
 
         return data;
