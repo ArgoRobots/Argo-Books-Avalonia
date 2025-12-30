@@ -120,6 +120,11 @@ public class ChartLoaderService
     public ChartExportData? PieChartExportData { get; private set; }
 
     /// <summary>
+    /// Dictionary storing export data for each chart by its title.
+    /// </summary>
+    private readonly Dictionary<string, ChartExportData> _chartExportDataByTitle = new();
+
+    /// <summary>
     /// Gets or sets whether to use line charts instead of column charts.
     /// </summary>
     public bool UseLineChart { get; set; }
@@ -262,14 +267,14 @@ public class ChartLoaderService
         if (companyData?.Purchases == null || companyData.Purchases.Count == 0)
         {
             // Store empty export data
-            CurrentExportData = new ChartExportData
+            StoreExportData(new ChartExportData
             {
                 ChartTitle = "Expenses Overview",
                 ChartType = ChartType.Expense,
                 Labels = [],
                 Values = [],
                 SeriesName = "Expenses"
-            };
+            });
             return (series, labels, totalExpenses);
         }
 
@@ -291,14 +296,14 @@ public class ChartLoaderService
 
         if (expensesByDate.Count == 0)
         {
-            CurrentExportData = new ChartExportData
+            StoreExportData(new ChartExportData
             {
                 ChartTitle = "Expenses Overview",
                 ChartType = ChartType.Expense,
                 Labels = [],
                 Values = [],
                 SeriesName = "Expenses"
-            };
+            });
             return (series, labels, totalExpenses);
         }
 
@@ -311,7 +316,7 @@ public class ChartLoaderService
         series.Add(CreateTimeSeries(values, "Expenses", RevenueColor));
 
         // Store export data for Google Sheets/Excel export
-        CurrentExportData = new ChartExportData
+        StoreExportData(new ChartExportData
         {
             ChartTitle = "Expenses Overview",
             ChartType = ChartType.Expense,
@@ -321,7 +326,7 @@ public class ChartLoaderService
             TotalValue = (double)totalExpenses,
             StartDate = start,
             EndDate = end
-        };
+        });
 
         return (series, labels, totalExpenses);
     }
@@ -340,14 +345,14 @@ public class ChartLoaderService
 
         if (companyData?.Sales == null || companyData.Sales.Count == 0)
         {
-            CurrentExportData = new ChartExportData
+            StoreExportData(new ChartExportData
             {
                 ChartTitle = "Revenue Overview",
                 ChartType = ChartType.Revenue,
                 Labels = [],
                 Values = [],
                 SeriesName = "Revenue"
-            };
+            });
             return (series, labels, totalRevenue);
         }
 
@@ -363,14 +368,14 @@ public class ChartLoaderService
 
         if (revenueByDate.Count == 0)
         {
-            CurrentExportData = new ChartExportData
+            StoreExportData(new ChartExportData
             {
                 ChartTitle = "Revenue Overview",
                 ChartType = ChartType.Revenue,
                 Labels = [],
                 Values = [],
                 SeriesName = "Revenue"
-            };
+            });
             return (series, labels, totalRevenue);
         }
 
@@ -380,7 +385,7 @@ public class ChartLoaderService
 
         series.Add(CreateTimeSeries(values, "Revenue", ProfitColor));
 
-        CurrentExportData = new ChartExportData
+        StoreExportData(new ChartExportData
         {
             ChartTitle = "Revenue Overview",
             ChartType = ChartType.Revenue,
@@ -390,7 +395,7 @@ public class ChartLoaderService
             TotalValue = (double)totalRevenue,
             StartDate = start,
             EndDate = end
-        };
+        });
 
         return (series, labels, totalRevenue);
     }
@@ -409,14 +414,14 @@ public class ChartLoaderService
 
         if (companyData == null)
         {
-            CurrentExportData = new ChartExportData
+            StoreExportData(new ChartExportData
             {
                 ChartTitle = "Profits Overview",
                 ChartType = ChartType.Profit,
                 Labels = [],
                 Values = [],
                 SeriesName = "Profit"
-            };
+            });
             return (series, labels, totalProfit);
         }
 
@@ -440,14 +445,14 @@ public class ChartLoaderService
 
         if (allDates.Count == 0)
         {
-            CurrentExportData = new ChartExportData
+            StoreExportData(new ChartExportData
             {
                 ChartTitle = "Profits Overview",
                 ChartType = ChartType.Profit,
                 Labels = [],
                 Values = [],
                 SeriesName = "Profit"
-            };
+            });
             return (series, labels, totalProfit);
         }
 
@@ -463,7 +468,7 @@ public class ChartLoaderService
 
         series.Add(CreateTimeSeries(values, "Profit", ProfitColor));
 
-        CurrentExportData = new ChartExportData
+        StoreExportData(new ChartExportData
         {
             ChartTitle = "Profits Overview",
             ChartType = ChartType.Profit,
@@ -473,7 +478,7 @@ public class ChartLoaderService
             TotalValue = (double)totalProfit,
             StartDate = start,
             EndDate = end
-        };
+        });
 
         return (series, labels, totalProfit);
     }
@@ -667,6 +672,10 @@ public class ChartLoaderService
             StartDate = start,
             EndDate = end
         };
+
+        // Also store by title for chart-specific retrieval
+        _chartExportDataByTitle["Expense Distribution"] = PieChartExportData;
+        _chartExportDataByTitle["Purchase Distribution"] = PieChartExportData;
 
         return (series, total);
     }
@@ -1733,12 +1742,46 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Gets the export data for a specific chart by its identifier.
+    /// Stores export data for a chart, making it available for later retrieval by title.
+    /// Also stores aliases for titles that differ between ChartLoaderService and UI.
     /// </summary>
-    /// <param name="chartId">The identifier of the chart.</param>
+    private void StoreExportData(ChartExportData data)
+    {
+        CurrentExportData = data;
+        if (!string.IsNullOrEmpty(data.ChartTitle))
+        {
+            _chartExportDataByTitle[data.ChartTitle] = data;
+
+            // Store aliases for UI titles that differ from internal titles
+            var aliases = data.ChartTitle switch
+            {
+                "Expenses Overview" => new[] { "Purchase Trends", "Total Expenses" },
+                "Revenue Overview" => new[] { "Sales Trends", "Total Revenue" },
+                "Profits Overview" => new[] { "Profit Over Time", "Profits over Time" },
+                _ => Array.Empty<string>()
+            };
+
+            foreach (var alias in aliases)
+            {
+                _chartExportDataByTitle[alias] = data;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the export data for a specific chart by its identifier or title.
+    /// </summary>
+    /// <param name="chartId">The identifier or title of the chart.</param>
     /// <returns>The chart export data, or null if not found.</returns>
     public ChartExportData? GetExportDataForChart(string chartId)
     {
+        // First try to find by exact title match in the dictionary
+        if (!string.IsNullOrEmpty(chartId) && _chartExportDataByTitle.TryGetValue(chartId, out var data))
+        {
+            return data;
+        }
+
+        // Fall back to legacy handling for Dashboard page charts
         return chartId switch
         {
             "ExpenseDistributionChart" => PieChartExportData,

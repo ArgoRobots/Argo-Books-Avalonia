@@ -92,16 +92,8 @@ public partial class AnalyticsPage : UserControl
                 var isPieChart = sender is PieChart;
                 var isGeoMap = sender is GeoMap;
 
-                // Determine a chart identifier based on the chart type
-                var chartId = sender switch
-                {
-                    CartesianChart => "CartesianChart",
-                    PieChart => "PieChart",
-                    GeoMap => "GeoMap",
-                    _ => string.Empty
-                };
-
-                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart, isGeoMap: isGeoMap,
+                // Use the chart title as the chart ID for export operations
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: _clickedChartName, isPieChart: isPieChart, isGeoMap: isGeoMap,
                     parentWidth: Bounds.Width, parentHeight: Bounds.Height);
                 e.Handled = true;
             }
