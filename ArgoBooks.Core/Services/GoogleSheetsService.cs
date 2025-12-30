@@ -747,7 +747,9 @@ public class GoogleSheetsService
                                 SheetId = 0,
                                 RowIndex = 0,
                                 ColumnIndex = seriesRanges.Length + 2
-                            }
+                            },
+                            WidthPixels = 650,
+                            HeightPixels = 400
                         }
                     }
                 }
@@ -819,7 +821,24 @@ public class GoogleSheetsService
                 }
             ],
             Series = series,
-            HeaderCount = 1
+            HeaderCount = 1,
+            Axis =
+            [
+                new BasicChartAxis
+                {
+                    Position = "BOTTOM_AXIS",
+                    Title = "",
+                    Format = new TextFormat
+                    {
+                        FontSize = 10
+                    }
+                },
+                new BasicChartAxis
+                {
+                    Position = "LEFT_AXIS",
+                    Title = ""
+                }
+            ]
         };
     }
 
