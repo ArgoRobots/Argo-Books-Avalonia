@@ -444,10 +444,18 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             var chartExportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
             var chartTitle = chartExportData?.ChartTitle ?? "Chart";
 
-            // Use Pie chart type for distribution charts, Column for time-based charts
-            var chartType = chartExportData?.ChartType == Services.ChartType.Distribution
-                ? ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Pie
-                : ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column;
+            // Use Pie chart type for distribution charts, Line or Column for time-based charts
+            ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;
+            if (chartExportData?.ChartType == Services.ChartType.Distribution)
+            {
+                chartType = ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Pie;
+            }
+            else
+            {
+                chartType = _chartLoaderService.UseLineChart
+                    ? ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Line
+                    : ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column;
+            }
 
             var googleSheetsService = new ArgoBooks.Core.Services.GoogleSheetsService();
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
