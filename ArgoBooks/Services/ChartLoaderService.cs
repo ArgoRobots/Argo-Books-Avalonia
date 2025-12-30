@@ -115,6 +115,11 @@ public class ChartLoaderService
     public ChartExportData? CurrentExportData { get; private set; }
 
     /// <summary>
+    /// Gets or sets the pie chart data for export functionality.
+    /// </summary>
+    public ChartExportData? PieChartExportData { get; private set; }
+
+    /// <summary>
     /// Gets or sets whether to use line charts instead of column charts.
     /// </summary>
     public bool UseLineChart { get; set; }
@@ -603,7 +608,10 @@ public class ChartLoaderService
         decimal total = 0;
 
         if (companyData?.Purchases == null || companyData.Purchases.Count == 0)
+        {
+            PieChartExportData = null;
             return (series, total);
+        }
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
@@ -624,7 +632,10 @@ public class ChartLoaderService
             .ToList();
 
         if (distribution.Count == 0)
+        {
+            PieChartExportData = null;
             return (series, total);
+        }
 
         total = distribution.Sum(d => d.Total);
 
@@ -643,6 +654,19 @@ public class ChartLoaderService
 
         foreach (var ps in pieSeriesList)
             series.Add(ps);
+
+        // Store export data for Google Sheets/Excel export
+        PieChartExportData = new ChartExportData
+        {
+            ChartTitle = "Expense Distribution",
+            ChartType = ChartType.Distribution,
+            Labels = distribution.Select(d => d.Category).ToArray(),
+            Values = distribution.Select(d => (double)d.Total).ToArray(),
+            SeriesName = "Amount",
+            TotalValue = (double)total,
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, total);
     }
@@ -1709,28 +1733,49 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Gets the export data for a specific chart by its identifier.
+    /// </summary>
+    /// <param name="chartId">The identifier of the chart.</param>
+    /// <returns>The chart export data, or null if not found.</returns>
+    public ChartExportData? GetExportDataForChart(string chartId)
+    {
+        return chartId switch
+        {
+            "ExpenseDistributionChart" => PieChartExportData,
+            "ExpensesChart" => CurrentExportData,
+            _ => CurrentExportData
+        };
+    }
+
+    /// <summary>
     /// Gets the data for exporting to Google Sheets.
     /// Does not include total row as it would appear as a category in the chart.
     /// </summary>
+    /// <param name="chartId">The identifier of the chart to export. If empty, defaults to CurrentExportData.</param>
     /// <returns>Export data formatted for Google Sheets.</returns>
-    public List<List<object>> GetGoogleSheetsExportData()
+    public List<List<object>> GetGoogleSheetsExportData(string chartId = "")
     {
-        if (CurrentExportData == null)
+        var exportData = GetExportDataForChart(chartId);
+
+        if (exportData == null)
             return [];
+
+        // Use "Category" for pie charts, "Date" for time-based charts
+        var labelHeader = exportData.ChartType == ChartType.Distribution ? "Category" : "Date";
 
         var data = new List<List<object>>
         {
             // Header row
-            new() { "Date", CurrentExportData.SeriesName }
+            new() { labelHeader, exportData.SeriesName }
         };
 
         // Data rows (no total - it would show up as a category in the chart)
-        for (int i = 0; i < CurrentExportData.Labels.Length; i++)
+        for (int i = 0; i < exportData.Labels.Length; i++)
         {
             data.Add(new List<object>
             {
-                CurrentExportData.Labels[i],
-                CurrentExportData.Values[i]
+                exportData.Labels[i],
+                exportData.Values[i]
             });
         }
 

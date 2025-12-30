@@ -298,7 +298,8 @@
                         </Border>
                         <Border Grid.Row="1" Padding="20">
                             <Panel>
-                                <lvc:PieChart Series="{Binding ExpenseDistributionSeries}"
+                                <lvc:PieChart x:Name="ExpenseDistributionChart"
+                                              Series="{Binding ExpenseDistributionSeries}"
                                               LegendTextPaint="{Binding LegendTextPaint}"
                                               IsVisible="{Binding HasExpenseDistributionData}"
                                               PointerPressed="OnChartPointerPressed" />

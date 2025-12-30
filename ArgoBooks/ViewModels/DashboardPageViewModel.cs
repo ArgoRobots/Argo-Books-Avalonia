@@ -385,12 +385,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// Event raised when a chart image should be saved.
     /// The View should subscribe to this and handle the actual save dialog.
     /// </summary>
-    public event EventHandler? SaveChartImageRequested;
+    public event EventHandler<SaveChartImageEventArgs>? SaveChartImageRequested;
 
     /// <inheritdoc />
     protected override void OnSaveChartAsImage()
     {
-        SaveChartImageRequested?.Invoke(this, EventArgs.Empty);
+        SaveChartImageRequested?.Invoke(this, new SaveChartImageEventArgs { ChartId = SelectedChartId });
     }
 
     /// <summary>
@@ -410,7 +410,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     private async Task ExportToGoogleSheetsAsync()
     {
-        var exportData = _chartLoaderService.GetGoogleSheetsExportData();
+        var exportData = _chartLoaderService.GetGoogleSheetsExportData(SelectedChartId);
         if (exportData.Count == 0)
         {
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
@@ -441,13 +441,19 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         try
         {
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
-            var chartTitle = _chartLoaderService.CurrentExportData?.ChartTitle ?? "Chart";
+            var chartExportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
+            var chartTitle = chartExportData?.ChartTitle ?? "Chart";
+
+            // Use Pie chart type for distribution charts, Column for time-based charts
+            var chartType = chartExportData?.ChartType == Services.ChartType.Distribution
+                ? ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Pie
+                : ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column;
 
             var googleSheetsService = new ArgoBooks.Core.Services.GoogleSheetsService();
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
                 exportData,
                 chartTitle,
-                ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column,
+                chartType,
                 companyName
             );
 
@@ -723,6 +729,17 @@ public class GoogleSheetsExportEventArgs : EventArgs
     /// Gets or sets the error message if the export failed.
     /// </summary>
     public string? ErrorMessage { get; set; }
+}
+
+/// <summary>
+/// Event arguments for saving a chart as an image.
+/// </summary>
+public class SaveChartImageEventArgs : EventArgs
+{
+    /// <summary>
+    /// Gets or sets the identifier of the chart to save.
+    /// </summary>
+    public string ChartId { get; set; } = string.Empty;
 }
 
 #endregion

@@ -27,6 +27,12 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
     [ObservableProperty]
     private bool _showChartExportOptions = true;
 
+    /// <summary>
+    /// Gets or sets the identifier of the currently selected chart for context menu operations.
+    /// </summary>
+    [ObservableProperty]
+    private string _selectedChartId = string.Empty;
+
     #endregion
 
     #region Chart Context Menu Methods
@@ -36,12 +42,14 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
     /// </summary>
     /// <param name="x">The X coordinate.</param>
     /// <param name="y">The Y coordinate.</param>
+    /// <param name="chartId">The identifier of the chart that was clicked.</param>
     /// <param name="isPieChart">True if the chart is a pie chart (hides reset zoom).</param>
     /// <param name="isGeoMap">True if the chart is a geo map (only shows save as image).</param>
-    public void ShowChartContextMenu(double x, double y, bool isPieChart = false, bool isGeoMap = false)
+    public void ShowChartContextMenu(double x, double y, string chartId = "", bool isPieChart = false, bool isGeoMap = false)
     {
         ChartContextMenuX = x;
         ChartContextMenuY = y;
+        SelectedChartId = chartId;
         ShowChartResetZoom = !isPieChart && !isGeoMap;
         ShowChartExportOptions = !isGeoMap;
         IsChartContextMenuOpen = true;

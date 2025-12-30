@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
@@ -37,20 +38,41 @@ public partial class DashboardPage : UserControl
     /// <summary>
     /// Handles the save chart as image request from the ViewModel.
     /// </summary>
-    private async void OnSaveChartImageRequested(object? sender, EventArgs e)
+    private async void OnSaveChartImageRequested(object? sender, SaveChartImageEventArgs e)
     {
-        var chart = this.FindControl<CartesianChart>("ExpensesChart");
-        if (chart == null) return;
-
         // Get the top-level window for the file picker
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
+
+        // Determine the chart name for the file and get chart bounds
+        string suggestedFileName;
+        Size chartBounds;
+
+        switch (e.ChartId)
+        {
+            case "ExpensesChart":
+                var expensesChart = this.FindControl<CartesianChart>("ExpensesChart");
+                if (expensesChart == null) return;
+                suggestedFileName = $"Expenses_Chart_{DateTime.Now:yyyy-MM-dd}";
+                chartBounds = new Size(expensesChart.Bounds.Width, expensesChart.Bounds.Height);
+                break;
+
+            case "ExpenseDistributionChart":
+                var pieChart = this.FindControl<PieChart>("ExpenseDistributionChart");
+                if (pieChart == null) return;
+                suggestedFileName = $"Expense_Distribution_Chart_{DateTime.Now:yyyy-MM-dd}";
+                chartBounds = new Size(pieChart.Bounds.Width, pieChart.Bounds.Height);
+                break;
+
+            default:
+                return;
+        }
 
         // Show save file dialog
         var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Save Chart as Image",
-            SuggestedFileName = $"Expenses_Chart_{DateTime.Now:yyyy-MM-dd}",
+            SuggestedFileName = suggestedFileName,
             DefaultExtension = "png",
             FileTypeChoices = new[]
             {
@@ -65,14 +87,6 @@ public partial class DashboardPage : UserControl
         {
             var filePath = file.Path.LocalPath;
 
-            // Create an SKCartesianChart to render the chart to an image
-            var skChart = new SKCartesianChart(chart)
-            {
-                Width = (int)chart.Bounds.Width,
-                Height = (int)chart.Bounds.Height,
-                Background = SKColors.Transparent
-            };
-
             // Determine format based on file extension
             var extension = Path.GetExtension(filePath).ToLowerInvariant();
             var format = extension switch
@@ -81,8 +95,31 @@ public partial class DashboardPage : UserControl
                 _ => SKEncodedImageFormat.Png
             };
 
-            // Save the chart as an image
-            skChart.SaveImage(filePath, format, 100);
+            // Save the chart based on its type
+            switch (e.ChartId)
+            {
+                case "ExpensesChart":
+                    var expensesChart = this.FindControl<CartesianChart>("ExpensesChart")!;
+                    var skCartesianChart = new SKCartesianChart(expensesChart)
+                    {
+                        Width = (int)chartBounds.Width,
+                        Height = (int)chartBounds.Height,
+                        Background = SKColors.Transparent
+                    };
+                    skCartesianChart.SaveImage(filePath, format, 100);
+                    break;
+
+                case "ExpenseDistributionChart":
+                    var pieChart = this.FindControl<PieChart>("ExpenseDistributionChart")!;
+                    var skPieChart = new SKPieChart(pieChart)
+                    {
+                        Width = (int)chartBounds.Width,
+                        Height = (int)chartBounds.Height,
+                        Background = SKColors.Transparent
+                    };
+                    skPieChart.SaveImage(filePath, format, 100);
+                    break;
+            }
 
             System.Diagnostics.Debug.WriteLine($"Chart saved to: {filePath}");
         }
@@ -106,7 +143,16 @@ public partial class DashboardPage : UserControl
                 // Get position relative to this page (the Panel container) for proper menu placement
                 var position = e.GetPosition(this);
                 var isPieChart = sender is PieChart;
-                viewModel.ShowChartContextMenu(position.X, position.Y, isPieChart: isPieChart);
+
+                // Determine the chart identifier based on the sender
+                var chartId = sender switch
+                {
+                    CartesianChart cc when cc.Name == "ExpensesChart" => "ExpensesChart",
+                    PieChart pc when pc.Name == "ExpenseDistributionChart" => "ExpenseDistributionChart",
+                    _ => string.Empty
+                };
+
+                viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart);
                 e.Handled = true;
             }
         }
