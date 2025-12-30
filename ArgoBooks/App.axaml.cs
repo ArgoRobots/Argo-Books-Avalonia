@@ -1400,6 +1400,26 @@ public partial class App : Application
             {
                 viewModel.Initialize(CompanyManager);
             }
+
+            // Wire up Google Sheets export notifications
+            viewModel.GoogleSheetsExportStatusChanged += (_, args) =>
+            {
+                if (args.IsExporting)
+                {
+                    _mainWindowViewModel?.ShowLoading("Exporting to Google Sheets...");
+                }
+                else if (args.IsSuccess)
+                {
+                    _mainWindowViewModel?.HideLoading();
+                    appShellViewModel.AddNotification("Success", "Chart exported to Google Sheets successfully.", NotificationType.Success);
+                }
+                else if (!string.IsNullOrEmpty(args.ErrorMessage))
+                {
+                    _mainWindowViewModel?.HideLoading();
+                    appShellViewModel.AddNotification("Export Failed", args.ErrorMessage, NotificationType.Error);
+                }
+            };
+
             return new DashboardPage { DataContext = viewModel };
         });
         navigationService.RegisterPage("Analytics", _ =>

@@ -393,20 +393,100 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         SaveChartImageRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// Event raised when exporting to Google Sheets starts or completes.
+    /// </summary>
+    public event EventHandler<GoogleSheetsExportEventArgs>? GoogleSheetsExportStatusChanged;
+
     /// <inheritdoc />
     protected override void OnExportToGoogleSheets()
+    {
+        // Fire and forget the async operation
+        _ = ExportToGoogleSheetsAsync();
+    }
+
+    /// <summary>
+    /// Exports the chart data to Google Sheets asynchronously.
+    /// </summary>
+    private async Task ExportToGoogleSheetsAsync()
     {
         var exportData = _chartLoaderService.GetGoogleSheetsExportData();
         if (exportData.Count == 0)
         {
-            // No data to export
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = "No chart data to export."
+            });
             return;
         }
 
-        // TODO: Implement Google Sheets export using Google.Apis.Sheets.v4
-        // The data is already formatted in exportData as List<List<object>>
-        // For now, this is a placeholder - the data structure is ready for export
-        System.Diagnostics.Debug.WriteLine($"Google Sheets export: {exportData.Count - 1} rows ready for export.");
+        // Check if Google credentials are configured
+        if (!ArgoBooks.Core.Services.GoogleCredentialsManager.AreCredentialsConfigured())
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = "Google OAuth credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file."
+            });
+            return;
+        }
+
+        // Notify that export is starting
+        GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+        {
+            IsExporting = true
+        });
+
+        try
+        {
+            var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
+            var chartTitle = _chartLoaderService.CurrentExportData?.ChartTitle ?? "Chart";
+
+            var googleSheetsService = new ArgoBooks.Core.Services.GoogleSheetsService();
+            var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
+                exportData,
+                chartTitle,
+                ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column,
+                companyName
+            );
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                // Open the spreadsheet in the browser
+                ArgoBooks.Core.Services.GoogleSheetsService.OpenInBrowser(url);
+
+                GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+                {
+                    IsSuccess = true,
+                    SpreadsheetUrl = url
+                });
+            }
+            else
+            {
+                GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Failed to create spreadsheet."
+                });
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Failed to export to Google Sheets: {ex.Message}"
+            });
+        }
     }
 
     /// <inheritdoc />
@@ -617,6 +697,32 @@ public class ActiveRentalItem
         : DaysRemaining == 0
             ? "Due today"
             : $"{DaysRemaining} days left";
+}
+
+/// <summary>
+/// Event arguments for Google Sheets export status changes.
+/// </summary>
+public class GoogleSheetsExportEventArgs : EventArgs
+{
+    /// <summary>
+    /// Gets or sets whether an export is currently in progress.
+    /// </summary>
+    public bool IsExporting { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the export completed successfully.
+    /// </summary>
+    public bool IsSuccess { get; set; }
+
+    /// <summary>
+    /// Gets or sets the URL of the created spreadsheet.
+    /// </summary>
+    public string? SpreadsheetUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets the error message if the export failed.
+    /// </summary>
+    public string? ErrorMessage { get; set; }
 }
 
 #endregion
