@@ -746,6 +746,124 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Chart Context Menu Overrides
+
+    /// <summary>
+    /// Event raised when a chart image should be saved.
+    /// The View should subscribe to this and handle the actual save dialog.
+    /// </summary>
+    public event EventHandler<SaveChartImageEventArgs>? SaveChartImageRequested;
+
+    /// <inheritdoc />
+    protected override void OnSaveChartAsImage()
+    {
+        SaveChartImageRequested?.Invoke(this, new SaveChartImageEventArgs { ChartId = SelectedChartId });
+    }
+
+    /// <summary>
+    /// Event raised when exporting to Google Sheets starts or completes.
+    /// </summary>
+    public event EventHandler<GoogleSheetsExportEventArgs>? GoogleSheetsExportStatusChanged;
+
+    /// <inheritdoc />
+    protected override void OnExportToGoogleSheets()
+    {
+        // Fire and forget the async operation
+        _ = ExportToGoogleSheetsAsync();
+    }
+
+    /// <summary>
+    /// Exports the chart data to Google Sheets asynchronously.
+    /// </summary>
+    private async Task ExportToGoogleSheetsAsync()
+    {
+        var exportData = _chartLoaderService.GetGoogleSheetsExportData(SelectedChartId);
+        if (exportData.Count == 0)
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = "No chart data to export."
+            });
+            return;
+        }
+
+        // Check if Google credentials are configured
+        if (!ArgoBooks.Core.Services.GoogleCredentialsManager.AreCredentialsConfigured())
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = "Google OAuth credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file."
+            });
+            return;
+        }
+
+        // Notify that export is starting
+        GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+        {
+            IsExporting = true
+        });
+
+        try
+        {
+            var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
+            var chartExportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
+            var chartTitle = chartExportData?.ChartTitle ?? "Chart";
+
+            // Use Pie chart type for distribution charts, Column for time-based charts
+            var chartType = chartExportData?.ChartType == Services.ChartType.Distribution
+                ? ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Pie
+                : ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column;
+
+            var googleSheetsService = new ArgoBooks.Core.Services.GoogleSheetsService();
+            var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
+                exportData,
+                chartTitle,
+                chartType,
+                companyName
+            );
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                // Open the spreadsheet in the browser
+                ArgoBooks.Core.Services.GoogleSheetsService.OpenInBrowser(url);
+
+                GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+                {
+                    IsSuccess = true,
+                    SpreadsheetUrl = url
+                });
+            }
+            else
+            {
+                GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+                {
+                    IsSuccess = false,
+                    ErrorMessage = "Failed to create spreadsheet."
+                });
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
+            {
+                IsSuccess = false,
+                ErrorMessage = $"Failed to export to Google Sheets: {ex.Message}"
+            });
+        }
+    }
+
+    #endregion
+
     #region Initialization
 
     /// <summary>
