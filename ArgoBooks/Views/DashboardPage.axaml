@@ -659,6 +659,7 @@
                                SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
                                ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
                                ExportToExcelCommand="{Binding ExportToExcelCommand}"
-                               ResetChartZoomCommand="{Binding ResetChartZoomCommand}" />
+                               ResetChartZoomCommand="{Binding ResetChartZoomCommand}"
+                               CloseCommand="{Binding HideChartContextMenuCommand}" />
     </Panel>
 </UserControl>

@@ -748,8 +748,8 @@ public class GoogleSheetsService
                                 RowIndex = 0,
                                 ColumnIndex = seriesRanges.Length + 2
                             },
-                            WidthPixels = 650,
-                            HeightPixels = 400
+                            WidthPixels = 800,
+                            HeightPixels = 420
                         }
                     }
                 }
@@ -831,6 +831,12 @@ public class GoogleSheetsService
                     Format = new TextFormat
                     {
                         FontSize = 10
+                    },
+                    ViewWindowOptions = new ChartAxisViewWindowOptions
+                    {
+                        ViewWindowMode = "EXPLICIT",
+                        ViewWindowMin = 0,
+                        ViewWindowMax = endRowIndex + 0.5
                     }
                 },
                 new BasicChartAxis
