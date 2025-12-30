@@ -39,12 +39,6 @@
             <Setter Property="CornerRadius" Value="12" />
         </Style>
 
-        <!-- Table Header Style -->
-        <Style Selector="Border.table-header">
-            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
-            <Setter Property="Padding" Value="16,12" />
-        </Style>
-
         <!-- Table Row Style -->
         <Style Selector="Border.table-row">
             <Setter Property="Padding" Value="16,14" />

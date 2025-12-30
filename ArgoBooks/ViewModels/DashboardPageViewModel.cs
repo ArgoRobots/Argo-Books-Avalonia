@@ -65,9 +65,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     [ObservableProperty]
     private string? _profitChangeText;
 
-    [ObservableProperty]
-    private bool _isProfitPositive = true;
-
     #endregion
 
     #region Recent Transactions
@@ -234,7 +231,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         var netProfitValue = thisMonthRevenue - thisMonthExpenses;
         var lastMonthProfit = lastMonthRevenue - lastMonthExpenses;
         NetProfit = FormatCurrency(Math.Abs(netProfitValue));
-        IsProfitPositive = netProfitValue >= 0;
         ProfitChangeValue = CalculatePercentageChange(lastMonthProfit, netProfitValue);
         ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
 
@@ -539,34 +535,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
         // Use absolute value since the arrow indicates direction
         return $"{Math.Abs(change.Value):F1}%";
-    }
-
-    private static string GetStatusVariant(string status)
-    {
-        return status.ToLowerInvariant() switch
-        {
-            "paid" => "success",
-            "pending" => "warning",
-            "overdue" => "error",
-            "completed" => "success",
-            _ => "neutral"
-        };
-    }
-
-    private static string GetInvoiceStatusVariant(InvoiceStatus status)
-    {
-        return status switch
-        {
-            InvoiceStatus.Paid => "success",
-            InvoiceStatus.Sent => "info",
-            InvoiceStatus.Viewed => "info",
-            InvoiceStatus.Partial => "warning",
-            InvoiceStatus.Pending => "warning",
-            InvoiceStatus.Draft => "neutral",
-            InvoiceStatus.Cancelled => "error",
-            InvoiceStatus.Overdue => "error",
-            _ => "neutral"
-        };
     }
 
     private static string GetCustomerName(CompanyData data, string? customerId)
