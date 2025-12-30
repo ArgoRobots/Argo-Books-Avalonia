@@ -664,7 +664,7 @@
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}">
                                                             <TextBlock Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -675,7 +675,7 @@
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.CategoryColumnWidth}">
                                                             <TextBlock Text="{Binding CategoryName}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -686,7 +686,7 @@
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.SupplierColumnWidth}">
                                                             <TextBlock Text="{Binding SupplierName}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -697,7 +697,7 @@
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.CountryColumnWidth}">
                                                             <TextBlock Text="{Binding CountryOfOrigin}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        Margin="8,0" />
                                                             <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -797,7 +797,7 @@
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.DescriptionColumnWidth}">
                                                             <TextBlock Text="{Binding Description, TargetNullValue='-', FallbackValue='-'}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
@@ -808,7 +808,7 @@
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ProductsPageViewModel)DataContext).ColumnWidths.CategoryColumnWidth}">
                                                             <TextBlock Text="{Binding CategoryName}"
                                                                        FontSize="14"
-                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />
