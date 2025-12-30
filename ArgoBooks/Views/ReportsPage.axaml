@@ -443,7 +443,7 @@
                                                 <Border Margin="0,0,12,12"
                                                         Padding="12"
                                                         CornerRadius="8"
-                                                        Width="200"
+                                                        Width="230"
                                                         Background="{DynamicResource SurfaceAltBrush}"
                                                         BorderThickness="2"
                                                         Classes.selected="{Binding IsSelected}">
