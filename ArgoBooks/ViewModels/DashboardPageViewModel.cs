@@ -471,7 +471,7 @@ public partial class DashboardPageViewModel : ViewModelBase
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
             {
                 IsSuccess = false,
-                ErrorMessage = "Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables."
+                ErrorMessage = "Google OAuth credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file."
             });
             return;
         }

@@ -31,13 +31,13 @@ public static class GoogleCredentialsManager
             return _cachedCredential;
         }
 
-        var clientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
-        var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
+        var clientId = DotEnv.Get("GOOGLE_CLIENT_ID");
+        var clientSecret = DotEnv.Get("GOOGLE_CLIENT_SECRET");
 
         if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
         {
             throw new InvalidOperationException(
-                "Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.");
+                "Google OAuth credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your .env file.");
         }
 
         var secrets = new ClientSecrets
@@ -73,13 +73,11 @@ public static class GoogleCredentialsManager
     }
 
     /// <summary>
-    /// Checks if Google OAuth credentials are configured in environment variables.
+    /// Checks if Google OAuth credentials are configured in the .env file or environment variables.
     /// </summary>
     /// <returns>True if credentials are configured, false otherwise.</returns>
     public static bool AreCredentialsConfigured()
     {
-        var clientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
-        var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
-        return !string.IsNullOrEmpty(clientId) && !string.IsNullOrEmpty(clientSecret);
+        return DotEnv.HasValue("GOOGLE_CLIENT_ID") && DotEnv.HasValue("GOOGLE_CLIENT_SECRET");
     }
 }
