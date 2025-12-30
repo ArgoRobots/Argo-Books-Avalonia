@@ -122,6 +122,12 @@ public partial class DashboardPageViewModel : ViewModelBase
     [ObservableProperty]
     private double _chartContextMenuY;
 
+    [ObservableProperty]
+    private bool _showChartResetZoom = true;
+
+    [ObservableProperty]
+    private bool _showChartExportOptions = true;
+
     #endregion
 
     #region Expense Distribution Chart
@@ -399,10 +405,14 @@ public partial class DashboardPageViewModel : ViewModelBase
     /// </summary>
     /// <param name="x">The X coordinate.</param>
     /// <param name="y">The Y coordinate.</param>
-    public void ShowChartContextMenu(double x, double y)
+    /// <param name="isPieChart">True if the chart is a pie chart (hides reset zoom).</param>
+    /// <param name="isGeoMap">True if the chart is a geo map (only shows save as image).</param>
+    public void ShowChartContextMenu(double x, double y, bool isPieChart = false, bool isGeoMap = false)
     {
         ChartContextMenuX = x;
         ChartContextMenuY = y;
+        ShowChartResetZoom = !isPieChart && !isGeoMap;
+        ShowChartExportOptions = !isGeoMap;
         IsChartContextMenuOpen = true;
     }
 

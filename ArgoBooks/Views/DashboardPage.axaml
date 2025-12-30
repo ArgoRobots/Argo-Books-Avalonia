@@ -659,6 +659,8 @@
                                IsOpen="{Binding IsChartContextMenuOpen}"
                                MenuX="{Binding ChartContextMenuX}"
                                MenuY="{Binding ChartContextMenuY}"
+                               ShowResetZoom="{Binding ShowChartResetZoom}"
+                               ShowExportOptions="{Binding ShowChartExportOptions}"
                                SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
                                ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
                                ExportToExcelCommand="{Binding ExportToExcelCommand}"

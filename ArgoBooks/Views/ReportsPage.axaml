@@ -271,7 +271,8 @@
                                     <!-- Templates Tab Content -->
                                     <StackPanel Spacing="16" IsVisible="{Binding IsTemplatesTabSelected}">
                                     <!-- Built-in Templates Grid (responsive) -->
-                                    <ItemsControl ItemsSource="{Binding ReportTemplateOptions}">
+                                    <ItemsControl ItemsSource="{Binding ReportTemplateOptions}"
+                                                  HorizontalAlignment="Center">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <WrapPanel Orientation="Horizontal" />
@@ -347,7 +348,8 @@
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    Margin="0,8,0,0" />
-                                        <ItemsControl ItemsSource="{Binding CustomTemplateNames}">
+                                        <ItemsControl ItemsSource="{Binding CustomTemplateNames}"
+                                                      HorizontalAlignment="Center">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <WrapPanel Orientation="Horizontal" />
@@ -429,7 +431,8 @@
                                     <TextBlock Text="Select charts to include in your report"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ItemsControl ItemsSource="{Binding AvailableCharts}">
+                                    <ItemsControl ItemsSource="{Binding AvailableCharts}"
+                                                  HorizontalAlignment="Center">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <WrapPanel Orientation="Horizontal" />

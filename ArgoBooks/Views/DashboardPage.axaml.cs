@@ -105,7 +105,8 @@ public partial class DashboardPage : UserControl
             {
                 // Get position relative to this page (the Panel container) for proper menu placement
                 var position = e.GetPosition(this);
-                viewModel.ShowChartContextMenu(position.X, position.Y);
+                var isPieChart = sender is PieChart;
+                viewModel.ShowChartContextMenu(position.X, position.Y, isPieChart: isPieChart);
                 e.Handled = true;
             }
         }

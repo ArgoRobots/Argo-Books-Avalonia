@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using ArgoBooks.Controls;
 using ArgoBooks.ViewModels;
+using LiveChartsCore.SkiaSharpView.Avalonia;
 
 namespace ArgoBooks.Views;
 
@@ -57,7 +58,9 @@ public partial class AnalyticsPage : UserControl
             {
                 // Get position relative to this page (the Panel container) for proper menu placement
                 var position = e.GetPosition(this);
-                viewModel.ShowChartContextMenu(position.X, position.Y);
+                var isPieChart = sender is PieChart;
+                var isGeoMap = sender is GeoMap;
+                viewModel.ShowChartContextMenu(position.X, position.Y, isPieChart: isPieChart, isGeoMap: isGeoMap);
                 e.Handled = true;
             }
         }

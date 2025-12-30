@@ -629,7 +629,8 @@
                                 <Panel>
                                     <lvc:GeoMap Series="{Binding GeoMapSeries}"
                                                 MapProjection="Mercator"
-                                                IsVisible="{Binding HasWorldMapData}" />
+                                                IsVisible="{Binding HasWorldMapData}"
+                                                PointerPressed="OnChartPointerPressed" />
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="8"
                                             IsVisible="{Binding !HasWorldMapData}">
@@ -1996,6 +1997,8 @@
                                IsOpen="{Binding IsChartContextMenuOpen}"
                                MenuX="{Binding ChartContextMenuX}"
                                MenuY="{Binding ChartContextMenuY}"
+                               ShowResetZoom="{Binding ShowChartResetZoom}"
+                               ShowExportOptions="{Binding ShowChartExportOptions}"
                                SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
                                ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
                                ExportToExcelCommand="{Binding ExportToExcelCommand}"

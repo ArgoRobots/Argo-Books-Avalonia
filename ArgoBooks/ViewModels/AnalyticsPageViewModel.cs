@@ -1396,13 +1396,25 @@ public partial class AnalyticsPageViewModel : ViewModelBase
     [ObservableProperty]
     private double _chartContextMenuY;
 
+    [ObservableProperty]
+    private bool _showChartResetZoom = true;
+
+    [ObservableProperty]
+    private bool _showChartExportOptions = true;
+
     /// <summary>
     /// Shows the chart context menu at the specified position.
     /// </summary>
-    public void ShowChartContextMenu(double x, double y)
+    /// <param name="x">The X coordinate.</param>
+    /// <param name="y">The Y coordinate.</param>
+    /// <param name="isPieChart">True if the chart is a pie chart (hides reset zoom).</param>
+    /// <param name="isGeoMap">True if the chart is a geo map (only shows save as image).</param>
+    public void ShowChartContextMenu(double x, double y, bool isPieChart = false, bool isGeoMap = false)
     {
         ChartContextMenuX = x;
         ChartContextMenuY = y;
+        ShowChartResetZoom = !isPieChart && !isGeoMap;
+        ShowChartExportOptions = !isGeoMap;
         IsChartContextMenuOpen = true;
     }
 

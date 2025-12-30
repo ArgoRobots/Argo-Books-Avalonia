@@ -32,6 +32,12 @@ public partial class ChartContextMenu : UserControl
     public static readonly StyledProperty<ICommand?> ResetChartZoomCommandProperty =
         AvaloniaProperty.Register<ChartContextMenu, ICommand?>(nameof(ResetChartZoomCommand));
 
+    public static readonly StyledProperty<bool> ShowResetZoomProperty =
+        AvaloniaProperty.Register<ChartContextMenu, bool>(nameof(ShowResetZoom), true);
+
+    public static readonly StyledProperty<bool> ShowExportOptionsProperty =
+        AvaloniaProperty.Register<ChartContextMenu, bool>(nameof(ShowExportOptions), true);
+
     #endregion
 
     #region Properties
@@ -97,6 +103,24 @@ public partial class ChartContextMenu : UserControl
     {
         get => GetValue(ResetChartZoomCommandProperty);
         set => SetValue(ResetChartZoomCommandProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether to show the Reset Zoom option (hide for pie charts).
+    /// </summary>
+    public bool ShowResetZoom
+    {
+        get => GetValue(ShowResetZoomProperty);
+        set => SetValue(ShowResetZoomProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether to show export options (hide for geomaps).
+    /// </summary>
+    public bool ShowExportOptions
+    {
+        get => GetValue(ShowExportOptionsProperty);
+        set => SetValue(ShowExportOptionsProperty, value);
     }
 
     #endregion
