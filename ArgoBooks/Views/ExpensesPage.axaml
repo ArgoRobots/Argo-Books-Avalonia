@@ -341,7 +341,6 @@
                                                            IsVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowIdColumn}">
                                                         <TextBlock Text="{Binding Id}"
                                                                    FontSize="14"
-                                                                   FontWeight="Medium"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    Margin="8,16,8,16"
