@@ -54,15 +54,12 @@
                 </StackPanel>
 
                 <!-- Main Actions -->
-                <Grid ColumnDefinitions="*,*"
-                      Margin="0,0,0,48">
+                <UniformGrid Rows="1" Columns="2"
+                             Margin="0,0,0,48">
                     <!-- Create New Company -->
-                    <Border Grid.Column="0"
-                            Classes="action-card"
-                            HorizontalAlignment="Stretch"
+                    <Border Classes="action-card"
                             Margin="0,0,12,0">
                         <Button Classes="action-card-button"
-                                HorizontalAlignment="Stretch"
                                 Command="{Binding CreateNewCompanyCommand}">
                             <StackPanel Spacing="16">
                                 <Border Width="64" Height="64"
@@ -89,12 +86,9 @@
                     </Border>
 
                     <!-- Open Existing Company -->
-                    <Border Grid.Column="1"
-                            Classes="action-card"
-                            HorizontalAlignment="Stretch"
+                    <Border Classes="action-card"
                             Margin="12,0,0,0">
                         <Button Classes="action-card-button"
-                                HorizontalAlignment="Stretch"
                                 Command="{Binding OpenCompanyCommand}">
                             <StackPanel Spacing="16">
                                 <Border Width="64" Height="64"
@@ -119,7 +113,7 @@
                             </StackPanel>
                         </Button>
                     </Border>
-                </Grid>
+                </UniformGrid>
 
                 <!-- Recent Companies Section -->
                 <Border Classes="section-card"
