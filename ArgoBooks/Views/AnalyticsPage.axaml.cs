@@ -8,6 +8,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
 using LiveChartsCore.SkiaSharpView.SKCharts;
+using LiveChartsCore.SkiaSharpView.VisualElements;
 using SkiaSharp;
 
 namespace ArgoBooks.Views;
@@ -117,63 +118,26 @@ public partial class AnalyticsPage : UserControl
     }
 
     /// <summary>
-    /// Attempts to find the chart title by looking at parent containers.
+    /// Attempts to find the chart title from the chart's Title property.
     /// </summary>
     private static string? GetChartTitle(Control? chart)
     {
         if (chart == null) return null;
 
-        // Walk up the visual tree to find a Grid with a header Border containing a TextBlock
-        var parent = chart.Parent;
-        while (parent != null)
+        // Get the title directly from LiveCharts chart controls
+        // The Title property is a LabelVisual which has a Text property
+        if (chart is CartesianChart cartesianChart &&
+            cartesianChart.Title is LabelVisual cartesianLabel &&
+            !string.IsNullOrWhiteSpace(cartesianLabel.Text))
         {
-            if (parent is Grid grid)
-            {
-                // Look for a TextBlock in the first child (header area)
-                foreach (var child in grid.Children)
-                {
-                    if (child is Border border)
-                    {
-                        var textBlock = FindTextBlock(border);
-                        if (textBlock != null && !string.IsNullOrWhiteSpace(textBlock.Text))
-                        {
-                            return textBlock.Text;
-                        }
-                    }
-                }
-            }
-            parent = parent.Parent;
+            return cartesianLabel.Text;
         }
-        return null;
-    }
 
-    /// <summary>
-    /// Recursively finds a TextBlock within a control.
-    /// </summary>
-    private static TextBlock? FindTextBlock(Control control)
-    {
-        if (control is TextBlock tb)
-            return tb;
-
-        if (control is Panel panel)
+        if (chart is PieChart pieChart &&
+            pieChart.Title is LabelVisual pieLabel &&
+            !string.IsNullOrWhiteSpace(pieLabel.Text))
         {
-            foreach (var child in panel.Children)
-            {
-                if (child is Control c)
-                {
-                    var result = FindTextBlock(c);
-                    if (result != null)
-                        return result;
-                }
-            }
-        }
-        else if (control is Decorator decorator && decorator.Child is Control decoratorChild)
-        {
-            return FindTextBlock(decoratorChild);
-        }
-        else if (control is ContentControl cc && cc.Content is Control content)
-        {
-            return FindTextBlock(content);
+            return pieLabel.Text;
         }
 
         return null;
