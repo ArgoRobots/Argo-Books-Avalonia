@@ -119,10 +119,16 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     /// <summary>
     /// Gets the text showing remaining products for the current tab.
+    /// Shows "Upgrade" when the limit is reached.
     /// </summary>
-    public string RemainingProductsText => IsExpensesTabSelected
-        ? $"{RemainingExpenseProducts} of {FreeProductLimit} remaining"
-        : $"{RemainingRevenueProducts} of {FreeProductLimit} remaining";
+    public string RemainingProductsText
+    {
+        get
+        {
+            var remaining = IsExpensesTabSelected ? RemainingExpenseProducts : RemainingRevenueProducts;
+            return remaining == 0 ? "Upgrade" : $"{remaining} of {FreeProductLimit} remaining";
+        }
+    }
 
     /// <summary>
     /// Gets whether to show the remaining products label (only when no standard plan).

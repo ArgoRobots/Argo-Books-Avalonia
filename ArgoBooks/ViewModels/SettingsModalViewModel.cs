@@ -615,11 +615,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens the upgrade modal.
+    /// Closes the settings modal and opens the upgrade modal.
     /// </summary>
     [RelayCommand]
     private void UpgradeNow()
     {
+        IsOpen = false;
         UpgradeRequested?.Invoke(this, EventArgs.Empty);
     }
 
