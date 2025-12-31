@@ -27,76 +27,15 @@
                 <!-- Tab Navigation (Row 0) -->
                 <Border Grid.Row="0"
                         Background="{DynamicResource SurfaceBrush}"
-                        CornerRadius="12"
                         BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1"
-                        Padding="4"
-                        Margin="0,0,0,24"
-                        HorizontalAlignment="Left">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <Button Classes="tab-button"
-                                Command="{Binding SwitchToExpenseTabCommand}">
-                            <Button.Background>
-                                <Binding Path="IsExpenseTabActive">
-                                    <Binding.Converter>
-                                        <local:BoolToTabBackgroundConverter />
-                                    </Binding.Converter>
-                                </Binding>
-                            </Button.Background>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
-                                          Width="16" Height="16">
-                                    <PathIcon.Foreground>
-                                        <Binding Path="IsExpenseTabActive">
-                                            <Binding.Converter>
-                                                <local:BoolToTabForegroundConverter />
-                                            </Binding.Converter>
-                                        </Binding>
-                                    </PathIcon.Foreground>
-                                </PathIcon>
-                                <TextBlock Text="Expense Returns">
-                                    <TextBlock.Foreground>
-                                        <Binding Path="IsExpenseTabActive">
-                                            <Binding.Converter>
-                                                <local:BoolToTabForegroundConverter />
-                                            </Binding.Converter>
-                                        </Binding>
-                                    </TextBlock.Foreground>
-                                </TextBlock>
-                            </StackPanel>
-                        </Button>
-                        <Button Classes="tab-button"
-                                Command="{Binding SwitchToCustomerTabCommand}">
-                            <Button.Background>
-                                <Binding Path="IsCustomerTabActive">
-                                    <Binding.Converter>
-                                        <local:BoolToTabBackgroundConverter />
-                                    </Binding.Converter>
-                                </Binding>
-                            </Button.Background>
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                                          Width="16" Height="16">
-                                    <PathIcon.Foreground>
-                                        <Binding Path="IsCustomerTabActive">
-                                            <Binding.Converter>
-                                                <local:BoolToTabForegroundConverter />
-                                            </Binding.Converter>
-                                        </Binding>
-                                    </PathIcon.Foreground>
-                                </PathIcon>
-                                <TextBlock Text="Customer Returns">
-                                    <TextBlock.Foreground>
-                                        <Binding Path="IsCustomerTabActive">
-                                            <Binding.Converter>
-                                                <local:BoolToTabForegroundConverter />
-                                            </Binding.Converter>
-                                        </Binding>
-                                    </TextBlock.Foreground>
-                                </TextBlock>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                        BorderThickness="0,0,0,1"
+                        Margin="0,0,0,24">
+                    <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+                                Margin="0"
+                                Classes="page-tabs">
+                        <TabItem Header="Expense Returns" />
+                        <TabItem Header="Customer Returns" />
+                    </TabControl>
                 </Border>
 
                 <!-- Statistics Cards (Row 1) -->
@@ -949,22 +888,50 @@
     </Panel>
 
     <UserControl.Styles>
-        <!-- Tab Button -->
-        <Style Selector="Button.tab-button">
+        <!-- TabControl - page tabs styling -->
+        <Style Selector="TabControl.page-tabs">
             <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="TabControl.page-tabs /template/ ItemsPresenter#PART_ItemsPresenter">
+            <Setter Property="Margin" Value="24,0" />
+        </Style>
+        <Style Selector="TabControl.page-tabs /template/ Border#PART_InnerBorder">
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="TabControl.page-tabs /template/ ContentPresenter#PART_SelectedContentHost">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <!-- Tab Item Styling -->
+        <Style Selector="TabControl.page-tabs TabItem">
             <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Padding" Value="4,12,4,10" />
+            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <Style Selector="Button.tab-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{TemplateBinding Background}" />
-            <Setter Property="CornerRadius" Value="8" />
+        <Style Selector="TabControl.page-tabs TabItem:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         </Style>
-        <Style Selector="Button.tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        <Style Selector="TabControl.page-tabs TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TabControl.page-tabs TabItem:selected /template/ Border#PART_SelectedPipe">
+            <Setter Property="IsVisible" Value="True" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="Height" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Margin" Value="0,0,0,0" />
+            <Setter Property="CornerRadius" Value="1" />
         </Style>
 
         <!-- Search Input -->

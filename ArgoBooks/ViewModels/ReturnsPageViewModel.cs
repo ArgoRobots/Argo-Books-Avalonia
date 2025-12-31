@@ -40,42 +40,15 @@ public partial class ReturnsPageViewModel : ViewModelBase
     #region Tabs
 
     [ObservableProperty]
-    private bool _isExpenseTabActive = true;
+    private int _selectedTabIndex;
 
-    [ObservableProperty]
-    private bool _isCustomerTabActive;
-
-    partial void OnIsExpenseTabActiveChanged(bool value)
+    partial void OnSelectedTabIndexChanged(int value)
     {
-        if (value)
-        {
-            IsCustomerTabActive = false;
-            CurrentPage = 1;
-            FilterReturns();
-        }
+        CurrentPage = 1;
+        FilterReturns();
     }
 
-    partial void OnIsCustomerTabActiveChanged(bool value)
-    {
-        if (value)
-        {
-            IsExpenseTabActive = false;
-            CurrentPage = 1;
-            FilterReturns();
-        }
-    }
-
-    [RelayCommand]
-    private void SwitchToExpenseTab()
-    {
-        IsExpenseTabActive = true;
-    }
-
-    [RelayCommand]
-    private void SwitchToCustomerTab()
-    {
-        IsCustomerTabActive = true;
-    }
+    public bool IsExpenseTabActive => SelectedTabIndex == 0;
 
     #endregion
 

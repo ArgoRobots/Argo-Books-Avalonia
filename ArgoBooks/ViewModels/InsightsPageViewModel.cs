@@ -50,6 +50,9 @@ public partial class InsightsPageViewModel : ViewModelBase
     [ObservableProperty]
     private string _lastUpdated = "Just now";
 
+    [ObservableProperty]
+    private bool _isRefreshing;
+
     #endregion
 
     #region Forecasted Growth
@@ -223,9 +226,20 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// Refreshes the insights data.
     /// </summary>
     [RelayCommand]
-    private void RefreshInsights()
+    private async Task RefreshInsightsAsync()
     {
-        // In a real implementation, this would call an AI service to regenerate insights
-        LastUpdated = DateTime.Now.ToString("h:mm tt");
+        if (IsRefreshing) return;
+
+        IsRefreshing = true;
+        try
+        {
+            // In a real implementation, this would call an AI service to regenerate insights
+            await Task.Delay(1500); // Simulate network delay
+            LastUpdated = DateTime.Now.ToString("h:mm tt");
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
     }
 }
