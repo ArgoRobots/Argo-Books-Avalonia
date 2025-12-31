@@ -1,6 +1,7 @@
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 
 namespace ArgoBooks.Controls;
 
@@ -37,6 +38,9 @@ public partial class ChartContextMenu : UserControl
 
     public static readonly StyledProperty<bool> ShowExportOptionsProperty =
         AvaloniaProperty.Register<ChartContextMenu, bool>(nameof(ShowExportOptions), true);
+
+    public static readonly StyledProperty<ICommand?> CloseCommandProperty =
+        AvaloniaProperty.Register<ChartContextMenu, ICommand?>(nameof(CloseCommand));
 
     #endregion
 
@@ -123,10 +127,36 @@ public partial class ChartContextMenu : UserControl
         set => SetValue(ShowExportOptionsProperty, value);
     }
 
+    /// <summary>
+    /// Gets or sets the command to close the context menu.
+    /// </summary>
+    public ICommand? CloseCommand
+    {
+        get => GetValue(CloseCommandProperty);
+        set => SetValue(CloseCommandProperty, value);
+    }
+
     #endregion
 
     public ChartContextMenu()
     {
         InitializeComponent();
+    }
+
+    /// <summary>
+    /// Handles pointer pressed on the overlay to close the context menu.
+    /// </summary>
+    private void OnOverlayPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (CloseCommand?.CanExecute(null) == true)
+        {
+            CloseCommand.Execute(null);
+        }
+        else
+        {
+            // Fallback: directly set IsOpen to false
+            IsOpen = false;
+        }
+        e.Handled = true;
     }
 }

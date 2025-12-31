@@ -7,7 +7,16 @@
              x:Class="ArgoBooks.Controls.ChartContextMenu"
              x:DataType="controls:ChartContextMenu">
 
-    <Border x:Name="MenuBorder"
+    <Panel>
+        <!-- Transparent overlay to capture clicks outside the menu -->
+        <Border x:Name="Overlay"
+                Background="Transparent"
+                IsVisible="{Binding IsOpen, RelativeSource={RelativeSource AncestorType=controls:ChartContextMenu}}"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                PointerPressed="OnOverlayPointerPressed" />
+
+        <Border x:Name="MenuBorder"
             Background="{DynamicResource SurfaceBrush}"
             BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="1"
@@ -111,4 +120,5 @@
             </StackPanel>
         </StackPanel>
     </Border>
+    </Panel>
 </UserControl>

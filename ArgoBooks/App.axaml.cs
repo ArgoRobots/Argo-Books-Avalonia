@@ -1411,7 +1411,7 @@ public partial class App : Application
                 else if (args.IsSuccess)
                 {
                     _mainWindowViewModel?.HideLoading();
-                    appShellViewModel.AddNotification("Success", "Chart exported to Google Sheets successfully.", NotificationType.Success);
+                    // No notification - the browser opens automatically
                 }
                 else if (!string.IsNullOrEmpty(args.ErrorMessage))
                 {

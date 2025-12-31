@@ -166,9 +166,9 @@
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
                     </UniformGrid>
 
-                    <!-- Charts Row 1: Purchases -->
+                    <!-- Charts Row 1: Profit Analysis -->
                     <Grid ColumnDefinitions="*,*" Height="300">
-                        <!-- Purchase Trends Chart -->
+                        <!-- Profit Trends Chart -->
                         <Border Grid.Column="0"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
@@ -180,7 +180,7 @@
                                         Padding="20,16"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Purchase Trends"
+                                    <TextBlock Text="Profit Over Time"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                HorizontalAlignment="Center"
@@ -189,16 +189,16 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesTrendsSeries}"
-                                                            XAxes="{Binding ExpensesTrendsXAxes}"
-                                                            YAxes="{Binding ExpensesTrendsYAxes}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ProfitTrendsSeries}"
+                                                            XAxes="{Binding ProfitTrendsXAxes}"
+                                                            YAxes="{Binding ProfitTrendsYAxes}"
                                                             ZoomMode="X"
-                                                            IsVisible="{Binding HasExpensesTrendsData}" />
+                                                            IsVisible="{Binding HasProfitTrendsData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
-                                                IsVisible="{Binding !HasExpensesTrendsData}">
-                                            <TextBlock Text="No purchase data available"
+                                                IsVisible="{Binding !HasProfitTrendsData}">
+                                            <TextBlock Text="No profit data available"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
                                                        FontSize="14"
@@ -209,7 +209,7 @@
                             </Grid>
                         </Border>
 
-                        <!-- Purchase Distribution Chart -->
+                        <!-- Sales vs Expenses Chart -->
                         <Border Grid.Column="1"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
@@ -221,7 +221,7 @@
                                         Padding="20,16"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Purchase Distribution"
+                                    <TextBlock Text="Sales vs Expenses"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                HorizontalAlignment="Center"
@@ -229,16 +229,17 @@
                                 </Border>
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
-                                        <!-- Pie Chart with data -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesDistributionSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasExpensesDistributionData}" />
+                                        <!-- Chart with data -->
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding SalesVsExpensesSeries}"
+                                                            XAxes="{Binding SalesVsExpensesXAxes}"
+                                                            YAxes="{Binding SalesVsExpensesYAxes}"
+                                                            ZoomMode="X"
+                                                            IsVisible="{Binding HasSalesVsExpensesData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
-                                                IsVisible="{Binding !HasExpensesDistributionData}">
-                                            <TextBlock Text="No distribution data available"
+                                                IsVisible="{Binding !HasSalesVsExpensesData}">
+                                            <TextBlock Text="No comparison data available"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
                                                        FontSize="14"
@@ -334,9 +335,9 @@
                         </Border>
                     </Grid>
 
-                    <!-- Charts Row 3: Profit Analysis -->
+                    <!-- Charts Row 3: Purchases -->
                     <Grid ColumnDefinitions="*,*" Height="300">
-                        <!-- Profit Trends Chart -->
+                        <!-- Purchase Trends Chart -->
                         <Border Grid.Column="0"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
@@ -348,7 +349,7 @@
                                         Padding="20,16"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Profit Over Time"
+                                    <TextBlock Text="Purchase Trends"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                HorizontalAlignment="Center"
@@ -357,16 +358,16 @@
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
                                         <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ProfitTrendsSeries}"
-                                                            XAxes="{Binding ProfitTrendsXAxes}"
-                                                            YAxes="{Binding ProfitTrendsYAxes}"
+                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesTrendsSeries}"
+                                                            XAxes="{Binding ExpensesTrendsXAxes}"
+                                                            YAxes="{Binding ExpensesTrendsYAxes}"
                                                             ZoomMode="X"
-                                                            IsVisible="{Binding HasProfitTrendsData}" />
+                                                            IsVisible="{Binding HasExpensesTrendsData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
-                                                IsVisible="{Binding !HasProfitTrendsData}">
-                                            <TextBlock Text="No profit data available"
+                                                IsVisible="{Binding !HasExpensesTrendsData}">
+                                            <TextBlock Text="No purchase data available"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
                                                        FontSize="14"
@@ -377,7 +378,7 @@
                             </Grid>
                         </Border>
 
-                        <!-- Sales vs Expenses Chart -->
+                        <!-- Purchase Distribution Chart -->
                         <Border Grid.Column="1"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
@@ -389,7 +390,7 @@
                                         Padding="20,16"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Sales vs Expenses"
+                                    <TextBlock Text="Purchase Distribution"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                HorizontalAlignment="Center"
@@ -397,17 +398,16 @@
                                 </Border>
                                 <Border Grid.Row="1" Padding="10">
                                     <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding SalesVsExpensesSeries}"
-                                                            XAxes="{Binding SalesVsExpensesXAxes}"
-                                                            YAxes="{Binding SalesVsExpensesYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasSalesVsExpensesData}" />
+                                        <!-- Pie Chart with data -->
+                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesDistributionSeries}"
+                                                      LegendPosition="Right"
+                                                      LegendTextPaint="{Binding LegendTextPaint}"
+                                                      IsVisible="{Binding HasExpensesDistributionData}" />
                                         <!-- No data placeholder -->
                                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                                 CornerRadius="8"
-                                                IsVisible="{Binding !HasSalesVsExpensesData}">
-                                            <TextBlock Text="No comparison data available"
+                                                IsVisible="{Binding !HasExpensesDistributionData}">
+                                            <TextBlock Text="No distribution data available"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
                                                        FontSize="14"
@@ -2002,7 +2002,8 @@
                                SaveChartAsImageCommand="{Binding SaveChartAsImageCommand}"
                                ExportToGoogleSheetsCommand="{Binding ExportToGoogleSheetsCommand}"
                                ExportToExcelCommand="{Binding ExportToExcelCommand}"
-                               ResetChartZoomCommand="{Binding ResetChartZoomCommand}" />
+                               ResetChartZoomCommand="{Binding ResetChartZoomCommand}"
+                               CloseCommand="{Binding HideChartContextMenuCommand}" />
     </Panel>
 
     <UserControl.Styles>

@@ -27,6 +27,12 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
     [ObservableProperty]
     private bool _showChartExportOptions = true;
 
+    /// <summary>
+    /// Gets or sets the identifier of the currently selected chart for context menu operations.
+    /// </summary>
+    [ObservableProperty]
+    private string _selectedChartId = string.Empty;
+
     #endregion
 
     #region Chart Context Menu Methods
@@ -36,12 +42,34 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
     /// </summary>
     /// <param name="x">The X coordinate.</param>
     /// <param name="y">The Y coordinate.</param>
+    /// <param name="chartId">The identifier of the chart that was clicked.</param>
     /// <param name="isPieChart">True if the chart is a pie chart (hides reset zoom).</param>
     /// <param name="isGeoMap">True if the chart is a geo map (only shows save as image).</param>
-    public void ShowChartContextMenu(double x, double y, bool isPieChart = false, bool isGeoMap = false)
+    /// <param name="parentWidth">The width of the parent container for bounds checking.</param>
+    /// <param name="parentHeight">The height of the parent container for bounds checking.</param>
+    public void ShowChartContextMenu(double x, double y, string chartId = "", bool isPieChart = false, bool isGeoMap = false, double parentWidth = 0, double parentHeight = 0)
     {
-        ChartContextMenuX = x;
-        ChartContextMenuY = y;
+        // Menu dimensions (approximate)
+        const double menuWidth = 220;
+        const double menuHeight = 180;
+
+        // Adjust position to prevent overflow
+        double adjustedX = x;
+        double adjustedY = y;
+
+        if (parentWidth > 0 && x + menuWidth > parentWidth)
+        {
+            adjustedX = Math.Max(0, parentWidth - menuWidth - 10);
+        }
+
+        if (parentHeight > 0 && y + menuHeight > parentHeight)
+        {
+            adjustedY = Math.Max(0, parentHeight - menuHeight - 10);
+        }
+
+        ChartContextMenuX = adjustedX;
+        ChartContextMenuY = adjustedY;
+        SelectedChartId = chartId;
         ShowChartResetZoom = !isPieChart && !isGeoMap;
         ShowChartExportOptions = !isGeoMap;
         IsChartContextMenuOpen = true;
