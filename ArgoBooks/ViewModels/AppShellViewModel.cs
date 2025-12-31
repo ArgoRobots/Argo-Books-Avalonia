@@ -334,6 +334,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up user panel's open settings to open settings modal
         UserPanelViewModel.OpenSettingsRequested += (_, _) => SettingsModalViewModel.OpenCommand.Execute(null);
 
+        // Wire up user panel's my plan to open upgrade modal
+        UserPanelViewModel.OpenMyPlanRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
+
         // Wire up notification panel's settings to open settings modal at notifications tab
         NotificationPanelViewModel.OpenNotificationSettingsRequested += (_, _) => SettingsModalViewModel.OpenWithTab(2);
 
@@ -354,6 +357,8 @@ public partial class AppShellViewModel : ViewModelBase
         {
             SidebarViewModel.HasPremium = true;
             UpgradeModalViewModel.HasPremium = true;
+            HeaderViewModel.HasPremium = true;
+            UserPanelViewModel.HasPremium = true;
         };
 
         // Wire up file menu's create new company to open the wizard
@@ -598,6 +603,8 @@ public partial class AppShellViewModel : ViewModelBase
         SettingsModalViewModel.HasStandard = hasStandard;
         UpgradeModalViewModel.HasStandard = hasStandard;
         UpgradeModalViewModel.HasPremium = hasPremium;
+        HeaderViewModel.HasPremium = hasPremium;
+        UserPanelViewModel.HasPremium = hasPremium;
     }
 
     /// <summary>

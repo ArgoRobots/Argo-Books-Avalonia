@@ -73,43 +73,49 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private bool _hasPremium;
 
     /// <summary>
-    /// Gets whether the Standard button should be enabled (not already on Standard or Premium plan).
+    /// Gets whether to show "Active" badge on Standard card (has Standard but not Premium).
     /// </summary>
-    public bool CanSelectStandard => !HasStandard && !HasPremium;
+    public bool ShowStandardActive => HasStandard && !HasPremium;
 
     /// <summary>
-    /// Gets whether the Premium button should be enabled (not already on Premium plan).
+    /// Gets whether to show "Included" text on Standard card (has Premium).
     /// </summary>
-    public bool CanSelectPremium => !HasPremium;
+    public bool ShowStandardIncluded => HasPremium;
+
+    /// <summary>
+    /// Gets whether to show Select Standard button (no plan at all).
+    /// </summary>
+    public bool ShowSelectStandard => !HasStandard && !HasPremium;
+
+    /// <summary>
+    /// Gets whether to show "Active" badge on Premium card.
+    /// </summary>
+    public bool ShowPremiumActive => HasPremium;
+
+    /// <summary>
+    /// Gets whether to show Select Premium button (doesn't have Premium).
+    /// </summary>
+    public bool ShowSelectPremium => !HasPremium;
 
     /// <summary>
     /// Gets whether to show the cancel subscription button for Premium.
     /// </summary>
     public bool ShowCancelPremium => HasPremium;
 
-    /// <summary>
-    /// Gets the text for the Standard plan button.
-    /// </summary>
-    public string StandardButtonText => HasStandard || HasPremium ? "Current Plan" : "Select Standard";
-
-    /// <summary>
-    /// Gets the text for the Premium plan button.
-    /// </summary>
-    public string PremiumButtonText => HasPremium ? "Current Plan" : "Select Premium";
-
     partial void OnHasStandardChanged(bool value)
     {
-        OnPropertyChanged(nameof(CanSelectStandard));
-        OnPropertyChanged(nameof(StandardButtonText));
+        OnPropertyChanged(nameof(ShowStandardActive));
+        OnPropertyChanged(nameof(ShowSelectStandard));
     }
 
     partial void OnHasPremiumChanged(bool value)
     {
-        OnPropertyChanged(nameof(CanSelectStandard));
-        OnPropertyChanged(nameof(CanSelectPremium));
+        OnPropertyChanged(nameof(ShowStandardActive));
+        OnPropertyChanged(nameof(ShowStandardIncluded));
+        OnPropertyChanged(nameof(ShowSelectStandard));
+        OnPropertyChanged(nameof(ShowPremiumActive));
+        OnPropertyChanged(nameof(ShowSelectPremium));
         OnPropertyChanged(nameof(ShowCancelPremium));
-        OnPropertyChanged(nameof(StandardButtonText));
-        OnPropertyChanged(nameof(PremiumButtonText));
     }
 
     #endregion

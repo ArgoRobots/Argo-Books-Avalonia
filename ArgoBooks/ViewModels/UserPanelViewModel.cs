@@ -50,6 +50,13 @@ public partial class UserPanelViewModel : ViewModelBase
 
     #endregion
 
+    #region Plan Status
+
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    #endregion
+
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
@@ -137,6 +144,16 @@ public partial class UserPanelViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Opens the My Plan / Upgrade modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenMyPlan()
+    {
+        Close();
+        OpenMyPlanRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// Opens application settings.
     /// </summary>
     [RelayCommand]
@@ -191,6 +208,7 @@ public partial class UserPanelViewModel : ViewModelBase
     #region Events
 
     public event EventHandler? OpenProfileRequested;
+    public event EventHandler? OpenMyPlanRequested;
     public event EventHandler? OpenSettingsRequested;
     public event EventHandler? OpenHelpRequested;
     public event EventHandler? SwitchAccountRequested;
