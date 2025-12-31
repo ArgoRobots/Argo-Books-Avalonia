@@ -57,7 +57,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     private async Task ShowContinueButtonAfterDelayAsync()
     {
-        await Task.Delay(2000);
+        await Task.Delay(1500);
         if (IsVerificationSuccess)
         {
             ShowContinueButton = true;
