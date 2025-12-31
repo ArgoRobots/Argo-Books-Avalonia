@@ -240,43 +240,29 @@
                 <!-- Expenses Overview Chart -->
                 <Border Grid.Column="0"
                         Classes="card"
+                        Padding="8"
                         Margin="0,0,12,0">
-                    <Grid RowDefinitions="Auto,*">
-                        <Border Grid.Row="0"
-                                Padding="20,16"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,0,0,1">
-                            <TextBlock Text="{Binding ExpensesChartTitle}"
-                                       FontSize="16"
-                                       FontWeight="SemiBold"
+                    <Grid>
+                        <!-- Chart with data -->
+                        <lvc:CartesianChart
+                            x:Name="ExpensesChart"
+                            Title="{Binding ExpensesChartTitleVisual}"
+                            Series="{Binding ExpensesChartSeries}"
+                            XAxes="{Binding ExpensesChartXAxes}"
+                            YAxes="{Binding ExpensesChartYAxes}"
+                            TooltipPosition="Top"
+                            IsVisible="{Binding HasExpensesChartData}"
+                            PointerPressed="OnChartPointerPressed" />
+
+                        <!-- Empty state placeholder -->
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                IsVisible="{Binding !HasExpensesChartData}">
+                            <TextBlock Text="No expenses data"
                                        HorizontalAlignment="Center"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                        </Border>
-                        <Border Grid.Row="1" Padding="8">
-                            <Grid>
-                                <!-- Chart with data -->
-                                <lvc:CartesianChart
-                                    x:Name="ExpensesChart"
-                                    Series="{Binding ExpensesChartSeries}"
-                                    XAxes="{Binding ExpensesChartXAxes}"
-                                    YAxes="{Binding ExpensesChartYAxes}"
-                                    ZoomMode="Both"
-                                    TooltipPosition="Top"
-                                    IsVisible="{Binding HasExpensesChartData}"
-                                    PointerPressed="OnChartPointerPressed" />
-
-                                <!-- Empty state placeholder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasExpensesChartData}">
-                                    <TextBlock Text="No expenses data"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
-
-                            </Grid>
+                                       VerticalAlignment="Center"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                         </Border>
                     </Grid>
                 </Border>
@@ -284,37 +270,25 @@
                 <!-- Expense Breakdown Chart -->
                 <Border Grid.Column="1"
                         Classes="card"
+                        Padding="20"
                         Margin="12,0,0,0">
-                    <Grid RowDefinitions="Auto,*">
-                        <Border Grid.Row="0"
-                                Padding="20,16"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,0,0,1">
-                            <TextBlock Text="Distribution of expenses"
-                                       FontSize="16"
-                                       FontWeight="SemiBold"
+                    <Panel>
+                        <lvc:PieChart x:Name="ExpenseDistributionChart"
+                                      Title="{Binding ExpenseDistributionChartTitle}"
+                                      Series="{Binding ExpenseDistributionSeries}"
+                                      LegendTextPaint="{Binding LegendTextPaint}"
+                                      IsVisible="{Binding HasExpenseDistributionData}"
+                                      PointerPressed="OnChartPointerPressed" />
+                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                CornerRadius="8"
+                                IsVisible="{Binding !HasExpenseDistributionData}">
+                            <TextBlock Text="No expense data available"
                                        HorizontalAlignment="Center"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                       VerticalAlignment="Center"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                         </Border>
-                        <Border Grid.Row="1" Padding="20">
-                            <Panel>
-                                <lvc:PieChart x:Name="ExpenseDistributionChart"
-                                              Series="{Binding ExpenseDistributionSeries}"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              IsVisible="{Binding HasExpenseDistributionData}"
-                                              PointerPressed="OnChartPointerPressed" />
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        IsVisible="{Binding !HasExpenseDistributionData}">
-                                    <TextBlock Text="No expense data available"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </Border>
-                            </Panel>
-                        </Border>
-                    </Grid>
+                    </Panel>
                 </Border>
             </Grid>
 

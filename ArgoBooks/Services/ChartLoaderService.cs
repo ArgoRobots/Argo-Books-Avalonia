@@ -4,8 +4,10 @@ using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
+using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
+using LiveChartsCore.SkiaSharpView.VisualElements;
 using SkiaSharp;
 
 namespace ArgoBooks.Services;
@@ -39,6 +41,24 @@ public class ChartLoaderService
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
         var textColor = isDarkTheme ? SKColor.Parse("#F9FAFB") : SKColor.Parse("#1F2937");
         return new SolidColorPaint(textColor) { FontFamily = "Segoe UI" };
+    }
+
+    /// <summary>
+    /// Creates a chart title visual element with consistent styling.
+    /// </summary>
+    /// <param name="text">The title text.</param>
+    /// <returns>A configured LabelVisual for use as a chart title.</returns>
+    public static LabelVisual CreateChartTitle(string text)
+    {
+        var isDarkTheme = ThemeService.Instance.IsDarkTheme;
+        var textColor = isDarkTheme ? SKColor.Parse("#F9FAFB") : SKColor.Parse("#1F2937");
+        return new LabelVisual
+        {
+            Text = text,
+            TextSize = 16,
+            Padding = new LiveChartsCore.Drawing.Padding(15, 12),
+            Paint = new SolidColorPaint(textColor) { FontFamily = "Segoe UI", SKFontStyle = new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
+        };
     }
 
     // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap

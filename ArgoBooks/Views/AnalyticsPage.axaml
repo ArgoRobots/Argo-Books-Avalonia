@@ -174,39 +174,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Profit Over Time"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding ProfitOverTimeTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding ProfitTrendsSeries}"
+                                                    XAxes="{Binding ProfitTrendsXAxes}"
+                                                    YAxes="{Binding ProfitTrendsYAxes}"
+                                                    IsVisible="{Binding HasProfitTrendsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasProfitTrendsData}">
+                                    <TextBlock Text="No profit data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ProfitTrendsSeries}"
-                                                            XAxes="{Binding ProfitTrendsXAxes}"
-                                                            YAxes="{Binding ProfitTrendsYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasProfitTrendsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasProfitTrendsData}">
-                                            <TextBlock Text="No profit data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Sales vs Expenses Chart -->
@@ -215,39 +203,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Sales vs Expenses"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding SalesVsExpensesTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding SalesVsExpensesSeries}"
+                                                    XAxes="{Binding SalesVsExpensesXAxes}"
+                                                    YAxes="{Binding SalesVsExpensesYAxes}"
+                                                    IsVisible="{Binding HasSalesVsExpensesData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasSalesVsExpensesData}">
+                                    <TextBlock Text="No comparison data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding SalesVsExpensesSeries}"
-                                                            XAxes="{Binding SalesVsExpensesXAxes}"
-                                                            YAxes="{Binding SalesVsExpensesYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasSalesVsExpensesData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasSalesVsExpensesData}">
-                                            <TextBlock Text="No comparison data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -259,39 +235,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Sales Trends"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding SalesTrendsTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding RevenueTrendsSeries}"
+                                                    XAxes="{Binding RevenueTrendsXAxes}"
+                                                    YAxes="{Binding RevenueTrendsYAxes}"
+                                                    IsVisible="{Binding HasRevenueTrendsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasRevenueTrendsData}">
+                                    <TextBlock Text="No sales data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding RevenueTrendsSeries}"
-                                                            XAxes="{Binding RevenueTrendsXAxes}"
-                                                            YAxes="{Binding RevenueTrendsYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasRevenueTrendsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasRevenueTrendsData}">
-                                            <TextBlock Text="No sales data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Sales Distribution Chart -->
@@ -300,38 +264,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Sales Distribution"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart with data -->
+                                <lvc:PieChart Title="{Binding SalesDistributionTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding RevenueDistributionSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasRevenueDistributionData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasRevenueDistributionData}">
+                                    <TextBlock Text="No distribution data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart with data -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding RevenueDistributionSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasRevenueDistributionData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasRevenueDistributionData}">
-                                            <TextBlock Text="No distribution data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -343,39 +296,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Purchase Trends"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding PurchaseTrendsTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding ExpensesTrendsSeries}"
+                                                    XAxes="{Binding ExpensesTrendsXAxes}"
+                                                    YAxes="{Binding ExpensesTrendsYAxes}"
+                                                    IsVisible="{Binding HasExpensesTrendsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasExpensesTrendsData}">
+                                    <TextBlock Text="No purchase data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesTrendsSeries}"
-                                                            XAxes="{Binding ExpensesTrendsXAxes}"
-                                                            YAxes="{Binding ExpensesTrendsYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasExpensesTrendsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasExpensesTrendsData}">
-                                            <TextBlock Text="No purchase data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Purchase Distribution Chart -->
@@ -384,38 +325,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Purchase Distribution"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart with data -->
+                                <lvc:PieChart Title="{Binding PurchaseDistributionTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding ExpensesDistributionSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasExpensesDistributionData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasExpensesDistributionData}">
+                                    <TextBlock Text="No distribution data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart with data -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesDistributionSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasExpensesDistributionData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasExpensesDistributionData}">
-                                            <TextBlock Text="No distribution data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
                 </StackPanel>
@@ -431,38 +361,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Countries of Origin"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart with data -->
+                                <lvc:PieChart Title="{Binding CountriesOfOriginTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding CountriesOfOriginSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasCountriesOfOriginData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasCountriesOfOriginData}">
+                                    <TextBlock Text="No country data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart with data -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CountriesOfOriginSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasCountriesOfOriginData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasCountriesOfOriginData}">
-                                            <TextBlock Text="No country data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Companies of Origin Chart -->
@@ -471,38 +390,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Companies of Origin"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart with data -->
+                                <lvc:PieChart Title="{Binding CompaniesOfOriginTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding CompaniesOfOriginSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasCompaniesOfOriginData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasCompaniesOfOriginData}">
+                                    <TextBlock Text="No company data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart with data -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CompaniesOfOriginSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasCompaniesOfOriginData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasCompaniesOfOriginData}">
-                                            <TextBlock Text="No company data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -514,38 +422,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Countries of Destination"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart with data -->
+                                <lvc:PieChart Title="{Binding CountriesOfDestinationTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding CountriesOfDestinationSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasCountriesOfDestinationData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasCountriesOfDestinationData}">
+                                    <TextBlock Text="No destination data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart with data -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CountriesOfDestinationSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasCountriesOfDestinationData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasCountriesOfDestinationData}">
-                                            <TextBlock Text="No destination data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Companies of Destination Chart -->
@@ -554,38 +451,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Companies of Destination"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart with data -->
+                                <lvc:PieChart Title="{Binding CompaniesOfDestinationTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding CompaniesOfDestinationSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasCompaniesOfDestinationData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasCompaniesOfDestinationData}">
+                                    <TextBlock Text="No company data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart with data -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CompaniesOfDestinationSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasCompaniesOfDestinationData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasCompaniesOfDestinationData}">
-                                            <TextBlock Text="No company data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -689,38 +575,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Transactions by Accountant"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart with data -->
+                                <lvc:PieChart Title="{Binding TransactionsByAccountantTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding AccountantsTransactionsSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasAccountantsTransactionsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasAccountantsTransactionsData}">
+                                    <TextBlock Text="No accountant data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart with data -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding AccountantsTransactionsSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasAccountantsTransactionsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasAccountantsTransactionsData}">
-                                            <TextBlock Text="No accountant data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Workload Distribution -->
@@ -729,39 +604,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Workload Distribution"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding WorkloadDistributionTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding TotalTransactionsSeries}"
+                                                    XAxes="{Binding TotalTransactionsXAxes}"
+                                                    YAxes="{Binding TotalTransactionsYAxes}"
+                                                    IsVisible="{Binding HasTotalTransactionsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasTotalTransactionsData}">
+                                    <TextBlock Text="No workload data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding TotalTransactionsSeries}"
-                                                            XAxes="{Binding TotalTransactionsXAxes}"
-                                                            YAxes="{Binding TotalTransactionsYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasTotalTransactionsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasTotalTransactionsData}">
-                                            <TextBlock Text="No workload data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -770,39 +633,27 @@
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="12"
+                            Padding="10"
                             Height="300">
-                        <Grid RowDefinitions="Auto,*">
-                            <Border Grid.Row="0"
-                                    Padding="20,16"
-                                    BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="0,0,0,1">
-                                <TextBlock Text="Processing Time Trends"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
+                        <Panel>
+                            <!-- Chart with data -->
+                            <lvc:CartesianChart Title="{Binding ProcessingTimeTrendsTitle}"
+                                                PointerPressed="OnChartPointerPressed"
+                                                Series="{Binding AvgTransactionValueSeries}"
+                                                XAxes="{Binding AvgTransactionValueXAxes}"
+                                                YAxes="{Binding AvgTransactionValueYAxes}"
+                                                IsVisible="{Binding HasAvgTransactionValueData}" />
+                            <!-- No data placeholder -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    IsVisible="{Binding !HasAvgTransactionValueData}">
+                                <TextBlock Text="No processing data available"
                                            HorizontalAlignment="Center"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                           VerticalAlignment="Center"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
                             </Border>
-                            <Border Grid.Row="1" Padding="10">
-                                <Panel>
-                                    <!-- Chart with data -->
-                                    <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding AvgTransactionValueSeries}"
-                                                        XAxes="{Binding AvgTransactionValueXAxes}"
-                                                        YAxes="{Binding AvgTransactionValueYAxes}"
-                                                        ZoomMode="X"
-                                                        IsVisible="{Binding HasAvgTransactionValueData}" />
-                                    <!-- No data placeholder -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            IsVisible="{Binding !HasAvgTransactionValueData}">
-                                        <TextBlock Text="No processing data available"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontSize="14"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    </Border>
-                                </Panel>
-                            </Border>
-                        </Grid>
+                        </Panel>
                     </Border>
                 </StackPanel>
 
@@ -852,39 +703,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Average Transaction Value"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding AverageTransactionValueTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding AvgTransactionValueSeries}"
+                                                    XAxes="{Binding AvgTransactionValueXAxes}"
+                                                    YAxes="{Binding AvgTransactionValueYAxes}"
+                                                    IsVisible="{Binding HasAvgTransactionValueData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasAvgTransactionValueData}">
+                                    <TextBlock Text="No transaction data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding AvgTransactionValueSeries}"
-                                                            XAxes="{Binding AvgTransactionValueXAxes}"
-                                                            YAxes="{Binding AvgTransactionValueYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasAvgTransactionValueData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasAvgTransactionValueData}">
-                                            <TextBlock Text="No transaction data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Total Transactions Over Time -->
@@ -893,39 +732,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Total Transactions"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding TotalTransactionsTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding TotalTransactionsSeries}"
+                                                    XAxes="{Binding TotalTransactionsXAxes}"
+                                                    YAxes="{Binding TotalTransactionsYAxes}"
+                                                    IsVisible="{Binding HasTotalTransactionsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasTotalTransactionsData}">
+                                    <TextBlock Text="No transaction data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding TotalTransactionsSeries}"
-                                                            XAxes="{Binding TotalTransactionsXAxes}"
-                                                            YAxes="{Binding TotalTransactionsYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasTotalTransactionsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasTotalTransactionsData}">
-                                            <TextBlock Text="No transaction data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -937,39 +764,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Average Shipping Costs"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding AverageShippingCostsTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding AvgShippingCostsSeries}"
+                                                    XAxes="{Binding AvgShippingCostsXAxes}"
+                                                    YAxes="{Binding AvgShippingCostsYAxes}"
+                                                    IsVisible="{Binding HasAvgShippingCostsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasAvgShippingCostsData}">
+                                    <TextBlock Text="No shipping data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding AvgShippingCostsSeries}"
-                                                            XAxes="{Binding AvgShippingCostsXAxes}"
-                                                            YAxes="{Binding AvgShippingCostsYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasAvgShippingCostsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasAvgShippingCostsData}">
-                                            <TextBlock Text="No shipping data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Growth Rates -->
@@ -978,39 +793,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Growth Rates"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding GrowthRatesTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding GrowthRatesSeries}"
+                                                    XAxes="{Binding GrowthRatesXAxes}"
+                                                    YAxes="{Binding GrowthRatesYAxes}"
+                                                    IsVisible="{Binding HasGrowthRatesData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasGrowthRatesData}">
+                                    <TextBlock Text="No growth data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding GrowthRatesSeries}"
-                                                            XAxes="{Binding GrowthRatesXAxes}"
-                                                            YAxes="{Binding GrowthRatesYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasGrowthRatesData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasGrowthRatesData}">
-                                            <TextBlock Text="No growth data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
                 </StackPanel>
@@ -1061,38 +864,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Top Customers by Revenue"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart - using Companies of Origin for top customers -->
+                                <lvc:PieChart Title="{Binding TopCustomersByRevenueTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding CompaniesOfOriginSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasCompaniesOfOriginData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasCompaniesOfOriginData}">
+                                    <TextBlock Text="No customer data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart - using Companies of Origin for top customers -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CompaniesOfOriginSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasCompaniesOfOriginData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasCompaniesOfOriginData}">
-                                            <TextBlock Text="No customer data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Customer Payment Status -->
@@ -1101,36 +893,25 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Customer Payment Status"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <lvc:PieChart Title="{Binding CustomerPaymentStatusTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding CustomerPaymentStatusSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasCustomerPaymentStatusData}" />
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasCustomerPaymentStatusData}">
+                                    <TextBlock Text="No payment data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding CustomerPaymentStatusSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasCustomerPaymentStatusData}" />
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasCustomerPaymentStatusData}">
-                                            <TextBlock Text="No payment data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -1142,39 +923,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Customer Growth"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart - using Growth Rates -->
+                                <lvc:CartesianChart Title="{Binding CustomerGrowthTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding GrowthRatesSeries}"
+                                                    XAxes="{Binding GrowthRatesXAxes}"
+                                                    YAxes="{Binding GrowthRatesYAxes}"
+                                                    IsVisible="{Binding HasGrowthRatesData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasGrowthRatesData}">
+                                    <TextBlock Text="No growth data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart - using Growth Rates -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding GrowthRatesSeries}"
-                                                            XAxes="{Binding GrowthRatesXAxes}"
-                                                            YAxes="{Binding GrowthRatesYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasGrowthRatesData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasGrowthRatesData}">
-                                            <TextBlock Text="No growth data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Customer Lifetime Value -->
@@ -1183,39 +952,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Customer Lifetime Value"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart - using Avg Transaction Value -->
+                                <lvc:CartesianChart Title="{Binding CustomerLifetimeValueTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding AvgTransactionValueSeries}"
+                                                    XAxes="{Binding AvgTransactionValueXAxes}"
+                                                    YAxes="{Binding AvgTransactionValueYAxes}"
+                                                    IsVisible="{Binding HasAvgTransactionValueData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasAvgTransactionValueData}">
+                                    <TextBlock Text="No value data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart - using Avg Transaction Value -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding AvgTransactionValueSeries}"
-                                                            XAxes="{Binding AvgTransactionValueXAxes}"
-                                                            YAxes="{Binding AvgTransactionValueYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasAvgTransactionValueData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasAvgTransactionValueData}">
-                                            <TextBlock Text="No value data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -1227,46 +984,25 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Grid.Column="0"
-                                                   Text="Active vs Inactive Customers"
-                                                   FontSize="16"
-                                                   FontWeight="SemiBold"
-                                                   HorizontalAlignment="Center"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <Button Grid.Column="1"
-                                                Classes="info-button"
-                                                Command="{Binding ShowCustomerActivityInfoCommand}"
-                                                ToolTip.Tip="What counts as active?">
-                                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
-                                                      Width="18" Height="18" />
-                                        </Button>
-                                    </Grid>
+                            <Panel>
+                                <lvc:PieChart Title="{Binding ActiveVsInactiveCustomersTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding ActiveInactiveCustomersSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasActiveInactiveCustomersData}" />
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasActiveInactiveCustomersData}">
+                                    <TextBlock Text="No customer activity data"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ActiveInactiveCustomersSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasActiveInactiveCustomersData}" />
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasActiveInactiveCustomersData}">
-                                            <TextBlock Text="No customer activity data"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Rentals per Customer -->
@@ -1275,39 +1011,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Rentals per Customer"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart - using Total Transactions -->
+                                <lvc:CartesianChart Title="{Binding RentalsPerCustomerTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding TotalTransactionsSeries}"
+                                                    XAxes="{Binding TotalTransactionsXAxes}"
+                                                    YAxes="{Binding TotalTransactionsYAxes}"
+                                                    IsVisible="{Binding HasTotalTransactionsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasTotalTransactionsData}">
+                                    <TextBlock Text="No rental data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart - using Total Transactions -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding TotalTransactionsSeries}"
-                                                            XAxes="{Binding TotalTransactionsXAxes}"
-                                                            YAxes="{Binding TotalTransactionsYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasTotalTransactionsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasTotalTransactionsData}">
-                                            <TextBlock Text="No rental data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
                 </StackPanel>
@@ -1358,39 +1082,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Returns Over Time"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding ReturnsOverTimeTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding ReturnsOverTimeSeries}"
+                                                    XAxes="{Binding ReturnsOverTimeXAxes}"
+                                                    YAxes="{Binding ReturnsOverTimeYAxes}"
+                                                    IsVisible="{Binding HasReturnsOverTimeData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasReturnsOverTimeData}">
+                                    <TextBlock Text="No returns data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ReturnsOverTimeSeries}"
-                                                            XAxes="{Binding ReturnsOverTimeXAxes}"
-                                                            YAxes="{Binding ReturnsOverTimeYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasReturnsOverTimeData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasReturnsOverTimeData}">
-                                            <TextBlock Text="No returns data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Return Reasons -->
@@ -1399,38 +1111,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Return Reasons"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart with data -->
+                                <lvc:PieChart Title="{Binding ReturnReasonsTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding ReturnReasonsSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasReturnReasonsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasReturnReasonsData}">
+                                    <TextBlock Text="No return reasons data"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart with data -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ReturnReasonsSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasReturnReasonsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasReturnReasonsData}">
-                                            <TextBlock Text="No return reasons data"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -1442,39 +1143,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Financial Impact of Returns"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding FinancialImpactOfReturnsTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding ReturnFinancialImpactSeries}"
+                                                    XAxes="{Binding ReturnFinancialImpactXAxes}"
+                                                    YAxes="{Binding ReturnFinancialImpactYAxes}"
+                                                    IsVisible="{Binding HasReturnFinancialImpactData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasReturnFinancialImpactData}">
+                                    <TextBlock Text="No financial impact data"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding ReturnFinancialImpactSeries}"
-                                                            XAxes="{Binding ReturnFinancialImpactXAxes}"
-                                                            YAxes="{Binding ReturnFinancialImpactYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasReturnFinancialImpactData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasReturnFinancialImpactData}">
-                                            <TextBlock Text="No financial impact data"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Returns by Category -->
@@ -1483,38 +1172,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Returns by Category"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart - reusing Return Reasons -->
+                                <lvc:PieChart Title="{Binding ReturnsByCategoryTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding ReturnReasonsSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasReturnReasonsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasReturnReasonsData}">
+                                    <TextBlock Text="No category data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart - reusing Return Reasons -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ReturnReasonsSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasReturnReasonsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasReturnReasonsData}">
-                                            <TextBlock Text="No category data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -1526,38 +1204,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Returns by Product"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart - reusing Expense Distribution -->
+                                <lvc:PieChart Title="{Binding ReturnsByProductTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding ExpensesDistributionSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasExpensesDistributionData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasExpensesDistributionData}">
+                                    <TextBlock Text="No product data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart - reusing Expense Distribution -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesDistributionSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasExpensesDistributionData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasExpensesDistributionData}">
-                                            <TextBlock Text="No product data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Purchase vs Sale Returns -->
@@ -1566,39 +1233,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Purchase vs Sale Returns"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart - using Sales vs Expenses -->
+                                <lvc:CartesianChart Title="{Binding PurchaseVsSaleReturnsTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding SalesVsExpensesSeries}"
+                                                    XAxes="{Binding SalesVsExpensesXAxes}"
+                                                    YAxes="{Binding SalesVsExpensesYAxes}"
+                                                    IsVisible="{Binding HasSalesVsExpensesData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasSalesVsExpensesData}">
+                                    <TextBlock Text="No comparison data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart - using Sales vs Expenses -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding SalesVsExpensesSeries}"
-                                                            XAxes="{Binding SalesVsExpensesXAxes}"
-                                                            YAxes="{Binding SalesVsExpensesYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasSalesVsExpensesData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasSalesVsExpensesData}">
-                                            <TextBlock Text="No comparison data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
                 </StackPanel>
@@ -1649,39 +1304,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Losses Over Time"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding LossesOverTimeTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding LossesOverTimeSeries}"
+                                                    XAxes="{Binding LossesOverTimeXAxes}"
+                                                    YAxes="{Binding LossesOverTimeYAxes}"
+                                                    IsVisible="{Binding HasLossesOverTimeData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasLossesOverTimeData}">
+                                    <TextBlock Text="No losses data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding LossesOverTimeSeries}"
-                                                            XAxes="{Binding LossesOverTimeXAxes}"
-                                                            YAxes="{Binding LossesOverTimeYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasLossesOverTimeData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasLossesOverTimeData}">
-                                            <TextBlock Text="No losses data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Loss Reasons -->
@@ -1690,38 +1333,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Loss Reasons"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart - Loss Reasons -->
+                                <lvc:PieChart Title="{Binding LossReasonsTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding LossReasonsSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasLossReasonsData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasLossReasonsData}">
+                                    <TextBlock Text="No loss reasons data"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart - Loss Reasons -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding LossReasonsSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasLossReasonsData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasLossReasonsData}">
-                                            <TextBlock Text="No loss reasons data"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -1733,39 +1365,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Financial Impact of Losses"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart with data -->
+                                <lvc:CartesianChart Title="{Binding FinancialImpactOfLossesTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding LossFinancialImpactSeries}"
+                                                    XAxes="{Binding LossFinancialImpactXAxes}"
+                                                    YAxes="{Binding LossFinancialImpactYAxes}"
+                                                    IsVisible="{Binding HasLossFinancialImpactData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasLossFinancialImpactData}">
+                                    <TextBlock Text="No financial impact data"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart with data -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding LossFinancialImpactSeries}"
-                                                            XAxes="{Binding LossFinancialImpactXAxes}"
-                                                            YAxes="{Binding LossFinancialImpactYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasLossFinancialImpactData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasLossFinancialImpactData}">
-                                            <TextBlock Text="No financial impact data"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Losses by Category -->
@@ -1774,38 +1394,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Losses by Category"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart - reusing Expense Distribution -->
+                                <lvc:PieChart Title="{Binding LossesByCategoryTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding ExpensesDistributionSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasExpensesDistributionData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasExpensesDistributionData}">
+                                    <TextBlock Text="No category data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart - reusing Expense Distribution -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding ExpensesDistributionSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasExpensesDistributionData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasExpensesDistributionData}">
-                                            <TextBlock Text="No category data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
 
@@ -1817,38 +1426,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="0,0,12,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Losses by Product"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Pie Chart - Losses by Product -->
+                                <lvc:PieChart Title="{Binding LossesByProductTitle}"
+                                              PointerPressed="OnChartPointerPressed"
+                                              Series="{Binding LossesByProductSeries}"
+                                              LegendPosition="Right"
+                                              LegendTextPaint="{Binding LegendTextPaint}"
+                                              IsVisible="{Binding HasLossesByProductData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasLossesByProductData}">
+                                    <TextBlock Text="No product data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Pie Chart - Losses by Product -->
-                                        <lvc:PieChart PointerPressed="OnChartPointerPressed" Series="{Binding LossesByProductSeries}"
-                                                      LegendPosition="Right"
-                                                      LegendTextPaint="{Binding LegendTextPaint}"
-                                                      IsVisible="{Binding HasLossesByProductData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasLossesByProductData}">
-                                            <TextBlock Text="No product data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Purchase vs Sale Losses -->
@@ -1857,39 +1455,27 @@
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="12"
+                                Padding="10"
                                 Margin="12,0,0,0">
-                            <Grid RowDefinitions="Auto,*">
-                                <Border Grid.Row="0"
-                                        Padding="20,16"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Purchase vs Sale Losses"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"
+                            <Panel>
+                                <!-- Chart - using Sales vs Expenses -->
+                                <lvc:CartesianChart Title="{Binding PurchaseVsSaleLossesTitle}"
+                                                    PointerPressed="OnChartPointerPressed"
+                                                    Series="{Binding SalesVsExpensesSeries}"
+                                                    XAxes="{Binding SalesVsExpensesXAxes}"
+                                                    YAxes="{Binding SalesVsExpensesYAxes}"
+                                                    IsVisible="{Binding HasSalesVsExpensesData}" />
+                                <!-- No data placeholder -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        IsVisible="{Binding !HasSalesVsExpensesData}">
+                                    <TextBlock Text="No comparison data available"
                                                HorizontalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <Border Grid.Row="1" Padding="10">
-                                    <Panel>
-                                        <!-- Chart - using Sales vs Expenses -->
-                                        <lvc:CartesianChart PointerPressed="OnChartPointerPressed" Series="{Binding SalesVsExpensesSeries}"
-                                                            XAxes="{Binding SalesVsExpensesXAxes}"
-                                                            YAxes="{Binding SalesVsExpensesYAxes}"
-                                                            ZoomMode="X"
-                                                            IsVisible="{Binding HasSalesVsExpensesData}" />
-                                        <!-- No data placeholder -->
-                                        <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding !HasSalesVsExpensesData}">
-                                            <TextBlock Text="No comparison data available"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                    </Panel>
-                                </Border>
-                            </Grid>
+                            </Panel>
                         </Border>
                     </Grid>
                 </StackPanel>
