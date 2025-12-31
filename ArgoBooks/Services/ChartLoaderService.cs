@@ -605,7 +605,17 @@ public class ChartLoaderService
         var labels = Array.Empty<string>();
 
         if (companyData == null)
+        {
+            _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+            {
+                ChartTitle = "Sales vs Expenses",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Revenue"
+            };
             return (series, labels);
+        }
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
@@ -621,7 +631,17 @@ public class ChartLoaderService
         }
 
         if (months.Count == 0)
+        {
+            _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+            {
+                ChartTitle = "Sales vs Expenses",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Revenue"
+            };
             return (series, labels);
+        }
 
         labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
 
@@ -651,6 +671,19 @@ public class ChartLoaderService
             series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
             series.Add(CreateTimeSeries(expenseValues, "Expenses", ExpenseColor));
         }
+
+        // Store export data for multi-series chart
+        _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+        {
+            ChartTitle = "Sales vs Expenses",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = revenueValues,
+            SeriesName = "Revenue",
+            AdditionalSeries = [("Expenses", expenseValues)],
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels);
     }
@@ -866,13 +899,14 @@ public class ChartLoaderService
         }
 
         labels = growthLabels.ToArray();
+        var values = growthRates.ToArray();
 
         // Only add series if there's actual data (any non-zero growth rates)
         if (growthRates.Any(v => v != 0))
         {
             series.Add(new ColumnSeries<double>
             {
-                Values = growthRates.ToArray(),
+                Values = values,
                 Name = "Growth Rate %",
                 Fill = new SolidColorPaint(RevenueColor),
                 Stroke = null,
@@ -880,6 +914,18 @@ public class ChartLoaderService
                 Padding = 2
             });
         }
+
+        // Store export data
+        _chartExportDataByTitle["Growth Rates"] = new ChartExportData
+        {
+            ChartTitle = "Growth Rates",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = values,
+            SeriesName = "Growth Rate %",
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels);
     }
@@ -945,6 +991,18 @@ public class ChartLoaderService
             });
         }
 
+        // Store export data
+        _chartExportDataByTitle["Average Transaction Value"] = new ChartExportData
+        {
+            ChartTitle = "Average Transaction Value",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = avgValues,
+            SeriesName = "Avg Transaction",
+            StartDate = start,
+            EndDate = end
+        };
+
         return (series, labels);
     }
 
@@ -1003,6 +1061,18 @@ public class ChartLoaderService
                 Padding = 2
             });
         }
+
+        // Store export data
+        _chartExportDataByTitle["Total Transactions"] = new ChartExportData
+        {
+            ChartTitle = "Total Transactions",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = countValues,
+            SeriesName = "Transactions",
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels);
     }
@@ -1067,6 +1137,18 @@ public class ChartLoaderService
                 Padding = 2
             });
         }
+
+        // Store export data
+        _chartExportDataByTitle["Average Shipping Costs"] = new ChartExportData
+        {
+            ChartTitle = "Average Shipping Costs",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = avgShipping,
+            SeriesName = "Avg Shipping",
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels);
     }
@@ -1674,6 +1756,19 @@ public class ChartLoaderService
 
         series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor));
 
+        // Store export data
+        _chartExportDataByTitle["Returns Over Time"] = new ChartExportData
+        {
+            ChartTitle = "Returns Over Time",
+            ChartType = ChartType.Expense,
+            Labels = labels,
+            Values = values,
+            SeriesName = "Returns",
+            TotalValue = totalReturns,
+            StartDate = start,
+            EndDate = end
+        };
+
         return (series, labels, dates, totalReturns);
     }
 
@@ -1795,6 +1890,19 @@ public class ChartLoaderService
             });
         }
 
+        // Store export data
+        _chartExportDataByTitle["Financial Impact of Returns"] = new ChartExportData
+        {
+            ChartTitle = "Financial Impact of Returns",
+            ChartType = ChartType.Expense,
+            Labels = labels,
+            Values = impactValues,
+            SeriesName = "Refunds",
+            TotalValue = (double)totalImpact,
+            StartDate = start,
+            EndDate = end
+        };
+
         return (series, labels, totalImpact);
     }
 
@@ -1833,6 +1941,19 @@ public class ChartLoaderService
         totalLosses = lossesByDate.Sum(l => l.Count);
 
         series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor));
+
+        // Store export data
+        _chartExportDataByTitle["Losses Over Time"] = new ChartExportData
+        {
+            ChartTitle = "Losses Over Time",
+            ChartType = ChartType.Expense,
+            Labels = labels,
+            Values = values,
+            SeriesName = "Losses",
+            TotalValue = totalLosses,
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels, dates, totalLosses);
     }
@@ -1893,6 +2014,19 @@ public class ChartLoaderService
                 Padding = 2
             });
         }
+
+        // Store export data
+        _chartExportDataByTitle["Financial Impact of Losses"] = new ChartExportData
+        {
+            ChartTitle = "Financial Impact of Losses",
+            ChartType = ChartType.Expense,
+            Labels = labels,
+            Values = impactValues,
+            SeriesName = "Value Lost",
+            TotalValue = (double)totalImpact,
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels, totalImpact);
     }
@@ -2014,19 +2148,71 @@ public class ChartLoaderService
     /// <returns>The chart export data, or null if not found.</returns>
     public ChartExportData? GetExportDataForChart(string chartId)
     {
+        if (string.IsNullOrEmpty(chartId))
+            return null;
+
         // First try to find by exact title match in the dictionary
-        if (!string.IsNullOrEmpty(chartId) && _chartExportDataByTitle.TryGetValue(chartId, out var data))
+        if (_chartExportDataByTitle.TryGetValue(chartId, out var data))
         {
             return data;
         }
 
-        // Fall back to legacy handling for Dashboard page charts
-        return chartId switch
+        // Handle dynamic titles with patterns (e.g., "Total expenses: $171.00")
+        if (chartId.StartsWith("Total expenses:", StringComparison.OrdinalIgnoreCase))
         {
-            "ExpenseDistributionChart" => PieChartExportData,
-            "ExpensesChart" => CurrentExportData,
-            _ => CurrentExportData
+            return _chartExportDataByTitle.GetValueOrDefault("Expenses Overview") ?? CurrentExportData;
+        }
+
+        if (chartId.StartsWith("Distribution of expenses", StringComparison.OrdinalIgnoreCase))
+        {
+            return PieChartExportData;
+        }
+
+        // Map UI chart titles to their corresponding export data
+        // Many charts share the same underlying data series
+        var mappedTitle = chartId switch
+        {
+            // Performance tab charts that share data with other charts
+            "Processing Time Trends" => "Average Transaction Value",
+            "Workload Distribution" => "Total Transactions",
+
+            // Customers tab charts that share data with other charts
+            "Top Customers by Revenue" => "Companies of Origin",
+            "Customer Growth" => "Growth Rates",
+            "Customer Lifetime Value" => "Average Transaction Value",
+            "Rentals per Customer" => "Total Transactions",
+
+            // Returns tab charts that share data with other charts
+            "Returns by Category" => "Return Reasons",
+            "Returns by Product" => "Expense Distribution",
+            "Purchase vs Sale Returns" => "Sales vs Expenses",
+
+            // Losses tab charts that share data with other charts
+            "Losses by Category" => "Expense Distribution",
+            "Purchase vs Sale Losses" => "Sales vs Expenses",
+
+            // Companies of Destination uses accountant transactions data
+            "Companies of Destination" => "Transactions by Accountant",
+
+            // Legacy Dashboard page chart identifiers
+            "ExpenseDistributionChart" => "Expense Distribution",
+            "ExpensesChart" => "Expenses Overview",
+
+            _ => null
         };
+
+        if (mappedTitle != null && _chartExportDataByTitle.TryGetValue(mappedTitle, out var mappedData))
+        {
+            return mappedData;
+        }
+
+        // Return PieChartExportData for distribution-related charts not found above
+        if (chartId.Contains("Distribution", StringComparison.OrdinalIgnoreCase))
+        {
+            return PieChartExportData;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -2042,23 +2228,39 @@ public class ChartLoaderService
         if (exportData == null)
             return [];
 
-        // Use "Category" for pie charts, "Date" for time-based charts
-        var labelHeader = exportData.ChartType == ChartType.Distribution ? "Category" : "Date";
-
-        var data = new List<List<object>>
+        // Use "Category" for pie charts, "Date" or "Month" for time-based charts
+        var labelHeader = exportData.ChartType switch
         {
-            // Header row
-            new() { labelHeader, exportData.SeriesName }
+            ChartType.Distribution => "Category",
+            ChartType.Comparison => "Month",
+            _ => "Date"
         };
+
+        // Build header row with all series names
+        var headerRow = new List<object> { labelHeader, exportData.SeriesName };
+        foreach (var (name, _) in exportData.AdditionalSeries)
+        {
+            headerRow.Add(name);
+        }
+
+        var data = new List<List<object>> { headerRow };
 
         // Data rows (no total - it would show up as a category in the chart)
         for (int i = 0; i < exportData.Labels.Length; i++)
         {
-            data.Add(new List<object>
+            var row = new List<object>
             {
                 exportData.Labels[i],
                 exportData.Values[i]
-            });
+            };
+
+            // Add values from additional series
+            foreach (var (_, values) in exportData.AdditionalSeries)
+            {
+                row.Add(i < values.Length ? values[i] : 0.0);
+            }
+
+            data.Add(row);
         }
 
         return data;
@@ -2233,6 +2435,17 @@ public class ChartExportData
     public double? TotalValue { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
+
+    /// <summary>
+    /// Additional series for multi-series charts (e.g., Sales vs Expenses).
+    /// Each entry contains a series name and its values.
+    /// </summary>
+    public List<(string Name, double[] Values)> AdditionalSeries { get; set; } = [];
+
+    /// <summary>
+    /// Returns true if this chart has multiple series.
+    /// </summary>
+    public bool IsMultiSeries => AdditionalSeries.Count > 0;
 }
 
 /// <summary>

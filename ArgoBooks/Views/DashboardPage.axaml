@@ -276,6 +276,7 @@
                         <lvc:PieChart x:Name="ExpenseDistributionChart"
                                       Title="{Binding ExpenseDistributionChartTitle}"
                                       Series="{Binding ExpenseDistributionSeries}"
+                                      LegendPosition="Right"
                                       LegendTextPaint="{Binding LegendTextPaint}"
                                       IsVisible="{Binding HasExpenseDistributionData}"
                                       PointerPressed="OnChartPointerPressed" />
