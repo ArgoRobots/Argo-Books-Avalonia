@@ -9,6 +9,7 @@ using LiveChartsCore.Geo;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
 using LiveChartsCore.SkiaSharpView.Painting;
+using LiveChartsCore.SkiaSharpView.VisualElements;
 
 namespace ArgoBooks.ViewModels;
 
@@ -725,6 +726,103 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Chart Titles
+
+    // Dashboard Tab Chart Titles
+    public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle("Profit Over Time");
+    public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle("Sales vs Expenses");
+    public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle("Sales Trends");
+    public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle("Sales Distribution");
+    public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle("Purchase Trends");
+    public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle("Purchase Distribution");
+
+    // Geographic Tab Chart Titles
+    public LabelVisual CountriesOfOriginTitle => ChartLoaderService.CreateChartTitle("Countries of Origin");
+    public LabelVisual CompaniesOfOriginTitle => ChartLoaderService.CreateChartTitle("Companies of Origin");
+    public LabelVisual CountriesOfDestinationTitle => ChartLoaderService.CreateChartTitle("Countries of Destination");
+    public LabelVisual CompaniesOfDestinationTitle => ChartLoaderService.CreateChartTitle("Companies of Destination");
+    public LabelVisual WorldMapOverviewTitle => ChartLoaderService.CreateChartTitle("World Map Overview");
+
+    // Operational Tab Chart Titles
+    public LabelVisual TransactionsByAccountantTitle => ChartLoaderService.CreateChartTitle("Transactions by Accountant");
+    public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle("Workload Distribution");
+    public LabelVisual ProcessingTimeTrendsTitle => ChartLoaderService.CreateChartTitle("Processing Time Trends");
+
+    // Performance Tab Chart Titles
+    public LabelVisual AverageTransactionValueTitle => ChartLoaderService.CreateChartTitle("Average Transaction Value");
+    public LabelVisual TotalTransactionsTitle => ChartLoaderService.CreateChartTitle("Total Transactions");
+    public LabelVisual AverageShippingCostsTitle => ChartLoaderService.CreateChartTitle("Average Shipping Costs");
+    public LabelVisual GrowthRatesTitle => ChartLoaderService.CreateChartTitle("Growth Rates");
+
+    // Customers Tab Chart Titles
+    public LabelVisual TopCustomersByRevenueTitle => ChartLoaderService.CreateChartTitle("Top Customers by Revenue");
+    public LabelVisual CustomerPaymentStatusTitle => ChartLoaderService.CreateChartTitle("Customer Payment Status");
+    public LabelVisual CustomerGrowthTitle => ChartLoaderService.CreateChartTitle("Customer Growth");
+    public LabelVisual CustomerLifetimeValueTitle => ChartLoaderService.CreateChartTitle("Customer Lifetime Value");
+    public LabelVisual ActiveVsInactiveCustomersTitle => ChartLoaderService.CreateChartTitle("Active vs Inactive Customers");
+    public LabelVisual RentalsPerCustomerTitle => ChartLoaderService.CreateChartTitle("Rentals per Customer");
+
+    // Returns Tab Chart Titles
+    public LabelVisual ReturnsOverTimeTitle => ChartLoaderService.CreateChartTitle("Returns Over Time");
+    public LabelVisual ReturnReasonsTitle => ChartLoaderService.CreateChartTitle("Return Reasons");
+    public LabelVisual FinancialImpactOfReturnsTitle => ChartLoaderService.CreateChartTitle("Financial Impact of Returns");
+    public LabelVisual ReturnsByCategoryTitle => ChartLoaderService.CreateChartTitle("Returns by Category");
+    public LabelVisual ReturnsByProductTitle => ChartLoaderService.CreateChartTitle("Returns by Product");
+    public LabelVisual PurchaseVsSaleReturnsTitle => ChartLoaderService.CreateChartTitle("Purchase vs Sale Returns");
+
+    // Losses Tab Chart Titles
+    public LabelVisual LossesOverTimeTitle => ChartLoaderService.CreateChartTitle("Losses Over Time");
+    public LabelVisual LossReasonsTitle => ChartLoaderService.CreateChartTitle("Loss Reasons");
+    public LabelVisual FinancialImpactOfLossesTitle => ChartLoaderService.CreateChartTitle("Financial Impact of Losses");
+    public LabelVisual LossesByCategoryTitle => ChartLoaderService.CreateChartTitle("Losses by Category");
+    public LabelVisual LossesByProductTitle => ChartLoaderService.CreateChartTitle("Losses by Product");
+    public LabelVisual PurchaseVsSaleLossesTitle => ChartLoaderService.CreateChartTitle("Purchase vs Sale Losses");
+
+    /// <summary>
+    /// Notifies all chart title properties changed (for theme updates).
+    /// </summary>
+    private void NotifyAllChartTitlesChanged()
+    {
+        OnPropertyChanged(nameof(ProfitOverTimeTitle));
+        OnPropertyChanged(nameof(SalesVsExpensesTitle));
+        OnPropertyChanged(nameof(SalesTrendsTitle));
+        OnPropertyChanged(nameof(SalesDistributionTitle));
+        OnPropertyChanged(nameof(PurchaseTrendsTitle));
+        OnPropertyChanged(nameof(PurchaseDistributionTitle));
+        OnPropertyChanged(nameof(CountriesOfOriginTitle));
+        OnPropertyChanged(nameof(CompaniesOfOriginTitle));
+        OnPropertyChanged(nameof(CountriesOfDestinationTitle));
+        OnPropertyChanged(nameof(CompaniesOfDestinationTitle));
+        OnPropertyChanged(nameof(WorldMapOverviewTitle));
+        OnPropertyChanged(nameof(TransactionsByAccountantTitle));
+        OnPropertyChanged(nameof(WorkloadDistributionTitle));
+        OnPropertyChanged(nameof(ProcessingTimeTrendsTitle));
+        OnPropertyChanged(nameof(AverageTransactionValueTitle));
+        OnPropertyChanged(nameof(TotalTransactionsTitle));
+        OnPropertyChanged(nameof(AverageShippingCostsTitle));
+        OnPropertyChanged(nameof(GrowthRatesTitle));
+        OnPropertyChanged(nameof(TopCustomersByRevenueTitle));
+        OnPropertyChanged(nameof(CustomerPaymentStatusTitle));
+        OnPropertyChanged(nameof(CustomerGrowthTitle));
+        OnPropertyChanged(nameof(CustomerLifetimeValueTitle));
+        OnPropertyChanged(nameof(ActiveVsInactiveCustomersTitle));
+        OnPropertyChanged(nameof(RentalsPerCustomerTitle));
+        OnPropertyChanged(nameof(ReturnsOverTimeTitle));
+        OnPropertyChanged(nameof(ReturnReasonsTitle));
+        OnPropertyChanged(nameof(FinancialImpactOfReturnsTitle));
+        OnPropertyChanged(nameof(ReturnsByCategoryTitle));
+        OnPropertyChanged(nameof(ReturnsByProductTitle));
+        OnPropertyChanged(nameof(PurchaseVsSaleReturnsTitle));
+        OnPropertyChanged(nameof(LossesOverTimeTitle));
+        OnPropertyChanged(nameof(LossReasonsTitle));
+        OnPropertyChanged(nameof(FinancialImpactOfLossesTitle));
+        OnPropertyChanged(nameof(LossesByCategoryTitle));
+        OnPropertyChanged(nameof(LossesByProductTitle));
+        OnPropertyChanged(nameof(PurchaseVsSaleLossesTitle));
+    }
+
+    #endregion
+
     #region Constructor
 
     /// <summary>
@@ -735,8 +833,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         // Initialize with default values
         UpdateDateRangeFromSelection();
 
-        // Subscribe to theme changes to update legend text color
-        ThemeService.Instance.ThemeChanged += (_, _) => OnPropertyChanged(nameof(LegendTextPaint));
+        // Subscribe to theme changes to update legend text color and chart titles
+        ThemeService.Instance.ThemeChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(LegendTextPaint));
+            NotifyAllChartTitlesChanged();
+        };
     }
 
     /// <summary>

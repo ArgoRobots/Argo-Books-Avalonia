@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
+using LiveChartsCore.SkiaSharpView.VisualElements;
 
 namespace ArgoBooks.ViewModels;
 
@@ -105,7 +106,13 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private Axis[] _expensesChartYAxes = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExpensesChartTitleVisual))]
     private string _expensesChartTitle = "Total expenses: $0.00";
+
+    /// <summary>
+    /// Gets the visual title element for the expenses chart.
+    /// </summary>
+    public LabelVisual ExpensesChartTitleVisual => ChartLoaderService.CreateChartTitle(ExpensesChartTitle);
 
     [ObservableProperty]
     private bool _hasExpensesChartData;
@@ -119,6 +126,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     [ObservableProperty]
     private bool _hasExpenseDistributionData;
+
+    /// <summary>
+    /// Gets the visual title element for the expense distribution chart.
+    /// </summary>
+    public LabelVisual ExpenseDistributionChartTitle => ChartLoaderService.CreateChartTitle("Distribution of expenses");
 
     #endregion
 
@@ -136,8 +148,13 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         RecentTransactions = [];
         ActiveRentalsList = [];
 
-        // Subscribe to theme changes to update legend text color
-        ThemeService.Instance.ThemeChanged += (_, _) => OnPropertyChanged(nameof(LegendTextPaint));
+        // Subscribe to theme changes to update legend text color and chart titles
+        ThemeService.Instance.ThemeChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(LegendTextPaint));
+            OnPropertyChanged(nameof(ExpensesChartTitleVisual));
+            OnPropertyChanged(nameof(ExpenseDistributionChartTitle));
+        };
     }
 
     /// <summary>
