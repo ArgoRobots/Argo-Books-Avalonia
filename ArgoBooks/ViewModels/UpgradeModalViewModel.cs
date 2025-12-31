@@ -272,7 +272,14 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
                 if (App.LicenseService != null)
                 {
-                    _ = App.LicenseService.SaveLicenseAsync(hasStandard, hasPremium, key);
+                    try
+                    {
+                        await App.LicenseService.SaveLicenseAsync(hasStandard, hasPremium, key);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to save license: {ex.Message}");
+                    }
                 }
 
                 // User will click Continue button to close

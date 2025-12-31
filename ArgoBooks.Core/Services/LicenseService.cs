@@ -143,16 +143,19 @@ public class LicenseService
         // Add machine name
         machineInfo.Append(Environment.MachineName);
 
-        // Add first MAC address if available
+        // Add MAC addresses from all physical network adapters (sorted for consistency)
         try
         {
-            var networkInterface = NetworkInterface.GetAllNetworkInterfaces()
-                .FirstOrDefault(n => n.OperationalStatus == OperationalStatus.Up &&
-                                    n.NetworkInterfaceType != NetworkInterfaceType.Loopback);
+            var macAddresses = NetworkInterface.GetAllNetworkInterfaces()
+                .Where(n => n.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                           n.NetworkInterfaceType != NetworkInterfaceType.Tunnel)
+                .Select(n => n.GetPhysicalAddress().ToString())
+                .Where(mac => !string.IsNullOrEmpty(mac) && mac != "000000000000")
+                .OrderBy(mac => mac)
+                .ToList();
 
-            if (networkInterface != null)
+            foreach (var mac in macAddresses)
             {
-                var mac = networkInterface.GetPhysicalAddress().ToString();
                 machineInfo.Append(mac);
             }
         }
