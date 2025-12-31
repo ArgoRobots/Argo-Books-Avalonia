@@ -8,6 +8,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
 using LiveChartsCore.SkiaSharpView.SKCharts;
+using LiveChartsCore.SkiaSharpView.VisualElements;
 using SkiaSharp;
 
 namespace ArgoBooks.Views;
@@ -159,13 +160,13 @@ public partial class DashboardPage : UserControl
                 var position = e.GetPosition(this);
                 var isPieChart = sender is PieChart;
 
-                // Determine the chart identifier based on the sender
-                var chartId = sender switch
+                // Get the chart title from LabelVisual, fall back to chart Name for data lookup
+                var chartId = GetChartTitle(sender as Control) ?? (sender switch
                 {
-                    CartesianChart cc when cc.Name == "ExpensesChart" => "ExpensesChart",
-                    PieChart pc when pc.Name == "ExpenseDistributionChart" => "ExpenseDistributionChart",
+                    CartesianChart cc => cc.Name ?? "ExpensesChart",
+                    PieChart pc => pc.Name ?? "ExpenseDistributionChart",
                     _ => string.Empty
-                };
+                });
 
                 viewModel.ShowChartContextMenu(position.X, position.Y, chartId: chartId, isPieChart: isPieChart,
                     parentWidth: Bounds.Width, parentHeight: Bounds.Height);
@@ -180,6 +181,31 @@ public partial class DashboardPage : UserControl
                 viewModel.HideChartContextMenuCommand.Execute(null);
             }
         }
+    }
+
+    /// <summary>
+    /// Attempts to find the chart title from the chart's Title property.
+    /// </summary>
+    private static string? GetChartTitle(Control? chart)
+    {
+        if (chart == null) return null;
+
+        // Get the title directly from LiveCharts chart controls
+        if (chart is CartesianChart cartesianChart &&
+            cartesianChart.Title is LabelVisual cartesianLabel &&
+            !string.IsNullOrWhiteSpace(cartesianLabel.Text))
+        {
+            return cartesianLabel.Text;
+        }
+
+        if (chart is PieChart pieChart &&
+            pieChart.Title is LabelVisual pieLabel &&
+            !string.IsNullOrWhiteSpace(pieLabel.Text))
+        {
+            return pieLabel.Text;
+        }
+
+        return null;
     }
 
     /// <summary>

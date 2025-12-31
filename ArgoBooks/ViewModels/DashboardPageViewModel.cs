@@ -459,7 +459,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
             var chartExportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
-            var chartTitle = chartExportData?.ChartTitle ?? "Chart";
+            // Use the UI title (SelectedChartId) for Google Sheets, not the internal stored title
+            var chartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : (chartExportData?.ChartTitle ?? "Chart");
 
             // Use Pie chart type for distribution charts, Line or Column for time-based charts
             ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;

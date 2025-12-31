@@ -899,13 +899,14 @@ public class ChartLoaderService
         }
 
         labels = growthLabels.ToArray();
+        var values = growthRates.ToArray();
 
         // Only add series if there's actual data (any non-zero growth rates)
         if (growthRates.Any(v => v != 0))
         {
             series.Add(new ColumnSeries<double>
             {
-                Values = growthRates.ToArray(),
+                Values = values,
                 Name = "Growth Rate %",
                 Fill = new SolidColorPaint(RevenueColor),
                 Stroke = null,
@@ -913,6 +914,18 @@ public class ChartLoaderService
                 Padding = 2
             });
         }
+
+        // Store export data
+        _chartExportDataByTitle["Growth Rates"] = new ChartExportData
+        {
+            ChartTitle = "Growth Rates",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = values,
+            SeriesName = "Growth Rate %",
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels);
     }
@@ -978,6 +991,18 @@ public class ChartLoaderService
             });
         }
 
+        // Store export data
+        _chartExportDataByTitle["Average Transaction Value"] = new ChartExportData
+        {
+            ChartTitle = "Average Transaction Value",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = avgValues,
+            SeriesName = "Avg Transaction",
+            StartDate = start,
+            EndDate = end
+        };
+
         return (series, labels);
     }
 
@@ -1036,6 +1061,18 @@ public class ChartLoaderService
                 Padding = 2
             });
         }
+
+        // Store export data
+        _chartExportDataByTitle["Total Transactions"] = new ChartExportData
+        {
+            ChartTitle = "Total Transactions",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = countValues,
+            SeriesName = "Transactions",
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels);
     }
@@ -1100,6 +1137,18 @@ public class ChartLoaderService
                 Padding = 2
             });
         }
+
+        // Store export data
+        _chartExportDataByTitle["Average Shipping Costs"] = new ChartExportData
+        {
+            ChartTitle = "Average Shipping Costs",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = avgShipping,
+            SeriesName = "Avg Shipping",
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels);
     }
@@ -1707,6 +1756,19 @@ public class ChartLoaderService
 
         series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor));
 
+        // Store export data
+        _chartExportDataByTitle["Returns Over Time"] = new ChartExportData
+        {
+            ChartTitle = "Returns Over Time",
+            ChartType = ChartType.Expense,
+            Labels = labels,
+            Values = values,
+            SeriesName = "Returns",
+            TotalValue = totalReturns,
+            StartDate = start,
+            EndDate = end
+        };
+
         return (series, labels, dates, totalReturns);
     }
 
@@ -1828,6 +1890,19 @@ public class ChartLoaderService
             });
         }
 
+        // Store export data
+        _chartExportDataByTitle["Financial Impact of Returns"] = new ChartExportData
+        {
+            ChartTitle = "Financial Impact of Returns",
+            ChartType = ChartType.Expense,
+            Labels = labels,
+            Values = impactValues,
+            SeriesName = "Refunds",
+            TotalValue = (double)totalImpact,
+            StartDate = start,
+            EndDate = end
+        };
+
         return (series, labels, totalImpact);
     }
 
@@ -1866,6 +1941,19 @@ public class ChartLoaderService
         totalLosses = lossesByDate.Sum(l => l.Count);
 
         series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor));
+
+        // Store export data
+        _chartExportDataByTitle["Losses Over Time"] = new ChartExportData
+        {
+            ChartTitle = "Losses Over Time",
+            ChartType = ChartType.Expense,
+            Labels = labels,
+            Values = values,
+            SeriesName = "Losses",
+            TotalValue = totalLosses,
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels, dates, totalLosses);
     }
@@ -1926,6 +2014,19 @@ public class ChartLoaderService
                 Padding = 2
             });
         }
+
+        // Store export data
+        _chartExportDataByTitle["Financial Impact of Losses"] = new ChartExportData
+        {
+            ChartTitle = "Financial Impact of Losses",
+            ChartType = ChartType.Expense,
+            Labels = labels,
+            Values = impactValues,
+            SeriesName = "Value Lost",
+            TotalValue = (double)totalImpact,
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels, totalImpact);
     }
@@ -2047,10 +2148,24 @@ public class ChartLoaderService
     /// <returns>The chart export data, or null if not found.</returns>
     public ChartExportData? GetExportDataForChart(string chartId)
     {
+        if (string.IsNullOrEmpty(chartId))
+            return null;
+
         // First try to find by exact title match in the dictionary
-        if (!string.IsNullOrEmpty(chartId) && _chartExportDataByTitle.TryGetValue(chartId, out var data))
+        if (_chartExportDataByTitle.TryGetValue(chartId, out var data))
         {
             return data;
+        }
+
+        // Handle dynamic titles with patterns (e.g., "Total expenses: $171.00")
+        if (chartId.StartsWith("Total expenses:", StringComparison.OrdinalIgnoreCase))
+        {
+            return _chartExportDataByTitle.GetValueOrDefault("Expenses Overview") ?? CurrentExportData;
+        }
+
+        if (chartId.StartsWith("Distribution of expenses", StringComparison.OrdinalIgnoreCase))
+        {
+            return PieChartExportData;
         }
 
         // Fall back to legacy handling for Dashboard page charts only
