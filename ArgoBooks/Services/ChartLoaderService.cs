@@ -2168,13 +2168,51 @@ public class ChartLoaderService
             return PieChartExportData;
         }
 
-        // Fall back to legacy handling for Dashboard page charts only
-        return chartId switch
+        // Map UI chart titles to their corresponding export data
+        // Many charts share the same underlying data series
+        var mappedTitle = chartId switch
         {
-            "ExpenseDistributionChart" => PieChartExportData,
-            "ExpensesChart" => CurrentExportData,
-            _ => null  // Return null for unknown charts instead of wrong data
+            // Performance tab charts that share data with other charts
+            "Processing Time Trends" => "Average Transaction Value",
+            "Workload Distribution" => "Total Transactions",
+
+            // Customers tab charts that share data with other charts
+            "Top Customers by Revenue" => "Companies of Origin",
+            "Customer Growth" => "Growth Rates",
+            "Customer Lifetime Value" => "Average Transaction Value",
+            "Rentals per Customer" => "Total Transactions",
+
+            // Returns tab charts that share data with other charts
+            "Returns by Category" => "Return Reasons",
+            "Returns by Product" => "Expense Distribution",
+            "Purchase vs Sale Returns" => "Sales vs Expenses",
+
+            // Losses tab charts that share data with other charts
+            "Losses by Category" => "Expense Distribution",
+            "Purchase vs Sale Losses" => "Sales vs Expenses",
+
+            // Companies of Destination uses accountant transactions data
+            "Companies of Destination" => "Transactions by Accountant",
+
+            // Legacy Dashboard page chart identifiers
+            "ExpenseDistributionChart" => "Expense Distribution",
+            "ExpensesChart" => "Expenses Overview",
+
+            _ => null
         };
+
+        if (mappedTitle != null && _chartExportDataByTitle.TryGetValue(mappedTitle, out var mappedData))
+        {
+            return mappedData;
+        }
+
+        // Return PieChartExportData for distribution-related charts not found above
+        if (chartId.Contains("Distribution", StringComparison.OrdinalIgnoreCase))
+        {
+            return PieChartExportData;
+        }
+
+        return null;
     }
 
     /// <summary>
