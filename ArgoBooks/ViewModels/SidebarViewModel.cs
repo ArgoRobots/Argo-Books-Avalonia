@@ -65,6 +65,15 @@ public partial class SidebarViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showPayroll = true;
 
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    #endregion
+
+    #region Premium Feature Items
+
+    private SidebarItemModel? _insightsItem;
+
     #endregion
 
     #region Navigation Items
@@ -124,8 +133,10 @@ public partial class SidebarViewModel : ViewModelBase
             "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z")); // fa-home
         MainItems.Add(CreateItem("Analytics", "Analytics",
             "M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z")); // fa-chart-line
-        MainItems.Add(CreateItem("Insights", "Insights",
-            "M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z")); // fa-lightbulb
+        _insightsItem = CreateItem("Insights", "Insights",
+            "M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"); // fa-lightbulb
+        _insightsItem.IsVisible = HasPremium; // Hide by default unless premium
+        MainItems.Add(_insightsItem);
         MainItems.Add(CreateItem("Reports", "Reports",
             "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z")); // fa-file-alt
 
@@ -219,6 +230,17 @@ public partial class SidebarViewModel : ViewModelBase
     partial void OnCompanyNameChanged(string? value)
     {
         CompanyInitial = string.IsNullOrEmpty(value) ? "A" : value[0].ToString().ToUpper();
+    }
+
+    /// <summary>
+    /// Updates premium feature visibility when premium status changes.
+    /// </summary>
+    partial void OnHasPremiumChanged(bool value)
+    {
+        if (_insightsItem != null)
+        {
+            _insightsItem.IsVisible = value;
+        }
     }
 
     /// <summary>

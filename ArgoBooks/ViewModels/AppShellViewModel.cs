@@ -346,6 +346,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up header's upgrade button to open upgrade modal
         HeaderViewModel.OpenUpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
 
+        // Wire up license verification to enable premium features
+        UpgradeModalViewModel.KeyVerified += (_, _) => SidebarViewModel.HasPremium = true;
+
         // Wire up file menu's create new company to open the wizard
         FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
 
@@ -550,6 +553,14 @@ public partial class AppShellViewModel : ViewModelBase
     public void UpdateFeatureVisibility(bool showTransactions, bool showInventory, bool showRentals, bool showPayroll)
     {
         SidebarViewModel.UpdateFeatureVisibility(showTransactions, showInventory, showRentals, showPayroll);
+    }
+
+    /// <summary>
+    /// Sets the premium status to show or hide premium features.
+    /// </summary>
+    public void SetPremiumStatus(bool hasPremium)
+    {
+        SidebarViewModel.HasPremium = hasPremium;
     }
 
     /// <summary>

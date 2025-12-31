@@ -71,9 +71,9 @@
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16" Margin="24">
                             <!-- Standard Plan -->
                             <Border Grid.Column="0" Classes="plan-card">
-                                <StackPanel Spacing="16">
+                                <Grid RowDefinitions="Auto,*,Auto">
                                     <!-- Plan Header -->
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
                                         <Border Width="48" Height="48"
                                                 CornerRadius="8"
                                                 ClipToBounds="True">
@@ -107,7 +107,7 @@
                                     </StackPanel>
 
                                     <!-- Features -->
-                                    <StackPanel Spacing="0">
+                                    <StackPanel Grid.Row="1" Spacing="0" Margin="0,16,0,16" VerticalAlignment="Top">
                                         <Border Classes="feature-item">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
@@ -150,20 +150,21 @@
                                         </Border>
                                     </StackPanel>
 
-                                    <Button Classes="primary-button"
+                                    <Button Grid.Row="2"
+                                            Classes="primary-button"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Center"
                                             Command="{Binding SelectStandardCommand}">
                                         Select Standard
                                     </Button>
-                                </StackPanel>
+                                </Grid>
                             </Border>
 
                             <!-- Premium Plan -->
                             <Border Grid.Column="1" Classes="plan-card">
-                                <StackPanel Spacing="16">
+                                <Grid RowDefinitions="Auto,*,Auto">
                                     <!-- Plan Header -->
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12">
                                         <Border Width="48" Height="48"
                                                 CornerRadius="8"
                                                 ClipToBounds="True">
@@ -197,7 +198,7 @@
                                     </StackPanel>
 
                                     <!-- Features -->
-                                    <StackPanel Spacing="0">
+                                    <StackPanel Grid.Row="1" Spacing="0" Margin="0,16,0,16" VerticalAlignment="Top">
                                         <Border Classes="feature-item">
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <PathIcon Grid.Column="0"
@@ -250,13 +251,14 @@
                                         </Border>
                                     </StackPanel>
 
-                                    <Button Classes="primary-button"
+                                    <Button Grid.Row="2"
+                                            Classes="primary-button"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Center"
                                             Command="{Binding SelectPremiumCommand}">
                                         Select Premium
                                     </Button>
-                                </StackPanel>
+                                </Grid>
                             </Border>
                         </Grid>
                     </ScrollViewer>
