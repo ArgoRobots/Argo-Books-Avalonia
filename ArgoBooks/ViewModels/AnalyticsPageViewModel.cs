@@ -779,46 +779,33 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     public LabelVisual PurchaseVsSaleLossesTitle => ChartLoaderService.CreateChartTitle("Purchase vs Sale Losses");
 
     /// <summary>
+    /// Chart title property names for batch notification.
+    /// </summary>
+    private static readonly string[] ChartTitlePropertyNames =
+    [
+        nameof(ProfitOverTimeTitle), nameof(SalesVsExpensesTitle), nameof(SalesTrendsTitle),
+        nameof(SalesDistributionTitle), nameof(PurchaseTrendsTitle), nameof(PurchaseDistributionTitle),
+        nameof(CountriesOfOriginTitle), nameof(CompaniesOfOriginTitle), nameof(CountriesOfDestinationTitle),
+        nameof(CompaniesOfDestinationTitle), nameof(WorldMapOverviewTitle), nameof(TransactionsByAccountantTitle),
+        nameof(WorkloadDistributionTitle), nameof(ProcessingTimeTrendsTitle), nameof(AverageTransactionValueTitle),
+        nameof(TotalTransactionsTitle), nameof(AverageShippingCostsTitle), nameof(GrowthRatesTitle),
+        nameof(TopCustomersByRevenueTitle), nameof(CustomerPaymentStatusTitle), nameof(CustomerGrowthTitle),
+        nameof(CustomerLifetimeValueTitle), nameof(ActiveVsInactiveCustomersTitle), nameof(RentalsPerCustomerTitle),
+        nameof(ReturnsOverTimeTitle), nameof(ReturnReasonsTitle), nameof(FinancialImpactOfReturnsTitle),
+        nameof(ReturnsByCategoryTitle), nameof(ReturnsByProductTitle), nameof(PurchaseVsSaleReturnsTitle),
+        nameof(LossesOverTimeTitle), nameof(LossReasonsTitle), nameof(FinancialImpactOfLossesTitle),
+        nameof(LossesByCategoryTitle), nameof(LossesByProductTitle), nameof(PurchaseVsSaleLossesTitle)
+    ];
+
+    /// <summary>
     /// Notifies all chart title properties changed (for theme updates).
     /// </summary>
     private void NotifyAllChartTitlesChanged()
     {
-        OnPropertyChanged(nameof(ProfitOverTimeTitle));
-        OnPropertyChanged(nameof(SalesVsExpensesTitle));
-        OnPropertyChanged(nameof(SalesTrendsTitle));
-        OnPropertyChanged(nameof(SalesDistributionTitle));
-        OnPropertyChanged(nameof(PurchaseTrendsTitle));
-        OnPropertyChanged(nameof(PurchaseDistributionTitle));
-        OnPropertyChanged(nameof(CountriesOfOriginTitle));
-        OnPropertyChanged(nameof(CompaniesOfOriginTitle));
-        OnPropertyChanged(nameof(CountriesOfDestinationTitle));
-        OnPropertyChanged(nameof(CompaniesOfDestinationTitle));
-        OnPropertyChanged(nameof(WorldMapOverviewTitle));
-        OnPropertyChanged(nameof(TransactionsByAccountantTitle));
-        OnPropertyChanged(nameof(WorkloadDistributionTitle));
-        OnPropertyChanged(nameof(ProcessingTimeTrendsTitle));
-        OnPropertyChanged(nameof(AverageTransactionValueTitle));
-        OnPropertyChanged(nameof(TotalTransactionsTitle));
-        OnPropertyChanged(nameof(AverageShippingCostsTitle));
-        OnPropertyChanged(nameof(GrowthRatesTitle));
-        OnPropertyChanged(nameof(TopCustomersByRevenueTitle));
-        OnPropertyChanged(nameof(CustomerPaymentStatusTitle));
-        OnPropertyChanged(nameof(CustomerGrowthTitle));
-        OnPropertyChanged(nameof(CustomerLifetimeValueTitle));
-        OnPropertyChanged(nameof(ActiveVsInactiveCustomersTitle));
-        OnPropertyChanged(nameof(RentalsPerCustomerTitle));
-        OnPropertyChanged(nameof(ReturnsOverTimeTitle));
-        OnPropertyChanged(nameof(ReturnReasonsTitle));
-        OnPropertyChanged(nameof(FinancialImpactOfReturnsTitle));
-        OnPropertyChanged(nameof(ReturnsByCategoryTitle));
-        OnPropertyChanged(nameof(ReturnsByProductTitle));
-        OnPropertyChanged(nameof(PurchaseVsSaleReturnsTitle));
-        OnPropertyChanged(nameof(LossesOverTimeTitle));
-        OnPropertyChanged(nameof(LossReasonsTitle));
-        OnPropertyChanged(nameof(FinancialImpactOfLossesTitle));
-        OnPropertyChanged(nameof(LossesByCategoryTitle));
-        OnPropertyChanged(nameof(LossesByProductTitle));
-        OnPropertyChanged(nameof(PurchaseVsSaleLossesTitle));
+        foreach (var propertyName in ChartTitlePropertyNames)
+        {
+            OnPropertyChanged(propertyName);
+        }
     }
 
     #endregion
