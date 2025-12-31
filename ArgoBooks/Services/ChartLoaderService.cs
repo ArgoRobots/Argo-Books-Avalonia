@@ -2020,12 +2020,12 @@ public class ChartLoaderService
             return data;
         }
 
-        // Fall back to legacy handling for Dashboard page charts
+        // Fall back to legacy handling for Dashboard page charts only
         return chartId switch
         {
             "ExpenseDistributionChart" => PieChartExportData,
             "ExpensesChart" => CurrentExportData,
-            _ => CurrentExportData
+            _ => null  // Return null for unknown charts instead of wrong data
         };
     }
 
