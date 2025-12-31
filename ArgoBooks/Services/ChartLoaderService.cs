@@ -160,16 +160,17 @@ public class ChartLoaderService
 
     /// <summary>
     /// Creates a series for date-based data with proportional spacing.
-    /// Points are positioned based on actual date values, not evenly spaced.
+    /// Points are positioned based on actual date values (converted to OADate), not evenly spaced.
     /// </summary>
     private ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color)
     {
-        // Convert to DateTimePoint for proper date-based positioning
-        var points = dates.Zip(values, (d, v) => new DateTimePoint(d, v)).ToArray();
+        // Convert dates to OADate (days since Dec 30, 1899) for X coordinate
+        // Use ObservablePoint which directly stores X,Y coordinates
+        var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
 
         if (UseLineChart)
         {
-            return new LineSeries<DateTimePoint>
+            return new LineSeries<ObservablePoint>
             {
                 Values = points,
                 Name = name,
@@ -177,18 +178,16 @@ public class ChartLoaderService
                 Fill = null,
                 GeometryStroke = new SolidColorPaint(color, 2),
                 GeometryFill = new SolidColorPaint(color),
-                GeometrySize = 6,
-                Mapping = (point, index) => new LiveChartsCore.Kernel.Coordinate(point.DateTime.ToOADate(), point.Value ?? 0)
+                GeometrySize = 6
             };
         }
-        return new ColumnSeries<DateTimePoint>
+        return new ColumnSeries<ObservablePoint>
         {
             Values = points,
             Name = name,
             Fill = new SolidColorPaint(color),
             Stroke = null,
-            MaxBarWidth = 50,
-            Mapping = (point, index) => new LiveChartsCore.Kernel.Coordinate(point.DateTime.ToOADate(), point.Value ?? 0)
+            MaxBarWidth = 50
         };
     }
 
