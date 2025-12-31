@@ -154,9 +154,9 @@
                                             Classes="primary-button"
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Center"
-                                            Command="{Binding SelectStandardCommand}">
-                                        Select Standard
-                                    </Button>
+                                            Command="{Binding SelectStandardCommand}"
+                                            IsEnabled="{Binding CanSelectStandard}"
+                                            Content="{Binding StandardButtonText}" />
                                 </Grid>
                             </Border>
 
@@ -251,13 +251,20 @@
                                         </Border>
                                     </StackPanel>
 
-                                    <Button Grid.Row="2"
-                                            Classes="primary-button"
-                                            HorizontalAlignment="Stretch"
-                                            HorizontalContentAlignment="Center"
-                                            Command="{Binding SelectPremiumCommand}">
-                                        Select Premium
-                                    </Button>
+                                    <StackPanel Grid.Row="2" Spacing="8">
+                                        <Button Classes="primary-button"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                Command="{Binding SelectPremiumCommand}"
+                                                IsEnabled="{Binding CanSelectPremium}"
+                                                Content="{Binding PremiumButtonText}" />
+                                        <Button Classes="secondary-button"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                Command="{Binding CancelSubscriptionCommand}"
+                                                Content="Cancel Subscription"
+                                                IsVisible="{Binding ShowCancelPremium}" />
+                                    </StackPanel>
                                 </Grid>
                             </Border>
                         </Grid>
@@ -442,12 +449,20 @@
                                        MaxWidth="300" />
                         </StackPanel>
 
-                        <!-- Continue Button -->
-                        <Button Classes="primary-button"
-                                Content="Continue"
-                                Command="{Binding ContinueAfterSuccessCommand}"
-                                HorizontalAlignment="Center"
-                                Padding="32,12" />
+                        <!-- Continue Button (appears after 2 seconds with animation) -->
+                        <Panel x:Name="ContinueButtonPanel"
+                               HorizontalAlignment="Center"
+                               Opacity="0"
+                               IsVisible="{Binding ShowContinueButton}">
+                            <Panel.RenderTransform>
+                                <TranslateTransform Y="20" />
+                            </Panel.RenderTransform>
+                            <Button Classes="primary-button"
+                                    Content="Continue"
+                                    Command="{Binding ContinueAfterSuccessCommand}"
+                                    HorizontalAlignment="Center"
+                                    Padding="32,12" />
+                        </Panel>
                     </StackPanel>
                 </Panel>
             </Border>

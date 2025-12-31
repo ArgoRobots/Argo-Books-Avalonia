@@ -350,7 +350,11 @@ public partial class AppShellViewModel : ViewModelBase
         HeaderViewModel.OpenUpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
 
         // Wire up license verification to enable premium features
-        UpgradeModalViewModel.KeyVerified += (_, _) => SidebarViewModel.HasPremium = true;
+        UpgradeModalViewModel.KeyVerified += (_, _) =>
+        {
+            SidebarViewModel.HasPremium = true;
+            UpgradeModalViewModel.HasPremium = true;
+        };
 
         // Wire up file menu's create new company to open the wizard
         FileMenuPanelViewModel.CreateNewCompanyRequested += (_, _) => CreateCompanyViewModel.OpenCommand.Execute(null);
@@ -592,6 +596,8 @@ public partial class AppShellViewModel : ViewModelBase
         SidebarViewModel.HasPremium = hasPremium;
         SidebarViewModel.HasEnterprise = hasEnterprise;
         SettingsModalViewModel.HasStandard = hasStandard;
+        UpgradeModalViewModel.HasStandard = hasStandard;
+        UpgradeModalViewModel.HasPremium = hasPremium;
     }
 
     /// <summary>

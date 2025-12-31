@@ -180,6 +180,13 @@
                                                VerticalAlignment="Center"
                                                IsVisible="{Binding ShowRemainingProducts}" />
 
+                                    <!-- Upgrade Button (shown when limit reached) -->
+                                    <Button Classes="secondary-button"
+                                            Content="Upgrade"
+                                            Command="{Binding UpgradeCommand}"
+                                            IsVisible="{Binding ShowUpgradeButton}"
+                                            Padding="12,6" />
+
                                     <!-- Add Product Button -->
                                     <Button Classes="primary-button"
                                             Command="{Binding OpenAddModalCommand}"

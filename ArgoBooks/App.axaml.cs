@@ -1446,6 +1446,8 @@ public partial class App : Application
             var viewModel = new ProductsPageViewModel();
             // Set plan status from app shell
             viewModel.HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false;
+            // Wire up upgrade request to open upgrade modal
+            viewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
             if (param is Dictionary<string, object?> dict)
             {
                 // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)

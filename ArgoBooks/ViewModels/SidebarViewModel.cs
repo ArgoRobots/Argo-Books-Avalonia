@@ -87,6 +87,13 @@ public partial class SidebarViewModel : ViewModelBase
 
     #endregion
 
+    #region Enterprise Feature Items
+
+    private SidebarItemModel? _locationsItem;
+    private SidebarItemModel? _transfersItem;
+
+    #endregion
+
     #region Navigation Items
 
     [ObservableProperty]
@@ -186,10 +193,14 @@ public partial class SidebarViewModel : ViewModelBase
             "M22 18V3H2v15H0v2h24v-2h-2zm-2-1H4V5h16v12zM6 15h2v-5H6v5zm4 0h2V8h-2v7zm4 0h2v-3h-2v3z")); // fa-warehouse
         InventoryItems.Add(CreateItem("Adjustments", "Adjustments",
             "M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z")); // fa-sliders-h
-        InventoryItems.Add(CreateItem("Locations", "Locations",
-            "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z")); // fa-map-marker-alt
-        InventoryItems.Add(CreateItem("Transfers", "Transfers",
-            "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z")); // fa-exchange-alt
+        _locationsItem = CreateItem("Locations", "Locations",
+            "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"); // fa-map-marker-alt
+        _locationsItem.IsVisible = HasEnterprise; // Hidden until enterprise plan
+        InventoryItems.Add(_locationsItem);
+        _transfersItem = CreateItem("Transfers", "Transfers",
+            "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"); // fa-exchange-alt
+        _transfersItem.IsVisible = HasEnterprise; // Hidden until enterprise plan
+        InventoryItems.Add(_transfersItem);
         InventoryItems.Add(CreateItem("Purchase Orders", "PurchaseOrders",
             "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z")); // fa-clipboard-list
 
@@ -266,6 +277,10 @@ public partial class SidebarViewModel : ViewModelBase
     partial void OnHasEnterpriseChanged(bool value)
     {
         ShowTeam = value;
+        if (_locationsItem != null)
+            _locationsItem.IsVisible = value;
+        if (_transfersItem != null)
+            _transfersItem.IsVisible = value;
     }
 
     /// <summary>

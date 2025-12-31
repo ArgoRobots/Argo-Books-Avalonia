@@ -16,6 +16,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private const string LicenseValidationUrl = "https://argorobots.com/validate_license.php";
     private const string StandardUpgradeUrl = "http://localhost/argo-books-website/upgrade/standard/";
     private const string PremiumUpgradeUrl = "http://localhost/argo-books-website/upgrade/premium/";
+    private const string CancelSubscriptionUrl = "https://argorobots.com/community/users/subscription.php";
 
     [ObservableProperty]
     private bool _isOpen;
@@ -33,10 +34,85 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private bool _isVerificationSuccess;
 
     [ObservableProperty]
+    private bool _showContinueButton;
+
+    [ObservableProperty]
     private string? _successMessage;
 
     [ObservableProperty]
     private string _licenseKey = string.Empty;
+
+    partial void OnIsVerificationSuccessChanged(bool value)
+    {
+        if (value)
+        {
+            // Show continue button after 2 second delay
+            _ = ShowContinueButtonAfterDelayAsync();
+        }
+        else
+        {
+            ShowContinueButton = false;
+        }
+    }
+
+    private async Task ShowContinueButtonAfterDelayAsync()
+    {
+        await Task.Delay(2000);
+        if (IsVerificationSuccess)
+        {
+            ShowContinueButton = true;
+        }
+    }
+
+    #region Plan Status
+
+    [ObservableProperty]
+    private bool _hasStandard;
+
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    /// <summary>
+    /// Gets whether the Standard button should be enabled (not already on Standard or Premium plan).
+    /// </summary>
+    public bool CanSelectStandard => !HasStandard && !HasPremium;
+
+    /// <summary>
+    /// Gets whether the Premium button should be enabled (not already on Premium plan).
+    /// </summary>
+    public bool CanSelectPremium => !HasPremium;
+
+    /// <summary>
+    /// Gets whether to show the cancel subscription button for Premium.
+    /// </summary>
+    public bool ShowCancelPremium => HasPremium;
+
+    /// <summary>
+    /// Gets the text for the Standard plan button.
+    /// </summary>
+    public string StandardButtonText => HasStandard || HasPremium ? "Current Plan" : "Select Standard";
+
+    /// <summary>
+    /// Gets the text for the Premium plan button.
+    /// </summary>
+    public string PremiumButtonText => HasPremium ? "Current Plan" : "Select Premium";
+
+    partial void OnHasStandardChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSelectStandard));
+        OnPropertyChanged(nameof(StandardButtonText));
+    }
+
+    partial void OnHasPremiumChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSelectStandard));
+        OnPropertyChanged(nameof(CanSelectPremium));
+        OnPropertyChanged(nameof(ShowCancelPremium));
+        OnPropertyChanged(nameof(StandardButtonText));
+        OnPropertyChanged(nameof(PremiumButtonText));
+    }
+
+    #endregion
 
     /// <summary>
     /// Gets the formatted license key for API calls (keeps dashes).
@@ -83,6 +159,13 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private void SelectPremium()
     {
         OpenUrl(PremiumUpgradeUrl);
+        Close();
+    }
+
+    [RelayCommand]
+    private void CancelSubscription()
+    {
+        OpenUrl(CancelSubscriptionUrl);
         Close();
     }
 
@@ -162,7 +245,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
             if (response?.Success == true)
             {
                 IsVerificationSuccess = true;
-                SuccessMessage = response.Message ?? "License activated successfully!";
+                // Fix server message: change "can be redeemed" to "has been redeemed"
+                var message = response.Message ?? "License activated successfully!";
+                SuccessMessage = message.Replace("can be redeemed", "has been redeemed");
                 // User will click Continue button to close
             }
             else

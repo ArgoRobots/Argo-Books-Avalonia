@@ -119,16 +119,25 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     /// <summary>
     /// Gets the text showing remaining products for the current tab.
-    /// Shows "Upgrade" when the limit is reached.
     /// </summary>
     public string RemainingProductsText
     {
         get
         {
             var remaining = IsExpensesTabSelected ? RemainingExpenseProducts : RemainingRevenueProducts;
-            return remaining == 0 ? "Upgrade" : $"{remaining} of {FreeProductLimit} remaining";
+            return $"{remaining} of {FreeProductLimit} remaining";
         }
     }
+
+    /// <summary>
+    /// Gets whether to show the upgrade button (when limit is reached).
+    /// </summary>
+    public bool ShowUpgradeButton => !HasStandard && !CanAddProduct;
+
+    /// <summary>
+    /// Event raised when the upgrade button is clicked.
+    /// </summary>
+    public event EventHandler? UpgradeRequested;
 
     /// <summary>
     /// Gets whether to show the remaining products label (only when no standard plan).
@@ -140,6 +149,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         OnPropertyChanged(nameof(RemainingExpenseProducts));
         OnPropertyChanged(nameof(RemainingProductsText));
         OnPropertyChanged(nameof(CanAddProduct));
+        OnPropertyChanged(nameof(ShowUpgradeButton));
     }
 
     partial void OnRevenueProductsCountChanged(int value)
@@ -147,12 +157,20 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         OnPropertyChanged(nameof(RemainingRevenueProducts));
         OnPropertyChanged(nameof(RemainingProductsText));
         OnPropertyChanged(nameof(CanAddProduct));
+        OnPropertyChanged(nameof(ShowUpgradeButton));
     }
 
     partial void OnHasStandardChanged(bool value)
     {
         OnPropertyChanged(nameof(CanAddProduct));
         OnPropertyChanged(nameof(ShowRemainingProducts));
+        OnPropertyChanged(nameof(ShowUpgradeButton));
+    }
+
+    [RelayCommand]
+    private void Upgrade()
+    {
+        UpgradeRequested?.Invoke(this, EventArgs.Empty);
     }
 
     #endregion
