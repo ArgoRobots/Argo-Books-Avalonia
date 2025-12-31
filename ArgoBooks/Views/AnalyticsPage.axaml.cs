@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
 using ArgoBooks.Controls;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
@@ -43,6 +44,13 @@ public partial class AnalyticsPage : UserControl
 
         // Wire up page-level click handler to close context menu
         PointerPressed += OnPagePointerPressed;
+
+        // Attach handler at page level with handledEventsToo to intercept events handled by LiveCharts
+        this.AddHandler(
+            PointerWheelChangedEvent,
+            OnChartPointerWheelChanged,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
     }
 
     protected override void OnUnloaded(RoutedEventArgs e)
@@ -275,6 +283,35 @@ public partial class AnalyticsPage : UserControl
                 {
                     viewModel.HideChartContextMenuCommand.Execute(null);
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles pointer wheel events on charts to allow scroll passthrough to parent ScrollViewer.
+    /// LiveCharts captures wheel events for zooming, so we intercept them and forward to the ScrollViewer.
+    /// </summary>
+    private void OnChartPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        // Check if the event originated from a CartesianChart
+        var source = e.Source as Control;
+        var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
+
+        if (chart == null)
+            return; // Not over a chart, let normal scrolling happen
+
+        // Find the ScrollViewer and manually scroll it
+        var scrollViewer = chart.FindAncestorOfType<ScrollViewer>();
+        if (scrollViewer != null)
+        {
+            // Use ScrollViewer's built-in line scroll methods for natural scroll feel
+            var linesToScroll = (int)Math.Round(e.Delta.Y * 3);
+            for (int i = 0; i < Math.Abs(linesToScroll); i++)
+            {
+                if (linesToScroll > 0)
+                    scrollViewer.LineUp();
+                else
+                    scrollViewer.LineDown();
             }
         }
     }
