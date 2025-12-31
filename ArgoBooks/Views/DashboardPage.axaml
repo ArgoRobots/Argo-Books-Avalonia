@@ -250,7 +250,6 @@
                             Series="{Binding ExpensesChartSeries}"
                             XAxes="{Binding ExpensesChartXAxes}"
                             YAxes="{Binding ExpensesChartYAxes}"
-                            ZoomMode="Both"
                             TooltipPosition="Top"
                             IsVisible="{Binding HasExpensesChartData}"
                             PointerPressed="OnChartPointerPressed" />

@@ -183,7 +183,6 @@
                                                     Series="{Binding ProfitTrendsSeries}"
                                                     XAxes="{Binding ProfitTrendsXAxes}"
                                                     YAxes="{Binding ProfitTrendsYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasProfitTrendsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -213,7 +212,6 @@
                                                     Series="{Binding SalesVsExpensesSeries}"
                                                     XAxes="{Binding SalesVsExpensesXAxes}"
                                                     YAxes="{Binding SalesVsExpensesYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasSalesVsExpensesData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -246,7 +244,6 @@
                                                     Series="{Binding RevenueTrendsSeries}"
                                                     XAxes="{Binding RevenueTrendsXAxes}"
                                                     YAxes="{Binding RevenueTrendsYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasRevenueTrendsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -308,7 +305,6 @@
                                                     Series="{Binding ExpensesTrendsSeries}"
                                                     XAxes="{Binding ExpensesTrendsXAxes}"
                                                     YAxes="{Binding ExpensesTrendsYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasExpensesTrendsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -617,7 +613,6 @@
                                                     Series="{Binding TotalTransactionsSeries}"
                                                     XAxes="{Binding TotalTransactionsXAxes}"
                                                     YAxes="{Binding TotalTransactionsYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasTotalTransactionsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -647,7 +642,6 @@
                                                 Series="{Binding AvgTransactionValueSeries}"
                                                 XAxes="{Binding AvgTransactionValueXAxes}"
                                                 YAxes="{Binding AvgTransactionValueYAxes}"
-                                                ZoomMode="X"
                                                 IsVisible="{Binding HasAvgTransactionValueData}" />
                             <!-- No data placeholder -->
                             <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -718,7 +712,6 @@
                                                     Series="{Binding AvgTransactionValueSeries}"
                                                     XAxes="{Binding AvgTransactionValueXAxes}"
                                                     YAxes="{Binding AvgTransactionValueYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasAvgTransactionValueData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -748,7 +741,6 @@
                                                     Series="{Binding TotalTransactionsSeries}"
                                                     XAxes="{Binding TotalTransactionsXAxes}"
                                                     YAxes="{Binding TotalTransactionsYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasTotalTransactionsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -781,7 +773,6 @@
                                                     Series="{Binding AvgShippingCostsSeries}"
                                                     XAxes="{Binding AvgShippingCostsXAxes}"
                                                     YAxes="{Binding AvgShippingCostsYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasAvgShippingCostsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -811,7 +802,6 @@
                                                     Series="{Binding GrowthRatesSeries}"
                                                     XAxes="{Binding GrowthRatesXAxes}"
                                                     YAxes="{Binding GrowthRatesYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasGrowthRatesData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -942,7 +932,6 @@
                                                     Series="{Binding GrowthRatesSeries}"
                                                     XAxes="{Binding GrowthRatesXAxes}"
                                                     YAxes="{Binding GrowthRatesYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasGrowthRatesData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -972,7 +961,6 @@
                                                     Series="{Binding AvgTransactionValueSeries}"
                                                     XAxes="{Binding AvgTransactionValueXAxes}"
                                                     YAxes="{Binding AvgTransactionValueYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasAvgTransactionValueData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1032,7 +1020,6 @@
                                                     Series="{Binding TotalTransactionsSeries}"
                                                     XAxes="{Binding TotalTransactionsXAxes}"
                                                     YAxes="{Binding TotalTransactionsYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasTotalTransactionsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1104,7 +1091,6 @@
                                                     Series="{Binding ReturnsOverTimeSeries}"
                                                     XAxes="{Binding ReturnsOverTimeXAxes}"
                                                     YAxes="{Binding ReturnsOverTimeYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasReturnsOverTimeData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1166,7 +1152,6 @@
                                                     Series="{Binding ReturnFinancialImpactSeries}"
                                                     XAxes="{Binding ReturnFinancialImpactXAxes}"
                                                     YAxes="{Binding ReturnFinancialImpactYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasReturnFinancialImpactData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1257,7 +1242,6 @@
                                                     Series="{Binding SalesVsExpensesSeries}"
                                                     XAxes="{Binding SalesVsExpensesXAxes}"
                                                     YAxes="{Binding SalesVsExpensesYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasSalesVsExpensesData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1329,7 +1313,6 @@
                                                     Series="{Binding LossesOverTimeSeries}"
                                                     XAxes="{Binding LossesOverTimeXAxes}"
                                                     YAxes="{Binding LossesOverTimeYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasLossesOverTimeData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1391,7 +1374,6 @@
                                                     Series="{Binding LossFinancialImpactSeries}"
                                                     XAxes="{Binding LossFinancialImpactXAxes}"
                                                     YAxes="{Binding LossFinancialImpactYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasLossFinancialImpactData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1482,7 +1464,6 @@
                                                     Series="{Binding SalesVsExpensesSeries}"
                                                     XAxes="{Binding SalesVsExpensesXAxes}"
                                                     YAxes="{Binding SalesVsExpensesYAxes}"
-                                                    ZoomMode="X"
                                                     IsVisible="{Binding HasSalesVsExpensesData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
