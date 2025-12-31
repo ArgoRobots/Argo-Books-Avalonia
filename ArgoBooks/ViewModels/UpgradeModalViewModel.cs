@@ -42,6 +42,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _licenseKey = string.Empty;
 
+    // Stores the license type from the last successful verification
+    private string? _verifiedLicenseType;
+
     partial void OnIsVerificationSuccessChanged(bool value)
     {
         if (value)
@@ -152,6 +155,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
+        _verifiedLicenseType = null;
     }
 
     [RelayCommand]
@@ -200,6 +204,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
+        _verifiedLicenseType = null;
     }
 
     [RelayCommand]
@@ -210,6 +215,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
+        _verifiedLicenseType = null;
     }
 
     [RelayCommand]
@@ -220,6 +226,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         IsVerificationSuccess = false;
         LicenseKey = string.Empty;
         SuccessMessage = null;
+        _verifiedLicenseType = null;
     }
 
     [RelayCommand]
@@ -250,10 +257,24 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
             if (response?.Success == true)
             {
+                // Store the license type for saving when user clicks Continue
+                _verifiedLicenseType = response.Type;
+
                 IsVerificationSuccess = true;
                 // Fix server message: change "can be redeemed" to "has been redeemed"
                 var message = response.Message ?? "License activated successfully!";
                 SuccessMessage = message.Replace("can be redeemed", "has been redeemed");
+
+                // Save license securely
+                var hasStandard = response.Type?.Equals("standard", StringComparison.OrdinalIgnoreCase) == true ||
+                                  response.Type?.Equals("premium", StringComparison.OrdinalIgnoreCase) == true;
+                var hasPremium = response.Type?.Equals("premium", StringComparison.OrdinalIgnoreCase) == true;
+
+                if (App.LicenseService != null)
+                {
+                    _ = App.LicenseService.SaveLicenseAsync(hasStandard, hasPremium, key);
+                }
+
                 // User will click Continue button to close
             }
             else

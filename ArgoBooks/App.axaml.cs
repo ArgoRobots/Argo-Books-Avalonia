@@ -30,6 +30,11 @@ public partial class App : Application
     public static GlobalSettingsService? SettingsService { get; private set; }
 
     /// <summary>
+    /// Gets the license service instance for secure license storage.
+    /// </summary>
+    public static LicenseService? LicenseService { get; private set; }
+
+    /// <summary>
     /// Gets the shared undo/redo manager instance.
     /// </summary>
     public static UndoRedoManager UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
@@ -218,6 +223,7 @@ public partial class App : Application
             var encryptionService = new EncryptionService();
             var fileService = new FileService(compressionService, footerService, encryptionService);
             SettingsService = new GlobalSettingsService();
+            LicenseService = new LicenseService(encryptionService, SettingsService);
             CompanyManager = new CompanyManager(fileService, encryptionService, SettingsService, footerService);
 
             // Create navigation service
@@ -353,6 +359,16 @@ public partial class App : Application
                 // Initialize theme service with settings
                 ThemeService.Instance.SetGlobalSettingsService(SettingsService);
                 ThemeService.Instance.Initialize();
+            }
+
+            // Load and apply saved license status
+            if (LicenseService != null && _appShellViewModel != null)
+            {
+                var (hasStandard, hasPremium) = LicenseService.LoadLicense();
+                if (hasStandard || hasPremium)
+                {
+                    _appShellViewModel.SetPlanStatus(hasStandard, hasPremium);
+                }
             }
 
             // Load and display recent companies
