@@ -57,6 +57,7 @@ public class GoogleSheetsService
     /// <param name="column1Text">Header text for the first column (labels).</param>
     /// <param name="column2Text">Header text for the second column (values).</param>
     /// <param name="companyName">Name of the company for the spreadsheet title.</param>
+    /// <param name="numberFormat">Number format pattern (default: "#,##0.00").</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The URL of the created spreadsheet, or null if export failed.</returns>
     public async Task<string?> ExportChartToGoogleSheetsAsync(
@@ -66,6 +67,7 @@ public class GoogleSheetsService
         string column1Text,
         string column2Text,
         string companyName,
+        string numberFormat = "#,##0.00",
         CancellationToken cancellationToken = default)
     {
         if (!await InitializeServiceAsync(cancellationToken))
@@ -73,118 +75,39 @@ public class GoogleSheetsService
             return null;
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
+        const string sheetName = "Chart Data";
 
-        var sheetName = "Chart Data";
-
-        // Create a new spreadsheet
-        var spreadsheet = new Spreadsheet
-        {
-            Properties = new SpreadsheetProperties
-            {
-                Title = $"{companyName} - {chartTitle} - {DateTime.Today:yyyy-MM-dd}"
-            },
-            Sheets =
-            [
-                new Sheet
-                {
-                    Properties = new SheetProperties
-                    {
-                        Title = sheetName,
-                        SheetId = 0
-                    }
-                }
-            ]
-        };
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        spreadsheet = await _sheetsService!.Spreadsheets
-            .Create(spreadsheet)
-            .ExecuteAsync(cancellationToken);
-
+        var spreadsheet = await CreateSpreadsheetAsync(chartTitle, companyName, sheetName, cancellationToken);
         var spreadsheetId = spreadsheet.SpreadsheetId;
 
-        cancellationToken.ThrowIfCancellationRequested();
-
         // Prepare the data
-        var values = new List<IList<object>>
-        {
-            new List<object> { column1Text, column2Text }
-        };
-
+        var values = new List<IList<object>> { new List<object> { column1Text, column2Text } };
         foreach (var item in data.OrderBy(x => x.Key))
         {
-            cancellationToken.ThrowIfCancellationRequested();
             values.Add(new List<object> { item.Key, item.Value });
         }
-
-        cancellationToken.ThrowIfCancellationRequested();
 
         // Write data to sheet
         var range = $"'{sheetName}'!A1:B{values.Count}";
         var valueRange = new ValueRange { Values = values };
 
-        var updateRequest = _sheetsService.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
+        var updateRequest = _sheetsService!.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
         updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-
         await updateRequest.ExecuteAsync(cancellationToken);
 
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // Format headers and numbers
+        // Format headers and numbers, add chart
         var requests = new List<Request>
         {
             CreateHeaderFormatRequest(0, 0, 0, 1),
-            CreateNumberFormatRequest(1, values.Count - 1, 1, 1, "#,##0.00")
-        };
-
-        // Add chart
-        var chartRequest = CreateChartRequest(
-            chartType,
-            chartTitle,
-            0, values.Count - 1,
-            [("A", "B")]
-        );
-        requests.Add(chartRequest);
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // Execute all formatting requests
-        var batchUpdateRequest = new BatchUpdateSpreadsheetRequest
-        {
-            Requests = requests
+            CreateNumberFormatRequest(1, values.Count - 1, 1, 1, numberFormat),
+            CreateChartRequest(chartType, chartTitle, 0, values.Count - 1, [("A", "B")])
         };
 
         await _sheetsService.Spreadsheets
-            .BatchUpdate(batchUpdateRequest, spreadsheetId)
+            .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
             .ExecuteAsync(cancellationToken);
 
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // Auto-resize columns
-        var dimensionRange = new DimensionRange
-        {
-            SheetId = 0,
-            Dimension = "COLUMNS",
-            StartIndex = 0,
-            EndIndex = 2
-        };
-
-        var autoResizeRequest = new Request
-        {
-            AutoResizeDimensions = new AutoResizeDimensionsRequest
-            {
-                Dimensions = dimensionRange
-            }
-        };
-
-        await _sheetsService.Spreadsheets
-            .BatchUpdate(new BatchUpdateSpreadsheetRequest
-            {
-                Requests = [autoResizeRequest]
-            }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
+        await AutoResizeColumnsAsync(spreadsheetId, 2, cancellationToken);
 
         return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}";
     }
@@ -192,7 +115,7 @@ public class GoogleSheetsService
     /// <summary>
     /// Exports chart data with integer values (counts) to Google Sheets.
     /// </summary>
-    public async Task<string?> ExportCountChartToGoogleSheetsAsync(
+    public Task<string?> ExportCountChartToGoogleSheetsAsync(
         IReadOnlyDictionary<string, int> data,
         string chartTitle,
         ChartType chartType,
@@ -201,108 +124,10 @@ public class GoogleSheetsService
         string companyName,
         CancellationToken cancellationToken = default)
     {
-        // Convert to double dictionary
         var doubleData = data.ToDictionary(kvp => kvp.Key, kvp => (double)kvp.Value);
-
-        if (!await InitializeServiceAsync(cancellationToken))
-        {
-            return null;
-        }
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var sheetName = "Chart Data";
-
-        // Create a new spreadsheet
-        var spreadsheet = new Spreadsheet
-        {
-            Properties = new SpreadsheetProperties
-            {
-                Title = $"{companyName} - {chartTitle} - {DateTime.Today:yyyy-MM-dd}"
-            },
-            Sheets =
-            [
-                new Sheet
-                {
-                    Properties = new SheetProperties
-                    {
-                        Title = sheetName,
-                        SheetId = 0
-                    }
-                }
-            ]
-        };
-
-        spreadsheet = await _sheetsService!.Spreadsheets
-            .Create(spreadsheet)
-            .ExecuteAsync(cancellationToken);
-
-        var spreadsheetId = spreadsheet.SpreadsheetId;
-
-        // Prepare the data
-        var values = new List<IList<object>>
-        {
-            new List<object> { column1Text, column2Text }
-        };
-
-        foreach (var item in data.OrderBy(x => x.Key))
-        {
-            values.Add(new List<object> { item.Key, item.Value });
-        }
-
-        // Write data to sheet
-        var range = $"'{sheetName}'!A1:B{values.Count}";
-        var valueRange = new ValueRange { Values = values };
-
-        var updateRequest = _sheetsService.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
-        updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-
-        await updateRequest.ExecuteAsync(cancellationToken);
-
-        // Format headers and numbers (no decimals for counts)
-        var requests = new List<Request>
-        {
-            CreateHeaderFormatRequest(0, 0, 0, 1),
-            CreateNumberFormatRequest(1, values.Count - 1, 1, 1, "#,##0")
-        };
-
-        // Add chart
-        var chartRequest = CreateChartRequest(
-            chartType,
-            chartTitle,
-            0, values.Count - 1,
-            [("A", "B")]
-        );
-        requests.Add(chartRequest);
-
-        await _sheetsService.Spreadsheets
-            .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
-
-        // Auto-resize columns
-        await _sheetsService.Spreadsheets
-            .BatchUpdate(new BatchUpdateSpreadsheetRequest
-            {
-                Requests =
-                [
-                    new Request
-                    {
-                        AutoResizeDimensions = new AutoResizeDimensionsRequest
-                        {
-                            Dimensions = new DimensionRange
-                            {
-                                SheetId = 0,
-                                Dimension = "COLUMNS",
-                                StartIndex = 0,
-                                EndIndex = 2
-                            }
-                        }
-                    }
-                ]
-            }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
-
-        return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}";
+        return ExportChartToGoogleSheetsAsync(
+            doubleData, chartTitle, chartType, column1Text, column2Text, companyName,
+            numberFormat: "#,##0", cancellationToken);
     }
 
     /// <summary>
@@ -320,64 +145,29 @@ public class GoogleSheetsService
             return null;
         }
 
-        var sheetName = "Chart Data";
+        const string sheetName = "Chart Data";
 
-        // Create a new spreadsheet
-        var spreadsheet = new Spreadsheet
-        {
-            Properties = new SpreadsheetProperties
-            {
-                Title = $"{companyName} - {chartTitle} - {DateTime.Today:yyyy-MM-dd}"
-            },
-            Sheets =
-            [
-                new Sheet
-                {
-                    Properties = new SheetProperties
-                    {
-                        Title = sheetName,
-                        SheetId = 0
-                    }
-                }
-            ]
-        };
-
-        spreadsheet = await _sheetsService!.Spreadsheets
-            .Create(spreadsheet)
-            .ExecuteAsync(cancellationToken);
-
+        var spreadsheet = await CreateSpreadsheetAsync(chartTitle, companyName, sheetName, cancellationToken);
         var spreadsheetId = spreadsheet.SpreadsheetId;
 
-        // Create drive service for permissions
+        // Set file permissions to be accessible by anyone with the link
         var driveService = new DriveService(new BaseClientService.Initializer
         {
-            HttpClientInitializer = _sheetsService.HttpClientInitializer,
+            HttpClientInitializer = _sheetsService!.HttpClientInitializer,
             ApplicationName = "Argo Books"
         });
-
-        // Set file permissions to be accessible by anyone with the link
-        var permission = new Permission
-        {
-            Type = "anyone",
-            Role = "writer",
-            AllowFileDiscovery = false
-        };
-
         await driveService.Permissions
-            .Create(permission, spreadsheetId)
+            .Create(new Permission { Type = "anyone", Role = "writer", AllowFileDiscovery = false }, spreadsheetId)
             .ExecuteAsync(cancellationToken);
 
         // Get series names and prepare headers
         var seriesNames = data.First().Value.Keys.ToList();
-        var orderedSeriesNames = seriesNames
-            .OrderBy(x => x.Contains("Sales"))
-            .ToList();
+        var orderedSeriesNames = seriesNames.OrderBy(x => x.Contains("Sales")).ToList();
         var headers = new List<object> { "Date" };
         headers.AddRange(orderedSeriesNames);
 
         // Prepare the data
         var values = new List<IList<object>> { headers };
-
         foreach (var dateEntry in data.OrderBy(x => x.Key))
         {
             var row = new List<object> { dateEntry.Key };
@@ -391,65 +181,28 @@ public class GoogleSheetsService
         // Write data to sheet
         var range = $"{sheetName}!A1:{(char)('A' + seriesNames.Count)}{values.Count}";
         var valueRange = new ValueRange { Values = values };
-
         var updateRequest = _sheetsService.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
         updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
         await updateRequest.ExecuteAsync(cancellationToken);
 
         // Format headers and numbers
-        var requests = new List<Request>
-        {
-            CreateHeaderFormatRequest(0, 0, 0, seriesNames.Count)
-        };
-
-        // Format number columns
+        var requests = new List<Request> { CreateHeaderFormatRequest(0, 0, 0, seriesNames.Count) };
         for (var i = 1; i <= seriesNames.Count; i++)
         {
             requests.Add(CreateNumberFormatRequest(1, values.Count - 1, i, i, "#,##0.00"));
         }
 
         // Add chart with multiple series
-        var seriesRanges = new List<(string, string)>();
-        for (var i = 0; i < seriesNames.Count; i++)
-        {
-            seriesRanges.Add(("A", $"{(char)('B' + i)}"));
-        }
-
-        var chartRequest = CreateChartRequest(
-            chartType,
-            chartTitle,
-            0,
-            values.Count - 1,
-            seriesRanges.ToArray()
-        );
-        requests.Add(chartRequest);
+        var seriesRanges = Enumerable.Range(0, seriesNames.Count)
+            .Select(i => ("A", $"{(char)('B' + i)}"))
+            .ToArray();
+        requests.Add(CreateChartRequest(chartType, chartTitle, 0, values.Count - 1, seriesRanges));
 
         await _sheetsService.Spreadsheets
             .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
             .ExecuteAsync(cancellationToken);
 
-        // Auto-resize columns
-        await _sheetsService.Spreadsheets
-            .BatchUpdate(new BatchUpdateSpreadsheetRequest
-            {
-                Requests =
-                [
-                    new Request
-                    {
-                        AutoResizeDimensions = new AutoResizeDimensionsRequest
-                        {
-                            Dimensions = new DimensionRange
-                            {
-                                SheetId = 0,
-                                Dimension = "COLUMNS",
-                                StartIndex = 0,
-                                EndIndex = seriesNames.Count + 1
-                            }
-                        }
-                    }
-                ]
-            }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
+        await AutoResizeColumnsAsync(spreadsheetId, seriesNames.Count + 1, cancellationToken);
 
         return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}";
     }
@@ -470,123 +223,45 @@ public class GoogleSheetsService
         string companyName,
         CancellationToken cancellationToken = default)
     {
-        if (exportData.Count == 0)
+        if (exportData.Count == 0 || !await InitializeServiceAsync(cancellationToken))
         {
             return null;
         }
 
-        if (!await InitializeServiceAsync(cancellationToken))
-        {
-            return null;
-        }
+        const string sheetName = "Chart Data";
 
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var sheetName = "Chart Data";
-
-        // Create a new spreadsheet
-        var spreadsheet = new Spreadsheet
-        {
-            Properties = new SpreadsheetProperties
-            {
-                Title = $"{companyName} - {chartTitle} - {DateTime.Today:yyyy-MM-dd}"
-            },
-            Sheets =
-            [
-                new Sheet
-                {
-                    Properties = new SheetProperties
-                    {
-                        Title = sheetName,
-                        SheetId = 0
-                    }
-                }
-            ]
-        };
-
-        spreadsheet = await _sheetsService!.Spreadsheets
-            .Create(spreadsheet)
-            .ExecuteAsync(cancellationToken);
-
+        var spreadsheet = await CreateSpreadsheetAsync(chartTitle, companyName, sheetName, cancellationToken);
         var spreadsheetId = spreadsheet.SpreadsheetId;
 
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // Convert List<List<object>> to IList<IList<object>>
+        // Convert and write data
         var values = exportData.Select(row => (IList<object>)row.ToList()).ToList();
-
-        // Determine the number of columns
         var columnCount = values.Max(row => row.Count);
         var lastColumn = (char)('A' + columnCount - 1);
 
-        // Write data to sheet
         var range = $"'{sheetName}'!A1:{lastColumn}{values.Count}";
         var valueRange = new ValueRange { Values = values };
-
-        var updateRequest = _sheetsService.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
+        var updateRequest = _sheetsService!.Spreadsheets.Values.Update(valueRange, spreadsheetId, range);
         updateRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
-
         await updateRequest.ExecuteAsync(cancellationToken);
 
-        cancellationToken.ThrowIfCancellationRequested();
-
         // Format headers and numbers
-        var requests = new List<Request>
-        {
-            CreateHeaderFormatRequest(0, 0, 0, columnCount - 1)
-        };
-
-        // Format number columns (all columns except the first one which is typically labels)
+        var requests = new List<Request> { CreateHeaderFormatRequest(0, 0, 0, columnCount - 1) };
         for (var i = 1; i < columnCount; i++)
         {
             requests.Add(CreateNumberFormatRequest(1, values.Count - 1, i, i, "#,##0.00"));
         }
 
         // Add chart
-        var seriesRanges = new List<(string, string)>();
-        for (var i = 1; i < columnCount; i++)
-        {
-            seriesRanges.Add(("A", $"{(char)('A' + i)}"));
-        }
-
-        var chartRequest = CreateChartRequest(
-            chartType,
-            chartTitle,
-            0, values.Count - 1,
-            seriesRanges.ToArray()
-        );
-        requests.Add(chartRequest);
-
-        cancellationToken.ThrowIfCancellationRequested();
+        var seriesRanges = Enumerable.Range(1, columnCount - 1)
+            .Select(i => ("A", $"{(char)('A' + i)}"))
+            .ToArray();
+        requests.Add(CreateChartRequest(chartType, chartTitle, 0, values.Count - 1, seriesRanges));
 
         await _sheetsService.Spreadsheets
             .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = requests }, spreadsheetId)
             .ExecuteAsync(cancellationToken);
 
-        cancellationToken.ThrowIfCancellationRequested();
-
-        // Auto-resize columns
-        await _sheetsService.Spreadsheets
-            .BatchUpdate(new BatchUpdateSpreadsheetRequest
-            {
-                Requests =
-                [
-                    new Request
-                    {
-                        AutoResizeDimensions = new AutoResizeDimensionsRequest
-                        {
-                            Dimensions = new DimensionRange
-                            {
-                                SheetId = 0,
-                                Dimension = "COLUMNS",
-                                StartIndex = 0,
-                                EndIndex = columnCount
-                            }
-                        }
-                    }
-                ]
-            }, spreadsheetId)
-            .ExecuteAsync(cancellationToken);
+        await AutoResizeColumnsAsync(spreadsheetId, columnCount, cancellationToken);
 
         return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}";
     }
@@ -612,6 +287,66 @@ public class GoogleSheetsService
     }
 
     #region Private Helper Methods
+
+    /// <summary>
+    /// Creates a new spreadsheet with a single sheet.
+    /// </summary>
+    private async Task<Spreadsheet> CreateSpreadsheetAsync(
+        string chartTitle,
+        string companyName,
+        string sheetName,
+        CancellationToken cancellationToken)
+    {
+        var spreadsheet = new Spreadsheet
+        {
+            Properties = new SpreadsheetProperties
+            {
+                Title = $"{companyName} - {chartTitle} - {DateTime.Today:yyyy-MM-dd}"
+            },
+            Sheets =
+            [
+                new Sheet
+                {
+                    Properties = new SheetProperties
+                    {
+                        Title = sheetName,
+                        SheetId = 0
+                    }
+                }
+            ]
+        };
+
+        return await _sheetsService!.Spreadsheets
+            .Create(spreadsheet)
+            .ExecuteAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Auto-resizes columns in the spreadsheet.
+    /// </summary>
+    private async Task AutoResizeColumnsAsync(
+        string spreadsheetId,
+        int columnCount,
+        CancellationToken cancellationToken)
+    {
+        var request = new Request
+        {
+            AutoResizeDimensions = new AutoResizeDimensionsRequest
+            {
+                Dimensions = new DimensionRange
+                {
+                    SheetId = 0,
+                    Dimension = "COLUMNS",
+                    StartIndex = 0,
+                    EndIndex = columnCount
+                }
+            }
+        };
+
+        await _sheetsService!.Spreadsheets
+            .BatchUpdate(new BatchUpdateSpreadsheetRequest { Requests = [request] }, spreadsheetId)
+            .ExecuteAsync(cancellationToken);
+    }
 
     private static Request CreateHeaderFormatRequest(
         int startRowIndex,
