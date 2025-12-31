@@ -244,16 +244,35 @@ public class ChartLoaderService
             return CreateXAxes();
         }
 
+        // Calculate min and max OADate values with padding
+        var minDate = dates.Min().ToOADate();
+        var maxDate = dates.Max().ToOADate();
+        var padding = Math.Max(0.5, (maxDate - minDate) * 0.05); // 5% padding or at least 0.5 days
+
         var axis = new Axis
         {
             TextSize = AxisTextSize,
             LabelsPaint = new SolidColorPaint(_textColor),
             LabelsRotation = 0,
+            MinLimit = minDate - padding,
+            MaxLimit = maxDate + padding,
             Labeler = value =>
             {
-                // Convert the numeric X value (days since epoch) back to a date string
-                var date = DateTime.FromOADate(value);
-                return date.ToString("yyyy-MM-dd");
+                // Validate OADate range to prevent exceptions
+                // Valid OADate range is approximately -657434 (year 100) to 2958466 (year 9999)
+                if (value < -657434 || value > 2958466)
+                {
+                    return string.Empty;
+                }
+                try
+                {
+                    var date = DateTime.FromOADate(value);
+                    return date.ToString("yyyy-MM-dd");
+                }
+                catch
+                {
+                    return string.Empty;
+                }
             },
             MinStep = 1 // Minimum step of 1 day
         };
