@@ -605,7 +605,17 @@ public class ChartLoaderService
         var labels = Array.Empty<string>();
 
         if (companyData == null)
+        {
+            _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+            {
+                ChartTitle = "Sales vs Expenses",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Revenue"
+            };
             return (series, labels);
+        }
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
@@ -621,7 +631,17 @@ public class ChartLoaderService
         }
 
         if (months.Count == 0)
+        {
+            _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+            {
+                ChartTitle = "Sales vs Expenses",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Revenue"
+            };
             return (series, labels);
+        }
 
         labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
 
@@ -651,6 +671,19 @@ public class ChartLoaderService
             series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
             series.Add(CreateTimeSeries(expenseValues, "Expenses", ExpenseColor));
         }
+
+        // Store export data for multi-series chart
+        _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+        {
+            ChartTitle = "Sales vs Expenses",
+            ChartType = ChartType.Comparison,
+            Labels = labels,
+            Values = revenueValues,
+            SeriesName = "Revenue",
+            AdditionalSeries = [("Expenses", expenseValues)],
+            StartDate = start,
+            EndDate = end
+        };
 
         return (series, labels);
     }
@@ -2042,23 +2075,39 @@ public class ChartLoaderService
         if (exportData == null)
             return [];
 
-        // Use "Category" for pie charts, "Date" for time-based charts
-        var labelHeader = exportData.ChartType == ChartType.Distribution ? "Category" : "Date";
-
-        var data = new List<List<object>>
+        // Use "Category" for pie charts, "Date" or "Month" for time-based charts
+        var labelHeader = exportData.ChartType switch
         {
-            // Header row
-            new() { labelHeader, exportData.SeriesName }
+            ChartType.Distribution => "Category",
+            ChartType.Comparison => "Month",
+            _ => "Date"
         };
+
+        // Build header row with all series names
+        var headerRow = new List<object> { labelHeader, exportData.SeriesName };
+        foreach (var (name, _) in exportData.AdditionalSeries)
+        {
+            headerRow.Add(name);
+        }
+
+        var data = new List<List<object>> { headerRow };
 
         // Data rows (no total - it would show up as a category in the chart)
         for (int i = 0; i < exportData.Labels.Length; i++)
         {
-            data.Add(new List<object>
+            var row = new List<object>
             {
                 exportData.Labels[i],
                 exportData.Values[i]
-            });
+            };
+
+            // Add values from additional series
+            foreach (var (_, values) in exportData.AdditionalSeries)
+            {
+                row.Add(i < values.Length ? values[i] : 0.0);
+            }
+
+            data.Add(row);
         }
 
         return data;
@@ -2233,6 +2282,17 @@ public class ChartExportData
     public double? TotalValue { get; set; }
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
+
+    /// <summary>
+    /// Additional series for multi-series charts (e.g., Sales vs Expenses).
+    /// Each entry contains a series name and its values.
+    /// </summary>
+    public List<(string Name, double[] Values)> AdditionalSeries { get; set; } = [];
+
+    /// <summary>
+    /// Returns true if this chart has multiple series.
+    /// </summary>
+    public bool IsMultiSeries => AdditionalSeries.Count > 0;
 }
 
 /// <summary>
