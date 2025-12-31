@@ -125,7 +125,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Windows Hello Security" />
+                                                <TextBlock Grid.Column="1" Text="Biometric Login Security" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">
@@ -206,6 +206,16 @@
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
                                                 <TextBlock Grid.Column="1" Text="Everything in Standard" />
+                                            </Grid>
+                                        </Border>
+                                        <Border Classes="feature-item">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0"
+                                                          Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                          Width="14" Height="14"
+                                                          Foreground="#22C55E"
+                                                          Margin="0,0,10,0" />
+                                                <TextBlock Grid.Column="1" Text="Invoices &amp; payments" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">

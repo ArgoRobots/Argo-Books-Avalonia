@@ -18,6 +18,7 @@
         <StyleInclude Source="avares://ArgoBooks/Styles/BaseStyles.axaml" />
         <StyleInclude Source="avares://ArgoBooks/Styles/ButtonStyles.axaml" />
         <StyleInclude Source="avares://ArgoBooks/Styles/CardStyles.axaml" />
+        <StyleInclude Source="avares://ArgoBooks/Styles/SyncIconStyles.axaml" />
     </Application.Styles>
 
     <Application.Resources>
