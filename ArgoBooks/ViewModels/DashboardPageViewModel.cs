@@ -378,10 +378,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
 
         // Load expenses chart data for the last 30 days
-        var (series, labels, totalExpenses) = _chartLoaderService.LoadExpensesOverviewChart(data);
+        var (series, labels, dates, totalExpenses) = _chartLoaderService.LoadExpensesOverviewChart(data);
 
         ExpensesChartSeries = series;
-        ExpensesChartXAxes = _chartLoaderService.CreateXAxes(labels);
+        ExpensesChartXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ExpensesChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
         ExpensesChartTitle = $"Total expenses: {FormatCurrency(totalExpenses)}";
         HasExpensesChartData = series.Count > 0 && labels.Length > 0;

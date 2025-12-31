@@ -151,6 +151,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Creates a series for time-based data, either as line or column based on UseLineChart.
+    /// Uses categorical (index-based) positioning - dates will be evenly spaced.
     /// </summary>
     private ISeries CreateTimeSeries(double[] values, string name, SKColor color)
     {
@@ -170,6 +171,39 @@ public class ChartLoaderService
         return new ColumnSeries<double>
         {
             Values = values,
+            Name = name,
+            Fill = new SolidColorPaint(color),
+            Stroke = null,
+            MaxBarWidth = 50
+        };
+    }
+
+    /// <summary>
+    /// Creates a series for date-based data with proportional spacing.
+    /// Points are positioned based on actual date values (converted to OADate), not evenly spaced.
+    /// </summary>
+    private ISeries CreateDateTimeSeries(DateTime[] dates, double[] values, string name, SKColor color)
+    {
+        // Convert dates to OADate (days since Dec 30, 1899) for X coordinate
+        // Use ObservablePoint which directly stores X,Y coordinates
+        var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
+
+        if (UseLineChart)
+        {
+            return new LineSeries<ObservablePoint>
+            {
+                Values = points,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = null,
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            };
+        }
+        return new ColumnSeries<ObservablePoint>
+        {
+            Values = points,
             Name = name,
             Fill = new SolidColorPaint(color),
             Stroke = null,
@@ -198,7 +232,8 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Creates X-axis configuration for a cartesian chart.
+    /// Creates X-axis configuration for a cartesian chart with categorical (evenly-spaced) labels.
+    /// Use this for non-date categories like product names, months, etc.
     /// </summary>
     /// <param name="labels">The labels for the X-axis.</param>
     /// <returns>Configured X-axis array.</returns>
@@ -210,6 +245,55 @@ public class ChartLoaderService
             LabelsPaint = new SolidColorPaint(_textColor),
             Labels = labels?.ToArray(),
             LabelsRotation = 0
+        };
+
+        return [axis];
+    }
+
+    /// <summary>
+    /// Creates X-axis configuration for a cartesian chart with proportional date spacing.
+    /// Use this for time-series charts where date spacing should be proportional to actual time differences.
+    /// </summary>
+    /// <param name="dates">The actual DateTime values for proportional positioning.</param>
+    /// <returns>Configured X-axis array.</returns>
+    public Axis[] CreateDateXAxes(DateTime[]? dates = null)
+    {
+        if (dates == null || dates.Length == 0)
+        {
+            return CreateXAxes();
+        }
+
+        // Calculate min and max OADate values with padding
+        var minDate = dates.Min().ToOADate();
+        var maxDate = dates.Max().ToOADate();
+        var padding = Math.Max(0.5, (maxDate - minDate) * 0.05); // 5% padding or at least 0.5 days
+
+        var axis = new Axis
+        {
+            TextSize = AxisTextSize,
+            LabelsPaint = new SolidColorPaint(_textColor),
+            LabelsRotation = 0,
+            MinLimit = minDate - padding,
+            MaxLimit = maxDate + padding,
+            Labeler = value =>
+            {
+                // Validate OADate range to prevent exceptions
+                // Valid OADate range is approximately -657434 (year 100) to 2958466 (year 9999)
+                if (value < -657434 || value > 2958466)
+                {
+                    return string.Empty;
+                }
+                try
+                {
+                    var date = DateTime.FromOADate(value);
+                    return date.ToString("yyyy-MM-dd");
+                }
+                catch
+                {
+                    return string.Empty;
+                }
+            },
+            MinStep = 1 // Minimum step of 1 day
         };
 
         return [axis];
@@ -274,14 +358,15 @@ public class ChartLoaderService
     /// <param name="companyData">The company data to load from.</param>
     /// <param name="startDate">Optional start date filter.</param>
     /// <param name="endDate">Optional end date filter.</param>
-    /// <returns>A tuple containing the series collection and X-axis labels.</returns>
-    public (ObservableCollection<ISeries> Series, string[] Labels, decimal TotalExpenses) LoadExpensesOverviewChart(
+    /// <returns>A tuple containing the series collection, X-axis labels, dates for proportional spacing, and total expenses.</returns>
+    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, decimal TotalExpenses) LoadExpensesOverviewChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
+        var dates = Array.Empty<DateTime>();
         decimal totalExpenses = 0;
 
         if (companyData?.Purchases == null || companyData.Purchases.Count == 0)
@@ -295,7 +380,7 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Expenses"
             });
-            return (series, labels, totalExpenses);
+            return (series, labels, dates, totalExpenses);
         }
 
         // Default date range: last 30 days
@@ -324,16 +409,17 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Expenses"
             });
-            return (series, labels, totalExpenses);
+            return (series, labels, dates, totalExpenses);
         }
 
-        // Create labels and values
+        // Create labels, dates, and values
         labels = expensesByDate.Select(e => e.Date.ToString("yyyy-MM-dd")).ToArray();
+        dates = expensesByDate.Select(e => e.Date).ToArray();
         var values = expensesByDate.Select(e => (double)e.Total).ToArray();
         totalExpenses = expensesByDate.Sum(e => e.Total);
 
-        // Create series (column or line based on UseLineChart setting)
-        series.Add(CreateTimeSeries(values, "Expenses", RevenueColor));
+        // Create series with proportional date spacing
+        series.Add(CreateDateTimeSeries(dates, values, "Expenses", RevenueColor));
 
         // Store export data for Google Sheets/Excel export
         StoreExportData(new ChartExportData
@@ -348,19 +434,20 @@ public class ChartLoaderService
             EndDate = end
         });
 
-        return (series, labels, totalExpenses);
+        return (series, labels, dates, totalExpenses);
     }
 
     /// <summary>
     /// Loads revenue overview chart data as a column series.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, decimal TotalRevenue) LoadRevenueOverviewChart(
+    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, decimal TotalRevenue) LoadRevenueOverviewChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
+        var dates = Array.Empty<DateTime>();
         decimal totalRevenue = 0;
 
         if (companyData?.Sales == null || companyData.Sales.Count == 0)
@@ -373,7 +460,7 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Revenue"
             });
-            return (series, labels, totalRevenue);
+            return (series, labels, dates, totalRevenue);
         }
 
         var end = endDate ?? DateTime.Now;
@@ -396,14 +483,15 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Revenue"
             });
-            return (series, labels, totalRevenue);
+            return (series, labels, dates, totalRevenue);
         }
 
         labels = revenueByDate.Select(r => r.Date.ToString("yyyy-MM-dd")).ToArray();
+        dates = revenueByDate.Select(r => r.Date).ToArray();
         var values = revenueByDate.Select(r => (double)r.Total).ToArray();
         totalRevenue = revenueByDate.Sum(r => r.Total);
 
-        series.Add(CreateTimeSeries(values, "Revenue", ProfitColor));
+        series.Add(CreateDateTimeSeries(dates, values, "Revenue", ProfitColor));
 
         StoreExportData(new ChartExportData
         {
@@ -417,19 +505,20 @@ public class ChartLoaderService
             EndDate = end
         });
 
-        return (series, labels, totalRevenue);
+        return (series, labels, dates, totalRevenue);
     }
 
     /// <summary>
     /// Loads profits overview chart data as a column series.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, decimal TotalProfit) LoadProfitsOverviewChart(
+    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, decimal TotalProfit) LoadProfitsOverviewChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
+        var dates = Array.Empty<DateTime>();
         decimal totalProfit = 0;
 
         if (companyData == null)
@@ -442,7 +531,7 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Profit"
             });
-            return (series, labels, totalProfit);
+            return (series, labels, dates, totalProfit);
         }
 
         var end = endDate ?? DateTime.Now;
@@ -473,7 +562,7 @@ public class ChartLoaderService
                 Values = [],
                 SeriesName = "Profit"
             });
-            return (series, labels, totalProfit);
+            return (series, labels, dates, totalProfit);
         }
 
         var profitData = allDates.Select(date => new
@@ -483,10 +572,11 @@ public class ChartLoaderService
         }).ToList();
 
         labels = profitData.Select(p => p.Date.ToString("yyyy-MM-dd")).ToArray();
+        dates = profitData.Select(p => p.Date).ToArray();
         var values = profitData.Select(p => (double)p.Profit).ToArray();
         totalProfit = profitData.Sum(p => p.Profit);
 
-        series.Add(CreateTimeSeries(values, "Profit", ProfitColor));
+        series.Add(CreateDateTimeSeries(dates, values, "Profit", ProfitColor));
 
         StoreExportData(new ChartExportData
         {
@@ -500,7 +590,7 @@ public class ChartLoaderService
             EndDate = end
         });
 
-        return (series, labels, totalProfit);
+        return (series, labels, dates, totalProfit);
     }
 
     /// <summary>
@@ -1551,17 +1641,18 @@ public class ChartLoaderService
     /// <summary>
     /// Loads returns over time chart.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, int TotalReturns) LoadReturnsOverTimeChart(
+    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, int TotalReturns) LoadReturnsOverTimeChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
+        var dates = Array.Empty<DateTime>();
         int totalReturns = 0;
 
         if (companyData?.Returns == null || companyData.Returns.Count == 0)
-            return (series, labels, totalReturns);
+            return (series, labels, dates, totalReturns);
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
@@ -1574,23 +1665,16 @@ public class ChartLoaderService
             .ToList();
 
         if (returnsByDate.Count == 0)
-            return (series, labels, totalReturns);
+            return (series, labels, dates, totalReturns);
 
         labels = returnsByDate.Select(r => r.Date.ToString("yyyy-MM-dd")).ToArray();
+        dates = returnsByDate.Select(r => r.Date).ToArray();
         var values = returnsByDate.Select(r => (double)r.Count).ToArray();
         totalReturns = returnsByDate.Sum(r => r.Count);
 
-        series.Add(new ColumnSeries<double>
-        {
-            Values = values,
-            Name = "Returns",
-            Fill = new SolidColorPaint(ExpenseColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+        series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor));
 
-        return (series, labels, totalReturns);
+        return (series, labels, dates, totalReturns);
     }
 
     /// <summary>
@@ -1717,17 +1801,18 @@ public class ChartLoaderService
     /// <summary>
     /// Loads losses over time chart.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, string[] Labels, int TotalLosses) LoadLossesOverTimeChart(
+    public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, int TotalLosses) LoadLossesOverTimeChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
+        var dates = Array.Empty<DateTime>();
         int totalLosses = 0;
 
         if (companyData?.LostDamaged == null || companyData.LostDamaged.Count == 0)
-            return (series, labels, totalLosses);
+            return (series, labels, dates, totalLosses);
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
@@ -1740,23 +1825,16 @@ public class ChartLoaderService
             .ToList();
 
         if (lossesByDate.Count == 0)
-            return (series, labels, totalLosses);
+            return (series, labels, dates, totalLosses);
 
         labels = lossesByDate.Select(l => l.Date.ToString("yyyy-MM-dd")).ToArray();
+        dates = lossesByDate.Select(l => l.Date).ToArray();
         var values = lossesByDate.Select(l => (double)l.Count).ToArray();
         totalLosses = lossesByDate.Sum(l => l.Count);
 
-        series.Add(new ColumnSeries<double>
-        {
-            Values = values,
-            Name = "Losses",
-            Fill = new SolidColorPaint(ExpenseColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+        series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor));
 
-        return (series, labels, totalLosses);
+        return (series, labels, dates, totalLosses);
     }
 
     /// <summary>

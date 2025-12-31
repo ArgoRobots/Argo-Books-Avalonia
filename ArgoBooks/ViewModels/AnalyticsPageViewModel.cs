@@ -1065,9 +1065,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadExpensesTrendsChart(CompanyData data)
     {
-        var (series, labels, _) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
+        var (series, labels, dates, _) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
         ExpensesTrendsSeries = series;
-        ExpensesTrendsXAxes = _chartLoaderService.CreateXAxes(labels);
+        ExpensesTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ExpensesTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasExpensesTrendsData = series.Count > 0;
     }
@@ -1081,9 +1081,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadRevenueTrendsChart(CompanyData data)
     {
-        var (series, labels, _) = _chartLoaderService.LoadRevenueOverviewChart(data, StartDate, EndDate);
+        var (series, labels, dates, _) = _chartLoaderService.LoadRevenueOverviewChart(data, StartDate, EndDate);
         RevenueTrendsSeries = series;
-        RevenueTrendsXAxes = _chartLoaderService.CreateXAxes(labels);
+        RevenueTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         RevenueTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasRevenueTrendsData = series.Count > 0;
     }
@@ -1097,9 +1097,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadProfitTrendsChart(CompanyData data)
     {
-        var (series, labels, _) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
+        var (series, labels, dates, _) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
         ProfitTrendsSeries = series;
-        ProfitTrendsXAxes = _chartLoaderService.CreateXAxes(labels);
+        ProfitTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ProfitTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasProfitTrendsData = series.Count > 0;
     }
@@ -1222,9 +1222,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadReturnsOverTimeChart(CompanyData data)
     {
-        var (series, labels, _) = _chartLoaderService.LoadReturnsOverTimeChart(data, StartDate, EndDate);
+        var (series, labels, dates, _) = _chartLoaderService.LoadReturnsOverTimeChart(data, StartDate, EndDate);
         ReturnsOverTimeSeries = series;
-        ReturnsOverTimeXAxes = _chartLoaderService.CreateXAxes(labels);
+        ReturnsOverTimeXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ReturnsOverTimeYAxes = _chartLoaderService.CreateNumberYAxes();
         HasReturnsOverTimeData = series.Count > 0;
     }
@@ -1247,9 +1247,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadLossesOverTimeChart(CompanyData data)
     {
-        var (series, labels, _) = _chartLoaderService.LoadLossesOverTimeChart(data, StartDate, EndDate);
+        var (series, labels, dates, _) = _chartLoaderService.LoadLossesOverTimeChart(data, StartDate, EndDate);
         LossesOverTimeSeries = series;
-        LossesOverTimeXAxes = _chartLoaderService.CreateXAxes(labels);
+        LossesOverTimeXAxes = _chartLoaderService.CreateDateXAxes(dates);
         LossesOverTimeYAxes = _chartLoaderService.CreateNumberYAxes();
         HasLossesOverTimeData = series.Count > 0;
     }
