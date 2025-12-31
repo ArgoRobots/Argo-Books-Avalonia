@@ -173,9 +173,17 @@
                                         </StackPanel>
                                     </Button>
 
+                                    <!-- Remaining Products Label (only shown without standard plan) -->
+                                    <TextBlock Text="{Binding RemainingProductsText}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding ShowRemainingProducts}" />
+
                                     <!-- Add Product Button -->
                                     <Button Classes="primary-button"
-                                            Command="{Binding OpenAddModalCommand}">
+                                            Command="{Binding OpenAddModalCommand}"
+                                            IsEnabled="{Binding CanAddProduct}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                       Width="16" Height="16"

@@ -126,6 +126,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     #region Security Settings
 
     [ObservableProperty]
+    private bool _hasStandard; // Whether user has Standard plan or higher
+
+    [ObservableProperty]
     private bool _windowsHelloEnabled;
 
     [ObservableProperty]
@@ -136,6 +139,11 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasPassword;
+
+    /// <summary>
+    /// Event raised when user wants to upgrade their plan.
+    /// </summary>
+    public event EventHandler? UpgradeRequested;
 
     [ObservableProperty]
     private bool _isAddPasswordModalOpen;
@@ -604,6 +612,15 @@ public partial class SettingsModalViewModel : ViewModelBase
     private void ToggleCurrentPasswordVisibility()
     {
         IsCurrentPasswordVisible = !IsCurrentPasswordVisible;
+    }
+
+    /// <summary>
+    /// Opens the upgrade modal.
+    /// </summary>
+    [RelayCommand]
+    private void UpgradeNow()
+    {
+        UpgradeRequested?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

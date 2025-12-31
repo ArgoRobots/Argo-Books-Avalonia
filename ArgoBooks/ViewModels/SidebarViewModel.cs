@@ -66,13 +66,24 @@ public partial class SidebarViewModel : ViewModelBase
     private bool _showPayroll = true;
 
     [ObservableProperty]
-    private bool _hasPremium;
+    private bool _showTeam; // Hidden until enterprise plan (always false for now)
+
+    [ObservableProperty]
+    private bool _hasStandard; // Standard plan or higher
+
+    [ObservableProperty]
+    private bool _hasPremium; // Premium plan
+
+    [ObservableProperty]
+    private bool _hasEnterprise; // Enterprise plan (always false for now)
 
     #endregion
 
     #region Premium Feature Items
 
     private SidebarItemModel? _insightsItem;
+    private SidebarItemModel? _invoicesItem;
+    private SidebarItemModel? _paymentsItem;
 
     #endregion
 
@@ -145,10 +156,14 @@ public partial class SidebarViewModel : ViewModelBase
             "M20 12l-1-1L13 16V4h-2v12l-5-5L4 12l8 8 8-8z")); // fa-arrow-down (shortened wings)
         TransactionItems.Add(CreateItem("Revenue", "Revenue",
             "M4 12l1 1L11 8V20h2V8l5 5L20 12l-8-8-8 8z")); // fa-arrow-up (shortened wings)
-        TransactionItems.Add(CreateItem("Invoices", "Invoices",
-            "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z")); // fa-file-invoice
-        TransactionItems.Add(CreateItem("Payments", "Payments",
-            "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z")); // fa-credit-card
+        _invoicesItem = CreateItem("Invoices", "Invoices",
+            "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"); // fa-file-invoice
+        _invoicesItem.IsVisible = HasPremium; // Hide by default unless premium
+        TransactionItems.Add(_invoicesItem);
+        _paymentsItem = CreateItem("Payments", "Payments",
+            "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"); // fa-credit-card
+        _paymentsItem.IsVisible = HasPremium; // Hide by default unless premium
+        TransactionItems.Add(_paymentsItem);
 
         // Rentals Section (mockup: Rental Inventory, Rental Records)
         RentalItems.Add(CreateItem("Rental Inventory", "RentalInventory",
@@ -238,9 +253,19 @@ public partial class SidebarViewModel : ViewModelBase
     partial void OnHasPremiumChanged(bool value)
     {
         if (_insightsItem != null)
-        {
             _insightsItem.IsVisible = value;
-        }
+        if (_invoicesItem != null)
+            _invoicesItem.IsVisible = value;
+        if (_paymentsItem != null)
+            _paymentsItem.IsVisible = value;
+    }
+
+    /// <summary>
+    /// Updates enterprise feature visibility when enterprise status changes.
+    /// </summary>
+    partial void OnHasEnterpriseChanged(bool value)
+    {
+        ShowTeam = value;
     }
 
     /// <summary>

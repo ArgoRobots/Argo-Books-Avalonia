@@ -337,6 +337,9 @@ public partial class AppShellViewModel : ViewModelBase
         // Wire up notification panel's settings to open settings modal at notifications tab
         NotificationPanelViewModel.OpenNotificationSettingsRequested += (_, _) => SettingsModalViewModel.OpenWithTab(2);
 
+        // Wire up settings modal's upgrade request to open upgrade modal
+        SettingsModalViewModel.UpgradeRequested += (_, _) => UpgradeModalViewModel.OpenCommand.Execute(null);
+
         // Wire up user panel's switch account to open switch account modal
         UserPanelViewModel.SwitchAccountRequested += (_, _) => SwitchAccountModalViewModel.OpenCommand.Execute(null);
 
@@ -561,6 +564,34 @@ public partial class AppShellViewModel : ViewModelBase
     public void SetPremiumStatus(bool hasPremium)
     {
         SidebarViewModel.HasPremium = hasPremium;
+    }
+
+    /// <summary>
+    /// Sets the standard plan status to show or hide standard features.
+    /// </summary>
+    public void SetStandardStatus(bool hasStandard)
+    {
+        SidebarViewModel.HasStandard = hasStandard;
+        SettingsModalViewModel.HasStandard = hasStandard;
+    }
+
+    /// <summary>
+    /// Sets the enterprise plan status to show or hide enterprise features.
+    /// </summary>
+    public void SetEnterpriseStatus(bool hasEnterprise)
+    {
+        SidebarViewModel.HasEnterprise = hasEnterprise;
+    }
+
+    /// <summary>
+    /// Sets all plan statuses at once.
+    /// </summary>
+    public void SetPlanStatus(bool hasStandard, bool hasPremium, bool hasEnterprise = false)
+    {
+        SidebarViewModel.HasStandard = hasStandard;
+        SidebarViewModel.HasPremium = hasPremium;
+        SidebarViewModel.HasEnterprise = hasEnterprise;
+        SettingsModalViewModel.HasStandard = hasStandard;
     }
 
     /// <summary>

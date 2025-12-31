@@ -207,7 +207,8 @@
                 <!-- Team Section -->
                 <controls:SidebarSection Title="TEAM"
                                          IsCollapsed="{Binding IsCollapsed}"
-                                         Items="{Binding TeamItems}" />
+                                         Items="{Binding TeamItems}"
+                                         IsVisible="{Binding ShowTeam}" />
 
                 <!-- Tracking Section -->
                 <controls:SidebarSection Title="TRACKING"

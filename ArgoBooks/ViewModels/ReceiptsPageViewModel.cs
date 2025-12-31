@@ -27,6 +27,13 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region Plan Status
+
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    #endregion
+
     #region View Mode
 
     [ObservableProperty]
