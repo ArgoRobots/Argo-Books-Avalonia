@@ -382,22 +382,8 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        if (totalCount == 0)
-        {
-            PaginationText = "0 items";
-            return;
-        }
-
-        if (TotalPages <= 1)
-        {
-            PaginationText = totalCount == 1 ? "1 item" : $"{totalCount} items";
-        }
-        else
-        {
-            var start = (CurrentPage - 1) * PageSize + 1;
-            var end = Math.Min(CurrentPage * PageSize, totalCount);
-            PaginationText = $"{start}-{end} of {totalCount} items";
-        }
+        PaginationText = PaginationHelper.FormatPaginationText(
+            totalCount, CurrentPage, PageSize, TotalPages, "item");
     }
 
     #endregion

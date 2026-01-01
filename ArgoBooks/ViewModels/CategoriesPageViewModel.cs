@@ -75,23 +75,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        if (totalCount == 0)
-        {
-            PaginationText = "0 categories";
-            return;
-        }
-
-        // For single page, just show count; for multiple pages, show range
-        if (TotalPages <= 1)
-        {
-            PaginationText = totalCount == 1 ? "1 category" : $"{totalCount} categories";
-        }
-        else
-        {
-            var start = (CurrentPage - 1) * PageSize + 1;
-            var end = Math.Min(CurrentPage * PageSize, totalCount);
-            PaginationText = $"{start}-{end} of {totalCount} categories";
-        }
+        PaginationText = PaginationHelper.FormatPaginationText(
+            totalCount, CurrentPage, PageSize, TotalPages, "category", "categories");
     }
 
     #endregion

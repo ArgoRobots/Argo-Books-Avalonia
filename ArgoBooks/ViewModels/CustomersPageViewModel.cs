@@ -547,23 +547,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        if (totalCount == 0)
-        {
-            PaginationText = "0 customers";
-            return;
-        }
-
-        // For single page, just show count; for multiple pages, show range
-        if (TotalPages <= 1)
-        {
-            PaginationText = totalCount == 1 ? "1 customer" : $"{totalCount} customers";
-        }
-        else
-        {
-            var start = (CurrentPage - 1) * PageSize + 1;
-            var end = Math.Min(CurrentPage * PageSize, totalCount);
-            PaginationText = $"{start}-{end} of {totalCount} customers";
-        }
+        PaginationText = PaginationHelper.FormatPaginationText(
+            totalCount, CurrentPage, PageSize, TotalPages, "customer");
     }
 
     #endregion

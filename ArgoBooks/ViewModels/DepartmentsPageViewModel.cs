@@ -40,7 +40,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void UpdatePaginationText(int totalItems)
     {
-        PaginationText = totalItems == 1 ? "1 department" : $"{totalItems} departments";
+        PaginationText = PaginationHelper.FormatSimpleCount(totalItems, "department");
     }
 
     #endregion
