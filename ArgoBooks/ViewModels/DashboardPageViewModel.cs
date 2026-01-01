@@ -131,6 +131,48 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
     }
 
+    /// <summary>
+    /// Gets the comparison period dates based on the selected date range.
+    /// </summary>
+    private (DateTime prevStartDate, DateTime prevEndDate) GetComparisonPeriod()
+    {
+        var now = DateTime.Now;
+
+        return SelectedDateRange switch
+        {
+            "This Month" => (
+                new DateTime(now.Year, now.Month, 1).AddMonths(-1),
+                new DateTime(now.Year, now.Month, 1).AddDays(-1)
+            ),
+            "Last Month" => (
+                new DateTime(now.Year, now.Month, 1).AddMonths(-2),
+                new DateTime(now.Year, now.Month, 1).AddMonths(-1).AddDays(-1)
+            ),
+            "This Quarter" => (
+                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3),
+                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1)
+            ),
+            "Last Quarter" => (
+                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-6),
+                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3).AddDays(-1)
+            ),
+            "This Year" => (
+                new DateTime(now.Year - 1, 1, 1),
+                new DateTime(now.Year - 1, 12, 31)
+            ),
+            "Last Year" => (
+                new DateTime(now.Year - 2, 1, 1),
+                new DateTime(now.Year - 2, 12, 31)
+            ),
+            "All Time" => (DateTime.MinValue, DateTime.MinValue), // No comparison for All Time
+            "Custom Range" => (
+                StartDate.AddDays(-(EndDate - StartDate).TotalDays - 1),
+                StartDate.AddDays(-1)
+            ),
+            _ => (StartDate.AddDays(-30), StartDate.AddDays(-1))
+        };
+    }
+
     #endregion
 
     #region Statistics Properties
@@ -323,10 +365,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadStatistics(CompanyData data)
     {
-        // Calculate comparison period (same length as selected period, immediately before)
-        var periodLength = EndDate - StartDate;
-        var prevStartDate = StartDate - periodLength;
-        var prevEndDate = StartDate.AddDays(-1);
+        // Calculate comparison period based on selected date range
+        var (prevStartDate, prevEndDate) = GetComparisonPeriod();
 
         // Calculate current period revenue
         var currentRevenue = data.Sales
