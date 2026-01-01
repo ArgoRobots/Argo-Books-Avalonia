@@ -33,6 +33,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     /// </summary>
     public string? HighlightTransactionId { get; set; }
 
+    /// <summary>
+    /// Refreshes the display to apply highlighting after HighlightTransactionId is set.
+    /// </summary>
+    public void ApplyHighlight() => FilterRevenue();
+
     #endregion
 
     #region Search and Filter

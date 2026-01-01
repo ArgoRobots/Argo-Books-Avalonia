@@ -1457,6 +1457,7 @@ public partial class App : Application
             if (param is TransactionNavigationParameter navParam)
             {
                 viewModel.HighlightTransactionId = navParam.TransactionId;
+                viewModel.ApplyHighlight();
             }
             return new RevenuePage { DataContext = viewModel };
         });
@@ -1466,6 +1467,7 @@ public partial class App : Application
             if (param is TransactionNavigationParameter navParam)
             {
                 viewModel.HighlightTransactionId = navParam.TransactionId;
+                viewModel.ApplyHighlight();
             }
             return new ExpensesPage { DataContext = viewModel };
         });
