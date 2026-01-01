@@ -21,6 +21,118 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 {
+    #region Date Range
+
+    /// <summary>
+    /// Available date range options.
+    /// </summary>
+    public ObservableCollection<string> DateRangeOptions { get; } =
+    [
+        "This Month",
+        "Last Month",
+        "This Quarter",
+        "Last Quarter",
+        "This Year",
+        "Last Year",
+        "All Time",
+        "Custom Range"
+    ];
+
+    [ObservableProperty]
+    private string _selectedDateRange = "This Month";
+
+    [ObservableProperty]
+    private DateTime _startDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    [ObservableProperty]
+    private DateTime _endDate = DateTime.Now;
+
+    /// <summary>
+    /// Gets whether the custom date range option is selected.
+    /// </summary>
+    public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
+
+    /// <summary>
+    /// Gets the label for comparison period based on selected date range.
+    /// </summary>
+    public string ComparisonPeriodLabel => SelectedDateRange switch
+    {
+        "This Month" => "from last month",
+        "Last Month" => "from prior month",
+        "This Quarter" => "from last quarter",
+        "Last Quarter" => "from prior quarter",
+        "This Year" => "from last year",
+        "Last Year" => "from prior year",
+        "All Time" => "",
+        "Custom Range" => "from prior period",
+        _ => "from last period"
+    };
+
+    partial void OnSelectedDateRangeChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsCustomDateRange));
+        OnPropertyChanged(nameof(ComparisonPeriodLabel));
+        UpdateDateRangeFromSelection();
+        LoadDashboardData();
+    }
+
+    /// <summary>
+    /// Updates the start and end dates based on the selected date range option.
+    /// </summary>
+    private void UpdateDateRangeFromSelection()
+    {
+        var now = DateTime.Now;
+
+        switch (SelectedDateRange)
+        {
+            case "This Month":
+                StartDate = new DateTime(now.Year, now.Month, 1);
+                EndDate = now;
+                break;
+
+            case "Last Month":
+                var lastMonth = now.AddMonths(-1);
+                StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
+                EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
+                break;
+
+            case "This Quarter":
+                var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
+                StartDate = quarterStart;
+                EndDate = now;
+                break;
+
+            case "Last Quarter":
+                var lastQuarterEnd = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1);
+                var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
+                lastQuarterStart = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
+                StartDate = lastQuarterStart;
+                EndDate = lastQuarterEnd;
+                break;
+
+            case "This Year":
+                StartDate = new DateTime(now.Year, 1, 1);
+                EndDate = now;
+                break;
+
+            case "Last Year":
+                StartDate = new DateTime(now.Year - 1, 1, 1);
+                EndDate = new DateTime(now.Year - 1, 12, 31);
+                break;
+
+            case "All Time":
+                StartDate = new DateTime(2000, 1, 1);
+                EndDate = now;
+                break;
+
+            case "Custom Range":
+                // Keep current values, let user modify
+                break;
+        }
+    }
+
+    #endregion
+
     #region Statistics Properties
 
     [ObservableProperty]
@@ -211,44 +323,44 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadStatistics(CompanyData data)
     {
-        var now = DateTime.Now;
-        var thisMonth = new DateTime(now.Year, now.Month, 1);
-        var lastMonth = thisMonth.AddMonths(-1);
-        var lastMonthEnd = thisMonth.AddDays(-1);
+        // Calculate comparison period (same length as selected period, immediately before)
+        var periodLength = EndDate - StartDate;
+        var prevStartDate = StartDate - periodLength;
+        var prevEndDate = StartDate.AddDays(-1);
 
-        // Calculate this month's revenue
-        var thisMonthRevenue = data.Sales
-            .Where(s => s.Date >= thisMonth && s.Date <= now)
+        // Calculate current period revenue
+        var currentRevenue = data.Sales
+            .Where(s => s.Date >= StartDate && s.Date <= EndDate)
             .Sum(s => s.Total);
 
-        // Calculate last month's revenue for comparison
-        var lastMonthRevenue = data.Sales
-            .Where(s => s.Date >= lastMonth && s.Date <= lastMonthEnd)
+        // Calculate previous period revenue for comparison
+        var prevRevenue = data.Sales
+            .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
             .Sum(s => s.Total);
 
-        TotalRevenue = FormatCurrency(thisMonthRevenue);
-        RevenueChangeValue = CalculatePercentageChange(lastMonthRevenue, thisMonthRevenue);
+        TotalRevenue = FormatCurrency(currentRevenue);
+        RevenueChangeValue = CalculatePercentageChange(prevRevenue, currentRevenue);
         RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
 
-        // Calculate this month's expenses
-        var thisMonthExpenses = data.Purchases
-            .Where(p => p.Date >= thisMonth && p.Date <= now)
+        // Calculate current period expenses
+        var currentExpenses = data.Purchases
+            .Where(p => p.Date >= StartDate && p.Date <= EndDate)
             .Sum(p => p.Total);
 
-        // Calculate last month's expenses for comparison
-        var lastMonthExpenses = data.Purchases
-            .Where(p => p.Date >= lastMonth && p.Date <= lastMonthEnd)
+        // Calculate previous period expenses for comparison
+        var prevExpenses = data.Purchases
+            .Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate)
             .Sum(p => p.Total);
 
-        TotalExpenses = FormatCurrency(thisMonthExpenses);
-        ExpenseChangeValue = CalculatePercentageChange(lastMonthExpenses, thisMonthExpenses);
+        TotalExpenses = FormatCurrency(currentExpenses);
+        ExpenseChangeValue = CalculatePercentageChange(prevExpenses, currentExpenses);
         ExpenseChangeText = FormatPercentageChange(ExpenseChangeValue);
 
         // Calculate net profit
-        var netProfitValue = thisMonthRevenue - thisMonthExpenses;
-        var lastMonthProfit = lastMonthRevenue - lastMonthExpenses;
+        var netProfitValue = currentRevenue - currentExpenses;
+        var prevProfit = prevRevenue - prevExpenses;
         NetProfit = FormatCurrency(Math.Abs(netProfitValue));
-        ProfitChangeValue = CalculatePercentageChange(lastMonthProfit, netProfitValue);
+        ProfitChangeValue = CalculatePercentageChange(prevProfit, netProfitValue);
         ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
 
         // Calculate outstanding invoices
@@ -377,8 +489,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Update theme colors based on current theme
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
 
-        // Load expenses chart data for the last 30 days
-        var (series, labels, dates, totalExpenses) = _chartLoaderService.LoadExpensesOverviewChart(data);
+        // Load expenses chart data for the selected date range
+        var (series, labels, dates, totalExpenses) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
 
         ExpensesChartSeries = series;
         ExpensesChartXAxes = _chartLoaderService.CreateDateXAxes(dates);
@@ -389,7 +501,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadExpenseDistributionChart(CompanyData data)
     {
-        var (series, total) = _chartLoaderService.LoadExpenseDistributionChart(data);
+        var (series, total) = _chartLoaderService.LoadExpenseDistributionChart(data, StartDate, EndDate);
         ExpenseDistributionSeries = series;
         HasExpenseDistributionData = series.Count > 0 && total > 0;
     }

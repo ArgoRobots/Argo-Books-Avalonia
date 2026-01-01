@@ -68,6 +68,8 @@
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
 
+                <!-- Date Range Selector -->
+                <controls:DateRangeSelector Grid.Column="1" VerticalAlignment="Center" />
             </Grid>
 
             <!-- Statistics Cards Row -->
