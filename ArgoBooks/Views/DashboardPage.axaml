@@ -81,6 +81,7 @@
                                    IconColor="Success"
                                    ChangeValue="{Binding RevenueChangeValue}"
                                    ChangeText="{Binding RevenueChangeText}"
+                                   ChangeLabel="{Binding ComparisonPeriodLabel}"
                                    Margin="0,0,12,0" />
 
                 <!-- Total Expenses -->
@@ -90,6 +91,7 @@
                                    IconColor="Danger"
                                    ChangeValue="{Binding ExpenseChangeValue}"
                                    ChangeText="{Binding ExpenseChangeText}"
+                                   ChangeLabel="{Binding ComparisonPeriodLabel}"
                                    Margin="6,0" />
 
                 <!-- Outstanding Invoices -->
