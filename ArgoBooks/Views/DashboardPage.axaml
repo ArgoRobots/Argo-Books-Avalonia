@@ -74,7 +74,7 @@
                   Background="{DynamicResource BackgroundSecondaryBrush}">
         <StackPanel Margin="24" Spacing="24">
             <!-- Page Header -->
-            <Grid ColumnDefinitions="*,Auto">
+            <Grid ColumnDefinitions="*,Auto,Auto">
                 <StackPanel Grid.Column="0" Spacing="4">
                     <TextBlock Text="Dashboard"
                                FontSize="24"
@@ -85,8 +85,11 @@
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
 
+                <!-- Chart Type Selector -->
+                <controls:ChartTypeSelector Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0" />
+
                 <!-- Date Range Selector -->
-                <controls:DateRangeSelector Grid.Column="1" VerticalAlignment="Center" />
+                <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Center" />
             </Grid>
 
             <!-- Statistics Cards Row -->

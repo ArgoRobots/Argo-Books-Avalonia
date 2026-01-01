@@ -147,17 +147,27 @@ public class ChartLoaderService
     /// <summary>
     /// Gets or sets whether to use line charts instead of column charts.
     /// </summary>
-    public bool UseLineChart { get; set; }
+    [Obsolete("Use ChartStyle property instead")]
+    public bool UseLineChart
+    {
+        get => SelectedChartStyle == ChartStyle.Line;
+        set => SelectedChartStyle = value ? ChartStyle.Line : ChartStyle.Column;
+    }
 
     /// <summary>
-    /// Creates a series for time-based data, either as line or column based on UseLineChart.
+    /// Gets or sets the chart style for rendering series.
+    /// </summary>
+    public ChartStyle SelectedChartStyle { get; set; } = ChartStyle.Line;
+
+    /// <summary>
+    /// Creates a series for time-based data based on SelectedChartStyle.
     /// Uses categorical (index-based) positioning - dates will be evenly spaced.
     /// </summary>
     private ISeries CreateTimeSeries(double[] values, string name, SKColor color)
     {
-        if (UseLineChart)
+        return SelectedChartStyle switch
         {
-            return new LineSeries<double>
+            ChartStyle.Line => new LineSeries<double>
             {
                 Values = values,
                 Name = name,
@@ -166,15 +176,35 @@ public class ChartLoaderService
                 GeometryStroke = new SolidColorPaint(color, 2),
                 GeometryFill = new SolidColorPaint(color),
                 GeometrySize = 6
-            };
-        }
-        return new ColumnSeries<double>
-        {
-            Values = values,
-            Name = name,
-            Fill = new SolidColorPaint(color),
-            Stroke = null,
-            MaxBarWidth = 50
+            },
+            ChartStyle.StepLine => new StepLineSeries<double>
+            {
+                Values = values,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = null,
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            },
+            ChartStyle.Area => new LineSeries<double>
+            {
+                Values = values,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = new SolidColorPaint(color.WithAlpha(80)),
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            },
+            _ => new ColumnSeries<double>
+            {
+                Values = values,
+                Name = name,
+                Fill = new SolidColorPaint(color),
+                Stroke = null,
+                MaxBarWidth = 50
+            }
         };
     }
 
@@ -188,9 +218,9 @@ public class ChartLoaderService
         // Use ObservablePoint which directly stores X,Y coordinates
         var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
 
-        if (UseLineChart)
+        return SelectedChartStyle switch
         {
-            return new LineSeries<ObservablePoint>
+            ChartStyle.Line => new LineSeries<ObservablePoint>
             {
                 Values = points,
                 Name = name,
@@ -199,15 +229,35 @@ public class ChartLoaderService
                 GeometryStroke = new SolidColorPaint(color, 2),
                 GeometryFill = new SolidColorPaint(color),
                 GeometrySize = 6
-            };
-        }
-        return new ColumnSeries<ObservablePoint>
-        {
-            Values = points,
-            Name = name,
-            Fill = new SolidColorPaint(color),
-            Stroke = null,
-            MaxBarWidth = 50
+            },
+            ChartStyle.StepLine => new StepLineSeries<ObservablePoint>
+            {
+                Values = points,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = null,
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            },
+            ChartStyle.Area => new LineSeries<ObservablePoint>
+            {
+                Values = points,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = new SolidColorPaint(color.WithAlpha(80)),
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            },
+            _ => new ColumnSeries<ObservablePoint>
+            {
+                Values = points,
+                Name = name,
+                Fill = new SolidColorPaint(color),
+                Stroke = null,
+                MaxBarWidth = 50
+            }
         };
     }
 
@@ -2458,6 +2508,17 @@ public enum ChartType
     Profit,
     Distribution,
     Comparison
+}
+
+/// <summary>
+/// Visual chart style for rendering series.
+/// </summary>
+public enum ChartStyle
+{
+    Line,
+    Column,
+    StepLine,
+    Area
 }
 
 /// <summary>

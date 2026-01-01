@@ -432,6 +432,23 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     partial void OnUseLineChartChanged(bool value)
     {
+        // Sync with SelectedChartType for backwards compatibility
+        SelectedChartType = value ? "Line" : "Column";
+    }
+
+    /// <summary>
+    /// Available chart type options for the selector.
+    /// </summary>
+    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area"];
+
+    [ObservableProperty]
+    private string _selectedChartType = "Line";
+
+    partial void OnSelectedChartTypeChanged(string value)
+    {
+        // Sync UseLineChart for backwards compatibility
+        _useLineChart = value == "Line";
+        OnPropertyChanged(nameof(UseLineChart));
         LoadAllCharts();
     }
 
@@ -1004,9 +1021,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var data = _companyManager?.CompanyData;
         if (data == null) return;
 
-        // Update theme colors and chart type
+        // Update theme colors and chart style
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
-        _chartLoaderService.UseLineChart = UseLineChart;
+        _chartLoaderService.SelectedChartStyle = SelectedChartType switch
+        {
+            "Line" => ChartStyle.Line,
+            "Column" => ChartStyle.Column,
+            "Step Line" => ChartStyle.StepLine,
+            "Area" => ChartStyle.Area,
+            _ => ChartStyle.Line
+        };
 
         // Load statistics for stat cards
         LoadAllStatistics(data);

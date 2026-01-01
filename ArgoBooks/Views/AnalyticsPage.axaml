@@ -27,7 +27,7 @@
                         Padding="24,16"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1">
-                    <Grid ColumnDefinitions="*,Auto">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
                         <!-- Page Title -->
                         <TextBlock Grid.Column="0"
                                    Text="Analytics"
@@ -36,16 +36,20 @@
                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                    VerticalAlignment="Center" />
 
+                        <!-- Chart Type Selector -->
+                        <controls:ChartTypeSelector Grid.Column="1"
+                                                    Margin="0,0,16,0"
+                                                    IsVisible="{Binding !IsGeographicTabSelected}" />
+
                         <!-- Date Range Controls -->
-                        <controls:DateRangeSelector Grid.Column="1" />
+                        <controls:DateRangeSelector Grid.Column="2" />
                     </Grid>
                 </Border>
 
-                <!-- Tab Bar with Chart Type Toggle -->
-                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ClipToBounds="False">
+                <!-- Tab Bar -->
+                <Grid Grid.Row="1" ClipToBounds="False">
                     <!-- Analytics Tabs -->
-                    <TabControl Grid.Column="0"
-                                SelectedIndex="{Binding SelectedTabIndex}"
+                    <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                                 Classes="page-tabs">
                         <TabItem Header="Dashboard" />
                         <TabItem Header="Geographic" />
@@ -55,25 +59,6 @@
                         <TabItem Header="Returns" />
                         <TabItem Header="Losses" />
                     </TabControl>
-
-                    <!-- Chart Type Toggle -->
-                    <StackPanel Grid.Column="1"
-                                Orientation="Horizontal"
-                                Spacing="8"
-                                Margin="0,0,24,0"
-                                VerticalAlignment="Center"
-                                ClipToBounds="False"
-                                IsVisible="{Binding !IsGeographicTabSelected}">
-                        <TextBlock Text="Line Chart"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   VerticalAlignment="Center" />
-                        <ToggleSwitch IsChecked="{Binding UseLineChart}"
-                                      OnContent=""
-                                      Margin="0,0,0,8"
-                                      OffContent=""
-                                      Classes="chart-toggle" />
-                    </StackPanel>
                 </Grid>
             </Grid>
         </Border>

@@ -175,6 +175,23 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Chart Type
+
+    /// <summary>
+    /// Available chart type options for the selector.
+    /// </summary>
+    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area"];
+
+    [ObservableProperty]
+    private string _selectedChartType = "Line";
+
+    partial void OnSelectedChartTypeChanged(string value)
+    {
+        LoadDashboardData();
+    }
+
+    #endregion
+
     #region Statistics Properties
 
     [ObservableProperty]
@@ -532,8 +549,16 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadProfitsChart(CompanyData data)
     {
-        // Update theme colors based on current theme
+        // Update theme colors and chart style
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
+        _chartLoaderService.SelectedChartStyle = SelectedChartType switch
+        {
+            "Line" => ChartStyle.Line,
+            "Column" => ChartStyle.Column,
+            "Step Line" => ChartStyle.StepLine,
+            "Area" => ChartStyle.Area,
+            _ => ChartStyle.Line
+        };
 
         // Load profits chart data for the selected date range
         var (series, labels, dates, totalProfit) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
