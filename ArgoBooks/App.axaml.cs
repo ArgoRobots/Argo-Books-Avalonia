@@ -349,52 +349,34 @@ public partial class App : Application
     /// </summary>
     private static async Task InitializeAsync()
     {
-        Console.WriteLine("[App] InitializeAsync started");
-
         try
         {
             // Load global settings
             if (SettingsService != null)
             {
-                Console.WriteLine("[App] Loading global settings...");
                 await SettingsService.LoadGlobalSettingsAsync();
-                Console.WriteLine("[App] Global settings loaded");
 
                 // Initialize theme service with settings
                 ThemeService.Instance.SetGlobalSettingsService(SettingsService);
                 ThemeService.Instance.Initialize();
             }
-            else
-            {
-                Console.WriteLine("[App] ERROR: SettingsService is null!");
-            }
 
             // Load and apply saved license status
-            Console.WriteLine("[App] Loading license...");
             if (LicenseService != null && _appShellViewModel != null)
             {
                 var (hasStandard, hasPremium) = LicenseService.LoadLicense();
-                Console.WriteLine($"[App] License loaded: hasStandard={hasStandard}, hasPremium={hasPremium}");
-
                 if (hasStandard || hasPremium)
                 {
-                    Console.WriteLine("[App] Setting plan status on AppShellViewModel");
                     _appShellViewModel.SetPlanStatus(hasStandard, hasPremium);
                 }
-            }
-            else
-            {
-                Console.WriteLine($"[App] Cannot load license: LicenseService={LicenseService != null}, _appShellViewModel={_appShellViewModel != null}");
             }
 
             // Load and display recent companies
             await LoadRecentCompaniesAsync();
-            Console.WriteLine("[App] InitializeAsync completed");
         }
         catch (Exception ex)
         {
             // Log error but don't crash the app
-            Console.WriteLine($"[App] ERROR during async initialization: {ex.GetType().Name}: {ex.Message}");
             System.Diagnostics.Debug.WriteLine($"Error during async initialization: {ex.Message}");
         }
     }

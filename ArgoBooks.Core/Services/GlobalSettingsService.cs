@@ -51,18 +51,15 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     public async Task LoadGlobalSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settingsPath = GetGlobalSettingsPath();
-        Console.WriteLine($"[GlobalSettingsService] LoadGlobalSettingsAsync - Path: {settingsPath}");
 
         if (!File.Exists(settingsPath))
         {
-            Console.WriteLine("[GlobalSettingsService] Settings file does not exist, using defaults");
             _globalSettings = new GlobalSettings();
             return;
         }
 
         try
         {
-            Console.WriteLine("[GlobalSettingsService] Reading settings file...");
             await using var fileStream = File.OpenRead(settingsPath);
             var settings = await JsonSerializer.DeserializeAsync<GlobalSettings>(
                 fileStream,
@@ -70,12 +67,10 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
                 cancellationToken);
 
             _globalSettings = settings ?? new GlobalSettings();
-            Console.WriteLine($"[GlobalSettingsService] Loaded settings. License data present: {_globalSettings.License?.LicenseData?.Length ?? 0} chars");
         }
-        catch (JsonException ex)
+        catch (JsonException)
         {
             // Corrupted settings file, use defaults
-            Console.WriteLine($"[GlobalSettingsService] JsonException loading settings: {ex.Message}");
             _globalSettings = new GlobalSettings();
         }
     }
@@ -84,32 +79,19 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     public async Task SaveGlobalSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settingsPath = GetGlobalSettingsPath();
-        Console.WriteLine($"[GlobalSettingsService] SaveGlobalSettingsAsync - Path: {settingsPath}");
-        Console.WriteLine($"[GlobalSettingsService] License data to save: {_globalSettings.License?.LicenseData?.Length ?? 0} chars");
-
         var directory = Path.GetDirectoryName(settingsPath);
 
         if (!string.IsNullOrEmpty(directory))
         {
             _platformService.EnsureDirectoryExists(directory);
-            Console.WriteLine($"[GlobalSettingsService] Ensured directory exists: {directory}");
         }
 
-        try
-        {
-            await using var fileStream = File.Create(settingsPath);
-            await JsonSerializer.SerializeAsync(
-                fileStream,
-                _globalSettings,
-                _jsonOptions,
-                cancellationToken);
-            Console.WriteLine("[GlobalSettingsService] Settings saved successfully!");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[GlobalSettingsService] ERROR saving settings: {ex.GetType().Name}: {ex.Message}");
-            throw;
-        }
+        await using var fileStream = File.Create(settingsPath);
+        await JsonSerializer.SerializeAsync(
+            fileStream,
+            _globalSettings,
+            _jsonOptions,
+            cancellationToken);
     }
 
     /// <inheritdoc />
