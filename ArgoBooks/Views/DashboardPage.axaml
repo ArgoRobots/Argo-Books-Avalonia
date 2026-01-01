@@ -48,6 +48,10 @@
         <Style Selector="Border.table-row:pointerover">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
         </Style>
+        <!-- Remove bottom border from last row -->
+        <Style Selector="ItemsControl > ContentPresenter:nth-last-child(1) Border.table-row">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
     </UserControl.Styles>
 
     <!-- Main Content -->
