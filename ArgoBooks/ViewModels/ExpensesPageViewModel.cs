@@ -466,18 +466,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             };
         }).ToList();
 
-        // If highlighting a transaction, ensure it's visible by adjusting page
-        if (!string.IsNullOrEmpty(HighlightTransactionId))
-        {
-            var highlightIndex = displayItems.FindIndex(x => x.Id == HighlightTransactionId);
-            if (highlightIndex >= 0)
-            {
-                CurrentPage = (highlightIndex / PageSize) + 1;
-            }
-            // Clear highlight ID after first use
-            HighlightTransactionId = null;
-        }
-
         // Apply sorting (only if not searching, since search has its own relevance sorting)
         if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
@@ -496,6 +484,18 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                     ["Status"] = e => e.StatusDisplay
                 },
                 e => e.Date);
+        }
+
+        // If highlighting a transaction, ensure it's visible by adjusting page (after sorting)
+        if (!string.IsNullOrEmpty(HighlightTransactionId))
+        {
+            var highlightIndex = displayItems.FindIndex(x => x.Id == HighlightTransactionId);
+            if (highlightIndex >= 0)
+            {
+                CurrentPage = (highlightIndex / PageSize) + 1;
+            }
+            // Clear highlight ID after first use
+            HighlightTransactionId = null;
         }
 
         // Calculate pagination

@@ -19,8 +19,7 @@
     <UserControl.Styles>
         <!-- Highlighted row style -->
         <Style Selector="Border.highlighted-row">
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Opacity" Value="0.15" />
+            <Setter Property="Background" Value="#3060A5FA" />
         </Style>
     </UserControl.Styles>
 
