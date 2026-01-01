@@ -12,15 +12,16 @@ public class InvoiceTests
     #region IsOverdue Tests
 
     [Fact]
-    public void IsOverdue_DraftStatus_PastDue_ReturnsFalse()
+    public void IsOverdue_DraftStatus_PastDue_ReturnsTrue()
     {
+        // Draft invoices can be overdue - only Paid and Cancelled are excluded
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Draft,
             DueDate = DateTime.UtcNow.AddDays(-1)
         };
 
-        Assert.False(invoice.IsOverdue);
+        Assert.True(invoice.IsOverdue);
     }
 
     [Fact]
@@ -132,6 +133,7 @@ public class InvoiceTests
     }
 
     [Theory]
+    [InlineData(InvoiceStatus.Draft)]
     [InlineData(InvoiceStatus.Pending)]
     [InlineData(InvoiceStatus.Sent)]
     [InlineData(InvoiceStatus.Viewed)]
