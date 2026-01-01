@@ -30,6 +30,11 @@ public partial class App : Application
     public static GlobalSettingsService? SettingsService { get; private set; }
 
     /// <summary>
+    /// Gets the license service instance for secure license storage.
+    /// </summary>
+    public static LicenseService? LicenseService { get; private set; }
+
+    /// <summary>
     /// Gets the shared undo/redo manager instance.
     /// </summary>
     public static UndoRedoManager UndoRedoManager => HeaderViewModel.SharedUndoRedoManager;
@@ -218,6 +223,7 @@ public partial class App : Application
             var encryptionService = new EncryptionService();
             var fileService = new FileService(compressionService, footerService, encryptionService);
             SettingsService = new GlobalSettingsService();
+            LicenseService = new LicenseService(encryptionService, SettingsService);
             CompanyManager = new CompanyManager(fileService, encryptionService, SettingsService, footerService);
 
             // Create navigation service
@@ -353,6 +359,16 @@ public partial class App : Application
                 // Initialize theme service with settings
                 ThemeService.Instance.SetGlobalSettingsService(SettingsService);
                 ThemeService.Instance.Initialize();
+            }
+
+            // Load and apply saved license status
+            if (LicenseService != null && _appShellViewModel != null)
+            {
+                var (hasStandard, hasPremium) = LicenseService.LoadLicense();
+                if (hasStandard || hasPremium)
+                {
+                    _appShellViewModel.SetPlanStatus(hasStandard, hasPremium);
+                }
             }
 
             // Load and display recent companies
@@ -1444,6 +1460,10 @@ public partial class App : Application
         navigationService.RegisterPage("Products", param =>
         {
             var viewModel = new ProductsPageViewModel();
+            // Set plan status from app shell
+            viewModel.HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false;
+            // Wire up upgrade request to open upgrade modal
+            viewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
             if (param is Dictionary<string, object?> dict)
             {
                 // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)
@@ -1494,7 +1514,13 @@ public partial class App : Application
         // Tracking Section
         navigationService.RegisterPage("Returns", _ => new ReturnsPage { DataContext = new ReturnsPageViewModel() });
         navigationService.RegisterPage("LostDamaged", _ => new LostDamagedPage { DataContext = new LostDamagedPageViewModel() });
-        navigationService.RegisterPage("Receipts", _ => new ReceiptsPage { DataContext = new ReceiptsPageViewModel() });
+        navigationService.RegisterPage("Receipts", _ =>
+        {
+            var viewModel = new ReceiptsPageViewModel();
+            // Set plan status from app shell
+            viewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
+            return new ReceiptsPage { DataContext = viewModel };
+        });
 
         // Settings and Help
         navigationService.RegisterPage("Settings", _ => CreatePlaceholderPage("Settings", "Configure application settings"));

@@ -71,6 +71,23 @@ public partial class HeaderViewModel : ViewModelBase
 
     #endregion
 
+    #region Plan Status
+
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    /// <summary>
+    /// Gets whether to show the upgrade button (only when user doesn't have Premium).
+    /// </summary>
+    public bool ShowUpgrade => !HasPremium;
+
+    partial void OnHasPremiumChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowUpgrade));
+    }
+
+    #endregion
+
     #region Notifications
 
     [ObservableProperty]

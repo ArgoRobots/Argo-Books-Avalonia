@@ -132,14 +132,15 @@
                         VerticalAlignment="Center"
                         Spacing="4">
 
-                <!-- Upgrade Button (blue circle with up arrow) -->
+                <!-- Upgrade Button (blue circle with up arrow) - hidden when user has Premium -->
                 <Button Classes="header-icon"
                         Command="{Binding OpenUpgradeCommand}"
-                        ToolTip.Tip="Upgrades">
+                        ToolTip.Tip="Upgrades"
+                        IsVisible="{Binding ShowUpgrade}">
                     <Panel Width="24" Height="24">
                         <Ellipse Fill="{DynamicResource PrimaryBrush}" Width="24" Height="24" />
-                        <PathIcon Data="M12 4L6 10h4v8h4v-8h4L12 4z"
-                                  Width="14" Height="14"
+                        <PathIcon Data="M12 6L6 12h4v6h4v-6h4L12 6z"
+                                  Width="12" Height="12"
                                   Foreground="White"
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center" />

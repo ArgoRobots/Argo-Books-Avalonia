@@ -16,6 +16,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private const string LicenseValidationUrl = "https://argorobots.com/validate_license.php";
     private const string StandardUpgradeUrl = "http://localhost/argo-books-website/upgrade/standard/";
     private const string PremiumUpgradeUrl = "http://localhost/argo-books-website/upgrade/premium/";
+    private const string CancelSubscriptionUrl = "https://argorobots.com/community/users/subscription.php";
 
     [ObservableProperty]
     private bool _isOpen;
@@ -33,10 +34,94 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private bool _isVerificationSuccess;
 
     [ObservableProperty]
+    private bool _showContinueButton;
+
+    [ObservableProperty]
     private string? _successMessage;
 
     [ObservableProperty]
     private string _licenseKey = string.Empty;
+
+    // Stores the license type from the last successful verification
+    private string? _verifiedLicenseType;
+
+    partial void OnIsVerificationSuccessChanged(bool value)
+    {
+        if (value)
+        {
+            // Show continue button after 2 second delay
+            _ = ShowContinueButtonAfterDelayAsync();
+        }
+        else
+        {
+            ShowContinueButton = false;
+        }
+    }
+
+    private async Task ShowContinueButtonAfterDelayAsync()
+    {
+        await Task.Delay(1500);
+        if (IsVerificationSuccess)
+        {
+            ShowContinueButton = true;
+        }
+    }
+
+    #region Plan Status
+
+    [ObservableProperty]
+    private bool _hasStandard;
+
+    [ObservableProperty]
+    private bool _hasPremium;
+
+    /// <summary>
+    /// Gets whether to show "Active" badge on Standard card (has Standard but not Premium).
+    /// </summary>
+    public bool ShowStandardActive => HasStandard && !HasPremium;
+
+    /// <summary>
+    /// Gets whether to show "Included" text on Standard card (has Premium).
+    /// </summary>
+    public bool ShowStandardIncluded => HasPremium;
+
+    /// <summary>
+    /// Gets whether to show Select Standard button (no plan at all).
+    /// </summary>
+    public bool ShowSelectStandard => !HasStandard && !HasPremium;
+
+    /// <summary>
+    /// Gets whether to show "Active" badge on Premium card.
+    /// </summary>
+    public bool ShowPremiumActive => HasPremium;
+
+    /// <summary>
+    /// Gets whether to show Select Premium button (doesn't have Premium).
+    /// </summary>
+    public bool ShowSelectPremium => !HasPremium;
+
+    /// <summary>
+    /// Gets whether to show the cancel subscription button for Premium.
+    /// </summary>
+    public bool ShowCancelPremium => HasPremium;
+
+    partial void OnHasStandardChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowStandardActive));
+        OnPropertyChanged(nameof(ShowSelectStandard));
+    }
+
+    partial void OnHasPremiumChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowStandardActive));
+        OnPropertyChanged(nameof(ShowStandardIncluded));
+        OnPropertyChanged(nameof(ShowSelectStandard));
+        OnPropertyChanged(nameof(ShowPremiumActive));
+        OnPropertyChanged(nameof(ShowSelectPremium));
+        OnPropertyChanged(nameof(ShowCancelPremium));
+    }
+
+    #endregion
 
     /// <summary>
     /// Gets the formatted license key for API calls (keeps dashes).
@@ -70,6 +155,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
+        _verifiedLicenseType = null;
     }
 
     [RelayCommand]
@@ -83,6 +169,13 @@ public partial class UpgradeModalViewModel : ViewModelBase
     private void SelectPremium()
     {
         OpenUrl(PremiumUpgradeUrl);
+        Close();
+    }
+
+    [RelayCommand]
+    private void CancelSubscription()
+    {
+        OpenUrl(CancelSubscriptionUrl);
         Close();
     }
 
@@ -111,6 +204,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
+        _verifiedLicenseType = null;
     }
 
     [RelayCommand]
@@ -121,6 +215,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
+        _verifiedLicenseType = null;
     }
 
     [RelayCommand]
@@ -131,6 +226,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         IsVerificationSuccess = false;
         LicenseKey = string.Empty;
         SuccessMessage = null;
+        _verifiedLicenseType = null;
     }
 
     [RelayCommand]
@@ -161,8 +257,32 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
             if (response?.Success == true)
             {
+                // Store the license type for saving when user clicks Continue
+                _verifiedLicenseType = response.Type;
+
                 IsVerificationSuccess = true;
-                SuccessMessage = response.Message ?? "License activated successfully!";
+                // Fix server message: change "can be redeemed" to "has been redeemed"
+                var message = response.Message ?? "License activated successfully!";
+                SuccessMessage = message.Replace("can be redeemed", "has been redeemed");
+
+                // Save license securely
+                // API returns types like "standard_key", "premium_key" - check with Contains
+                var licenseType = response.Type?.ToLowerInvariant() ?? "";
+                var hasStandard = licenseType.Contains("standard") || licenseType.Contains("premium");
+                var hasPremium = licenseType.Contains("premium");
+
+                if (App.LicenseService != null)
+                {
+                    try
+                    {
+                        await App.LicenseService.SaveLicenseAsync(hasStandard, hasPremium, key);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to save license: {ex.Message}");
+                    }
+                }
+
                 // User will click Continue button to close
             }
             else

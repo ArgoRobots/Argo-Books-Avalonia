@@ -557,11 +557,26 @@
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <TextBlock Text="Use fingerprint or face recognition to unlock"
                                                        FontSize="12"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                       IsVisible="{Binding HasStandard}" />
+                                            <TextBlock Text="Requires Standard plan or higher"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource WarningBrush}"
+                                                       IsVisible="{Binding !HasStandard}" />
                                         </StackPanel>
+                                        <!-- Toggle when user has standard -->
                                         <ToggleSwitch Grid.Column="1"
                                                       IsChecked="{Binding WindowsHelloEnabled}"
+                                                      IsVisible="{Binding HasStandard}"
                                                       VerticalAlignment="Center" />
+                                        <!-- Upgrade button when user doesn't have standard -->
+                                        <Button Grid.Column="1"
+                                                Classes="primary-button"
+                                                Content="Upgrade Now"
+                                                Command="{Binding UpgradeNowCommand}"
+                                                IsVisible="{Binding !HasStandard}"
+                                                VerticalAlignment="Center"
+                                                Padding="12,6" />
                                     </Grid>
                                 </Border>
 

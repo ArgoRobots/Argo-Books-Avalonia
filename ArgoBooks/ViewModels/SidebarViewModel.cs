@@ -65,6 +65,33 @@ public partial class SidebarViewModel : ViewModelBase
     [ObservableProperty]
     private bool _showPayroll = true;
 
+    [ObservableProperty]
+    private bool _showTeam; // Hidden until enterprise plan (always false for now)
+
+    [ObservableProperty]
+    private bool _hasStandard; // Standard plan or higher
+
+    [ObservableProperty]
+    private bool _hasPremium; // Premium plan
+
+    [ObservableProperty]
+    private bool _hasEnterprise; // Enterprise plan (always false for now)
+
+    #endregion
+
+    #region Premium Feature Items
+
+    private SidebarItemModel? _insightsItem;
+    private SidebarItemModel? _invoicesItem;
+    private SidebarItemModel? _paymentsItem;
+
+    #endregion
+
+    #region Enterprise Feature Items
+
+    private SidebarItemModel? _locationsItem;
+    private SidebarItemModel? _transfersItem;
+
     #endregion
 
     #region Navigation Items
@@ -124,8 +151,10 @@ public partial class SidebarViewModel : ViewModelBase
             "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z")); // fa-home
         MainItems.Add(CreateItem("Analytics", "Analytics",
             "M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z")); // fa-chart-line
-        MainItems.Add(CreateItem("Insights", "Insights",
-            "M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z")); // fa-lightbulb
+        _insightsItem = CreateItem("Insights", "Insights",
+            "M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"); // fa-lightbulb
+        _insightsItem.IsVisible = HasPremium; // Hide by default unless premium
+        MainItems.Add(_insightsItem);
         MainItems.Add(CreateItem("Reports", "Reports",
             "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z")); // fa-file-alt
 
@@ -134,10 +163,14 @@ public partial class SidebarViewModel : ViewModelBase
             "M20 12l-1-1L13 16V4h-2v12l-5-5L4 12l8 8 8-8z")); // fa-arrow-down (shortened wings)
         TransactionItems.Add(CreateItem("Revenue", "Revenue",
             "M4 12l1 1L11 8V20h2V8l5 5L20 12l-8-8-8 8z")); // fa-arrow-up (shortened wings)
-        TransactionItems.Add(CreateItem("Invoices", "Invoices",
-            "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z")); // fa-file-invoice
-        TransactionItems.Add(CreateItem("Payments", "Payments",
-            "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z")); // fa-credit-card
+        _invoicesItem = CreateItem("Invoices", "Invoices",
+            "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"); // fa-file-invoice
+        _invoicesItem.IsVisible = HasPremium; // Hide by default unless premium
+        TransactionItems.Add(_invoicesItem);
+        _paymentsItem = CreateItem("Payments", "Payments",
+            "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"); // fa-credit-card
+        _paymentsItem.IsVisible = HasPremium; // Hide by default unless premium
+        TransactionItems.Add(_paymentsItem);
 
         // Rentals Section (mockup: Rental Inventory, Rental Records)
         RentalItems.Add(CreateItem("Rental Inventory", "RentalInventory",
@@ -160,10 +193,14 @@ public partial class SidebarViewModel : ViewModelBase
             "M22 18V3H2v15H0v2h24v-2h-2zm-2-1H4V5h16v12zM6 15h2v-5H6v5zm4 0h2V8h-2v7zm4 0h2v-3h-2v3z")); // fa-warehouse
         InventoryItems.Add(CreateItem("Adjustments", "Adjustments",
             "M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z")); // fa-sliders-h
-        InventoryItems.Add(CreateItem("Locations", "Locations",
-            "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z")); // fa-map-marker-alt
-        InventoryItems.Add(CreateItem("Transfers", "Transfers",
-            "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z")); // fa-exchange-alt
+        _locationsItem = CreateItem("Locations", "Locations",
+            "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"); // fa-map-marker-alt
+        _locationsItem.IsVisible = HasEnterprise; // Hidden until enterprise plan
+        InventoryItems.Add(_locationsItem);
+        _transfersItem = CreateItem("Transfers", "Transfers",
+            "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"); // fa-exchange-alt
+        _transfersItem.IsVisible = HasEnterprise; // Hidden until enterprise plan
+        InventoryItems.Add(_transfersItem);
         InventoryItems.Add(CreateItem("Purchase Orders", "PurchaseOrders",
             "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z")); // fa-clipboard-list
 
@@ -219,6 +256,31 @@ public partial class SidebarViewModel : ViewModelBase
     partial void OnCompanyNameChanged(string? value)
     {
         CompanyInitial = string.IsNullOrEmpty(value) ? "A" : value[0].ToString().ToUpper();
+    }
+
+    /// <summary>
+    /// Updates premium feature visibility when premium status changes.
+    /// </summary>
+    partial void OnHasPremiumChanged(bool value)
+    {
+        if (_insightsItem != null)
+            _insightsItem.IsVisible = value;
+        if (_invoicesItem != null)
+            _invoicesItem.IsVisible = value;
+        if (_paymentsItem != null)
+            _paymentsItem.IsVisible = value;
+    }
+
+    /// <summary>
+    /// Updates enterprise feature visibility when enterprise status changes.
+    /// </summary>
+    partial void OnHasEnterpriseChanged(bool value)
+    {
+        ShowTeam = value;
+        if (_locationsItem != null)
+            _locationsItem.IsVisible = value;
+        if (_transfersItem != null)
+            _transfersItem.IsVisible = value;
     }
 
     /// <summary>

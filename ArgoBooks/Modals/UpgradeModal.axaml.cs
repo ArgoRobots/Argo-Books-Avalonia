@@ -58,6 +58,13 @@ public partial class UpgradeModal : UserControl
                             ResetSuccessAnimation();
                         }
                     }
+                    else if (e.PropertyName == nameof(UpgradeModalViewModel.ShowContinueButton))
+                    {
+                        if (vm.ShowContinueButton)
+                        {
+                            PlayContinueButtonAnimation();
+                        }
+                    }
                 };
             }
         };
@@ -88,6 +95,16 @@ public partial class UpgradeModal : UserControl
                 if (SuccessTextPanel.RenderTransform is TranslateTransform textTranslate)
                 {
                     textTranslate.Y = 20;
+                }
+            }
+
+            // Reset continue button
+            if (ContinueButtonPanel != null)
+            {
+                ContinueButtonPanel.Opacity = 0;
+                if (ContinueButtonPanel.RenderTransform is TranslateTransform buttonTranslate)
+                {
+                    buttonTranslate.Y = 20;
                 }
             }
         }, DispatcherPriority.Background);
@@ -220,6 +237,69 @@ public partial class UpgradeModal : UserControl
                     }
                 };
                       await textSlideAnimation.RunAsync(SuccessTextPanel);  // Run on control
+            }
+        });
+    }
+
+    private async void PlayContinueButtonAnimation()
+    {
+        await Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            if (ContinueButtonPanel != null)
+            {
+                var fadeAnimation = new Animation
+                {
+                    Duration = TimeSpan.FromMilliseconds(400),
+                    Easing = new CubicEaseOut(),
+                    FillMode = FillMode.Forward,
+                    Children =
+                    {
+                        new KeyFrame
+                        {
+                            Cue = new Cue(0),
+                            Setters =
+                            {
+                                new Setter(OpacityProperty, 0.0)
+                            }
+                        },
+                        new KeyFrame
+                        {
+                            Cue = new Cue(1),
+                            Setters =
+                            {
+                                new Setter(OpacityProperty, 1.0)
+                            }
+                        }
+                    }
+                };
+                _ = fadeAnimation.RunAsync(ContinueButtonPanel);
+
+                var slideAnimation = new Animation
+                {
+                    Duration = TimeSpan.FromMilliseconds(400),
+                    Easing = new CubicEaseOut(),
+                    FillMode = FillMode.Forward,
+                    Children =
+                    {
+                        new KeyFrame
+                        {
+                            Cue = new Cue(0),
+                            Setters =
+                            {
+                                new Setter(TranslateTransform.YProperty, 20.0)
+                            }
+                        },
+                        new KeyFrame
+                        {
+                            Cue = new Cue(1),
+                            Setters =
+                            {
+                                new Setter(TranslateTransform.YProperty, 0.0)
+                            }
+                        }
+                    }
+                };
+                await slideAnimation.RunAsync(ContinueButtonPanel);
             }
         });
     }

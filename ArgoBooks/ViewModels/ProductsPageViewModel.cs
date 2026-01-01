@@ -43,6 +43,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     {
         OnPropertyChanged(nameof(IsExpensesTabSelected));
         OnPropertyChanged(nameof(IsRevenueTabSelected));
+        OnPropertyChanged(nameof(RemainingProductsText));
+        OnPropertyChanged(nameof(CanAddProduct));
         ColumnWidths.SetTabMode(IsExpensesTabSelected);
         FilterProducts();
     }
@@ -84,6 +86,92 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     [ObservableProperty]
     private int _services;
+
+    #endregion
+
+    #region Plan Status and Product Limits
+
+    private const int FreeProductLimit = 10;
+
+    [ObservableProperty]
+    private bool _hasStandard;
+
+    [ObservableProperty]
+    private int _expenseProductsCount;
+
+    [ObservableProperty]
+    private int _revenueProductsCount;
+
+    /// <summary>
+    /// Gets remaining expense products the user can add (when no standard plan).
+    /// </summary>
+    public int RemainingExpenseProducts => Math.Max(0, FreeProductLimit - ExpenseProductsCount);
+
+    /// <summary>
+    /// Gets remaining revenue products the user can add (when no standard plan).
+    /// </summary>
+    public int RemainingRevenueProducts => Math.Max(0, FreeProductLimit - RevenueProductsCount);
+
+    /// <summary>
+    /// Gets whether the user can add more products to the current tab.
+    /// </summary>
+    public bool CanAddProduct => HasStandard || (IsExpensesTabSelected ? RemainingExpenseProducts > 0 : RemainingRevenueProducts > 0);
+
+    /// <summary>
+    /// Gets the text showing remaining products for the current tab.
+    /// </summary>
+    public string RemainingProductsText
+    {
+        get
+        {
+            var remaining = IsExpensesTabSelected ? RemainingExpenseProducts : RemainingRevenueProducts;
+            return $"{remaining} of {FreeProductLimit} remaining";
+        }
+    }
+
+    /// <summary>
+    /// Gets whether to show the upgrade button (when limit is reached).
+    /// </summary>
+    public bool ShowUpgradeButton => !HasStandard && !CanAddProduct;
+
+    /// <summary>
+    /// Event raised when the upgrade button is clicked.
+    /// </summary>
+    public event EventHandler? UpgradeRequested;
+
+    /// <summary>
+    /// Gets whether to show the remaining products label (only when no standard plan).
+    /// </summary>
+    public bool ShowRemainingProducts => !HasStandard;
+
+    partial void OnExpenseProductsCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(RemainingExpenseProducts));
+        OnPropertyChanged(nameof(RemainingProductsText));
+        OnPropertyChanged(nameof(CanAddProduct));
+        OnPropertyChanged(nameof(ShowUpgradeButton));
+    }
+
+    partial void OnRevenueProductsCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(RemainingRevenueProducts));
+        OnPropertyChanged(nameof(RemainingProductsText));
+        OnPropertyChanged(nameof(CanAddProduct));
+        OnPropertyChanged(nameof(ShowUpgradeButton));
+    }
+
+    partial void OnHasStandardChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanAddProduct));
+        OnPropertyChanged(nameof(ShowRemainingProducts));
+        OnPropertyChanged(nameof(ShowUpgradeButton));
+    }
+
+    [RelayCommand]
+    private void Upgrade()
+    {
+        UpgradeRequested?.Invoke(this, EventArgs.Empty);
+    }
 
     #endregion
 
@@ -390,6 +478,23 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         Services = _allProducts.Count(p =>
             !string.IsNullOrEmpty(p.CategoryId) &&
             serviceCategories.Contains(p.CategoryId));
+
+        // Count expense vs revenue products based on category type
+        var expenseCategoryIds = companyData.Categories
+            .Where(c => c.Type == CategoryType.Purchase)
+            .Select(c => c.Id)
+            .ToHashSet();
+
+        var revenueCategoryIds = companyData.Categories
+            .Where(c => c.Type == CategoryType.Sales)
+            .Select(c => c.Id)
+            .ToHashSet();
+
+        ExpenseProductsCount = _allProducts.Count(p =>
+            string.IsNullOrEmpty(p.CategoryId) || expenseCategoryIds.Contains(p.CategoryId));
+
+        RevenueProductsCount = _allProducts.Count(p =>
+            !string.IsNullOrEmpty(p.CategoryId) && revenueCategoryIds.Contains(p.CategoryId));
     }
 
     /// <summary>

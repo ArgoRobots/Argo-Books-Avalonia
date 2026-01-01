@@ -39,9 +39,24 @@ public class UiSettings
 
 public class LicenseSettings
 {
-    public string? StandardKey { get; set; }
-    public string? PremiumSubscriptionId { get; set; }
-    public DateTime? PremiumExpiryDate { get; set; }
+    /// <summary>
+    /// Obfuscated license data (encrypted with machine-specific key).
+    /// </summary>
+    public string? LicenseData { get; set; }
+
+    /// <summary>
+    /// Salt used for obfuscation.
+    /// </summary>
+    public string? Salt { get; set; }
+
+    /// <summary>
+    /// IV used for obfuscation.
+    /// </summary>
+    public string? Iv { get; set; }
+
+    /// <summary>
+    /// Last license validation date.
+    /// </summary>
     public DateTime? LastValidationDate { get; set; }
 }
 
