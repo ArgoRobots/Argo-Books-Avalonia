@@ -198,7 +198,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         IsDeleteConfirmOpen = true;
     }
 
-    [RelayCommand(CanExecute = nameof(CanDeleteExpense))]
     protected override void DeleteTransaction()
     {
         var companyData = App.CompanyManager?.CompanyData;
@@ -244,8 +243,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         RaiseTransactionDeleted();
         CloseDeleteConfirm();
     }
-
-    private bool CanDeleteExpense() => true;
 
     #endregion
 

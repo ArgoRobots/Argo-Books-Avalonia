@@ -193,7 +193,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         IsDeleteConfirmOpen = true;
     }
 
-    [RelayCommand(CanExecute = nameof(CanDeleteRevenue))]
     protected override void DeleteTransaction()
     {
         var companyData = App.CompanyManager?.CompanyData;
@@ -239,8 +238,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         RaiseTransactionDeleted();
         CloseDeleteConfirm();
     }
-
-    private bool CanDeleteRevenue() => true;
 
     #endregion
 
