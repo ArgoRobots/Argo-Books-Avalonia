@@ -266,9 +266,10 @@ public partial class UpgradeModalViewModel : ViewModelBase
                 SuccessMessage = message.Replace("can be redeemed", "has been redeemed");
 
                 // Save license securely
-                var hasStandard = response.Type?.Equals("standard", StringComparison.OrdinalIgnoreCase) == true ||
-                                  response.Type?.Equals("premium", StringComparison.OrdinalIgnoreCase) == true;
-                var hasPremium = response.Type?.Equals("premium", StringComparison.OrdinalIgnoreCase) == true;
+                // API returns types like "standard_key", "premium_key" - check with Contains
+                var licenseType = response.Type?.ToLowerInvariant() ?? "";
+                var hasStandard = licenseType.Contains("standard") || licenseType.Contains("premium");
+                var hasPremium = licenseType.Contains("premium");
 
                 Console.WriteLine($"[UpgradeModal] License verified! Type={response.Type}, hasStandard={hasStandard}, hasPremium={hasPremium}");
 
