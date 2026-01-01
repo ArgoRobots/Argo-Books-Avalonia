@@ -39,9 +39,15 @@ public class LicenseService
     /// <param name="licenseKey">The license key that was verified.</param>
     public async Task SaveLicenseAsync(bool hasStandard, bool hasPremium, string? licenseKey)
     {
+        Console.WriteLine($"[LicenseService] SaveLicenseAsync called: hasStandard={hasStandard}, hasPremium={hasPremium}");
+
         var settings = _settingsService.GetSettings();
         if (settings == null)
+        {
+            Console.WriteLine("[LicenseService] ERROR: GetSettings() returned null!");
             return;
+        }
+        Console.WriteLine("[LicenseService] Got settings successfully");
 
         var licenseData = new LicenseData
         {
@@ -52,25 +58,33 @@ public class LicenseService
         };
 
         var json = JsonSerializer.Serialize(licenseData);
+        Console.WriteLine($"[LicenseService] License JSON: {json}");
+
         var dataBytes = Encoding.UTF8.GetBytes(json);
 
         // Generate salt and IV
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();
+        Console.WriteLine($"[LicenseService] Generated salt: {salt?.Substring(0, Math.Min(10, salt?.Length ?? 0))}..., iv: {iv?.Substring(0, Math.Min(10, iv?.Length ?? 0))}...");
 
         // Use machine-specific password for encryption
         var machineKey = GetMachineKey();
+        Console.WriteLine($"[LicenseService] Machine key: {machineKey.Substring(0, Math.Min(20, machineKey.Length))}...");
 
         // Encrypt the license data
         var encryptedData = _encryptionService.Encrypt(dataBytes, machineKey, salt, iv);
+        Console.WriteLine($"[LicenseService] Encrypted data length: {encryptedData?.Length ?? 0}");
 
         // Store in settings
         settings.License.LicenseData = Convert.ToBase64String(encryptedData);
         settings.License.Salt = salt;
         settings.License.Iv = iv;
         settings.License.LastValidationDate = DateTime.UtcNow;
+        Console.WriteLine($"[LicenseService] Updated settings.License - LicenseData length: {settings.License.LicenseData?.Length ?? 0}");
 
+        Console.WriteLine("[LicenseService] Calling SaveAsync...");
         await _settingsService.SaveAsync(settings);
+        Console.WriteLine("[LicenseService] SaveAsync completed!");
     }
 
     /// <summary>
@@ -79,18 +93,32 @@ public class LicenseService
     /// <returns>Tuple of (hasStandard, hasPremium) or (false, false) if no valid license.</returns>
     public (bool HasStandard, bool HasPremium) LoadLicense()
     {
+        Console.WriteLine("[LicenseService] LoadLicense called");
+
         try
         {
             var settings = _settingsService.GetSettings();
-            if (settings?.License?.LicenseData == null ||
+            Console.WriteLine($"[LicenseService] GetSettings returned: {(settings == null ? "null" : "not null")}");
+
+            if (settings?.License == null)
+            {
+                Console.WriteLine("[LicenseService] settings.License is null");
+                return (false, false);
+            }
+
+            Console.WriteLine($"[LicenseService] License data present: LicenseData={settings.License.LicenseData?.Length ?? 0} chars, Salt={settings.License.Salt?.Length ?? 0} chars, Iv={settings.License.Iv?.Length ?? 0} chars");
+
+            if (settings.License.LicenseData == null ||
                 settings.License.Salt == null ||
                 settings.License.Iv == null)
             {
+                Console.WriteLine("[LicenseService] Missing license data fields - returning (false, false)");
                 return (false, false);
             }
 
             var encryptedData = Convert.FromBase64String(settings.License.LicenseData);
             var machineKey = GetMachineKey();
+            Console.WriteLine($"[LicenseService] Machine key for decrypt: {machineKey.Substring(0, Math.Min(20, machineKey.Length))}...");
 
             // Decrypt the license data
             var decryptedData = _encryptionService.Decrypt(
@@ -100,21 +128,29 @@ public class LicenseService
                 settings.License.Iv);
 
             var json = Encoding.UTF8.GetString(decryptedData);
+            Console.WriteLine($"[LicenseService] Decrypted JSON: {json}");
+
             var licenseData = JsonSerializer.Deserialize<LicenseData>(json);
 
             if (licenseData == null)
+            {
+                Console.WriteLine("[LicenseService] Deserialized license data is null");
                 return (false, false);
+            }
 
+            Console.WriteLine($"[LicenseService] Loaded license: HasStandard={licenseData.HasStandard}, HasPremium={licenseData.HasPremium}");
             return (licenseData.HasStandard, licenseData.HasPremium);
         }
-        catch (CryptographicException)
+        catch (CryptographicException ex)
         {
             // Decryption failed - likely different machine or tampered data
+            Console.WriteLine($"[LicenseService] CryptographicException during decrypt: {ex.Message}");
             return (false, false);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // Any other error - return no license
+            Console.WriteLine($"[LicenseService] Exception during load: {ex.GetType().Name}: {ex.Message}");
             return (false, false);
         }
     }
@@ -142,6 +178,7 @@ public class LicenseService
 
         // Add machine name
         machineInfo.Append(Environment.MachineName);
+        Console.WriteLine($"[LicenseService] GetMachineKey - MachineName: {Environment.MachineName}");
 
         // Add MAC addresses from all physical network adapters (sorted for consistency)
         try
@@ -154,14 +191,16 @@ public class LicenseService
                 .OrderBy(mac => mac)
                 .ToList();
 
+            Console.WriteLine($"[LicenseService] GetMachineKey - Found {macAddresses.Count} MAC addresses");
             foreach (var mac in macAddresses)
             {
+                Console.WriteLine($"[LicenseService] GetMachineKey - MAC: {mac}");
                 machineInfo.Append(mac);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Ignore network errors
+            Console.WriteLine($"[LicenseService] GetMachineKey - Error getting MAC addresses: {ex.Message}");
         }
 
         // Add static application key to make it harder to reverse
@@ -170,6 +209,8 @@ public class LicenseService
         // Hash the combined data to create a fixed-length key
         using var sha256 = SHA256.Create();
         var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(machineInfo.ToString()));
-        return Convert.ToBase64String(hashBytes);
+        var result = Convert.ToBase64String(hashBytes);
+        Console.WriteLine($"[LicenseService] GetMachineKey - Final hash: {result}");
+        return result;
     }
 }

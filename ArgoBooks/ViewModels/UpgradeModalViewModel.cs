@@ -270,16 +270,25 @@ public partial class UpgradeModalViewModel : ViewModelBase
                                   response.Type?.Equals("premium", StringComparison.OrdinalIgnoreCase) == true;
                 var hasPremium = response.Type?.Equals("premium", StringComparison.OrdinalIgnoreCase) == true;
 
+                Console.WriteLine($"[UpgradeModal] License verified! Type={response.Type}, hasStandard={hasStandard}, hasPremium={hasPremium}");
+
                 if (App.LicenseService != null)
                 {
+                    Console.WriteLine("[UpgradeModal] Saving license...");
                     try
                     {
                         await App.LicenseService.SaveLicenseAsync(hasStandard, hasPremium, key);
+                        Console.WriteLine("[UpgradeModal] License save completed!");
                     }
                     catch (Exception ex)
                     {
+                        Console.WriteLine($"[UpgradeModal] ERROR saving license: {ex.GetType().Name}: {ex.Message}");
                         System.Diagnostics.Debug.WriteLine($"Failed to save license: {ex.Message}");
                     }
+                }
+                else
+                {
+                    Console.WriteLine("[UpgradeModal] ERROR: App.LicenseService is null!");
                 }
 
                 // User will click Continue button to close
