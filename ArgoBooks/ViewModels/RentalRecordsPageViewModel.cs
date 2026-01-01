@@ -450,7 +450,7 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        PaginationText = PaginationHelper.FormatPaginationText(
+        PaginationText = PaginationTextHelper.FormatPaginationText(
             totalCount, CurrentPage, PageSize, TotalPages, "record");
     }
 

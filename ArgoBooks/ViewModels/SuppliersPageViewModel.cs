@@ -56,7 +56,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void UpdatePaginationText(int totalItems)
     {
-        PaginationText = PaginationHelper.FormatSimpleCount(totalItems, "supplier");
+        PaginationText = PaginationTextHelper.FormatSimpleCount(totalItems, "supplier");
     }
 
     #endregion
