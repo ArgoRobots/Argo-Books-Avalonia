@@ -16,23 +16,6 @@
         <local:PageEqualsConverter x:Key="PageEqualsConverter" />
     </UserControl.Resources>
 
-    <UserControl.Styles>
-        <!-- Highlighted row style with fade animation -->
-        <Style Selector="Border.highlighted-row">
-            <Setter Property="Background" Value="#3060A5FA" />
-            <Style.Animations>
-                <Animation Duration="0:0:3" FillMode="Forward">
-                    <KeyFrame Cue="0%">
-                        <Setter Property="Background" Value="#3060A5FA" />
-                    </KeyFrame>
-                    <KeyFrame Cue="100%">
-                        <Setter Property="Background" Value="Transparent" />
-                    </KeyFrame>
-                </Animation>
-            </Style.Animations>
-        </Style>
-    </UserControl.Styles>
-
     <Design.DataContext>
         <vm:ExpensesPageViewModel />
     </Design.DataContext>

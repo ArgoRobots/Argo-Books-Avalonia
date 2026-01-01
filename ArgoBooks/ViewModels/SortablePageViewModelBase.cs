@@ -164,6 +164,43 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
 
     #endregion
 
+    #region Transaction Highlighting
+
+    /// <summary>
+    /// Transaction ID to highlight when navigating from dashboard.
+    /// Set this before calling ApplyHighlight().
+    /// </summary>
+    public string? HighlightTransactionId { get; set; }
+
+    /// <summary>
+    /// Refreshes the display to apply highlighting after HighlightTransactionId is set.
+    /// </summary>
+    public void ApplyHighlight() => OnSortOrPageChanged();
+
+    /// <summary>
+    /// Calculates the page number for a highlighted item and navigates to it.
+    /// Call this after sorting but before pagination in your filter method.
+    /// </summary>
+    /// <typeparam name="T">The type of display item.</typeparam>
+    /// <param name="items">The sorted list of items.</param>
+    /// <param name="idSelector">Function to get the ID from an item.</param>
+    protected void NavigateToHighlightedItem<T>(List<T> items, Func<T, string?> idSelector)
+    {
+        if (string.IsNullOrEmpty(HighlightTransactionId))
+            return;
+
+        var highlightIndex = items.FindIndex(x => idSelector(x) == HighlightTransactionId);
+        if (highlightIndex >= 0)
+        {
+            CurrentPage = (highlightIndex / PageSize) + 1;
+        }
+
+        // Clear highlight ID after first use
+        HighlightTransactionId = null;
+    }
+
+    #endregion
+
     /// <summary>
     /// Called when sorting or pagination changes. Override to refresh data.
     /// </summary>

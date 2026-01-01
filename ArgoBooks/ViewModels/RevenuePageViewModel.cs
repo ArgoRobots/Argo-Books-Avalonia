@@ -28,16 +28,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private int _returnsCount;
 
-    /// <summary>
-    /// Transaction ID to highlight when navigating from dashboard.
-    /// </summary>
-    public string? HighlightTransactionId { get; set; }
-
-    /// <summary>
-    /// Refreshes the display to apply highlighting after HighlightTransactionId is set.
-    /// </summary>
-    public void ApplyHighlight() => FilterRevenue();
-
     #endregion
 
     #region Search and Filter
@@ -477,17 +467,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 r => r.Date);
         }
 
-        // If highlighting a transaction, ensure it's visible by adjusting page (after sorting)
-        if (!string.IsNullOrEmpty(HighlightTransactionId))
-        {
-            var highlightIndex = displayItems.FindIndex(x => x.Id == HighlightTransactionId);
-            if (highlightIndex >= 0)
-            {
-                CurrentPage = (highlightIndex / PageSize) + 1;
-            }
-            // Clear highlight ID after first use
-            HighlightTransactionId = null;
-        }
+        // Navigate to highlighted item if set (from dashboard click)
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
