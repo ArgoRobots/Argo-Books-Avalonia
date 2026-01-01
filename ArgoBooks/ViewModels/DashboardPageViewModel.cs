@@ -246,45 +246,51 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
-    #region Expenses Overview Chart
+    #region Profits Overview Chart
 
     private readonly ChartLoaderService _chartLoaderService = new();
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> _expensesChartSeries = [];
+    private ObservableCollection<ISeries> _profitsChartSeries = [];
 
     [ObservableProperty]
-    private Axis[] _expensesChartXAxes = [];
+    private Axis[] _profitsChartXAxes = [];
 
     [ObservableProperty]
-    private Axis[] _expensesChartYAxes = [];
+    private Axis[] _profitsChartYAxes = [];
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ExpensesChartTitleVisual))]
-    private string _expensesChartTitle = "Total expenses: $0.00";
+    [NotifyPropertyChangedFor(nameof(ProfitsChartTitleVisual))]
+    private string _profitsChartTitle = "Total profits: $0.00";
 
     /// <summary>
-    /// Gets the visual title element for the expenses chart.
+    /// Gets the visual title element for the profits chart.
     /// </summary>
-    public LabelVisual ExpensesChartTitleVisual => ChartLoaderService.CreateChartTitle(ExpensesChartTitle);
+    public LabelVisual ProfitsChartTitleVisual => ChartLoaderService.CreateChartTitle(ProfitsChartTitle);
 
     [ObservableProperty]
-    private bool _hasExpensesChartData;
+    private bool _hasProfitsChartData;
 
     #endregion
 
-    #region Expense Distribution Chart
+    #region Sales vs Expenses Chart
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> _expenseDistributionSeries = [];
+    private ObservableCollection<ISeries> _salesVsExpensesSeries = [];
 
     [ObservableProperty]
-    private bool _hasExpenseDistributionData;
+    private Axis[] _salesVsExpensesXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _salesVsExpensesYAxes = [];
+
+    [ObservableProperty]
+    private bool _hasSalesVsExpensesData;
 
     /// <summary>
-    /// Gets the visual title element for the expense distribution chart.
+    /// Gets the visual title element for the sales vs expenses chart.
     /// </summary>
-    public LabelVisual ExpenseDistributionChartTitle => ChartLoaderService.CreateChartTitle("Distribution of expenses");
+    public LabelVisual SalesVsExpensesChartTitle => ChartLoaderService.CreateChartTitle("Sales vs Expenses");
 
     #endregion
 
@@ -306,8 +312,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ThemeService.Instance.ThemeChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(LegendTextPaint));
-            OnPropertyChanged(nameof(ExpensesChartTitleVisual));
-            OnPropertyChanged(nameof(ExpenseDistributionChartTitle));
+            OnPropertyChanged(nameof(ProfitsChartTitleVisual));
+            OnPropertyChanged(nameof(SalesVsExpensesChartTitle));
         };
     }
 
@@ -359,8 +365,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         LoadStatistics(data);
         LoadRecentTransactions(data);
         LoadActiveRentals(data);
-        LoadExpensesChart(data);
-        LoadExpenseDistributionChart(data);
+        LoadProfitsChart(data);
+        LoadSalesVsExpensesChart(data);
     }
 
     private void LoadStatistics(CompanyData data)
@@ -524,26 +530,31 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ActiveRentalsList = new ObservableCollection<ActiveRentalItem>(activeRentals);
     }
 
-    private void LoadExpensesChart(CompanyData data)
+    private void LoadProfitsChart(CompanyData data)
     {
         // Update theme colors based on current theme
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
 
-        // Load expenses chart data for the selected date range
-        var (series, labels, dates, totalExpenses) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
+        // Load profits chart data for the selected date range
+        var (series, labels, dates, totalProfit) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
 
-        ExpensesChartSeries = series;
-        ExpensesChartXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        ExpensesChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
-        ExpensesChartTitle = $"Total expenses: {FormatCurrency(totalExpenses)}";
-        HasExpensesChartData = series.Count > 0 && labels.Length > 0;
+        ProfitsChartSeries = series;
+        ProfitsChartXAxes = _chartLoaderService.CreateDateXAxes(dates);
+        ProfitsChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        ProfitsChartTitle = $"Total profits: {FormatCurrency(totalProfit)}";
+        HasProfitsChartData = series.Count > 0 && labels.Length > 0;
     }
 
-    private void LoadExpenseDistributionChart(CompanyData data)
+    private void LoadSalesVsExpensesChart(CompanyData data)
     {
-        var (series, total) = _chartLoaderService.LoadExpenseDistributionChart(data, StartDate, EndDate);
-        ExpenseDistributionSeries = series;
-        HasExpenseDistributionData = series.Count > 0 && total > 0;
+        // Update theme colors based on current theme
+        _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
+
+        var (series, labels) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
+        SalesVsExpensesSeries = series;
+        SalesVsExpensesXAxes = _chartLoaderService.CreateMonthXAxes(labels);
+        SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        HasSalesVsExpensesData = series.Count > 0 && labels.Length > 0;
     }
 
     #endregion
@@ -692,7 +703,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnResetChartZoom()
     {
-        ChartLoaderService.ResetZoom(ExpensesChartXAxes, ExpensesChartYAxes);
+        ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
+        ChartLoaderService.ResetZoom(SalesVsExpensesXAxes, SalesVsExpensesYAxes);
     }
 
     /// <summary>
