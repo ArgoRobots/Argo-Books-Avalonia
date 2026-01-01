@@ -493,39 +493,23 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             };
         }).ToList();
 
-        // Apply sorting
-        if (SortDirection != SortDirection.None)
+        // Apply sorting (only if not searching, since search has its own relevance sorting)
+        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            displayItems = SortColumn switch
-            {
-                "Id" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(p => p.Id).ToList()
-                    : displayItems.OrderByDescending(p => p.Id).ToList(),
-                "Invoice" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(p => p.InvoiceDisplay).ToList()
-                    : displayItems.OrderByDescending(p => p.InvoiceDisplay).ToList(),
-                "Customer" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(p => p.CustomerName).ToList()
-                    : displayItems.OrderByDescending(p => p.CustomerName).ToList(),
-                "Date" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(p => p.Date).ToList()
-                    : displayItems.OrderByDescending(p => p.Date).ToList(),
-                "Method" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(p => p.PaymentMethodDisplay).ToList()
-                    : displayItems.OrderByDescending(p => p.PaymentMethodDisplay).ToList(),
-                "Amount" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(p => p.Amount).ToList()
-                    : displayItems.OrderByDescending(p => p.Amount).ToList(),
-                "Status" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(p => p.Status).ToList()
-                    : displayItems.OrderByDescending(p => p.Status).ToList(),
-                _ => displayItems.OrderByDescending(p => p.Date).ToList()
-            };
-        }
-        else if (string.IsNullOrWhiteSpace(SearchQuery))
-        {
-            // Default sort by date descending when not searching
-            displayItems = displayItems.OrderByDescending(p => p.Date).ToList();
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<PaymentDisplayItem, object?>>
+                {
+                    ["Id"] = p => p.Id,
+                    ["Invoice"] = p => p.InvoiceDisplay,
+                    ["Customer"] = p => p.CustomerName,
+                    ["Date"] = p => p.Date,
+                    ["Method"] = p => p.PaymentMethodDisplay,
+                    ["Amount"] = p => p.Amount,
+                    ["Status"] = p => p.Status
+                },
+                p => p.Date);
         }
 
         // Calculate pagination
@@ -692,67 +676,4 @@ public class InvoiceOption
     public decimal AmountDue { get; set; }
 
     public override string ToString() => Display;
-}
-
-/// <summary>
-/// Undoable action for adding a payment.
-/// </summary>
-public class PaymentAddAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public PaymentAddAction(string description, Payment _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing a payment.
-/// </summary>
-public class PaymentEditAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public PaymentEditAction(string description, Payment _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting a payment.
-/// </summary>
-public class PaymentDeleteAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public PaymentDeleteAction(string description, Payment _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

@@ -277,9 +277,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var itemToUndo = newItem;
-        App.UndoRedoManager?.RecordAction(new RentalItemAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add rental item '{newItem.Name}'",
-            itemToUndo,
             () =>
             {
                 companyData.RentalInventory.Remove(itemToUndo);
@@ -403,9 +402,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new RentalItemEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit rental item '{newName}'",
-            itemToEdit,
             () =>
             {
                 itemToEdit.Name = oldName;
@@ -479,9 +477,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
             companyData.RentalInventory.Remove(item);
             companyData.MarkAsModified();
 
-            App.UndoRedoManager?.RecordAction(new RentalItemDeleteAction(
+            App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete rental item '{deletedItem.Name}'",
-                deletedItem,
                 () =>
                 {
                     companyData.RentalInventory.Add(deletedItem);
@@ -630,9 +627,8 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
         var rentalToUndo = newRental;
         var itemToUpdate = _rentingItem;
-        App.UndoRedoManager?.RecordAction(new RentalRecordAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Rent out '{_rentingItem.Name}' to customer",
-            rentalToUndo,
             () =>
             {
                 companyData.Rentals.Remove(rentalToUndo);
@@ -794,25 +790,4 @@ public class AccountantOption
     public string Name { get; set; } = string.Empty;
 
     public override string ToString() => Name;
-}
-
-/// <summary>
-/// Undoable action for adding a rental record.
-/// </summary>
-public class RentalRecordAddAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public RentalRecordAddAction(string description, RentalRecord _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

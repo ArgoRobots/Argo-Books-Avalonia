@@ -475,9 +475,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         // Create undo action
         var deletedExpense = expense;
         var capturedReceipt = deletedReceipt;
-        var action = new ExpenseDeleteAction(
+        var action = new DelegateAction(
             $"Delete expense {expense.Id}",
-            deletedExpense,
             () =>
             {
                 companyData.Purchases.Add(deletedExpense);
@@ -967,9 +966,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
 
         // Create undo action
         var capturedReceipt = receipt;
-        var action = new ExpenseAddAction(
+        var action = new DelegateAction(
             $"Add expense {expenseId}",
-            expense,
             () =>
             {
                 companyData.Purchases.Remove(expense);
@@ -1123,9 +1121,8 @@ public partial class ExpenseModalsViewModel : ViewModelBase
         var newTotal = Total;
         var capturedNewReceipt = newReceipt;
 
-        var action = new ExpenseEditAction(
+        var action = new DelegateAction(
             $"Edit expense {_editingExpenseId}",
-            expense,
             () =>
             {
                 expense.Date = originalDate;

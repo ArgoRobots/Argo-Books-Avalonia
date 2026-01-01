@@ -260,9 +260,8 @@ public partial class PaymentModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var paymentToUndo = newPayment;
-        App.UndoRedoManager?.RecordAction(new PaymentAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Record payment '{newPayment.Id}'",
-            paymentToUndo,
             () =>
             {
                 companyData.Payments.Remove(paymentToUndo);
@@ -382,9 +381,8 @@ public partial class PaymentModalsViewModel : ObservableObject
 
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new PaymentEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit payment '{paymentToEdit.Id}'",
-            paymentToEdit,
             () =>
             {
                 paymentToEdit.InvoiceId = oldInvoiceId;
@@ -453,9 +451,8 @@ public partial class PaymentModalsViewModel : ObservableObject
             companyData.Payments.Remove(payment);
             companyData.MarkAsModified();
 
-            App.UndoRedoManager?.RecordAction(new PaymentDeleteAction(
+            App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete payment '{deletedPayment.Id}'",
-                deletedPayment,
                 () =>
                 {
                     companyData.Payments.Add(deletedPayment);

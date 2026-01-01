@@ -675,36 +675,19 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         // Apply sorting (only if not searching, since search has its own relevance sorting)
         if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            if (SortDirection != SortDirection.None)
-            {
-                displayItems = SortColumn switch
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<ProductDisplayItem, object?>>
                 {
-                    "Name" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(p => p.Name).ToList()
-                        : displayItems.OrderByDescending(p => p.Name).ToList(),
-                    "Type" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(p => p.ItemType).ToList()
-                        : displayItems.OrderByDescending(p => p.ItemType).ToList(),
-                    "Description" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(p => p.Description).ToList()
-                        : displayItems.OrderByDescending(p => p.Description).ToList(),
-                    "Category" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(p => p.CategoryName).ToList()
-                        : displayItems.OrderByDescending(p => p.CategoryName).ToList(),
-                    "Supplier" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(p => p.SupplierName).ToList()
-                        : displayItems.OrderByDescending(p => p.SupplierName).ToList(),
-                    "Country" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(p => p.CountryOfOrigin).ToList()
-                        : displayItems.OrderByDescending(p => p.CountryOfOrigin).ToList(),
-                    _ => displayItems.OrderBy(p => p.Name).ToList()
-                };
-            }
-            else if (string.IsNullOrWhiteSpace(SearchQuery))
-            {
-                // Default sort by name when not searching
-                displayItems = displayItems.OrderBy(p => p.Name).ToList();
-            }
+                    ["Name"] = p => p.Name,
+                    ["Type"] = p => p.ItemType,
+                    ["Description"] = p => p.Description,
+                    ["Category"] = p => p.CategoryName,
+                    ["Supplier"] = p => p.SupplierName,
+                    ["Country"] = p => p.CountryOfOrigin
+                },
+                p => p.Name);
         }
 
         // Calculate pagination
@@ -824,9 +807,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var productToUndo = newProduct;
-        App.UndoRedoManager?.RecordAction(new ProductAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add product '{newProduct.Name}'",
-            productToUndo,
             () =>
             {
                 companyData.Products.Remove(productToUndo);
@@ -917,9 +899,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new ProductEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit product '{newName}'",
-            productToEdit,
             () =>
             {
                 productToEdit.Name = oldName;
@@ -996,9 +977,8 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new ProductDeleteAction(
+            App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete product '{deletedProduct.Name}'",
-                deletedProduct,
                 () =>
                 {
                     companyData.Products.Add(deletedProduct);
@@ -1249,67 +1229,4 @@ public class SupplierOption
     public string Name { get; set; } = string.Empty;
 
     public override string ToString() => Name;
-}
-
-/// <summary>
-/// Undoable action for adding a product.
-/// </summary>
-public class ProductAddAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public ProductAddAction(string description, Product _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing a product.
-/// </summary>
-public class ProductEditAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public ProductEditAction(string description, Product _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting a product.
-/// </summary>
-public class ProductDeleteAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public ProductDeleteAction(string description, Product _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

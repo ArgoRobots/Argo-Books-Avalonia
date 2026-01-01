@@ -326,44 +326,25 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             };
         }).ToList();
 
-        // Apply sorting
-        if (SortDirection != SortDirection.None)
+        // Apply sorting (only if not searching, since search has its own relevance sorting)
+        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            displayItems = SortColumn switch
-            {
-                "Name" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.Name).ToList()
-                    : displayItems.OrderByDescending(i => i.Name).ToList(),
-                "Supplier" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.SupplierName).ToList()
-                    : displayItems.OrderByDescending(i => i.SupplierName).ToList(),
-                "Status" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.Status).ToList()
-                    : displayItems.OrderByDescending(i => i.Status).ToList(),
-                "TotalQty" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.TotalQuantity).ToList()
-                    : displayItems.OrderByDescending(i => i.TotalQuantity).ToList(),
-                "Available" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.AvailableQuantity).ToList()
-                    : displayItems.OrderByDescending(i => i.AvailableQuantity).ToList(),
-                "Rented" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.RentedQuantity).ToList()
-                    : displayItems.OrderByDescending(i => i.RentedQuantity).ToList(),
-                "DailyRate" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.DailyRate).ToList()
-                    : displayItems.OrderByDescending(i => i.DailyRate).ToList(),
-                "WeeklyRate" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.WeeklyRate).ToList()
-                    : displayItems.OrderByDescending(i => i.WeeklyRate).ToList(),
-                "Deposit" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.SecurityDeposit).ToList()
-                    : displayItems.OrderByDescending(i => i.SecurityDeposit).ToList(),
-                _ => displayItems.OrderBy(i => i.Name).ToList()
-            };
-        }
-        else if (string.IsNullOrWhiteSpace(SearchQuery))
-        {
-            displayItems = displayItems.OrderBy(i => i.Name).ToList();
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<RentalItemDisplayItem, object?>>
+                {
+                    ["Name"] = i => i.Name,
+                    ["Supplier"] = i => i.SupplierName,
+                    ["Status"] = i => i.Status,
+                    ["TotalQty"] = i => i.TotalQuantity,
+                    ["Available"] = i => i.AvailableQuantity,
+                    ["Rented"] = i => i.RentedQuantity,
+                    ["DailyRate"] = i => i.DailyRate,
+                    ["WeeklyRate"] = i => i.WeeklyRate,
+                    ["Deposit"] = i => i.SecurityDeposit
+                },
+                i => i.Name);
         }
 
         // Calculate pagination
@@ -501,67 +482,4 @@ public partial class RentalItemDisplayItem : ObservableObject
     public string WeeklyRateFormatted => $"${WeeklyRate:N2}";
     public string MonthlyRateFormatted => $"${MonthlyRate:N2}";
     public string DepositFormatted => $"${SecurityDeposit:N2}";
-}
-
-/// <summary>
-/// Undoable action for adding a rental item.
-/// </summary>
-public class RentalItemAddAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public RentalItemAddAction(string description, RentalItem _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing a rental item.
-/// </summary>
-public class RentalItemEditAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public RentalItemEditAction(string description, RentalItem _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting a rental item.
-/// </summary>
-public class RentalItemDeleteAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public RentalItemDeleteAction(string description, RentalItem _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

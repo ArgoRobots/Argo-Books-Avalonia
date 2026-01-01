@@ -325,9 +325,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Create undo action
         var deletedInvoice = invoice;
-        var action = new InvoiceDeleteAction(
+        var action = new DelegateAction(
             $"Delete invoice {invoice.Id}",
-            deletedInvoice,
             () =>
             {
                 companyData.Invoices.Add(deletedInvoice);
@@ -547,9 +546,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         };
 
         // Create undo action
-        var action = new InvoiceAddAction(
+        var action = new DelegateAction(
             $"Create and send invoice {invoiceId}",
-            invoice,
             () =>
             {
                 companyData.Invoices!.Remove(invoice);
@@ -628,9 +626,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         };
 
         // Create undo action
-        var action = new InvoiceAddAction(
+        var action = new DelegateAction(
             $"Add draft invoice {invoiceId}",
-            invoice,
             () =>
             {
                 companyData.Invoices!.Remove(invoice);
@@ -722,9 +719,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         };
 
         // Create undo action
-        var action = new InvoiceAddAction(
+        var action = new DelegateAction(
             $"Add invoice {invoiceId}",
-            invoice,
             () =>
             {
                 companyData.Invoices!.Remove(invoice);
@@ -777,9 +773,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }).ToList();
 
         // Create undo action
-        var action = new InvoiceEditAction(
+        var action = new DelegateAction(
             $"Edit invoice {_editingInvoiceId}",
-            invoice,
             () =>
             {
                 invoice.CustomerId = originalCustomerId;

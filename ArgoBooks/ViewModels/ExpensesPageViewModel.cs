@@ -460,41 +460,24 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             };
         }).ToList();
 
-        // Apply sorting
-        if (SortDirection != SortDirection.None)
+        // Apply sorting (only if not searching, since search has its own relevance sorting)
+        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            displayItems = SortColumn switch
-            {
-                "Id" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(e => e.Id).ToList()
-                    : displayItems.OrderByDescending(e => e.Id).ToList(),
-                "Accountant" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(e => e.AccountantName).ToList()
-                    : displayItems.OrderByDescending(e => e.AccountantName).ToList(),
-                "Product" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(e => e.ProductDescription).ToList()
-                    : displayItems.OrderByDescending(e => e.ProductDescription).ToList(),
-                "Category" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(e => e.CategoryName).ToList()
-                    : displayItems.OrderByDescending(e => e.CategoryName).ToList(),
-                "Supplier" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(e => e.SupplierName).ToList()
-                    : displayItems.OrderByDescending(e => e.SupplierName).ToList(),
-                "Date" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(e => e.Date).ToList()
-                    : displayItems.OrderByDescending(e => e.Date).ToList(),
-                "Total" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(e => e.Total).ToList()
-                    : displayItems.OrderByDescending(e => e.Total).ToList(),
-                "Status" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(e => e.StatusDisplay).ToList()
-                    : displayItems.OrderByDescending(e => e.StatusDisplay).ToList(),
-                _ => displayItems.OrderByDescending(e => e.Date).ToList()
-            };
-        }
-        else if (string.IsNullOrWhiteSpace(SearchQuery))
-        {
-            displayItems = displayItems.OrderByDescending(e => e.Date).ToList();
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<ExpenseDisplayItem, object?>>
+                {
+                    ["Id"] = e => e.Id,
+                    ["Accountant"] = e => e.AccountantName,
+                    ["Product"] = e => e.ProductDescription,
+                    ["Category"] = e => e.CategoryName,
+                    ["Supplier"] = e => e.SupplierName,
+                    ["Date"] = e => e.Date,
+                    ["Total"] = e => e.Total,
+                    ["Status"] = e => e.StatusDisplay
+                },
+                e => e.Date);
         }
 
         // Calculate pagination
@@ -784,67 +767,4 @@ public partial class ExpenseDisplayItem : ObservableObject
     public bool IsLostDamaged => StatusDisplay == "Lost/Damaged";
     public bool CanMarkAsReturned => !IsReturned && !IsLostDamaged;
     public bool CanMarkAsLostDamaged => !IsReturned && !IsLostDamaged;
-}
-
-/// <summary>
-/// Undoable action for adding an expense.
-/// </summary>
-public class ExpenseAddAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public ExpenseAddAction(string description, Purchase _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing an expense.
-/// </summary>
-public class ExpenseEditAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public ExpenseEditAction(string description, Purchase _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting an expense.
-/// </summary>
-public class ExpenseDeleteAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public ExpenseDeleteAction(string description, Purchase _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

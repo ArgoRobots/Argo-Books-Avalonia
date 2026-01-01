@@ -472,9 +472,8 @@ public partial class RevenueModalsViewModel : ViewModelBase
         // Create undo action
         var deletedSale = sale;
         var capturedReceipt = deletedReceipt;
-        var action = new RevenueDeleteAction(
+        var action = new DelegateAction(
             $"Delete sale {sale.Id}",
-            deletedSale,
             () =>
             {
                 companyData.Sales.Add(deletedSale);
@@ -962,9 +961,8 @@ public partial class RevenueModalsViewModel : ViewModelBase
 
         // Create undo action
         var capturedReceipt = receipt;
-        var action = new RevenueAddAction(
+        var action = new DelegateAction(
             $"Add sale {saleId}",
-            sale,
             () =>
             {
                 companyData.Sales.Remove(sale);
@@ -1118,9 +1116,8 @@ public partial class RevenueModalsViewModel : ViewModelBase
         var newTotal = Total;
         var capturedNewReceipt = newReceipt;
 
-        var action = new RevenueEditAction(
+        var action = new DelegateAction(
             $"Edit sale {_editingRevenueId}",
-            sale,
             () =>
             {
                 sale.Date = originalDate;

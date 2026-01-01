@@ -59,11 +59,6 @@ public static class BoolConverters
     public static readonly IValueConverter ToExpensesOrRevenue =
         new FuncValueConverter<bool, string>(value => value ? "Expenses" : "Revenue");
 
-    /// <summary>
-    /// Converts bool (isExpensesTabSelected) to "Expenses" (true) or "Revenue" (false).
-    /// </summary>
-    public static readonly IValueConverter ToExpensesOrRevenueProducts =
-        new FuncValueConverter<bool, string>(value => value ? "Expenses" : "Revenue");
 
     /// <summary>
     /// Converts bool (isChild) to left margin indent for child rows.

@@ -153,9 +153,8 @@ public partial class SupplierModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var supplierToUndo = newSupplier;
-        App.UndoRedoManager?.RecordAction(new SupplierAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add supplier '{newSupplier.Name}'",
-            supplierToUndo,
             () => { companyData.Suppliers.Remove(supplierToUndo); companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty); },
             () => { companyData.Suppliers.Add(supplierToUndo); companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty); }));
 
@@ -263,9 +262,8 @@ public partial class SupplierModalsViewModel : ObservableObject
         supplierToEdit.UpdatedAt = DateTime.UtcNow;
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new SupplierEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit supplier '{newName}'",
-            supplierToEdit,
             () => { supplierToEdit.Name = oldName; supplierToEdit.Email = oldEmail; supplierToEdit.Phone = oldPhone; supplierToEdit.Website = oldWebsite; supplierToEdit.Address = oldAddress; supplierToEdit.Notes = oldNotes; companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty); },
             () => { supplierToEdit.Name = newName; supplierToEdit.Email = newEmail; supplierToEdit.Phone = newPhone; supplierToEdit.Website = newWebsite; supplierToEdit.Address = newAddress; supplierToEdit.Notes = newNotes; companyData.MarkAsModified(); SupplierSaved?.Invoke(this, EventArgs.Empty); }));
 
@@ -307,9 +305,8 @@ public partial class SupplierModalsViewModel : ObservableObject
         companyData.Suppliers.Remove(supplier);
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new SupplierDeleteAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Delete supplier '{deletedSupplier.Name}'",
-            deletedSupplier,
             () => { companyData.Suppliers.Add(deletedSupplier); companyData.MarkAsModified(); SupplierDeleted?.Invoke(this, EventArgs.Empty); },
             () => { companyData.Suppliers.Remove(deletedSupplier); companyData.MarkAsModified(); SupplierDeleted?.Invoke(this, EventArgs.Empty); }));
 

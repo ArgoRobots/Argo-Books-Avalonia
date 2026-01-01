@@ -6,14 +6,8 @@ namespace ArgoBooks.Core.Models.Entities;
 /// <summary>
 /// Represents an employee.
 /// </summary>
-public class Employee
+public class Employee : BaseEntity
 {
-    /// <summary>
-    /// Unique identifier (e.g., EMP-001).
-    /// </summary>
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
     /// <summary>
     /// First name.
     /// </summary>
@@ -25,18 +19,6 @@ public class Employee
     /// </summary>
     [JsonPropertyName("lastName")]
     public string LastName { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Email address.
-    /// </summary>
-    [JsonPropertyName("email")]
-    public string Email { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Phone number.
-    /// </summary>
-    [JsonPropertyName("phone")]
-    public string Phone { get; set; } = string.Empty;
 
     /// <summary>
     /// Date of birth.
@@ -97,18 +79,6 @@ public class Employee
     /// </summary>
     [JsonPropertyName("status")]
     public EmployeeStatus Status { get; set; } = EmployeeStatus.Active;
-
-    /// <summary>
-    /// When the record was created.
-    /// </summary>
-    [JsonPropertyName("createdAt")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    /// <summary>
-    /// When the record was last updated.
-    /// </summary>
-    [JsonPropertyName("updatedAt")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// Full name of the employee.

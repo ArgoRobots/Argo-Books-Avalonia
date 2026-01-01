@@ -218,9 +218,8 @@ public partial class ProductModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var productToUndo = newProduct;
-        App.UndoRedoManager?.RecordAction(new ProductAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add product '{newProduct.Name}'",
-            productToUndo,
             () =>
             {
                 companyData.Products.Remove(productToUndo);
@@ -358,9 +357,8 @@ public partial class ProductModalsViewModel : ObservableObject
 
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new ProductEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit product '{newName}'",
-            productToEdit,
             () =>
             {
                 productToEdit.Name = oldName;
@@ -430,9 +428,8 @@ public partial class ProductModalsViewModel : ObservableObject
             companyData.Products.Remove(product);
             companyData.MarkAsModified();
 
-            App.UndoRedoManager?.RecordAction(new ProductDeleteAction(
+            App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete product '{deletedProduct.Name}'",
-                deletedProduct,
                 () =>
                 {
                     companyData.Products.Add(deletedProduct);
