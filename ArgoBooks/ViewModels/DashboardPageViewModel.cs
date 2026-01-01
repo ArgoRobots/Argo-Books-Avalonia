@@ -552,7 +552,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         var (series, labels) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
         SalesVsExpensesSeries = series;
-        SalesVsExpensesXAxes = _chartLoaderService.CreateMonthXAxes(labels);
+        SalesVsExpensesXAxes = _chartLoaderService.CreateXAxes(labels);
         SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasSalesVsExpensesData = series.Count > 0 && labels.Length > 0;
     }
