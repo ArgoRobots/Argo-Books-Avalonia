@@ -136,7 +136,7 @@
                             <Grid ColumnDefinitions="*,Auto">
                                 <!-- Title -->
                                 <TextBlock Grid.Column="0"
-                                           Text="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpensesOrRevenueProducts}}"
+                                           Text="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpensesOrRevenue}}"
                                            FontSize="18"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}"

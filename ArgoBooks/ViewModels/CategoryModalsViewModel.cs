@@ -199,9 +199,8 @@ public partial class CategoryModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var categoryToUndo = newCategory;
-        App.UndoRedoManager?.RecordAction(new CategoryAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add category '{newCategory.Name}'",
-            categoryToUndo,
             () => { companyData.Categories.Remove(categoryToUndo); companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
             () => { companyData.Categories.Add(categoryToUndo); companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
 
@@ -277,9 +276,8 @@ public partial class CategoryModalsViewModel : ObservableObject
         categoryToEdit.Icon = newIcon;
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new CategoryEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit category '{newName}'",
-            categoryToEdit,
             () => { categoryToEdit.Name = oldName; categoryToEdit.Description = oldDescription; categoryToEdit.ItemType = oldItemType; categoryToEdit.Icon = oldIcon; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
             () => { categoryToEdit.Name = newName; categoryToEdit.Description = newDescription; categoryToEdit.ItemType = newItemType; categoryToEdit.Icon = newIcon; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
 
@@ -338,9 +336,8 @@ public partial class CategoryModalsViewModel : ObservableObject
         companyData.Categories.Remove(category);
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new CategoryDeleteAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Delete category '{deletedCategory.Name}'",
-            deletedCategory,
             () =>
             {
                 companyData.Categories.Add(deletedCategory);
@@ -414,9 +411,8 @@ public partial class CategoryModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var categoryToMove = category;
-        App.UndoRedoManager?.RecordAction(new CategoryMoveAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Move category '{category.Name}'",
-            categoryToMove,
             () => { categoryToMove.ParentId = oldParentId; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
             () => { categoryToMove.ParentId = newParentId; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
 

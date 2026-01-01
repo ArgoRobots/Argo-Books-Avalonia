@@ -446,41 +446,24 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             };
         }).ToList();
 
-        // Apply sorting
-        if (SortDirection != SortDirection.None)
+        // Apply sorting (only if not searching, since search has its own relevance sorting)
+        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            displayItems = SortColumn switch
-            {
-                "Id" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(r => r.Id).ToList()
-                    : displayItems.OrderByDescending(r => r.Id).ToList(),
-                "Accountant" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(r => r.AccountantName).ToList()
-                    : displayItems.OrderByDescending(r => r.AccountantName).ToList(),
-                "Customer" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(r => r.CustomerName).ToList()
-                    : displayItems.OrderByDescending(r => r.CustomerName).ToList(),
-                "Product" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(r => r.ProductDescription).ToList()
-                    : displayItems.OrderByDescending(r => r.ProductDescription).ToList(),
-                "Category" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(r => r.CategoryName).ToList()
-                    : displayItems.OrderByDescending(r => r.CategoryName).ToList(),
-                "Date" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(r => r.Date).ToList()
-                    : displayItems.OrderByDescending(r => r.Date).ToList(),
-                "Total" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(r => r.Total).ToList()
-                    : displayItems.OrderByDescending(r => r.Total).ToList(),
-                "Status" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(r => r.StatusDisplay).ToList()
-                    : displayItems.OrderByDescending(r => r.StatusDisplay).ToList(),
-                _ => displayItems.OrderByDescending(r => r.Date).ToList()
-            };
-        }
-        else if (string.IsNullOrWhiteSpace(SearchQuery))
-        {
-            displayItems = displayItems.OrderByDescending(r => r.Date).ToList();
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<RevenueDisplayItem, object?>>
+                {
+                    ["Id"] = r => r.Id,
+                    ["Accountant"] = r => r.AccountantName,
+                    ["Customer"] = r => r.CustomerName,
+                    ["Product"] = r => r.ProductDescription,
+                    ["Category"] = r => r.CategoryName,
+                    ["Date"] = r => r.Date,
+                    ["Total"] = r => r.Total,
+                    ["Status"] = r => r.StatusDisplay
+                },
+                r => r.Date);
         }
 
         // Calculate pagination
@@ -539,22 +522,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        if (totalCount == 0)
-        {
-            PaginationText = "0 sales";
-            return;
-        }
-
-        if (TotalPages <= 1)
-        {
-            PaginationText = totalCount == 1 ? "1 sale" : $"{totalCount} sales";
-        }
-        else
-        {
-            var start = (CurrentPage - 1) * PageSize + 1;
-            var end = Math.Min(CurrentPage * PageSize, totalCount);
-            PaginationText = $"{start}-{end} of {totalCount} sales";
-        }
+        PaginationText = PaginationHelper.FormatPaginationText(
+            totalCount, CurrentPage, PageSize, TotalPages, "sale");
     }
 
     #endregion
@@ -786,67 +755,4 @@ public partial class RevenueDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _receiptFilePath = string.Empty;
-}
-
-/// <summary>
-/// Undoable action for adding revenue/sale.
-/// </summary>
-public class RevenueAddAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public RevenueAddAction(string description, Sale _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing revenue/sale.
-/// </summary>
-public class RevenueEditAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public RevenueEditAction(string description, Sale _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting revenue/sale.
-/// </summary>
-public class RevenueDeleteAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public RevenueDeleteAction(string description, Sale _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

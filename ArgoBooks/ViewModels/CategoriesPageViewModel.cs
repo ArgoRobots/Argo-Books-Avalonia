@@ -75,23 +75,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        if (totalCount == 0)
-        {
-            PaginationText = "0 categories";
-            return;
-        }
-
-        // For single page, just show count; for multiple pages, show range
-        if (TotalPages <= 1)
-        {
-            PaginationText = totalCount == 1 ? "1 category" : $"{totalCount} categories";
-        }
-        else
-        {
-            var start = (CurrentPage - 1) * PageSize + 1;
-            var end = Math.Min(CurrentPage * PageSize, totalCount);
-            PaginationText = $"{start}-{end} of {totalCount} categories";
-        }
+        PaginationText = PaginationHelper.FormatPaginationText(
+            totalCount, CurrentPage, PageSize, TotalPages, "category", "categories");
     }
 
     #endregion
@@ -432,25 +417,18 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         // Apply sorting
         if (SortDirection != SortDirection.None)
         {
-            displayItems = SortColumn switch
-            {
-                "Name" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(x => x.Name).ToList()
-                    : displayItems.OrderByDescending(x => x.Name).ToList(),
-                "Parent" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(x => x.ParentName).ToList()
-                    : displayItems.OrderByDescending(x => x.ParentName).ToList(),
-                "Description" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(x => x.Description).ToList()
-                    : displayItems.OrderByDescending(x => x.Description).ToList(),
-                "Type" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(x => x.ItemType).ToList()
-                    : displayItems.OrderByDescending(x => x.ItemType).ToList(),
-                "ProductCount" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(x => x.ProductCount).ToList()
-                    : displayItems.OrderByDescending(x => x.ProductCount).ToList(),
-                _ => displayItems
-            };
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<CategoryDisplayItem, object?>>
+                {
+                    ["Name"] = x => x.Name,
+                    ["Parent"] = x => x.ParentName,
+                    ["Description"] = x => x.Description,
+                    ["Type"] = x => x.ItemType,
+                    ["ProductCount"] = x => x.ProductCount
+                },
+                null);
         }
 
         // Calculate pagination
@@ -574,9 +552,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var categoryToUndo = newCategory;
-        App.UndoRedoManager?.RecordAction(new CategoryAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add category '{newCategory.Name}'",
-            categoryToUndo,
             () =>
             {
                 companyData.Categories.Remove(categoryToUndo);
@@ -654,9 +631,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new CategoryEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit category '{newName}'",
-            categoryToEdit,
             () =>
             {
                 categoryToEdit.Name = oldName;
@@ -749,9 +725,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new CategoryDeleteAction(
+            App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete category '{deletedCategory.Name}'",
-                deletedCategory,
                 () =>
                 {
                     // Undo: restore category
@@ -896,9 +871,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var categoryToMove = category;
-        App.UndoRedoManager?.RecordAction(new CategoryMoveAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Move category '{category.Name}'",
-            categoryToMove,
             () =>
             {
                 categoryToMove.ParentId = oldParentId;
@@ -1066,96 +1040,4 @@ public class IconOption
         Icon = icon;
         Name = name;
     }
-}
-
-/// <summary>
-/// Undoable action for adding a category.
-/// </summary>
-public class CategoryAddAction : IUndoableAction
-{
-    private readonly Category _category;
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public CategoryAddAction(string description, Category category, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _category = category;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing a category.
-/// </summary>
-public class CategoryEditAction : IUndoableAction
-{
-    private readonly Category _category;
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public CategoryEditAction(string description, Category category, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _category = category;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting a category.
-/// </summary>
-public class CategoryDeleteAction : IUndoableAction
-{
-    private readonly Category _category;
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public CategoryDeleteAction(string description, Category category, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _category = category;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for moving a category.
-/// </summary>
-public class CategoryMoveAction : IUndoableAction
-{
-    private readonly Category _category;
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public CategoryMoveAction(string description, Category category, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _category = category;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

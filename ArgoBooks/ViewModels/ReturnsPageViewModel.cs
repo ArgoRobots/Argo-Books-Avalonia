@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -396,22 +397,8 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        if (totalCount == 0)
-        {
-            PaginationText = "0 returns";
-            return;
-        }
-
-        if (TotalPages <= 1)
-        {
-            PaginationText = totalCount == 1 ? "1 return" : $"{totalCount} returns";
-        }
-        else
-        {
-            var start = (CurrentPage - 1) * PageSize + 1;
-            var end = Math.Min(CurrentPage * PageSize, totalCount);
-            PaginationText = $"{start}-{end} of {totalCount} returns";
-        }
+        PaginationText = PaginationHelper.FormatPaginationText(
+            totalCount, CurrentPage, PageSize, TotalPages, "return");
     }
 
     #endregion

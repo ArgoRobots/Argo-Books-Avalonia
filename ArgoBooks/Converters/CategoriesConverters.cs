@@ -59,11 +59,6 @@ public static class BoolConverters
     public static readonly IValueConverter ToExpensesOrRevenue =
         new FuncValueConverter<bool, string>(value => value ? "Expenses" : "Revenue");
 
-    /// <summary>
-    /// Converts bool (isExpensesTabSelected) to "Expenses" (true) or "Revenue" (false).
-    /// </summary>
-    public static readonly IValueConverter ToExpensesOrRevenueProducts =
-        new FuncValueConverter<bool, string>(value => value ? "Expenses" : "Revenue");
 
     /// <summary>
     /// Converts bool (isChild) to left margin indent for child rows.
@@ -271,283 +266,83 @@ public static class StringConverters
 {
     /// <summary>
     /// Converts item type ("Product" or "Service") to badge background color.
-    /// Product = blue (#DBEAFE), Service = purple (#F3E8FF).
     /// </summary>
-    public static readonly IValueConverter ToItemTypeBadgeBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value == "Service" ? "#F3E8FF" : "#DBEAFE";
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToItemTypeBadgeBackground = StatusConverters.ItemTypeBadgeBackground;
 
     /// <summary>
     /// Converts item type ("Product" or "Service") to badge foreground color.
-    /// Product = blue (#1E40AF), Service = purple (#7C3AED).
     /// </summary>
-    public static readonly IValueConverter ToItemTypeBadgeForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value == "Service" ? "#7C3AED" : "#1E40AF";
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToItemTypeBadgeForeground = StatusConverters.ItemTypeBadgeForeground;
 
     /// <summary>
     /// Converts payment status to badge background color.
-    /// Current = green (#DCFCE7), Overdue = yellow (#FEF3C7), Delinquent = red (#FEE2E2).
     /// </summary>
-    public static readonly IValueConverter ToPaymentStatusBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Current" => "#DCFCE7",
-                "Overdue" => "#FEF3C7",
-                "Delinquent" => "#FEE2E2",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToPaymentStatusBackground = StatusConverters.PaymentStatusBackground;
 
     /// <summary>
     /// Converts payment status to badge foreground color.
-    /// Current = green (#166534), Overdue = yellow (#92400E), Delinquent = red (#DC2626).
     /// </summary>
-    public static readonly IValueConverter ToPaymentStatusForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Current" => "#166534",
-                "Overdue" => "#92400E",
-                "Delinquent" => "#DC2626",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToPaymentStatusForeground = StatusConverters.PaymentStatusForeground;
 
     /// <summary>
     /// Converts history transaction type to badge background color.
-    /// Rental = blue (#DBEAFE), Purchase = purple (#F3E8FF), Return = orange (#FFEDD5), Payment = green (#DCFCE7).
     /// </summary>
-    public static readonly IValueConverter ToHistoryTypeBadgeBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Rental" => "#DBEAFE",
-                "Purchase" => "#F3E8FF",
-                "Return" => "#FFEDD5",
-                "Payment" => "#DCFCE7",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToHistoryTypeBadgeBackground = StatusConverters.HistoryTypeBadgeBackground;
 
     /// <summary>
     /// Converts history transaction type to badge foreground color.
-    /// Rental = blue (#1E40AF), Purchase = purple (#7C3AED), Return = orange (#C2410C), Payment = green (#166534).
     /// </summary>
-    public static readonly IValueConverter ToHistoryTypeBadgeForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Rental" => "#1E40AF",
-                "Purchase" => "#7C3AED",
-                "Return" => "#C2410C",
-                "Payment" => "#166534",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToHistoryTypeBadgeForeground = StatusConverters.HistoryTypeBadgeForeground;
 
     /// <summary>
     /// Converts history status to badge background color.
-    /// Completed = green (#DCFCE7), Pending = yellow (#FEF3C7), Overdue = red (#FEE2E2), Refunded = gray (#F3F4F6).
     /// </summary>
-    public static readonly IValueConverter ToHistoryStatusBadgeBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#DCFCE7",
-                "Pending" => "#FEF3C7",
-                "Overdue" => "#FEE2E2",
-                "Refunded" => "#E0E7FF",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToHistoryStatusBadgeBackground = StatusConverters.HistoryStatusBadgeBackground;
 
     /// <summary>
     /// Converts history status to badge foreground color.
-    /// Completed = green (#166534), Pending = yellow (#92400E), Overdue = red (#DC2626), Refunded = indigo (#4F46E5).
     /// </summary>
-    public static readonly IValueConverter ToHistoryStatusBadgeForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#166534",
-                "Pending" => "#92400E",
-                "Overdue" => "#DC2626",
-                "Refunded" => "#4F46E5",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToHistoryStatusBadgeForeground = StatusConverters.HistoryStatusBadgeForeground;
 
     /// <summary>
     /// Converts rental record status to badge background color.
-    /// Active = green (#DCFCE7), Returned = blue (#DBEAFE), Overdue = red (#FEE2E2), Cancelled = gray (#F3F4F6).
     /// </summary>
-    public static readonly IValueConverter ToRentalStatusBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Active" => "#DCFCE7",
-                "Returned" => "#DBEAFE",
-                "Overdue" => "#FEE2E2",
-                "Cancelled" => "#F3F4F6",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToRentalStatusBackground = StatusConverters.RentalStatusBackground;
 
     /// <summary>
     /// Converts rental record status to badge foreground color.
-    /// Active = green (#166534), Returned = blue (#1E40AF), Overdue = red (#DC2626), Cancelled = gray (#4B5563).
     /// </summary>
-    public static readonly IValueConverter ToRentalStatusForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Active" => "#166534",
-                "Returned" => "#1E40AF",
-                "Overdue" => "#DC2626",
-                "Cancelled" => "#4B5563",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToRentalStatusForeground = StatusConverters.RentalStatusForeground;
 
     /// <summary>
     /// Converts rental item status to badge background color.
-    /// Available = green (#DCFCE7), In Maintenance = yellow (#FEF3C7), All Rented = purple (#F3E8FF).
     /// </summary>
-    public static readonly IValueConverter ToRentalItemStatusBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Available" => "#DCFCE7",
-                "In Maintenance" => "#FEF3C7",
-                "All Rented" => "#F3E8FF",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToRentalItemStatusBackground = StatusConverters.RentalItemStatusBackground;
 
     /// <summary>
     /// Converts rental item status to badge foreground color.
-    /// Available = green (#166534), In Maintenance = yellow (#92400E), All Rented = purple (#7C3AED).
     /// </summary>
-    public static readonly IValueConverter ToRentalItemStatusForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Available" => "#166534",
-                "In Maintenance" => "#92400E",
-                "All Rented" => "#7C3AED",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToRentalItemStatusForeground = StatusConverters.RentalItemStatusForeground;
 
     /// <summary>
     /// Converts payment transaction status to badge background color.
-    /// Completed = green (#DCFCE7), Pending = yellow (#FEF3C7), Partial = blue (#DBEAFE), Refunded = purple (#F3E8FF).
     /// </summary>
-    public static readonly IValueConverter ToPaymentTransactionStatusBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#DCFCE7",
-                "Pending" => "#FEF3C7",
-                "Partial" => "#DBEAFE",
-                "Refunded" => "#F3E8FF",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToPaymentTransactionStatusBackground = StatusConverters.PaymentTransactionStatusBackground;
 
     /// <summary>
     /// Converts payment transaction status to badge foreground color.
-    /// Completed = green (#166534), Pending = yellow (#92400E), Partial = blue (#1E40AF), Refunded = purple (#7C3AED).
     /// </summary>
-    public static readonly IValueConverter ToPaymentTransactionStatusForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#166534",
-                "Pending" => "#92400E",
-                "Partial" => "#1E40AF",
-                "Refunded" => "#7C3AED",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToPaymentTransactionStatusForeground = StatusConverters.PaymentTransactionStatusForeground;
 
     /// <summary>
     /// Converts invoice status to badge background color.
-    /// Paid = green (#DCFCE7), Pending = yellow (#FEF3C7), Overdue = red (#FEE2E2), Draft = gray (#F3F4F6),
-    /// Sent = blue (#DBEAFE), Partial = purple (#F3E8FF), Cancelled = gray (#F3F4F6).
     /// </summary>
-    public static readonly IValueConverter ToInvoiceStatusBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Paid" => "#DCFCE7",
-                "Pending" => "#FEF3C7",
-                "Overdue" => "#FEE2E2",
-                "Draft" => "#F3F4F6",
-                "Sent" => "#DBEAFE",
-                "Viewed" => "#DBEAFE",
-                "Partial" => "#F3E8FF",
-                "Cancelled" => "#F3F4F6",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToInvoiceStatusBackground = StatusConverters.InvoiceStatusBackground;
 
     /// <summary>
     /// Converts invoice status to badge foreground color.
-    /// Paid = green (#166534), Pending = yellow (#92400E), Overdue = red (#DC2626), Draft = gray (#4B5563),
-    /// Sent = blue (#1E40AF), Partial = purple (#7C3AED), Cancelled = gray (#4B5563).
     /// </summary>
-    public static readonly IValueConverter ToInvoiceStatusForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Paid" => "#166534",
-                "Pending" => "#92400E",
-                "Overdue" => "#DC2626",
-                "Draft" => "#4B5563",
-                "Sent" => "#1E40AF",
-                "Viewed" => "#1E40AF",
-                "Partial" => "#7C3AED",
-                "Cancelled" => "#4B5563",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToInvoiceStatusForeground = StatusConverters.InvoiceStatusForeground;
 
     /// <summary>
     /// Returns true if the value equals the parameter.
@@ -558,79 +353,23 @@ public static class StringConverters
 
     /// <summary>
     /// Converts expense status to badge background color.
-    /// Completed = green (#DCFCE7), Pending = yellow (#FEF3C7), Returned = blue (#DBEAFE), Cancelled = gray (#F3F4F6).
     /// </summary>
-    public static readonly IValueConverter ToExpenseStatusBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#DCFCE7",
-                "Pending" => "#FEF3C7",
-                "Returned" => "#DBEAFE",
-                "Partial Return" => "#F3E8FF",
-                "Cancelled" => "#F3F4F6",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToExpenseStatusBackground = StatusConverters.TransactionStatusBackground;
 
     /// <summary>
     /// Converts expense status to badge foreground color.
-    /// Completed = green (#166534), Pending = yellow (#92400E), Returned = blue (#1E40AF), Cancelled = gray (#4B5563).
     /// </summary>
-    public static readonly IValueConverter ToExpenseStatusForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#166534",
-                "Pending" => "#92400E",
-                "Returned" => "#1E40AF",
-                "Partial Return" => "#7C3AED",
-                "Cancelled" => "#4B5563",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToExpenseStatusForeground = StatusConverters.TransactionStatusForeground;
 
     /// <summary>
     /// Converts revenue status to badge background color.
-    /// Completed = green (#DCFCE7), Pending = yellow (#FEF3C7), Returned = blue (#DBEAFE), Cancelled = gray (#F3F4F6).
     /// </summary>
-    public static readonly IValueConverter ToRevenueStatusBackground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#DCFCE7",
-                "Pending" => "#FEF3C7",
-                "Returned" => "#DBEAFE",
-                "Partial Return" => "#F3E8FF",
-                "Cancelled" => "#F3F4F6",
-                _ => "#F3F4F6"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToRevenueStatusBackground = StatusConverters.TransactionStatusBackground;
 
     /// <summary>
     /// Converts revenue status to badge foreground color.
-    /// Completed = green (#166534), Pending = yellow (#92400E), Returned = blue (#1E40AF), Cancelled = gray (#4B5563).
     /// </summary>
-    public static readonly IValueConverter ToRevenueStatusForeground =
-        new FuncValueConverter<string, IBrush>(value =>
-        {
-            var color = value switch
-            {
-                "Completed" => "#166534",
-                "Pending" => "#92400E",
-                "Returned" => "#1E40AF",
-                "Partial Return" => "#7C3AED",
-                "Cancelled" => "#4B5563",
-                _ => "#4B5563"
-            };
-            return new SolidColorBrush(Color.Parse(color));
-        });
+    public static readonly IValueConverter ToRevenueStatusForeground = StatusConverters.TransactionStatusForeground;
 }
 
 /// <summary>

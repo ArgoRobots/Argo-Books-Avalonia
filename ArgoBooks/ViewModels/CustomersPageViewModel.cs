@@ -493,39 +493,23 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
             };
         }).ToList();
 
-        // Apply sorting
-        if (SortDirection != SortDirection.None)
+        // Apply sorting (only if not searching, since search has its own relevance sorting)
+        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            displayItems = SortColumn switch
-            {
-                "Name" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(c => c.Name).ToList()
-                    : displayItems.OrderByDescending(c => c.Name).ToList(),
-                "Email" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(c => c.Email).ToList()
-                    : displayItems.OrderByDescending(c => c.Email).ToList(),
-                "Phone" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(c => c.Phone).ToList()
-                    : displayItems.OrderByDescending(c => c.Phone).ToList(),
-                "Address" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(c => c.Address).ToList()
-                    : displayItems.OrderByDescending(c => c.Address).ToList(),
-                "PaymentStatus" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(c => c.PaymentStatus).ToList()
-                    : displayItems.OrderByDescending(c => c.PaymentStatus).ToList(),
-                "Outstanding" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(c => c.Outstanding).ToList()
-                    : displayItems.OrderByDescending(c => c.Outstanding).ToList(),
-                "LastRental" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(c => c.LastRental).ToList()
-                    : displayItems.OrderByDescending(c => c.LastRental).ToList(),
-                _ => displayItems.OrderBy(c => c.Name).ToList()
-            };
-        }
-        else if (string.IsNullOrWhiteSpace(SearchQuery))
-        {
-            // Default sort by name when not searching
-            displayItems = displayItems.OrderBy(c => c.Name).ToList();
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<CustomerDisplayItem, object?>>
+                {
+                    ["Name"] = c => c.Name,
+                    ["Email"] = c => c.Email,
+                    ["Phone"] = c => c.Phone,
+                    ["Address"] = c => c.Address,
+                    ["PaymentStatus"] = c => c.PaymentStatus,
+                    ["Outstanding"] = c => c.Outstanding,
+                    ["LastRental"] = c => c.LastRental
+                },
+                c => c.Name);
         }
 
         // Calculate pagination
@@ -563,23 +547,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        if (totalCount == 0)
-        {
-            PaginationText = "0 customers";
-            return;
-        }
-
-        // For single page, just show count; for multiple pages, show range
-        if (TotalPages <= 1)
-        {
-            PaginationText = totalCount == 1 ? "1 customer" : $"{totalCount} customers";
-        }
-        else
-        {
-            var start = (CurrentPage - 1) * PageSize + 1;
-            var end = Math.Min(CurrentPage * PageSize, totalCount);
-            PaginationText = $"{start}-{end} of {totalCount} customers";
-        }
+        PaginationText = PaginationHelper.FormatPaginationText(
+            totalCount, CurrentPage, PageSize, TotalPages, "customer");
     }
 
     #endregion
@@ -647,9 +616,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var customerToUndo = newCustomer;
-        App.UndoRedoManager?.RecordAction(new CustomerAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add customer '{newCustomer.Name}'",
-            customerToUndo,
             () =>
             {
                 companyData.Customers.Remove(customerToUndo);
@@ -754,9 +722,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new CustomerEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit customer '{newName}'",
-            customerToEdit,
             () =>
             {
                 customerToEdit.Name = oldName;
@@ -829,9 +796,8 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new CustomerDeleteAction(
+            App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete customer '{deletedCustomer.Name}'",
-                deletedCustomer,
                 () =>
                 {
                     companyData.Customers.Add(deletedCustomer);
@@ -1129,65 +1095,3 @@ public class CustomerHistoryItem
     public string AmountFormatted => Amount < 0 ? $"-${Math.Abs(Amount):N2}" : $"${Amount:N2}";
 }
 
-/// <summary>
-/// Undoable action for adding a customer.
-/// </summary>
-public class CustomerAddAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public CustomerAddAction(string description, Customer _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing a customer.
-/// </summary>
-public class CustomerEditAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public CustomerEditAction(string description, Customer _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting a customer.
-/// </summary>
-public class CustomerDeleteAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public CustomerDeleteAction(string description, Customer _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}

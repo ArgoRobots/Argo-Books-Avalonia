@@ -469,35 +469,22 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             };
         }).ToList();
 
-        // Apply sorting
-        if (SortDirection != SortDirection.None)
+        // Apply sorting (only if not searching, since search has its own relevance sorting)
+        if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            displayItems = SortColumn switch
-            {
-                "Id" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.Id).ToList()
-                    : displayItems.OrderByDescending(i => i.Id).ToList(),
-                "Customer" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.CustomerName).ToList()
-                    : displayItems.OrderByDescending(i => i.CustomerName).ToList(),
-                "IssueDate" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.IssueDate).ToList()
-                    : displayItems.OrderByDescending(i => i.IssueDate).ToList(),
-                "DueDate" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.DueDate).ToList()
-                    : displayItems.OrderByDescending(i => i.DueDate).ToList(),
-                "Amount" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.Total).ToList()
-                    : displayItems.OrderByDescending(i => i.Total).ToList(),
-                "Status" => SortDirection == SortDirection.Ascending
-                    ? displayItems.OrderBy(i => i.StatusDisplay).ToList()
-                    : displayItems.OrderByDescending(i => i.StatusDisplay).ToList(),
-                _ => displayItems.OrderByDescending(i => i.IssueDate).ToList()
-            };
-        }
-        else if (string.IsNullOrWhiteSpace(SearchQuery))
-        {
-            displayItems = displayItems.OrderByDescending(i => i.IssueDate).ToList();
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<InvoiceDisplayItem, object?>>
+                {
+                    ["Id"] = i => i.Id,
+                    ["Customer"] = i => i.CustomerName,
+                    ["IssueDate"] = i => i.IssueDate,
+                    ["DueDate"] = i => i.DueDate,
+                    ["Amount"] = i => i.Total,
+                    ["Status"] = i => i.StatusDisplay
+                },
+                i => i.IssueDate);
         }
 
         // Calculate pagination
@@ -567,22 +554,8 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        if (totalCount == 0)
-        {
-            PaginationText = "0 invoices";
-            return;
-        }
-
-        if (TotalPages <= 1)
-        {
-            PaginationText = totalCount == 1 ? "1 invoice" : $"{totalCount} invoices";
-        }
-        else
-        {
-            var start = (CurrentPage - 1) * PageSize + 1;
-            var end = Math.Min(CurrentPage * PageSize, totalCount);
-            PaginationText = $"{start}-{end} of {totalCount} invoices";
-        }
+        PaginationText = PaginationHelper.FormatPaginationText(
+            totalCount, CurrentPage, PageSize, TotalPages, "invoice");
     }
 
     #endregion
@@ -693,67 +666,4 @@ public class CustomerOption
     public string Name { get; set; } = string.Empty;
 
     public override string ToString() => Name;
-}
-
-/// <summary>
-/// Undoable action for adding an invoice.
-/// </summary>
-public class InvoiceAddAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public InvoiceAddAction(string description, Invoice _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing an invoice.
-/// </summary>
-public class InvoiceEditAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public InvoiceEditAction(string description, Invoice _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting an invoice.
-/// </summary>
-public class InvoiceDeleteAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public InvoiceDeleteAction(string description, Invoice _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

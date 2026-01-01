@@ -56,7 +56,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void UpdatePaginationText(int totalItems)
     {
-        PaginationText = totalItems == 1 ? "1 supplier" : $"{totalItems} suppliers";
+        PaginationText = PaginationHelper.FormatSimpleCount(totalItems, "supplier");
     }
 
     #endregion
@@ -427,33 +427,18 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         // Apply sorting (only if not searching, since search has its own relevance sorting)
         if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            if (SortDirection != SortDirection.None)
-            {
-                displayItems = SortColumn switch
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<SupplierDisplayItem, object?>>
                 {
-                    "Name" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(s => s.Name).ToList()
-                        : displayItems.OrderByDescending(s => s.Name).ToList(),
-                    "Contact" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(s => s.ContactPerson).ToList()
-                        : displayItems.OrderByDescending(s => s.ContactPerson).ToList(),
-                    "Country" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(s => s.Country).ToList()
-                        : displayItems.OrderByDescending(s => s.Country).ToList(),
-                    "Products" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(s => s.ProductCount).ToList()
-                        : displayItems.OrderByDescending(s => s.ProductCount).ToList(),
-                    "Status" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(s => s.IsActive).ToList()
-                        : displayItems.OrderByDescending(s => s.IsActive).ToList(),
-                    _ => displayItems.OrderBy(s => s.Name).ToList()
-                };
-            }
-            else if (string.IsNullOrWhiteSpace(SearchQuery))
-            {
-                // Default sort by name when not searching
-                displayItems = displayItems.OrderBy(s => s.Name).ToList();
-            }
+                    ["Name"] = s => s.Name,
+                    ["Contact"] = s => s.ContactPerson,
+                    ["Country"] = s => s.Country,
+                    ["Products"] = s => s.ProductCount,
+                    ["Status"] = s => s.IsActive
+                },
+                s => s.Name);
         }
 
         // Calculate pagination
@@ -564,9 +549,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var supplierToUndo = newSupplier;
-        App.UndoRedoManager?.RecordAction(new SupplierAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add supplier '{newSupplier.Name}'",
-            supplierToUndo,
             () =>
             {
                 companyData.Suppliers.Remove(supplierToUndo);
@@ -671,9 +655,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new SupplierEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit supplier '{newName}'",
-            supplierToEdit,
             () =>
             {
                 supplierToEdit.Name = oldName;
@@ -762,9 +745,8 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new SupplierDeleteAction(
+            App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete supplier '{deletedSupplier.Name}'",
-                deletedSupplier,
                 () =>
                 {
                     // Undo: restore supplier and product references
@@ -972,67 +954,4 @@ public partial class SupplierDisplayItem : ObservableObject
     /// Status text for display.
     /// </summary>
     public string StatusText => IsActive ? "Active" : "Inactive";
-}
-
-/// <summary>
-/// Undoable action for adding a supplier.
-/// </summary>
-public class SupplierAddAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public SupplierAddAction(string description, Supplier _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing a supplier.
-/// </summary>
-public class SupplierEditAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public SupplierEditAction(string description, Supplier _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting a supplier.
-/// </summary>
-public class SupplierDeleteAction : IUndoableAction
-{
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public SupplierDeleteAction(string description, Supplier _, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

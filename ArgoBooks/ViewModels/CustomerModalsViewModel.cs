@@ -232,9 +232,8 @@ public partial class CustomerModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var customerToUndo = newCustomer;
-        App.UndoRedoManager?.RecordAction(new CustomerAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add customer '{newCustomer.Name}'",
-            customerToUndo,
             () =>
             {
                 companyData.Customers.Remove(customerToUndo);
@@ -373,9 +372,8 @@ public partial class CustomerModalsViewModel : ObservableObject
 
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new CustomerEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit customer '{newName}'",
-            customerToEdit,
             () =>
             {
                 customerToEdit.Name = oldName;
@@ -441,9 +439,8 @@ public partial class CustomerModalsViewModel : ObservableObject
             companyData.Customers.Remove(customer);
             companyData.MarkAsModified();
 
-            App.UndoRedoManager?.RecordAction(new CustomerDeleteAction(
+            App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete customer '{deletedCustomer.Name}'",
-                deletedCustomer,
                 () =>
                 {
                     companyData.Customers.Add(deletedCustomer);

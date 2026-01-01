@@ -40,7 +40,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void UpdatePaginationText(int totalItems)
     {
-        PaginationText = totalItems == 1 ? "1 department" : $"{totalItems} departments";
+        PaginationText = PaginationHelper.FormatSimpleCount(totalItems, "department");
     }
 
     #endregion
@@ -322,27 +322,16 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
         // Apply sorting (only if not searching, since search has its own relevance sorting)
         if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
         {
-            if (SortDirection != SortDirection.None)
-            {
-                displayItems = SortColumn switch
+            displayItems = displayItems.ApplySort(
+                SortColumn,
+                SortDirection,
+                new Dictionary<string, Func<DepartmentDisplayItem, object?>>
                 {
-                    "Name" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(d => d.Name).ToList()
-                        : displayItems.OrderByDescending(d => d.Name).ToList(),
-                    "Description" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(d => d.Description).ToList()
-                        : displayItems.OrderByDescending(d => d.Description).ToList(),
-                    "Employees" => SortDirection == SortDirection.Ascending
-                        ? displayItems.OrderBy(d => d.EmployeeCount).ToList()
-                        : displayItems.OrderByDescending(d => d.EmployeeCount).ToList(),
-                    _ => displayItems.OrderBy(d => d.Name).ToList()
-                };
-            }
-            else if (string.IsNullOrWhiteSpace(SearchQuery))
-            {
-                // Default sort by name when not searching
-                displayItems = displayItems.OrderBy(d => d.Name).ToList();
-            }
+                    ["Name"] = d => d.Name,
+                    ["Description"] = d => d.Description,
+                    ["Employees"] = d => d.EmployeeCount
+                },
+                d => d.Name);
         }
 
         // Calculate pagination
@@ -447,9 +436,8 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var departmentToUndo = newDepartment;
-        App.UndoRedoManager?.RecordAction(new DepartmentAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add department '{newDepartment.Name}'",
-            departmentToUndo,
             () =>
             {
                 companyData.Departments.Remove(departmentToUndo);
@@ -527,9 +515,8 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new DepartmentEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit department '{newName}'",
-            departmentToEdit,
             () =>
             {
                 departmentToEdit.Name = oldName;
@@ -608,9 +595,8 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new DepartmentDeleteAction(
+            App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete department '{deletedDepartment.Name}'",
-                deletedDepartment,
                 () =>
                 {
                     // Undo: restore department and employee department references
@@ -760,73 +746,4 @@ public class DepartmentColorOption
         Name = name;
         HexColor = hexColor;
     }
-}
-
-/// <summary>
-/// Undoable action for adding a department.
-/// </summary>
-public class DepartmentAddAction : IUndoableAction
-{
-    private readonly Department _department;
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public DepartmentAddAction(string description, Department department, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _department = department;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for editing a department.
-/// </summary>
-public class DepartmentEditAction : IUndoableAction
-{
-    private readonly Department _department;
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public DepartmentEditAction(string description, Department department, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _department = department;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
-}
-
-/// <summary>
-/// Undoable action for deleting a department.
-/// </summary>
-public class DepartmentDeleteAction : IUndoableAction
-{
-    private readonly Department _department;
-    private readonly Action _undoAction;
-    private readonly Action _redoAction;
-
-    public string Description { get; }
-
-    public DepartmentDeleteAction(string description, Department department, Action undoAction, Action redoAction)
-    {
-        Description = description;
-        _department = department;
-        _undoAction = undoAction;
-        _redoAction = redoAction;
-    }
-
-    public void Undo() => _undoAction();
-    public void Redo() => _redoAction();
 }

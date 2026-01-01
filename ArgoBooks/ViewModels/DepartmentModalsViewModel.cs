@@ -94,9 +94,8 @@ public partial class DepartmentModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var deptToUndo = newDepartment;
-        App.UndoRedoManager?.RecordAction(new DepartmentAddAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Add department '{newDepartment.Name}'",
-            deptToUndo,
             () => { companyData.Departments.Remove(deptToUndo); companyData.MarkAsModified(); DepartmentSaved?.Invoke(this, EventArgs.Empty); },
             () => { companyData.Departments.Add(deptToUndo); companyData.MarkAsModified(); DepartmentSaved?.Invoke(this, EventArgs.Empty); }));
 
@@ -150,9 +149,8 @@ public partial class DepartmentModalsViewModel : ObservableObject
         deptToEdit.Description = newDescription;
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new DepartmentEditAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Edit department '{newName}'",
-            deptToEdit,
             () => { deptToEdit.Name = oldName; deptToEdit.Description = oldDescription; companyData.MarkAsModified(); DepartmentSaved?.Invoke(this, EventArgs.Empty); },
             () => { deptToEdit.Name = newName; deptToEdit.Description = newDescription; companyData.MarkAsModified(); DepartmentSaved?.Invoke(this, EventArgs.Empty); }));
 
@@ -194,9 +192,8 @@ public partial class DepartmentModalsViewModel : ObservableObject
         companyData.Departments.Remove(department);
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new DepartmentDeleteAction(
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Delete department '{deletedDept.Name}'",
-            deletedDept,
             () => { companyData.Departments.Add(deletedDept); companyData.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); },
             () => { companyData.Departments.Remove(deletedDept); companyData.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); }));
 
