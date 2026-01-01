@@ -755,6 +755,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     }
 
     [RelayCommand]
+    private void NavigateToTransaction(RecentTransactionItem? transaction)
+    {
+        if (transaction == null) return;
+
+        var pageName = transaction.IsIncome ? "Revenue" : "Expenses";
+        App.NavigationService?.NavigateTo(pageName, new TransactionNavigationParameter(transaction.Id));
+    }
+
+    [RelayCommand]
     private void NavigateToRentals()
     {
         App.NavigationService?.NavigateTo("RentalRecords");
@@ -918,6 +927,22 @@ public class SaveChartImageEventArgs : EventArgs
     /// Gets or sets the identifier of the chart to save.
     /// </summary>
     public string ChartId { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Navigation parameter for navigating to a specific transaction.
+/// </summary>
+public class TransactionNavigationParameter
+{
+    /// <summary>
+    /// Gets the transaction ID to highlight.
+    /// </summary>
+    public string TransactionId { get; }
+
+    public TransactionNavigationParameter(string transactionId)
+    {
+        TransactionId = transactionId;
+    }
 }
 
 #endregion

@@ -1451,8 +1451,24 @@ public partial class App : Application
         navigationService.RegisterPage("Reports", _ => new ReportsPage { DataContext = new ReportsPageViewModel() });
 
         // Transactions Section
-        navigationService.RegisterPage("Revenue", _ => new RevenuePage { DataContext = new RevenuePageViewModel() });
-        navigationService.RegisterPage("Expenses", _ => new ExpensesPage { DataContext = new ExpensesPageViewModel() });
+        navigationService.RegisterPage("Revenue", param =>
+        {
+            var viewModel = new RevenuePageViewModel();
+            if (param is TransactionNavigationParameter navParam)
+            {
+                viewModel.HighlightTransactionId = navParam.TransactionId;
+            }
+            return new RevenuePage { DataContext = viewModel };
+        });
+        navigationService.RegisterPage("Expenses", param =>
+        {
+            var viewModel = new ExpensesPageViewModel();
+            if (param is TransactionNavigationParameter navParam)
+            {
+                viewModel.HighlightTransactionId = navParam.TransactionId;
+            }
+            return new ExpensesPage { DataContext = viewModel };
+        });
         navigationService.RegisterPage("Invoices", _ => new InvoicesPage { DataContext = new InvoicesPageViewModel() });
         navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = new PaymentsPageViewModel() });
 

@@ -28,6 +28,11 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private int _returnsCount;
 
+    /// <summary>
+    /// Transaction ID to highlight when navigating from dashboard.
+    /// </summary>
+    public string? HighlightTransactionId { get; set; }
+
     #endregion
 
     #region Search and Filter
@@ -456,9 +461,22 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 Discount = purchase.Discount,
                 Quantity = (int)purchase.Quantity,
                 UnitPrice = purchase.UnitPrice,
-                PaymentMethod = purchase.PaymentMethod
+                PaymentMethod = purchase.PaymentMethod,
+                IsHighlighted = purchase.Id == HighlightTransactionId
             };
         }).ToList();
+
+        // If highlighting a transaction, ensure it's visible by adjusting page
+        if (!string.IsNullOrEmpty(HighlightTransactionId))
+        {
+            var highlightIndex = displayItems.FindIndex(x => x.Id == HighlightTransactionId);
+            if (highlightIndex >= 0)
+            {
+                CurrentPage = (highlightIndex / PageSize) + 1;
+            }
+            // Clear highlight ID after first use
+            HighlightTransactionId = null;
+        }
 
         // Apply sorting (only if not searching, since search has its own relevance sorting)
         if (string.IsNullOrWhiteSpace(SearchQuery) || SortDirection != SortDirection.None)
@@ -753,4 +771,7 @@ public partial class ExpenseDisplayItem : ObservableObject
     public bool IsLostDamaged => StatusDisplay == "Lost/Damaged";
     public bool CanMarkAsReturned => !IsReturned && !IsLostDamaged;
     public bool CanMarkAsLostDamaged => !IsReturned && !IsLostDamaged;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }

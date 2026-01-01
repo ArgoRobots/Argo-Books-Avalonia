@@ -39,6 +39,18 @@
             <Setter Property="CornerRadius" Value="12" />
         </Style>
 
+        <!-- Clickable Table Row Button Style -->
+        <Style Selector="Button.table-row-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.table-row-button:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
         <!-- Table Row Style -->
         <Style Selector="Border.table-row">
             <Setter Property="Padding" Value="16,14" />
@@ -313,18 +325,10 @@
                                 Padding="20,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Text="Recent Transactions"
-                                           FontSize="16"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <Button Grid.Column="1"
-                                        Classes="ghost-button"
-                                        Command="{Binding NavigateToRevenueCommand}">
-                                    <TextBlock Text="View All" FontSize="13" />
-                                </Button>
-                            </Grid>
+                            <TextBlock Text="Recent Transactions"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                         </Border>
 
                         <!-- Table Content -->
@@ -335,8 +339,11 @@
                             <ItemsControl ItemsSource="{Binding RecentTransactions}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:RecentTransactionItem">
-                                        <Border Classes="table-row">
-                                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                        <Button Classes="table-row-button"
+                                                Command="{Binding $parent[ItemsControl].((vm:DashboardPageViewModel)DataContext).NavigateToTransactionCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Border Classes="table-row">
+                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                                                 <!-- Type Icon -->
                                                 <Border Grid.Column="0"
                                                         Width="36" Height="36"
@@ -452,8 +459,9 @@
                                                                FontSize="11"
                                                                FontWeight="Medium" />
                                                 </Border>
-                                            </Grid>
-                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
