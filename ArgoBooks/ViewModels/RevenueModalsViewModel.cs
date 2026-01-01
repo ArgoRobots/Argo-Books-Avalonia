@@ -88,6 +88,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         set => DeleteTransactionAmount = value;
     }
 
+    // Command aliases for AXAML bindings
+    public IRelayCommand SaveRevenueCommand => SaveTransactionCommand;
+    public IRelayCommand DeleteRevenueCommand => DeleteTransactionCommand;
+
     #endregion
 
     #region Reason Options

@@ -88,6 +88,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         set => DeleteTransactionAmount = value;
     }
 
+    // Command aliases for AXAML bindings
+    public IRelayCommand SaveExpenseCommand => SaveTransactionCommand;
+    public IRelayCommand DeleteExpenseCommand => DeleteTransactionCommand;
+
     // Expense-specific filter
     [ObservableProperty]
     private string _filterReceiptStatus = "All";
