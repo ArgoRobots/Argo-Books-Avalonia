@@ -288,14 +288,14 @@
                     </Grid>
                 </Border>
 
-                <!-- Sales vs Expenses Chart -->
+                <!-- Expenses vs Revenue Chart -->
                 <Border Grid.Column="1"
                         Classes="card"
                         Padding="8"
                         Margin="12,0,0,0">
                     <Grid>
                         <lvc:CartesianChart
-                            x:Name="SalesVsExpensesChart"
+                            x:Name="ExpensesVsRevenueChart"
                             Title="{Binding SalesVsExpensesChartTitle}"
                             Series="{Binding SalesVsExpensesSeries}"
                             XAxes="{Binding SalesVsExpensesXAxes}"
@@ -306,7 +306,7 @@
                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                 CornerRadius="8"
                                 IsVisible="{Binding !HasSalesVsExpensesData}">
-                            <TextBlock Text="No sales/expense data available"
+                            <TextBlock Text="No expense/revenue data available"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        FontSize="14"

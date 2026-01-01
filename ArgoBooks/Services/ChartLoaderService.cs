@@ -594,7 +594,7 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads sales vs expenses comparison chart as a multi-series column chart.
+    /// Loads expenses vs revenue comparison chart as a multi-series column chart.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels) LoadSalesVsExpensesChart(
         CompanyData? companyData,
@@ -606,13 +606,13 @@ public class ChartLoaderService
 
         if (companyData == null)
         {
-            _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+            _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
             {
-                ChartTitle = "Sales vs Expenses",
+                ChartTitle = "Expenses vs Revenue",
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
-                SeriesName = "Revenue"
+                SeriesName = "Expenses"
             };
             return (series, labels);
         }
@@ -632,13 +632,13 @@ public class ChartLoaderService
 
         if (months.Count == 0)
         {
-            _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+            _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
             {
-                ChartTitle = "Sales vs Expenses",
+                ChartTitle = "Expenses vs Revenue",
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
-                SeriesName = "Revenue"
+                SeriesName = "Expenses"
             };
             return (series, labels);
         }
@@ -665,22 +665,22 @@ public class ChartLoaderService
                 .Sum(p => p.Total) ?? 0);
         }).ToArray();
 
-        // Only add series if there's actual data
+        // Only add series if there's actual data (expenses first, then revenue)
         if (revenueValues.Any(v => v > 0) || expenseValues.Any(v => v > 0))
         {
-            series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
             series.Add(CreateTimeSeries(expenseValues, "Expenses", ExpenseColor));
+            series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
         }
 
         // Store export data for multi-series chart
-        _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+        _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
         {
-            ChartTitle = "Sales vs Expenses",
+            ChartTitle = "Expenses vs Revenue",
             ChartType = ChartType.Comparison,
             Labels = labels,
-            Values = revenueValues,
-            SeriesName = "Revenue",
-            AdditionalSeries = [("Expenses", expenseValues)],
+            Values = expenseValues,
+            SeriesName = "Expenses",
+            AdditionalSeries = [("Revenue", revenueValues)],
             StartDate = start,
             EndDate = end
         };
