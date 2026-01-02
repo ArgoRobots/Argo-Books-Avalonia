@@ -449,6 +449,43 @@ public class ChartLoaderService
     #region Shared Data Model Conversion
 
     /// <summary>
+    /// Creates a ReportFilters instance from date parameters.
+    /// This enables using ReportChartDataService for data fetching.
+    /// </summary>
+    /// <param name="startDate">Optional start date.</param>
+    /// <param name="endDate">Optional end date.</param>
+    /// <param name="defaultDaysBack">Default number of days to look back if no start date specified.</param>
+    /// <returns>A configured ReportFilters instance.</returns>
+    private static ReportFilters CreateFilters(DateTime? startDate, DateTime? endDate, int defaultDaysBack = 30)
+    {
+        var end = endDate ?? DateTime.Now;
+        var start = startDate ?? end.AddDays(-defaultDaysBack);
+        return new ReportFilters
+        {
+            StartDate = start,
+            EndDate = end,
+            IncludeReturns = true,
+            IncludeLosses = true
+        };
+    }
+
+    /// <summary>
+    /// Creates a ReportFilters instance with month-based default range.
+    /// </summary>
+    private static ReportFilters CreateFiltersMonths(DateTime? startDate, DateTime? endDate, int defaultMonthsBack = 6)
+    {
+        var end = endDate ?? DateTime.Now;
+        var start = startDate ?? end.AddMonths(-defaultMonthsBack);
+        return new ReportFilters
+        {
+            StartDate = start,
+            EndDate = end,
+            IncludeReturns = true,
+            IncludeLosses = true
+        };
+    }
+
+    /// <summary>
     /// Converts a list of ChartDataPoint objects to a LiveChartsCore series.
     /// This enables using the shared ReportChartDataService for data fetching.
     /// </summary>
@@ -573,6 +610,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads expenses overview chart data as a column series.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     /// <param name="companyData">The company data to load from.</param>
     /// <param name="startDate">Optional start date filter.</param>
@@ -588,37 +626,12 @@ public class ChartLoaderService
         var dates = Array.Empty<DateTime>();
         decimal totalExpenses = 0;
 
-        if (companyData?.Purchases == null || companyData.Purchases.Count == 0)
-        {
-            // Store empty export data
-            StoreExportData(new ChartExportData
-            {
-                ChartTitle = "Expenses Overview",
-                ChartType = ChartType.Expense,
-                Labels = [],
-                Values = [],
-                SeriesName = "Expenses"
-            });
-            return (series, labels, dates, totalExpenses);
-        }
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
 
-        // Default date range: last 30 days
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        var dataPoints = dataService.GetExpensesOverTime();
 
-        // Group purchases/expenses by date
-        var expensesByDate = companyData.Purchases
-            .Where(p => p.Date >= start && p.Date <= end)
-            .GroupBy(p => p.Date.Date)
-            .OrderBy(g => g.Key)
-            .Select(g => new
-            {
-                Date = g.Key,
-                Total = g.Sum(p => p.Total)
-            })
-            .ToList();
-
-        if (expensesByDate.Count == 0)
+        if (dataPoints.Count == 0)
         {
             StoreExportData(new ChartExportData
             {
@@ -631,16 +644,13 @@ public class ChartLoaderService
             return (series, labels, dates, totalExpenses);
         }
 
-        // Create labels, dates, and values
-        labels = expensesByDate.Select(e => e.Date.ToString("yyyy-MM-dd")).ToArray();
-        dates = expensesByDate.Select(e => e.Date).ToArray();
-        var values = expensesByDate.Select(e => (double)e.Total).ToArray();
-        totalExpenses = expensesByDate.Sum(e => e.Total);
+        labels = dataPoints.Select(p => p.Label).ToArray();
+        dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var values = dataPoints.Select(p => p.Value).ToArray();
+        totalExpenses = dataService.GetTotalExpenses();
 
-        // Create series with proportional date spacing
         series.Add(CreateDateTimeSeries(dates, values, "Expenses", RevenueColor));
 
-        // Store export data for Google Sheets/Excel export
         StoreExportData(new ChartExportData
         {
             ChartTitle = "Expenses Overview",
@@ -649,8 +659,8 @@ public class ChartLoaderService
             Values = values,
             SeriesName = "Expenses",
             TotalValue = (double)totalExpenses,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         });
 
         return (series, labels, dates, totalExpenses);
@@ -658,6 +668,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads revenue overview chart data as a column series.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, decimal TotalRevenue) LoadRevenueOverviewChart(
         CompanyData? companyData,
@@ -669,7 +680,12 @@ public class ChartLoaderService
         var dates = Array.Empty<DateTime>();
         decimal totalRevenue = 0;
 
-        if (companyData?.Sales == null || companyData.Sales.Count == 0)
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetRevenueOverTime();
+
+        if (dataPoints.Count == 0)
         {
             StoreExportData(new ChartExportData
             {
@@ -682,33 +698,10 @@ public class ChartLoaderService
             return (series, labels, dates, totalRevenue);
         }
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
-
-        var revenueByDate = companyData.Sales
-            .Where(s => s.Date >= start && s.Date <= end)
-            .GroupBy(s => s.Date.Date)
-            .OrderBy(g => g.Key)
-            .Select(g => new { Date = g.Key, Total = g.Sum(s => s.Total) })
-            .ToList();
-
-        if (revenueByDate.Count == 0)
-        {
-            StoreExportData(new ChartExportData
-            {
-                ChartTitle = "Revenue Overview",
-                ChartType = ChartType.Revenue,
-                Labels = [],
-                Values = [],
-                SeriesName = "Revenue"
-            });
-            return (series, labels, dates, totalRevenue);
-        }
-
-        labels = revenueByDate.Select(r => r.Date.ToString("yyyy-MM-dd")).ToArray();
-        dates = revenueByDate.Select(r => r.Date).ToArray();
-        var values = revenueByDate.Select(r => (double)r.Total).ToArray();
-        totalRevenue = revenueByDate.Sum(r => r.Total);
+        labels = dataPoints.Select(p => p.Label).ToArray();
+        dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var values = dataPoints.Select(p => p.Value).ToArray();
+        totalRevenue = dataService.GetTotalRevenue();
 
         series.Add(CreateDateTimeSeries(dates, values, "Revenue", ProfitColor));
 
@@ -720,8 +713,8 @@ public class ChartLoaderService
             Values = values,
             SeriesName = "Revenue",
             TotalValue = (double)totalRevenue,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         });
 
         return (series, labels, dates, totalRevenue);
@@ -729,6 +722,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads profits overview chart data as a column series.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, decimal TotalProfit) LoadProfitsOverviewChart(
         CompanyData? companyData,
@@ -740,7 +734,12 @@ public class ChartLoaderService
         var dates = Array.Empty<DateTime>();
         decimal totalProfit = 0;
 
-        if (companyData == null)
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetProfitOverTime();
+
+        if (dataPoints.Count == 0)
         {
             StoreExportData(new ChartExportData
             {
@@ -753,47 +752,10 @@ public class ChartLoaderService
             return (series, labels, dates, totalProfit);
         }
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
-
-        // Get revenue by date
-        var revenueByDate = companyData.Sales?
-            .Where(s => s.Date >= start && s.Date <= end)
-            .GroupBy(s => s.Date.Date)
-            .ToDictionary(g => g.Key, g => g.Sum(s => s.Total)) ?? new Dictionary<DateTime, decimal>();
-
-        // Get expenses by date
-        var expensesByDate = companyData.Purchases?
-            .Where(p => p.Date >= start && p.Date <= end)
-            .GroupBy(p => p.Date.Date)
-            .ToDictionary(g => g.Key, g => g.Sum(p => p.Total)) ?? new Dictionary<DateTime, decimal>();
-
-        // Calculate profit by date
-        var allDates = revenueByDate.Keys.Union(expensesByDate.Keys).OrderBy(d => d).ToList();
-
-        if (allDates.Count == 0)
-        {
-            StoreExportData(new ChartExportData
-            {
-                ChartTitle = "Profits Overview",
-                ChartType = ChartType.Profit,
-                Labels = [],
-                Values = [],
-                SeriesName = "Profit"
-            });
-            return (series, labels, dates, totalProfit);
-        }
-
-        var profitData = allDates.Select(date => new
-        {
-            Date = date,
-            Profit = revenueByDate.GetValueOrDefault(date, 0) - expensesByDate.GetValueOrDefault(date, 0)
-        }).ToList();
-
-        labels = profitData.Select(p => p.Date.ToString("yyyy-MM-dd")).ToArray();
-        dates = profitData.Select(p => p.Date).ToArray();
-        var values = profitData.Select(p => (double)p.Profit).ToArray();
-        totalProfit = profitData.Sum(p => p.Profit);
+        labels = dataPoints.Select(p => p.Label).ToArray();
+        dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var values = dataPoints.Select(p => p.Value).ToArray();
+        totalProfit = (decimal)values.Sum();
 
         // Use profit-specific series that shows negative values in red for column charts
         foreach (var s in CreateProfitDateTimeSeries(dates, values, "Profit"))
@@ -809,8 +771,8 @@ public class ChartLoaderService
             Values = values,
             SeriesName = "Profit",
             TotalValue = (double)totalProfit,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         });
 
         return (series, labels, dates, totalProfit);
@@ -818,6 +780,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads expenses vs revenue comparison chart as a multi-series column chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels) LoadSalesVsExpensesChart(
         CompanyData? companyData,
@@ -827,7 +790,12 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
 
-        if (companyData == null)
+        var filters = CreateFiltersMonths(startDate, endDate, 6);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var seriesData = dataService.GetSalesVsExpenses();
+
+        if (seriesData.Count < 2)
         {
             _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
             {
@@ -840,30 +808,10 @@ public class ChartLoaderService
             return (series, labels);
         }
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddMonths(-6);
+        var revenueData = seriesData.FirstOrDefault(s => s.Name == "Revenue");
+        var expenseData = seriesData.FirstOrDefault(s => s.Name == "Expenses");
 
-        // Get months that have actual data (sales or purchases)
-        var allMonths = new List<DateTime>();
-        var current = new DateTime(start.Year, start.Month, 1);
-        var endMonth = new DateTime(end.Year, end.Month, 1);
-        while (current <= endMonth)
-        {
-            allMonths.Add(current);
-            current = current.AddMonths(1);
-        }
-
-        // Filter to only months with data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
-            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
-            return hasSales || hasPurchases;
-        }).ToList();
-
-        if (monthsWithData.Count == 0)
+        if (revenueData == null || expenseData == null || revenueData.DataPoints.Count == 0)
         {
             _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
             {
@@ -876,34 +824,36 @@ public class ChartLoaderService
             return (series, labels);
         }
 
-        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
-
-        // Calculate revenue per month
-        var revenueValues = monthsWithData.Select(month =>
+        // Filter to only include months with data (at least one non-zero value)
+        var monthIndicesWithData = new List<int>();
+        for (int i = 0; i < revenueData.DataPoints.Count; i++)
         {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return (double)(companyData.Sales?
-                .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                .Sum(s => s.Total) ?? 0);
-        }).ToArray();
-
-        // Calculate expenses per month
-        var expenseValues = monthsWithData.Select(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return (double)(companyData.Purchases?
-                .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                .Sum(p => p.Total) ?? 0);
-        }).ToArray();
-
-        // Only add series if there's actual data (expenses first, then revenue)
-        if (revenueValues.Any(v => v > 0) || expenseValues.Any(v => v > 0))
-        {
-            series.Add(CreateTimeSeries(expenseValues, "Expenses", ExpenseColor));
-            series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
+            if (revenueData.DataPoints[i].Value > 0 || expenseData.DataPoints[i].Value > 0)
+            {
+                monthIndicesWithData.Add(i);
+            }
         }
+
+        if (monthIndicesWithData.Count == 0)
+        {
+            _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
+            {
+                ChartTitle = "Expenses vs Revenue",
+                ChartType = ChartType.Comparison,
+                Labels = [],
+                Values = [],
+                SeriesName = "Expenses"
+            };
+            return (series, labels);
+        }
+
+        labels = monthIndicesWithData.Select(i => revenueData.DataPoints[i].Label).ToArray();
+        var revenueValues = monthIndicesWithData.Select(i => revenueData.DataPoints[i].Value).ToArray();
+        var expenseValues = monthIndicesWithData.Select(i => expenseData.DataPoints[i].Value).ToArray();
+
+        // Add series (expenses first, then revenue for consistency)
+        series.Add(CreateTimeSeries(expenseValues, "Expenses", ExpenseColor));
+        series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
 
         // Store export data for multi-series chart
         _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
@@ -914,8 +864,8 @@ public class ChartLoaderService
             Values = expenseValues,
             SeriesName = "Expenses",
             AdditionalSeries = [("Revenue", revenueValues)],
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, labels);
@@ -923,6 +873,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads revenue distribution by category as a pie chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadRevenueDistributionChart(
         CompanyData? companyData,
@@ -932,59 +883,39 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        if (companyData?.Sales == null || companyData.Sales.Count == 0)
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetRevenueDistribution().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
             return (series, total);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        total = (decimal)dataPoints.Sum(p => p.Value);
 
-        var salesInRange = companyData.Sales
-            .Where(s => s.Date >= start && s.Date <= end)
-            .ToList();
-
-        var distribution = salesInRange
-            .GroupBy(s => GetEffectiveCategoryId(s, companyData) ?? "Unknown")
-            .Select(g => new
-            {
-                Category = companyData.GetCategory(g.Key)?.Name ?? "Other",
-                Total = g.Sum(s => s.Total)
-            })
-            .OrderByDescending(x => x.Total)
-            .Take(8)
-            .ToList();
-
-        if (distribution.Count == 0)
-            return (series, total);
-
-        total = distribution.Sum(d => d.Total);
-
-        var pieSeriesList = new List<PieSeries<double>>();
-        for (int i = 0; i < distribution.Count; i++)
+        for (int i = 0; i < dataPoints.Count; i++)
         {
-            var item = distribution[i];
-            pieSeriesList.Add(new PieSeries<double>
+            var item = dataPoints[i];
+            series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)item.Total },
-                Name = item.Category,
+                Values = [item.Value],
+                Name = item.Label,
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
         }
-
-        foreach (var ps in pieSeriesList)
-            series.Add(ps);
 
         // Store export data for Google Sheets/Excel export
         var exportData = new ChartExportData
         {
             ChartTitle = "Sales Distribution",
             ChartType = ChartType.Distribution,
-            Labels = distribution.Select(d => d.Category).ToArray(),
-            Values = distribution.Select(d => (double)d.Total).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = (double)total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
         _chartExportDataByTitle["Sales Distribution"] = exportData;
 
@@ -993,6 +924,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads expense distribution by category as a pie chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadExpenseDistributionChart(
         CompanyData? companyData,
@@ -1002,65 +934,42 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        if (companyData?.Purchases == null || companyData.Purchases.Count == 0)
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetExpenseDistribution().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
         {
             PieChartExportData = null;
             return (series, total);
         }
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        total = (decimal)dataPoints.Sum(p => p.Value);
 
-        var purchasesInRange = companyData.Purchases
-            .Where(p => p.Date >= start && p.Date <= end)
-            .ToList();
-
-        var distribution = purchasesInRange
-            .GroupBy(p => GetEffectiveCategoryId(p, companyData) ?? "Unknown")
-            .Select(g => new
-            {
-                Category = companyData.GetCategory(g.Key)?.Name ?? "Other",
-                Total = g.Sum(p => p.Total)
-            })
-            .OrderByDescending(x => x.Total)
-            .Take(8)
-            .ToList();
-
-        if (distribution.Count == 0)
+        for (int i = 0; i < dataPoints.Count; i++)
         {
-            PieChartExportData = null;
-            return (series, total);
-        }
-
-        total = distribution.Sum(d => d.Total);
-
-        var pieSeriesList = new List<PieSeries<double>>();
-        for (int i = 0; i < distribution.Count; i++)
-        {
-            var item = distribution[i];
-            pieSeriesList.Add(new PieSeries<double>
+            var item = dataPoints[i];
+            series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)item.Total },
-                Name = item.Category,
+                Values = [item.Value],
+                Name = item.Label,
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
         }
-
-        foreach (var ps in pieSeriesList)
-            series.Add(ps);
 
         // Store export data for Google Sheets/Excel export
         PieChartExportData = new ChartExportData
         {
             ChartTitle = "Expense Distribution",
             ChartType = ChartType.Distribution,
-            Labels = distribution.Select(d => d.Category).ToArray(),
-            Values = distribution.Select(d => (double)d.Total).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = (double)total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         // Also store by title for chart-specific retrieval (various UI titles)
@@ -1073,6 +982,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads growth rates chart data.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels) LoadGrowthRatesChart(
         CompanyData? companyData,
@@ -1082,69 +992,19 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
 
-        if (companyData?.Sales == null)
+        var filters = CreateFiltersMonths(startDate, endDate, 12);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetGrowthRates();
+
+        if (dataPoints.Count == 0)
             return (series, labels);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddMonths(-12);
-
-        // Get months that have actual sales data
-        var allMonths = new List<DateTime>();
-        var current = new DateTime(start.Year, start.Month, 1);
-        var endMonth = new DateTime(end.Year, end.Month, 1);
-        while (current <= endMonth)
-        {
-            allMonths.Add(current);
-            current = current.AddMonths(1);
-        }
-
-        // Filter to only months with sales data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
-        }).ToList();
-
-        if (monthsWithData.Count < 2)
-            return (series, labels);
-
-        var growthRates = new List<double>();
-        var growthLabels = new List<string>();
-
-        for (int i = 1; i < monthsWithData.Count; i++)
-        {
-            var currentMonth = monthsWithData[i];
-            var previousMonth = monthsWithData[i - 1];
-
-            var currentMonthStart = new DateTime(currentMonth.Year, currentMonth.Month, 1);
-            var currentMonthEnd = currentMonthStart.AddMonths(1).AddDays(-1);
-            var previousMonthStart = new DateTime(previousMonth.Year, previousMonth.Month, 1);
-            var previousMonthEnd = previousMonthStart.AddMonths(1).AddDays(-1);
-
-            var currentRevenue = companyData.Sales
-                .Where(s => s.Date >= currentMonthStart && s.Date <= currentMonthEnd)
-                .Sum(s => s.Total);
-
-            var previousRevenue = companyData.Sales
-                .Where(s => s.Date >= previousMonthStart && s.Date <= previousMonthEnd)
-                .Sum(s => s.Total);
-
-            double growthRate = 0;
-            if (previousRevenue != 0)
-                growthRate = (double)((currentRevenue - previousRevenue) / previousRevenue * 100);
-            else if (currentRevenue > 0)
-                growthRate = 100;
-
-            growthRates.Add(growthRate);
-            growthLabels.Add(currentMonth.ToString("MMM yyyy"));
-        }
-
-        labels = growthLabels.ToArray();
-        var values = growthRates.ToArray();
+        labels = dataPoints.Select(p => p.Label).ToArray();
+        var values = dataPoints.Select(p => p.Value).ToArray();
 
         // Only add series if there's actual data (any non-zero growth rates)
-        if (growthRates.Any(v => v != 0))
+        if (values.Any(v => v != 0))
         {
             series.Add(new ColumnSeries<double>
             {
@@ -1165,8 +1025,8 @@ public class ChartLoaderService
             Labels = labels,
             Values = values,
             SeriesName = "Growth Rate %",
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, labels);
@@ -1174,6 +1034,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads average transaction value chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels) LoadAverageTransactionValueChart(
         CompanyData? companyData,
@@ -1183,66 +1044,30 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
 
-        if (companyData == null)
+        var filters = CreateFiltersMonths(startDate, endDate, 6);
+        filters.TransactionType = TransactionType.Both;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetAverageTransactionValue();
+
+        // Filter to only months with data (non-zero values)
+        var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
+
+        if (filteredData.Count == 0)
             return (series, labels);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddMonths(-6);
+        labels = filteredData.Select(p => p.Label).ToArray();
+        var avgValues = filteredData.Select(p => p.Value).ToArray();
 
-        // Get months that have actual transaction data
-        var allMonths = new List<DateTime>();
-        var current = new DateTime(start.Year, start.Month, 1);
-        var endMonth = new DateTime(end.Year, end.Month, 1);
-        while (current <= endMonth)
+        series.Add(new ColumnSeries<double>
         {
-            allMonths.Add(current);
-            current = current.AddMonths(1);
-        }
-
-        // Filter to only months with transaction data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
-            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
-            return hasSales || hasPurchases;
-        }).ToList();
-
-        if (monthsWithData.Count == 0)
-            return (series, labels);
-
-        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
-
-        var avgValues = monthsWithData.Select(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-
-            var transactions = new List<decimal>();
-            transactions.AddRange(companyData.Sales?
-                .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                .Select(s => s.Total) ?? []);
-            transactions.AddRange(companyData.Purchases?
-                .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                .Select(p => p.Total) ?? []);
-
-            return transactions.Count > 0 ? (double)transactions.Average() : 0;
-        }).ToArray();
-
-        // Only add series if there's actual data
-        if (avgValues.Any(v => v > 0))
-        {
-            series.Add(new ColumnSeries<double>
-            {
-                Values = avgValues,
-                Name = "Avg Transaction",
-                Fill = new SolidColorPaint(RevenueColor),
-                Stroke = null,
-                MaxBarWidth = 50,
-                Padding = 2
-            });
-        }
+            Values = avgValues,
+            Name = "Avg Transaction",
+            Fill = new SolidColorPaint(RevenueColor),
+            Stroke = null,
+            MaxBarWidth = 50,
+            Padding = 2
+        });
 
         // Store export data
         _chartExportDataByTitle["Average Transaction Value"] = new ChartExportData
@@ -1252,8 +1077,8 @@ public class ChartLoaderService
             Labels = labels,
             Values = avgValues,
             SeriesName = "Avg Transaction",
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, labels);
@@ -1261,6 +1086,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads total transactions count chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels) LoadTotalTransactionsChart(
         CompanyData? companyData,
@@ -1270,61 +1096,30 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
 
-        if (companyData == null)
+        var filters = CreateFiltersMonths(startDate, endDate, 6);
+        filters.TransactionType = TransactionType.Both;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetTransactionCount();
+
+        // Filter to only months with data (non-zero values)
+        var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
+
+        if (filteredData.Count == 0)
             return (series, labels);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddMonths(-6);
+        labels = filteredData.Select(p => p.Label).ToArray();
+        var countValues = filteredData.Select(p => p.Value).ToArray();
 
-        // Get months that have actual transaction data
-        var allMonths = new List<DateTime>();
-        var current = new DateTime(start.Year, start.Month, 1);
-        var endMonth = new DateTime(end.Year, end.Month, 1);
-        while (current <= endMonth)
+        series.Add(new ColumnSeries<double>
         {
-            allMonths.Add(current);
-            current = current.AddMonths(1);
-        }
-
-        // Filter to only months with transaction data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
-            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
-            return hasSales || hasPurchases;
-        }).ToList();
-
-        if (monthsWithData.Count == 0)
-            return (series, labels);
-
-        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
-
-        var countValues = monthsWithData.Select(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-
-            var salesCount = companyData.Sales?.Count(s => s.Date >= monthStart && s.Date <= monthEnd) ?? 0;
-            var purchaseCount = companyData.Purchases?.Count(p => p.Date >= monthStart && p.Date <= monthEnd) ?? 0;
-
-            return (double)(salesCount + purchaseCount);
-        }).ToArray();
-
-        // Only add series if there's actual data
-        if (countValues.Any(v => v > 0))
-        {
-            series.Add(new ColumnSeries<double>
-            {
-                Values = countValues,
-                Name = "Transactions",
-                Fill = new SolidColorPaint(RevenueColor),
-                Stroke = null,
-                MaxBarWidth = 50,
-                Padding = 2
-            });
-        }
+            Values = countValues,
+            Name = "Transactions",
+            Fill = new SolidColorPaint(RevenueColor),
+            Stroke = null,
+            MaxBarWidth = 50,
+            Padding = 2
+        });
 
         // Store export data
         _chartExportDataByTitle["Total Transactions"] = new ChartExportData
@@ -1334,8 +1129,8 @@ public class ChartLoaderService
             Labels = labels,
             Values = countValues,
             SeriesName = "Transactions",
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, labels);
@@ -1343,6 +1138,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads average shipping costs chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels) LoadAverageShippingCostsChart(
         CompanyData? companyData,
@@ -1352,66 +1148,29 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
 
-        if (companyData == null)
+        var filters = CreateFiltersMonths(startDate, endDate, 6);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetAverageShippingCosts();
+
+        // Filter to only months with data (non-zero values)
+        var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
+
+        if (filteredData.Count == 0)
             return (series, labels);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddMonths(-6);
+        labels = filteredData.Select(p => p.Label).ToArray();
+        var avgShipping = filteredData.Select(p => p.Value).ToArray();
 
-        // Get months that have actual transaction data
-        var allMonths = new List<DateTime>();
-        var current = new DateTime(start.Year, start.Month, 1);
-        var endMonth = new DateTime(end.Year, end.Month, 1);
-        while (current <= endMonth)
+        series.Add(new ColumnSeries<double>
         {
-            allMonths.Add(current);
-            current = current.AddMonths(1);
-        }
-
-        // Filter to only months with transaction data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
-            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
-            return hasSales || hasPurchases;
-        }).ToList();
-
-        if (monthsWithData.Count == 0)
-            return (series, labels);
-
-        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
-
-        var avgShipping = monthsWithData.Select(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-
-            var shippingCosts = new List<decimal>();
-            shippingCosts.AddRange(companyData.Sales?
-                .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                .Select(s => s.ShippingCost) ?? []);
-            shippingCosts.AddRange(companyData.Purchases?
-                .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                .Select(p => p.ShippingCost) ?? []);
-
-            return shippingCosts.Count > 0 ? (double)shippingCosts.Average() : 0;
-        }).ToArray();
-
-        // Only add series if there's actual data
-        if (avgShipping.Any(v => v > 0))
-        {
-            series.Add(new ColumnSeries<double>
-            {
-                Values = avgShipping,
-                Name = "Avg Shipping",
-                Fill = new SolidColorPaint(RevenueColor),
-                Stroke = null,
-                MaxBarWidth = 50,
-                Padding = 2
-            });
-        }
+            Values = avgShipping,
+            Name = "Avg Shipping",
+            Fill = new SolidColorPaint(RevenueColor),
+            Stroke = null,
+            MaxBarWidth = 50,
+            Padding = 2
+        });
 
         // Store export data
         _chartExportDataByTitle["Average Shipping Costs"] = new ChartExportData
@@ -1421,15 +1180,16 @@ public class ChartLoaderService
             Labels = labels,
             Values = avgShipping,
             SeriesName = "Avg Shipping",
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, labels);
     }
 
     /// <summary>
-    /// Loads countries of origin (sales by customer country, or product supplier country as fallback) as a pie chart.
+    /// Loads countries of origin (sales by customer country) as a pie chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCountriesOfOriginChart(
         CompanyData? companyData,
@@ -1439,56 +1199,23 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        if (companyData?.Sales == null)
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetSalesByCountryOfOrigin().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
             return (series, total);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        total = (decimal)dataPoints.Sum(p => p.Value);
 
-        var salesInRange = companyData.Sales
-            .Where(s => s.Date >= start && s.Date <= end)
-            .ToList();
-
-        var distribution = salesInRange
-            .GroupBy(s =>
-            {
-                // First try customer country
-                var customer = companyData.GetCustomer(s.CustomerId ?? "");
-                if (customer?.Address?.Country != null && !string.IsNullOrEmpty(customer.Address.Country))
-                    return customer.Address.Country;
-
-                // Fall back to product's supplier country (origin of the product)
-                var firstProductId = s.LineItems?.FirstOrDefault()?.ProductId;
-                if (!string.IsNullOrEmpty(firstProductId))
-                {
-                    var product = companyData.GetProduct(firstProductId);
-                    if (product != null && !string.IsNullOrEmpty(product.SupplierId))
-                    {
-                        var supplier = companyData.GetSupplier(product.SupplierId);
-                        if (supplier?.Address?.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
-                            return supplier.Address.Country;
-                    }
-                }
-
-                return "Unknown";
-            })
-            .Select(g => new { Country = g.Key, Total = g.Sum(s => s.Total) })
-            .OrderByDescending(x => x.Total)
-            .Take(8)
-            .ToList();
-
-        if (distribution.Count == 0)
-            return (series, total);
-
-        total = distribution.Sum(d => d.Total);
-
-        for (int i = 0; i < distribution.Count; i++)
+        for (int i = 0; i < dataPoints.Count; i++)
         {
-            var item = distribution[i];
+            var item = dataPoints[i];
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)item.Total },
-                Name = item.Country,
+                Values = [item.Value],
+                Name = item.Label,
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1499,12 +1226,12 @@ public class ChartLoaderService
         {
             ChartTitle = "Countries of Origin",
             ChartType = ChartType.Distribution,
-            Labels = distribution.Select(d => d.Country).ToArray(),
-            Values = distribution.Select(d => (double)d.Total).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = (double)total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, total);
@@ -1512,6 +1239,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads countries of destination (purchases by supplier country) as a pie chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCountriesOfDestinationChart(
         CompanyData? companyData,
@@ -1521,46 +1249,23 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        if (companyData?.Purchases == null)
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetPurchasesByCountryOfDestination().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
             return (series, total);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        total = (decimal)dataPoints.Sum(p => p.Value);
 
-        var purchasesInRange = companyData.Purchases
-            .Where(p => p.Date >= start && p.Date <= end)
-            .ToList();
-
-        var distribution = purchasesInRange
-            .GroupBy(p =>
-            {
-                // First try supplier from purchase
-                var supplierId = GetEffectiveSupplierId(p, companyData);
-                if (!string.IsNullOrEmpty(supplierId))
-                {
-                    var supplier = companyData.GetSupplier(supplierId);
-                    if (supplier?.Address?.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
-                        return supplier.Address.Country;
-                }
-                return "Unknown";
-            })
-            .Select(g => new { Country = g.Key, Total = g.Sum(p => p.Total) })
-            .OrderByDescending(x => x.Total)
-            .Take(8)
-            .ToList();
-
-        if (distribution.Count == 0)
-            return (series, total);
-
-        total = distribution.Sum(d => d.Total);
-
-        for (int i = 0; i < distribution.Count; i++)
+        for (int i = 0; i < dataPoints.Count; i++)
         {
-            var item = distribution[i];
+            var item = dataPoints[i];
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)item.Total },
-                Name = item.Country,
+                Values = [item.Value],
+                Name = item.Label,
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1571,19 +1276,20 @@ public class ChartLoaderService
         {
             ChartTitle = "Countries of Destination",
             ChartType = ChartType.Distribution,
-            Labels = distribution.Select(d => d.Country).ToArray(),
-            Values = distribution.Select(d => (double)d.Total).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = (double)total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, total);
     }
 
     /// <summary>
-    /// Loads companies of origin (sales by customer, or product supplier as fallback) as a pie chart.
+    /// Loads companies of origin (sales by customer) as a pie chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCompaniesOfOriginChart(
         CompanyData? companyData,
@@ -1593,56 +1299,23 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        if (companyData?.Sales == null)
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetSalesByCompanyOfOrigin().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
             return (series, total);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        total = (decimal)dataPoints.Sum(p => p.Value);
 
-        var salesInRange = companyData.Sales
-            .Where(s => s.Date >= start && s.Date <= end)
-            .ToList();
-
-        var distribution = salesInRange
-            .GroupBy(s =>
-            {
-                // First try customer name
-                var customer = companyData.GetCustomer(s.CustomerId ?? "");
-                if (customer != null && !string.IsNullOrEmpty(customer.Name))
-                    return customer.Name;
-
-                // Fall back to product's supplier name (origin of the product)
-                var firstProductId = s.LineItems?.FirstOrDefault()?.ProductId;
-                if (!string.IsNullOrEmpty(firstProductId))
-                {
-                    var product = companyData.GetProduct(firstProductId);
-                    if (product != null && !string.IsNullOrEmpty(product.SupplierId))
-                    {
-                        var supplier = companyData.GetSupplier(product.SupplierId);
-                        if (supplier != null && !string.IsNullOrEmpty(supplier.Name))
-                            return supplier.Name;
-                    }
-                }
-
-                return "Unknown";
-            })
-            .Select(g => new { Company = g.Key, Total = g.Sum(s => s.Total) })
-            .OrderByDescending(x => x.Total)
-            .Take(8)
-            .ToList();
-
-        if (distribution.Count == 0)
-            return (series, total);
-
-        total = distribution.Sum(d => d.Total);
-
-        for (int i = 0; i < distribution.Count; i++)
+        for (int i = 0; i < dataPoints.Count; i++)
         {
-            var item = distribution[i];
+            var item = dataPoints[i];
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)item.Total },
-                Name = item.Company,
+                Values = [item.Value],
+                Name = item.Label,
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1653,12 +1326,12 @@ public class ChartLoaderService
         {
             ChartTitle = "Companies of Origin",
             ChartType = ChartType.Distribution,
-            Labels = distribution.Select(d => d.Company).ToArray(),
-            Values = distribution.Select(d => (double)d.Total).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = (double)total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, total);
@@ -1666,6 +1339,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads accountants transactions as a pie chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadAccountantsTransactionsChart(
         CompanyData? companyData,
@@ -1675,53 +1349,23 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        if (companyData == null)
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetTransactionsByAccountant().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
             return (series, total);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        total = (decimal)dataPoints.Sum(p => p.Value);
 
-        var accountantData = new Dictionary<string, decimal>();
-
-        // Sales by accountant
-        if (companyData.Sales != null)
+        for (int i = 0; i < dataPoints.Count; i++)
         {
-            foreach (var sale in companyData.Sales.Where(s => s.Date >= start && s.Date <= end))
-            {
-                var accountantName = companyData.GetAccountant(sale.AccountantId ?? "")?.Name ?? "Unknown";
-                accountantData.TryAdd(accountantName, 0);
-                accountantData[accountantName] += sale.Total;
-            }
-        }
-
-        // Purchases by accountant
-        if (companyData.Purchases != null)
-        {
-            foreach (var purchase in companyData.Purchases.Where(p => p.Date >= start && p.Date <= end))
-            {
-                var accountantName = companyData.GetAccountant(purchase.AccountantId ?? "")?.Name ?? "Unknown";
-                accountantData.TryAdd(accountantName, 0);
-                accountantData[accountantName] += purchase.Total;
-            }
-        }
-
-        var distribution = accountantData
-            .OrderByDescending(kvp => kvp.Value)
-            .Take(8)
-            .ToList();
-
-        if (distribution.Count == 0)
-            return (series, total);
-
-        total = distribution.Sum(d => d.Value);
-
-        for (int i = 0; i < distribution.Count; i++)
-        {
-            var item = distribution[i];
+            var item = dataPoints[i];
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)item.Value },
-                Name = item.Key,
+                Values = [item.Value],
+                Name = item.Label,
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1732,12 +1376,12 @@ public class ChartLoaderService
         {
             ChartTitle = "Transactions by Accountant",
             ChartType = ChartType.Distribution,
-            Labels = distribution.Select(d => d.Key).ToArray(),
-            Values = distribution.Select(d => (double)d.Value).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = (double)total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
         _chartExportDataByTitle["Transactions by Accountant"] = exportData;
         _chartExportDataByTitle["Companies of Destination"] = exportData;
@@ -1881,6 +1525,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads loss reasons chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, int Total) LoadLossReasonsChart(
         CompanyData? companyData,
@@ -1890,32 +1535,24 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         int total = 0;
 
-        if (companyData?.LostDamaged == null || companyData.LostDamaged.Count == 0)
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeLosses = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetLossReasons().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
             return (series, total);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        total = (int)dataPoints.Sum(p => p.Value);
 
-        var distribution = companyData.LostDamaged
-            .Where(l => l.DateDiscovered >= start && l.DateDiscovered <= end)
-            .GroupBy(l => l.Reason.ToString())
-            .Select(g => new { Reason = g.Key, Count = g.Count() })
-            .OrderByDescending(x => x.Count)
-            .Take(8)
-            .ToList();
-
-        if (distribution.Count == 0)
-            return (series, total);
-
-        total = distribution.Sum(d => d.Count);
-
-        for (int i = 0; i < distribution.Count; i++)
+        for (int i = 0; i < dataPoints.Count; i++)
         {
-            var item = distribution[i];
+            var item = dataPoints[i];
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)item.Count },
-                Name = item.Reason,
+                Values = [item.Value],
+                Name = item.Label,
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1926,12 +1563,12 @@ public class ChartLoaderService
         {
             ChartTitle = "Loss Reasons",
             ChartType = ChartType.Distribution,
-            Labels = distribution.Select(d => d.Reason).ToArray(),
-            Values = distribution.Select(d => (double)d.Count).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Count",
             TotalValue = total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, total);
@@ -1939,6 +1576,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads losses by product chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadLossesByProductChart(
         CompanyData? companyData,
@@ -1948,32 +1586,24 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        if (companyData?.LostDamaged == null || companyData.LostDamaged.Count == 0)
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeLosses = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetLossesByProduct().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
             return (series, total);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        total = (decimal)dataPoints.Sum(p => p.Value);
 
-        var distribution = companyData.LostDamaged
-            .Where(l => l.DateDiscovered >= start && l.DateDiscovered <= end)
-            .GroupBy(l => companyData.GetProduct(l.ProductId ?? "")?.Name ?? "Unknown")
-            .Select(g => new { Product = g.Key, Total = g.Sum(l => l.ValueLost) })
-            .OrderByDescending(x => x.Total)
-            .Take(8)
-            .ToList();
-
-        if (distribution.Count == 0)
-            return (series, total);
-
-        total = distribution.Sum(d => d.Total);
-
-        for (int i = 0; i < distribution.Count; i++)
+        for (int i = 0; i < dataPoints.Count; i++)
         {
-            var item = distribution[i];
+            var item = dataPoints[i];
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)item.Total },
-                Name = item.Product,
+                Values = [item.Value],
+                Name = item.Label,
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1984,12 +1614,12 @@ public class ChartLoaderService
         {
             ChartTitle = "Losses by Product",
             ChartType = ChartType.Distribution,
-            Labels = distribution.Select(d => d.Product).ToArray(),
-            Values = distribution.Select(d => (double)d.Total).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = (double)total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, total);
@@ -1997,6 +1627,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads returns over time chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, int TotalReturns) LoadReturnsOverTimeChart(
         CompanyData? companyData,
@@ -2008,26 +1639,19 @@ public class ChartLoaderService
         var dates = Array.Empty<DateTime>();
         int totalReturns = 0;
 
-        if (companyData?.Returns == null || companyData.Returns.Count == 0)
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeReturns = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetReturnsOverTime();
+
+        if (dataPoints.Count == 0)
             return (series, labels, dates, totalReturns);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
-
-        var returnsByDate = companyData.Returns
-            .Where(r => r.ReturnDate >= start && r.ReturnDate <= end)
-            .GroupBy(r => r.ReturnDate.Date)
-            .OrderBy(g => g.Key)
-            .Select(g => new { Date = g.Key, Count = g.Count() })
-            .ToList();
-
-        if (returnsByDate.Count == 0)
-            return (series, labels, dates, totalReturns);
-
-        labels = returnsByDate.Select(r => r.Date.ToString("yyyy-MM-dd")).ToArray();
-        dates = returnsByDate.Select(r => r.Date).ToArray();
-        var values = returnsByDate.Select(r => (double)r.Count).ToArray();
-        totalReturns = returnsByDate.Sum(r => r.Count);
+        labels = dataPoints.Select(p => p.Label).ToArray();
+        dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var values = dataPoints.Select(p => p.Value).ToArray();
+        totalReturns = (int)values.Sum();
 
         series.Add(CreateDateTimeSeries(dates, values, "Returns", ExpenseColor));
 
@@ -2040,8 +1664,8 @@ public class ChartLoaderService
             Values = values,
             SeriesName = "Returns",
             TotalValue = totalReturns,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, labels, dates, totalReturns);
@@ -2049,6 +1673,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads return reasons as a pie chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, int Total) LoadReturnReasonsChart(
         CompanyData? companyData,
@@ -2058,33 +1683,24 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         int total = 0;
 
-        if (companyData?.Returns == null)
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeReturns = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetReturnReasons().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
             return (series, total);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
+        total = (int)dataPoints.Sum(p => p.Value);
 
-        var distribution = companyData.Returns
-            .Where(r => r.ReturnDate >= start && r.ReturnDate <= end)
-            .SelectMany(r => r.Items ?? [])
-            .GroupBy(item => string.IsNullOrEmpty(item.Reason) ? "Unknown" : item.Reason)
-            .Select(g => new { Reason = g.Key, Count = g.Count() })
-            .OrderByDescending(x => x.Count)
-            .Take(8)
-            .ToList();
-
-        if (distribution.Count == 0)
-            return (series, total);
-
-        total = distribution.Sum(d => d.Count);
-
-        for (int i = 0; i < distribution.Count; i++)
+        for (int i = 0; i < dataPoints.Count; i++)
         {
-            var item = distribution[i];
+            var item = dataPoints[i];
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)item.Count },
-                Name = item.Reason,
+                Values = [item.Value],
+                Name = item.Label,
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -2095,12 +1711,12 @@ public class ChartLoaderService
         {
             ChartTitle = "Return Reasons",
             ChartType = ChartType.Distribution,
-            Labels = distribution.Select(d => d.Reason).ToArray(),
-            Values = distribution.Select(d => (double)d.Count).ToArray(),
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Count",
             TotalValue = total,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
         _chartExportDataByTitle["Return Reasons"] = exportData;
         _chartExportDataByTitle["Returns by Category"] = exportData;
@@ -2110,6 +1726,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads return financial impact chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels, decimal TotalImpact) LoadReturnFinancialImpactChart(
         CompanyData? companyData,
@@ -2120,59 +1737,31 @@ public class ChartLoaderService
         var labels = Array.Empty<string>();
         decimal totalImpact = 0;
 
-        if (companyData?.Returns == null)
+        var filters = CreateFiltersMonths(startDate, endDate, 6);
+        filters.IncludeReturns = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetReturnFinancialImpact();
+
+        // Filter to only months with data (non-zero values)
+        var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
+
+        if (filteredData.Count == 0)
             return (series, labels, totalImpact);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddMonths(-6);
-
-        // Get months that have actual return data
-        var allMonths = new List<DateTime>();
-        var current = new DateTime(start.Year, start.Month, 1);
-        var endMonth = new DateTime(end.Year, end.Month, 1);
-        while (current <= endMonth)
-        {
-            allMonths.Add(current);
-            current = current.AddMonths(1);
-        }
-
-        // Filter to only months with return data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return companyData.Returns?.Any(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd) ?? false;
-        }).ToList();
-
-        if (monthsWithData.Count == 0)
-            return (series, labels, totalImpact);
-
-        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
-
-        var impactValues = monthsWithData.Select(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return (double)(companyData.Returns
-                .Where(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd)
-                .Sum(r => r.RefundAmount));
-        }).ToArray();
-
+        labels = filteredData.Select(p => p.Label).ToArray();
+        var impactValues = filteredData.Select(p => p.Value).ToArray();
         totalImpact = (decimal)impactValues.Sum();
 
-        // Only add series if there's actual data
-        if (impactValues.Any(v => v > 0))
+        series.Add(new ColumnSeries<double>
         {
-            series.Add(new ColumnSeries<double>
-            {
-                Values = impactValues,
-                Name = "Refunds",
-                Fill = new SolidColorPaint(ExpenseColor),
-                Stroke = null,
-                MaxBarWidth = 50,
-                Padding = 2
-            });
-        }
+            Values = impactValues,
+            Name = "Refunds",
+            Fill = new SolidColorPaint(ExpenseColor),
+            Stroke = null,
+            MaxBarWidth = 50,
+            Padding = 2
+        });
 
         // Store export data
         _chartExportDataByTitle["Financial Impact of Returns"] = new ChartExportData
@@ -2183,8 +1772,8 @@ public class ChartLoaderService
             Values = impactValues,
             SeriesName = "Refunds",
             TotalValue = (double)totalImpact,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, labels, totalImpact);
@@ -2192,6 +1781,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads losses over time chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels, DateTime[] Dates, int TotalLosses) LoadLossesOverTimeChart(
         CompanyData? companyData,
@@ -2203,26 +1793,19 @@ public class ChartLoaderService
         var dates = Array.Empty<DateTime>();
         int totalLosses = 0;
 
-        if (companyData?.LostDamaged == null || companyData.LostDamaged.Count == 0)
+        var filters = CreateFilters(startDate, endDate);
+        filters.IncludeLosses = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetLossesOverTime();
+
+        if (dataPoints.Count == 0)
             return (series, labels, dates, totalLosses);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddDays(-30);
-
-        var lossesByDate = companyData.LostDamaged
-            .Where(l => l.DateDiscovered >= start && l.DateDiscovered <= end)
-            .GroupBy(l => l.DateDiscovered.Date)
-            .OrderBy(g => g.Key)
-            .Select(g => new { Date = g.Key, Count = g.Count() })
-            .ToList();
-
-        if (lossesByDate.Count == 0)
-            return (series, labels, dates, totalLosses);
-
-        labels = lossesByDate.Select(l => l.Date.ToString("yyyy-MM-dd")).ToArray();
-        dates = lossesByDate.Select(l => l.Date).ToArray();
-        var values = lossesByDate.Select(l => (double)l.Count).ToArray();
-        totalLosses = lossesByDate.Sum(l => l.Count);
+        labels = dataPoints.Select(p => p.Label).ToArray();
+        dates = dataPoints.Where(p => p.Date.HasValue).Select(p => p.Date!.Value).ToArray();
+        var values = dataPoints.Select(p => p.Value).ToArray();
+        totalLosses = (int)values.Sum();
 
         series.Add(CreateDateTimeSeries(dates, values, "Losses", ExpenseColor));
 
@@ -2235,8 +1818,8 @@ public class ChartLoaderService
             Values = values,
             SeriesName = "Losses",
             TotalValue = totalLosses,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, labels, dates, totalLosses);
@@ -2244,6 +1827,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads loss financial impact chart.
+    /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels, decimal TotalImpact) LoadLossFinancialImpactChart(
         CompanyData? companyData,
@@ -2254,59 +1838,31 @@ public class ChartLoaderService
         var labels = Array.Empty<string>();
         decimal totalImpact = 0;
 
-        if (companyData?.LostDamaged == null)
+        var filters = CreateFiltersMonths(startDate, endDate, 6);
+        filters.IncludeLosses = true;
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        var dataPoints = dataService.GetLossFinancialImpact();
+
+        // Filter to only months with data (non-zero values)
+        var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
+
+        if (filteredData.Count == 0)
             return (series, labels, totalImpact);
 
-        var end = endDate ?? DateTime.Now;
-        var start = startDate ?? end.AddMonths(-6);
-
-        // Get months that have actual loss data
-        var allMonths = new List<DateTime>();
-        var current = new DateTime(start.Year, start.Month, 1);
-        var endMonth = new DateTime(end.Year, end.Month, 1);
-        while (current <= endMonth)
-        {
-            allMonths.Add(current);
-            current = current.AddMonths(1);
-        }
-
-        // Filter to only months with loss data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return companyData.LostDamaged?.Any(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd) ?? false;
-        }).ToList();
-
-        if (monthsWithData.Count == 0)
-            return (series, labels, totalImpact);
-
-        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
-
-        var impactValues = monthsWithData.Select(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return (double)(companyData.LostDamaged
-                .Where(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd)
-                .Sum(l => l.ValueLost));
-        }).ToArray();
-
+        labels = filteredData.Select(p => p.Label).ToArray();
+        var impactValues = filteredData.Select(p => p.Value).ToArray();
         totalImpact = (decimal)impactValues.Sum();
 
-        // Only add series if there's actual data
-        if (impactValues.Any(v => v > 0))
+        series.Add(new ColumnSeries<double>
         {
-            series.Add(new ColumnSeries<double>
-            {
-                Values = impactValues,
-                Name = "Value Lost",
-                Fill = new SolidColorPaint(ExpenseColor),
-                Stroke = null,
-                MaxBarWidth = 50,
-                Padding = 2
-            });
-        }
+            Values = impactValues,
+            Name = "Value Lost",
+            Fill = new SolidColorPaint(ExpenseColor),
+            Stroke = null,
+            MaxBarWidth = 50,
+            Padding = 2
+        });
 
         // Store export data
         _chartExportDataByTitle["Financial Impact of Losses"] = new ChartExportData
@@ -2317,8 +1873,8 @@ public class ChartLoaderService
             Values = impactValues,
             SeriesName = "Value Lost",
             TotalValue = (double)totalImpact,
-            StartDate = start,
-            EndDate = end
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
         };
 
         return (series, labels, totalImpact);
