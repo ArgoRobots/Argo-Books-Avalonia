@@ -64,7 +64,8 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         "MM/DD/YYYY",
         "DD/MM/YYYY",
-        "YYYY-MM-DD"
+        "YYYY-MM-DD",
+        "MMM D, YYYY"
     };
 
     public ObservableCollection<string> TimeZones { get; } = new()

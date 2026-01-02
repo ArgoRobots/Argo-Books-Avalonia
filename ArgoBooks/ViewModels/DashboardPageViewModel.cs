@@ -974,7 +974,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             return "Yesterday";
         if (date.Date > now.Date.AddDays(-7))
             return date.ToString("dddd");
-        return date.ToString("MMM dd, yyyy");
+        return DateFormatService.Format(date);
     }
 
     private static double? CalculatePercentageChange(decimal previous, decimal current)

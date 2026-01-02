@@ -395,7 +395,7 @@ public class ChartLoaderService
                 try
                 {
                     var date = DateTime.FromOADate(value);
-                    return date.ToString("yyyy-MM-dd");
+                    return DateFormatService.Format(date);
                 }
                 catch
                 {
