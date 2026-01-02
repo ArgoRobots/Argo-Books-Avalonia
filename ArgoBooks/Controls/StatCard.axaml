@@ -193,26 +193,13 @@
                             </Style>
                         </TextBlock.Styles>
                     </TextBlock>
-                    <!-- comparison label text -->
+                    <!-- comparison label text (always neutral gray) -->
                     <TextBlock Text="{Binding ChangeLabel, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
                                FontSize="12"
                                VerticalAlignment="Center"
-                               IsVisible="{Binding ChangeLabel, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                               Classes.positive="{Binding IsPositiveTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                               Classes.negative="{Binding IsNegativeTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}"
-                               Classes.neutral="{Binding IsNeutralTrend, RelativeSource={RelativeSource AncestorType=controls:StatCard}}">
-                        <TextBlock.Styles>
-                            <Style Selector="TextBlock.positive">
-                                <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
-                            </Style>
-                            <Style Selector="TextBlock.negative">
-                                <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                            </Style>
-                            <Style Selector="TextBlock.neutral">
-                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-                            </Style>
-                        </TextBlock.Styles>
-                    </TextBlock>
+                               Margin="4,0,0,0"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               IsVisible="{Binding ChangeLabel, RelativeSource={RelativeSource AncestorType=controls:StatCard}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                 </StackPanel>
 
                 <!-- Secondary Text -->

@@ -262,6 +262,43 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Creates series for profit data with negative values shown in red (for Column mode).
+    /// </summary>
+    private IEnumerable<ISeries> CreateProfitDateTimeSeries(DateTime[] dates, double[] values, string name)
+    {
+        var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
+
+        if (SelectedChartStyle == ChartStyle.Column)
+        {
+            // Split into positive (green) and negative (red) column series
+            var posPoints = points.Select(p => new ObservablePoint(p.X, p.Y >= 0 ? p.Y : null)).ToArray();
+            var negPoints = points.Select(p => new ObservablePoint(p.X, p.Y < 0 ? p.Y : null)).ToArray();
+
+            yield return new ColumnSeries<ObservablePoint>
+            {
+                Values = posPoints,
+                Name = name,
+                Fill = new SolidColorPaint(ProfitColor),
+                Stroke = null,
+                MaxBarWidth = 50
+            };
+            yield return new ColumnSeries<ObservablePoint>
+            {
+                Values = negPoints,
+                Name = $"{name} (Loss)",
+                Fill = new SolidColorPaint(ExpenseColor),
+                Stroke = null,
+                MaxBarWidth = 50
+            };
+        }
+        else
+        {
+            // For line-based charts, use single series with green color
+            yield return CreateDateTimeSeries(dates, values, name, ProfitColor);
+        }
+    }
+
+    /// <summary>
     /// Updates theme colors based on the current application theme.
     /// </summary>
     /// <param name="isDarkTheme">Whether the dark theme is active.</param>
@@ -626,7 +663,11 @@ public class ChartLoaderService
         var values = profitData.Select(p => (double)p.Profit).ToArray();
         totalProfit = profitData.Sum(p => p.Profit);
 
-        series.Add(CreateDateTimeSeries(dates, values, "Profit", ProfitColor));
+        // Use profit-specific series that shows negative values in red for column charts
+        foreach (var s in CreateProfitDateTimeSeries(dates, values, "Profit"))
+        {
+            series.Add(s);
+        }
 
         StoreExportData(new ChartExportData
         {
