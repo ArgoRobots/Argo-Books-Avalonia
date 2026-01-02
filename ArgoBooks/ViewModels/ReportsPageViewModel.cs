@@ -1326,44 +1326,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ObservableCollection<PageOrientation> Orientations { get; } =
         new(Enum.GetValues<PageOrientation>());
 
-    // Element property enum collections
+    // Element property enum collections - uses GetDisplayName() extension method for consistent naming
     public ObservableCollection<ChartDataTypeOption> ChartTypeOptions { get; } =
-    [
-        // Revenue charts
-        new(ChartDataType.TotalRevenue, "Total Revenue"),
-        new(ChartDataType.RevenueDistribution, "Revenue Distribution"),
-        // Expense charts
-        new(ChartDataType.TotalExpenses, "Total Expenses"),
-        new(ChartDataType.ExpensesDistribution, "Expenses Distribution"),
-        // Financial charts
-        new(ChartDataType.TotalProfits, "Total Profits"),
-        new(ChartDataType.SalesVsExpenses, "Sales vs Expenses"),
-        new(ChartDataType.GrowthRates, "Growth Rates"),
-        // Transaction charts
-        new(ChartDataType.AverageTransactionValue, "Average Transaction Value"),
-        new(ChartDataType.TotalTransactions, "Total Transactions"),
-        new(ChartDataType.AverageShippingCosts, "Average Shipping Costs"),
-        // Geographic charts
-        new(ChartDataType.WorldMap, "World Map"),
-        new(ChartDataType.CountriesOfOrigin, "Countries of Origin"),
-        new(ChartDataType.CountriesOfDestination, "Countries of Destination"),
-        new(ChartDataType.CompaniesOfOrigin, "Companies of Origin"),
-        // Accountant charts
-        new(ChartDataType.AccountantsTransactions, "Accountants Transactions"),
-        // Returns charts
-        new(ChartDataType.ReturnsOverTime, "Returns Over Time"),
-        new(ChartDataType.ReturnReasons, "Return Reasons"),
-        new(ChartDataType.ReturnFinancialImpact, "Return Financial Impact"),
-        new(ChartDataType.ReturnsByCategory, "Returns by Category"),
-        new(ChartDataType.ReturnsByProduct, "Returns by Product"),
-        new(ChartDataType.PurchaseVsSaleReturns, "Purchase vs Sale Returns"),
-        // Losses charts
-        new(ChartDataType.LossesOverTime, "Losses Over Time"),
-        new(ChartDataType.LossReasons, "Loss Reasons"),
-        new(ChartDataType.LossFinancialImpact, "Loss Financial Impact"),
-        new(ChartDataType.LossesByCategory, "Losses by Category"),
-        new(ChartDataType.LossesByProduct, "Losses by Product")
-    ];
+        new(Enum.GetValues<ChartDataType>().Select(t => new ChartDataTypeOption(t, t.GetDisplayName())));
 
     /// <summary>
     /// Gets or sets the selected chart data type option, syncing with SelectedChartElement.ChartType.
@@ -1785,31 +1750,31 @@ public partial class ReportsPageViewModel : ViewModelBase
         AvailableCharts.Clear();
 
         // Revenue charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalRevenue, "Total Revenue", "Revenue over time"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.RevenueDistribution, "Revenue Distribution", "Revenue by category"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.TotalRevenue, ChartDataType.TotalRevenue.GetDisplayName(), "Revenue over time"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.RevenueDistribution, ChartDataType.RevenueDistribution.GetDisplayName(), "Revenue by category"));
 
         // Expense charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalExpenses, "Total Expenses", "Expenses over time"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.ExpensesDistribution, "Expense Distribution", "Expenses by category"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.TotalExpenses, ChartDataType.TotalExpenses.GetDisplayName(), "Expenses over time"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.ExpensesDistribution, ChartDataType.ExpensesDistribution.GetDisplayName(), "Expenses by category"));
 
         // Financial charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.SalesVsExpenses, "Expenses vs Revenue", "Compare revenue and costs"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalProfits, "Total Profits", "Profit over time"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.GrowthRates, "Growth Rates", "Period-over-period growth"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.SalesVsExpenses, ChartDataType.SalesVsExpenses.GetDisplayName(), "Compare revenue and costs"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.TotalProfits, ChartDataType.TotalProfits.GetDisplayName(), "Profit over time"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.GrowthRates, ChartDataType.GrowthRates.GetDisplayName(), "Period-over-period growth"));
 
         // Transaction charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.AverageTransactionValue, "Avg. Transaction Value", "Average transaction amounts"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalTransactions, "Total Transactions", "Transaction volume"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.AverageTransactionValue, ChartDataType.AverageTransactionValue.GetDisplayName(), "Average transaction amounts"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.TotalTransactions, ChartDataType.TotalTransactions.GetDisplayName(), "Transaction volume"));
 
         // Geographic charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.WorldMap, "World Map", "Geographic distribution"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.CountriesOfOrigin, "Countries of Origin", "Sales by origin country"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.WorldMap, ChartDataType.WorldMap.GetDisplayName(), "Geographic distribution"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.CountriesOfOrigin, ChartDataType.CountriesOfOrigin.GetDisplayName(), "Sales by origin country"));
 
         // Return/Loss charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsOverTime, "Returns Over Time", "Return trends"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnReasons, "Return Reasons", "Why items are returned"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.LossesOverTime, "Losses Over Time", "Loss trends"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.LossReasons, "Loss Reasons", "Why items are lost"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsOverTime, ChartDataType.ReturnsOverTime.GetDisplayName(), "Return trends"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnReasons, ChartDataType.ReturnReasons.GetDisplayName(), "Why items are returned"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.LossesOverTime, ChartDataType.LossesOverTime.GetDisplayName(), "Loss trends"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.LossReasons, ChartDataType.LossReasons.GetDisplayName(), "Why items are lost"));
     }
 
     private void LoadTemplate(string templateName)
