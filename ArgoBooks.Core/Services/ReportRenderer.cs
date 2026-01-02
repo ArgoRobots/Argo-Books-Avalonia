@@ -302,23 +302,29 @@ public class ReportRenderer : IDisposable
             canvas.DrawText(title, rect.MidX, rect.Top + 20 * _renderScale, SKTextAlign.Center, titleFont, titlePaint);
         }
 
-        // Define chart area (with padding for axes and labels)
-        var leftPadding = 60 * _renderScale;  // Space for Y-axis labels
-        var bottomPadding = 40 * _renderScale; // Space for X-axis labels
-        var rightPadding = 15 * _renderScale;
+        // Define chart area with title offset
         var topPadding = (chart.ShowTitle ? 35 : 15) * _renderScale;
 
-        var chartArea = new SKRect(
-            rect.Left + leftPadding,
+        // For bar/line charts, add padding for Y-axis and X-axis labels
+        var barChartArea = new SKRect(
+            rect.Left + 60 * _renderScale,   // Space for Y-axis labels
             rect.Top + topPadding,
-            rect.Right - rightPadding,
-            rect.Bottom - bottomPadding
+            rect.Right - 15 * _renderScale,  // Right padding
+            rect.Bottom - 40 * _renderScale  // Space for X-axis labels
+        );
+
+        // For pie charts and no-data, use minimal padding
+        var pieChartArea = new SKRect(
+            rect.Left + 15 * _renderScale,
+            rect.Top + topPadding,
+            rect.Right - 15 * _renderScale,
+            rect.Bottom - 15 * _renderScale
         );
 
         // Handle different chart types
         if (IsGeoMapChart(chart.ChartType))
         {
-            RenderGeoMap(canvas, chartArea, chart);
+            RenderGeoMap(canvas, pieChartArea, chart);
             return;
         }
 
@@ -327,10 +333,10 @@ public class ReportRenderer : IDisposable
             var seriesData = GetMultiSeriesData(chart.ChartType);
             if (seriesData == null || seriesData.Count == 0)
             {
-                DrawNoDataPlaceholder(canvas, chartArea);
+                DrawNoDataPlaceholder(canvas, pieChartArea);
                 return;
             }
-            RenderMultiSeriesBarChart(canvas, chartArea, seriesData, chart);
+            RenderMultiSeriesBarChart(canvas, barChartArea, seriesData, chart);
             return;
         }
 
@@ -339,14 +345,14 @@ public class ReportRenderer : IDisposable
 
         if (chartData == null || chartData.Count == 0)
         {
-            DrawNoDataPlaceholder(canvas, chartArea);
+            DrawNoDataPlaceholder(canvas, pieChartArea);
             return;
         }
 
         // Render the appropriate chart type
         if (IsDistributionChart(chart.ChartType))
         {
-            RenderPieChart(canvas, chartArea, chartData, chart);
+            RenderPieChart(canvas, pieChartArea, chartData, chart);
         }
         else
         {
@@ -355,11 +361,11 @@ public class ReportRenderer : IDisposable
                 chart.ChartStyle == ReportChartStyle.StepLine ||
                 chart.ChartStyle == ReportChartStyle.Area)
             {
-                RenderLineChart(canvas, chartArea, chartData, chart);
+                RenderLineChart(canvas, barChartArea, chartData, chart);
             }
             else
             {
-                RenderBarChart(canvas, chartArea, chartData, chart);
+                RenderBarChart(canvas, barChartArea, chartData, chart);
             }
         }
     }
@@ -779,9 +785,13 @@ public class ReportRenderer : IDisposable
         var total = dataPoints.Sum(p => Math.Abs(p.Value));
         if (total == 0) return;
 
+        // Reserve space for legend on the right
+        var legendWidth = chart.ShowLegend ? 120 * _renderScale : 0;
+        var pieAreaWidth = chartArea.Width - legendWidth;
+
         // Determine pie chart dimensions (smaller of width/height, with padding)
-        var pieSize = Math.Min(chartArea.Width, chartArea.Height) * 0.7f;
-        var centerX = chartArea.Left + chartArea.Width * 0.4f;
+        var pieSize = Math.Min(pieAreaWidth, chartArea.Height) * 0.8f;
+        var centerX = chartArea.Left + pieAreaWidth / 2;
         var centerY = chartArea.MidY;
         var radius = pieSize / 2;
 
@@ -800,7 +810,7 @@ public class ReportRenderer : IDisposable
 
         var startAngle = -90f; // Start at top
         var legendY = chartArea.Top + 10 * _renderScale;
-        var legendX = centerX + radius + 20 * _renderScale;
+        var legendX = chartArea.Left + pieAreaWidth + 10 * _renderScale;
 
         using var labelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
         using var labelPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };

@@ -1288,6 +1288,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ObservableCollection<ChartDataType> ChartTypes { get; } =
         new(Enum.GetValues<ChartDataType>());
 
+    public ObservableCollection<ReportChartStyle> ChartStyles { get; } =
+        new(Enum.GetValues<ReportChartStyle>());
+
     public ObservableCollection<ImageScaleMode> ImageScaleModes { get; } =
         new(Enum.GetValues<ImageScaleMode>());
 

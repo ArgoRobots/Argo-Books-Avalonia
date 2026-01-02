@@ -955,6 +955,12 @@
                                               SelectedItem="{Binding SelectedChartElement.ChartType}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="Chart Style" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding ChartStyles}"
+                                              SelectedItem="{Binding SelectedChartElement.ChartStyle}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
                                 <CheckBox Content="Show Title" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
                                 <CheckBox Content="Show Legend" IsChecked="{Binding SelectedChartElement.ShowLegend}" />
                                 <StackPanel Spacing="4">
