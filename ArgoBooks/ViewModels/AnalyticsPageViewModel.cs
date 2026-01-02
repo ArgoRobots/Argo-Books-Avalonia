@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -85,17 +86,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Available date range options.
     /// </summary>
-    public ObservableCollection<string> DateRangeOptions { get; } =
-    [
-        "This Month",
-        "Last Month",
-        "This Quarter",
-        "Last Quarter",
-        "This Year",
-        "Last Year",
-        "All Time",
-        "Custom Range"
-    ];
+    public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
 
     [ObservableProperty]
     private string _selectedDateRange = "This Month";

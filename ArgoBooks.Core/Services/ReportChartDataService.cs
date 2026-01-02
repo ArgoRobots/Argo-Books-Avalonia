@@ -931,16 +931,30 @@ public class ReportChartDataService
 
     /// <summary>
     /// Gets the months between two dates.
+    /// Handles extreme dates (DateTime.MinValue/MaxValue) by clamping to reasonable ranges.
     /// </summary>
     private static IEnumerable<DateTime> GetMonthsBetween(DateTime startDate, DateTime endDate)
     {
+        // Clamp dates to avoid DateTime overflow when using MinValue/MaxValue
+        var minSafeDate = new DateTime(1900, 1, 1);
+        var maxSafeDate = new DateTime(2100, 12, 31);
+
+        if (startDate < minSafeDate) startDate = minSafeDate;
+        if (endDate > maxSafeDate) endDate = maxSafeDate;
+        if (startDate > endDate) yield break;
+
         var current = new DateTime(startDate.Year, startDate.Month, 1);
         var end = new DateTime(endDate.Year, endDate.Month, 1);
 
-        while (current <= end)
+        // Safety limit to prevent infinite loops (max 1200 months = 100 years)
+        var maxIterations = 1200;
+        var iterations = 0;
+
+        while (current <= end && iterations < maxIterations)
         {
             yield return current;
             current = current.AddMonths(1);
+            iterations++;
         }
     }
 

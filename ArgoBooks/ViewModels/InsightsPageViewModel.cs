@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Models.Reports;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -61,17 +62,7 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// <summary>
     /// Available date range options.
     /// </summary>
-    public ObservableCollection<string> DateRangeOptions { get; } =
-    [
-        "This Month",
-        "Last Month",
-        "This Quarter",
-        "Last Quarter",
-        "This Year",
-        "Last Year",
-        "All Time",
-        "Custom Range"
-    ];
+    public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
 
     [ObservableProperty]
     private string _selectedDateRange = "This Month";
