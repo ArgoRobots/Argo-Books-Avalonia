@@ -7,6 +7,7 @@ using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
+using LiveChartsCore.Drawing;
 using LiveChartsCore.Geo;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
@@ -1015,6 +1016,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// Gets the legend text paint based on the current theme.
     /// </summary>
     public SolidColorPaint LegendTextPaint => ChartLoaderService.GetLegendTextPaint();
+
+    /// <summary>
+    /// Gets the draw margin for pie charts to center them better when legend is on the right.
+    /// Adds left margin to shift pie toward center of the overall chart area.
+    /// </summary>
+    public Margin PieChartDrawMargin => new(50, 0, 0, 0);
 
     #endregion
 
