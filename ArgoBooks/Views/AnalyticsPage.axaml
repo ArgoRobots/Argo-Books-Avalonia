@@ -43,7 +43,7 @@
                                                     IsVisible="{Binding !IsGeographicTabSelected}" />
 
                         <!-- Date Range Controls -->
-                        <controls:DateRangeSelector Grid.Column="2" />
+                        <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Top" />
                     </Grid>
                 </Border>
 

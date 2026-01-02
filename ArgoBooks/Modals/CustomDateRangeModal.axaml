@@ -58,7 +58,7 @@
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                         <Button Grid.Column="1"
-                                Classes="ghost-button"
+                                Classes="close-button"
                                 Padding="4"
                                 MinWidth="28"
                                 MinHeight="28"
@@ -115,6 +115,23 @@
     </Grid>
 
     <UserControl.Styles>
+        <!-- Close Button - no background -->
+        <Style Selector="Button.close-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.close-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.close-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Button.close-button:pointerover PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+
         <!-- Form DatePicker -->
         <Style Selector="DatePicker.form-datepicker">
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />

@@ -93,7 +93,7 @@
                 <controls:ChartTypeSelector Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0" />
 
                 <!-- Date Range Selector -->
-                <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Center" />
+                <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Top" />
             </Grid>
 
             <!-- Statistics Cards Row -->

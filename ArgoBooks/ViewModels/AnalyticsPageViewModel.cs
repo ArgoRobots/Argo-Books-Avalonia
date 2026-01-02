@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
@@ -252,8 +253,33 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// Applies the custom date range from the modal.
     /// </summary>
     [RelayCommand]
-    private void ApplyCustomDateRange()
+    private async Task ApplyCustomDateRange()
     {
+        // Check if start date is after end date
+        if (ModalStartDate > ModalEndDate)
+        {
+            var result = await App.ConfirmationDialog!.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Invalid Date Range",
+                Message = "The start date is after the end date. Would you like to swap the dates?",
+                PrimaryButtonText = "Swap Dates",
+                CancelButtonText = "Cancel"
+            });
+
+            if (result == ConfirmationResult.Primary)
+            {
+                // Swap the dates
+                (ModalStartDate, ModalEndDate) = (ModalEndDate, ModalStartDate);
+                OnPropertyChanged(nameof(ModalStartDateOffset));
+                OnPropertyChanged(nameof(ModalEndDateOffset));
+            }
+            else
+            {
+                // User cancelled, keep modal open
+                return;
+            }
+        }
+
         StartDate = ModalStartDate;
         EndDate = ModalEndDate;
         HasAppliedCustomRange = true;
