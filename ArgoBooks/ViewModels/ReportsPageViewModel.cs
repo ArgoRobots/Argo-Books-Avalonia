@@ -379,6 +379,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
 
         OnPropertyChanged(nameof(SelectedChartElement));
+        OnPropertyChanged(nameof(SelectedChartDataTypeOption));
         OnPropertyChanged(nameof(SelectedChartStyleOption));
         OnPropertyChanged(nameof(SelectedLabelElement));
         OnPropertyChanged(nameof(SelectedImageElement));
@@ -1326,8 +1327,61 @@ public partial class ReportsPageViewModel : ViewModelBase
         new(Enum.GetValues<PageOrientation>());
 
     // Element property enum collections
-    public ObservableCollection<ChartDataType> ChartTypes { get; } =
-        new(Enum.GetValues<ChartDataType>());
+    public ObservableCollection<ChartDataTypeOption> ChartTypeOptions { get; } =
+    [
+        // Revenue charts
+        new(ChartDataType.TotalRevenue, "Total Revenue"),
+        new(ChartDataType.RevenueDistribution, "Revenue Distribution"),
+        // Expense charts
+        new(ChartDataType.TotalExpenses, "Total Expenses"),
+        new(ChartDataType.ExpensesDistribution, "Expenses Distribution"),
+        // Financial charts
+        new(ChartDataType.TotalProfits, "Total Profits"),
+        new(ChartDataType.SalesVsExpenses, "Sales vs Expenses"),
+        new(ChartDataType.GrowthRates, "Growth Rates"),
+        // Transaction charts
+        new(ChartDataType.AverageTransactionValue, "Average Transaction Value"),
+        new(ChartDataType.TotalTransactions, "Total Transactions"),
+        new(ChartDataType.AverageShippingCosts, "Average Shipping Costs"),
+        // Geographic charts
+        new(ChartDataType.WorldMap, "World Map"),
+        new(ChartDataType.CountriesOfOrigin, "Countries of Origin"),
+        new(ChartDataType.CountriesOfDestination, "Countries of Destination"),
+        new(ChartDataType.CompaniesOfOrigin, "Companies of Origin"),
+        // Accountant charts
+        new(ChartDataType.AccountantsTransactions, "Accountants Transactions"),
+        // Returns charts
+        new(ChartDataType.ReturnsOverTime, "Returns Over Time"),
+        new(ChartDataType.ReturnReasons, "Return Reasons"),
+        new(ChartDataType.ReturnFinancialImpact, "Return Financial Impact"),
+        new(ChartDataType.ReturnsByCategory, "Returns by Category"),
+        new(ChartDataType.ReturnsByProduct, "Returns by Product"),
+        new(ChartDataType.PurchaseVsSaleReturns, "Purchase vs Sale Returns"),
+        // Losses charts
+        new(ChartDataType.LossesOverTime, "Losses Over Time"),
+        new(ChartDataType.LossReasons, "Loss Reasons"),
+        new(ChartDataType.LossFinancialImpact, "Loss Financial Impact"),
+        new(ChartDataType.LossesByCategory, "Losses by Category"),
+        new(ChartDataType.LossesByProduct, "Losses by Product")
+    ];
+
+    /// <summary>
+    /// Gets or sets the selected chart data type option, syncing with SelectedChartElement.ChartType.
+    /// </summary>
+    public ChartDataTypeOption? SelectedChartDataTypeOption
+    {
+        get => SelectedChartElement != null
+            ? ChartTypeOptions.FirstOrDefault(o => o.Value == SelectedChartElement.ChartType)
+            : null;
+        set
+        {
+            if (SelectedChartElement != null && value != null)
+            {
+                SelectedChartElement.ChartType = value.Value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
     public ObservableCollection<ChartStyleOption> ChartStyleOptions { get; } =
     [
@@ -2088,6 +2142,14 @@ public partial class CustomTemplateOption : ObservableObject
 /// Represents a chart style option with a display name.
 /// </summary>
 public record ChartStyleOption(ReportChartStyle Value, string DisplayName)
+{
+    public override string ToString() => DisplayName;
+}
+
+/// <summary>
+/// Represents a chart data type option with a display name.
+/// </summary>
+public record ChartDataTypeOption(ChartDataType Value, string DisplayName)
 {
     public override string ToString() => DisplayName;
 }
