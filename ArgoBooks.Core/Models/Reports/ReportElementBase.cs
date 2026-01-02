@@ -158,6 +158,7 @@ public abstract class ReportElementBase : INotifyPropertyChanged
 public class ChartReportElement : ReportElementBase
 {
     private ChartDataType _chartType = ChartDataType.TotalRevenue;
+    private ReportChartStyle _chartStyle = ReportChartStyle.Bar;
     private bool _showLegend = true;
     private bool _showTitle = true;
     private string _fontFamily = "Segoe UI";
@@ -172,6 +173,13 @@ public class ChartReportElement : ReportElementBase
     {
         get => _chartType;
         set => SetField(ref _chartType, value);
+    }
+
+    [JsonPropertyName("chartStyle")]
+    public ReportChartStyle ChartStyle
+    {
+        get => _chartStyle;
+        set => SetField(ref _chartStyle, value);
     }
 
     [JsonPropertyName("showLegend")]
@@ -246,6 +254,7 @@ public class ChartReportElement : ReportElementBase
             ZOrder = ZOrder,
             IsVisible = IsVisible,
             ChartType = ChartType,
+            ChartStyle = ChartStyle,
             ShowLegend = ShowLegend,
             ShowTitle = ShowTitle,
             FontFamily = FontFamily,

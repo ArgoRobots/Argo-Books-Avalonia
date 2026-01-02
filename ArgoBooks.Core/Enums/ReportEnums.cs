@@ -139,6 +139,17 @@ public enum ChartDataType
 }
 
 /// <summary>
+/// Visual chart style for rendering series in reports.
+/// </summary>
+public enum ReportChartStyle
+{
+    Bar,
+    Line,
+    StepLine,
+    Area
+}
+
+/// <summary>
 /// Text horizontal alignment options.
 /// </summary>
 public enum HorizontalTextAlignment
