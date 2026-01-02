@@ -266,13 +266,25 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
-        var months = GetMonthsBetween(startDate, endDate).ToList();
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
+
+        // Filter to only months that have actual sales data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return _companyData.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
+        }).ToList();
+
+        if (monthsWithData.Count < 2)
+            return [];
+
         var result = new List<ChartDataPoint>();
 
-        for (int i = 1; i < months.Count; i++)
+        for (int i = 1; i < monthsWithData.Count; i++)
         {
-            var currentMonth = months[i];
-            var previousMonth = months[i - 1];
+            var currentMonth = monthsWithData[i];
+            var previousMonth = monthsWithData[i - 1];
 
             var currentMonthStart = new DateTime(currentMonth.Year, currentMonth.Month, 1);
             var currentMonthEnd = currentMonthStart.AddMonths(1).AddDays(-1);
