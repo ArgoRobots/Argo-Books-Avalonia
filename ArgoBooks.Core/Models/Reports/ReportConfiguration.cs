@@ -254,6 +254,13 @@ public class ReportFilters
     /// </summary>
     [JsonPropertyName("datePresetName")]
     public string? DatePresetName { get; set; }
+
+    /// <summary>
+    /// The date format to use for X-axis labels (e.g., "MMM d, yyyy", "MM/dd/yyyy").
+    /// Defaults to "MMM yyyy" for month-year format on chart X-axes.
+    /// </summary>
+    [JsonPropertyName("dateFormat")]
+    public string DateFormat { get; set; } = "MMM yyyy";
 }
 
 /// <summary>
@@ -419,4 +426,19 @@ public static class DatePresetNames
         return [Today, Yesterday, Last7Days, Last30Days, ThisWeek, LastWeek,
                 ThisMonth, LastMonth, ThisQuarter, LastQuarter, YearToDate, LastYear, AllTime, Custom];
     }
+
+    /// <summary>
+    /// Standard date range options for UI dropdowns.
+    /// </summary>
+    public static readonly string[] StandardDateRangeOptions =
+    [
+        "This Month",
+        "Last Month",
+        "This Quarter",
+        "Last Quarter",
+        "This Year",
+        "Last Year",
+        "All Time",
+        "Custom Range"
+    ];
 }

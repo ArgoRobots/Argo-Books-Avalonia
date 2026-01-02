@@ -4,6 +4,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
@@ -27,17 +28,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Available date range options.
     /// </summary>
-    public ObservableCollection<string> DateRangeOptions { get; } =
-    [
-        "This Month",
-        "Last Month",
-        "This Quarter",
-        "Last Quarter",
-        "This Year",
-        "Last Year",
-        "All Time",
-        "Custom Range"
-    ];
+    public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
 
     [ObservableProperty]
     private string _selectedDateRange = "This Month";
@@ -814,7 +805,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             }
             else
             {
-                chartType = _chartLoaderService.UseLineChart
+                chartType = _chartLoaderService.SelectedChartStyle == ChartStyle.Line
                     ? ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Line
                     : ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column;
             }

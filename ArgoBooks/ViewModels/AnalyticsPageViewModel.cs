@@ -1,11 +1,13 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiveChartsCore;
+using LiveChartsCore.Measure;
 using LiveChartsCore.Geo;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
@@ -85,17 +87,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Available date range options.
     /// </summary>
-    public ObservableCollection<string> DateRangeOptions { get; } =
-    [
-        "This Month",
-        "Last Month",
-        "This Quarter",
-        "Last Quarter",
-        "This Year",
-        "Last Year",
-        "All Time",
-        "Custom Range"
-    ];
+    public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
 
     [ObservableProperty]
     private string _selectedDateRange = "This Month";
@@ -916,11 +908,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     // Dashboard Tab Chart Titles
     public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle("Profit Over Time");
-    public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle("Sales vs Expenses");
+    public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle("Expenses vs Revenue");
     public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle("Sales Trends");
-    public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle("Sales Distribution");
+    public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle("Revenue Distribution");
     public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle("Purchase Trends");
-    public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle("Purchase Distribution");
+    public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle("Expense Distribution");
 
     // Geographic Tab Chart Titles
     public LabelVisual CountriesOfOriginTitle => ChartLoaderService.CreateChartTitle("Countries of Origin");
@@ -1025,6 +1017,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     public SolidColorPaint LegendTextPaint => ChartLoaderService.GetLegendTextPaint();
 
+    /// <summary>
+    /// Gets the draw margin for pie charts to center them better when legend is on the right.
+    /// Adds margins to shift pie toward center and reduce its size.
+    /// </summary>
+    public Margin PieChartDrawMargin => new(0, 40, 0, 0);
+
     #endregion
 
     #region Chart Context Menu Overrides
@@ -1101,7 +1099,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             }
             else
             {
-                chartType = _chartLoaderService.UseLineChart
+                chartType = _chartLoaderService.SelectedChartStyle == ChartStyle.Line
                     ? ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Line
                     : ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column;
             }

@@ -201,7 +201,7 @@
                             </Panel>
                         </Border>
 
-                        <!-- Sales Distribution Chart -->
+                        <!-- Revenue Distribution Chart -->
                         <Border Grid.Column="1"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
@@ -216,6 +216,7 @@
                                               Series="{Binding RevenueDistributionSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasRevenueDistributionData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -262,7 +263,7 @@
                             </Panel>
                         </Border>
 
-                        <!-- Purchase Distribution Chart -->
+                        <!-- Expense Distribution Chart -->
                         <Border Grid.Column="1"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
@@ -277,6 +278,7 @@
                                               Series="{Binding ExpensesDistributionSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasExpensesDistributionData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -313,6 +315,7 @@
                                               Series="{Binding CountriesOfOriginSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasCountriesOfOriginData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -342,6 +345,7 @@
                                               Series="{Binding CompaniesOfOriginSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasCompaniesOfOriginData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -374,6 +378,7 @@
                                               Series="{Binding CountriesOfDestinationSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasCountriesOfDestinationData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -403,6 +408,7 @@
                                               Series="{Binding CompaniesOfDestinationSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasCompaniesOfDestinationData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -527,6 +533,7 @@
                                               Series="{Binding AccountantsTransactionsSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasAccountantsTransactionsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -816,6 +823,7 @@
                                               Series="{Binding CompaniesOfOriginSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasCompaniesOfOriginData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -844,6 +852,7 @@
                                               Series="{Binding CustomerPaymentStatusSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasCustomerPaymentStatusData}" />
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -935,6 +944,7 @@
                                               Series="{Binding ActiveInactiveCustomersSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasActiveInactiveCustomersData}" />
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -1063,6 +1073,7 @@
                                               Series="{Binding ReturnReasonsSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasReturnReasonsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1124,6 +1135,7 @@
                                               Series="{Binding ReturnReasonsSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasReturnReasonsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1156,6 +1168,7 @@
                                               Series="{Binding ExpensesDistributionSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasExpensesDistributionData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1285,6 +1298,7 @@
                                               Series="{Binding LossReasonsSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasLossReasonsData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1346,6 +1360,7 @@
                                               Series="{Binding ExpensesDistributionSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasExpensesDistributionData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -1378,6 +1393,7 @@
                                               Series="{Binding LossesByProductSeries}"
                                               LegendPosition="Right"
                                               LegendTextPaint="{Binding LegendTextPaint}"
+                                              DrawMargin="{Binding PieChartDrawMargin}"
                                               IsVisible="{Binding HasLossesByProductData}" />
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"

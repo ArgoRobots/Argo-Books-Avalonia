@@ -282,6 +282,28 @@ public partial class ElementPropertyPanel : UserControl
         };
         panel.Children.Add(chartTypeCombo);
 
+        // Chart Style
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Chart Style",
+            Classes = { "property-label" },
+            Margin = new Thickness(0, 8, 0, 0)
+        });
+
+        var chartStyleCombo = new ComboBox
+        {
+            Classes = { "property-input" },
+            ItemsSource = Enum.GetValues<ReportChartStyle>(),
+            SelectedItem = chart.ChartStyle
+        };
+        chartStyleCombo.SelectionChanged += (s, e) =>
+        {
+            if (_isUpdating || chartStyleCombo.SelectedItem is not ReportChartStyle newStyle) return;
+            chart.ChartStyle = newStyle;
+            OnPropertyChanged(chart, nameof(chart.ChartStyle), newStyle);
+        };
+        panel.Children.Add(chartStyleCombo);
+
         // Show Title
         var showTitleCheck = new CheckBox
         {
