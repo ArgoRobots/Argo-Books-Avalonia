@@ -1321,8 +1321,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadCompaniesOfDestinationChart(CompanyData data)
     {
-        // For companies of destination, we use the accountants transactions chart (purchase-side)
-        var (series, _) = _chartLoaderService.LoadAccountantsTransactionsChart(data, StartDate, EndDate);
+        // For companies of destination, use sales by customer company (where products are shipped to)
+        var (series, _) = _chartLoaderService.LoadCompaniesOfDestinationChart(data, StartDate, EndDate);
         CompaniesOfDestinationSeries = series;
         HasCompaniesOfDestinationData = series.Count > 0;
     }

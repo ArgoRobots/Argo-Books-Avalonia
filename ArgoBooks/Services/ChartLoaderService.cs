@@ -1238,7 +1238,7 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads countries of destination (purchases by supplier country) as a pie chart.
+    /// Loads countries of destination (sales by customer country) as a pie chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCountriesOfDestinationChart(
@@ -1252,7 +1252,8 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetPurchasesByCountryOfDestination().Take(8).ToList();
+        // Use sales with customer country lookup - destination is where products are shipped to (customer location)
+        var dataPoints = dataService.GetSalesByCustomerCountry().Take(8).ToList();
 
         if (dataPoints.Count == 0)
             return (series, total);
@@ -1338,6 +1339,58 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Loads companies of destination (sales by customer) as a pie chart.
+    /// For sales, destination means where products are shipped to (customer companies).
+    /// Uses ReportChartDataService for data fetching.
+    /// </summary>
+    public (ObservableCollection<ISeries> Series, decimal Total) LoadCompaniesOfDestinationChart(
+        CompanyData? companyData,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
+    {
+        var series = new ObservableCollection<ISeries>();
+        decimal total = 0;
+
+        var filters = CreateFilters(startDate, endDate);
+        var dataService = new ReportChartDataService(companyData, filters);
+
+        // Use sales by customer for destination - products are shipped to customers
+        var dataPoints = dataService.GetSalesByCompanyOfOrigin().Take(8).ToList();
+
+        if (dataPoints.Count == 0)
+            return (series, total);
+
+        total = (decimal)dataPoints.Sum(p => p.Value);
+
+        for (int i = 0; i < dataPoints.Count; i++)
+        {
+            var item = dataPoints[i];
+            series.Add(new PieSeries<double>
+            {
+                Values = [item.Value],
+                Name = item.Label,
+                Fill = new SolidColorPaint(GetColorForIndex(i)),
+                Pushout = 0
+            });
+        }
+
+        // Store export data
+        _chartExportDataByTitle["Companies of Destination"] = new ChartExportData
+        {
+            ChartTitle = "Companies of Destination",
+            ChartType = ChartType.Distribution,
+            Labels = dataPoints.Select(p => p.Label).ToArray(),
+            Values = dataPoints.Select(p => p.Value).ToArray(),
+            SeriesName = "Amount",
+            TotalValue = (double)total,
+            StartDate = filters.StartDate,
+            EndDate = filters.EndDate
+        };
+
+        return (series, total);
+    }
+
+    /// <summary>
     /// Loads accountants transactions as a pie chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
@@ -1384,7 +1437,6 @@ public class ChartLoaderService
             EndDate = filters.EndDate
         };
         _chartExportDataByTitle["Transactions by Accountant"] = exportData;
-        _chartExportDataByTitle["Companies of Destination"] = exportData;
         _chartExportDataByTitle["Workload Distribution"] = exportData;
 
         return (series, total);
@@ -2039,9 +2091,6 @@ public class ChartLoaderService
             // Losses tab charts that share data with other charts
             "Losses by Category" => "Expense Distribution",
             "Purchase vs Sale Losses" => "Sales vs Expenses",
-
-            // Companies of Destination uses accountant transactions data
-            "Companies of Destination" => "Transactions by Accountant",
 
             // Legacy Dashboard page chart identifiers
             "ExpenseDistributionChart" => "Expense Distribution",

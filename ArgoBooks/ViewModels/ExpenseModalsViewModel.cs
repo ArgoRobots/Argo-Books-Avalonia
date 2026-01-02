@@ -54,6 +54,12 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         set => HasCounterpartyError = value;
     }
 
+    // Notify SelectedSupplier when SelectedCounterparty changes so UI bindings update
+    partial void OnSelectedCounterpartyChanged(CounterpartyOption? value)
+    {
+        OnPropertyChanged(nameof(SelectedSupplier));
+    }
+
     public ObservableCollection<CounterpartyOption> SupplierOptions => CounterpartyOptions;
 
     // Filter aliases
