@@ -957,8 +957,8 @@
                                 </StackPanel>
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Chart Style" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding ChartStyles}"
-                                              SelectedItem="{Binding SelectedChartElement.ChartStyle}"
+                                    <ComboBox ItemsSource="{Binding ChartStyleOptions}"
+                                              SelectedItem="{Binding SelectedChartStyleOption}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <CheckBox Content="Show Title" IsChecked="{Binding SelectedChartElement.ShowTitle}" />

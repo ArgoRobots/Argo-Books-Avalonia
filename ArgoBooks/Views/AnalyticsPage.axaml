@@ -201,7 +201,7 @@
                             </Panel>
                         </Border>
 
-                        <!-- Sales Distribution Chart -->
+                        <!-- Revenue Distribution Chart -->
                         <Border Grid.Column="1"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"
@@ -262,7 +262,7 @@
                             </Panel>
                         </Border>
 
-                        <!-- Purchase Distribution Chart -->
+                        <!-- Expense Distribution Chart -->
                         <Border Grid.Column="1"
                                 Background="{DynamicResource SurfaceBrush}"
                                 BorderBrush="{DynamicResource BorderBrush}"

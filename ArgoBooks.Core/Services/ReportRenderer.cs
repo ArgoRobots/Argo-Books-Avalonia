@@ -579,8 +579,9 @@ public class ReportRenderer : IDisposable
             canvas.DrawRect(barRect, barPaint);
 
             // Draw X-axis label (rotate if many bars)
-            var label = point.Label;
-            if (label.Length > 8) label = label[..8] + "...";
+            // Use formatted date if available, otherwise fall back to Label
+            var label = FormatXAxisLabel(point);
+            if (label.Length > 10) label = label[..10] + "...";
 
             var labelX = x + barWidth / 2;
             var labelY = chartArea.Bottom + 15 * _renderScale;
@@ -754,8 +755,9 @@ public class ReportRenderer : IDisposable
 
         for (int i = 0; i < pointCount; i++)
         {
-            var label = dataPoints[i].Label;
-            if (label.Length > 8) label = label[..8] + "...";
+            // Use formatted date if available, otherwise fall back to Label
+            var label = FormatXAxisLabel(dataPoints[i]);
+            if (label.Length > 10) label = label[..10] + "...";
 
             var labelX = points[i].X;
             var labelY = chartArea.Bottom + 15 * _renderScale;
@@ -795,6 +797,9 @@ public class ReportRenderer : IDisposable
         var centerY = chartArea.MidY;
         var radius = pieSize / 2;
 
+        // Ensure we have a valid radius
+        if (radius <= 0) return;
+
         // Color palette for pie slices
         var colors = new[]
         {
@@ -815,6 +820,13 @@ public class ReportRenderer : IDisposable
         using var labelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
         using var labelPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
 
+        var pieRect = new SKRect(
+            centerX - radius,
+            centerY - radius,
+            centerX + radius,
+            centerY + radius
+        );
+
         for (int i = 0; i < dataPoints.Count; i++)
         {
             var point = dataPoints[i];
@@ -830,29 +842,31 @@ public class ReportRenderer : IDisposable
                 IsAntialias = true
             };
 
-            var pieRect = new SKRect(
-                centerX - radius,
-                centerY - radius,
-                centerX + radius,
-                centerY + radius
-            );
-
-            using var path = new SKPath();
-            path.MoveTo(centerX, centerY);
-            path.ArcTo(pieRect, startAngle, sweepAngle, false);
-            path.LineTo(centerX, centerY);
-            path.Close();
-            canvas.DrawPath(path, slicePaint);
-
-            // Draw slice border
-            using var borderPaint = new SKPaint
+            // Handle full circle (360 degrees) - SkiaSharp ArcTo doesn't handle this well
+            if (sweepAngle >= 359.9f)
             {
-                Color = SKColors.White,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = 2 * _renderScale,
-                IsAntialias = true
-            };
-            canvas.DrawPath(path, borderPaint);
+                // Draw a full circle instead
+                canvas.DrawOval(pieRect, slicePaint);
+            }
+            else if (sweepAngle > 0)
+            {
+                // Draw pie slice using arc
+                using var path = new SKPath();
+                path.MoveTo(centerX, centerY);
+                path.ArcTo(pieRect, startAngle, sweepAngle, false);
+                path.Close();
+                canvas.DrawPath(path, slicePaint);
+
+                // Draw slice border
+                using var borderPaint = new SKPaint
+                {
+                    Color = SKColors.White,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 2 * _renderScale,
+                    IsAntialias = true
+                };
+                canvas.DrawPath(path, borderPaint);
+            }
 
             // Draw legend item (if chart has show legend enabled and there's space)
             if (chart.ShowLegend && legendX < chartArea.Right - 50 * _renderScale)
@@ -931,8 +945,9 @@ public class ReportRenderer : IDisposable
         canvas.DrawLine(chartArea.Left, chartArea.Top, chartArea.Left, chartArea.Bottom, axisPaint);
         canvas.DrawLine(chartArea.Left, baselineY, chartArea.Right, baselineY, axisPaint);
 
-        // Get unique labels (X-axis categories)
-        var labels = seriesData.First().DataPoints.Select(p => p.Label).ToList();
+        // Get unique labels (X-axis categories) - use formatted dates if available
+        var firstSeriesPoints = seriesData.First().DataPoints;
+        var labels = firstSeriesPoints.Select(p => FormatXAxisLabel(p)).ToList();
         var categoryCount = labels.Count;
         var seriesCount = seriesData.Count;
 
@@ -1627,6 +1642,20 @@ public class ReportRenderer : IDisposable
             (float)(element.X + element.Width) * _renderScale,
             (float)(element.Y + element.Height) * _renderScale
         );
+    }
+
+    /// <summary>
+    /// Formats a chart data point's label for X-axis display.
+    /// Uses the configured date format if a Date is available, otherwise falls back to Label.
+    /// </summary>
+    private string FormatXAxisLabel(ChartDataPoint point)
+    {
+        if (point.Date.HasValue)
+        {
+            var dateFormat = _config.Filters.DateFormat;
+            return point.Date.Value.ToString(dateFormat);
+        }
+        return point.Label;
     }
 
     private static SKColor ParseColor(string colorString)

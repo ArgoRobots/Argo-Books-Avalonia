@@ -908,7 +908,7 @@ public class ChartLoaderService
         // Store export data for Google Sheets/Excel export
         var exportData = new ChartExportData
         {
-            ChartTitle = "Sales Distribution",
+            ChartTitle = "Revenue Distribution",
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
@@ -917,7 +917,7 @@ public class ChartLoaderService
             StartDate = filters.StartDate,
             EndDate = filters.EndDate
         };
-        _chartExportDataByTitle["Sales Distribution"] = exportData;
+        _chartExportDataByTitle["Revenue Distribution"] = exportData;
 
         return (series, total);
     }

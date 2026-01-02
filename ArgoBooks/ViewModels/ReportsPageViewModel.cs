@@ -377,6 +377,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
 
         OnPropertyChanged(nameof(SelectedChartElement));
+        OnPropertyChanged(nameof(SelectedChartStyleOption));
         OnPropertyChanged(nameof(SelectedLabelElement));
         OnPropertyChanged(nameof(SelectedImageElement));
         OnPropertyChanged(nameof(SelectedTableElement));
@@ -406,6 +407,25 @@ public partial class ReportsPageViewModel : ViewModelBase
     public TableReportElement? SelectedTableElement => SelectedElement as TableReportElement;
     public DateRangeReportElement? SelectedDateRangeElement => SelectedElement as DateRangeReportElement;
     public SummaryReportElement? SelectedSummaryElement => SelectedElement as SummaryReportElement;
+
+    /// <summary>
+    /// Gets or sets the selected chart style as a ChartStyleOption for the ComboBox binding.
+    /// Converts between ChartStyleOption and ReportChartStyle.
+    /// </summary>
+    public ChartStyleOption? SelectedChartStyleOption
+    {
+        get => SelectedChartElement is { } chart
+            ? ChartStyleOptions.FirstOrDefault(o => o.Value == chart.ChartStyle)
+            : null;
+        set
+        {
+            if (value != null && SelectedChartElement is { } chart)
+            {
+                chart.ChartStyle = value.Value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
     // Type checking properties for conditional visibility
     public bool IsChartSelected => SelectedElement is ChartReportElement;
@@ -1288,8 +1308,13 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ObservableCollection<ChartDataType> ChartTypes { get; } =
         new(Enum.GetValues<ChartDataType>());
 
-    public ObservableCollection<ReportChartStyle> ChartStyles { get; } =
-        new(Enum.GetValues<ReportChartStyle>());
+    public ObservableCollection<ChartStyleOption> ChartStyleOptions { get; } =
+    [
+        new(ReportChartStyle.Bar, "Bar Chart"),
+        new(ReportChartStyle.Line, "Line Chart"),
+        new(ReportChartStyle.StepLine, "Step Line"),
+        new(ReportChartStyle.Area, "Area Chart")
+    ];
 
     public ObservableCollection<ImageScaleMode> ImageScaleModes { get; } =
         new(Enum.GetValues<ImageScaleMode>());
@@ -1804,6 +1829,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         Configuration.Filters.TransactionType = SelectedTransactionType;
         Configuration.Filters.DatePresetName = SelectedDatePreset;
 
+        // Set date format from DateFormatService for consistent X-axis labeling
+        Configuration.Filters.DateFormat = DateFormatService.GetCurrentDotNetFormat();
+
         if (IsCustomDateRange)
         {
             Configuration.Filters.StartDate = CustomStartDate?.DateTime;
@@ -2033,4 +2061,12 @@ public partial class CustomTemplateOption : ObservableObject
 
     [ObservableProperty]
     private bool _isSelected;
+}
+
+/// <summary>
+/// Represents a chart style option with a display name.
+/// </summary>
+public record ChartStyleOption(ReportChartStyle Value, string DisplayName)
+{
+    public override string ToString() => DisplayName;
 }

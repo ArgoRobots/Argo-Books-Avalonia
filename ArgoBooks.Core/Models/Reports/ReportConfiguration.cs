@@ -254,6 +254,13 @@ public class ReportFilters
     /// </summary>
     [JsonPropertyName("datePresetName")]
     public string? DatePresetName { get; set; }
+
+    /// <summary>
+    /// The date format to use for X-axis labels (e.g., "MMM d, yyyy", "MM/dd/yyyy").
+    /// Defaults to "MMM yyyy" for month-year format on chart X-axes.
+    /// </summary>
+    [JsonPropertyName("dateFormat")]
+    public string DateFormat { get; set; } = "MMM yyyy";
 }
 
 /// <summary>

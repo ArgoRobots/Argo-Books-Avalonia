@@ -909,9 +909,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle("Profit Over Time");
     public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle("Sales vs Expenses");
     public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle("Sales Trends");
-    public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle("Sales Distribution");
+    public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle("Revenue Distribution");
     public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle("Purchase Trends");
-    public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle("Purchase Distribution");
+    public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle("Expense Distribution");
 
     // Geographic Tab Chart Titles
     public LabelVisual CountriesOfOriginTitle => ChartLoaderService.CreateChartTitle("Countries of Origin");
