@@ -907,7 +907,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     // Dashboard Tab Chart Titles
     public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle("Profit Over Time");
-    public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle("Sales vs Expenses");
+    public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle("Expenses vs Revenue");
     public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle("Sales Trends");
     public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle("Revenue Distribution");
     public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle("Purchase Trends");

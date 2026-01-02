@@ -1718,7 +1718,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         AvailableCharts.Add(new ChartOption(ChartDataType.ExpensesDistribution, "Expense Distribution", "Expenses by category"));
 
         // Financial charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.SalesVsExpenses, "Sales vs Expenses", "Compare revenue and costs"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.SalesVsExpenses, "Expenses vs Revenue", "Compare revenue and costs"));
         AvailableCharts.Add(new ChartOption(ChartDataType.TotalProfits, "Total Profits", "Profit over time"));
         AvailableCharts.Add(new ChartOption(ChartDataType.GrowthRates, "Growth Rates", "Period-over-period growth"));
 

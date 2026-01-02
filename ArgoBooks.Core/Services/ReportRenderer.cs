@@ -787,13 +787,10 @@ public class ReportRenderer : IDisposable
         var total = dataPoints.Sum(p => Math.Abs(p.Value));
         if (total == 0) return;
 
-        // Reserve space for legend on the right
-        var legendWidth = chart.ShowLegend ? 120 * _renderScale : 0;
-        var pieAreaWidth = chartArea.Width - legendWidth;
-
-        // Determine pie chart dimensions (smaller of width/height, with padding)
-        var pieSize = Math.Min(pieAreaWidth, chartArea.Height) * 0.8f;
-        var centerX = chartArea.Left + pieAreaWidth / 2;
+        // Determine pie chart dimensions - use smaller of width/height with padding
+        // Center the pie in the chart area, legend will be positioned to the right of the pie
+        var pieSize = Math.Min(chartArea.Width, chartArea.Height) * 0.7f;
+        var centerX = chartArea.MidX;
         var centerY = chartArea.MidY;
         var radius = pieSize / 2;
 
@@ -814,8 +811,10 @@ public class ReportRenderer : IDisposable
         };
 
         var startAngle = -90f; // Start at top
+
+        // Position legend to the right of the pie
+        var legendX = centerX + radius + 20 * _renderScale;
         var legendY = chartArea.Top + 10 * _renderScale;
-        var legendX = chartArea.Left + pieAreaWidth + 10 * _renderScale;
 
         using var labelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
         using var labelPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
@@ -1020,28 +1019,6 @@ public class ReportRenderer : IDisposable
             else
             {
                 canvas.DrawText(label, labelX, labelY, SKTextAlign.Center, xLabelFont, xLabelPaint);
-            }
-        }
-
-        // Draw legend at the top right
-        if (chart.ShowLegend)
-        {
-            var legendY = chartArea.Top + 15 * _renderScale;
-            var legendX = chartArea.Right - 100 * _renderScale;
-
-            using var legendFont = new SKFont(_defaultTypeface, 9 * _renderScale);
-            using var legendPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
-
-            foreach (var series in seriesData)
-            {
-                var seriesColor = SKColor.Parse(series.Color);
-                using var boxPaint = new SKPaint { Color = seriesColor, Style = SKPaintStyle.Fill };
-
-                var boxSize = 10 * _renderScale;
-                canvas.DrawRect(legendX, legendY - boxSize + 3 * _renderScale, legendX + boxSize, legendY + 3 * _renderScale, boxPaint);
-                canvas.DrawText(series.Name, legendX + boxSize + 5 * _renderScale, legendY, SKTextAlign.Left, legendFont, legendPaint);
-
-                legendY += 15 * _renderScale;
             }
         }
     }
@@ -1687,7 +1664,7 @@ public class ReportRenderer : IDisposable
             ChartDataType.TotalExpenses => "Total Expenses",
             ChartDataType.ExpensesDistribution => "Expense Distribution",
             ChartDataType.TotalProfits => "Total Profits",
-            ChartDataType.SalesVsExpenses => "Sales vs Expenses",
+            ChartDataType.SalesVsExpenses => "Expenses vs Revenue",
             ChartDataType.GrowthRates => "Growth Rates",
             ChartDataType.AverageTransactionValue => "Average Transaction Value",
             ChartDataType.TotalTransactions => "Total Transactions",
