@@ -501,6 +501,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             OnPropertyChanged(nameof(ProfitsChartTitleVisual));
             OnPropertyChanged(nameof(SalesVsExpensesChartTitle));
         };
+
+        // Subscribe to date format changes to refresh charts and transaction dates
+        DateFormatService.DateFormatChanged += (_, _) =>
+        {
+            LoadDashboardData();
+        };
     }
 
     /// <summary>

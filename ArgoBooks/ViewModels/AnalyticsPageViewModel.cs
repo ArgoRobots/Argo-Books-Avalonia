@@ -1012,6 +1012,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             OnPropertyChanged(nameof(LegendTextPaint));
             NotifyAllChartTitlesChanged();
         };
+
+        // Subscribe to date format changes to refresh charts
+        DateFormatService.DateFormatChanged += (_, _) =>
+        {
+            LoadAllCharts();
+        };
     }
 
     /// <summary>

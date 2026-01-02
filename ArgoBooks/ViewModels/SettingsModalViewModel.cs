@@ -421,6 +421,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void Save()
     {
+        // Check if date format changed before updating original values
+        var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
+
         // Update original values to current (so close doesn't revert)
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
@@ -432,6 +435,12 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             settings.Localization.DateFormat = SelectedDateFormat;
             settings.ChangesMade = true;
+        }
+
+        // Notify that date format changed so views can refresh
+        if (dateFormatChanged)
+        {
+            DateFormatService.NotifyDateFormatChanged();
         }
 
         IsOpen = false;

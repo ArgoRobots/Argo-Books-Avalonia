@@ -6,6 +6,19 @@ namespace ArgoBooks.Services;
 public static class DateFormatService
 {
     /// <summary>
+    /// Event raised when the date format setting changes.
+    /// </summary>
+    public static event EventHandler? DateFormatChanged;
+
+    /// <summary>
+    /// Raises the DateFormatChanged event to notify subscribers that the date format has changed.
+    /// </summary>
+    public static void NotifyDateFormatChanged()
+    {
+        DateFormatChanged?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// Gets the current date format setting from company settings.
     /// </summary>
     private static string CurrentFormat =>
