@@ -200,6 +200,9 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             App.ExpenseModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ExpenseModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+
+        // Subscribe to date format changes to refresh date display
+        DateFormatService.DateFormatChanged += (_, _) => FilterExpenses();
     }
 
     private void InitializeColumnVisibility()
@@ -742,7 +745,7 @@ public partial class ExpenseDisplayItem : ObservableObject
     [ObservableProperty]
     private PaymentMethod _paymentMethod;
 
-    public string DateFormatted => Date.ToString("MMM d, yyyy");
+    public string DateFormatted => DateFormatService.Format(Date);
     public string TotalFormatted => $"${Total:N2}";
     public string AmountFormatted => $"${Amount:N2}";
     public string TaxAmountFormatted => $"${TaxAmount:N2}";
