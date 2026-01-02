@@ -195,6 +195,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             App.RevenueModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.RevenueModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+
+        // Subscribe to date format changes to refresh date display
+        DateFormatService.DateFormatChanged += (_, _) => FilterRevenue();
     }
 
     private void InitializeColumnVisibility()
@@ -442,7 +445,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 UnitPrice = sale.UnitPrice,
                 PaymentMethod = sale.PaymentMethod,
                 HasReceipt = hasReceipt,
-                ReceiptFilePath = receiptFilePath
+                ReceiptFilePath = receiptFilePath,
+                IsHighlighted = sale.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -465,6 +469,9 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 },
                 r => r.Date);
         }
+
+        // Navigate to highlighted item if set (from dashboard click)
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -522,7 +529,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        PaginationText = PaginationHelper.FormatPaginationText(
+        PaginationText = PaginationTextHelper.FormatPaginationText(
             totalCount, CurrentPage, PageSize, TotalPages, "sale");
     }
 
@@ -718,7 +725,7 @@ public partial class RevenueDisplayItem : ObservableObject
     [ObservableProperty]
     private PaymentMethod _paymentMethod;
 
-    public string DateFormatted => Date.ToString("MMM d, yyyy");
+    public string DateFormatted => DateFormatService.Format(Date);
     public string TotalFormatted => $"${Total:N2}";
     public string AmountFormatted => $"${Amount:N2}";
     public string TaxAmountFormatted => $"${TaxAmount:N2}";
@@ -755,4 +762,7 @@ public partial class RevenueDisplayItem : ObservableObject
 
     [ObservableProperty]
     private string _receiptFilePath = string.Empty;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }

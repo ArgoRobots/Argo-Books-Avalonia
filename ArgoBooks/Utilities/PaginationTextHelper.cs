@@ -3,7 +3,7 @@ namespace ArgoBooks.Utilities;
 /// <summary>
 /// Helper for formatting pagination text consistently across ViewModels.
 /// </summary>
-public static class PaginationHelper
+public static class PaginationTextHelper
 {
     /// <summary>
     /// Formats pagination text based on current page state.

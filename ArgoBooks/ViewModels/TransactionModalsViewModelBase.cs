@@ -450,8 +450,14 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         DeleteTransactionAmount = string.Empty;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanDeleteTransaction))]
     protected abstract void DeleteTransaction();
+
+    /// <summary>
+    /// Determines whether the delete transaction command can execute.
+    /// Override in derived classes to customize behavior.
+    /// </summary>
+    protected virtual bool CanDeleteTransaction() => true;
 
     #endregion
 
@@ -808,5 +814,17 @@ public class CounterpartyOption
 {
     public string? Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    public override string ToString() => Name;
+}
+
+/// <summary>
+/// Option class for product selection in line items.
+/// </summary>
+public class ProductOption
+{
+    public string? Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public decimal UnitPrice { get; set; }
     public override string ToString() => Name;
 }

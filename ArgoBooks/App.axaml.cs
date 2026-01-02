@@ -94,6 +94,17 @@ public partial class App : Application
     /// </summary>
     public static RevenueModalsViewModel? RevenueModalsViewModel => _appShellViewModel?.RevenueModalsViewModel;
 
+    /// <summary>
+    /// Adds a notification to the notification panel.
+    /// </summary>
+    /// <param name="title">The notification title.</param>
+    /// <param name="message">The notification message.</param>
+    /// <param name="type">The notification type.</param>
+    public static void AddNotification(string title, string message, NotificationType type = NotificationType.Info)
+    {
+        _appShellViewModel?.AddNotification(title, message, type);
+    }
+
     #region Shared Table Column Widths
 
     /// <summary>
@@ -1451,8 +1462,26 @@ public partial class App : Application
         navigationService.RegisterPage("Reports", _ => new ReportsPage { DataContext = new ReportsPageViewModel() });
 
         // Transactions Section
-        navigationService.RegisterPage("Revenue", _ => new RevenuePage { DataContext = new RevenuePageViewModel() });
-        navigationService.RegisterPage("Expenses", _ => new ExpensesPage { DataContext = new ExpensesPageViewModel() });
+        navigationService.RegisterPage("Revenue", param =>
+        {
+            var viewModel = new RevenuePageViewModel();
+            if (param is TransactionNavigationParameter navParam)
+            {
+                viewModel.HighlightTransactionId = navParam.TransactionId;
+                viewModel.ApplyHighlight();
+            }
+            return new RevenuePage { DataContext = viewModel };
+        });
+        navigationService.RegisterPage("Expenses", param =>
+        {
+            var viewModel = new ExpensesPageViewModel();
+            if (param is TransactionNavigationParameter navParam)
+            {
+                viewModel.HighlightTransactionId = navParam.TransactionId;
+                viewModel.ApplyHighlight();
+            }
+            return new ExpensesPage { DataContext = viewModel };
+        });
         navigationService.RegisterPage("Invoices", _ => new InvoicesPage { DataContext = new InvoicesPageViewModel() });
         navigationService.RegisterPage("Payments", _ => new PaymentsPage { DataContext = new PaymentsPageViewModel() });
 

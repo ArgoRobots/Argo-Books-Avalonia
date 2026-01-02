@@ -200,6 +200,9 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             App.ExpenseModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ExpenseModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+
+        // Subscribe to date format changes to refresh date display
+        DateFormatService.DateFormatChanged += (_, _) => FilterExpenses();
     }
 
     private void InitializeColumnVisibility()
@@ -456,7 +459,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 Discount = purchase.Discount,
                 Quantity = (int)purchase.Quantity,
                 UnitPrice = purchase.UnitPrice,
-                PaymentMethod = purchase.PaymentMethod
+                PaymentMethod = purchase.PaymentMethod,
+                IsHighlighted = purchase.Id == HighlightTransactionId
             };
         }).ToList();
 
@@ -479,6 +483,9 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 },
                 e => e.Date);
         }
+
+        // Navigate to highlighted item if set (from dashboard click)
+        NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
         var totalCount = displayItems.Count;
@@ -536,7 +543,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     private void UpdatePaginationText(int totalCount)
     {
-        PaginationText = PaginationHelper.FormatPaginationText(
+        PaginationText = PaginationTextHelper.FormatPaginationText(
             totalCount, CurrentPage, PageSize, TotalPages, "expense");
     }
 
@@ -738,7 +745,7 @@ public partial class ExpenseDisplayItem : ObservableObject
     [ObservableProperty]
     private PaymentMethod _paymentMethod;
 
-    public string DateFormatted => Date.ToString("MMM d, yyyy");
+    public string DateFormatted => DateFormatService.Format(Date);
     public string TotalFormatted => $"${Total:N2}";
     public string AmountFormatted => $"${Amount:N2}";
     public string TaxAmountFormatted => $"${TaxAmount:N2}";
@@ -753,4 +760,7 @@ public partial class ExpenseDisplayItem : ObservableObject
     public bool IsLostDamaged => StatusDisplay == "Lost/Damaged";
     public bool CanMarkAsReturned => !IsReturned && !IsLostDamaged;
     public bool CanMarkAsLostDamaged => !IsReturned && !IsLostDamaged;
+
+    [ObservableProperty]
+    private bool _isHighlighted;
 }

@@ -1,3 +1,4 @@
+using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -86,6 +87,10 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         get => DeleteTransactionAmount;
         set => DeleteTransactionAmount = value;
     }
+
+    // Command aliases for AXAML bindings
+    public IRelayCommand SaveRevenueCommand => SaveTransactionCommand;
+    public IRelayCommand DeleteRevenueCommand => DeleteTransactionCommand;
 
     #endregion
 
@@ -193,7 +198,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         IsDeleteConfirmOpen = true;
     }
 
-    [RelayCommand(CanExecute = nameof(CanDeleteRevenue))]
     protected override void DeleteTransaction()
     {
         var companyData = App.CompanyManager?.CompanyData;
@@ -239,8 +243,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         RaiseTransactionDeleted();
         CloseDeleteConfirm();
     }
-
-    private bool CanDeleteRevenue() => true;
 
     #endregion
 

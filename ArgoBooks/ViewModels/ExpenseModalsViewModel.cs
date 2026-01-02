@@ -1,3 +1,4 @@
+using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -86,6 +87,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         get => DeleteTransactionAmount;
         set => DeleteTransactionAmount = value;
     }
+
+    // Command aliases for AXAML bindings
+    public IRelayCommand SaveExpenseCommand => SaveTransactionCommand;
+    public IRelayCommand DeleteExpenseCommand => DeleteTransactionCommand;
 
     // Expense-specific filter
     [ObservableProperty]
@@ -198,7 +203,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         IsDeleteConfirmOpen = true;
     }
 
-    [RelayCommand(CanExecute = nameof(CanDeleteExpense))]
     protected override void DeleteTransaction()
     {
         var companyData = App.CompanyManager?.CompanyData;
@@ -244,8 +248,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         RaiseTransactionDeleted();
         CloseDeleteConfirm();
     }
-
-    private bool CanDeleteExpense() => true;
 
     #endregion
 

@@ -561,7 +561,7 @@
                                                        IsVisible="{Binding HasStandard}" />
                                             <TextBlock Text="Requires Standard plan or higher"
                                                        FontSize="12"
-                                                       Foreground="{DynamicResource WarningBrush}"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                                        IsVisible="{Binding !HasStandard}" />
                                         </StackPanel>
                                         <!-- Toggle when user has standard -->

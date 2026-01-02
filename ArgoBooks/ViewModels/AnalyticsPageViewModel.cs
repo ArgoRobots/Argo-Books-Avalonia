@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
@@ -105,6 +106,95 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     [ObservableProperty]
     private DateTime _endDate = DateTime.Now;
 
+    // Temporary date values for the modal (before applying)
+    [ObservableProperty]
+    private DateTime _modalStartDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    [ObservableProperty]
+    private DateTime _modalEndDate = DateTime.Now;
+
+    /// <summary>
+    /// Gets or sets whether the custom date range modal is open.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isCustomDateRangeModalOpen;
+
+    /// <summary>
+    /// Gets or sets whether a custom date range has been applied.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AppliedDateRangeText))]
+    private bool _hasAppliedCustomRange;
+
+    /// <summary>
+    /// Gets the formatted text showing the applied custom date range.
+    /// </summary>
+    public string AppliedDateRangeText => HasAppliedCustomRange
+        ? $"{StartDate:MMM d, yyyy} - {EndDate:MMM d, yyyy}"
+        : string.Empty;
+
+    /// <summary>
+    /// Gets or sets the start date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? StartDateOffset
+    {
+        get => new DateTimeOffset(StartDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                StartDate = value.Value.DateTime;
+                LoadAllCharts();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the end date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? EndDateOffset
+    {
+        get => new DateTimeOffset(EndDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                EndDate = value.Value.DateTime;
+                LoadAllCharts();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the modal start date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? ModalStartDateOffset
+    {
+        get => new DateTimeOffset(ModalStartDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                ModalStartDate = value.Value.DateTime;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the modal end date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? ModalEndDateOffset
+    {
+        get => new DateTimeOffset(ModalEndDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                ModalEndDate = value.Value.DateTime;
+            }
+        }
+    }
+
     /// <summary>
     /// Gets whether the custom date range option is selected.
     /// </summary>
@@ -130,8 +220,87 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         OnPropertyChanged(nameof(IsCustomDateRange));
         OnPropertyChanged(nameof(ComparisonPeriodLabel));
-        UpdateDateRangeFromSelection();
+
+        if (value == "Custom Range")
+        {
+            // Open the modal for custom date range selection
+            OpenCustomDateRangeModal();
+        }
+        else
+        {
+            // Reset the applied custom range flag when selecting a preset
+            HasAppliedCustomRange = false;
+            UpdateDateRangeFromSelection();
+            LoadAllCharts();
+        }
+    }
+
+    /// <summary>
+    /// Opens the custom date range modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenCustomDateRangeModal()
+    {
+        // Initialize modal dates with current values
+        ModalStartDate = StartDate;
+        ModalEndDate = EndDate;
+        OnPropertyChanged(nameof(ModalStartDateOffset));
+        OnPropertyChanged(nameof(ModalEndDateOffset));
+        IsCustomDateRangeModalOpen = true;
+    }
+
+    /// <summary>
+    /// Applies the custom date range from the modal.
+    /// </summary>
+    [RelayCommand]
+    private async Task ApplyCustomDateRange()
+    {
+        // Check if start date is after end date
+        if (ModalStartDate > ModalEndDate)
+        {
+            var result = await App.ConfirmationDialog!.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Invalid Date Range",
+                Message = "The start date is after the end date. Would you like to swap the dates?",
+                PrimaryButtonText = "Swap Dates",
+                CancelButtonText = "Cancel"
+            });
+
+            if (result == ConfirmationResult.Primary)
+            {
+                // Swap the dates
+                (ModalStartDate, ModalEndDate) = (ModalEndDate, ModalStartDate);
+                OnPropertyChanged(nameof(ModalStartDateOffset));
+                OnPropertyChanged(nameof(ModalEndDateOffset));
+            }
+            else
+            {
+                // User cancelled, keep modal open
+                return;
+            }
+        }
+
+        StartDate = ModalStartDate;
+        EndDate = ModalEndDate;
+        HasAppliedCustomRange = true;
+        OnPropertyChanged(nameof(AppliedDateRangeText));
+        IsCustomDateRangeModalOpen = false;
         LoadAllCharts();
+    }
+
+    /// <summary>
+    /// Cancels the custom date range modal.
+    /// </summary>
+    [RelayCommand]
+    private void CancelCustomDateRange()
+    {
+        IsCustomDateRangeModalOpen = false;
+
+        // If no custom range was previously applied, revert to default selection
+        if (!HasAppliedCustomRange)
+        {
+            SelectedDateRange = "This Month";
+        }
     }
 
     /// <summary>
@@ -432,6 +601,23 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     partial void OnUseLineChartChanged(bool value)
     {
+        // Sync with SelectedChartType for backwards compatibility
+        SelectedChartType = value ? "Line" : "Column";
+    }
+
+    /// <summary>
+    /// Available chart type options for the selector.
+    /// </summary>
+    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area"];
+
+    [ObservableProperty]
+    private string _selectedChartType = "Line";
+
+    partial void OnSelectedChartTypeChanged(string value)
+    {
+        // Sync UseLineChart for backwards compatibility
+        _useLineChart = value == "Line";
+        OnPropertyChanged(nameof(UseLineChart));
         LoadAllCharts();
     }
 
@@ -826,6 +1012,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             OnPropertyChanged(nameof(LegendTextPaint));
             NotifyAllChartTitlesChanged();
         };
+
+        // Subscribe to date format changes to refresh charts
+        DateFormatService.DateFormatChanged += (_, _) =>
+        {
+            LoadAllCharts();
+        };
     }
 
     /// <summary>
@@ -1004,9 +1196,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var data = _companyManager?.CompanyData;
         if (data == null) return;
 
-        // Update theme colors and chart type
+        // Update theme colors and chart style
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
-        _chartLoaderService.UseLineChart = UseLineChart;
+        _chartLoaderService.SelectedChartStyle = SelectedChartType switch
+        {
+            "Line" => ChartStyle.Line,
+            "Column" => ChartStyle.Column,
+            "Step Line" => ChartStyle.StepLine,
+            "Area" => ChartStyle.Area,
+            _ => ChartStyle.Line
+        };
 
         // Load statistics for stat cards
         LoadAllStatistics(data);

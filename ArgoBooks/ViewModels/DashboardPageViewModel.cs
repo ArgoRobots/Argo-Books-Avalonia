@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
@@ -21,6 +22,345 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 {
+    #region Date Range
+
+    /// <summary>
+    /// Available date range options.
+    /// </summary>
+    public ObservableCollection<string> DateRangeOptions { get; } =
+    [
+        "This Month",
+        "Last Month",
+        "This Quarter",
+        "Last Quarter",
+        "This Year",
+        "Last Year",
+        "All Time",
+        "Custom Range"
+    ];
+
+    [ObservableProperty]
+    private string _selectedDateRange = "This Month";
+
+    [ObservableProperty]
+    private DateTime _startDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    [ObservableProperty]
+    private DateTime _endDate = DateTime.Now;
+
+    // Temporary date values for the modal (before applying)
+    [ObservableProperty]
+    private DateTime _modalStartDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    [ObservableProperty]
+    private DateTime _modalEndDate = DateTime.Now;
+
+    /// <summary>
+    /// Gets or sets whether the custom date range modal is open.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isCustomDateRangeModalOpen;
+
+    /// <summary>
+    /// Gets or sets whether a custom date range has been applied.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AppliedDateRangeText))]
+    private bool _hasAppliedCustomRange;
+
+    /// <summary>
+    /// Gets the formatted text showing the applied custom date range.
+    /// </summary>
+    public string AppliedDateRangeText => HasAppliedCustomRange
+        ? $"{StartDate:MMM d, yyyy} - {EndDate:MMM d, yyyy}"
+        : string.Empty;
+
+    /// <summary>
+    /// Gets or sets the start date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? StartDateOffset
+    {
+        get => new DateTimeOffset(StartDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                StartDate = value.Value.DateTime;
+                LoadDashboardData();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the end date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? EndDateOffset
+    {
+        get => new DateTimeOffset(EndDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                EndDate = value.Value.DateTime;
+                LoadDashboardData();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the modal start date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? ModalStartDateOffset
+    {
+        get => new DateTimeOffset(ModalStartDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                ModalStartDate = value.Value.DateTime;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the modal end date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? ModalEndDateOffset
+    {
+        get => new DateTimeOffset(ModalEndDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                ModalEndDate = value.Value.DateTime;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether the custom date range option is selected.
+    /// </summary>
+    public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
+
+    /// <summary>
+    /// Gets the label for comparison period based on selected date range.
+    /// </summary>
+    public string ComparisonPeriodLabel => SelectedDateRange switch
+    {
+        "This Month" => "from last month",
+        "Last Month" => "from prior month",
+        "This Quarter" => "from last quarter",
+        "Last Quarter" => "from prior quarter",
+        "This Year" => "from last year",
+        "Last Year" => "from prior year",
+        "All Time" => "",
+        "Custom Range" => "from prior period",
+        _ => "from last period"
+    };
+
+    partial void OnSelectedDateRangeChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsCustomDateRange));
+        OnPropertyChanged(nameof(ComparisonPeriodLabel));
+
+        if (value == "Custom Range")
+        {
+            // Open the modal for custom date range selection
+            OpenCustomDateRangeModal();
+        }
+        else
+        {
+            // Reset the applied custom range flag when selecting a preset
+            HasAppliedCustomRange = false;
+            UpdateDateRangeFromSelection();
+            LoadDashboardData();
+        }
+    }
+
+    /// <summary>
+    /// Opens the custom date range modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenCustomDateRangeModal()
+    {
+        // Initialize modal dates with current values
+        ModalStartDate = StartDate;
+        ModalEndDate = EndDate;
+        OnPropertyChanged(nameof(ModalStartDateOffset));
+        OnPropertyChanged(nameof(ModalEndDateOffset));
+        IsCustomDateRangeModalOpen = true;
+    }
+
+    /// <summary>
+    /// Applies the custom date range from the modal.
+    /// </summary>
+    [RelayCommand]
+    private async Task ApplyCustomDateRange()
+    {
+        // Check if start date is after end date
+        if (ModalStartDate > ModalEndDate)
+        {
+            var result = await App.ConfirmationDialog!.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Invalid Date Range",
+                Message = "The start date is after the end date. Would you like to swap the dates?",
+                PrimaryButtonText = "Swap Dates",
+                CancelButtonText = "Cancel"
+            });
+
+            if (result == ConfirmationResult.Primary)
+            {
+                // Swap the dates
+                (ModalStartDate, ModalEndDate) = (ModalEndDate, ModalStartDate);
+                OnPropertyChanged(nameof(ModalStartDateOffset));
+                OnPropertyChanged(nameof(ModalEndDateOffset));
+            }
+            else
+            {
+                // User cancelled, keep modal open
+                return;
+            }
+        }
+
+        StartDate = ModalStartDate;
+        EndDate = ModalEndDate;
+        HasAppliedCustomRange = true;
+        OnPropertyChanged(nameof(AppliedDateRangeText));
+        IsCustomDateRangeModalOpen = false;
+        LoadDashboardData();
+    }
+
+    /// <summary>
+    /// Cancels the custom date range modal.
+    /// </summary>
+    [RelayCommand]
+    private void CancelCustomDateRange()
+    {
+        IsCustomDateRangeModalOpen = false;
+
+        // If no custom range was previously applied, revert to default selection
+        if (!HasAppliedCustomRange)
+        {
+            SelectedDateRange = "This Month";
+        }
+    }
+
+    /// <summary>
+    /// Updates the start and end dates based on the selected date range option.
+    /// </summary>
+    private void UpdateDateRangeFromSelection()
+    {
+        var now = DateTime.Now;
+
+        switch (SelectedDateRange)
+        {
+            case "This Month":
+                StartDate = new DateTime(now.Year, now.Month, 1);
+                EndDate = now;
+                break;
+
+            case "Last Month":
+                var lastMonth = now.AddMonths(-1);
+                StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
+                EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
+                break;
+
+            case "This Quarter":
+                var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
+                StartDate = quarterStart;
+                EndDate = now;
+                break;
+
+            case "Last Quarter":
+                var lastQuarterEnd = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1);
+                var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
+                lastQuarterStart = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
+                StartDate = lastQuarterStart;
+                EndDate = lastQuarterEnd;
+                break;
+
+            case "This Year":
+                StartDate = new DateTime(now.Year, 1, 1);
+                EndDate = now;
+                break;
+
+            case "Last Year":
+                StartDate = new DateTime(now.Year - 1, 1, 1);
+                EndDate = new DateTime(now.Year - 1, 12, 31);
+                break;
+
+            case "All Time":
+                StartDate = new DateTime(2000, 1, 1);
+                EndDate = now;
+                break;
+
+            case "Custom Range":
+                // Keep current values, let user modify
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Gets the comparison period dates based on the selected date range.
+    /// </summary>
+    private (DateTime prevStartDate, DateTime prevEndDate) GetComparisonPeriod()
+    {
+        var now = DateTime.Now;
+
+        return SelectedDateRange switch
+        {
+            "This Month" => (
+                new DateTime(now.Year, now.Month, 1).AddMonths(-1),
+                new DateTime(now.Year, now.Month, 1).AddDays(-1)
+            ),
+            "Last Month" => (
+                new DateTime(now.Year, now.Month, 1).AddMonths(-2),
+                new DateTime(now.Year, now.Month, 1).AddMonths(-1).AddDays(-1)
+            ),
+            "This Quarter" => (
+                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3),
+                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1)
+            ),
+            "Last Quarter" => (
+                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-6),
+                new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3).AddDays(-1)
+            ),
+            "This Year" => (
+                new DateTime(now.Year - 1, 1, 1),
+                new DateTime(now.Year - 1, 12, 31)
+            ),
+            "Last Year" => (
+                new DateTime(now.Year - 2, 1, 1),
+                new DateTime(now.Year - 2, 12, 31)
+            ),
+            "All Time" => (DateTime.MinValue, DateTime.MinValue), // No comparison for All Time
+            "Custom Range" => (
+                StartDate.AddDays(-(EndDate - StartDate).TotalDays - 1),
+                StartDate.AddDays(-1)
+            ),
+            _ => (StartDate.AddDays(-30), StartDate.AddDays(-1))
+        };
+    }
+
+    #endregion
+
+    #region Chart Type
+
+    /// <summary>
+    /// Available chart type options for the selector.
+    /// </summary>
+    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area"];
+
+    [ObservableProperty]
+    private string _selectedChartType = "Line";
+
+    partial void OnSelectedChartTypeChanged(string value)
+    {
+        LoadDashboardData();
+    }
+
+    #endregion
+
     #region Statistics Properties
 
     [ObservableProperty]
@@ -92,45 +432,51 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
-    #region Expenses Overview Chart
+    #region Profits Overview Chart
 
     private readonly ChartLoaderService _chartLoaderService = new();
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> _expensesChartSeries = [];
+    private ObservableCollection<ISeries> _profitsChartSeries = [];
 
     [ObservableProperty]
-    private Axis[] _expensesChartXAxes = [];
+    private Axis[] _profitsChartXAxes = [];
 
     [ObservableProperty]
-    private Axis[] _expensesChartYAxes = [];
+    private Axis[] _profitsChartYAxes = [];
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ExpensesChartTitleVisual))]
-    private string _expensesChartTitle = "Total expenses: $0.00";
+    [NotifyPropertyChangedFor(nameof(ProfitsChartTitleVisual))]
+    private string _profitsChartTitle = "Total profits: $0.00";
 
     /// <summary>
-    /// Gets the visual title element for the expenses chart.
+    /// Gets the visual title element for the profits chart.
     /// </summary>
-    public LabelVisual ExpensesChartTitleVisual => ChartLoaderService.CreateChartTitle(ExpensesChartTitle);
+    public LabelVisual ProfitsChartTitleVisual => ChartLoaderService.CreateChartTitle(ProfitsChartTitle);
 
     [ObservableProperty]
-    private bool _hasExpensesChartData;
+    private bool _hasProfitsChartData;
 
     #endregion
 
-    #region Expense Distribution Chart
+    #region Sales vs Expenses Chart
 
     [ObservableProperty]
-    private ObservableCollection<ISeries> _expenseDistributionSeries = [];
+    private ObservableCollection<ISeries> _salesVsExpensesSeries = [];
 
     [ObservableProperty]
-    private bool _hasExpenseDistributionData;
+    private Axis[] _salesVsExpensesXAxes = [];
+
+    [ObservableProperty]
+    private Axis[] _salesVsExpensesYAxes = [];
+
+    [ObservableProperty]
+    private bool _hasSalesVsExpensesData;
 
     /// <summary>
-    /// Gets the visual title element for the expense distribution chart.
+    /// Gets the visual title element for the expenses vs revenue chart.
     /// </summary>
-    public LabelVisual ExpenseDistributionChartTitle => ChartLoaderService.CreateChartTitle("Distribution of expenses");
+    public LabelVisual SalesVsExpensesChartTitle => ChartLoaderService.CreateChartTitle("Expenses vs Revenue");
 
     #endregion
 
@@ -152,8 +498,14 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ThemeService.Instance.ThemeChanged += (_, _) =>
         {
             OnPropertyChanged(nameof(LegendTextPaint));
-            OnPropertyChanged(nameof(ExpensesChartTitleVisual));
-            OnPropertyChanged(nameof(ExpenseDistributionChartTitle));
+            OnPropertyChanged(nameof(ProfitsChartTitleVisual));
+            OnPropertyChanged(nameof(SalesVsExpensesChartTitle));
+        };
+
+        // Subscribe to date format changes to refresh charts and transaction dates
+        DateFormatService.DateFormatChanged += (_, _) =>
+        {
+            LoadDashboardData();
         };
     }
 
@@ -205,50 +557,48 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         LoadStatistics(data);
         LoadRecentTransactions(data);
         LoadActiveRentals(data);
-        LoadExpensesChart(data);
-        LoadExpenseDistributionChart(data);
+        LoadProfitsChart(data);
+        LoadSalesVsExpensesChart(data);
     }
 
     private void LoadStatistics(CompanyData data)
     {
-        var now = DateTime.Now;
-        var thisMonth = new DateTime(now.Year, now.Month, 1);
-        var lastMonth = thisMonth.AddMonths(-1);
-        var lastMonthEnd = thisMonth.AddDays(-1);
+        // Calculate comparison period based on selected date range
+        var (prevStartDate, prevEndDate) = GetComparisonPeriod();
 
-        // Calculate this month's revenue
-        var thisMonthRevenue = data.Sales
-            .Where(s => s.Date >= thisMonth && s.Date <= now)
+        // Calculate current period revenue
+        var currentRevenue = data.Sales
+            .Where(s => s.Date >= StartDate && s.Date <= EndDate)
             .Sum(s => s.Total);
 
-        // Calculate last month's revenue for comparison
-        var lastMonthRevenue = data.Sales
-            .Where(s => s.Date >= lastMonth && s.Date <= lastMonthEnd)
+        // Calculate previous period revenue for comparison
+        var prevRevenue = data.Sales
+            .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
             .Sum(s => s.Total);
 
-        TotalRevenue = FormatCurrency(thisMonthRevenue);
-        RevenueChangeValue = CalculatePercentageChange(lastMonthRevenue, thisMonthRevenue);
+        TotalRevenue = FormatCurrency(currentRevenue);
+        RevenueChangeValue = CalculatePercentageChange(prevRevenue, currentRevenue);
         RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
 
-        // Calculate this month's expenses
-        var thisMonthExpenses = data.Purchases
-            .Where(p => p.Date >= thisMonth && p.Date <= now)
+        // Calculate current period expenses
+        var currentExpenses = data.Purchases
+            .Where(p => p.Date >= StartDate && p.Date <= EndDate)
             .Sum(p => p.Total);
 
-        // Calculate last month's expenses for comparison
-        var lastMonthExpenses = data.Purchases
-            .Where(p => p.Date >= lastMonth && p.Date <= lastMonthEnd)
+        // Calculate previous period expenses for comparison
+        var prevExpenses = data.Purchases
+            .Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate)
             .Sum(p => p.Total);
 
-        TotalExpenses = FormatCurrency(thisMonthExpenses);
-        ExpenseChangeValue = CalculatePercentageChange(lastMonthExpenses, thisMonthExpenses);
+        TotalExpenses = FormatCurrency(currentExpenses);
+        ExpenseChangeValue = CalculatePercentageChange(prevExpenses, currentExpenses);
         ExpenseChangeText = FormatPercentageChange(ExpenseChangeValue);
 
         // Calculate net profit
-        var netProfitValue = thisMonthRevenue - thisMonthExpenses;
-        var lastMonthProfit = lastMonthRevenue - lastMonthExpenses;
+        var netProfitValue = currentRevenue - currentExpenses;
+        var prevProfit = prevRevenue - prevExpenses;
         NetProfit = FormatCurrency(Math.Abs(netProfitValue));
-        ProfitChangeValue = CalculatePercentageChange(lastMonthProfit, netProfitValue);
+        ProfitChangeValue = CalculatePercentageChange(prevProfit, netProfitValue);
         ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
 
         // Calculate outstanding invoices
@@ -273,10 +623,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     {
         var recentItems = new List<RecentTransactionItem>();
 
-        // Get recent sales
+        // Get recent sales (no status badge needed for completed transactions)
         var recentSales = data.Sales
             .OrderByDescending(s => s.Date)
-            .Take(5)
+            .Take(10)
             .Select(s => new RecentTransactionItem
             {
                 Id = s.Id,
@@ -286,18 +636,18 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 AmountValue = s.Total,
                 Date = s.Date,
                 DateFormatted = FormatDate(s.Date),
-                Status = "Completed",
-                StatusVariant = "success",
+                Status = string.Empty,
+                StatusVariant = string.Empty,
                 IsIncome = true,
                 CustomerName = GetCustomerName(data, s.CustomerId)
             });
 
         recentItems.AddRange(recentSales);
 
-        // Get recent purchases/expenses
+        // Get recent purchases/expenses (no status badge needed for completed transactions)
         var recentPurchases = data.Purchases
             .OrderByDescending(p => p.Date)
-            .Take(5)
+            .Take(10)
             .Select(p => new RecentTransactionItem
             {
                 Id = p.Id,
@@ -307,34 +657,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 AmountValue = p.Total,
                 Date = p.Date,
                 DateFormatted = FormatDate(p.Date),
-                Status = "Completed",
-                StatusVariant = "success",
+                Status = string.Empty,
+                StatusVariant = string.Empty,
                 IsIncome = false,
                 CustomerName = GetSupplierName(data, p.SupplierId)
             });
 
         recentItems.AddRange(recentPurchases);
 
-        // Get recent invoices
-        var recentInvoices = data.Invoices
-            .OrderByDescending(i => i.IssueDate)
-            .Take(5)
-            .Select(i => new RecentTransactionItem
-            {
-                Id = i.Id,
-                Type = "Invoice",
-                Description = $"Invoice {i.InvoiceNumber}",
-                Amount = FormatCurrency(i.Total),
-                AmountValue = i.Total,
-                Date = i.IssueDate,
-                DateFormatted = FormatDate(i.IssueDate),
-                Status = "Completed",
-                StatusVariant = "success",
-                IsIncome = true,
-                CustomerName = GetCustomerName(data, i.CustomerId)
-            });
-
-        recentItems.AddRange(recentInvoices);
+        // Note: Invoices are intentionally excluded from recent transactions
 
         // Sort by date and take top 10
         var sortedItems = recentItems
@@ -372,26 +703,39 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ActiveRentalsList = new ObservableCollection<ActiveRentalItem>(activeRentals);
     }
 
-    private void LoadExpensesChart(CompanyData data)
+    private void LoadProfitsChart(CompanyData data)
+    {
+        // Update theme colors and chart style
+        _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
+        _chartLoaderService.SelectedChartStyle = SelectedChartType switch
+        {
+            "Line" => ChartStyle.Line,
+            "Column" => ChartStyle.Column,
+            "Step Line" => ChartStyle.StepLine,
+            "Area" => ChartStyle.Area,
+            _ => ChartStyle.Line
+        };
+
+        // Load profits chart data for the selected date range
+        var (series, labels, dates, totalProfit) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
+
+        ProfitsChartSeries = series;
+        ProfitsChartXAxes = _chartLoaderService.CreateDateXAxes(dates);
+        ProfitsChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        ProfitsChartTitle = $"Total profits: {FormatCurrency(totalProfit)}";
+        HasProfitsChartData = series.Count > 0 && labels.Length > 0;
+    }
+
+    private void LoadSalesVsExpensesChart(CompanyData data)
     {
         // Update theme colors based on current theme
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
 
-        // Load expenses chart data for the last 30 days
-        var (series, labels, dates, totalExpenses) = _chartLoaderService.LoadExpensesOverviewChart(data);
-
-        ExpensesChartSeries = series;
-        ExpensesChartXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        ExpensesChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
-        ExpensesChartTitle = $"Total expenses: {FormatCurrency(totalExpenses)}";
-        HasExpensesChartData = series.Count > 0 && labels.Length > 0;
-    }
-
-    private void LoadExpenseDistributionChart(CompanyData data)
-    {
-        var (series, total) = _chartLoaderService.LoadExpenseDistributionChart(data);
-        ExpenseDistributionSeries = series;
-        HasExpenseDistributionData = series.Count > 0 && total > 0;
+        var (series, labels) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
+        SalesVsExpensesSeries = series;
+        SalesVsExpensesXAxes = _chartLoaderService.CreateXAxes(labels);
+        SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        HasSalesVsExpensesData = series.Count > 0 && labels.Length > 0;
     }
 
     #endregion
@@ -540,7 +884,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnResetChartZoom()
     {
-        ChartLoaderService.ResetZoom(ExpensesChartXAxes, ExpensesChartYAxes);
+        ChartLoaderService.ResetZoom(ProfitsChartXAxes, ProfitsChartYAxes);
+        ChartLoaderService.ResetZoom(SalesVsExpensesXAxes, SalesVsExpensesYAxes);
     }
 
     /// <summary>
@@ -603,6 +948,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     }
 
     [RelayCommand]
+    private void NavigateToTransaction(RecentTransactionItem? transaction)
+    {
+        if (transaction == null) return;
+
+        var pageName = transaction.IsIncome ? "Revenue" : "Expenses";
+        App.NavigationService?.NavigateTo(pageName, new TransactionNavigationParameter(transaction.Id));
+    }
+
+    [RelayCommand]
     private void NavigateToRentals()
     {
         App.NavigationService?.NavigateTo("RentalRecords");
@@ -626,7 +980,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             return "Yesterday";
         if (date.Date > now.Date.AddDays(-7))
             return date.ToString("dddd");
-        return date.ToString("MMM dd, yyyy");
+        return DateFormatService.Format(date);
     }
 
     private static double? CalculatePercentageChange(decimal previous, decimal current)
@@ -698,6 +1052,7 @@ public class RecentTransactionItem
     public string CustomerName { get; set; } = string.Empty;
 
     // Helper properties for status variant styling
+    public bool HasStatus => !string.IsNullOrEmpty(Status);
     public bool IsStatusSuccess => StatusVariant == "success";
     public bool IsStatusWarning => StatusVariant == "warning";
     public bool IsStatusError => StatusVariant == "error";
@@ -766,6 +1121,22 @@ public class SaveChartImageEventArgs : EventArgs
     /// Gets or sets the identifier of the chart to save.
     /// </summary>
     public string ChartId { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Navigation parameter for navigating to a specific transaction.
+/// </summary>
+public class TransactionNavigationParameter
+{
+    /// <summary>
+    /// Gets the transaction ID to highlight.
+    /// </summary>
+    public string TransactionId { get; }
+
+    public TransactionNavigationParameter(string transactionId)
+    {
+        TransactionId = transactionId;
+    }
 }
 
 #endregion

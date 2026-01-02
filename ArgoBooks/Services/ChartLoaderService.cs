@@ -147,17 +147,27 @@ public class ChartLoaderService
     /// <summary>
     /// Gets or sets whether to use line charts instead of column charts.
     /// </summary>
-    public bool UseLineChart { get; set; }
+    [Obsolete("Use ChartStyle property instead")]
+    public bool UseLineChart
+    {
+        get => SelectedChartStyle == ChartStyle.Line;
+        set => SelectedChartStyle = value ? ChartStyle.Line : ChartStyle.Column;
+    }
 
     /// <summary>
-    /// Creates a series for time-based data, either as line or column based on UseLineChart.
+    /// Gets or sets the chart style for rendering series.
+    /// </summary>
+    public ChartStyle SelectedChartStyle { get; set; } = ChartStyle.Line;
+
+    /// <summary>
+    /// Creates a series for time-based data based on SelectedChartStyle.
     /// Uses categorical (index-based) positioning - dates will be evenly spaced.
     /// </summary>
     private ISeries CreateTimeSeries(double[] values, string name, SKColor color)
     {
-        if (UseLineChart)
+        return SelectedChartStyle switch
         {
-            return new LineSeries<double>
+            ChartStyle.Line => new LineSeries<double>
             {
                 Values = values,
                 Name = name,
@@ -166,15 +176,35 @@ public class ChartLoaderService
                 GeometryStroke = new SolidColorPaint(color, 2),
                 GeometryFill = new SolidColorPaint(color),
                 GeometrySize = 6
-            };
-        }
-        return new ColumnSeries<double>
-        {
-            Values = values,
-            Name = name,
-            Fill = new SolidColorPaint(color),
-            Stroke = null,
-            MaxBarWidth = 50
+            },
+            ChartStyle.StepLine => new StepLineSeries<double>
+            {
+                Values = values,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = null,
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            },
+            ChartStyle.Area => new LineSeries<double>
+            {
+                Values = values,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = new SolidColorPaint(color.WithAlpha(80)),
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            },
+            _ => new ColumnSeries<double>
+            {
+                Values = values,
+                Name = name,
+                Fill = new SolidColorPaint(color),
+                Stroke = null,
+                MaxBarWidth = 50
+            }
         };
     }
 
@@ -188,9 +218,9 @@ public class ChartLoaderService
         // Use ObservablePoint which directly stores X,Y coordinates
         var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
 
-        if (UseLineChart)
+        return SelectedChartStyle switch
         {
-            return new LineSeries<ObservablePoint>
+            ChartStyle.Line => new LineSeries<ObservablePoint>
             {
                 Values = points,
                 Name = name,
@@ -199,16 +229,95 @@ public class ChartLoaderService
                 GeometryStroke = new SolidColorPaint(color, 2),
                 GeometryFill = new SolidColorPaint(color),
                 GeometrySize = 6
-            };
-        }
-        return new ColumnSeries<ObservablePoint>
-        {
-            Values = points,
-            Name = name,
-            Fill = new SolidColorPaint(color),
-            Stroke = null,
-            MaxBarWidth = 50
+            },
+            ChartStyle.StepLine => new StepLineSeries<ObservablePoint>
+            {
+                Values = points,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = null,
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            },
+            ChartStyle.Area => new LineSeries<ObservablePoint>
+            {
+                Values = points,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = new SolidColorPaint(color.WithAlpha(80)),
+                GeometryStroke = new SolidColorPaint(color, 2),
+                GeometryFill = new SolidColorPaint(color),
+                GeometrySize = 6
+            },
+            _ => new ColumnSeries<ObservablePoint>
+            {
+                Values = points,
+                Name = name,
+                Fill = new SolidColorPaint(color),
+                Stroke = null,
+                MaxBarWidth = 50
+            }
         };
+    }
+
+    /// <summary>
+    /// Creates series for profit data with negative values shown in red (for Column mode).
+    /// </summary>
+    private IEnumerable<ISeries> CreateProfitDateTimeSeries(DateTime[] dates, double[] values, string name)
+    {
+        // For column charts, split into positive (green) and negative (red) series
+        // Column is the default when not Line, StepLine, or Area
+        var isColumnStyle = SelectedChartStyle != ChartStyle.Line &&
+                           SelectedChartStyle != ChartStyle.StepLine &&
+                           SelectedChartStyle != ChartStyle.Area;
+
+        if (isColumnStyle)
+        {
+            // Create separate lists for positive and negative values
+            var positivePoints = new List<ObservablePoint>();
+            var negativePoints = new List<ObservablePoint>();
+
+            for (int i = 0; i < dates.Length; i++)
+            {
+                var x = dates[i].ToOADate();
+                var y = values[i];
+
+                if (y >= 0)
+                    positivePoints.Add(new ObservablePoint(x, y));
+                else
+                    negativePoints.Add(new ObservablePoint(x, y));
+            }
+
+            if (positivePoints.Count > 0)
+            {
+                yield return new ColumnSeries<ObservablePoint>
+                {
+                    Values = positivePoints,
+                    Name = name,
+                    Fill = new SolidColorPaint(ProfitColor),
+                    Stroke = null,
+                    MaxBarWidth = 50
+                };
+            }
+
+            if (negativePoints.Count > 0)
+            {
+                yield return new ColumnSeries<ObservablePoint>
+                {
+                    Values = negativePoints,
+                    Name = $"{name} (Loss)",
+                    Fill = new SolidColorPaint(ExpenseColor),
+                    Stroke = null,
+                    MaxBarWidth = 50
+                };
+            }
+
+            yield break;
+        }
+
+        // For line-based charts, use single series with green color
+        yield return CreateDateTimeSeries(dates, values, name, ProfitColor);
     }
 
     /// <summary>
@@ -286,7 +395,7 @@ public class ChartLoaderService
                 try
                 {
                     var date = DateTime.FromOADate(value);
-                    return date.ToString("yyyy-MM-dd");
+                    return DateFormatService.Format(date);
                 }
                 catch
                 {
@@ -576,7 +685,11 @@ public class ChartLoaderService
         var values = profitData.Select(p => (double)p.Profit).ToArray();
         totalProfit = profitData.Sum(p => p.Profit);
 
-        series.Add(CreateDateTimeSeries(dates, values, "Profit", ProfitColor));
+        // Use profit-specific series that shows negative values in red for column charts
+        foreach (var s in CreateProfitDateTimeSeries(dates, values, "Profit"))
+        {
+            series.Add(s);
+        }
 
         StoreExportData(new ChartExportData
         {
@@ -594,7 +707,7 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads sales vs expenses comparison chart as a multi-series column chart.
+    /// Loads expenses vs revenue comparison chart as a multi-series column chart.
     /// </summary>
     public (ObservableCollection<ISeries> Series, string[] Labels) LoadSalesVsExpensesChart(
         CompanyData? companyData,
@@ -606,13 +719,13 @@ public class ChartLoaderService
 
         if (companyData == null)
         {
-            _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+            _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
             {
-                ChartTitle = "Sales vs Expenses",
+                ChartTitle = "Expenses vs Revenue",
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
-                SeriesName = "Revenue"
+                SeriesName = "Expenses"
             };
             return (series, labels);
         }
@@ -620,33 +733,43 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        // Get months in range
-        var months = new List<DateTime>();
+        // Get months that have actual data (sales or purchases)
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with data
+        var monthsWithData = allMonths.Where(month =>
         {
-            _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
+        {
+            _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
             {
-                ChartTitle = "Sales vs Expenses",
+                ChartTitle = "Expenses vs Revenue",
                 ChartType = ChartType.Comparison,
                 Labels = [],
                 Values = [],
-                SeriesName = "Revenue"
+                SeriesName = "Expenses"
             };
             return (series, labels);
         }
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
         // Calculate revenue per month
-        var revenueValues = months.Select(month =>
+        var revenueValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -656,7 +779,7 @@ public class ChartLoaderService
         }).ToArray();
 
         // Calculate expenses per month
-        var expenseValues = months.Select(month =>
+        var expenseValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -665,22 +788,22 @@ public class ChartLoaderService
                 .Sum(p => p.Total) ?? 0);
         }).ToArray();
 
-        // Only add series if there's actual data
+        // Only add series if there's actual data (expenses first, then revenue)
         if (revenueValues.Any(v => v > 0) || expenseValues.Any(v => v > 0))
         {
-            series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
             series.Add(CreateTimeSeries(expenseValues, "Expenses", ExpenseColor));
+            series.Add(CreateTimeSeries(revenueValues, "Revenue", ProfitColor));
         }
 
         // Store export data for multi-series chart
-        _chartExportDataByTitle["Sales vs Expenses"] = new ChartExportData
+        _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
         {
-            ChartTitle = "Sales vs Expenses",
+            ChartTitle = "Expenses vs Revenue",
             ChartType = ChartType.Comparison,
             Labels = labels,
-            Values = revenueValues,
-            SeriesName = "Revenue",
-            AdditionalSeries = [("Expenses", expenseValues)],
+            Values = expenseValues,
+            SeriesName = "Expenses",
+            AdditionalSeries = [("Revenue", revenueValues)],
             StartDate = start,
             EndDate = end
         };
@@ -855,25 +978,34 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-12);
 
-        var months = new List<DateTime>();
+        // Get months that have actual sales data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count < 2)
+        // Filter to only months with sales data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+        }).ToList();
+
+        if (monthsWithData.Count < 2)
             return (series, labels);
 
         var growthRates = new List<double>();
         var growthLabels = new List<string>();
 
-        for (int i = 1; i < months.Count; i++)
+        for (int i = 1; i < monthsWithData.Count; i++)
         {
-            var currentMonth = months[i];
-            var previousMonth = months[i - 1];
+            var currentMonth = monthsWithData[i];
+            var previousMonth = monthsWithData[i - 1];
 
             var currentMonthStart = new DateTime(currentMonth.Year, currentMonth.Month, 1);
             var currentMonthEnd = currentMonthStart.AddMonths(1).AddDays(-1);
@@ -947,21 +1079,32 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual transaction data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var avgValues = months.Select(month =>
+        var avgValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -1023,21 +1166,32 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual transaction data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var countValues = months.Select(month =>
+        var countValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -1094,21 +1248,32 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual transaction data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var avgShipping = months.Select(month =>
+        var avgShipping = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -1851,21 +2016,30 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual return data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with return data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return companyData.Returns?.Any(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd) ?? false;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels, totalImpact);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var impactValues = months.Select(month =>
+        var impactValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -1976,21 +2150,30 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual loss data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with loss data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return companyData.LostDamaged?.Any(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd) ?? false;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels, totalImpact);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var impactValues = months.Select(month =>
+        var impactValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -2458,6 +2641,17 @@ public enum ChartType
     Profit,
     Distribution,
     Comparison
+}
+
+/// <summary>
+/// Visual chart style for rendering series.
+/// </summary>
+public enum ChartStyle
+{
+    Line,
+    Column,
+    StepLine,
+    Area
 }
 
 /// <summary>
