@@ -480,10 +480,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     {
         var recentItems = new List<RecentTransactionItem>();
 
-        // Get recent sales
+        // Get recent sales (no status badge needed for completed transactions)
         var recentSales = data.Sales
             .OrderByDescending(s => s.Date)
-            .Take(5)
+            .Take(10)
             .Select(s => new RecentTransactionItem
             {
                 Id = s.Id,
@@ -493,18 +493,18 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 AmountValue = s.Total,
                 Date = s.Date,
                 DateFormatted = FormatDate(s.Date),
-                Status = "Completed",
-                StatusVariant = "success",
+                Status = string.Empty,
+                StatusVariant = string.Empty,
                 IsIncome = true,
                 CustomerName = GetCustomerName(data, s.CustomerId)
             });
 
         recentItems.AddRange(recentSales);
 
-        // Get recent purchases/expenses
+        // Get recent purchases/expenses (no status badge needed for completed transactions)
         var recentPurchases = data.Purchases
             .OrderByDescending(p => p.Date)
-            .Take(5)
+            .Take(10)
             .Select(p => new RecentTransactionItem
             {
                 Id = p.Id,
@@ -514,34 +514,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 AmountValue = p.Total,
                 Date = p.Date,
                 DateFormatted = FormatDate(p.Date),
-                Status = "Completed",
-                StatusVariant = "success",
+                Status = string.Empty,
+                StatusVariant = string.Empty,
                 IsIncome = false,
                 CustomerName = GetSupplierName(data, p.SupplierId)
             });
 
         recentItems.AddRange(recentPurchases);
 
-        // Get recent invoices
-        var recentInvoices = data.Invoices
-            .OrderByDescending(i => i.IssueDate)
-            .Take(5)
-            .Select(i => new RecentTransactionItem
-            {
-                Id = i.Id,
-                Type = "Invoice",
-                Description = $"Invoice {i.InvoiceNumber}",
-                Amount = FormatCurrency(i.Total),
-                AmountValue = i.Total,
-                Date = i.IssueDate,
-                DateFormatted = FormatDate(i.IssueDate),
-                Status = "Completed",
-                StatusVariant = "success",
-                IsIncome = true,
-                CustomerName = GetCustomerName(data, i.CustomerId)
-            });
-
-        recentItems.AddRange(recentInvoices);
+        // Note: Invoices are intentionally excluded from recent transactions
 
         // Sort by date and take top 10
         var sortedItems = recentItems
@@ -928,6 +909,7 @@ public class RecentTransactionItem
     public string CustomerName { get; set; } = string.Empty;
 
     // Helper properties for status variant styling
+    public bool HasStatus => !string.IsNullOrEmpty(Status);
     public bool IsStatusSuccess => StatusVariant == "success";
     public bool IsStatusWarning => StatusVariant == "warning";
     public bool IsStatusError => StatusVariant == "error";

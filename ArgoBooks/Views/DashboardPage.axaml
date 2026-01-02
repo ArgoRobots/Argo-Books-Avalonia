@@ -419,11 +419,12 @@
                                                                HorizontalAlignment="Right" />
                                                 </StackPanel>
 
-                                                <!-- Status Badge -->
+                                                <!-- Status Badge (only show when there's a status) -->
                                                 <Border Grid.Column="3"
                                                         CornerRadius="12"
                                                         Padding="8,4"
                                                         VerticalAlignment="Center"
+                                                        IsVisible="{Binding HasStatus}"
                                                         Classes.success="{Binding IsStatusSuccess}"
                                                         Classes.warning="{Binding IsStatusWarning}"
                                                         Classes.error="{Binding IsStatusError}"

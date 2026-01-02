@@ -266,36 +266,58 @@ public class ChartLoaderService
     /// </summary>
     private IEnumerable<ISeries> CreateProfitDateTimeSeries(DateTime[] dates, double[] values, string name)
     {
-        var points = dates.Zip(values, (d, v) => new ObservablePoint(d.ToOADate(), v)).ToArray();
+        // For column charts, split into positive (green) and negative (red) series
+        // Column is the default when not Line, StepLine, or Area
+        var isColumnStyle = SelectedChartStyle != ChartStyle.Line &&
+                           SelectedChartStyle != ChartStyle.StepLine &&
+                           SelectedChartStyle != ChartStyle.Area;
 
-        if (SelectedChartStyle == ChartStyle.Column)
+        if (isColumnStyle)
         {
-            // Split into positive (green) and negative (red) column series
-            var posPoints = points.Select(p => new ObservablePoint(p.X, p.Y >= 0 ? p.Y : null)).ToArray();
-            var negPoints = points.Select(p => new ObservablePoint(p.X, p.Y < 0 ? p.Y : null)).ToArray();
+            // Create separate lists for positive and negative values
+            var positivePoints = new List<ObservablePoint>();
+            var negativePoints = new List<ObservablePoint>();
 
-            yield return new ColumnSeries<ObservablePoint>
+            for (int i = 0; i < dates.Length; i++)
             {
-                Values = posPoints,
-                Name = name,
-                Fill = new SolidColorPaint(ProfitColor),
-                Stroke = null,
-                MaxBarWidth = 50
-            };
-            yield return new ColumnSeries<ObservablePoint>
+                var x = dates[i].ToOADate();
+                var y = values[i];
+
+                if (y >= 0)
+                    positivePoints.Add(new ObservablePoint(x, y));
+                else
+                    negativePoints.Add(new ObservablePoint(x, y));
+            }
+
+            if (positivePoints.Count > 0)
             {
-                Values = negPoints,
-                Name = $"{name} (Loss)",
-                Fill = new SolidColorPaint(ExpenseColor),
-                Stroke = null,
-                MaxBarWidth = 50
-            };
+                yield return new ColumnSeries<ObservablePoint>
+                {
+                    Values = positivePoints,
+                    Name = name,
+                    Fill = new SolidColorPaint(ProfitColor),
+                    Stroke = null,
+                    MaxBarWidth = 50
+                };
+            }
+
+            if (negativePoints.Count > 0)
+            {
+                yield return new ColumnSeries<ObservablePoint>
+                {
+                    Values = negativePoints,
+                    Name = $"{name} (Loss)",
+                    Fill = new SolidColorPaint(ExpenseColor),
+                    Stroke = null,
+                    MaxBarWidth = 50
+                };
+            }
+
+            yield break;
         }
-        else
-        {
-            // For line-based charts, use single series with green color
-            yield return CreateDateTimeSeries(dates, values, name, ProfitColor);
-        }
+
+        // For line-based charts, use single series with green color
+        yield return CreateDateTimeSeries(dates, values, name, ProfitColor);
     }
 
     /// <summary>
