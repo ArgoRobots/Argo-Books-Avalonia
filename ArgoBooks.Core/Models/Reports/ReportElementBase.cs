@@ -6,6 +6,23 @@ using ArgoBooks.Core.Enums;
 namespace ArgoBooks.Core.Models.Reports;
 
 /// <summary>
+/// Event args for property changing event, including old and new values.
+/// </summary>
+public class ElementPropertyChangingEventArgs : EventArgs
+{
+    public string PropertyName { get; }
+    public object? OldValue { get; }
+    public object? NewValue { get; }
+
+    public ElementPropertyChangingEventArgs(string propertyName, object? oldValue, object? newValue)
+    {
+        PropertyName = propertyName;
+        OldValue = oldValue;
+        NewValue = newValue;
+    }
+}
+
+/// <summary>
 /// Base class for all report elements.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "elementType")]
@@ -29,6 +46,11 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     /// Fired when a property changes.
     /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>
+    /// Fired before a property changes, with old and new values for undo/redo tracking.
+    /// </summary>
+    public event EventHandler<ElementPropertyChangingEventArgs>? PropertyChanging;
 
     /// <summary>
     /// Unique identifier for the element.
@@ -141,11 +163,21 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Raises the PropertyChanging event before a property changes.
+    /// </summary>
+    protected virtual void OnPropertyChanging(string? propertyName, object? oldValue, object? newValue)
+    {
+        PropertyChanging?.Invoke(this, new ElementPropertyChangingEventArgs(propertyName ?? "", oldValue, newValue));
+    }
+
+    /// <summary>
     /// Sets a field value and raises PropertyChanged if the value changed.
+    /// Also raises PropertyChanging before the change for undo/redo tracking.
     /// </summary>
     protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+        OnPropertyChanging(propertyName, field, value);
         field = value;
         OnPropertyChanged(propertyName);
         return true;

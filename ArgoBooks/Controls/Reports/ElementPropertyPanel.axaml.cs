@@ -277,8 +277,9 @@ public partial class ElementPropertyPanel : UserControl
         chartTypeCombo.SelectionChanged += (s, e) =>
         {
             if (_isUpdating || chartTypeCombo.SelectedItem is not ChartDataType newType) return;
+            var oldValue = chart.ChartType;
             chart.ChartType = newType;
-            OnPropertyChanged(chart, nameof(chart.ChartType), newType);
+            OnPropertyChanged(chart, nameof(chart.ChartType), oldValue, newType);
         };
         panel.Children.Add(chartTypeCombo);
 
@@ -299,8 +300,9 @@ public partial class ElementPropertyPanel : UserControl
         chartStyleCombo.SelectionChanged += (s, e) =>
         {
             if (_isUpdating || chartStyleCombo.SelectedItem is not ReportChartStyle newStyle) return;
+            var oldValue = chart.ChartStyle;
             chart.ChartStyle = newStyle;
-            OnPropertyChanged(chart, nameof(chart.ChartStyle), newStyle);
+            OnPropertyChanged(chart, nameof(chart.ChartStyle), oldValue, newStyle);
         };
         panel.Children.Add(chartStyleCombo);
 
@@ -315,8 +317,9 @@ public partial class ElementPropertyPanel : UserControl
         showTitleCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = chart.ShowTitle;
             chart.ShowTitle = showTitleCheck.IsChecked ?? true;
-            OnPropertyChanged(chart, nameof(chart.ShowTitle), chart.ShowTitle);
+            OnPropertyChanged(chart, nameof(chart.ShowTitle), oldValue, chart.ShowTitle);
         };
         panel.Children.Add(showTitleCheck);
 
@@ -330,8 +333,9 @@ public partial class ElementPropertyPanel : UserControl
         showLegendCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = chart.ShowLegend;
             chart.ShowLegend = showLegendCheck.IsChecked ?? true;
-            OnPropertyChanged(chart, nameof(chart.ShowLegend), chart.ShowLegend);
+            OnPropertyChanged(chart, nameof(chart.ShowLegend), oldValue, chart.ShowLegend);
         };
         panel.Children.Add(showLegendCheck);
 
@@ -364,8 +368,9 @@ public partial class ElementPropertyPanel : UserControl
         dataSelectionCombo.SelectionChanged += (s, e) =>
         {
             if (_isUpdating || dataSelectionCombo.SelectedItem is not TableDataSelection newSelection) return;
+            var oldValue = table.DataSelection;
             table.DataSelection = newSelection;
-            OnPropertyChanged(table, nameof(table.DataSelection), newSelection);
+            OnPropertyChanged(table, nameof(table.DataSelection), oldValue, newSelection);
         };
         panel.Children.Add(dataSelectionCombo);
 
@@ -387,8 +392,9 @@ public partial class ElementPropertyPanel : UserControl
         rowCountInput.ValueChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = table.MaxRows;
             table.MaxRows = (int)(rowCountInput.Value ?? 10);
-            OnPropertyChanged(table, nameof(table.MaxRows), table.MaxRows);
+            OnPropertyChanged(table, nameof(table.MaxRows), oldValue, table.MaxRows);
         };
         panel.Children.Add(rowCountInput);
 
@@ -403,8 +409,9 @@ public partial class ElementPropertyPanel : UserControl
         showHeaderCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = table.ShowHeaders;
             table.ShowHeaders = showHeaderCheck.IsChecked ?? true;
-            OnPropertyChanged(table, nameof(table.ShowHeaders), table.ShowHeaders);
+            OnPropertyChanged(table, nameof(table.ShowHeaders), oldValue, table.ShowHeaders);
         };
         panel.Children.Add(showHeaderCheck);
 
@@ -417,8 +424,9 @@ public partial class ElementPropertyPanel : UserControl
         alternatingRowsCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = table.AlternateRowColors;
             table.AlternateRowColors = alternatingRowsCheck.IsChecked ?? true;
-            OnPropertyChanged(table, nameof(table.AlternateRowColors), table.AlternateRowColors);
+            OnPropertyChanged(table, nameof(table.AlternateRowColors), oldValue, table.AlternateRowColors);
         };
         panel.Children.Add(alternatingRowsCheck);
 
@@ -453,8 +461,9 @@ public partial class ElementPropertyPanel : UserControl
         textInput.TextChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = label.Text;
             label.Text = textInput.Text ?? "";
-            OnPropertyChanged(label, nameof(label.Text), textInput.Text);
+            OnPropertyChanged(label, nameof(label.Text), oldValue, textInput.Text);
         };
         panel.Children.Add(textInput);
 
@@ -476,8 +485,9 @@ public partial class ElementPropertyPanel : UserControl
         fontSizeInput.ValueChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = label.FontSize;
             label.FontSize = (double)(fontSizeInput.Value ?? 14);
-            OnPropertyChanged(label, nameof(label.FontSize), label.FontSize);
+            OnPropertyChanged(label, nameof(label.FontSize), oldValue, label.FontSize);
         };
         panel.Children.Add(fontSizeInput);
 
@@ -500,8 +510,9 @@ public partial class ElementPropertyPanel : UserControl
         boldCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = label.IsBold;
             label.IsBold = boldCheck.IsChecked ?? false;
-            OnPropertyChanged(label, nameof(label.IsBold), label.IsBold);
+            OnPropertyChanged(label, nameof(label.IsBold), oldValue, label.IsBold);
         };
         fontStylePanel.Children.Add(boldCheck);
 
@@ -516,8 +527,9 @@ public partial class ElementPropertyPanel : UserControl
         italicCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = label.IsItalic;
             label.IsItalic = italicCheck.IsChecked ?? false;
-            OnPropertyChanged(label, nameof(label.IsItalic), label.IsItalic);
+            OnPropertyChanged(label, nameof(label.IsItalic), oldValue, label.IsItalic);
         };
         fontStylePanel.Children.Add(italicCheck);
 
@@ -531,8 +543,9 @@ public partial class ElementPropertyPanel : UserControl
         underlineCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = label.IsUnderline;
             label.IsUnderline = underlineCheck.IsChecked ?? false;
-            OnPropertyChanged(label, nameof(label.IsUnderline), label.IsUnderline);
+            OnPropertyChanged(label, nameof(label.IsUnderline), oldValue, label.IsUnderline);
         };
         fontStylePanel.Children.Add(underlineCheck);
 
@@ -555,8 +568,9 @@ public partial class ElementPropertyPanel : UserControl
         hAlignCombo.SelectionChanged += (s, e) =>
         {
             if (_isUpdating || hAlignCombo.SelectedItem is not HorizontalTextAlignment align) return;
+            var oldValue = label.HorizontalAlignment;
             label.HorizontalAlignment = align;
-            OnPropertyChanged(label, nameof(label.HorizontalAlignment), align);
+            OnPropertyChanged(label, nameof(label.HorizontalAlignment), oldValue, align);
         };
         panel.Children.Add(hAlignCombo);
 
@@ -628,8 +642,9 @@ public partial class ElementPropertyPanel : UserControl
         scaleModeCombo.SelectionChanged += (s, e) =>
         {
             if (_isUpdating || scaleModeCombo.SelectedItem is not ImageScaleMode mode) return;
+            var oldValue = image.ScaleMode;
             image.ScaleMode = mode;
-            OnPropertyChanged(image, nameof(image.ScaleMode), mode);
+            OnPropertyChanged(image, nameof(image.ScaleMode), oldValue, mode);
         };
         panel.Children.Add(scaleModeCombo);
 
@@ -662,8 +677,9 @@ public partial class ElementPropertyPanel : UserControl
         dateFormatInput.TextChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = dateRange.DateFormat;
             dateRange.DateFormat = dateFormatInput.Text ?? "MMM dd, yyyy";
-            OnPropertyChanged(dateRange, nameof(dateRange.DateFormat), dateFormatInput.Text);
+            OnPropertyChanged(dateRange, nameof(dateRange.DateFormat), oldValue, dateFormatInput.Text);
         };
         panel.Children.Add(dateFormatInput);
 
@@ -685,8 +701,9 @@ public partial class ElementPropertyPanel : UserControl
         fontSizeInput.ValueChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = dateRange.FontSize;
             dateRange.FontSize = (double)(fontSizeInput.Value ?? 12);
-            OnPropertyChanged(dateRange, nameof(dateRange.FontSize), dateRange.FontSize);
+            OnPropertyChanged(dateRange, nameof(dateRange.FontSize), oldValue, dateRange.FontSize);
         };
         panel.Children.Add(fontSizeInput);
 
@@ -719,8 +736,9 @@ public partial class ElementPropertyPanel : UserControl
         totalSalesCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = summary.ShowTotalSales;
             summary.ShowTotalSales = totalSalesCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowTotalSales), summary.ShowTotalSales);
+            OnPropertyChanged(summary, nameof(summary.ShowTotalSales), oldValue, summary.ShowTotalSales);
         };
         panel.Children.Add(totalSalesCheck);
 
@@ -733,8 +751,9 @@ public partial class ElementPropertyPanel : UserControl
         transactionCountCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = summary.ShowTotalTransactions;
             summary.ShowTotalTransactions = transactionCountCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowTotalTransactions), summary.ShowTotalTransactions);
+            OnPropertyChanged(summary, nameof(summary.ShowTotalTransactions), oldValue, summary.ShowTotalTransactions);
         };
         panel.Children.Add(transactionCountCheck);
 
@@ -747,8 +766,9 @@ public partial class ElementPropertyPanel : UserControl
         avgValueCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = summary.ShowAverageValue;
             summary.ShowAverageValue = avgValueCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowAverageValue), summary.ShowAverageValue);
+            OnPropertyChanged(summary, nameof(summary.ShowAverageValue), oldValue, summary.ShowAverageValue);
         };
         panel.Children.Add(avgValueCheck);
 
@@ -761,8 +781,9 @@ public partial class ElementPropertyPanel : UserControl
         growthRateCheck.IsCheckedChanged += (s, e) =>
         {
             if (_isUpdating) return;
+            var oldValue = summary.ShowGrowthRate;
             summary.ShowGrowthRate = growthRateCheck.IsChecked ?? true;
-            OnPropertyChanged(summary, nameof(summary.ShowGrowthRate), summary.ShowGrowthRate);
+            OnPropertyChanged(summary, nameof(summary.ShowGrowthRate), oldValue, summary.ShowGrowthRate);
         };
         panel.Children.Add(growthRateCheck);
 
@@ -776,29 +797,33 @@ public partial class ElementPropertyPanel : UserControl
     private void OnPositionXChanged(object? sender, NumericUpDownValueChangedEventArgs e)
     {
         if (_isUpdating || SelectedElement == null) return;
+        var oldValue = SelectedElement.X;
         SelectedElement.X = (double)(e.NewValue ?? 0);
-        OnPropertyChanged(SelectedElement, "X", SelectedElement.X);
+        OnPropertyChanged(SelectedElement, "X", oldValue, SelectedElement.X);
     }
 
     private void OnPositionYChanged(object? sender, NumericUpDownValueChangedEventArgs e)
     {
         if (_isUpdating || SelectedElement == null) return;
+        var oldValue = SelectedElement.Y;
         SelectedElement.Y = (double)(e.NewValue ?? 0);
-        OnPropertyChanged(SelectedElement, "Y", SelectedElement.Y);
+        OnPropertyChanged(SelectedElement, "Y", oldValue, SelectedElement.Y);
     }
 
     private void OnWidthChanged(object? sender, NumericUpDownValueChangedEventArgs e)
     {
         if (_isUpdating || SelectedElement == null) return;
+        var oldValue = SelectedElement.Width;
         SelectedElement.Width = (double)(e.NewValue ?? 100);
-        OnPropertyChanged(SelectedElement, "Width", SelectedElement.Width);
+        OnPropertyChanged(SelectedElement, "Width", oldValue, SelectedElement.Width);
     }
 
     private void OnHeightChanged(object? sender, NumericUpDownValueChangedEventArgs e)
     {
         if (_isUpdating || SelectedElement == null) return;
+        var oldValue = SelectedElement.Height;
         SelectedElement.Height = (double)(e.NewValue ?? 100);
-        OnPropertyChanged(SelectedElement, "Height", SelectedElement.Height);
+        OnPropertyChanged(SelectedElement, "Height", oldValue, SelectedElement.Height);
     }
 
     private void OnIsLockedChanged(object? sender, RoutedEventArgs e)
@@ -809,8 +834,9 @@ public partial class ElementPropertyPanel : UserControl
     private void OnIsVisibleChanged(object? sender, RoutedEventArgs e)
     {
         if (_isUpdating || SelectedElement == null || _isVisibleCheckbox == null) return;
+        var oldValue = SelectedElement.IsVisible;
         SelectedElement.IsVisible = _isVisibleCheckbox.IsChecked ?? true;
-        OnPropertyChanged(SelectedElement, "IsVisible", SelectedElement.IsVisible);
+        OnPropertyChanged(SelectedElement, "IsVisible", oldValue, SelectedElement.IsVisible);
     }
 
     private void OnBringToFrontClick(object? sender, RoutedEventArgs e)
@@ -833,9 +859,9 @@ public partial class ElementPropertyPanel : UserControl
         ZOrderChangeRequested?.Invoke(this, new ZOrderChangeEventArgs(ZOrderChange.SendBackward));
     }
 
-    private void OnPropertyChanged(ReportElementBase element, string propertyName, object? newValue)
+    private void OnPropertyChanged(ReportElementBase element, string propertyName, object? oldValue, object? newValue)
     {
-        PropertyValueChanged?.Invoke(this, new PropertyChangedEventArgs(element, propertyName, newValue));
+        PropertyValueChanged?.Invoke(this, new PropertyChangedEventArgs(element, propertyName, oldValue, newValue));
     }
 
     #endregion
@@ -871,12 +897,14 @@ public class PropertyChangedEventArgs : EventArgs
 {
     public ReportElementBase Element { get; }
     public string PropertyName { get; }
+    public object? OldValue { get; }
     public object? NewValue { get; }
 
-    public PropertyChangedEventArgs(ReportElementBase element, string propertyName, object? newValue)
+    public PropertyChangedEventArgs(ReportElementBase element, string propertyName, object? oldValue, object? newValue)
     {
         Element = element;
         PropertyName = propertyName;
+        OldValue = oldValue;
         NewValue = newValue;
     }
 }

@@ -951,8 +951,8 @@
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Chart Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding ChartTypes}"
-                                              SelectedItem="{Binding SelectedChartElement.ChartType}"
+                                    <ComboBox ItemsSource="{Binding ChartTypeOptions}"
+                                              SelectedItem="{Binding SelectedChartDataTypeOption}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">

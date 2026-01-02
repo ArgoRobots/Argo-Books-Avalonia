@@ -377,6 +377,103 @@ public class ReportPropertyChangeAction<T> : IReportUndoableAction
 }
 
 /// <summary>
+/// Action for changing an element property value.
+/// </summary>
+public class ElementPropertyChangeAction : IReportUndoableAction
+{
+    private readonly ReportConfiguration _config;
+    private readonly string _elementId;
+    private readonly string _propertyName;
+    private readonly object? _oldValue;
+    private readonly object? _newValue;
+    private readonly string _elementDisplayName;
+
+    public string Description => $"Change {_elementDisplayName} {FormatPropertyName(_propertyName)}";
+
+    public ElementPropertyChangeAction(
+        ReportConfiguration config,
+        string elementId,
+        string elementDisplayName,
+        string propertyName,
+        object? oldValue,
+        object? newValue)
+    {
+        _config = config;
+        _elementId = elementId;
+        _elementDisplayName = elementDisplayName;
+        _propertyName = propertyName;
+        _oldValue = oldValue;
+        _newValue = newValue;
+    }
+
+    public void Undo()
+    {
+        var element = _config.GetElementById(_elementId);
+        if (element != null)
+        {
+            SetPropertyValue(element, _propertyName, _oldValue);
+        }
+    }
+
+    public void Redo()
+    {
+        var element = _config.GetElementById(_elementId);
+        if (element != null)
+        {
+            SetPropertyValue(element, _propertyName, _newValue);
+        }
+    }
+
+    private static void SetPropertyValue(object target, string propertyName, object? value)
+    {
+        var property = target.GetType().GetProperty(propertyName);
+        if (property != null && property.CanWrite)
+        {
+            // Handle type conversion for enums and other types
+            var convertedValue = ConvertValue(value, property.PropertyType);
+            property.SetValue(target, convertedValue);
+        }
+    }
+
+    private static object? ConvertValue(object? value, Type targetType)
+    {
+        if (value == null)
+            return targetType.IsValueType ? Activator.CreateInstance(targetType) : null;
+
+        if (targetType.IsAssignableFrom(value.GetType()))
+            return value;
+
+        if (targetType.IsEnum && value is string stringValue)
+            return Enum.Parse(targetType, stringValue);
+
+        if (targetType.IsEnum && value.GetType().IsEnum)
+            return value;
+
+        try
+        {
+            return Convert.ChangeType(value, targetType);
+        }
+        catch
+        {
+            return value;
+        }
+    }
+
+    private static string FormatPropertyName(string propertyName)
+    {
+        // Convert PascalCase to space-separated words
+        var result = new System.Text.StringBuilder();
+        foreach (var c in propertyName)
+        {
+            if (char.IsUpper(c) && result.Length > 0)
+                result.Append(' ');
+            result.Append(char.ToLower(c));
+        }
+        return result.ToString();
+    }
+}
+
+/// <summary>
 /// Action for batch operations (alignment, distribution, sizing).
 /// </summary>
 public class BatchMoveResizeAction : IReportUndoableAction

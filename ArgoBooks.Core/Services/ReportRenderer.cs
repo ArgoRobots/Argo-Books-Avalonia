@@ -1655,40 +1655,7 @@ public class ReportRenderer : IDisposable
         return SKColors.Black;
     }
 
-    private static string GetChartTitle(ChartDataType chartType)
-    {
-        return chartType switch
-        {
-            ChartDataType.TotalRevenue => "Total Revenue",
-            ChartDataType.RevenueDistribution => "Revenue Distribution",
-            ChartDataType.TotalExpenses => "Total Expenses",
-            ChartDataType.ExpensesDistribution => "Expense Distribution",
-            ChartDataType.TotalProfits => "Total Profits",
-            ChartDataType.SalesVsExpenses => "Expenses vs Revenue",
-            ChartDataType.GrowthRates => "Growth Rates",
-            ChartDataType.AverageTransactionValue => "Average Transaction Value",
-            ChartDataType.TotalTransactions => "Total Transactions",
-            ChartDataType.AverageShippingCosts => "Average Shipping Costs",
-            ChartDataType.WorldMap => "Geographic Distribution",
-            ChartDataType.CountriesOfOrigin => "Countries of Origin",
-            ChartDataType.CountriesOfDestination => "Countries of Destination",
-            ChartDataType.CompaniesOfOrigin => "Companies of Origin",
-            ChartDataType.AccountantsTransactions => "Transactions by Accountant",
-            ChartDataType.ReturnsOverTime => "Returns Over Time",
-            ChartDataType.ReturnReasons => "Return Reasons",
-            ChartDataType.ReturnFinancialImpact => "Return Financial Impact",
-            ChartDataType.ReturnsByCategory => "Returns by Category",
-            ChartDataType.ReturnsByProduct => "Returns by Product",
-            ChartDataType.PurchaseVsSaleReturns => "Purchase vs Sale Returns",
-            ChartDataType.LossesOverTime => "Losses Over Time",
-            ChartDataType.LossReasons => "Loss Reasons",
-            ChartDataType.LossFinancialImpact => "Loss Financial Impact",
-            ChartDataType.LossesByCategory => "Losses by Category",
-            ChartDataType.LossesByProduct => "Losses by Product",
-            ChartDataType.PurchaseVsSaleLosses => "Purchase vs Sale Losses",
-            _ => "Chart"
-        };
-    }
+    private static string GetChartTitle(ChartDataType chartType) => chartType.GetDisplayName();
 
     private static List<string> GetVisibleColumns(TableReportElement table)
     {

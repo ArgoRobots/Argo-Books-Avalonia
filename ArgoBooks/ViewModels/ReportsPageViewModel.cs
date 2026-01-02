@@ -368,15 +368,18 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (oldValue != null)
         {
             oldValue.PropertyChanged -= OnElementPropertyChanged;
+            oldValue.PropertyChanging -= OnElementPropertyChanging;
         }
 
         // Subscribe to new element
         if (newValue != null)
         {
             newValue.PropertyChanged += OnElementPropertyChanged;
+            newValue.PropertyChanging += OnElementPropertyChanging;
         }
 
         OnPropertyChanged(nameof(SelectedChartElement));
+        OnPropertyChanged(nameof(SelectedChartDataTypeOption));
         OnPropertyChanged(nameof(SelectedChartStyleOption));
         OnPropertyChanged(nameof(SelectedLabelElement));
         OnPropertyChanged(nameof(SelectedImageElement));
@@ -389,6 +392,25 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsTableSelected));
         OnPropertyChanged(nameof(IsDateRangeSelected));
         OnPropertyChanged(nameof(IsSummarySelected));
+    }
+
+    private void OnElementPropertyChanging(object? sender, ElementPropertyChangingEventArgs e)
+    {
+        if (sender is ReportElementBase element)
+        {
+            // Skip position/size properties - these are tracked separately via drag/resize
+            if (e.PropertyName is "X" or "Y" or "Width" or "Height" or "ZOrder" or "Bounds")
+                return;
+
+            // Record property change for undo/redo
+            UndoRedoManager.RecordAction(new ElementPropertyChangeAction(
+                Configuration,
+                element.Id,
+                element.DisplayName,
+                e.PropertyName,
+                e.OldValue,
+                e.NewValue));
+        }
     }
 
     private void OnElementPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -1304,9 +1326,27 @@ public partial class ReportsPageViewModel : ViewModelBase
     public ObservableCollection<PageOrientation> Orientations { get; } =
         new(Enum.GetValues<PageOrientation>());
 
-    // Element property enum collections
-    public ObservableCollection<ChartDataType> ChartTypes { get; } =
-        new(Enum.GetValues<ChartDataType>());
+    // Element property enum collections - uses GetDisplayName() extension method for consistent naming
+    public ObservableCollection<ChartDataTypeOption> ChartTypeOptions { get; } =
+        new(Enum.GetValues<ChartDataType>().Select(t => new ChartDataTypeOption(t, t.GetDisplayName())));
+
+    /// <summary>
+    /// Gets or sets the selected chart data type option, syncing with SelectedChartElement.ChartType.
+    /// </summary>
+    public ChartDataTypeOption? SelectedChartDataTypeOption
+    {
+        get => SelectedChartElement != null
+            ? ChartTypeOptions.FirstOrDefault(o => o.Value == SelectedChartElement.ChartType)
+            : null;
+        set
+        {
+            if (SelectedChartElement != null && value != null)
+            {
+                SelectedChartElement.ChartType = value.Value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
     public ObservableCollection<ChartStyleOption> ChartStyleOptions { get; } =
     [
@@ -1710,31 +1750,31 @@ public partial class ReportsPageViewModel : ViewModelBase
         AvailableCharts.Clear();
 
         // Revenue charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalRevenue, "Total Revenue", "Revenue over time"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.RevenueDistribution, "Revenue Distribution", "Revenue by category"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.TotalRevenue, ChartDataType.TotalRevenue.GetDisplayName(), "Revenue over time"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.RevenueDistribution, ChartDataType.RevenueDistribution.GetDisplayName(), "Revenue by category"));
 
         // Expense charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalExpenses, "Total Expenses", "Expenses over time"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.ExpensesDistribution, "Expense Distribution", "Expenses by category"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.TotalExpenses, ChartDataType.TotalExpenses.GetDisplayName(), "Expenses over time"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.ExpensesDistribution, ChartDataType.ExpensesDistribution.GetDisplayName(), "Expenses by category"));
 
         // Financial charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.SalesVsExpenses, "Expenses vs Revenue", "Compare revenue and costs"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalProfits, "Total Profits", "Profit over time"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.GrowthRates, "Growth Rates", "Period-over-period growth"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.SalesVsExpenses, ChartDataType.SalesVsExpenses.GetDisplayName(), "Compare revenue and costs"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.TotalProfits, ChartDataType.TotalProfits.GetDisplayName(), "Profit over time"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.GrowthRates, ChartDataType.GrowthRates.GetDisplayName(), "Period-over-period growth"));
 
         // Transaction charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.AverageTransactionValue, "Avg. Transaction Value", "Average transaction amounts"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalTransactions, "Total Transactions", "Transaction volume"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.AverageTransactionValue, ChartDataType.AverageTransactionValue.GetDisplayName(), "Average transaction amounts"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.TotalTransactions, ChartDataType.TotalTransactions.GetDisplayName(), "Transaction volume"));
 
         // Geographic charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.WorldMap, "World Map", "Geographic distribution"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.CountriesOfOrigin, "Countries of Origin", "Sales by origin country"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.WorldMap, ChartDataType.WorldMap.GetDisplayName(), "Geographic distribution"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.CountriesOfOrigin, ChartDataType.CountriesOfOrigin.GetDisplayName(), "Sales by origin country"));
 
         // Return/Loss charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsOverTime, "Returns Over Time", "Return trends"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnReasons, "Return Reasons", "Why items are returned"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.LossesOverTime, "Losses Over Time", "Loss trends"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.LossReasons, "Loss Reasons", "Why items are lost"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsOverTime, ChartDataType.ReturnsOverTime.GetDisplayName(), "Return trends"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnReasons, ChartDataType.ReturnReasons.GetDisplayName(), "Why items are returned"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.LossesOverTime, ChartDataType.LossesOverTime.GetDisplayName(), "Loss trends"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.LossReasons, ChartDataType.LossReasons.GetDisplayName(), "Why items are lost"));
     }
 
     private void LoadTemplate(string templateName)
@@ -2067,6 +2107,14 @@ public partial class CustomTemplateOption : ObservableObject
 /// Represents a chart style option with a display name.
 /// </summary>
 public record ChartStyleOption(ReportChartStyle Value, string DisplayName)
+{
+    public override string ToString() => DisplayName;
+}
+
+/// <summary>
+/// Represents a chart data type option with a display name.
+/// </summary>
+public record ChartDataTypeOption(ChartDataType Value, string DisplayName)
 {
     public override string ToString() => DisplayName;
 }
