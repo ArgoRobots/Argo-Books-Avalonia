@@ -105,6 +105,33 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     [ObservableProperty]
     private DateTime _endDate = DateTime.Now;
 
+    // Temporary date values for the modal (before applying)
+    [ObservableProperty]
+    private DateTime _modalStartDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    [ObservableProperty]
+    private DateTime _modalEndDate = DateTime.Now;
+
+    /// <summary>
+    /// Gets or sets whether the custom date range modal is open.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isCustomDateRangeModalOpen;
+
+    /// <summary>
+    /// Gets or sets whether a custom date range has been applied.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AppliedDateRangeText))]
+    private bool _hasAppliedCustomRange;
+
+    /// <summary>
+    /// Gets the formatted text showing the applied custom date range.
+    /// </summary>
+    public string AppliedDateRangeText => HasAppliedCustomRange
+        ? $"{StartDate:MMM d, yyyy} - {EndDate:MMM d, yyyy}"
+        : string.Empty;
+
     /// <summary>
     /// Gets or sets the start date as DateTimeOffset for DatePicker binding.
     /// </summary>
@@ -138,6 +165,36 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     }
 
     /// <summary>
+    /// Gets or sets the modal start date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? ModalStartDateOffset
+    {
+        get => new DateTimeOffset(ModalStartDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                ModalStartDate = value.Value.DateTime;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the modal end date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? ModalEndDateOffset
+    {
+        get => new DateTimeOffset(ModalEndDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                ModalEndDate = value.Value.DateTime;
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets whether the custom date range option is selected.
     /// </summary>
     public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
@@ -162,8 +219,62 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         OnPropertyChanged(nameof(IsCustomDateRange));
         OnPropertyChanged(nameof(ComparisonPeriodLabel));
-        UpdateDateRangeFromSelection();
+
+        if (value == "Custom Range")
+        {
+            // Open the modal for custom date range selection
+            OpenCustomDateRangeModal();
+        }
+        else
+        {
+            // Reset the applied custom range flag when selecting a preset
+            HasAppliedCustomRange = false;
+            UpdateDateRangeFromSelection();
+            LoadAllCharts();
+        }
+    }
+
+    /// <summary>
+    /// Opens the custom date range modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenCustomDateRangeModal()
+    {
+        // Initialize modal dates with current values
+        ModalStartDate = StartDate;
+        ModalEndDate = EndDate;
+        OnPropertyChanged(nameof(ModalStartDateOffset));
+        OnPropertyChanged(nameof(ModalEndDateOffset));
+        IsCustomDateRangeModalOpen = true;
+    }
+
+    /// <summary>
+    /// Applies the custom date range from the modal.
+    /// </summary>
+    [RelayCommand]
+    private void ApplyCustomDateRange()
+    {
+        StartDate = ModalStartDate;
+        EndDate = ModalEndDate;
+        HasAppliedCustomRange = true;
+        OnPropertyChanged(nameof(AppliedDateRangeText));
+        IsCustomDateRangeModalOpen = false;
         LoadAllCharts();
+    }
+
+    /// <summary>
+    /// Cancels the custom date range modal.
+    /// </summary>
+    [RelayCommand]
+    private void CancelCustomDateRange()
+    {
+        IsCustomDateRangeModalOpen = false;
+
+        // If no custom range was previously applied, revert to default selection
+        if (!HasAppliedCustomRange)
+        {
+            SelectedDateRange = "This Month";
+        }
     }
 
     /// <summary>

@@ -1531,6 +1531,72 @@
                                ExportToExcelCommand="{Binding ExportToExcelCommand}"
                                ResetChartZoomCommand="{Binding ResetChartZoomCommand}"
                                CloseCommand="{Binding HideChartContextMenuCommand}" />
+
+    <!-- Custom Date Range Modal -->
+    <controls:ModalOverlay IsOpen="{Binding IsCustomDateRangeModalOpen}"
+                           CloseOnBackdropClick="False"
+                           CloseOnEscape="True">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="12"
+                Width="360"
+                BoxShadow="0 8 32 0 #40000000"
+                Padding="0">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Padding="24,20"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <TextBlock Text="Select Date Range"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                </Border>
+
+                <!-- Body -->
+                <StackPanel Grid.Row="1" Spacing="16" Margin="24,20">
+                    <!-- Start Date -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Start Date"
+                                   FontSize="13"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <DatePicker SelectedDate="{Binding ModalStartDateOffset}"
+                                    HorizontalAlignment="Stretch" />
+                    </StackPanel>
+
+                    <!-- End Date -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="End Date"
+                                   FontSize="13"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <DatePicker SelectedDate="{Binding ModalEndDateOffset}"
+                                    HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Padding="24,16"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Spacing="12">
+                        <Button Classes="secondary-button"
+                                Content="Cancel"
+                                Command="{Binding CancelCustomDateRangeCommand}" />
+                        <Button Classes="primary-button"
+                                Content="Apply"
+                                Command="{Binding ApplyCustomDateRangeCommand}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </controls:ModalOverlay>
     </Panel>
 
     <UserControl.Styles>

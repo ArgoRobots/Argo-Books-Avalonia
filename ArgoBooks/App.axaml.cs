@@ -94,6 +94,17 @@ public partial class App : Application
     /// </summary>
     public static RevenueModalsViewModel? RevenueModalsViewModel => _appShellViewModel?.RevenueModalsViewModel;
 
+    /// <summary>
+    /// Adds a notification to the notification panel.
+    /// </summary>
+    /// <param name="title">The notification title.</param>
+    /// <param name="message">The notification message.</param>
+    /// <param name="type">The notification type.</param>
+    public static void AddNotification(string title, string message, NotificationType type = NotificationType.Info)
+    {
+        _appShellViewModel?.AddNotification(title, message, type);
+    }
+
     #region Shared Table Column Widths
 
     /// <summary>

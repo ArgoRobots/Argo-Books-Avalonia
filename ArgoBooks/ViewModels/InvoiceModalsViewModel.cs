@@ -258,6 +258,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var invoice = App.CompanyManager?.CompanyData?.Invoices?.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
+        // Prevent editing invoices that have been sent
+        if (invoice.Status != InvoiceStatus.Draft && invoice.Status != InvoiceStatus.Pending)
+        {
+            App.AddNotification(
+                "Cannot Edit Invoice",
+                "Invoices that have been sent cannot be modified. Only Draft and Pending invoices can be edited.",
+                NotificationType.Warning);
+            return;
+        }
+
         _editingInvoiceId = invoice.Id;
         IsEditMode = true;
         ModalTitle = $"Edit Invoice {invoice.Id}";
