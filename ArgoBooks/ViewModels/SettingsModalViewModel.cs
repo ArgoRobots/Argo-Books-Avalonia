@@ -13,6 +13,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     // Store original values for reverting on cancel
     private string _originalTheme = "Dark";
     private string _originalAccentColor = "Blue";
+    private string _originalDateFormat = "MM/DD/YYYY";
 
     [ObservableProperty]
     private bool _isOpen;
@@ -298,7 +299,8 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public bool HasUnsavedChanges =>
         SelectedTheme != _originalTheme ||
-        SelectedAccentColor != _originalAccentColor;
+        SelectedAccentColor != _originalAccentColor ||
+        SelectedDateFormat != _originalDateFormat;
 
     /// <summary>
     /// Default constructor.
@@ -333,9 +335,17 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedTheme = ThemeService.Instance.CurrentThemeName;
         SelectedAccentColor = ThemeService.Instance.CurrentAccentColor;
 
+        // Load date format from company settings
+        var settings = App.CompanyManager?.CompanyData?.Settings;
+        if (settings != null)
+        {
+            SelectedDateFormat = settings.Localization.DateFormat;
+        }
+
         // Store original values for potential revert
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
+        _originalDateFormat = SelectedDateFormat;
         SelectedTabIndex = tabIndex;
         IsOpen = true;
     }
@@ -398,6 +408,10 @@ public partial class SettingsModalViewModel : ViewModelBase
             SelectedAccentColor = _originalAccentColor;
             ApplyAccentColor(_originalAccentColor);
         }
+        if (SelectedDateFormat != _originalDateFormat)
+        {
+            SelectedDateFormat = _originalDateFormat;
+        }
     }
 
     /// <summary>
@@ -409,7 +423,16 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Update original values to current (so close doesn't revert)
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
-        // TODO: Persist other settings
+        _originalDateFormat = SelectedDateFormat;
+
+        // Save date format to company settings
+        var settings = App.CompanyManager?.CompanyData?.Settings;
+        if (settings != null)
+        {
+            settings.Localization.DateFormat = SelectedDateFormat;
+            settings.ChangesMade = true;
+        }
+
         IsOpen = false;
     }
 
