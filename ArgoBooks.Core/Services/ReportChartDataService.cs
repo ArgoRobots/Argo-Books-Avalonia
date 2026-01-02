@@ -217,9 +217,22 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
-        var months = GetMonthsBetween(startDate, endDate);
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
 
-        var revenueData = months.Select(month =>
+        // Filter to only months that have actual sales or purchase data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var hasSales = _companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = _companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
+            return [];
+
+        var revenueData = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -234,7 +247,7 @@ public class ReportChartDataService
             };
         }).ToList();
 
-        var expenseData = months.Select(month =>
+        var expenseData = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -334,9 +347,23 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
-        var months = GetMonthsBetween(startDate, endDate);
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
 
-        return months.Select(month =>
+        // Filter to only months with actual transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            var hasRevenue = _filters.TransactionType is TransactionType.Revenue or TransactionType.Both &&
+                (_companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false);
+            var hasExpenses = _filters.TransactionType is TransactionType.Expenses or TransactionType.Both &&
+                (_companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false);
+
+            return hasRevenue || hasExpenses;
+        }).ToList();
+
+        return monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -376,9 +403,23 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
-        var months = GetMonthsBetween(startDate, endDate);
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
 
-        return months.Select(month =>
+        // Filter to only months with actual transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            var hasRevenue = _filters.TransactionType is TransactionType.Revenue or TransactionType.Both &&
+                (_companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false);
+            var hasExpenses = _filters.TransactionType is TransactionType.Expenses or TransactionType.Both &&
+                (_companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false);
+
+            return hasRevenue || hasExpenses;
+        }).ToList();
+
+        return monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -516,9 +557,21 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
-        var months = GetMonthsBetween(startDate, endDate);
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
 
-        return months.Select(month =>
+        // Filter to only months with actual transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+            var hasSales = _companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = _companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        return monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -732,10 +785,21 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
-        var months = GetMonthsBetween(startDate, endDate);
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
+
+        // Filter to only months with actual return data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return _companyData.Returns.Any(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd);
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
+            return [];
 
         // Current Return model represents returns from sales (customer returns)
-        var saleReturns = months.Select(month =>
+        var saleReturns = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -750,7 +814,7 @@ public class ReportChartDataService
         }).ToList();
 
         // No purchase returns in current model - return empty series
-        var purchaseReturns = months.Select(month => new ChartDataPoint
+        var purchaseReturns = monthsWithData.Select(month => new ChartDataPoint
         {
             Label = month.ToString("MMM yyyy"),
             Value = 0,
@@ -898,10 +962,21 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
-        var months = GetMonthsBetween(startDate, endDate);
+        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
+
+        // Filter to only months with actual loss data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return _companyData.LostDamaged.Any(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd);
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
+            return [];
 
         // Group by reason type - show Damaged vs Lost as the two main categories
-        var damagedLosses = months.Select(month =>
+        var damagedLosses = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -916,7 +991,7 @@ public class ReportChartDataService
             };
         }).ToList();
 
-        var lostLosses = months.Select(month =>
+        var lostLosses = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
