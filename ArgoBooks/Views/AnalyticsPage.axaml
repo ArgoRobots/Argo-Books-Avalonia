@@ -39,6 +39,7 @@
 
                         <!-- Chart Type Selector -->
                         <controls:ChartTypeSelector Grid.Column="1"
+                                                    VerticalAlignment="Top"
                                                     Margin="0,0,16,0"
                                                     IsVisible="{Binding !IsGeographicTabSelected}" />
 
