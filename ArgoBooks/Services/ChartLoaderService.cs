@@ -670,17 +670,27 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        // Get months in range
-        var months = new List<DateTime>();
+        // Get months that have actual data (sales or purchases)
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
         {
             _chartExportDataByTitle["Expenses vs Revenue"] = new ChartExportData
             {
@@ -693,10 +703,10 @@ public class ChartLoaderService
             return (series, labels);
         }
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
         // Calculate revenue per month
-        var revenueValues = months.Select(month =>
+        var revenueValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -706,7 +716,7 @@ public class ChartLoaderService
         }).ToArray();
 
         // Calculate expenses per month
-        var expenseValues = months.Select(month =>
+        var expenseValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -905,25 +915,34 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-12);
 
-        var months = new List<DateTime>();
+        // Get months that have actual sales data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count < 2)
+        // Filter to only months with sales data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+        }).ToList();
+
+        if (monthsWithData.Count < 2)
             return (series, labels);
 
         var growthRates = new List<double>();
         var growthLabels = new List<string>();
 
-        for (int i = 1; i < months.Count; i++)
+        for (int i = 1; i < monthsWithData.Count; i++)
         {
-            var currentMonth = months[i];
-            var previousMonth = months[i - 1];
+            var currentMonth = monthsWithData[i];
+            var previousMonth = monthsWithData[i - 1];
 
             var currentMonthStart = new DateTime(currentMonth.Year, currentMonth.Month, 1);
             var currentMonthEnd = currentMonthStart.AddMonths(1).AddDays(-1);
@@ -997,21 +1016,32 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual transaction data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var avgValues = months.Select(month =>
+        var avgValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -1073,21 +1103,32 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual transaction data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var countValues = months.Select(month =>
+        var countValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -1144,21 +1185,32 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual transaction data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with transaction data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var hasSales = companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
+            var hasPurchases = companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            return hasSales || hasPurchases;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var avgShipping = months.Select(month =>
+        var avgShipping = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -1901,21 +1953,30 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual return data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with return data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return companyData.Returns?.Any(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd) ?? false;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels, totalImpact);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var impactValues = months.Select(month =>
+        var impactValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
@@ -2026,21 +2087,30 @@ public class ChartLoaderService
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddMonths(-6);
 
-        var months = new List<DateTime>();
+        // Get months that have actual loss data
+        var allMonths = new List<DateTime>();
         var current = new DateTime(start.Year, start.Month, 1);
         var endMonth = new DateTime(end.Year, end.Month, 1);
         while (current <= endMonth)
         {
-            months.Add(current);
+            allMonths.Add(current);
             current = current.AddMonths(1);
         }
 
-        if (months.Count == 0)
+        // Filter to only months with loss data
+        var monthsWithData = allMonths.Where(month =>
+        {
+            var monthStart = new DateTime(month.Year, month.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            return companyData.LostDamaged?.Any(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd) ?? false;
+        }).ToList();
+
+        if (monthsWithData.Count == 0)
             return (series, labels, totalImpact);
 
-        labels = months.Select(m => m.ToString("MMM yyyy")).ToArray();
+        labels = monthsWithData.Select(m => m.ToString("MMM yyyy")).ToArray();
 
-        var impactValues = months.Select(month =>
+        var impactValues = monthsWithData.Select(month =>
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);

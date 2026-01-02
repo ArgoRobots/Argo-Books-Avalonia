@@ -106,6 +106,38 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private DateTime _endDate = DateTime.Now;
 
     /// <summary>
+    /// Gets or sets the start date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? StartDateOffset
+    {
+        get => new DateTimeOffset(StartDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                StartDate = value.Value.DateTime;
+                LoadAllCharts();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the end date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? EndDateOffset
+    {
+        get => new DateTimeOffset(EndDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                EndDate = value.Value.DateTime;
+                LoadAllCharts();
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets whether the custom date range option is selected.
     /// </summary>
     public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
