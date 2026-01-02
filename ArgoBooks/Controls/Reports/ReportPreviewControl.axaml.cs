@@ -278,11 +278,12 @@ public partial class ReportPreviewControl : UserControl
             var config = Configuration;
             var width = (int)_pageWidth;
             var height = (int)_pageHeight;
+            var companyData = App.CompanyManager?.CompanyData;
 
             await Task.Run(() =>
             {
-                // Generate preview bitmap using SkiaSharp
-                using var renderer = new ReportRenderer(config!, null);
+                // Generate preview bitmap using SkiaSharp with company data for chart rendering
+                using var renderer = new ReportRenderer(config!, companyData);
                 using var skBitmap = renderer.CreatePreview(width, height);
 
                 // Convert SKBitmap to Avalonia Bitmap

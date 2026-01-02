@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Data;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -52,6 +53,238 @@ public partial class InsightsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isRefreshing;
+
+    #endregion
+
+    #region Date Range
+
+    /// <summary>
+    /// Available date range options.
+    /// </summary>
+    public ObservableCollection<string> DateRangeOptions { get; } =
+    [
+        "This Month",
+        "Last Month",
+        "This Quarter",
+        "Last Quarter",
+        "This Year",
+        "Last Year",
+        "All Time",
+        "Custom Range"
+    ];
+
+    [ObservableProperty]
+    private string _selectedDateRange = "This Month";
+
+    [ObservableProperty]
+    private DateTime _startDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    [ObservableProperty]
+    private DateTime _endDate = DateTime.Now;
+
+    // Temporary date values for the modal (before applying)
+    [ObservableProperty]
+    private DateTime _modalStartDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    [ObservableProperty]
+    private DateTime _modalEndDate = DateTime.Now;
+
+    /// <summary>
+    /// Gets or sets whether the custom date range modal is open.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isCustomDateRangeModalOpen;
+
+    /// <summary>
+    /// Gets or sets whether a custom date range has been applied.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AppliedDateRangeText))]
+    private bool _hasAppliedCustomRange;
+
+    /// <summary>
+    /// Gets the formatted text showing the applied custom date range.
+    /// </summary>
+    public string AppliedDateRangeText => HasAppliedCustomRange
+        ? $"{StartDate:MMM d, yyyy} - {EndDate:MMM d, yyyy}"
+        : string.Empty;
+
+    /// <summary>
+    /// Gets or sets the modal start date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? ModalStartDateOffset
+    {
+        get => new DateTimeOffset(ModalStartDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                ModalStartDate = value.Value.DateTime;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the modal end date as DateTimeOffset for DatePicker binding.
+    /// </summary>
+    public DateTimeOffset? ModalEndDateOffset
+    {
+        get => new DateTimeOffset(ModalEndDate);
+        set
+        {
+            if (value.HasValue)
+            {
+                ModalEndDate = value.Value.DateTime;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether the custom date range option is selected.
+    /// </summary>
+    public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
+
+    partial void OnSelectedDateRangeChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsCustomDateRange));
+
+        if (value == "Custom Range")
+        {
+            OpenCustomDateRangeModal();
+        }
+        else
+        {
+            HasAppliedCustomRange = false;
+            UpdateDateRangeFromSelection();
+            RefreshForecastData();
+        }
+    }
+
+    /// <summary>
+    /// Opens the custom date range modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenCustomDateRangeModal()
+    {
+        ModalStartDate = StartDate;
+        ModalEndDate = EndDate;
+        OnPropertyChanged(nameof(ModalStartDateOffset));
+        OnPropertyChanged(nameof(ModalEndDateOffset));
+        IsCustomDateRangeModalOpen = true;
+    }
+
+    /// <summary>
+    /// Applies the custom date range from the modal.
+    /// </summary>
+    [RelayCommand]
+    private async Task ApplyCustomDateRange()
+    {
+        if (ModalStartDate > ModalEndDate)
+        {
+            var result = await App.ConfirmationDialog!.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Invalid Date Range",
+                Message = "The start date is after the end date. Would you like to swap the dates?",
+                PrimaryButtonText = "Swap Dates",
+                CancelButtonText = "Cancel"
+            });
+
+            if (result == ConfirmationResult.Primary)
+            {
+                (ModalStartDate, ModalEndDate) = (ModalEndDate, ModalStartDate);
+                OnPropertyChanged(nameof(ModalStartDateOffset));
+                OnPropertyChanged(nameof(ModalEndDateOffset));
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        StartDate = ModalStartDate;
+        EndDate = ModalEndDate;
+        HasAppliedCustomRange = true;
+        OnPropertyChanged(nameof(AppliedDateRangeText));
+        IsCustomDateRangeModalOpen = false;
+        RefreshForecastData();
+    }
+
+    /// <summary>
+    /// Cancels the custom date range modal.
+    /// </summary>
+    [RelayCommand]
+    private void CancelCustomDateRange()
+    {
+        IsCustomDateRangeModalOpen = false;
+
+        if (!HasAppliedCustomRange)
+        {
+            SelectedDateRange = "This Month";
+        }
+    }
+
+    /// <summary>
+    /// Updates the start and end dates based on the selected date range option.
+    /// </summary>
+    private void UpdateDateRangeFromSelection()
+    {
+        var now = DateTime.Now;
+
+        switch (SelectedDateRange)
+        {
+            case "This Month":
+                StartDate = new DateTime(now.Year, now.Month, 1);
+                EndDate = now;
+                break;
+
+            case "Last Month":
+                var lastMonth = now.AddMonths(-1);
+                StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
+                EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
+                break;
+
+            case "This Quarter":
+                var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
+                StartDate = quarterStart;
+                EndDate = now;
+                break;
+
+            case "Last Quarter":
+                var lastQuarterEnd = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1);
+                var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
+                lastQuarterStart = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
+                StartDate = lastQuarterStart;
+                EndDate = lastQuarterEnd;
+                break;
+
+            case "This Year":
+                StartDate = new DateTime(now.Year, 1, 1);
+                EndDate = now;
+                break;
+
+            case "Last Year":
+                StartDate = new DateTime(now.Year - 1, 1, 1);
+                EndDate = new DateTime(now.Year - 1, 12, 31);
+                break;
+
+            case "All Time":
+                StartDate = new DateTime(2000, 1, 1);
+                EndDate = now;
+                break;
+
+            case "Custom Range":
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Refreshes the forecast data based on the selected date range.
+    /// </summary>
+    private void RefreshForecastData()
+    {
+        // In a real implementation, this would recalculate forecasts based on the date range
+        // For now, this is a placeholder for future functionality
+    }
 
     #endregion
 

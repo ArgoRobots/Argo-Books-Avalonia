@@ -1101,7 +1101,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             }
             else
             {
-                chartType = _chartLoaderService.UseLineChart
+                chartType = _chartLoaderService.SelectedChartStyle == ChartStyle.Line
                     ? ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Line
                     : ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column;
             }

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:modals="using:ArgoBooks.Modals"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.InsightsPage"
              x:DataType="vm:InsightsPageViewModel">
@@ -13,6 +14,7 @@
     </Design.DataContext>
 
     <!-- Main Content -->
+    <Panel>
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
         <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24">
@@ -115,7 +117,7 @@
                     Margin="0,0,0,24">
                 <StackPanel Spacing="20">
                     <!-- Section Header -->
-                    <Grid ColumnDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
                         <Border Grid.Column="0"
                                 Width="32" Height="32"
                                 CornerRadius="8"
@@ -134,6 +136,8 @@
                                        FontSize="12"
                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                         </StackPanel>
+                        <!-- Date Range Selector -->
+                        <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Top" />
                     </Grid>
 
                     <!-- Forecast Cards using StatCard control -->
@@ -142,18 +146,21 @@
                                            Value="{Binding ForecastedRevenue}"
                                            ChangeValue="{Binding RevenueGrowthValue}"
                                            ChangeText="{Binding RevenueGrowth}"
+                                           ChangeLabel="from current period"
                                            UseAltBackground="True"
                                            Margin="0,0,8,0" />
                         <controls:StatCard Label="Next Month Expenses"
                                            Value="{Binding ForecastedExpenses}"
                                            ChangeValue="{Binding ExpenseGrowthValue}"
                                            ChangeText="{Binding ExpenseGrowth}"
+                                           ChangeLabel="from current period"
                                            UseAltBackground="True"
                                            Margin="8,0" />
                         <controls:StatCard Label="Projected Profit"
                                            Value="{Binding ForecastedProfit}"
                                            ChangeValue="{Binding ProfitGrowthValue}"
                                            ChangeText="{Binding ProfitGrowth}"
+                                           ChangeLabel="from current period"
                                            ValueColor="Success"
                                            UseAltBackground="True"
                                            Margin="8,0" />
@@ -161,6 +168,7 @@
                                            Value="{Binding ForecastedCustomers}"
                                            ChangeValue="{Binding CustomerGrowthValue}"
                                            ChangeText="{Binding CustomerGrowth}"
+                                           ChangeLabel="from current period"
                                            UseAltBackground="True"
                                            Margin="8,0,0,0" />
                     </UniformGrid>
@@ -480,4 +488,8 @@
             </Grid>
         </Grid>
     </ScrollViewer>
+
+    <!-- Custom Date Range Modal -->
+    <modals:CustomDateRangeModal />
+    </Panel>
 </UserControl>
