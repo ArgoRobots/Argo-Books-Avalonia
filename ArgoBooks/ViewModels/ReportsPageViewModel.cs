@@ -368,12 +368,14 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (oldValue != null)
         {
             oldValue.PropertyChanged -= OnElementPropertyChanged;
+            oldValue.PropertyChanging -= OnElementPropertyChanging;
         }
 
         // Subscribe to new element
         if (newValue != null)
         {
             newValue.PropertyChanged += OnElementPropertyChanged;
+            newValue.PropertyChanging += OnElementPropertyChanging;
         }
 
         OnPropertyChanged(nameof(SelectedChartElement));
@@ -389,6 +391,25 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsTableSelected));
         OnPropertyChanged(nameof(IsDateRangeSelected));
         OnPropertyChanged(nameof(IsSummarySelected));
+    }
+
+    private void OnElementPropertyChanging(object? sender, ElementPropertyChangingEventArgs e)
+    {
+        if (sender is ReportElementBase element)
+        {
+            // Skip position/size properties - these are tracked separately via drag/resize
+            if (e.PropertyName is "X" or "Y" or "Width" or "Height" or "ZOrder" or "Bounds")
+                return;
+
+            // Record property change for undo/redo
+            UndoRedoManager.RecordAction(new ElementPropertyChangeAction(
+                Configuration,
+                element.Id,
+                element.DisplayName,
+                e.PropertyName,
+                e.OldValue,
+                e.NewValue));
+        }
     }
 
     private void OnElementPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
