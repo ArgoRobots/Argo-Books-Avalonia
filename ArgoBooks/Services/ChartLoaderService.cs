@@ -1,5 +1,8 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Charts;
+using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using LiveChartsCore;
@@ -442,6 +445,113 @@ public class ChartLoaderService
 
         return [axis];
     }
+
+    #region Shared Data Model Conversion
+
+    /// <summary>
+    /// Converts a list of ChartDataPoint objects to a LiveChartsCore series.
+    /// This enables using the shared ReportChartDataService for data fetching.
+    /// </summary>
+    /// <param name="dataPoints">The chart data points from the shared service.</param>
+    /// <param name="seriesName">The name of the series.</param>
+    /// <param name="color">The color for the series.</param>
+    /// <returns>A configured ISeries for LiveChartsCore.</returns>
+    public ISeries ConvertToSeries(List<ChartDataPoint> dataPoints, string seriesName, SKColor color)
+    {
+        if (dataPoints.Count == 0)
+        {
+            return new ColumnSeries<double> { Values = [], Name = seriesName };
+        }
+
+        // Check if we have date-based data
+        if (dataPoints.All(p => p.Date.HasValue))
+        {
+            var dates = dataPoints.Select(p => p.Date!.Value).ToArray();
+            var values = dataPoints.Select(p => p.Value).ToArray();
+            return CreateDateTimeSeries(dates, values, seriesName, color);
+        }
+
+        // Use categorical (label-based) series
+        var categoryValues = dataPoints.Select(p => p.Value).ToArray();
+        return CreateTimeSeries(categoryValues, seriesName, color);
+    }
+
+    /// <summary>
+    /// Converts a list of ChartDataPoint objects to a pie chart series.
+    /// </summary>
+    /// <param name="dataPoints">The chart data points from the shared service.</param>
+    /// <returns>A collection of PieSeries for LiveChartsCore.</returns>
+    public ObservableCollection<ISeries> ConvertToPieSeries(List<ChartDataPoint> dataPoints)
+    {
+        var series = new ObservableCollection<ISeries>();
+
+        if (dataPoints.Count == 0)
+            return series;
+
+        var colors = GetDistributionColors(dataPoints.Count);
+
+        for (int i = 0; i < dataPoints.Count; i++)
+        {
+            var point = dataPoints[i];
+            var color = !string.IsNullOrEmpty(point.Color)
+                ? SKColor.Parse(point.Color)
+                : colors[i % colors.Length];
+
+            series.Add(new PieSeries<double>
+            {
+                Values = [point.Value],
+                Name = point.Label,
+                Fill = new SolidColorPaint(color),
+                DataLabelsSize = LegendTextSize,
+                DataLabelsPaint = new SolidColorPaint(_textColor),
+                DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Outer
+            });
+        }
+
+        return series;
+    }
+
+    /// <summary>
+    /// Converts multi-series chart data to LiveChartsCore series.
+    /// Used for charts like Sales vs Expenses.
+    /// </summary>
+    /// <param name="seriesDataList">The multi-series data from the shared service.</param>
+    /// <returns>A collection of ISeries for LiveChartsCore.</returns>
+    public ObservableCollection<ISeries> ConvertMultiSeriesToLiveCharts(List<ChartSeriesData> seriesDataList)
+    {
+        var series = new ObservableCollection<ISeries>();
+
+        foreach (var seriesData in seriesDataList)
+        {
+            var color = SKColor.Parse(seriesData.Color);
+            series.Add(ConvertToSeries(seriesData.DataPoints, seriesData.Name, color));
+        }
+
+        return series;
+    }
+
+    /// <summary>
+    /// Gets an array of colors for distribution charts.
+    /// </summary>
+    private static SKColor[] GetDistributionColors(int count)
+    {
+        // Predefined colors for distribution charts (matching WinForms/dashboard style)
+        return
+        [
+            SKColor.Parse("#6495ED"), // Cornflower Blue
+            SKColor.Parse("#22C55E"), // Green
+            SKColor.Parse("#F59E0B"), // Amber
+            SKColor.Parse("#EF4444"), // Red
+            SKColor.Parse("#8B5CF6"), // Violet
+            SKColor.Parse("#EC4899"), // Pink
+            SKColor.Parse("#06B6D4"), // Cyan
+            SKColor.Parse("#84CC16"), // Lime
+            SKColor.Parse("#F97316"), // Orange
+            SKColor.Parse("#6366F1")  // Indigo
+        ];
+    }
+
+    #endregion
 
     /// <summary>
     /// Creates the tooltip paint for charts.

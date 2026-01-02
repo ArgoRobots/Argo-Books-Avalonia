@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Charts;
 using ArgoBooks.Core.Models.Reports;
 
 namespace ArgoBooks.Core.Services;
@@ -1013,25 +1014,4 @@ public class ReportChartDataService
     }
 
     #endregion
-}
-
-/// <summary>
-/// Represents a single data point in a chart.
-/// </summary>
-public class ChartDataPoint
-{
-    public string Label { get; set; } = string.Empty;
-    public double Value { get; set; }
-    public DateTime? Date { get; set; }
-    public string? Color { get; set; }
-}
-
-/// <summary>
-/// Represents a series of data points for multi-series charts.
-/// </summary>
-public class ChartSeriesData
-{
-    public string Name { get; set; } = string.Empty;
-    public string Color { get; set; } = "#000000";
-    public List<ChartDataPoint> DataPoints { get; set; } = [];
 }
