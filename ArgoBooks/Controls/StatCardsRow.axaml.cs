@@ -13,7 +13,7 @@ public class StatCardsRow : Panel
     protected override Size MeasureOverride(Size availableSize)
     {
         var childCount = Children.Count;
-        if (childCount == 0) return Size.Empty;
+        if (childCount == 0) return default;
 
         // Calculate available width per column (accounting for margins: 6px between each)
         var totalMargin = (childCount - 1) * 12.0; // 6px right + 6px left between adjacent cards
