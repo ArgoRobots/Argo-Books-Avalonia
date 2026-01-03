@@ -112,7 +112,7 @@
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="Enter notes (optional)"
+                                         Watermark="Enter notes"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"
@@ -216,7 +216,7 @@
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="Enter notes (optional)"
+                                         Watermark="Enter notes"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"

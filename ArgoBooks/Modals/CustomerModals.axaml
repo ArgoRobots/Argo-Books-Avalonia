@@ -82,7 +82,7 @@
                             <!-- Company Name -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Company" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name (optional)" />
+                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name" />
                             </StackPanel>
 
                             <!-- Email and Phone Row -->
@@ -135,7 +135,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes (optional)"
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                         </StackPanel>
@@ -201,7 +201,7 @@
                             <!-- Company Name -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Company" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name (optional)" />
+                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name" />
                             </StackPanel>
 
                             <!-- Email and Phone Row -->
@@ -254,7 +254,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes (optional)"
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                         </StackPanel>

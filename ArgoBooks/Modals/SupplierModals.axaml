@@ -70,7 +70,7 @@
                             </Grid>
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Notes (optional)" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -149,7 +149,7 @@
                             </Grid>
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Notes (optional)" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
