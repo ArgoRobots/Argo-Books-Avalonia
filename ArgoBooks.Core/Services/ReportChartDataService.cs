@@ -480,6 +480,8 @@ public class ReportChartDataService
                 Label = g.Key,
                 Value = (double)g.Sum(s => s.Total)
             })
+            // Filter out "Unknown" entries with zero or negligible value
+            .Where(p => p.Label != "Unknown" || p.Value > 0.01)
             .OrderByDescending(p => p.Value)
             .Take(10)
             .ToList();
