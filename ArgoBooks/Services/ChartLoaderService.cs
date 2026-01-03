@@ -1363,8 +1363,8 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads companies of origin (sales by customer) as a pie chart.
-    /// Uses ReportChartDataService for data fetching.
+    /// Loads companies of origin (supplier companies from purchases) as a pie chart.
+    /// Uses same logic as LoadWorldMapDataBySupplier for consistency.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCompaniesOfOriginChart(
         CompanyData? companyData,
@@ -1374,10 +1374,33 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        var filters = CreateFilters(startDate, endDate);
-        var dataService = new ReportChartDataService(companyData, filters);
+        if (companyData?.Purchases == null)
+            return (series, total);
 
-        var dataPoints = dataService.GetSalesByCompanyOfOrigin().Take(8).ToList();
+        var end = endDate ?? DateTime.Now;
+        var start = startDate ?? end.AddDays(-30);
+
+        // Get supplier companies from purchases (same logic as LoadWorldMapDataBySupplier)
+        var purchasesInRange = companyData.Purchases
+            .Where(p => p.Date >= start && p.Date <= end)
+            .ToList();
+
+        var dataPoints = purchasesInRange
+            .GroupBy(p =>
+            {
+                var supplierId = GetEffectiveSupplierId(p, companyData);
+                if (!string.IsNullOrEmpty(supplierId))
+                {
+                    var supplier = companyData.GetSupplier(supplierId);
+                    return supplier?.CompanyName ?? "Unknown";
+                }
+                return "Unknown";
+            })
+            .Where(g => g.Key != "Unknown")
+            .Select(g => new { Label = g.Key, Value = (double)g.Sum(p => p.Total) })
+            .OrderByDescending(p => p.Value)
+            .Take(8)
+            .ToList();
 
         if (dataPoints.Count == 0)
             return (series, total);
@@ -1405,8 +1428,8 @@ public class ChartLoaderService
             Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = (double)total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
+            StartDate = start,
+            EndDate = end
         };
 
         return (series, total);
