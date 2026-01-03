@@ -14,8 +14,8 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     private readonly INavigationService? _navigationService;
     private SidebarViewModel? _sidebarViewModel;
 
-    // Header button offset from sidebar edge (accounts for hamburger button and padding)
-    private const double HeaderButtonOffset = 56;
+    // Header button offset from sidebar edge (matches header's left padding)
+    private const double HeaderButtonOffset = 16;
     // Width of the main file menu panel
     private const double PanelWidth = 240;
     // Vertical offset of submenu from main panel top
