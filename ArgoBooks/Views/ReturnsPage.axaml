@@ -38,114 +38,25 @@
                     </TabControl>
                 </Border>
 
-                <!-- Statistics Cards (Row 1) -->
-                <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
-                    <Grid.Styles>
-                        <Style Selector="Border.stat-card">
-                            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-                            <Setter Property="CornerRadius" Value="12" />
-                            <Setter Property="Padding" Value="20" />
-                            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                            <Setter Property="BorderThickness" Value="1" />
-                        </Style>
-                    </Grid.Styles>
-
-                    <!-- Total Returns -->
-                    <Border Grid.Column="0" Classes="stat-card" Margin="0,0,12,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="#DBEAFE"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7h-2z"
-                                          Width="24" Height="24"
-                                          Foreground="#3B82F6" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding TotalReturns}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Total Returns"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Expense Returns -->
-                    <Border Grid.Column="1" Classes="stat-card" Margin="6,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="#FEE2E2"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
-                                          Width="24" Height="24"
-                                          Foreground="#DC2626" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding ExpenseReturns}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Expense Returns"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Customer Returns -->
-                    <Border Grid.Column="2" Classes="stat-card" Margin="6,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="#DCFCE7"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
-                                          Width="24" Height="24"
-                                          Foreground="#22C55E" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding CustomerReturns}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Customer Returns"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Total Refunded -->
-                    <Border Grid.Column="3" Classes="stat-card" Margin="12,0,0,0">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0"
-                                    Width="48" Height="48"
-                                    CornerRadius="10"
-                                    Background="#F3E8FF"
-                                    Margin="0,0,16,0">
-                                <PathIcon Data="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"
-                                          Width="24" Height="24"
-                                          Foreground="#9333EA" />
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding TotalRefunded}"
-                                           FontSize="28"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Total Refunded"
-                                           FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-                </Grid>
+                <!-- Statistics Cards Row -->
+                <controls:StatCardsRow Grid.Row="1" Margin="0,0,0,24">
+                    <controls:StatCard Label="Total Returns"
+                                       Value="{Binding TotalReturns}"
+                                       Icon="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7h-2z"
+                                       IconColor="Primary" />
+                    <controls:StatCard Label="Expense Returns"
+                                       Value="{Binding ExpenseReturns}"
+                                       Icon="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                                       IconColor="Danger" />
+                    <controls:StatCard Label="Customer Returns"
+                                       Value="{Binding CustomerReturns}"
+                                       Icon="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
+                                       IconColor="Success" />
+                    <controls:StatCard Label="Total Refunded"
+                                       Value="{Binding TotalRefunded}"
+                                       Icon="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"
+                                       IconColor="Info" />
+                </controls:StatCardsRow>
 
                 <!-- Main Content Card (Row 2) -->
                 <Border Grid.Row="2"

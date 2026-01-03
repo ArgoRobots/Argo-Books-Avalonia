@@ -22,114 +22,25 @@
     <Grid RowDefinitions="*">
         <!-- Main Content -->
         <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
-            <!-- Statistics Cards (Row 0) -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
-                <Grid.Styles>
-                    <Style Selector="Border.stat-card">
-                        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-                        <Setter Property="CornerRadius" Value="12" />
-                        <Setter Property="Padding" Value="20" />
-                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                        <Setter Property="BorderThickness" Value="1" />
-                    </Style>
-                </Grid.Styles>
-
-                <!-- Total Customers -->
-                <Border Grid.Column="0" Classes="stat-card" Margin="0,0,12,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#DBEAFE"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                                      Width="24" Height="24"
-                                      Foreground="#3B82F6" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding TotalCustomers}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Total Customers"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Active Customers -->
-                <Border Grid.Column="1" Classes="stat-card" Margin="6,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#DCFCE7"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                                      Width="24" Height="24"
-                                      Foreground="#22C55E" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding ActiveCustomers}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Active Customers"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Overdue Payments -->
-                <Border Grid.Column="2" Classes="stat-card" Margin="6,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#FEF3C7"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
-                                      Width="24" Height="24"
-                                      Foreground="#F59E0B" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding OverduePayments}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Overdue Payments"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Banned Customers -->
-                <Border Grid.Column="3" Classes="stat-card" Margin="12,0,0,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#FEE2E2"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
-                                      Width="24" Height="24"
-                                      Foreground="#DC2626" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding BannedCustomers}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Banned Customers"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </Grid>
+            <!-- Statistics Cards Row -->
+            <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
+                <controls:StatCard Label="Total Customers"
+                                   Value="{Binding TotalCustomers}"
+                                   Icon="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                                   IconColor="Primary" />
+                <controls:StatCard Label="Active Customers"
+                                   Value="{Binding ActiveCustomers}"
+                                   Icon="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                   IconColor="Success" />
+                <controls:StatCard Label="Overdue Payments"
+                                   Value="{Binding OverduePayments}"
+                                   Icon="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                   IconColor="Warning" />
+                <controls:StatCard Label="Banned Customers"
+                                   Value="{Binding BannedCustomers}"
+                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
+                                   IconColor="Danger" />
+            </controls:StatCardsRow>
 
             <!-- Main Content Card (Row 1) -->
             <Border Grid.Row="1"
