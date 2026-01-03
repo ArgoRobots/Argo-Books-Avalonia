@@ -1001,11 +1001,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         // Initialize with default values
         UpdateDateRangeFromSelection();
 
-        // Subscribe to theme changes to update legend text color and chart titles
+        // Subscribe to theme changes to reload charts with new colors
         ThemeService.Instance.ThemeChanged += (_, _) =>
         {
-            OnPropertyChanged(nameof(LegendTextPaint));
-            NotifyAllChartTitlesChanged();
+            LoadAllCharts();
         };
 
         // Subscribe to date format changes to refresh charts
