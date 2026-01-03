@@ -24,36 +24,37 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled">
             <Grid RowDefinitions="Auto,*" Margin="24">
-                <!-- Statistics Cards (Row 0) -->
-                <UniformGrid Grid.Row="0" Columns="4" Rows="1" Margin="0,0,0,24">
-                    <!-- Total Receipts -->
-                    <controls:StatCard Label="Total Receipts"
-                                       Value="{Binding TotalReceipts}"
-                                       Icon="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z"
-                                       IconColor="Primary"
-                                       Margin="0,0,12,0" />
-
-                    <!-- Expense Receipts -->
-                    <controls:StatCard Label="Expense Receipts"
-                                       Value="{Binding ExpenseReceipts}"
-                                       Icon="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
-                                       IconColor="Danger"
-                                       Margin="6,0" />
-
-                    <!-- Revenue Receipts -->
-                    <controls:StatCard Label="Revenue Receipts"
-                                       Value="{Binding RevenueReceipts}"
-                                       Icon="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
-                                       IconColor="Success"
-                                       Margin="6,0" />
-
-                    <!-- AI Scanned -->
-                    <controls:StatCard Label="AI Scanned"
-                                       Value="{Binding AiScannedReceipts}"
-                                       Icon="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"
-                                       IconColor="Info"
-                                       Margin="12,0,0,0" />
-                </UniformGrid>
+                <!-- Statistics Cards (Row 0) - uses 2-column layout for consistent alignment -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,*" Margin="0,0,0,24">
+                    <!-- Left half -->
+                    <Grid Grid.Column="0" ColumnDefinitions="*,*" Margin="0,0,12,0">
+                        <controls:StatCard Grid.Column="0"
+                                           Label="Total Receipts"
+                                           Value="{Binding TotalReceipts}"
+                                           Icon="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z"
+                                           IconColor="Primary"
+                                           Margin="0,0,12,0" />
+                        <controls:StatCard Grid.Column="1"
+                                           Label="Expense Receipts"
+                                           Value="{Binding ExpenseReceipts}"
+                                           Icon="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
+                                           IconColor="Danger" />
+                    </Grid>
+                    <!-- Right half -->
+                    <Grid Grid.Column="1" ColumnDefinitions="*,*" Margin="12,0,0,0">
+                        <controls:StatCard Grid.Column="0"
+                                           Label="Revenue Receipts"
+                                           Value="{Binding RevenueReceipts}"
+                                           Icon="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
+                                           IconColor="Success"
+                                           Margin="0,0,12,0" />
+                        <controls:StatCard Grid.Column="1"
+                                           Label="AI Scanned"
+                                           Value="{Binding AiScannedReceipts}"
+                                           Icon="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"
+                                           IconColor="Info" />
+                    </Grid>
+                </Grid>
 
                 <!-- Main Content Card (Row 1) -->
                 <Border Grid.Row="1"
