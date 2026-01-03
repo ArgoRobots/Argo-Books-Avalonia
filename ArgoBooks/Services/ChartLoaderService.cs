@@ -1188,7 +1188,7 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads countries of origin (sales by customer country) as a pie chart.
+    /// Loads countries of origin (supplier countries from purchases) as a pie chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCountriesOfOriginChart(
@@ -1202,7 +1202,8 @@ public class ChartLoaderService
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetSalesByCountryOfOrigin().Take(8).ToList();
+        // Countries of Origin = supplier countries from purchases
+        var dataPoints = dataService.GetPurchasesByCountryOfDestination().Take(8).ToList();
 
         if (dataPoints.Count == 0)
             return (series, total);
