@@ -55,7 +55,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     }
 
     // Notify SelectedSupplier when SelectedCounterparty changes so UI bindings update
-    partial void OnSelectedCounterpartyChanged(CounterpartyOption? value)
+    protected override void OnCounterpartyChanged(CounterpartyOption? value)
     {
         OnPropertyChanged(nameof(SelectedSupplier));
     }

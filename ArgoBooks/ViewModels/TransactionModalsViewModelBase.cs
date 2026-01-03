@@ -131,6 +131,18 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [ObservableProperty]
     private CounterpartyOption? _selectedCounterparty;
 
+    // Called when SelectedCounterparty changes - allows derived classes to notify alias properties
+    partial void OnSelectedCounterpartyChanged(CounterpartyOption? value)
+    {
+        OnCounterpartyChanged(value);
+    }
+
+    /// <summary>
+    /// Virtual method called when SelectedCounterparty changes.
+    /// Override in derived classes to notify alias property changes (e.g., SelectedCustomer, SelectedSupplier).
+    /// </summary>
+    protected virtual void OnCounterpartyChanged(CounterpartyOption? value) { }
+
     [ObservableProperty]
     private bool _hasCounterpartyError;
 

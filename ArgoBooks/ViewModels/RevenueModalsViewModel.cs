@@ -55,7 +55,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     }
 
     // Notify SelectedCustomer when SelectedCounterparty changes so UI bindings update
-    partial void OnSelectedCounterpartyChanged(CounterpartyOption? value)
+    protected override void OnCounterpartyChanged(CounterpartyOption? value)
     {
         OnPropertyChanged(nameof(SelectedCustomer));
     }
