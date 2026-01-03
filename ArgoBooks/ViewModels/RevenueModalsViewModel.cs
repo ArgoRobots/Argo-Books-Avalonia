@@ -54,6 +54,12 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         set => HasCounterpartyError = value;
     }
 
+    // Notify SelectedCustomer when SelectedCounterparty changes so UI bindings update
+    protected override void OnCounterpartyChanged(CounterpartyOption? value)
+    {
+        OnPropertyChanged(nameof(SelectedCustomer));
+    }
+
     public ObservableCollection<CounterpartyOption> CustomerOptions => CounterpartyOptions;
 
     // Filter aliases

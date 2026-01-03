@@ -43,6 +43,9 @@ public partial class CustomerModalsViewModel : ObservableObject
     private string _modalLastName = string.Empty;
 
     [ObservableProperty]
+    private string _modalCompanyName = string.Empty;
+
+    [ObservableProperty]
     private string _modalEmail = string.Empty;
 
     [ObservableProperty]
@@ -213,6 +216,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         {
             Id = newId,
             Name = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}".Trim(),
+            CompanyName = string.IsNullOrWhiteSpace(ModalCompanyName) ? null : ModalCompanyName.Trim(),
             Email = ModalEmail.Trim(),
             Phone = ModalPhone.Trim(),
             Address = new Core.Models.Common.Address
@@ -271,6 +275,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         var nameParts = customer.Name.Split(' ', 2);
         ModalFirstName = nameParts.Length > 0 ? nameParts[0] : string.Empty;
         ModalLastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
+        ModalCompanyName = customer.CompanyName ?? string.Empty;
         ModalEmail = customer.Email;
         ModalPhone = customer.Phone;
         ModalStreetAddress = customer.Address.Street;
@@ -310,6 +315,7 @@ public partial class CustomerModalsViewModel : ObservableObject
             return;
 
         var oldName = _editingCustomer.Name;
+        var oldCompanyName = _editingCustomer.CompanyName;
         var oldEmail = _editingCustomer.Email;
         var oldPhone = _editingCustomer.Phone;
         var oldAddress = new Core.Models.Common.Address
@@ -324,6 +330,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         var oldStatus = _editingCustomer.Status;
 
         var newName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}".Trim();
+        var newCompanyName = string.IsNullOrWhiteSpace(ModalCompanyName) ? null : ModalCompanyName.Trim();
         var newEmail = ModalEmail.Trim();
         var newPhone = ModalPhone.Trim();
         var newAddress = new Core.Models.Common.Address
@@ -345,6 +352,7 @@ public partial class CustomerModalsViewModel : ObservableObject
 
         // Check if anything actually changed
         var hasChanges = oldName != newName ||
+                         oldCompanyName != newCompanyName ||
                          oldEmail != newEmail ||
                          oldPhone != newPhone ||
                          oldAddress.Street != newAddress.Street ||
@@ -364,6 +372,7 @@ public partial class CustomerModalsViewModel : ObservableObject
 
         var customerToEdit = _editingCustomer;
         customerToEdit.Name = newName;
+        customerToEdit.CompanyName = newCompanyName;
         customerToEdit.Email = newEmail;
         customerToEdit.Phone = newPhone;
         customerToEdit.Address = newAddress;
@@ -378,6 +387,7 @@ public partial class CustomerModalsViewModel : ObservableObject
             () =>
             {
                 customerToEdit.Name = oldName;
+                customerToEdit.CompanyName = oldCompanyName;
                 customerToEdit.Email = oldEmail;
                 customerToEdit.Phone = oldPhone;
                 customerToEdit.Address = oldAddress;
@@ -389,6 +399,7 @@ public partial class CustomerModalsViewModel : ObservableObject
             () =>
             {
                 customerToEdit.Name = newName;
+                customerToEdit.CompanyName = newCompanyName;
                 customerToEdit.Email = newEmail;
                 customerToEdit.Phone = newPhone;
                 customerToEdit.Address = newAddress;
@@ -559,6 +570,7 @@ public partial class CustomerModalsViewModel : ObservableObject
     {
         ModalFirstName = string.Empty;
         ModalLastName = string.Empty;
+        ModalCompanyName = string.Empty;
         ModalEmail = string.Empty;
         ModalPhone = string.Empty;
         ModalStreetAddress = string.Empty;

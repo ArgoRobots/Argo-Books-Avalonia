@@ -462,14 +462,41 @@
                             </Border>
                             <Border Grid.Row="1" Padding="10">
                                 <Panel>
-                                    <lvc:GeoMap Series="{Binding GeoMapSeries}"
+                                    <!-- Origin GeoMap (supplier countries from purchases) -->
+                                    <lvc:GeoMap Series="{Binding OriginGeoMapSeries}"
                                                 MapProjection="Mercator"
-                                                IsVisible="{Binding HasWorldMapData}"
+                                                IsVisible="{Binding IsMapModeOrigin}"
                                                 PointerPressed="OnChartPointerPressed" />
+                                    <!-- Destination GeoMap (customer countries from sales) -->
+                                    <lvc:GeoMap Series="{Binding DestinationGeoMapSeries}"
+                                                MapProjection="Mercator"
+                                                IsVisible="{Binding IsMapModeDestination}"
+                                                PointerPressed="OnChartPointerPressed" />
+                                    <!-- No data message for Origin (only show when in origin mode AND no data) -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            IsVisible="{Binding !HasWorldMapData}">
-                                        <TextBlock Text="No geographic data available"
+                                            CornerRadius="8">
+                                        <Border.IsVisible>
+                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                <Binding Path="IsMapModeOrigin" />
+                                                <Binding Path="!HasOriginMapData" />
+                                            </MultiBinding>
+                                        </Border.IsVisible>
+                                        <TextBlock Text="No origin data available"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </Border>
+                                    <!-- No data message for Destination (only show when in destination mode AND no data) -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8">
+                                        <Border.IsVisible>
+                                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                                <Binding Path="IsMapModeDestination" />
+                                                <Binding Path="!HasDestinationMapData" />
+                                            </MultiBinding>
+                                        </Border.IsVisible>
+                                        <TextBlock Text="No destination data available"
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"
                                                    FontSize="14"

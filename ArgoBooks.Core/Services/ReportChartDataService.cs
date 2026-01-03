@@ -454,6 +454,15 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetSalesByCountryOfOrigin()
     {
+        return GetSalesByCustomerCountry();
+    }
+
+    /// <summary>
+    /// Gets sales grouped by customer country.
+    /// Used for geographic distribution charts showing where customers are located.
+    /// </summary>
+    public List<ChartDataPoint> GetSalesByCustomerCountry()
+    {
         if (_companyData?.Sales == null)
             return [];
 
@@ -471,6 +480,8 @@ public class ReportChartDataService
                 Label = g.Key,
                 Value = (double)g.Sum(s => s.Total)
             })
+            // Filter out "Unknown" entries with zero or negligible value
+            .Where(p => p.Label != "Unknown" || p.Value > 0.01)
             .OrderByDescending(p => p.Value)
             .Take(10)
             .ToList();

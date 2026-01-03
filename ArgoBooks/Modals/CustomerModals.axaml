@@ -79,19 +79,25 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Email -->
+                            <!-- Company Name -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Email" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="Enter email address" />
-                                <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626"
-                                           IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                <TextBlock Text="Company" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name" />
                             </StackPanel>
 
-                            <!-- Phone -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalPhone, Mode=TwoWay}" Classes="form-input" Watermark="Enter phone number" />
-                            </StackPanel>
+                            <!-- Email and Phone Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Email" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="Enter email address" />
+                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626"
+                                               IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Grid>
 
                             <!-- Address Section -->
                             <TextBlock Text="Address" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
@@ -129,7 +135,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes (optional)"
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                         </StackPanel>
@@ -192,25 +198,25 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Email -->
+                            <!-- Company Name -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Email" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="Enter email address" />
-                                <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626"
-                                           IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                <TextBlock Text="Company" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name" />
                             </StackPanel>
 
-                            <!-- Phone -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalPhone, Mode=TwoWay}" Classes="form-input" Watermark="Enter phone number" />
-                            </StackPanel>
-
-                            <!-- Status (Edit only) -->
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding ModalStatus}" Classes="form-combobox" />
-                            </StackPanel>
+                            <!-- Email and Phone Row -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Email" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="Enter email address" />
+                                    <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626"
+                                               IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Grid>
 
                             <!-- Address Section -->
                             <TextBlock Text="Address" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
@@ -248,7 +254,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes (optional)"
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                         </StackPanel>

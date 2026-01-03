@@ -105,6 +105,23 @@ public partial class App : Application
         _appShellViewModel?.AddNotification(title, message, type);
     }
 
+    #region Plan Status Events
+
+    /// <summary>
+    /// Event raised when the plan status changes (e.g., user upgrades).
+    /// </summary>
+    public static event EventHandler<PlanStatusChangedEventArgs>? PlanStatusChanged;
+
+    /// <summary>
+    /// Raises the PlanStatusChanged event.
+    /// </summary>
+    public static void RaisePlanStatusChanged(bool hasStandard, bool hasPremium)
+    {
+        PlanStatusChanged?.Invoke(null, new PlanStatusChangedEventArgs(hasStandard, hasPremium));
+    }
+
+    #endregion
+
     #region Shared Table Column Widths
 
     /// <summary>
@@ -1605,5 +1622,20 @@ public partial class App : Application
         {
             BindingPlugins.DataValidators.Remove(plugin);
         }
+    }
+}
+
+/// <summary>
+/// Event arguments for plan status changes.
+/// </summary>
+public class PlanStatusChangedEventArgs : EventArgs
+{
+    public bool HasStandard { get; }
+    public bool HasPremium { get; }
+
+    public PlanStatusChangedEventArgs(bool hasStandard, bool hasPremium)
+    {
+        HasStandard = hasStandard;
+        HasPremium = hasPremium;
     }
 }

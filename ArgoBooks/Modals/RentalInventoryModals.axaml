@@ -106,7 +106,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes (optional)"
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                         </StackPanel>
@@ -222,7 +222,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes (optional)"
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                         </StackPanel>
@@ -434,7 +434,7 @@
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding RentOutNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes (optional)"
+                                <TextBox Text="{Binding RentOutNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" MaxHeight="100" />
                             </StackPanel>
                         </StackPanel>

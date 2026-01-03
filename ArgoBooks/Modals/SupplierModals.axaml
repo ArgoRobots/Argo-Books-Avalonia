@@ -36,7 +36,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalPhone, Mode=TwoWay}" Classes="form-input" Watermark="Phone number" />
+                                    <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
                                 </StackPanel>
                             </Grid>
                             <StackPanel Spacing="6">
@@ -70,7 +70,7 @@
                             </Grid>
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Notes (optional)" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -115,7 +115,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalPhone, Mode=TwoWay}" Classes="form-input" Watermark="Phone number" />
+                                    <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
                                 </StackPanel>
                             </Grid>
                             <StackPanel Spacing="6">
@@ -149,7 +149,7 @@
                             </Grid>
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Notes (optional)" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

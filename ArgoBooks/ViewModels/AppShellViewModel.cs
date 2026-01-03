@@ -605,6 +605,9 @@ public partial class AppShellViewModel : ViewModelBase
         UpgradeModalViewModel.HasPremium = hasPremium;
         HeaderViewModel.HasPremium = hasPremium;
         UserPanelViewModel.HasPremium = hasPremium;
+
+        // Notify any subscribers (e.g., ProductsPageViewModel) of plan status change
+        App.RaisePlanStatusChanged(hasStandard, hasPremium);
     }
 
     /// <summary>
