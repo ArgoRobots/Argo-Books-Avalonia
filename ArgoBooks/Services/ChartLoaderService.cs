@@ -120,6 +120,62 @@ public class ChartLoaderService
         { "Hungary", "hun" }, { "HU", "hun" }
     };
 
+    // ISO code to country name mapping (reverse of CountryNameToIsoCode)
+    private static readonly Dictionary<string, string> IsoCodeToCountryName = new(StringComparer.OrdinalIgnoreCase)
+    {
+        { "usa", "United States" },
+        { "gbr", "United Kingdom" },
+        { "can", "Canada" },
+        { "deu", "Germany" },
+        { "fra", "France" },
+        { "ita", "Italy" },
+        { "esp", "Spain" },
+        { "aus", "Australia" },
+        { "jpn", "Japan" },
+        { "chn", "China" },
+        { "ind", "India" },
+        { "bra", "Brazil" },
+        { "mex", "Mexico" },
+        { "rus", "Russia" },
+        { "kor", "South Korea" },
+        { "nld", "Netherlands" },
+        { "che", "Switzerland" },
+        { "swe", "Sweden" },
+        { "nor", "Norway" },
+        { "dnk", "Denmark" },
+        { "fin", "Finland" },
+        { "pol", "Poland" },
+        { "bel", "Belgium" },
+        { "aut", "Austria" },
+        { "irl", "Ireland" },
+        { "prt", "Portugal" },
+        { "grc", "Greece" },
+        { "nzl", "New Zealand" },
+        { "sgp", "Singapore" },
+        { "hkg", "Hong Kong" },
+        { "twn", "Taiwan" },
+        { "zaf", "South Africa" },
+        { "arg", "Argentina" },
+        { "chl", "Chile" },
+        { "col", "Colombia" },
+        { "idn", "Indonesia" },
+        { "mys", "Malaysia" },
+        { "tha", "Thailand" },
+        { "vnm", "Vietnam" },
+        { "phl", "Philippines" },
+        { "tur", "Turkey" },
+        { "sau", "Saudi Arabia" },
+        { "are", "UAE" },
+        { "isr", "Israel" },
+        { "egy", "Egypt" },
+        { "nga", "Nigeria" },
+        { "ken", "Kenya" },
+        { "ukr", "Ukraine" },
+        { "cze", "Czech Republic" },
+        { "rou", "Romania" },
+        { "hun", "Hungary" }
+    };
+
     /// <summary>
     /// Converts a country name to ISO 3166-1 alpha-3 code for GeoMap.
     /// </summary>
@@ -129,6 +185,17 @@ public class ChartLoaderService
             return string.Empty;
 
         return CountryNameToIsoCode.TryGetValue(countryName, out var code) ? code : countryName.ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Converts an ISO 3166-1 alpha-3 code to country name for display.
+    /// </summary>
+    private static string GetCountryName(string? isoCode)
+    {
+        if (string.IsNullOrEmpty(isoCode))
+            return "Unknown";
+
+        return IsoCodeToCountryName.TryGetValue(isoCode, out var name) ? name : isoCode.ToUpperInvariant();
     }
 
     /// <summary>
@@ -1189,7 +1256,7 @@ public class ChartLoaderService
 
     /// <summary>
     /// Loads countries of origin (supplier countries from purchases) as a pie chart.
-    /// Uses ReportChartDataService for data fetching.
+    /// Uses same logic as LoadWorldMapDataBySupplier for consistency.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCountriesOfOriginChart(
         CompanyData? companyData,
@@ -1199,14 +1266,18 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        var filters = CreateFilters(startDate, endDate);
-        var dataService = new ReportChartDataService(companyData, filters);
+        // Use same logic as LoadWorldMapDataBySupplier - get supplier countries from purchases
+        var mapData = LoadWorldMapDataBySupplier(companyData, startDate, endDate);
 
-        // Countries of Origin = supplier countries from purchases
-        var dataPoints = dataService.GetPurchasesByCountryOfDestination().Take(8).ToList();
-
-        if (dataPoints.Count == 0)
+        if (mapData.Count == 0)
             return (series, total);
+
+        // Convert country codes to names and create data points
+        var dataPoints = mapData
+            .Select(kvp => new { Label = GetCountryName(kvp.Key), Value = kvp.Value })
+            .OrderByDescending(p => p.Value)
+            .Take(8)
+            .ToList();
 
         total = (decimal)dataPoints.Sum(p => p.Value);
 
@@ -1221,6 +1292,8 @@ public class ChartLoaderService
                 Pushout = 0
             });
         }
+
+        var filters = CreateFilters(startDate, endDate);
 
         // Store export data
         _chartExportDataByTitle["Countries of Origin"] = new ChartExportData
