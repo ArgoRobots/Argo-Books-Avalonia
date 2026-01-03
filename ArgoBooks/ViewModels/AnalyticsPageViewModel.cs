@@ -638,7 +638,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     partial void OnIsMapModeOriginChanged(bool value)
     {
         OnPropertyChanged(nameof(IsMapModeDestination));
-        LoadGeoMapChart();
+        // No need to reload - we have two separate GeoMaps that show/hide based on mode
     }
 
     #endregion
@@ -742,13 +742,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private bool _hasCompaniesOfDestinationData;
 
     [ObservableProperty]
-    private Dictionary<string, double> _worldMapData = new();
+    private ObservableCollection<IGeoSeries> _originGeoMapSeries = [];
 
     [ObservableProperty]
-    private ObservableCollection<IGeoSeries> _geoMapSeries = [];
+    private bool _hasOriginMapData;
 
     [ObservableProperty]
-    private bool _hasWorldMapData;
+    private ObservableCollection<IGeoSeries> _destinationGeoMapSeries = [];
+
+    [ObservableProperty]
+    private bool _hasDestinationMapData;
 
     #endregion
 
@@ -1332,34 +1335,35 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var data = _companyManager?.CompanyData;
         if (data == null) return;
 
-        // Load data based on mode (origin = customers, destination = suppliers)
-        if (IsMapModeOrigin)
-        {
-            WorldMapData = _chartLoaderService.LoadWorldMapData(data, StartDate, EndDate);
-        }
-        else
-        {
-            WorldMapData = _chartLoaderService.LoadWorldMapDataBySupplier(data, StartDate, EndDate);
-        }
+        // Load Origin map (supplier countries from purchases)
+        var originData = _chartLoaderService.LoadWorldMapDataBySupplier(data, StartDate, EndDate);
+        HasOriginMapData = originData.Count > 0;
 
-        HasWorldMapData = WorldMapData.Count > 0;
-
-        // Create HeatLandSeries for the GeoMap
-        var geoSeries = new ObservableCollection<IGeoSeries>();
-        if (HasWorldMapData)
+        var originSeries = new ObservableCollection<IGeoSeries>();
+        if (HasOriginMapData)
         {
-            var lands = WorldMapData.Select(kvp => new HeatLand
-            {
-                Name = kvp.Key,
-                Value = kvp.Value
-            }).ToArray();
-
-            geoSeries.Add(new HeatLandSeries
-            {
-                Lands = lands
-            });
+            var lands = originData
+                .Where(kvp => kvp.Value > 0)
+                .Select(kvp => new HeatLand { Name = kvp.Key, Value = kvp.Value })
+                .ToArray();
+            originSeries.Add(new HeatLandSeries { Lands = lands });
         }
-        GeoMapSeries = geoSeries;
+        OriginGeoMapSeries = originSeries;
+
+        // Load Destination map (customer countries from sales)
+        var destinationData = _chartLoaderService.LoadWorldMapData(data, StartDate, EndDate);
+        HasDestinationMapData = destinationData.Count > 0;
+
+        var destinationSeries = new ObservableCollection<IGeoSeries>();
+        if (HasDestinationMapData)
+        {
+            var lands = destinationData
+                .Where(kvp => kvp.Value > 0)
+                .Select(kvp => new HeatLand { Name = kvp.Key, Value = kvp.Value })
+                .ToArray();
+            destinationSeries.Add(new HeatLandSeries { Lands = lands });
+        }
+        DestinationGeoMapSeries = destinationSeries;
     }
 
     private void LoadAvgTransactionValueChart(CompanyData data)
