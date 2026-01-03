@@ -1436,9 +1436,8 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads companies of destination (sales by customer) as a pie chart.
-    /// For sales, destination means where products are shipped to (customer companies).
-    /// Uses ReportChartDataService for data fetching.
+    /// Loads companies of destination (customer companies from sales) as a pie chart.
+    /// Only shows data when customers have CompanyName set.
     /// </summary>
     public (ObservableCollection<ISeries> Series, decimal Total) LoadCompaniesOfDestinationChart(
         CompanyData? companyData,
@@ -1448,11 +1447,35 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         decimal total = 0;
 
-        var filters = CreateFilters(startDate, endDate);
-        var dataService = new ReportChartDataService(companyData, filters);
+        if (companyData?.Sales == null)
+            return (series, total);
 
-        // Use sales by customer for destination - products are shipped to customers
-        var dataPoints = dataService.GetSalesByCompanyOfOrigin().Take(8).ToList();
+        var end = endDate ?? DateTime.Now;
+        var start = startDate ?? end.AddDays(-30);
+
+        // Get customer companies from sales - only include customers with CompanyName set
+        var salesInRange = companyData.Sales
+            .Where(s => s.Date >= start && s.Date <= end)
+            .ToList();
+
+        var dataPoints = salesInRange
+            .GroupBy(s =>
+            {
+                var customerId = GetEffectiveCustomerId(s, companyData);
+                if (!string.IsNullOrEmpty(customerId))
+                {
+                    var customer = companyData.GetCustomer(customerId);
+                    // Only use CompanyName, not Name - this chart is for companies only
+                    if (!string.IsNullOrEmpty(customer?.CompanyName))
+                        return customer.CompanyName;
+                }
+                return null;
+            })
+            .Where(g => g.Key != null)
+            .Select(g => new { Label = g.Key!, Value = (double)g.Sum(s => s.Total) })
+            .OrderByDescending(p => p.Value)
+            .Take(8)
+            .ToList();
 
         if (dataPoints.Count == 0)
             return (series, total);
@@ -1480,8 +1503,8 @@ public class ChartLoaderService
             Values = dataPoints.Select(p => p.Value).ToArray(),
             SeriesName = "Amount",
             TotalValue = (double)total,
-            StartDate = filters.StartDate,
-            EndDate = filters.EndDate
+            StartDate = start,
+            EndDate = end
         };
 
         return (series, total);
