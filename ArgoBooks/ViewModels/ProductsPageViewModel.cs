@@ -15,17 +15,6 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class ProductsPageViewModel : SortablePageViewModelBase
 {
-    public ProductsPageViewModel()
-    {
-        // Subscribe to plan status changes so we update when user upgrades
-        App.PlanStatusChanged += OnPlanStatusChanged;
-    }
-
-    private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e)
-    {
-        HasStandard = e.HasStandard;
-    }
-
     #region Table Column Widths
 
     /// <summary>
@@ -387,6 +376,17 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             App.ProductModalsViewModel.FiltersCleared += OnFiltersCleared;
             App.ProductModalsViewModel.OpenCategoriesRequested += OnOpenCategoriesRequested;
         }
+
+        // Subscribe to plan status changes so we update when user upgrades
+        App.PlanStatusChanged += OnPlanStatusChanged;
+    }
+
+    /// <summary>
+    /// Handles plan status changes by updating HasStandard.
+    /// </summary>
+    private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e)
+    {
+        HasStandard = e.HasStandard;
     }
 
     /// <summary>
