@@ -79,6 +79,12 @@
                                 </StackPanel>
                             </Grid>
 
+                            <!-- Company Name -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Company" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name (optional)" />
+                            </StackPanel>
+
                             <!-- Email and Phone Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
@@ -191,6 +197,12 @@
                                                IsVisible="{Binding ModalLastNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
+
+                            <!-- Company Name -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Company" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name (optional)" />
+                            </StackPanel>
 
                             <!-- Email and Phone Row -->
                             <Grid ColumnDefinitions="*,16,*">
