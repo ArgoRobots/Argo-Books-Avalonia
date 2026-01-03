@@ -1392,7 +1392,7 @@ public class ChartLoaderService
                 if (!string.IsNullOrEmpty(supplierId))
                 {
                     var supplier = companyData.GetSupplier(supplierId);
-                    return supplier?.CompanyName ?? "Unknown";
+                    return supplier?.Name ?? "Unknown";
                 }
                 return "Unknown";
             })
