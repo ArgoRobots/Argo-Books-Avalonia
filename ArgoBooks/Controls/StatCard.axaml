@@ -15,7 +15,7 @@
             <Setter Property="Padding" Value="20" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="CornerRadius" Value="12" />
         </Style>
         <Style Selector="controls|StatCard.alt-bg Border#OuterBorder">
             <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
@@ -29,14 +29,14 @@
         <Style Selector="controls|StatCard Border#IconContainer">
             <Setter Property="Width" Value="48" />
             <Setter Property="Height" Value="48" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Margin" Value="0,0,16,0" />
         </Style>
         <Style Selector="controls|StatCard.compact Border#IconContainer">
             <Setter Property="Width" Value="36" />
             <Setter Property="Height" Value="36" />
             <Setter Property="Margin" Value="0,0,10,0" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="CornerRadius" Value="10" />
         </Style>
 
         <!-- Icon container colors -->
