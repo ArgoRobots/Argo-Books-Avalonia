@@ -912,9 +912,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     // Dashboard Tab Chart Titles
     public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle("Profit Over Time");
     public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle("Expenses vs Revenue");
-    public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle("Sales Trends");
+    public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle("Revenue Trends");
     public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle("Revenue Distribution");
-    public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle("Purchase Trends");
+    public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle("Expense Trends");
     public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle("Expense Distribution");
 
     // Geographic Tab Chart Titles
@@ -926,7 +926,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     // Operational Tab Chart Titles
     public LabelVisual TransactionsByAccountantTitle => ChartLoaderService.CreateChartTitle("Transactions by Accountant");
-    public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle("Workload Distribution");
+    public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle("Total Transactions Over Time");
 
     // Performance Tab Chart Titles
     public LabelVisual AverageTransactionValueTitle => ChartLoaderService.CreateChartTitle("Average Transaction Value");

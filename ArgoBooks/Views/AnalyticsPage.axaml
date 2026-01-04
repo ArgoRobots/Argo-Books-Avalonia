@@ -189,7 +189,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasRevenueTrendsData}">
-                                    <TextBlock Text="No sales data available"
+                                    <TextBlock Text="No revenue data available"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -251,7 +251,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasExpensesTrendsData}">
-                                    <TextBlock Text="No purchase data available"
+                                    <TextBlock Text="No expense data available"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -589,7 +589,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasTotalTransactionsData}">
-                                    <TextBlock Text="No workload data available"
+                                    <TextBlock Text="No transaction data available"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
