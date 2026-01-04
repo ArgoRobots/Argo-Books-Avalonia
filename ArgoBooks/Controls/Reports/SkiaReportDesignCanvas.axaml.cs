@@ -362,8 +362,8 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void DrawHeaderFooter(SKCanvas canvas, int width, int height)
     {
-        var headerHeight = 60f;
-        var footerHeight = 40f;
+        var headerHeight = (float)PageDimensions.HeaderHeight;
+        var footerHeight = (float)PageDimensions.FooterHeight;
 
         // Header separator line
         using var separatorPaint = new SKPaint
