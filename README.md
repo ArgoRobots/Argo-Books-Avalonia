@@ -2,7 +2,7 @@
 
 ## Introduction
 
-**Argo Books** is AI-powered accounting software with receipt scanning, predictive analytics, inventory management, and more. Everything you need to run your business. Available for Windows, macOS, Linux, and mobile (Android & iOS).
+**Argo Books** is easy-to-use accounting software with receipt scanning, predictive analytics, inventory management, and more. Everything you need to run your business. Available for Windows, macOS, and Linux. It's available for download at www.argorobots.com.
 
 ## Features
 
@@ -21,13 +21,12 @@
 
 - **[C# .NET 10](https://dotnet.microsoft.com/en-us/)**: Core framework for the application's logic and UI.
 - **[Avalonia UI](https://avaloniaui.net/)**: Cross-platform UI framework for building native applications on Windows, macOS, and Linux.
-- **[FluentAvalonia](https://github.com/amwx/FluentAvalonia)**: Brings WinUI Fluent Design controls and styling to Avalonia.
 - **[LiveCharts2](https://livecharts.dev/)**: Used to visualize data through beautiful and interactive charts.
 
 ## Prerequisites
 
 - **.NET 10 SDK**: Make sure you have the latest .NET 10 SDK installed on your machine. You can download it [here](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
-- **Visual Studio 2022 or later** (with Avalonia extension) or **JetBrains Rider**.
+- **JetBrains Rider**: This is the IDE used for Avalonia UI. You can download it [here](https://www.jetbrains.com/rider/).
 - **API Keys**: You'll need to obtain the .env file containing the API keys from Evan Di Placido.
 
 ## Installation
