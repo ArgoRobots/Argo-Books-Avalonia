@@ -17,22 +17,6 @@
         <converters:EqualConverter x:Key="EqualConverter" />
     </UserControl.Resources>
 
-    <UserControl.Styles>
-        <!-- Element panel toggle arrow animation -->
-        <Style Selector="PathIcon.element-panel-toggle">
-            <Setter Property="RenderTransform" Value="rotate(0deg)" />
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseInOut" />
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="PathIcon.element-panel-toggle.collapsed">
-            <Setter Property="RenderTransform" Value="rotate(180deg)" />
-        </Style>
-    </UserControl.Styles>
-
     <Design.DataContext>
         <vm:ReportsPageViewModel />
     </Design.DataContext>
@@ -607,10 +591,9 @@
                                     Width="24" Height="24"
                                     Click="OnToggleElementPanelClick"
                                     ToolTip.Tip="Toggle Panel">
-                                <PathIcon Width="12" Height="12"
-                                          Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
-                                          Classes="element-panel-toggle"
-                                          Classes.collapsed="{Binding !IsElementPanelExpanded}" />
+                                <controls:ToggleArrow IconSize="12"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      IsCollapsed="{Binding !IsElementPanelExpanded}" />
                             </Button>
                         </Grid>
 
