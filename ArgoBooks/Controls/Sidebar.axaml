@@ -7,7 +7,9 @@
              mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="800"
              x:Class="ArgoBooks.Controls.Sidebar"
              x:DataType="vm:SidebarViewModel"
-             Background="{DynamicResource SidebarBackgroundBrush}">
+             Background="{DynamicResource SidebarBackgroundBrush}"
+             BorderBrush="{DynamicResource SidebarBorderBrush}"
+             BorderThickness="0,0,1,0">
 
     <Design.DataContext>
         <vm:SidebarViewModel />
