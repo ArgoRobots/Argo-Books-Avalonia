@@ -35,6 +35,7 @@
     <Color x:Key="SidebarTextMutedColor">#A8B2C1</Color>
     <Color x:Key="SidebarHoverColor">#1E293B</Color>
     <Color x:Key="SidebarActiveColor">#0075FF</Color>
+    <Color x:Key="SidebarBorderColor">#1E293B</Color>
 
     <!-- Header Colors -->
     <Color x:Key="HeaderBackgroundColor">#1F2937</Color>
@@ -92,6 +93,7 @@
     <SolidColorBrush x:Key="SidebarTextMutedBrush" Color="{StaticResource SidebarTextMutedColor}" />
     <SolidColorBrush x:Key="SidebarHoverBrush" Color="{StaticResource SidebarHoverColor}" />
     <SolidColorBrush x:Key="SidebarActiveBrush" Color="{StaticResource SidebarActiveColor}" />
+    <SolidColorBrush x:Key="SidebarBorderBrush" Color="{StaticResource SidebarBorderColor}" />
 
     <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{StaticResource HeaderBackgroundColor}" />
     <SolidColorBrush x:Key="HeaderBorderBrush" Color="{StaticResource HeaderBorderColor}" />

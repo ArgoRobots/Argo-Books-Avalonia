@@ -70,7 +70,17 @@
             <Setter Property="Background" Value="{DynamicResource SidebarHoverBrush}" />
         </Style>
 
-        <!-- Active State -->
+        <!-- Default Icon/Text colors -->
+        <Style Selector="Button.sidebar-item PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SidebarTextMutedBrush}" />
+        </Style>
+
+        <Style Selector="Button.sidebar-item TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
+        </Style>
+
+        <!-- Active State (must come after default styles to override) -->
         <Style Selector="Button.sidebar-item.active /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SidebarActiveBrush}" />
         </Style>
@@ -85,16 +95,6 @@
 
         <Style Selector="Button.sidebar-item.active TextBlock">
             <Setter Property="Foreground" Value="White" />
-        </Style>
-
-        <!-- Default Icon/Text colors -->
-        <Style Selector="Button.sidebar-item PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource SidebarTextMutedBrush}" />
-        </Style>
-
-        <Style Selector="Button.sidebar-item TextBlock">
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
         </Style>
 
         <!-- Collapsed State - keep same left padding so icon stays in place -->

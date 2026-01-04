@@ -30,12 +30,13 @@
     <Color x:Key="TextDisabledColor">#CED4DA</Color>
     <Color x:Key="TextInverseColor">#FFFFFF</Color>
 
-    <!-- Sidebar Colors (from mockup: bg #1e2a3a, hover #2d3e52, active #0075ff, text #a8b2c1) -->
-    <Color x:Key="SidebarBackgroundColor">#1E2A3A</Color>
-    <Color x:Key="SidebarTextColor">#FFFFFF</Color>
-    <Color x:Key="SidebarTextMutedColor">#A8B2C1</Color>
-    <Color x:Key="SidebarHoverColor">#2D3E52</Color>
+    <!-- Sidebar Colors (light theme: light background with dark text) -->
+    <Color x:Key="SidebarBackgroundColor">#F8F9FA</Color>
+    <Color x:Key="SidebarTextColor">#212529</Color>
+    <Color x:Key="SidebarTextMutedColor">#6C757D</Color>
+    <Color x:Key="SidebarHoverColor">#E9ECEF</Color>
     <Color x:Key="SidebarActiveColor">#0075FF</Color>
+    <Color x:Key="SidebarBorderColor">#E1E5EB</Color>
 
     <!-- Header Colors (from mockup: bg white, border #e1e5eb) -->
     <Color x:Key="HeaderBackgroundColor">#FFFFFF</Color>
@@ -93,6 +94,7 @@
     <SolidColorBrush x:Key="SidebarTextMutedBrush" Color="{StaticResource SidebarTextMutedColor}" />
     <SolidColorBrush x:Key="SidebarHoverBrush" Color="{StaticResource SidebarHoverColor}" />
     <SolidColorBrush x:Key="SidebarActiveBrush" Color="{StaticResource SidebarActiveColor}" />
+    <SolidColorBrush x:Key="SidebarBorderBrush" Color="{StaticResource SidebarBorderColor}" />
 
     <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{StaticResource HeaderBackgroundColor}" />
     <SolidColorBrush x:Key="HeaderBorderBrush" Color="{StaticResource HeaderBorderColor}" />
