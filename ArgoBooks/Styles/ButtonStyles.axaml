@@ -25,6 +25,12 @@
     <Style Selector="Button.primary:disabled">
         <Setter Property="Opacity" Value="0.5" />
     </Style>
+    <Style Selector="Button.primary PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.primary TextBlock">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
 
     <!-- Secondary Button (outlined) -->
     <Style Selector="Button.secondary">
@@ -62,6 +68,12 @@
     <Style Selector="Button.primary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
     </Style>
+    <Style Selector="Button.primary-button PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.primary-button TextBlock">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
 
     <!-- Secondary Button (page header variant) -->
     <Style Selector="Button.secondary-button">
@@ -96,6 +108,12 @@
     </Style>
     <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="#B91C1C" />
+    </Style>
+    <Style Selector="Button.danger-button PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.danger-button TextBlock">
+        <Setter Property="Foreground" Value="White" />
     </Style>
 
     <!-- Ghost Button (no border, subtle) -->
