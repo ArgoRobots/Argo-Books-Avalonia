@@ -722,11 +722,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Update theme colors based on current theme
         _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
 
-        var (series, labels) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
         SalesVsExpensesSeries = series;
-        SalesVsExpensesXAxes = _chartLoaderService.CreateXAxes(labels);
+        SalesVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
         SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes();
-        HasSalesVsExpensesData = series.Count > 0 && labels.Length > 0;
+        HasSalesVsExpensesData = series.Count > 0 && dates.Length > 0;
     }
 
     #endregion
