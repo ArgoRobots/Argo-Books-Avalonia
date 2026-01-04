@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Enums;
+using static ArgoBooks.Core.Models.Reports.TemplateLayoutHelper;
 
 namespace ArgoBooks.Core.Models.Reports;
 
@@ -258,16 +259,7 @@ public static class ReportTemplateFactory
     {
         var context = new LayoutContext(config);
 
-        // Date range element
-        config.AddElement(new DateRangeReportElement
-        {
-            X = context.Margin,
-            Y = context.ContentTop,
-            Width = context.ContentWidth,
-            Height = context.DateRangeHeight
-        });
-
-        // Create a 2x2 grid for charts
+        // Create a 2x2 grid for charts below the date range
         var grid = CreateGrid(context, 2, 2);
 
         config.AddElement(new ChartReportElement
@@ -305,22 +297,22 @@ public static class ReportTemplateFactory
             Width = grid[1, 1].Width,
             Height = grid[1, 1].Height
         });
+
+        // Date range element - added last so it renders on top (highest ZOrder)
+        var dateRangeBounds = GetDateRangeBounds(context);
+        config.AddElement(new DateRangeReportElement
+        {
+            X = context.Margin + (context.ContentWidth - 200) / 2,
+            Y = dateRangeBounds.Y,
+            Height = dateRangeBounds.Height
+        });
     }
 
     private static void AddFinancialOverviewElements(ReportConfiguration config)
     {
         var context = new LayoutContext(config);
 
-        // Date range
-        config.AddElement(new DateRangeReportElement
-        {
-            X = context.Margin,
-            Y = context.ContentTop,
-            Width = context.ContentWidth,
-            Height = context.DateRangeHeight
-        });
-
-        // Create 2x2 grid for charts
+        // Create 2x2 grid for charts below the date range
         var grid = CreateGrid(context, 2, 2);
 
         config.AddElement(new ChartReportElement
@@ -358,22 +350,22 @@ public static class ReportTemplateFactory
             Width = grid[1, 1].Width,
             Height = grid[1, 1].Height
         });
+
+        // Date range element - added last so it renders on top (highest ZOrder)
+        var dateRangeBounds = GetDateRangeBounds(context);
+        config.AddElement(new DateRangeReportElement
+        {
+            X = context.Margin + (context.ContentWidth - 200) / 2,
+            Y = dateRangeBounds.Y,
+            Height = dateRangeBounds.Height
+        });
     }
 
     private static void AddPerformanceAnalysisElements(ReportConfiguration config)
     {
         var context = new LayoutContext(config);
 
-        // Date range
-        config.AddElement(new DateRangeReportElement
-        {
-            X = context.Margin,
-            Y = context.ContentTop,
-            Width = context.ContentWidth,
-            Height = context.DateRangeHeight
-        });
-
-        // Create vertical stack: summary (15%), then 3 equal charts
+        // Create vertical stack: summary (15%), then 3 equal charts below the date range
         var stack = CreateVerticalStack(context, 0.15, 0.28, 0.28, 0.29);
 
         config.AddElement(new SummaryReportElement
@@ -410,22 +402,22 @@ public static class ReportTemplateFactory
             Width = stack[3].Width,
             Height = stack[3].Height
         });
+
+        // Date range element - added last so it renders on top (highest ZOrder)
+        var dateRangeBounds = GetDateRangeBounds(context);
+        config.AddElement(new DateRangeReportElement
+        {
+            X = context.Margin + (context.ContentWidth - 200) / 2,
+            Y = dateRangeBounds.Y,
+            Height = dateRangeBounds.Height
+        });
     }
 
     private static void AddReturnsAnalysisElements(ReportConfiguration config)
     {
         var context = new LayoutContext(config);
 
-        // Date range
-        config.AddElement(new DateRangeReportElement
-        {
-            X = context.Margin,
-            Y = context.ContentTop,
-            Width = context.ContentWidth,
-            Height = context.DateRangeHeight
-        });
-
-        // Mixed layout: full-width chart at top, then 2x2 grid
+        // Mixed layout: full-width chart at top, then 2x2 grid below the date range
         var topStack = CreateVerticalStack(context, 0.33, 0.67);
 
         config.AddElement(new ChartReportElement
@@ -438,44 +430,51 @@ public static class ReportTemplateFactory
         });
 
         // Create a 2x2 grid in the bottom portion
-        var bottomArea = topStack[1];
-        var gridWidth = (bottomArea.Width - context.ElementSpacing) / 2;
-        var gridHeight = (bottomArea.Height - context.ElementSpacing) / 2;
+        var bottomGrid = SplitIntoGrid(topStack[1], 2, 2, context.ElementSpacing);
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.ReturnReasons,
-            X = bottomArea.X,
-            Y = bottomArea.Y,
-            Width = gridWidth,
-            Height = gridHeight
+            X = bottomGrid[0, 0].X,
+            Y = bottomGrid[0, 0].Y,
+            Width = bottomGrid[0, 0].Width,
+            Height = bottomGrid[0, 0].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.ReturnFinancialImpact,
-            X = bottomArea.X + gridWidth + context.ElementSpacing,
-            Y = bottomArea.Y,
-            Width = gridWidth,
-            Height = gridHeight
+            X = bottomGrid[0, 1].X,
+            Y = bottomGrid[0, 1].Y,
+            Width = bottomGrid[0, 1].Width,
+            Height = bottomGrid[0, 1].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.ReturnsByCategory,
-            X = bottomArea.X,
-            Y = bottomArea.Y + gridHeight + context.ElementSpacing,
-            Width = gridWidth,
-            Height = gridHeight
+            X = bottomGrid[1, 0].X,
+            Y = bottomGrid[1, 0].Y,
+            Width = bottomGrid[1, 0].Width,
+            Height = bottomGrid[1, 0].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.ReturnsByProduct,
-            X = bottomArea.X + gridWidth + context.ElementSpacing,
-            Y = bottomArea.Y + gridHeight + context.ElementSpacing,
-            Width = gridWidth,
-            Height = gridHeight
+            X = bottomGrid[1, 1].X,
+            Y = bottomGrid[1, 1].Y,
+            Width = bottomGrid[1, 1].Width,
+            Height = bottomGrid[1, 1].Height
+        });
+
+        // Date range element - added last so it renders on top (highest ZOrder)
+        var dateRangeBounds = GetDateRangeBounds(context);
+        config.AddElement(new DateRangeReportElement
+        {
+            X = context.Margin + (context.ContentWidth - 200) / 2,
+            Y = dateRangeBounds.Y,
+            Height = dateRangeBounds.Height
         });
     }
 
@@ -483,16 +482,7 @@ public static class ReportTemplateFactory
     {
         var context = new LayoutContext(config);
 
-        // Date range
-        config.AddElement(new DateRangeReportElement
-        {
-            X = context.Margin,
-            Y = context.ContentTop,
-            Width = context.ContentWidth,
-            Height = context.DateRangeHeight
-        });
-
-        // Mixed layout: full-width chart at top, then 2x2 grid
+        // Mixed layout: full-width chart at top, then 2x2 grid below the date range
         var topStack = CreateVerticalStack(context, 0.33, 0.67);
 
         config.AddElement(new ChartReportElement
@@ -505,44 +495,51 @@ public static class ReportTemplateFactory
         });
 
         // Create a 2x2 grid in the bottom portion
-        var bottomArea = topStack[1];
-        var gridWidth = (bottomArea.Width - context.ElementSpacing) / 2;
-        var gridHeight = (bottomArea.Height - context.ElementSpacing) / 2;
+        var bottomGrid = SplitIntoGrid(topStack[1], 2, 2, context.ElementSpacing);
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.LossReasons,
-            X = bottomArea.X,
-            Y = bottomArea.Y,
-            Width = gridWidth,
-            Height = gridHeight
+            X = bottomGrid[0, 0].X,
+            Y = bottomGrid[0, 0].Y,
+            Width = bottomGrid[0, 0].Width,
+            Height = bottomGrid[0, 0].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.LossFinancialImpact,
-            X = bottomArea.X + gridWidth + context.ElementSpacing,
-            Y = bottomArea.Y,
-            Width = gridWidth,
-            Height = gridHeight
+            X = bottomGrid[0, 1].X,
+            Y = bottomGrid[0, 1].Y,
+            Width = bottomGrid[0, 1].Width,
+            Height = bottomGrid[0, 1].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.LossesByCategory,
-            X = bottomArea.X,
-            Y = bottomArea.Y + gridHeight + context.ElementSpacing,
-            Width = gridWidth,
-            Height = gridHeight
+            X = bottomGrid[1, 0].X,
+            Y = bottomGrid[1, 0].Y,
+            Width = bottomGrid[1, 0].Width,
+            Height = bottomGrid[1, 0].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.LossesByProduct,
-            X = bottomArea.X + gridWidth + context.ElementSpacing,
-            Y = bottomArea.Y + gridHeight + context.ElementSpacing,
-            Width = gridWidth,
-            Height = gridHeight
+            X = bottomGrid[1, 1].X,
+            Y = bottomGrid[1, 1].Y,
+            Width = bottomGrid[1, 1].Width,
+            Height = bottomGrid[1, 1].Height
+        });
+
+        // Date range element - added last so it renders on top (highest ZOrder)
+        var dateRangeBounds = GetDateRangeBounds(context);
+        config.AddElement(new DateRangeReportElement
+        {
+            X = context.Margin + (context.ContentWidth - 200) / 2,
+            Y = dateRangeBounds.Y,
+            Height = dateRangeBounds.Height
         });
     }
 
@@ -550,16 +547,7 @@ public static class ReportTemplateFactory
     {
         var context = new LayoutContext(config);
 
-        // Date range
-        config.AddElement(new DateRangeReportElement
-        {
-            X = context.Margin,
-            Y = context.ContentTop,
-            Width = context.ContentWidth,
-            Height = context.DateRangeHeight
-        });
-
-        // Create vertical split: map (50%), then bottom grid (50%)
+        // Create vertical split: map (50%), then bottom grid (50%) below the date range
         var stack = CreateVerticalStack(context, 0.5, 0.5);
 
         config.AddElement(new ChartReportElement
@@ -572,101 +560,34 @@ public static class ReportTemplateFactory
         });
 
         // Split bottom area into 2 columns
-        var bottomArea = stack[1];
-        var colWidth = (bottomArea.Width - context.ElementSpacing) / 2;
+        var columns = SplitHorizontally(stack[1], [0.5, 0.5], context.ElementSpacing);
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.CountriesOfOrigin,
-            X = bottomArea.X,
-            Y = bottomArea.Y,
-            Width = colWidth,
-            Height = bottomArea.Height
+            X = columns[0].X,
+            Y = columns[0].Y,
+            Width = columns[0].Width,
+            Height = columns[0].Height
         });
 
         config.AddElement(new ChartReportElement
         {
             ChartType = ChartDataType.CountriesOfDestination,
-            X = bottomArea.X + colWidth + context.ElementSpacing,
-            Y = bottomArea.Y,
-            Width = colWidth,
-            Height = bottomArea.Height
+            X = columns[1].X,
+            Y = columns[1].Y,
+            Width = columns[1].Width,
+            Height = columns[1].Height
         });
-    }
 
-    #endregion
-
-    #region Layout Helpers
-
-    private class LayoutContext
-    {
-        public double PageWidth { get; }
-        public double PageHeight { get; }
-        public double Margin { get; } = PageDimensions.Margin;
-        public double HeaderHeight { get; } = PageDimensions.HeaderHeight;
-        public double FooterHeight { get; } = PageDimensions.FooterHeight;
-        public double ElementSpacing { get; } = 10;
-        public double DateRangeHeight { get; } = 30;
-        public double ContentTop => HeaderHeight + Margin;
-        public double ContentWidth => PageWidth - (Margin * 2);
-        public double ContentHeight => PageHeight - HeaderHeight - FooterHeight - (Margin * 2);
-
-        public LayoutContext(ReportConfiguration config)
+        // Date range element - added last so it renders on top (highest ZOrder)
+        var dateRangeBounds = GetDateRangeBounds(context);
+        config.AddElement(new DateRangeReportElement
         {
-            var (width, height) = PageDimensions.GetDimensions(config.PageSize, config.PageOrientation);
-            PageWidth = width;
-            PageHeight = height;
-        }
-    }
-
-    private readonly struct Rect(double x, double y, double width, double height)
-    {
-        public double X { get; } = x;
-        public double Y { get; } = y;
-        public double Width { get; } = width;
-        public double Height { get; } = height;
-    }
-
-    private static Rect[,] CreateGrid(LayoutContext context, int rows, int columns)
-    {
-        var startY = context.ContentTop + context.DateRangeHeight + context.ElementSpacing;
-        var availableHeight = context.ContentHeight - context.DateRangeHeight - context.ElementSpacing;
-
-        var cellWidth = (context.ContentWidth - (context.ElementSpacing * (columns - 1))) / columns;
-        var cellHeight = (availableHeight - (context.ElementSpacing * (rows - 1))) / rows;
-
-        var grid = new Rect[rows, columns];
-
-        for (int row = 0; row < rows; row++)
-        {
-            for (int col = 0; col < columns; col++)
-            {
-                var x = context.Margin + (col * (cellWidth + context.ElementSpacing));
-                var y = startY + (row * (cellHeight + context.ElementSpacing));
-                grid[row, col] = new Rect(x, y, cellWidth, cellHeight);
-            }
-        }
-
-        return grid;
-    }
-
-    private static Rect[] CreateVerticalStack(LayoutContext context, params double[] heightRatios)
-    {
-        var startY = context.ContentTop + context.DateRangeHeight + context.ElementSpacing;
-        var availableHeight = context.ContentHeight - context.DateRangeHeight - context.ElementSpacing;
-        availableHeight -= context.ElementSpacing * (heightRatios.Length - 1);
-
-        var stack = new Rect[heightRatios.Length];
-        var currentY = startY;
-
-        for (int i = 0; i < heightRatios.Length; i++)
-        {
-            var height = availableHeight * heightRatios[i];
-            stack[i] = new Rect(context.Margin, currentY, context.ContentWidth, height);
-            currentY += height + context.ElementSpacing;
-        }
-
-        return stack;
+            X = context.Margin + (context.ContentWidth - 200) / 2,
+            Y = dateRangeBounds.Y,
+            Height = dateRangeBounds.Height
+        });
     }
 
     #endregion

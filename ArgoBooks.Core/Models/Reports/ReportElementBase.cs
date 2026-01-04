@@ -812,7 +812,7 @@ public class DateRangeReportElement : ReportElementBase
 {
     private string _dateFormat = "yyyy-MM-dd";
     private string _textColor = "#808080";
-    private double _fontSize = 10;
+    private double _fontSize = 11;
     private bool _isBold;
     private bool _isItalic = true;
     private bool _isUnderline;
