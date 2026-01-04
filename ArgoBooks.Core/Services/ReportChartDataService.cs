@@ -270,6 +270,54 @@ public class ReportChartDataService
     }
 
     /// <summary>
+    /// Gets sales vs expenses data grouped by day for granular display.
+    /// </summary>
+    public List<ChartSeriesData> GetSalesVsExpensesDaily()
+    {
+        if (_companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        // Get all dates with data
+        var salesByDate = _companyData.Sales?
+            .Where(s => s.Date >= startDate && s.Date <= endDate)
+            .GroupBy(s => s.Date.Date)
+            .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.Total)) ?? [];
+
+        var purchasesByDate = _companyData.Purchases?
+            .Where(p => p.Date >= startDate && p.Date <= endDate)
+            .GroupBy(p => p.Date.Date)
+            .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.Total)) ?? [];
+
+        // Combine all dates
+        var allDates = salesByDate.Keys.Union(purchasesByDate.Keys).OrderBy(d => d).ToList();
+
+        if (allDates.Count == 0)
+            return [];
+
+        var revenueData = allDates.Select(date => new ChartDataPoint
+        {
+            Label = date.ToString("MMM dd"),
+            Value = salesByDate.GetValueOrDefault(date, 0),
+            Date = date
+        }).ToList();
+
+        var expenseData = allDates.Select(date => new ChartDataPoint
+        {
+            Label = date.ToString("MMM dd"),
+            Value = purchasesByDate.GetValueOrDefault(date, 0),
+            Date = date
+        }).ToList();
+
+        return
+        [
+            new ChartSeriesData { Name = "Revenue", Color = "#22C55E", DataPoints = revenueData },
+            new ChartSeriesData { Name = "Expenses", Color = "#EF4444", DataPoints = expenseData }
+        ];
+    }
+
+    /// <summary>
     /// Gets growth rates over time.
     /// </summary>
     public List<ChartDataPoint> GetGrowthRates()
@@ -445,6 +493,92 @@ public class ReportChartDataService
         }).ToList();
     }
 
+    /// <summary>
+    /// Gets average transaction value over time grouped by day.
+    /// </summary>
+    public List<ChartDataPoint> GetAverageTransactionValueDaily()
+    {
+        if (_companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var transactionsByDate = new Dictionary<DateTime, List<decimal>>();
+
+        if (_filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
+        {
+            foreach (var sale in _companyData.Sales?.Where(s => s.Date >= startDate && s.Date <= endDate) ?? [])
+            {
+                var date = sale.Date.Date;
+                if (!transactionsByDate.ContainsKey(date))
+                    transactionsByDate[date] = [];
+                transactionsByDate[date].Add(sale.Total);
+            }
+        }
+
+        if (_filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
+        {
+            foreach (var purchase in _companyData.Purchases?.Where(p => p.Date >= startDate && p.Date <= endDate) ?? [])
+            {
+                var date = purchase.Date.Date;
+                if (!transactionsByDate.ContainsKey(date))
+                    transactionsByDate[date] = [];
+                transactionsByDate[date].Add(purchase.Total);
+            }
+        }
+
+        return transactionsByDate
+            .OrderBy(kvp => kvp.Key)
+            .Select(kvp => new ChartDataPoint
+            {
+                Label = kvp.Key.ToString("MMM dd"),
+                Value = kvp.Value.Count > 0 ? (double)kvp.Value.Average() : 0,
+                Date = kvp.Key
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets transaction count over time grouped by day.
+    /// </summary>
+    public List<ChartDataPoint> GetTransactionCountDaily()
+    {
+        if (_companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var countsByDate = new Dictionary<DateTime, int>();
+
+        if (_filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
+        {
+            foreach (var sale in _companyData.Sales?.Where(s => s.Date >= startDate && s.Date <= endDate) ?? [])
+            {
+                var date = sale.Date.Date;
+                countsByDate[date] = countsByDate.GetValueOrDefault(date, 0) + 1;
+            }
+        }
+
+        if (_filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
+        {
+            foreach (var purchase in _companyData.Purchases?.Where(p => p.Date >= startDate && p.Date <= endDate) ?? [])
+            {
+                var date = purchase.Date.Date;
+                countsByDate[date] = countsByDate.GetValueOrDefault(date, 0) + 1;
+            }
+        }
+
+        return countsByDate
+            .OrderBy(kvp => kvp.Key)
+            .Select(kvp => new ChartDataPoint
+            {
+                Label = kvp.Key.ToString("MMM dd"),
+                Value = kvp.Value,
+                Date = kvp.Key
+            })
+            .ToList();
+    }
+
     #endregion
 
     #region Geographic Charts
@@ -612,6 +746,51 @@ public class ReportChartDataService
         }).ToList();
     }
 
+    /// <summary>
+    /// Gets average shipping costs over time grouped by day.
+    /// </summary>
+    public List<ChartDataPoint> GetAverageShippingCostsDaily()
+    {
+        if (_companyData == null)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        var shippingByDate = new Dictionary<DateTime, List<decimal>>();
+
+        if (_companyData.Sales != null)
+        {
+            foreach (var sale in _companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
+            {
+                var date = sale.Date.Date;
+                if (!shippingByDate.ContainsKey(date))
+                    shippingByDate[date] = [];
+                shippingByDate[date].Add(sale.ShippingCost);
+            }
+        }
+
+        if (_companyData.Purchases != null)
+        {
+            foreach (var purchase in _companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
+            {
+                var date = purchase.Date.Date;
+                if (!shippingByDate.ContainsKey(date))
+                    shippingByDate[date] = [];
+                shippingByDate[date].Add(purchase.ShippingCost);
+            }
+        }
+
+        return shippingByDate
+            .OrderBy(kvp => kvp.Key)
+            .Select(kvp => new ChartDataPoint
+            {
+                Label = kvp.Key.ToString("MMM dd"),
+                Value = kvp.Value.Count > 0 ? (double)kvp.Value.Average() : 0,
+                Date = kvp.Key
+            })
+            .ToList();
+    }
+
     #endregion
 
     #region Accountant Charts
@@ -724,6 +903,29 @@ public class ReportChartDataService
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key.ToString("MMM yyyy"),
+                Value = (double)g.Sum(r => r.RefundAmount),
+                Date = g.Key
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets return financial impact (refund amounts) grouped by day.
+    /// </summary>
+    public List<ChartDataPoint> GetReturnFinancialImpactDaily()
+    {
+        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return _companyData.Returns
+            .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
+            .GroupBy(r => r.ReturnDate.Date)
+            .OrderBy(g => g.Key)
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key.ToString("MMM dd"),
                 Value = (double)g.Sum(r => r.RefundAmount),
                 Date = g.Key
             })
@@ -905,6 +1107,29 @@ public class ReportChartDataService
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key.ToString("MMM yyyy"),
+                Value = (double)g.Sum(l => l.ValueLost),
+                Date = g.Key
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets loss financial impact grouped by day.
+    /// </summary>
+    public List<ChartDataPoint> GetLossFinancialImpactDaily()
+    {
+        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+            return [];
+
+        var (startDate, endDate) = GetDateRange();
+
+        return _companyData.LostDamaged
+            .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
+            .GroupBy(l => l.DateDiscovered.Date)
+            .OrderBy(g => g.Key)
+            .Select(g => new ChartDataPoint
+            {
+                Label = g.Key.ToString("MMM dd"),
                 Value = (double)g.Sum(l => l.ValueLost),
                 Date = g.Key
             })

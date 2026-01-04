@@ -189,7 +189,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasRevenueTrendsData}">
-                                    <TextBlock Text="No sales data available"
+                                    <TextBlock Text="No revenue data available"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -251,7 +251,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasExpensesTrendsData}">
-                                    <TextBlock Text="No purchase data available"
+                                    <TextBlock Text="No expense data available"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -589,7 +589,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasTotalTransactionsData}">
-                                    <TextBlock Text="No workload data available"
+                                    <TextBlock Text="No transaction data available"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -598,34 +598,6 @@
                             </Panel>
                         </Border>
                     </Grid>
-
-                    <!-- Processing Trends -->
-                    <Border Background="{DynamicResource SurfaceBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="12"
-                            Padding="10"
-                            Height="300">
-                        <Panel>
-                            <!-- Chart with data -->
-                            <lvc:CartesianChart Title="{Binding ProcessingTimeTrendsTitle}"
-                                                PointerPressed="OnChartPointerPressed"
-                                                Series="{Binding AvgTransactionValueSeries}"
-                                                XAxes="{Binding AvgTransactionValueXAxes}"
-                                                YAxes="{Binding AvgTransactionValueYAxes}"
-                                                IsVisible="{Binding HasAvgTransactionValueData}" />
-                            <!-- No data placeholder -->
-                            <Border Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="8"
-                                    IsVisible="{Binding !HasAvgTransactionValueData}">
-                                <TextBlock Text="No processing data available"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontSize="14"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                            </Border>
-                        </Panel>
-                    </Border>
                 </StackPanel>
 
                 <!-- Performance Tab Content -->

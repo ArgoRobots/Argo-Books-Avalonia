@@ -912,9 +912,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     // Dashboard Tab Chart Titles
     public LabelVisual ProfitOverTimeTitle => ChartLoaderService.CreateChartTitle("Profit Over Time");
     public LabelVisual SalesVsExpensesTitle => ChartLoaderService.CreateChartTitle("Expenses vs Revenue");
-    public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle("Sales Trends");
+    public LabelVisual SalesTrendsTitle => ChartLoaderService.CreateChartTitle("Revenue Trends");
     public LabelVisual SalesDistributionTitle => ChartLoaderService.CreateChartTitle("Revenue Distribution");
-    public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle("Purchase Trends");
+    public LabelVisual PurchaseTrendsTitle => ChartLoaderService.CreateChartTitle("Expense Trends");
     public LabelVisual PurchaseDistributionTitle => ChartLoaderService.CreateChartTitle("Expense Distribution");
 
     // Geographic Tab Chart Titles
@@ -926,8 +926,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     // Operational Tab Chart Titles
     public LabelVisual TransactionsByAccountantTitle => ChartLoaderService.CreateChartTitle("Transactions by Accountant");
-    public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle("Workload Distribution");
-    public LabelVisual ProcessingTimeTrendsTitle => ChartLoaderService.CreateChartTitle("Processing Time Trends");
+    public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle("Total Transactions Over Time");
 
     // Performance Tab Chart Titles
     public LabelVisual AverageTransactionValueTitle => ChartLoaderService.CreateChartTitle("Average Transaction Value");
@@ -968,7 +967,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         nameof(SalesDistributionTitle), nameof(PurchaseTrendsTitle), nameof(PurchaseDistributionTitle),
         nameof(CountriesOfOriginTitle), nameof(CompaniesOfOriginTitle), nameof(CountriesOfDestinationTitle),
         nameof(CompaniesOfDestinationTitle), nameof(WorldMapOverviewTitle), nameof(TransactionsByAccountantTitle),
-        nameof(WorkloadDistributionTitle), nameof(ProcessingTimeTrendsTitle), nameof(AverageTransactionValueTitle),
+        nameof(WorkloadDistributionTitle), nameof(AverageTransactionValueTitle),
         nameof(TotalTransactionsTitle), nameof(AverageShippingCostsTitle), nameof(GrowthRatesTitle),
         nameof(TopCustomersByRevenueTitle), nameof(CustomerPaymentStatusTitle), nameof(CustomerGrowthTitle),
         nameof(CustomerLifetimeValueTitle), nameof(ActiveVsInactiveCustomersTitle), nameof(RentalsPerCustomerTitle),
@@ -1294,9 +1293,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadSalesVsExpensesChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
         SalesVsExpensesSeries = series;
-        SalesVsExpensesXAxes = _chartLoaderService.CreateXAxes(labels);
+        SalesVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
         SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasSalesVsExpensesData = series.Count > 0;
     }
@@ -1368,27 +1367,27 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadAvgTransactionValueChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadAverageTransactionValueChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadAverageTransactionValueChart(data, StartDate, EndDate);
         AvgTransactionValueSeries = series;
-        AvgTransactionValueXAxes = _chartLoaderService.CreateXAxes(labels);
+        AvgTransactionValueXAxes = _chartLoaderService.CreateDateXAxes(dates);
         AvgTransactionValueYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasAvgTransactionValueData = series.Count > 0;
     }
 
     private void LoadTotalTransactionsChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadTotalTransactionsChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadTotalTransactionsChart(data, StartDate, EndDate);
         TotalTransactionsSeries = series;
-        TotalTransactionsXAxes = _chartLoaderService.CreateXAxes(labels);
+        TotalTransactionsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         TotalTransactionsYAxes = _chartLoaderService.CreateNumberYAxes();
         HasTotalTransactionsData = series.Count > 0;
     }
 
     private void LoadAvgShippingCostsChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadAverageShippingCostsChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadAverageShippingCostsChart(data, StartDate, EndDate);
         AvgShippingCostsSeries = series;
-        AvgShippingCostsXAxes = _chartLoaderService.CreateXAxes(labels);
+        AvgShippingCostsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         AvgShippingCostsYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasAvgShippingCostsData = series.Count > 0;
     }
@@ -1427,9 +1426,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadReturnFinancialImpactChart(CompanyData data)
     {
-        var (series, labels, _) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
+        var (series, _, dates, _) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
         ReturnFinancialImpactSeries = series;
-        ReturnFinancialImpactXAxes = _chartLoaderService.CreateXAxes(labels);
+        ReturnFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ReturnFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasReturnFinancialImpactData = series.Count > 0;
     }
@@ -1445,9 +1444,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadLossFinancialImpactChart(CompanyData data)
     {
-        var (series, labels, _) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
+        var (series, _, dates, _) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
         LossFinancialImpactSeries = series;
-        LossFinancialImpactXAxes = _chartLoaderService.CreateXAxes(labels);
+        LossFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         LossFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasLossFinancialImpactData = series.Count > 0;
     }
