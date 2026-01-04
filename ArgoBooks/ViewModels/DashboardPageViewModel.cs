@@ -485,11 +485,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         RecentTransactions = [];
         ActiveRentalsList = [];
 
-        // Subscribe to theme changes to update legend text color and chart titles
+        // Subscribe to theme changes to reload charts with new colors
         ThemeService.Instance.ThemeChanged += (_, _) =>
         {
-            OnPropertyChanged(nameof(LegendTextPaint));
-            OnPropertyChanged(nameof(ProfitsChartTitleVisual));
+            LoadDashboardData();
+            // Notify chart titles that have static text (no backing field changes during load)
             OnPropertyChanged(nameof(SalesVsExpensesChartTitle));
         };
 

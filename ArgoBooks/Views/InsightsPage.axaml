@@ -18,36 +18,25 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
         <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24">
-            <!-- Statistics Cards (Row 0) -->
-            <UniformGrid Grid.Row="0" Columns="4" Rows="1" Margin="0,0,0,24">
-                <!-- Total Insights -->
+            <!-- Statistics Cards Row -->
+            <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                 <controls:StatCard Label="AI Insights"
                                    Value="{Binding TotalInsights}"
                                    Icon="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"
-                                   IconColor="Info"
-                                   Margin="0,0,12,0" />
-
-                <!-- Trends Detected -->
+                                   IconColor="Info" />
                 <controls:StatCard Label="Trends Detected"
                                    Value="{Binding TrendsDetected}"
                                    Icon="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
-                                   IconColor="Success"
-                                   Margin="6,0" />
-
-                <!-- Anomalies -->
+                                   IconColor="Success" />
                 <controls:StatCard Label="Anomalies"
                                    Value="{Binding AnomaliesDetected}"
                                    Icon="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
-                                   IconColor="Warning"
-                                   Margin="6,0" />
-
-                <!-- Opportunities -->
+                                   IconColor="Warning" />
                 <controls:StatCard Label="Opportunities"
                                    Value="{Binding Opportunities}"
                                    Icon="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-                                   IconColor="Primary"
-                                   Margin="12,0,0,0" />
-            </UniformGrid>
+                                   IconColor="Primary" />
+            </controls:StatCardsRow>
 
             <!-- Page Header (Row 1) -->
             <Border Grid.Row="1"
@@ -140,38 +129,34 @@
                         <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Top" />
                     </Grid>
 
-                    <!-- Forecast Cards using StatCard control -->
-                    <UniformGrid Columns="4" Rows="1">
+                    <!-- Forecast Cards Row -->
+                    <controls:StatCardsRow>
                         <controls:StatCard Label="Next Month Revenue"
                                            Value="{Binding ForecastedRevenue}"
                                            ChangeValue="{Binding RevenueGrowthValue}"
                                            ChangeText="{Binding RevenueGrowth}"
                                            ChangeLabel="from current period"
-                                           UseAltBackground="True"
-                                           Margin="0,0,8,0" />
+                                           UseAltBackground="True" />
                         <controls:StatCard Label="Next Month Expenses"
                                            Value="{Binding ForecastedExpenses}"
                                            ChangeValue="{Binding ExpenseGrowthValue}"
                                            ChangeText="{Binding ExpenseGrowth}"
                                            ChangeLabel="from current period"
-                                           UseAltBackground="True"
-                                           Margin="8,0" />
+                                           UseAltBackground="True" />
                         <controls:StatCard Label="Projected Profit"
                                            Value="{Binding ForecastedProfit}"
                                            ChangeValue="{Binding ProfitGrowthValue}"
                                            ChangeText="{Binding ProfitGrowth}"
                                            ChangeLabel="from current period"
                                            ValueColor="Success"
-                                           UseAltBackground="True"
-                                           Margin="8,0" />
+                                           UseAltBackground="True" />
                         <controls:StatCard Label="Expected New Customers"
                                            Value="{Binding ForecastedCustomers}"
                                            ChangeValue="{Binding CustomerGrowthValue}"
                                            ChangeText="{Binding CustomerGrowth}"
                                            ChangeLabel="from current period"
-                                           UseAltBackground="True"
-                                           Margin="8,0,0,0" />
-                    </UniformGrid>
+                                           UseAltBackground="True" />
+                    </controls:StatCardsRow>
 
                     <!-- Confidence Indicator -->
                     <Border Background="{DynamicResource SurfaceAltBrush}"
