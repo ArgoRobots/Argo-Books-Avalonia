@@ -75,4 +75,46 @@ public class LinuxPlatformService : BasePlatformService
 
     /// <inheritdoc />
     public override bool SupportsAutoUpdate => true; // AppImage/Flatpak can auto-update
+
+    /// <inheritdoc />
+    public override string GetMachineId()
+    {
+        // Try /etc/machine-id first (systemd standard)
+        try
+        {
+            const string machineIdPath = "/etc/machine-id";
+            if (File.Exists(machineIdPath))
+            {
+                var machineId = File.ReadAllText(machineIdPath).Trim();
+                if (!string.IsNullOrEmpty(machineId))
+                {
+                    return machineId;
+                }
+            }
+        }
+        catch
+        {
+            // File read failed
+        }
+
+        // Try /var/lib/dbus/machine-id (older systems)
+        try
+        {
+            const string dbusMachineIdPath = "/var/lib/dbus/machine-id";
+            if (File.Exists(dbusMachineIdPath))
+            {
+                var machineId = File.ReadAllText(dbusMachineIdPath).Trim();
+                if (!string.IsNullOrEmpty(machineId))
+                {
+                    return machineId;
+                }
+            }
+        }
+        catch
+        {
+            // File read failed
+        }
+
+        return base.GetMachineId();
+    }
 }

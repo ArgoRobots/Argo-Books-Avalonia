@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using Xunit;
 
@@ -11,13 +12,15 @@ public class LicenseServiceTests
 {
     private readonly MockEncryptionService _encryptionService;
     private readonly MockGlobalSettingsService _settingsService;
+    private readonly MockPlatformService _platformService;
     private readonly LicenseService _licenseService;
 
     public LicenseServiceTests()
     {
         _encryptionService = new MockEncryptionService();
         _settingsService = new MockGlobalSettingsService();
-        _licenseService = new LicenseService(_encryptionService, _settingsService);
+        _platformService = new MockPlatformService();
+        _licenseService = new LicenseService(_encryptionService, _settingsService, _platformService);
     }
 
     #region Constructor Tests
@@ -26,14 +29,21 @@ public class LicenseServiceTests
     public void Constructor_NullEncryptionService_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new LicenseService(null!, _settingsService));
+            new LicenseService(null!, _settingsService, _platformService));
     }
 
     [Fact]
     public void Constructor_NullSettingsService_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new LicenseService(_encryptionService, null!));
+            new LicenseService(_encryptionService, null!, _platformService));
+    }
+
+    [Fact]
+    public void Constructor_NullPlatformService_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            new LicenseService(_encryptionService, _settingsService, null!));
     }
 
     #endregion
@@ -347,6 +357,30 @@ public class LicenseServiceTests
         {
             _settings.License = new LicenseSettings();
         }
+    }
+
+    private class MockPlatformService : IPlatformService
+    {
+        public PlatformType Platform => PlatformType.Windows;
+        public bool SupportsFileSystem => true;
+        public bool SupportsNativeDialogs => true;
+        public bool SupportsBiometrics => false;
+        public bool SupportsAutoUpdate => true;
+        public int MaxRecentCompanies => 10;
+
+        public string GetAppDataPath() => "/mock/appdata";
+        public string GetTempPath() => "/mock/temp";
+        public string GetDefaultDocumentsPath() => "/mock/documents";
+        public string GetLogsPath() => "/mock/logs";
+        public string GetCachePath() => "/mock/cache";
+        public string NormalizePath(string path) => path;
+        public string CombinePaths(params string[] paths) => string.Join("/", paths);
+        public void EnsureDirectoryExists(string path) { }
+
+        /// <summary>
+        /// Returns a stable mock machine ID for testing.
+        /// </summary>
+        public string GetMachineId() => "MOCK-MACHINE-ID-12345";
     }
 
     #endregion

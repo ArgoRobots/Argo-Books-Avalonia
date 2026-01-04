@@ -79,6 +79,14 @@ public abstract class BasePlatformService : IPlatformService
         return Path.Combine(paths);
     }
 
+    /// <inheritdoc />
+    public virtual string GetMachineId()
+    {
+        // Fallback implementation using machine name
+        // Platform-specific implementations should override this with more stable identifiers
+        return Environment.MachineName;
+    }
+
     /// <summary>
     /// Gets the application name used in paths.
     /// </summary>

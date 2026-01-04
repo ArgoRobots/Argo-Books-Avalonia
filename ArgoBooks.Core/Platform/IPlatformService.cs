@@ -84,6 +84,20 @@ public interface IPlatformService
     /// <param name="paths">Path segments to combine.</param>
     /// <returns>Combined path.</returns>
     string CombinePaths(params string[] paths);
+
+    /// <summary>
+    /// Gets a stable, unique identifier for this machine.
+    /// Used for machine-binding features like license encryption.
+    /// </summary>
+    /// <remarks>
+    /// Platform implementations:
+    /// - Windows: Uses MachineGuid from registry
+    /// - Linux: Uses /etc/machine-id
+    /// - macOS: Uses IOPlatformUUID
+    /// - Browser: Uses a stored random ID
+    /// </remarks>
+    /// <returns>A stable machine identifier string.</returns>
+    string GetMachineId();
 }
 
 /// <summary>
