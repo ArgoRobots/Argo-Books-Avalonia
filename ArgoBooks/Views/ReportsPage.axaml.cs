@@ -73,6 +73,7 @@ public partial class ReportsPage : UserControl
             _designCanvas.PointerMoved += OnCanvasPointerMoved;
             _designCanvas.PointerReleased += OnCanvasPointerReleased;
             _designCanvas.SelectionChanged += OnCanvasSelectionChanged;
+            _designCanvas.ContextMenuRequested += OnCanvasContextMenuRequested;
         }
 
         // Wire up keyboard shortcuts
@@ -258,6 +259,7 @@ public partial class ReportsPage : UserControl
             _designCanvas.PointerMoved -= OnCanvasPointerMoved;
             _designCanvas.PointerReleased -= OnCanvasPointerReleased;
             _designCanvas.SelectionChanged -= OnCanvasSelectionChanged;
+            _designCanvas.ContextMenuRequested -= OnCanvasContextMenuRequested;
         }
 
         if (_previewScrollViewer != null)
@@ -362,6 +364,24 @@ public partial class ReportsPage : UserControl
         if (DataContext is ReportsPageViewModel vm)
         {
             vm.SyncSelection(e.SelectedElements.ToList());
+        }
+    }
+
+    private void OnCanvasContextMenuRequested(object? sender, Controls.Reports.ContextMenuRequestedEventArgs e)
+    {
+        // Show context menu at the requested position
+        if (DataContext is ReportsPageViewModel vm)
+        {
+            vm.ShowContextMenu(e.X, e.Y);
+        }
+    }
+
+    private void OnContextMenuBackdropPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Hide context menu when clicking on backdrop
+        if (DataContext is ReportsPageViewModel vm)
+        {
+            vm.HideContextMenuCommand.Execute(null);
         }
     }
 

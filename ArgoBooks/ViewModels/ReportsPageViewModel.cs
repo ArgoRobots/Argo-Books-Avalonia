@@ -478,6 +478,63 @@ public partial class ReportsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isElementPanelExpanded = true;
 
+    #region Context Menu
+
+    [ObservableProperty]
+    private bool _isContextMenuOpen;
+
+    [ObservableProperty]
+    private double _contextMenuX;
+
+    [ObservableProperty]
+    private double _contextMenuY;
+
+    /// <summary>
+    /// Shows the context menu at the specified position.
+    /// </summary>
+    public void ShowContextMenu(double x, double y)
+    {
+        ContextMenuX = x;
+        ContextMenuY = y;
+        IsContextMenuOpen = true;
+    }
+
+    [RelayCommand]
+    private void HideContextMenu()
+    {
+        IsContextMenuOpen = false;
+    }
+
+    [RelayCommand]
+    private void ContextMenuBringToFront()
+    {
+        BringToFront();
+        HideContextMenu();
+    }
+
+    [RelayCommand]
+    private void ContextMenuSendToBack()
+    {
+        SendToBack();
+        HideContextMenu();
+    }
+
+    [RelayCommand]
+    private void ContextMenuDuplicate()
+    {
+        DuplicateSelectedElements();
+        HideContextMenu();
+    }
+
+    [RelayCommand]
+    private void ContextMenuDelete()
+    {
+        DeleteSelectedElements();
+        HideContextMenu();
+    }
+
+    #endregion
+
     [ObservableProperty]
     private bool _isPageSettingsOpen;
 

@@ -92,6 +92,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     [ObservableProperty]
     private string _selectedDateRange = "This Month";
 
+    // Stores the previous selection before opening custom range modal
+    private string _previousDateRange = "This Month";
+
     [ObservableProperty]
     private DateTime _startDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 
@@ -233,6 +236,13 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     [RelayCommand]
     private void OpenCustomDateRangeModal()
     {
+        // Store the previous selection before opening the modal
+        // so we can restore it if the user cancels
+        if (SelectedDateRange != "Custom Range")
+        {
+            _previousDateRange = SelectedDateRange;
+        }
+
         // Initialize modal dates with current values
         ModalStartDate = StartDate;
         ModalEndDate = EndDate;
@@ -288,10 +298,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     {
         IsCustomDateRangeModalOpen = false;
 
-        // If no custom range was previously applied, revert to default selection
+        // If no custom range was previously applied, revert to the previous selection
         if (!HasAppliedCustomRange)
         {
-            SelectedDateRange = "This Month";
+            SelectedDateRange = _previousDateRange;
         }
     }
 
