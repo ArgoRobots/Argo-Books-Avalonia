@@ -16,20 +16,6 @@
     </Design.DataContext>
 
     <UserControl.Styles>
-        <!-- Toggle button rotation animation -->
-        <Style Selector="PathIcon.toggle-arrow">
-            <Setter Property="RenderTransform" Value="rotate(0deg)" />
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseInOut" />
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="PathIcon.toggle-arrow.collapsed">
-            <Setter Property="RenderTransform" Value="rotate(180deg)" />
-        </Style>
-
         <!-- Sidebar toggle button style -->
         <Style Selector="Button.sidebar-toggle">
             <Setter Property="Background" Value="Transparent" />
@@ -115,10 +101,9 @@
                             Width="28" Height="28"
                             Margin="8,0,0,0"
                             VerticalAlignment="Center">
-                        <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
-                                  Width="18" Height="18"
-                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                  Classes="toggle-arrow" />
+                        <controls:ToggleArrow IconSize="18"
+                                              Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                              IsCollapsed="{Binding IsCollapsed}" />
                     </Button>
                 </Grid>
 
@@ -165,10 +150,9 @@
                             ToolTip.Tip="Expand sidebar"
                             Width="28" Height="28"
                             HorizontalAlignment="Center">
-                        <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
-                                  Width="18" Height="18"
-                                  Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                  Classes="toggle-arrow collapsed" />
+                        <controls:ToggleArrow IconSize="18"
+                                              Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                              IsCollapsed="{Binding IsCollapsed}" />
                     </Button>
                 </StackPanel>
             </Panel>
