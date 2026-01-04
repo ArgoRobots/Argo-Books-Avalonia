@@ -1073,15 +1073,7 @@ public class ChartLoaderService
         // Only add series if there's actual data (any non-zero growth rates)
         if (values.Any(v => v != 0))
         {
-            series.Add(new ColumnSeries<double>
-            {
-                Values = values,
-                Name = "Growth Rate %",
-                Fill = new SolidColorPaint(RevenueColor),
-                Stroke = null,
-                MaxBarWidth = 50,
-                Padding = 2
-            });
+            series.Add(CreateTimeSeries(values, "Growth Rate %", RevenueColor));
         }
 
         // Store export data
@@ -1126,15 +1118,7 @@ public class ChartLoaderService
         labels = filteredData.Select(p => p.Label).ToArray();
         var avgValues = filteredData.Select(p => p.Value).ToArray();
 
-        series.Add(new ColumnSeries<double>
-        {
-            Values = avgValues,
-            Name = "Avg Transaction",
-            Fill = new SolidColorPaint(RevenueColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+        series.Add(CreateTimeSeries(avgValues, "Avg Transaction", RevenueColor));
 
         // Store export data
         _chartExportDataByTitle["Average Transaction Value"] = new ChartExportData
@@ -1178,15 +1162,7 @@ public class ChartLoaderService
         labels = filteredData.Select(p => p.Label).ToArray();
         var countValues = filteredData.Select(p => p.Value).ToArray();
 
-        series.Add(new ColumnSeries<double>
-        {
-            Values = countValues,
-            Name = "Transactions",
-            Fill = new SolidColorPaint(RevenueColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+        series.Add(CreateTimeSeries(countValues, "Transactions", RevenueColor));
 
         // Store export data
         _chartExportDataByTitle["Total Transactions"] = new ChartExportData
@@ -1229,15 +1205,7 @@ public class ChartLoaderService
         labels = filteredData.Select(p => p.Label).ToArray();
         var avgShipping = filteredData.Select(p => p.Value).ToArray();
 
-        series.Add(new ColumnSeries<double>
-        {
-            Values = avgShipping,
-            Name = "Avg Shipping",
-            Fill = new SolidColorPaint(RevenueColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+        series.Add(CreateTimeSeries(avgShipping, "Avg Shipping", RevenueColor));
 
         // Store export data
         _chartExportDataByTitle["Average Shipping Costs"] = new ChartExportData
@@ -1925,15 +1893,7 @@ public class ChartLoaderService
         var impactValues = filteredData.Select(p => p.Value).ToArray();
         totalImpact = (decimal)impactValues.Sum();
 
-        series.Add(new ColumnSeries<double>
-        {
-            Values = impactValues,
-            Name = "Refunds",
-            Fill = new SolidColorPaint(ExpenseColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+        series.Add(CreateTimeSeries(impactValues, "Refunds", ExpenseColor));
 
         // Store export data
         _chartExportDataByTitle["Financial Impact of Returns"] = new ChartExportData
@@ -2026,15 +1986,7 @@ public class ChartLoaderService
         var impactValues = filteredData.Select(p => p.Value).ToArray();
         totalImpact = (decimal)impactValues.Sum();
 
-        series.Add(new ColumnSeries<double>
-        {
-            Values = impactValues,
-            Name = "Value Lost",
-            Fill = new SolidColorPaint(ExpenseColor),
-            Stroke = null,
-            MaxBarWidth = 50,
-            Padding = 2
-        });
+        series.Add(CreateTimeSeries(impactValues, "Value Lost", ExpenseColor));
 
         // Store export data
         _chartExportDataByTitle["Financial Impact of Losses"] = new ChartExportData

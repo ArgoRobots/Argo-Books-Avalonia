@@ -927,7 +927,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     // Operational Tab Chart Titles
     public LabelVisual TransactionsByAccountantTitle => ChartLoaderService.CreateChartTitle("Transactions by Accountant");
     public LabelVisual WorkloadDistributionTitle => ChartLoaderService.CreateChartTitle("Workload Distribution");
-    public LabelVisual ProcessingTimeTrendsTitle => ChartLoaderService.CreateChartTitle("Processing Time Trends");
 
     // Performance Tab Chart Titles
     public LabelVisual AverageTransactionValueTitle => ChartLoaderService.CreateChartTitle("Average Transaction Value");
@@ -968,7 +967,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         nameof(SalesDistributionTitle), nameof(PurchaseTrendsTitle), nameof(PurchaseDistributionTitle),
         nameof(CountriesOfOriginTitle), nameof(CompaniesOfOriginTitle), nameof(CountriesOfDestinationTitle),
         nameof(CompaniesOfDestinationTitle), nameof(WorldMapOverviewTitle), nameof(TransactionsByAccountantTitle),
-        nameof(WorkloadDistributionTitle), nameof(ProcessingTimeTrendsTitle), nameof(AverageTransactionValueTitle),
+        nameof(WorkloadDistributionTitle), nameof(AverageTransactionValueTitle),
         nameof(TotalTransactionsTitle), nameof(AverageShippingCostsTitle), nameof(GrowthRatesTitle),
         nameof(TopCustomersByRevenueTitle), nameof(CustomerPaymentStatusTitle), nameof(CustomerGrowthTitle),
         nameof(CustomerLifetimeValueTitle), nameof(ActiveVsInactiveCustomersTitle), nameof(RentalsPerCustomerTitle),

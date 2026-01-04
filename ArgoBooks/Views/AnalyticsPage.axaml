@@ -598,34 +598,6 @@
                             </Panel>
                         </Border>
                     </Grid>
-
-                    <!-- Processing Trends -->
-                    <Border Background="{DynamicResource SurfaceBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="12"
-                            Padding="10"
-                            Height="300">
-                        <Panel>
-                            <!-- Chart with data -->
-                            <lvc:CartesianChart Title="{Binding ProcessingTimeTrendsTitle}"
-                                                PointerPressed="OnChartPointerPressed"
-                                                Series="{Binding AvgTransactionValueSeries}"
-                                                XAxes="{Binding AvgTransactionValueXAxes}"
-                                                YAxes="{Binding AvgTransactionValueYAxes}"
-                                                IsVisible="{Binding HasAvgTransactionValueData}" />
-                            <!-- No data placeholder -->
-                            <Border Background="{DynamicResource SurfaceAltBrush}"
-                                    CornerRadius="8"
-                                    IsVisible="{Binding !HasAvgTransactionValueData}">
-                                <TextBlock Text="No processing data available"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontSize="14"
-                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                            </Border>
-                        </Panel>
-                    </Border>
                 </StackPanel>
 
                 <!-- Performance Tab Content -->
