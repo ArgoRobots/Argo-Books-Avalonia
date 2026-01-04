@@ -1293,9 +1293,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadSalesVsExpensesChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
         SalesVsExpensesSeries = series;
-        SalesVsExpensesXAxes = _chartLoaderService.CreateXAxes(labels);
+        SalesVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
         SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasSalesVsExpensesData = series.Count > 0;
     }
@@ -1367,27 +1367,27 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadAvgTransactionValueChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadAverageTransactionValueChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadAverageTransactionValueChart(data, StartDate, EndDate);
         AvgTransactionValueSeries = series;
-        AvgTransactionValueXAxes = _chartLoaderService.CreateXAxes(labels);
+        AvgTransactionValueXAxes = _chartLoaderService.CreateDateXAxes(dates);
         AvgTransactionValueYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasAvgTransactionValueData = series.Count > 0;
     }
 
     private void LoadTotalTransactionsChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadTotalTransactionsChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadTotalTransactionsChart(data, StartDate, EndDate);
         TotalTransactionsSeries = series;
-        TotalTransactionsXAxes = _chartLoaderService.CreateXAxes(labels);
+        TotalTransactionsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         TotalTransactionsYAxes = _chartLoaderService.CreateNumberYAxes();
         HasTotalTransactionsData = series.Count > 0;
     }
 
     private void LoadAvgShippingCostsChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadAverageShippingCostsChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadAverageShippingCostsChart(data, StartDate, EndDate);
         AvgShippingCostsSeries = series;
-        AvgShippingCostsXAxes = _chartLoaderService.CreateXAxes(labels);
+        AvgShippingCostsXAxes = _chartLoaderService.CreateDateXAxes(dates);
         AvgShippingCostsYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasAvgShippingCostsData = series.Count > 0;
     }
@@ -1426,9 +1426,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadReturnFinancialImpactChart(CompanyData data)
     {
-        var (series, labels, _) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
+        var (series, _, dates, _) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
         ReturnFinancialImpactSeries = series;
-        ReturnFinancialImpactXAxes = _chartLoaderService.CreateXAxes(labels);
+        ReturnFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ReturnFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasReturnFinancialImpactData = series.Count > 0;
     }
@@ -1444,9 +1444,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadLossFinancialImpactChart(CompanyData data)
     {
-        var (series, labels, _) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
+        var (series, _, dates, _) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
         LossFinancialImpactSeries = series;
-        LossFinancialImpactXAxes = _chartLoaderService.CreateXAxes(labels);
+        LossFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         LossFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes();
         HasLossFinancialImpactData = series.Count > 0;
     }
