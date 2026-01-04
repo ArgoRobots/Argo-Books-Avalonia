@@ -882,6 +882,91 @@
                                        FontWeight="Medium"
                                        VerticalAlignment="Center" />
                         </Border>
+
+                        <!-- Right-Click Context Menu -->
+                        <Canvas IsVisible="{Binding IsContextMenuOpen}" PointerPressed="OnContextMenuBackdropPressed">
+                            <!-- Invisible backdrop to close menu when clicking outside -->
+                            <Border Background="Transparent"
+                                    Width="{Binding $parent.Bounds.Width}"
+                                    Height="{Binding $parent.Bounds.Height}" />
+
+                            <!-- Context Menu Panel -->
+                            <Border Canvas.Left="{Binding ContextMenuX}"
+                                    Canvas.Top="{Binding ContextMenuY}"
+                                    Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="4"
+                                    BoxShadow="0 4 12 0 #40000000">
+                                <Border.Styles>
+                                    <Style Selector="Button.context-menu-item">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Padding" Value="10,8" />
+                                        <Setter Property="CornerRadius" Value="4" />
+                                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                    </Style>
+                                    <Style Selector="Button.context-menu-item:pointerover">
+                                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                    </Style>
+                                    <Style Selector="Button.context-menu-item:pressed">
+                                        <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
+                                    </Style>
+                                    <Style Selector="Button.context-menu-item.danger:pointerover">
+                                        <Setter Property="Background" Value="#FFEBEE" />
+                                    </Style>
+                                    <Style Selector="Button.context-menu-item.danger:pressed">
+                                        <Setter Property="Background" Value="#FFCDD2" />
+                                    </Style>
+                                </Border.Styles>
+                                <StackPanel Spacing="2" MinWidth="140">
+                                    <Button Classes="context-menu-item"
+                                            Command="{Binding ContextMenuBringToFrontCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
+                                                      Width="16" Height="16"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBlock Text="Bring to Front" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="context-menu-item"
+                                            Command="{Binding ContextMenuSendToBackCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"
+                                                      Width="16" Height="16"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}"
+                                                      RenderTransform="scale(1,-1)"
+                                                      RenderTransformOrigin="0.5,0.5" />
+                                            <TextBlock Text="Send to Back" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Border Height="1"
+                                            Background="{DynamicResource BorderBrush}"
+                                            Margin="4,4" />
+                                    <Button Classes="context-menu-item"
+                                            Command="{Binding ContextMenuDuplicateCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
+                                                      Width="16" Height="16"
+                                                      Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBlock Text="Duplicate" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="context-menu-item danger"
+                                            Command="{Binding ContextMenuDeleteCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                      Width="16" Height="16"
+                                                      Foreground="{DynamicResource DangerBrush}" />
+                                            <TextBlock Text="Delete" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </Canvas>
                     </Grid>
                 </Grid>
 

@@ -166,6 +166,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     public event EventHandler<ElementAddedEventArgs>? ElementAdded;
     public event EventHandler<ReportElementBase>? ElementRemoved;
     public event EventHandler<SelectionChangedEventArgs>? SelectionChanged;
+    public event EventHandler<ContextMenuRequestedEventArgs>? ContextMenuRequested;
 
     /// <summary>
     /// Notifies listeners about selection changes.
@@ -771,6 +772,29 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         var point = GetCanvasPoint(e);
         var props = e.GetCurrentPoint(_canvasImage).Properties;
+
+        // Handle right-click for context menu
+        if (props.IsRightButtonPressed)
+        {
+            var element = GetElementAtPoint(point);
+            if (element != null)
+            {
+                // Select the element if not already selected
+                if (!_selectedElements.Contains(element))
+                {
+                    _selectedElements.Clear();
+                    _selectedElements.Add(element);
+                    NotifySelectionChanged();
+                    InvalidateCanvas();
+                }
+
+                // Get the position relative to the parent control for menu positioning
+                var screenPoint = e.GetPosition(this);
+                ContextMenuRequested?.Invoke(this, new ContextMenuRequestedEventArgs(screenPoint.X, screenPoint.Y, element));
+            }
+            e.Handled = true;
+            return;
+        }
 
         if (props.IsLeftButtonPressed)
         {
@@ -1509,6 +1533,23 @@ public class ElementAddedEventArgs : EventArgs
 
     public ElementAddedEventArgs(ReportElementBase element)
     {
+        Element = element;
+    }
+}
+
+/// <summary>
+/// Event args for when a context menu is requested.
+/// </summary>
+public class ContextMenuRequestedEventArgs : EventArgs
+{
+    public double X { get; }
+    public double Y { get; }
+    public ReportElementBase Element { get; }
+
+    public ContextMenuRequestedEventArgs(double x, double y, ReportElementBase element)
+    {
+        X = x;
+        Y = y;
         Element = element;
     }
 }
