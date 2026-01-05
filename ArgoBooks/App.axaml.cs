@@ -313,6 +313,9 @@ public partial class App : Application
             // Wire up settings modal events
             WireSettingsModalEvents();
 
+            // Wire up export as modal events
+            WireExportEvents(desktop);
+
             // Wire up header save request
             _appShellViewModel.HeaderViewModel.SaveRequested += async (_, _) =>
             {
@@ -1036,6 +1039,144 @@ public partial class App : Application
                 CompanyManager.CurrentCompanySettings.Security.AutoLockEnabled = args.TimeoutMinutes > 0;
                 CompanyManager.CurrentCompanySettings.Security.AutoLockMinutes = args.TimeoutMinutes;
                 CompanyManager.MarkAsChanged();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Wires up export as modal events for spreadsheet export.
+    /// </summary>
+    private static void WireExportEvents(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        if (_appShellViewModel == null)
+            return;
+
+        var exportModal = _appShellViewModel.ExportAsModalViewModel;
+
+        // Refresh record counts when modal opens
+        exportModal.RefreshRecordCountsRequested += (_, _) =>
+        {
+            exportModal.RefreshRecordCounts(CompanyManager?.CompanyData);
+        };
+
+        // Handle export request
+        exportModal.ExportRequested += async (_, args) =>
+        {
+            if (args.Format == "backup")
+            {
+                // Backup export - not implemented yet
+                _appShellViewModel?.AddNotification("Info", "Backup export will be available in a future update.", NotificationType.Info);
+                return;
+            }
+
+            // Spreadsheet export
+            if (args.SelectedDataItems.Count == 0)
+            {
+                _appShellViewModel?.AddNotification("Warning", "Please select at least one data type to export.", NotificationType.Warning);
+                return;
+            }
+
+            if (CompanyManager?.CompanyData == null)
+            {
+                _appShellViewModel?.AddNotification("Error", "No company is currently open.", NotificationType.Error);
+                return;
+            }
+
+            // Show save file dialog
+            var extension = args.Format;
+            var filterName = args.Format.ToUpperInvariant() switch
+            {
+                "XLSX" => "Excel Workbook",
+                "CSV" => "CSV File",
+                "PDF" => "PDF Document",
+                _ => "File"
+            };
+
+            var file = await desktop.MainWindow!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Export Data",
+                SuggestedFileName = $"{CompanyManager.CurrentCompanyName ?? "Export"}-{DateTime.Now:yyyy-MM-dd}.{extension}",
+                DefaultExtension = extension,
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType(filterName)
+                    {
+                        Patterns = new[] { $"*.{extension}" }
+                    }
+                }
+            });
+
+            if (file == null) return;
+
+            var filePath = file.Path.LocalPath;
+            _mainWindowViewModel?.ShowLoading("Exporting data...");
+
+            try
+            {
+                var exportService = new Core.Services.SpreadsheetExportService();
+
+                switch (args.Format.ToLowerInvariant())
+                {
+                    case "xlsx":
+                        await exportService.ExportToExcelAsync(
+                            filePath,
+                            CompanyManager.CompanyData,
+                            args.SelectedDataItems,
+                            args.StartDate,
+                            args.EndDate);
+                        break;
+
+                    case "csv":
+                        await exportService.ExportToCsvAsync(
+                            filePath,
+                            CompanyManager.CompanyData,
+                            args.SelectedDataItems,
+                            args.StartDate,
+                            args.EndDate);
+                        break;
+
+                    case "pdf":
+                        await exportService.ExportToPdfAsync(
+                            filePath,
+                            CompanyManager.CompanyData,
+                            args.SelectedDataItems,
+                            args.StartDate,
+                            args.EndDate);
+                        break;
+                }
+
+                _mainWindowViewModel?.HideLoading();
+                _appShellViewModel?.AddNotification("Success", $"Data exported to {Path.GetFileName(filePath)}", NotificationType.Success);
+
+                // Open the containing folder
+                try
+                {
+                    var directory = Path.GetDirectoryName(filePath);
+                    if (!string.IsNullOrEmpty(directory))
+                    {
+                        if (OperatingSystem.IsWindows())
+                        {
+                            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{filePath}\"");
+                        }
+                        else if (OperatingSystem.IsMacOS())
+                        {
+                            System.Diagnostics.Process.Start("open", $"-R \"{filePath}\"");
+                        }
+                        else if (OperatingSystem.IsLinux())
+                        {
+                            System.Diagnostics.Process.Start("xdg-open", directory);
+                        }
+                    }
+                }
+                catch
+                {
+                    // Ignore errors opening folder
+                }
+            }
+            catch (Exception ex)
+            {
+                _mainWindowViewModel?.HideLoading();
+                _appShellViewModel?.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
             }
         };
     }
