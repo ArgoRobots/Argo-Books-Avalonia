@@ -1146,7 +1146,6 @@ public partial class App : Application
                 }
 
                 _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Success", $"Data exported to {Path.GetFileName(filePath)}", NotificationType.Success);
 
                 // Open the containing folder
                 try
