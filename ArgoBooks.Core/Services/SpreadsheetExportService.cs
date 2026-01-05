@@ -281,7 +281,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetCustomersData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Company", "Email", "Phone", "Street", "City", "State", "Zip Code", "Country", "Notes", "Status", "Total Purchases", "Last Transaction" };
+        var headers = new[] { "ID", "Name", "Company", "Email", "Phone", "Street", "City", "State", "Zip Code", "Country", "Notes", "Status", "Total Purchases" };
         var rows = data.Customers.Select(c => new object[]
         {
             c.Id,
@@ -296,8 +296,7 @@ public class SpreadsheetExportService
             c.Address?.Country ?? "",
             c.Notes ?? "",
             c.Status.ToString(),
-            c.TotalPurchases,
-            c.LastTransactionDate ?? DateTime.MinValue
+            c.TotalPurchases
         }).ToList();
         return (headers, rows);
     }
@@ -343,7 +342,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetProductsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "SKU", "Description", "Category ID", "Supplier ID", "Unit Price", "Cost Price", "Tax Rate", "Track Inventory", "Status" };
+        var headers = new[] { "ID", "Name", "SKU", "Description", "Category ID", "Supplier ID" };
         var rows = data.Products.Select(p => new object[]
         {
             p.Id,
@@ -351,12 +350,7 @@ public class SpreadsheetExportService
             p.Sku,
             p.Description ?? "",
             p.CategoryId ?? "",
-            p.SupplierId ?? "",
-            p.UnitPrice,
-            p.CostPrice,
-            p.TaxRate,
-            p.TrackInventory ? "Yes" : "No",
-            p.Status.ToString()
+            p.SupplierId ?? ""
         }).ToList();
         return (headers, rows);
     }
@@ -476,7 +470,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetCategoriesData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Type", "Parent ID", "Description", "Item Type", "Icon" };
+        var headers = new[] { "ID", "Name", "Type", "Parent ID", "Description", "Item Type" };
         var rows = data.Categories.Select(c => new object[]
         {
             c.Id,
@@ -484,8 +478,7 @@ public class SpreadsheetExportService
             c.Type.ToString(),
             c.ParentId ?? "",
             c.Description ?? "",
-            c.ItemType ?? "",
-            c.Icon ?? ""
+            c.ItemType ?? ""
         }).ToList();
         return (headers, rows);
     }
