@@ -1226,14 +1226,29 @@ public partial class App : Application
             if (file == null || file.Count == 0) return;
 
             var filePath = file[0].Path.LocalPath;
+            var companyData = CompanyManager.CompanyData;
+
+            // Create snapshot of current data for undo
+            var snapshot = CreateCompanyDataSnapshot(companyData);
+
             _mainWindowViewModel?.ShowLoading("Importing data...");
 
             try
             {
                 var importService = new Core.Services.SpreadsheetImportService();
-                await importService.ImportFromExcelAsync(filePath, CompanyManager.CompanyData);
+                await importService.ImportFromExcelAsync(filePath, companyData);
 
                 _mainWindowViewModel?.HideLoading();
+
+                // Create snapshot of imported data for redo
+                var importedSnapshot = CreateCompanyDataSnapshot(companyData);
+
+                // Record undo action
+                UndoRedoManager?.RecordAction(new Services.DelegateAction(
+                    "Import spreadsheet data",
+                    () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
+                    () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
+                ));
 
                 // Mark as changed - this will trigger CompanyDataChanged event
                 CompanyManager.MarkAsChanged();
@@ -1246,6 +1261,106 @@ public partial class App : Application
                 _appShellViewModel?.AddNotification("Import Failed", $"Failed to import data: {ex.Message}", NotificationType.Error);
             }
         };
+    }
+
+    /// <summary>
+    /// Creates a JSON snapshot of the company data collections for undo/redo.
+    /// </summary>
+    private static string CreateCompanyDataSnapshot(Core.Data.CompanyData data)
+    {
+        var snapshot = new
+        {
+            data.IdCounters,
+            data.Customers,
+            data.Products,
+            data.Suppliers,
+            data.Employees,
+            data.Departments,
+            data.Categories,
+            data.Locations,
+            data.Sales,
+            data.Purchases,
+            data.Invoices,
+            data.Payments,
+            data.RecurringInvoices,
+            data.Inventory,
+            data.StockAdjustments,
+            data.PurchaseOrders,
+            data.RentalInventory,
+            data.Rentals
+        };
+        return System.Text.Json.JsonSerializer.Serialize(snapshot);
+    }
+
+    /// <summary>
+    /// Restores company data collections from a JSON snapshot.
+    /// </summary>
+    private static void RestoreCompanyDataFromSnapshot(Core.Data.CompanyData data, string snapshotJson)
+    {
+        var options = new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        using var doc = System.Text.Json.JsonDocument.Parse(snapshotJson);
+        var root = doc.RootElement;
+
+        // Helper to deserialize a list property
+        void RestoreList<T>(List<T> list, string propertyName)
+        {
+            list.Clear();
+            if (root.TryGetProperty(propertyName, out var prop))
+            {
+                var items = System.Text.Json.JsonSerializer.Deserialize<List<T>>(prop.GetRawText(), options);
+                if (items != null)
+                    list.AddRange(items);
+            }
+        }
+
+        // Restore IdCounters
+        if (root.TryGetProperty("IdCounters", out var counters))
+        {
+            var restoredCounters = System.Text.Json.JsonSerializer.Deserialize<Core.Data.IdCounters>(counters.GetRawText(), options);
+            if (restoredCounters != null)
+            {
+                data.IdCounters.Customer = restoredCounters.Customer;
+                data.IdCounters.Product = restoredCounters.Product;
+                data.IdCounters.Supplier = restoredCounters.Supplier;
+                data.IdCounters.Employee = restoredCounters.Employee;
+                data.IdCounters.Department = restoredCounters.Department;
+                data.IdCounters.Category = restoredCounters.Category;
+                data.IdCounters.Location = restoredCounters.Location;
+                data.IdCounters.Sale = restoredCounters.Sale;
+                data.IdCounters.Purchase = restoredCounters.Purchase;
+                data.IdCounters.Invoice = restoredCounters.Invoice;
+                data.IdCounters.Payment = restoredCounters.Payment;
+                data.IdCounters.RecurringInvoice = restoredCounters.RecurringInvoice;
+                data.IdCounters.InventoryItem = restoredCounters.InventoryItem;
+                data.IdCounters.StockAdjustment = restoredCounters.StockAdjustment;
+                data.IdCounters.PurchaseOrder = restoredCounters.PurchaseOrder;
+                data.IdCounters.RentalItem = restoredCounters.RentalItem;
+                data.IdCounters.Rental = restoredCounters.Rental;
+            }
+        }
+
+        // Restore all collections
+        RestoreList(data.Customers, "Customers");
+        RestoreList(data.Products, "Products");
+        RestoreList(data.Suppliers, "Suppliers");
+        RestoreList(data.Employees, "Employees");
+        RestoreList(data.Departments, "Departments");
+        RestoreList(data.Categories, "Categories");
+        RestoreList(data.Locations, "Locations");
+        RestoreList(data.Sales, "Sales");
+        RestoreList(data.Purchases, "Purchases");
+        RestoreList(data.Invoices, "Invoices");
+        RestoreList(data.Payments, "Payments");
+        RestoreList(data.RecurringInvoices, "RecurringInvoices");
+        RestoreList(data.Inventory, "Inventory");
+        RestoreList(data.StockAdjustments, "StockAdjustments");
+        RestoreList(data.PurchaseOrders, "PurchaseOrders");
+        RestoreList(data.RentalInventory, "RentalInventory");
+        RestoreList(data.Rentals, "Rentals");
     }
 
     /// <summary>

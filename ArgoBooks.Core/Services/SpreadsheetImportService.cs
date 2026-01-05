@@ -490,10 +490,13 @@ public class SpreadsheetImportService
                 Type = ParseEnum(GetString(row, headers, "Type"), CategoryType.Sales),
                 ParentId = GetNullableString(row, headers, "Parent ID"),
                 Description = GetNullableString(row, headers, "Description"),
-                ItemType = GetString(row, headers, "Item Type")
+                ItemType = GetString(row, headers, "Item Type"),
+                Icon = GetString(row, headers, "Icon")
             };
             if (string.IsNullOrEmpty(category.ItemType))
                 category.ItemType = "Product";
+            if (string.IsNullOrEmpty(category.Icon))
+                category.Icon = "📦";
             data.Categories.Add(category);
         }
     }
