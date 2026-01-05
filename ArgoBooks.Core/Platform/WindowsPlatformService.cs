@@ -1,3 +1,4 @@
+using System.Runtime.Versioning;
 using Microsoft.Win32;
 
 namespace ArgoBooks.Core.Platform;
@@ -5,6 +6,7 @@ namespace ArgoBooks.Core.Platform;
 /// <summary>
 /// Windows-specific platform service implementation.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public class WindowsPlatformService : BasePlatformService
 {
     /// <inheritdoc />

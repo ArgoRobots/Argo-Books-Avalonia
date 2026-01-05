@@ -345,10 +345,9 @@
                                                                    FontWeight="Medium"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Text="{Binding Email}"
+                                                        <TextBlock Text="{Binding Id}"
                                                                    FontSize="12"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                   TextTrimming="CharacterEllipsis" />
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
                                                     </StackPanel>
                                                 </StackPanel>
                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
