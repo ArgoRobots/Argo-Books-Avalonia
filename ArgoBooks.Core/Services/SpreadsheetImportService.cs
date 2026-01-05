@@ -483,11 +483,20 @@ public class SpreadsheetImportService
         data.Categories.Clear();
         foreach (var row in rows)
         {
+            var typeStr = GetString(row, headers, "Type");
+            var categoryType = typeStr.ToLowerInvariant() switch
+            {
+                "revenue" or "sales" => CategoryType.Sales,
+                "expenses" or "purchase" => CategoryType.Purchase,
+                "rental" => CategoryType.Rental,
+                _ => CategoryType.Sales
+            };
+
             var category = new Category
             {
                 Id = GetString(row, headers, "ID"),
                 Name = GetString(row, headers, "Name"),
-                Type = ParseEnum(GetString(row, headers, "Type"), CategoryType.Sales),
+                Type = categoryType,
                 ParentId = GetNullableString(row, headers, "Parent ID"),
                 Description = GetNullableString(row, headers, "Description"),
                 ItemType = GetString(row, headers, "Item Type"),

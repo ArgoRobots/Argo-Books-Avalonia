@@ -475,7 +475,12 @@ public class SpreadsheetExportService
         {
             c.Id,
             c.Name,
-            c.Type.ToString(),
+            c.Type switch
+            {
+                CategoryType.Sales => "Revenue",
+                CategoryType.Purchase => "Expenses",
+                _ => c.Type.ToString()
+            },
             c.ParentId ?? "",
             c.Description ?? "",
             c.ItemType ?? "",
