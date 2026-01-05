@@ -1,3 +1,5 @@
+using Microsoft.Win32;
+
 namespace ArgoBooks.Core.Platform;
 
 /// <summary>
@@ -46,5 +48,26 @@ public class WindowsPlatformService : BasePlatformService
         }
 
         return normalized;
+    }
+
+    /// <inheritdoc />
+    public override string GetMachineId()
+    {
+        try
+        {
+            // Use Windows Cryptography MachineGuid - stable across reboots and network changes
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Cryptography");
+            var machineGuid = key?.GetValue("MachineGuid") as string;
+            if (!string.IsNullOrEmpty(machineGuid))
+            {
+                return machineGuid;
+            }
+        }
+        catch
+        {
+            // Registry access failed, fall back to base implementation
+        }
+
+        return base.GetMachineId();
     }
 }

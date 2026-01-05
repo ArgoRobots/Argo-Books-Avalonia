@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
 
@@ -13,6 +14,7 @@ public class LicenseService
 {
     private readonly IEncryptionService _encryptionService;
     private readonly IGlobalSettingsService _settingsService;
+    private readonly IPlatformService _platformService;
 
     /// <summary>
     /// Internal license data structure.
@@ -25,10 +27,23 @@ public class LicenseService
         public DateTime ActivationDate { get; set; }
     }
 
+    /// <summary>
+    /// Initializes a new instance of the LicenseService.
+    /// Uses the default platform service from the factory.
+    /// </summary>
     public LicenseService(IEncryptionService encryptionService, IGlobalSettingsService settingsService)
+        : this(encryptionService, settingsService, PlatformServiceFactory.GetPlatformService())
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the LicenseService with a specific platform service.
+    /// </summary>
+    public LicenseService(IEncryptionService encryptionService, IGlobalSettingsService settingsService, IPlatformService platformService)
     {
         _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        _platformService = platformService ?? throw new ArgumentNullException(nameof(platformService));
     }
 
     /// <summary>
@@ -90,32 +105,65 @@ public class LicenseService
             }
 
             var encryptedData = Convert.FromBase64String(settings.License.LicenseData);
+
+            // Try to decrypt with the new stable machine key first
             var machineKey = GetMachineKey();
+            var licenseData = TryDecryptLicense(encryptedData, machineKey, settings.License.Salt, settings.License.Iv);
 
-            // Decrypt the license data
-            var decryptedData = _encryptionService.Decrypt(
-                encryptedData,
-                machineKey,
-                settings.License.Salt,
-                settings.License.Iv);
+            // If that fails, try the legacy MAC-based key for backward compatibility
+            if (licenseData == null)
+            {
+                var legacyKey = GetLegacyMachineKey();
+                licenseData = TryDecryptLicense(encryptedData, legacyKey, settings.License.Salt, settings.License.Iv);
 
-            var json = Encoding.UTF8.GetString(decryptedData);
-            var licenseData = JsonSerializer.Deserialize<LicenseData>(json);
+                // If legacy key worked, re-encrypt with the new stable key for future loads
+                if (licenseData != null)
+                {
+                    _ = MigrateLicenseToNewKeyAsync(licenseData);
+                }
+            }
 
             if (licenseData == null)
                 return (false, false);
 
             return (licenseData.HasStandard, licenseData.HasPremium);
         }
-        catch (CryptographicException)
-        {
-            // Decryption failed - likely different machine or tampered data
-            return (false, false);
-        }
         catch (Exception)
         {
-            // Any other error - return no license
+            // Any error - return no license
             return (false, false);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to decrypt license data with the given key.
+    /// </summary>
+    private LicenseData? TryDecryptLicense(byte[] encryptedData, string machineKey, string salt, string iv)
+    {
+        try
+        {
+            var decryptedData = _encryptionService.Decrypt(encryptedData, machineKey, salt, iv);
+            var json = Encoding.UTF8.GetString(decryptedData);
+            return JsonSerializer.Deserialize<LicenseData>(json);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Migrates a license from the legacy key format to the new stable key format.
+    /// </summary>
+    private async Task MigrateLicenseToNewKeyAsync(LicenseData licenseData)
+    {
+        try
+        {
+            await SaveLicenseAsync(licenseData.HasStandard, licenseData.HasPremium, licenseData.LicenseKey);
+        }
+        catch
+        {
+            // Migration failed, but license still works with legacy key
         }
     }
 
@@ -133,10 +181,29 @@ public class LicenseService
     }
 
     /// <summary>
-    /// Gets a machine-specific key for encryption.
-    /// Uses a combination of machine name and MAC address.
+    /// Gets a machine-specific key for encryption using stable platform identifiers.
     /// </summary>
-    private static string GetMachineKey()
+    private string GetMachineKey()
+    {
+        var machineInfo = new StringBuilder();
+
+        // Use the platform-specific stable machine ID
+        machineInfo.Append(_platformService.GetMachineId());
+
+        // Add static application key (v2 to differentiate from legacy key)
+        machineInfo.Append("ArgoBooks_License_v2");
+
+        // Hash the combined data to create a fixed-length key
+        using var sha256 = SHA256.Create();
+        var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(machineInfo.ToString()));
+        return Convert.ToBase64String(hashBytes);
+    }
+
+    /// <summary>
+    /// Gets the legacy machine key based on MAC addresses.
+    /// Used for backward compatibility with licenses encrypted before the fix.
+    /// </summary>
+    private static string GetLegacyMachineKey()
     {
         var machineInfo = new StringBuilder();
 
@@ -164,7 +231,7 @@ public class LicenseService
             // Ignore network errors
         }
 
-        // Add static application key to make it harder to reverse
+        // Add static application key (v1 - legacy)
         machineInfo.Append("ArgoBooks_License_v1");
 
         // Hash the combined data to create a fixed-length key
