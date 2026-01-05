@@ -316,6 +316,9 @@ public partial class App : Application
             // Wire up export as modal events
             WireExportEvents(desktop);
 
+            // Wire up import modal events
+            WireImportEvents(desktop);
+
             // Wire up header save request
             _appShellViewModel.HeaderViewModel.SaveRequested += async (_, _) =>
             {
@@ -1176,6 +1179,71 @@ public partial class App : Application
             {
                 _mainWindowViewModel?.HideLoading();
                 _appShellViewModel?.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
+            }
+        };
+    }
+
+    /// <summary>
+    /// Wires up import modal events for spreadsheet import.
+    /// </summary>
+    private static void WireImportEvents(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        if (_appShellViewModel == null)
+            return;
+
+        var importModal = _appShellViewModel.ImportModalViewModel;
+
+        // Handle format selection
+        importModal.FormatSelected += async (_, format) =>
+        {
+            if (CompanyManager?.CompanyData == null)
+            {
+                _appShellViewModel?.AddNotification("Error", "No company is currently open.", NotificationType.Error);
+                return;
+            }
+
+            // Only Excel import is supported for now
+            if (format.ToUpperInvariant() != "EXCEL")
+            {
+                _appShellViewModel?.AddNotification("Info", $"{format} import will be available in a future update.", NotificationType.Info);
+                return;
+            }
+
+            // Show open file dialog
+            var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Import Excel File",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Excel Workbook")
+                    {
+                        Patterns = new[] { "*.xlsx" }
+                    }
+                }
+            });
+
+            if (file == null || file.Count == 0) return;
+
+            var filePath = file[0].Path.LocalPath;
+            _mainWindowViewModel?.ShowLoading("Importing data...");
+
+            try
+            {
+                var importService = new Core.Services.SpreadsheetImportService();
+                await importService.ImportFromExcelAsync(filePath, CompanyManager.CompanyData);
+
+                _mainWindowViewModel?.HideLoading();
+
+                // Mark as changed - this will trigger CompanyDataChanged event
+                CompanyManager.MarkAsChanged();
+
+                _appShellViewModel?.AddNotification("Import Complete", "Data has been imported successfully. Please save to persist changes.", NotificationType.Success);
+            }
+            catch (Exception ex)
+            {
+                _mainWindowViewModel?.HideLoading();
+                _appShellViewModel?.AddNotification("Import Failed", $"Failed to import data: {ex.Message}", NotificationType.Error);
             }
         };
     }
