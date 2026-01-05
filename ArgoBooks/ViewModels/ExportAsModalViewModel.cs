@@ -104,26 +104,26 @@ public partial class ExportAsModalViewModel : ViewModelBase
         DataItems.Add(new ExportDataItem { Name = "Customers", Key = "Customers", RecordCount = 0, IsSelected = true });
         DataItems.Add(new ExportDataItem { Name = "Suppliers", Key = "Suppliers", RecordCount = 0, IsSelected = true });
         DataItems.Add(new ExportDataItem { Name = "Products", Key = "Products", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Categories", Key = "Categories", RecordCount = 0 });
-        DataItems.Add(new ExportDataItem { Name = "Departments", Key = "Departments", RecordCount = 0 });
-        DataItems.Add(new ExportDataItem { Name = "Employees", Key = "Employees", RecordCount = 0 });
-        DataItems.Add(new ExportDataItem { Name = "Locations", Key = "Locations", RecordCount = 0 });
+        DataItems.Add(new ExportDataItem { Name = "Categories", Key = "Categories", RecordCount = 0, IsSelected = true });
+        DataItems.Add(new ExportDataItem { Name = "Departments", Key = "Departments", RecordCount = 0, IsSelected = true });
+        DataItems.Add(new ExportDataItem { Name = "Employees", Key = "Employees", RecordCount = 0, IsSelected = true });
+        DataItems.Add(new ExportDataItem { Name = "Locations", Key = "Locations", RecordCount = 0, IsSelected = true });
 
         // Transactions
         DataItems.Add(new ExportDataItem { Name = "Revenue (Sales)", Key = "Sales", RecordCount = 0, IsSelected = true });
         DataItems.Add(new ExportDataItem { Name = "Expenses (Purchases)", Key = "Purchases", RecordCount = 0, IsSelected = true });
         DataItems.Add(new ExportDataItem { Name = "Invoices", Key = "Invoices", RecordCount = 0, IsSelected = true });
         DataItems.Add(new ExportDataItem { Name = "Payments", Key = "Payments", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Recurring Invoices", Key = "Recurring Invoices", RecordCount = 0 });
+        DataItems.Add(new ExportDataItem { Name = "Recurring Invoices", Key = "Recurring Invoices", RecordCount = 0, IsSelected = true });
 
         // Inventory
-        DataItems.Add(new ExportDataItem { Name = "Inventory", Key = "Inventory", RecordCount = 0 });
-        DataItems.Add(new ExportDataItem { Name = "Stock Adjustments", Key = "Stock Adjustments", RecordCount = 0 });
-        DataItems.Add(new ExportDataItem { Name = "Purchase Orders", Key = "Purchase Orders", RecordCount = 0 });
+        DataItems.Add(new ExportDataItem { Name = "Inventory", Key = "Inventory", RecordCount = 0, IsSelected = true });
+        DataItems.Add(new ExportDataItem { Name = "Stock Adjustments", Key = "Stock Adjustments", RecordCount = 0, IsSelected = true });
+        DataItems.Add(new ExportDataItem { Name = "Purchase Orders", Key = "Purchase Orders", RecordCount = 0, IsSelected = true });
 
         // Rentals
-        DataItems.Add(new ExportDataItem { Name = "Rental Inventory", Key = "Rental Inventory", RecordCount = 0 });
-        DataItems.Add(new ExportDataItem { Name = "Rental Records", Key = "Rental Records", RecordCount = 0 });
+        DataItems.Add(new ExportDataItem { Name = "Rental Inventory", Key = "Rental Inventory", RecordCount = 0, IsSelected = true });
+        DataItems.Add(new ExportDataItem { Name = "Rental Records", Key = "Rental Records", RecordCount = 0, IsSelected = true });
     }
 
     /// <summary>
