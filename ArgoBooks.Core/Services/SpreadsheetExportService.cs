@@ -392,7 +392,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetSuppliersData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Contact Person", "Email", "Phone", "Address", "Payment Terms" };
+        var headers = new[] { "ID", "Name", "Contact Person", "Email", "Phone", "Country" };
         var rows = data.Suppliers.Select(s => new object[]
         {
             s.Id,
@@ -400,8 +400,7 @@ public class SpreadsheetExportService
             s.ContactPerson,
             s.Email ?? "",
             s.Phone ?? "",
-            FormatAddress(s.Address),
-            s.PaymentTerms
+            s.Address?.Country ?? ""
         }).ToList();
         return (headers, rows);
     }
