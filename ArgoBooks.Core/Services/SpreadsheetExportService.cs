@@ -281,7 +281,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetCustomersData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Company", "Email", "Phone", "Address", "Status", "Total Purchases", "Last Transaction" };
+        var headers = new[] { "ID", "Name", "Company", "Email", "Phone", "Street", "City", "State", "Zip Code", "Country", "Notes", "Status", "Total Purchases", "Last Transaction" };
         var rows = data.Customers.Select(c => new object[]
         {
             c.Id,
@@ -289,7 +289,12 @@ public class SpreadsheetExportService
             c.CompanyName ?? "",
             c.Email ?? "",
             c.Phone ?? "",
-            FormatAddress(c.Address),
+            c.Address?.Street ?? "",
+            c.Address?.City ?? "",
+            c.Address?.State ?? "",
+            c.Address?.ZipCode ?? "",
+            c.Address?.Country ?? "",
+            c.Notes ?? "",
             c.Status.ToString(),
             c.TotalPurchases,
             c.LastTransactionDate ?? DateTime.MinValue
@@ -338,17 +343,19 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetProductsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "SKU", "Description", "Category ID", "Unit Price", "Cost Price", "Tax Rate", "Status" };
+        var headers = new[] { "ID", "Name", "SKU", "Description", "Category ID", "Supplier ID", "Unit Price", "Cost Price", "Tax Rate", "Track Inventory", "Status" };
         var rows = data.Products.Select(p => new object[]
         {
             p.Id,
             p.Name,
             p.Sku,
-            p.Description,
+            p.Description ?? "",
             p.CategoryId ?? "",
+            p.SupplierId ?? "",
             p.UnitPrice,
             p.CostPrice,
             p.TaxRate,
+            p.TrackInventory ? "Yes" : "No",
             p.Status.ToString()
         }).ToList();
         return (headers, rows);
@@ -392,15 +399,20 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetSuppliersData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Contact Person", "Email", "Phone", "Country" };
+        var headers = new[] { "ID", "Name", "Email", "Phone", "Website", "Street", "City", "State", "Zip Code", "Country", "Notes" };
         var rows = data.Suppliers.Select(s => new object[]
         {
             s.Id,
             s.Name,
-            s.ContactPerson,
             s.Email ?? "",
             s.Phone ?? "",
-            s.Address?.Country ?? ""
+            s.Website ?? "",
+            s.Address?.Street ?? "",
+            s.Address?.City ?? "",
+            s.Address?.State ?? "",
+            s.Address?.ZipCode ?? "",
+            s.Address?.Country ?? "",
+            s.Notes ?? ""
         }).ToList();
         return (headers, rows);
     }
@@ -464,46 +476,50 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetCategoriesData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Type", "Description", "Color" };
+        var headers = new[] { "ID", "Name", "Type", "Parent ID", "Description", "Item Type", "Icon" };
         var rows = data.Categories.Select(c => new object[]
         {
             c.Id,
             c.Name,
             c.Type.ToString(),
+            c.ParentId ?? "",
             c.Description ?? "",
-            c.Color ?? ""
+            c.ItemType ?? "",
+            c.Icon ?? ""
         }).ToList();
         return (headers, rows);
     }
 
     private (string[] Headers, List<object[]> Rows) GetDepartmentsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Description", "Icon", "Icon Color", "Budget" };
+        var headers = new[] { "ID", "Name", "Description" };
         var rows = data.Departments.Select(d => new object[]
         {
             d.Id,
             d.Name,
-            d.Description ?? "",
-            d.Icon,
-            d.IconColor,
-            d.Budget
+            d.Description ?? ""
         }).ToList();
         return (headers, rows);
     }
 
     private (string[] Headers, List<object[]> Rows) GetEmployeesData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Email", "Phone", "Department ID", "Position", "Hire Date", "Employment Type", "Status" };
+        var headers = new[] { "ID", "First Name", "Last Name", "Email", "Phone", "Date of Birth", "Department ID", "Position", "Hire Date", "Employment Type", "Salary Type", "Salary Amount", "Pay Frequency", "Status" };
         var rows = data.Employees.Select(e => new object[]
         {
             e.Id,
-            e.FullName,
+            e.FirstName ?? "",
+            e.LastName ?? "",
             e.Email ?? "",
             e.Phone ?? "",
+            e.DateOfBirth ?? DateTime.MinValue,
             e.DepartmentId ?? "",
-            e.Position,
+            e.Position ?? "",
             e.HireDate,
-            e.EmploymentType,
+            e.EmploymentType ?? "",
+            e.SalaryType ?? "",
+            e.SalaryAmount,
+            e.PayFrequency ?? "",
             e.Status.ToString()
         }).ToList();
         return (headers, rows);
@@ -511,14 +527,18 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetLocationsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Contact Person", "Phone", "Address", "Capacity", "Utilization" };
+        var headers = new[] { "ID", "Name", "Contact Person", "Phone", "Street", "City", "State", "Zip Code", "Country", "Capacity", "Utilization" };
         var rows = data.Locations.Select(l => new object[]
         {
             l.Id,
             l.Name,
-            l.ContactPerson,
-            l.Phone,
-            FormatAddress(l.Address),
+            l.ContactPerson ?? "",
+            l.Phone ?? "",
+            l.Address?.Street ?? "",
+            l.Address?.City ?? "",
+            l.Address?.State ?? "",
+            l.Address?.ZipCode ?? "",
+            l.Address?.Country ?? "",
             l.Capacity,
             l.CurrentUtilization
         }).ToList();
