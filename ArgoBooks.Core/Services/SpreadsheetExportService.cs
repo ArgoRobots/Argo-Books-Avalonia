@@ -479,14 +479,15 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetDepartmentsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Description", "Color", "Icon" };
+        var headers = new[] { "ID", "Name", "Description", "Icon", "Icon Color", "Budget" };
         var rows = data.Departments.Select(d => new object[]
         {
             d.Id,
             d.Name,
             d.Description ?? "",
-            d.Color ?? "",
-            d.Icon ?? ""
+            d.Icon,
+            d.IconColor,
+            d.Budget
         }).ToList();
         return (headers, rows);
     }
@@ -591,7 +592,7 @@ public class SpreadsheetExportService
         if (!string.IsNullOrEmpty(address.Street)) parts.Add(address.Street);
         if (!string.IsNullOrEmpty(address.City)) parts.Add(address.City);
         if (!string.IsNullOrEmpty(address.State)) parts.Add(address.State);
-        if (!string.IsNullOrEmpty(address.PostalCode)) parts.Add(address.PostalCode);
+        if (!string.IsNullOrEmpty(address.ZipCode)) parts.Add(address.ZipCode);
         if (!string.IsNullOrEmpty(address.Country)) parts.Add(address.Country);
         return string.Join(", ", parts);
     }
