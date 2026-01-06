@@ -1524,7 +1524,8 @@ public class ChartLoaderService
                 Values = [count],
                 Name = name,
                 Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
-                Pushout = 0
+                Pushout = 0,
+                TooltipLabelFormatter = point => $"{point.Context.Series.Name}: {point.Coordinate.PrimaryValue:N0}"
             });
             legend.Add(new PieLegendItem
             {
@@ -1589,7 +1590,8 @@ public class ChartLoaderService
                 Values = [activeCount],
                 Name = "Active",
                 Fill = new SolidColorPaint(SKColor.Parse("#22C55E")),
-                Pushout = 0
+                Pushout = 0,
+                TooltipLabelFormatter = point => $"{point.Context.Series.Name}: {point.Coordinate.PrimaryValue:N0}"
             });
             legend.Add(new PieLegendItem
             {
@@ -1608,7 +1610,8 @@ public class ChartLoaderService
                 Values = [inactiveCount],
                 Name = "Inactive",
                 Fill = new SolidColorPaint(SKColor.Parse("#6B7280")),
-                Pushout = 0
+                Pushout = 0,
+                TooltipLabelFormatter = point => $"{point.Context.Series.Name}: {point.Coordinate.PrimaryValue:N0}"
             });
             legend.Add(new PieLegendItem
             {
@@ -1780,7 +1783,7 @@ public class ChartLoaderService
 
         var total = (int)dataPoints.Sum(p => p.Value);
 
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data
         var exportData = new ChartExportData
@@ -2303,12 +2306,14 @@ public class ChartLoaderService
     /// Creates pie chart series and legend items with "Other" grouping based on MaxPieSlices setting.
     /// </summary>
     /// <param name="dataPoints">The source data points.</param>
+    /// <param name="isCurrency">Whether to format tooltip values as currency with $ symbol.</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
-        List<ChartDataPoint> dataPoints)
+        List<ChartDataPoint> dataPoints,
+        bool isCurrency = true)
     {
         var maxSlices = ChartSettingsService.GetMaxPieSlices();
-        return CreatePieSeriesWithLegend(dataPoints, maxSlices);
+        return CreatePieSeriesWithLegend(dataPoints, maxSlices, isCurrency);
     }
 
     /// <summary>
@@ -2316,10 +2321,12 @@ public class ChartLoaderService
     /// </summary>
     /// <param name="dataPoints">The source data points.</param>
     /// <param name="maxSlices">Maximum number of slices before grouping into "Other".</param>
+    /// <param name="isCurrency">Whether to format tooltip values as currency with $ symbol.</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
     private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
         List<ChartDataPoint> dataPoints,
-        int maxSlices)
+        int maxSlices,
+        bool isCurrency = true)
     {
         var series = new ObservableCollection<ISeries>();
         var legendItems = new ObservableCollection<PieLegendItem>();
@@ -2348,19 +2355,23 @@ public class ChartLoaderService
             var item = topItems[i];
             var colorHex = GetColorHexForIndex(i);
             var percentage = total > 0 ? (item.Value / total) * 100 : 0;
+            var roundedValue = Math.Round(item.Value, 2);
 
             series.Add(new PieSeries<double>
             {
-                Values = [item.Value],
+                Values = [roundedValue],
                 Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
-                Pushout = 0
+                Pushout = 0,
+                TooltipLabelFormatter = isCurrency
+                    ? point => $"{point.Context.Series.Name}: ${point.Coordinate.PrimaryValue:N2}"
+                    : point => $"{point.Context.Series.Name}: {point.Coordinate.PrimaryValue:N0}"
             });
 
             legendItems.Add(new PieLegendItem
             {
                 Label = item.Label,
-                Value = item.Value,
+                Value = roundedValue,
                 Percentage = percentage,
                 ColorHex = colorHex
             });
@@ -2369,7 +2380,7 @@ public class ChartLoaderService
         // Create "Other" category if needed
         if (otherItems.Count > 0)
         {
-            var otherValue = otherItems.Sum(p => p.Value);
+            var otherValue = Math.Round(otherItems.Sum(p => p.Value), 2);
             var otherPercentage = total > 0 ? (otherValue / total) * 100 : 0;
             var otherColorHex = "#9CA3AF"; // Gray for "Other"
 
@@ -2378,7 +2389,10 @@ public class ChartLoaderService
                 Values = [otherValue],
                 Name = "Other",
                 Fill = new SolidColorPaint(SKColor.Parse(otherColorHex)),
-                Pushout = 0
+                Pushout = 0,
+                TooltipLabelFormatter = isCurrency
+                    ? point => $"{point.Context.Series.Name}: ${point.Coordinate.PrimaryValue:N2}"
+                    : point => $"{point.Context.Series.Name}: {point.Coordinate.PrimaryValue:N0}"
             });
 
             legendItems.Add(new PieLegendItem
