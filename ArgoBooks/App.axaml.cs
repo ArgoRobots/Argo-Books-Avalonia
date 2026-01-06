@@ -162,6 +162,11 @@ public partial class App : Application
     public static Controls.CategoriesTableColumnWidths CategoriesColumnWidths { get; } = new();
 
     /// <summary>
+    /// Gets the shared column widths for the Stock Levels table.
+    /// </summary>
+    public static Controls.StockLevelsTableColumnWidths StockLevelsColumnWidths { get; } = new();
+
+    /// <summary>
     /// Gets the shared column widths for the Departments table.
     /// </summary>
     public static Controls.DepartmentsTableColumnWidths DepartmentsColumnWidths { get; } = new();
@@ -2004,7 +2009,7 @@ public partial class App : Application
             }
             return new ProductsPage { DataContext = viewModel };
         });
-        navigationService.RegisterPage("StockLevels", _ => CreatePlaceholderPage("Stock Levels", "Monitor inventory levels"));
+        navigationService.RegisterPage("StockLevels", _ => new Views.StockLevelsPage { DataContext = new ViewModels.StockLevelsPageViewModel() });
         navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
         navigationService.RegisterPage("Categories", param =>
         {
