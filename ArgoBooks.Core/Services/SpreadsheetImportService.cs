@@ -1051,8 +1051,8 @@ public class SpreadsheetImportService
             };
 
             var itemType = GetString(row, headers, "Item Type");
-            // Normalize item type to proper casing (case-insensitive match)
-            itemType = itemType.ToLowerInvariant() switch
+            // Normalize item type to proper casing (case-insensitive match, trim whitespace)
+            itemType = itemType.Trim().ToLowerInvariant() switch
             {
                 "service" => "Service",
                 "product" => "Product",
@@ -1253,9 +1253,9 @@ public class SpreadsheetImportService
             category.Type = categoryType;
             category.ParentId = GetNullableString(row, headers, "Parent ID");
             category.Description = GetNullableString(row, headers, "Description");
-            // Normalize item type to proper casing (case-insensitive match)
+            // Normalize item type to proper casing (case-insensitive match, trim whitespace)
             var itemTypeStr = GetString(row, headers, "Item Type");
-            category.ItemType = itemTypeStr.ToLowerInvariant() switch
+            category.ItemType = itemTypeStr.Trim().ToLowerInvariant() switch
             {
                 "service" => "Service",
                 "product" => "Product",
