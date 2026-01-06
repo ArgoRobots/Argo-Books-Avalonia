@@ -75,9 +75,7 @@ public partial class ExportAsModalViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> FileFormats { get; } = new()
     {
-        "xlsx",
-        "csv",
-        "pdf"
+        "xlsx"
     };
 
     /// <summary>

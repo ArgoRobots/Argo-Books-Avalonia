@@ -82,37 +82,6 @@
                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                    Margin="0,0,0,4" />
 
-                        <!-- CSV -->
-                        <Button Classes="import-option"
-                                Command="{Binding SelectFormatCommand}"
-                                CommandParameter="CSV">
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <Border Grid.Column="0"
-                                        Width="40" Height="40"
-                                        CornerRadius="8"
-                                        Background="{DynamicResource WarningIconBgBrush}"
-                                        Margin="0,0,16,0">
-                                    <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"
-                                              Width="20" Height="20"
-                                              Foreground="{DynamicResource WarningBrush}" />
-                                </Border>
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="CSV (Comma-Separated Values)"
-                                               FontSize="14"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Import data from spreadsheet exports and text files"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
-                                <PathIcon Grid.Column="2"
-                                          Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
-                                          Width="16" Height="16"
-                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                          VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
                         <!-- Excel -->
                         <Button Classes="import-option"
                                 Command="{Binding SelectFormatCommand}"
