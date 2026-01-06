@@ -103,6 +103,29 @@
         <modals:CreateCompanyWizard DataContext="{Binding CreateCompanyViewModel}"
                                     ZIndex="200" />
 
+        <!-- Loading Overlay (shows during long operations like import) -->
+        <Border IsVisible="{Binding IsLoading}"
+                Background="#80000000"
+                ZIndex="225"
+                IsHitTestVisible="True">
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    Padding="32,24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <controls:LoadingSpinner SizePreset="Large"
+                                             SpinnerBrush="{DynamicResource PrimaryBrush}"
+                                             IsSpinning="{Binding IsLoading}" />
+                    <TextBlock Text="{Binding LoadingMessage}"
+                               FontSize="{StaticResource FontSizeMd}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Border>
+
         <!-- Confirmation Dialog (high level, can appear over any modal) -->
         <modals:ConfirmationDialog DataContext="{Binding ConfirmationDialogViewModel}"
                                    ZIndex="250" />
