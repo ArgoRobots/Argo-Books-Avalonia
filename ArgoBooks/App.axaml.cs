@@ -97,6 +97,16 @@ public partial class App : Application
     public static RevenueModalsViewModel? RevenueModalsViewModel => _appShellViewModel?.RevenueModalsViewModel;
 
     /// <summary>
+    /// Gets the stock levels modals view model for shared access.
+    /// </summary>
+    public static StockLevelsModalsViewModel? StockLevelsModalsViewModel => _appShellViewModel?.StockLevelsModalsViewModel;
+
+    /// <summary>
+    /// Gets the locations modals view model for shared access.
+    /// </summary>
+    public static LocationsModalsViewModel? LocationsModalsViewModel => _appShellViewModel?.LocationsModalsViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
@@ -162,6 +172,11 @@ public partial class App : Application
     public static Controls.CategoriesTableColumnWidths CategoriesColumnWidths { get; } = new();
 
     /// <summary>
+    /// Gets the shared column widths for the Stock Levels table.
+    /// </summary>
+    public static Controls.StockLevelsTableColumnWidths StockLevelsColumnWidths { get; } = new();
+
+    /// <summary>
     /// Gets the shared column widths for the Departments table.
     /// </summary>
     public static Controls.DepartmentsTableColumnWidths DepartmentsColumnWidths { get; } = new();
@@ -195,6 +210,11 @@ public partial class App : Application
     /// Gets the shared column widths for the Rental Inventory table.
     /// </summary>
     public static Controls.RentalInventoryTableColumnWidths RentalInventoryColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Locations table.
+    /// </summary>
+    public static Controls.LocationsTableColumnWidths LocationsColumnWidths { get; } = new();
 
     #endregion
 
@@ -2022,7 +2042,17 @@ public partial class App : Application
             }
             return new ProductsPage { DataContext = viewModel };
         });
-        navigationService.RegisterPage("StockLevels", _ => CreatePlaceholderPage("Stock Levels", "Monitor inventory levels"));
+        navigationService.RegisterPage("StockLevels", _ => new Views.StockLevelsPage { DataContext = new ViewModels.StockLevelsPageViewModel() });
+        navigationService.RegisterPage("Locations", param =>
+        {
+            var viewModel = new ViewModels.LocationsPageViewModel();
+            // Check if we should open the add modal
+            if (param is Dictionary<string, object?> dict && dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
+            {
+                LocationsModalsViewModel?.OpenAddModal();
+            }
+            return new Views.LocationsPage { DataContext = viewModel };
+        });
         navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
         navigationService.RegisterPage("Categories", param =>
         {

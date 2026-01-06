@@ -137,6 +137,12 @@
         <!-- Revenue Modals -->
         <modals:RevenueModals DataContext="{Binding RevenueModalsViewModel}" />
 
+        <!-- Stock Levels Modals -->
+        <modals:StockLevelsModals DataContext="{Binding StockLevelsModalsViewModel}" />
+
+        <!-- Locations Modals -->
+        <modals:LocationsModals DataContext="{Binding LocationsModalsViewModel}" />
+
         <!-- Unsaved Changes Dialog -->
         <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}" />
     </Panel>
