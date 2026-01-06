@@ -270,4 +270,26 @@ public partial class ChartSettingsService : ObservableObject
     /// Event raised when the date range changes.
     /// </summary>
     public event EventHandler<string>? DateRangeChanged;
+
+    /// <summary>
+    /// Static event raised when max pie slices setting changes.
+    /// </summary>
+    public static event EventHandler? MaxPieSlicesChanged;
+
+    /// <summary>
+    /// Notifies that the max pie slices setting has changed.
+    /// </summary>
+    public static void NotifyMaxPieSlicesChanged()
+    {
+        MaxPieSlicesChanged?.Invoke(null, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Gets the current max pie slices setting from global settings.
+    /// </summary>
+    public static int GetMaxPieSlices()
+    {
+        var settings = App.SettingsService?.GetSettings();
+        return settings?.Ui.Chart.MaxPieSlices ?? 6;
+    }
 }

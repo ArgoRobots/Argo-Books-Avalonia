@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
@@ -707,6 +708,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _expensesDistributionSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _expensesDistributionLegend = [];
+
+    [ObservableProperty]
     private bool _hasExpensesDistributionData;
 
     #endregion
@@ -727,6 +731,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _revenueDistributionSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _revenueDistributionLegend = [];
 
     [ObservableProperty]
     private bool _hasRevenueDistributionData;
@@ -767,10 +774,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _countriesOfOriginSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _countriesOfOriginLegend = [];
+
+    [ObservableProperty]
     private bool _hasCountriesOfOriginData;
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _companiesOfOriginSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _companiesOfOriginLegend = [];
 
     [ObservableProperty]
     private bool _hasCompaniesOfOriginData;
@@ -779,10 +792,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _countriesOfDestinationSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _countriesOfDestinationLegend = [];
+
+    [ObservableProperty]
     private bool _hasCountriesOfDestinationData;
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _companiesOfDestinationSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _companiesOfDestinationLegend = [];
 
     [ObservableProperty]
     private bool _hasCompaniesOfDestinationData;
@@ -843,6 +862,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _accountantsTransactionsSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _accountantsTransactionsLegend = [];
+
+    [ObservableProperty]
     private bool _hasAccountantsTransactionsData;
 
     #endregion
@@ -881,6 +903,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _returnReasonsSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _returnReasonsLegend = [];
+
+    [ObservableProperty]
     private bool _hasReturnReasonsData;
 
     [ObservableProperty]
@@ -903,10 +928,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _customerPaymentStatusSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _customerPaymentStatusLegend = [];
+
+    [ObservableProperty]
     private bool _hasCustomerPaymentStatusData;
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _activeInactiveCustomersSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _activeInactiveCustomersLegend = [];
 
     [ObservableProperty]
     private bool _hasActiveInactiveCustomersData;
@@ -943,10 +974,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _lossReasonsSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _lossReasonsLegend = [];
+
+    [ObservableProperty]
     private bool _hasLossReasonsData;
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _lossesByProductSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _lossesByProductLegend = [];
 
     [ObservableProperty]
     private bool _hasLossesByProductData;
@@ -1343,8 +1380,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadExpensesDistributionChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadExpenseDistributionChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadExpenseDistributionChart(data, StartDate, EndDate);
         ExpensesDistributionSeries = series;
+        ExpensesDistributionLegend = legend;
         HasExpensesDistributionData = series.Count > 0;
     }
 
@@ -1359,8 +1397,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadRevenueDistributionChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadRevenueDistributionChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadRevenueDistributionChart(data, StartDate, EndDate);
         RevenueDistributionSeries = series;
+        RevenueDistributionLegend = legend;
         HasRevenueDistributionData = series.Count > 0;
     }
 
@@ -1384,30 +1423,34 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadCountriesOfOriginChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadCountriesOfOriginChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadCountriesOfOriginChart(data, StartDate, EndDate);
         CountriesOfOriginSeries = series;
+        CountriesOfOriginLegend = legend;
         HasCountriesOfOriginData = series.Count > 0;
     }
 
     private void LoadCompaniesOfOriginChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadCompaniesOfOriginChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadCompaniesOfOriginChart(data, StartDate, EndDate);
         CompaniesOfOriginSeries = series;
+        CompaniesOfOriginLegend = legend;
         HasCompaniesOfOriginData = series.Count > 0;
     }
 
     private void LoadCountriesOfDestinationChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadCountriesOfDestinationChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadCountriesOfDestinationChart(data, StartDate, EndDate);
         CountriesOfDestinationSeries = series;
+        CountriesOfDestinationLegend = legend;
         HasCountriesOfDestinationData = series.Count > 0;
     }
 
     private void LoadCompaniesOfDestinationChart(CompanyData data)
     {
         // For companies of destination, use sales by customer company (where products are shipped to)
-        var (series, _) = _chartLoaderService.LoadCompaniesOfDestinationChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadCompaniesOfDestinationChart(data, StartDate, EndDate);
         CompaniesOfDestinationSeries = series;
+        CompaniesOfDestinationLegend = legend;
         HasCompaniesOfDestinationData = series.Count > 0;
     }
 
@@ -1476,8 +1519,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadAccountantsTransactionsChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadAccountantsTransactionsChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadAccountantsTransactionsChart(data, StartDate, EndDate);
         AccountantsTransactionsSeries = series;
+        AccountantsTransactionsLegend = legend;
         HasAccountantsTransactionsData = series.Count > 0;
     }
 

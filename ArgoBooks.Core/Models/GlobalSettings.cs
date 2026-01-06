@@ -44,6 +44,11 @@ public class ChartSettings
     public string DateRange { get; set; } = "This Month";
     public DateTime? CustomStartDate { get; set; }
     public DateTime? CustomEndDate { get; set; }
+
+    /// <summary>
+    /// Maximum number of slices to show in pie charts before grouping into "Other".
+    /// </summary>
+    public int MaxPieSlices { get; set; } = 6;
 }
 
 public class LicenseSettings

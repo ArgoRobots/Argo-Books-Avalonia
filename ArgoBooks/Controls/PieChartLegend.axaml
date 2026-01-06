@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="200"
+             x:Class="ArgoBooks.Controls.PieChartLegend"
+             x:DataType="controls:PieChartLegend">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  MaxHeight="{Binding MaxHeightOverride, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}">
+        <ItemsControl ItemsSource="{Binding Items, RelativeSource={RelativeSource AncestorType=controls:PieChartLegend}}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="controls:PieLegendItem">
+                    <Border Padding="4,3" CornerRadius="4">
+                        <Border.Styles>
+                            <Style Selector="Border:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                            </Style>
+                        </Border.Styles>
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <!-- Color indicator -->
+                            <Ellipse Grid.Column="0"
+                                     Width="10"
+                                     Height="10"
+                                     VerticalAlignment="Center"
+                                     Margin="0,0,8,0">
+                                <Ellipse.Fill>
+                                    <SolidColorBrush Color="{Binding ColorHex}" />
+                                </Ellipse.Fill>
+                            </Ellipse>
+
+                            <!-- Label -->
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Label}"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       ToolTip.Tip="{Binding Label}" />
+
+                            <!-- Percentage/Value -->
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding FormattedPercentage}"
+                                       FontSize="12"
+                                       VerticalAlignment="Center"
+                                       Margin="8,0,0,0"
+                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </ScrollViewer>
+</UserControl>

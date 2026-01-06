@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Charts;
@@ -980,35 +981,21 @@ public class ChartLoaderService
     /// Loads revenue distribution by category as a pie chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, decimal Total) LoadRevenueDistributionChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend, decimal Total) LoadRevenueDistributionChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-        decimal total = 0;
-
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetRevenueDistribution().Take(8).ToList();
+        var dataPoints = dataService.GetRevenueDistribution().ToList();
 
         if (dataPoints.Count == 0)
-            return (series, total);
+            return ([], [], 0);
 
-        total = (decimal)dataPoints.Sum(p => p.Value);
-
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var total = (decimal)dataPoints.Sum(p => p.Value);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data for Google Sheets/Excel export
         var exportData = new ChartExportData
@@ -1024,45 +1011,31 @@ public class ChartLoaderService
         };
         _chartExportDataByTitle["Revenue Distribution"] = exportData;
 
-        return (series, total);
+        return (series, legend, total);
     }
 
     /// <summary>
     /// Loads expense distribution by category as a pie chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, decimal Total) LoadExpenseDistributionChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend, decimal Total) LoadExpenseDistributionChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-        decimal total = 0;
-
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetExpenseDistribution().Take(8).ToList();
+        var dataPoints = dataService.GetExpenseDistribution().ToList();
 
         if (dataPoints.Count == 0)
         {
             PieChartExportData = null;
-            return (series, total);
+            return ([], [], 0);
         }
 
-        total = (decimal)dataPoints.Sum(p => p.Value);
-
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var total = (decimal)dataPoints.Sum(p => p.Value);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data for Google Sheets/Excel export
         PieChartExportData = new ChartExportData
@@ -1082,7 +1055,7 @@ public class ChartLoaderService
         _chartExportDataByTitle["Purchase Distribution"] = PieChartExportData;
         _chartExportDataByTitle["Distribution of expenses"] = PieChartExportData;
 
-        return (series, total);
+        return (series, legend, total);
     }
 
     /// <summary>
@@ -1279,40 +1252,25 @@ public class ChartLoaderService
     /// Loads countries of origin (supplier countries from purchases) as a pie chart.
     /// Uses same logic as LoadWorldMapDataBySupplier for consistency.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, decimal Total) LoadCountriesOfOriginChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend, decimal Total) LoadCountriesOfOriginChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-        decimal total = 0;
-
         // Use same logic as LoadWorldMapDataBySupplier - get supplier countries from purchases
         var mapData = LoadWorldMapDataBySupplier(companyData, startDate, endDate);
 
         if (mapData.Count == 0)
-            return (series, total);
+            return ([], [], 0);
 
         // Convert country codes to names and create data points
         var dataPoints = mapData
-            .Select(kvp => new { Label = GetCountryName(kvp.Key), Value = kvp.Value })
+            .Select(kvp => new ChartDataPoint { Label = GetCountryName(kvp.Key), Value = kvp.Value })
             .OrderByDescending(p => p.Value)
-            .Take(8)
             .ToList();
 
-        total = (decimal)dataPoints.Sum(p => p.Value);
-
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var total = (decimal)dataPoints.Sum(p => p.Value);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         var filters = CreateFilters(startDate, endDate);
 
@@ -1329,43 +1287,29 @@ public class ChartLoaderService
             EndDate = filters.EndDate
         };
 
-        return (series, total);
+        return (series, legend, total);
     }
 
     /// <summary>
     /// Loads countries of destination (sales by customer country) as a pie chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, decimal Total) LoadCountriesOfDestinationChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend, decimal Total) LoadCountriesOfDestinationChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-        decimal total = 0;
-
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
         // Use sales with customer country lookup - destination is where products are shipped to (customer location)
-        var dataPoints = dataService.GetSalesByCustomerCountry().Take(8).ToList();
+        var dataPoints = dataService.GetSalesByCustomerCountry().ToList();
 
         if (dataPoints.Count == 0)
-            return (series, total);
+            return ([], [], 0);
 
-        total = (decimal)dataPoints.Sum(p => p.Value);
-
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var total = (decimal)dataPoints.Sum(p => p.Value);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByTitle["Countries of Destination"] = new ChartExportData
@@ -1380,23 +1324,20 @@ public class ChartLoaderService
             EndDate = filters.EndDate
         };
 
-        return (series, total);
+        return (series, legend, total);
     }
 
     /// <summary>
     /// Loads companies of origin (supplier companies from purchases) as a pie chart.
     /// Uses same logic as LoadWorldMapDataBySupplier for consistency.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, decimal Total) LoadCompaniesOfOriginChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend, decimal Total) LoadCompaniesOfOriginChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-        decimal total = 0;
-
         if (companyData?.Purchases == null)
-            return (series, total);
+            return ([], [], 0);
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
@@ -1418,27 +1359,15 @@ public class ChartLoaderService
                 return "Unknown";
             })
             .Where(g => g.Key != "Unknown")
-            .Select(g => new { Label = g.Key, Value = (double)g.Sum(p => p.Total) })
+            .Select(g => new ChartDataPoint { Label = g.Key, Value = (double)g.Sum(p => p.Total) })
             .OrderByDescending(p => p.Value)
-            .Take(8)
             .ToList();
 
         if (dataPoints.Count == 0)
-            return (series, total);
+            return ([], [], 0);
 
-        total = (decimal)dataPoints.Sum(p => p.Value);
-
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var total = (decimal)dataPoints.Sum(p => p.Value);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByTitle["Companies of Origin"] = new ChartExportData
@@ -1453,23 +1382,20 @@ public class ChartLoaderService
             EndDate = end
         };
 
-        return (series, total);
+        return (series, legend, total);
     }
 
     /// <summary>
     /// Loads companies of destination (customer companies from sales) as a pie chart.
     /// Only shows data when customers have CompanyName set.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, decimal Total) LoadCompaniesOfDestinationChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend, decimal Total) LoadCompaniesOfDestinationChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-        decimal total = 0;
-
         if (companyData?.Sales == null)
-            return (series, total);
+            return ([], [], 0);
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
@@ -1493,27 +1419,15 @@ public class ChartLoaderService
                 return null;
             })
             .Where(g => g.Key != null)
-            .Select(g => new { Label = g.Key!, Value = (double)g.Sum(s => s.Total) })
+            .Select(g => new ChartDataPoint { Label = g.Key!, Value = (double)g.Sum(s => s.Total) })
             .OrderByDescending(p => p.Value)
-            .Take(8)
             .ToList();
 
         if (dataPoints.Count == 0)
-            return (series, total);
+            return ([], [], 0);
 
-        total = (decimal)dataPoints.Sum(p => p.Value);
-
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var total = (decimal)dataPoints.Sum(p => p.Value);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByTitle["Companies of Destination"] = new ChartExportData
@@ -1528,42 +1442,28 @@ public class ChartLoaderService
             EndDate = end
         };
 
-        return (series, total);
+        return (series, legend, total);
     }
 
     /// <summary>
     /// Loads accountants transactions as a pie chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public (ObservableCollection<ISeries> Series, decimal Total) LoadAccountantsTransactionsChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend, decimal Total) LoadAccountantsTransactionsChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-        decimal total = 0;
-
         var filters = CreateFilters(startDate, endDate);
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetTransactionsByAccountant().Take(8).ToList();
+        var dataPoints = dataService.GetTransactionsByAccountant().ToList();
 
         if (dataPoints.Count == 0)
-            return (series, total);
+            return ([], [], 0);
 
-        total = (decimal)dataPoints.Sum(p => p.Value);
-
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var total = (decimal)dataPoints.Sum(p => p.Value);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data (used for "Transactions by Accountant" and "Companies of Destination")
         var exportData = new ChartExportData
@@ -1580,7 +1480,7 @@ public class ChartLoaderService
         _chartExportDataByTitle["Transactions by Accountant"] = exportData;
         _chartExportDataByTitle["Workload Distribution"] = exportData;
 
-        return (series, total);
+        return (series, legend, total);
     }
 
     /// <summary>
@@ -2433,25 +2333,148 @@ public class ChartLoaderService
     }
 
     /// <summary>
+    /// Gets a color hex string for a series by index.
+    /// </summary>
+    /// <param name="index">The series index.</param>
+    /// <returns>A hex color string for the series.</returns>
+    public static string GetColorHexForIndex(int index)
+    {
+        var colors = new[]
+        {
+            "#6495ED", // Cornflower Blue
+            "#EF4444", // Red
+            "#22C55E", // Green
+            "#F59E0B", // Amber
+            "#8B5CF6", // Purple
+            "#EC4899", // Pink
+            "#14B8A6", // Teal
+            "#F97316", // Orange
+            "#6366F1", // Indigo
+            "#84CC16", // Lime
+        };
+
+        return colors[index % colors.Length];
+    }
+
+    /// <summary>
     /// Gets a color for a series by index.
     /// </summary>
     /// <param name="index">The series index.</param>
     /// <returns>An SKColor for the series.</returns>
     public static SKColor GetColorForIndex(int index)
     {
-        var colors = new[]
-        {
-            SKColor.Parse("#6495ED"), // Cornflower Blue
-            SKColor.Parse("#EF4444"), // Red
-            SKColor.Parse("#22C55E"), // Green
-            SKColor.Parse("#F59E0B"), // Amber
-            SKColor.Parse("#8B5CF6"), // Purple
-            SKColor.Parse("#EC4899"), // Pink
-            SKColor.Parse("#14B8A6"), // Teal
-            SKColor.Parse("#F97316"), // Orange
-        };
+        return SKColor.Parse(GetColorHexForIndex(index));
+    }
 
-        return colors[index % colors.Length];
+    /// <summary>
+    /// Creates pie chart series and legend items with "Other" grouping based on MaxPieSlices setting.
+    /// </summary>
+    /// <param name="dataPoints">The source data points.</param>
+    /// <returns>A tuple containing the series collection and legend items.</returns>
+    public static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
+        List<ChartDataPoint> dataPoints)
+    {
+        var maxSlices = ChartSettingsService.GetMaxPieSlices();
+        return CreatePieSeriesWithLegend(dataPoints, maxSlices);
+    }
+
+    /// <summary>
+    /// Creates pie chart series and legend items with "Other" grouping.
+    /// </summary>
+    /// <param name="dataPoints">The source data points.</param>
+    /// <param name="maxSlices">Maximum number of slices before grouping into "Other".</param>
+    /// <returns>A tuple containing the series collection and legend items.</returns>
+    public static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
+        List<ChartDataPoint> dataPoints,
+        int maxSlices)
+    {
+        var series = new ObservableCollection<ISeries>();
+        var legendItems = new ObservableCollection<PieLegendItem>();
+
+        if (dataPoints.Count == 0)
+            return (series, legendItems);
+
+        // Sort by value descending
+        var sortedPoints = dataPoints.OrderByDescending(p => p.Value).ToList();
+        var total = sortedPoints.Sum(p => p.Value);
+
+        // Take top items and group the rest into "Other"
+        var topItems = sortedPoints.Take(maxSlices - 1).ToList();
+        var otherItems = sortedPoints.Skip(maxSlices - 1).ToList();
+
+        // If there's only one "other" item, just show it directly instead of grouping
+        if (otherItems.Count == 1)
+        {
+            topItems.Add(otherItems[0]);
+            otherItems.Clear();
+        }
+
+        // Create series and legend items for top items
+        for (int i = 0; i < topItems.Count; i++)
+        {
+            var item = topItems[i];
+            var colorHex = GetColorHexForIndex(i);
+            var percentage = total > 0 ? (item.Value / total) * 100 : 0;
+
+            series.Add(new PieSeries<double>
+            {
+                Values = [item.Value],
+                Name = TruncateLegendLabel(item.Label),
+                Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
+                Pushout = 0
+            });
+
+            legendItems.Add(new PieLegendItem
+            {
+                Label = item.Label,
+                Value = item.Value,
+                Percentage = percentage,
+                ColorHex = colorHex
+            });
+        }
+
+        // Create "Other" category if needed
+        if (otherItems.Count > 0)
+        {
+            var otherValue = otherItems.Sum(p => p.Value);
+            var otherPercentage = total > 0 ? (otherValue / total) * 100 : 0;
+            var otherColorHex = "#9CA3AF"; // Gray for "Other"
+
+            series.Add(new PieSeries<double>
+            {
+                Values = [otherValue],
+                Name = "Other",
+                Fill = new SolidColorPaint(SKColor.Parse(otherColorHex)),
+                Pushout = 0
+            });
+
+            legendItems.Add(new PieLegendItem
+            {
+                Label = $"Other ({otherItems.Count} items)",
+                Value = otherValue,
+                Percentage = otherPercentage,
+                ColorHex = otherColorHex
+            });
+        }
+
+        return (series, legendItems);
+    }
+
+    /// <summary>
+    /// Creates pie chart series and legend items from raw label/value pairs with "Other" grouping.
+    /// </summary>
+    /// <param name="items">The source items as label/value pairs.</param>
+    /// <returns>A tuple containing the series collection and legend items.</returns>
+    public static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
+        IEnumerable<(string Label, double Value)> items)
+    {
+        var dataPoints = items.Select(i => new ChartDataPoint
+        {
+            Label = i.Label,
+            Value = i.Value
+        }).ToList();
+
+        return CreatePieSeriesWithLegend(dataPoints);
     }
 }
 
