@@ -1098,9 +1098,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     /// <summary>
     /// Gets the draw margin for pie charts to center them better when legend is on the right.
-    /// Adds margins to shift pie toward center and reduce its size.
+    /// Adds margins to shift pie toward center and leave space for the legend.
     /// </summary>
-    public Margin PieChartDrawMargin => new(0, 40, 0, 0);
+    public Margin PieChartDrawMargin => new(0, 40, 120, 0);
 
     #endregion
 
