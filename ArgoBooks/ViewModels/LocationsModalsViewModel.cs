@@ -67,17 +67,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _modalCountry = string.Empty;
 
-    [ObservableProperty]
-    private string _modalManager = string.Empty;
-
-    [ObservableProperty]
-    private string _modalPhone = string.Empty;
-
-    [ObservableProperty]
-    private string _modalCapacity = "1000";
-
-    [ObservableProperty]
-    private string _modalStatus = "Active";
 
     [ObservableProperty]
     private string _modalNotes = string.Empty;
@@ -107,10 +96,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// </summary>
     public ObservableCollection<string> TypeOptions { get; } = ["Warehouse", "Storage Facility", "Factory", "Retail Store", "Distribution Center"];
 
-    /// <summary>
-    /// Status options.
-    /// </summary>
-    public ObservableCollection<string> StatusOptions { get; } = ["Active", "Inactive"];
 
     #endregion
 
@@ -181,8 +166,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
             return;
         }
 
-        int.TryParse(ModalCapacity, out var capacity);
-
         var newLocation = new Location
         {
             Id = newId,
@@ -195,9 +178,9 @@ public partial class LocationsModalsViewModel : ViewModelBase
                 ZipCode = ModalPostalCode.Trim(),
                 Country = ModalCountry.Trim()
             },
-            ContactPerson = ModalManager.Trim(),
-            Phone = ModalPhone.Trim(),
-            Capacity = capacity,
+            ContactPerson = string.Empty,
+            Phone = string.Empty,
+            Capacity = 0,
             CurrentUtilization = 0,
             CreatedAt = DateTime.UtcNow
         };
@@ -250,10 +233,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
         ModalStateProvince = location.Address.State;
         ModalPostalCode = location.Address.ZipCode;
         ModalCountry = location.Address.Country;
-        ModalManager = location.ContactPerson;
-        ModalPhone = location.Phone;
-        ModalCapacity = location.Capacity.ToString();
-        ModalStatus = item.IsActive ? "Active" : "Inactive";
         ModalNotes = string.Empty;
         ModalNameError = null;
         ModalError = null;
@@ -295,9 +274,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
             ZipCode = _editingLocation.Address.ZipCode,
             Country = _editingLocation.Address.Country
         };
-        var oldContactPerson = _editingLocation.ContactPerson;
-        var oldPhone = _editingLocation.Phone;
-        var oldCapacity = _editingLocation.Capacity;
 
         // Store new values
         var newName = ModalName.Trim();
@@ -309,17 +285,11 @@ public partial class LocationsModalsViewModel : ViewModelBase
             ZipCode = ModalPostalCode.Trim(),
             Country = ModalCountry.Trim()
         };
-        var newContactPerson = ModalManager.Trim();
-        var newPhone = ModalPhone.Trim();
-        int.TryParse(ModalCapacity, out var newCapacity);
 
         // Update the location
         var locationToEdit = _editingLocation;
         locationToEdit.Name = newName;
         locationToEdit.Address = newAddress;
-        locationToEdit.ContactPerson = newContactPerson;
-        locationToEdit.Phone = newPhone;
-        locationToEdit.Capacity = newCapacity;
 
         companyData.MarkAsModified();
 
@@ -330,9 +300,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
             {
                 locationToEdit.Name = oldName;
                 locationToEdit.Address = oldAddress;
-                locationToEdit.ContactPerson = oldContactPerson;
-                locationToEdit.Phone = oldPhone;
-                locationToEdit.Capacity = oldCapacity;
                 companyData.MarkAsModified();
                 LocationSaved?.Invoke(this, EventArgs.Empty);
             },
@@ -340,9 +307,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
             {
                 locationToEdit.Name = newName;
                 locationToEdit.Address = newAddress;
-                locationToEdit.ContactPerson = newContactPerson;
-                locationToEdit.Phone = newPhone;
-                locationToEdit.Capacity = newCapacity;
                 companyData.MarkAsModified();
                 LocationSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -476,10 +440,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
         ModalStateProvince = string.Empty;
         ModalPostalCode = string.Empty;
         ModalCountry = string.Empty;
-        ModalManager = string.Empty;
-        ModalPhone = string.Empty;
-        ModalCapacity = "1000";
-        ModalStatus = "Active";
         ModalNotes = string.Empty;
         ModalNameError = null;
         ModalError = null;
@@ -495,13 +455,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(ModalName))
         {
             ModalNameError = "Location name is required.";
-            isValid = false;
-        }
-
-        // Validate capacity
-        if (!int.TryParse(ModalCapacity, out var capacity) || capacity < 0)
-        {
-            ModalError = "Please enter a valid capacity.";
             isValid = false;
         }
 

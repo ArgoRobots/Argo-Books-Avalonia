@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.StockLevelsModals"
              x:DataType="vm:StockLevelsModalsViewModel">
@@ -162,19 +163,19 @@
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Location" /><Run Text="*" Foreground="#dc2626" />
-                                    </TextBlock>
-                                    <ComboBox ItemsSource="{Binding AvailableLocations}"
-                                              SelectedItem="{Binding SelectedLocation}"
-                                              Classes="form-combobox"
-                                              HorizontalAlignment="Stretch">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding Name}" />
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <controls:SearchableDropdown
+                                        Label="Location"
+                                        IsRequired="True"
+                                        ItemsSource="{Binding AvailableLocations}"
+                                        SelectedItem="{Binding SelectedLocation}"
+                                        DisplayMemberPath="Name"
+                                        Placeholder="Select a location..."
+                                        HasError="{Binding HasLocationError}"
+                                        ErrorMessage="Please select a location"
+                                        ShowAddNew="False"
+                                        EmptyMessage="No locations found."
+                                        EmptyCreateLinkText="Create one"
+                                        EmptyCreateCommand="{Binding NavigateToCreateLocationCommand}" />
                                 </StackPanel>
                             </Grid>
 

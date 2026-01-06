@@ -106,37 +106,6 @@
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Manager and Contact Phone -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Manager" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalManager, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="Enter manager name" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Contact Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Capacity and Status -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Capacity (units)" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalCapacity, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="1000" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding StatusOptions}"
-                                              SelectedItem="{Binding ModalStatus}"
-                                              Classes="form-combobox"
-                                              HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
-
                             <!-- Notes -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -263,37 +232,6 @@
                                     <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="Enter street address" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Manager and Contact Phone -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Manager" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalManager, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="Enter manager name" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Contact Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Capacity and Status -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Capacity (units)" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalCapacity, Mode=TwoWay}"
-                                             Classes="form-input"
-                                             Watermark="1000" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding StatusOptions}"
-                                              SelectedItem="{Binding ModalStatus}"
-                                              Classes="form-combobox"
-                                              HorizontalAlignment="Stretch" />
                                 </StackPanel>
                             </Grid>
 

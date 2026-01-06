@@ -114,6 +114,9 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string? _addItemProductError;
 
+    [ObservableProperty]
+    private bool _hasLocationError;
+
     /// <summary>
     /// Available products for Add Item modal.
     /// </summary>
@@ -261,6 +264,19 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     #region Add Item Commands
 
     /// <summary>
+    /// Navigates to create a new location (closes current modal and opens Locations add modal).
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateLocation()
+    {
+        // Close this modal
+        IsAddItemModalOpen = false;
+
+        // Open the Locations add modal
+        App.LocationsModalsViewModel?.OpenAddModal();
+    }
+
+    /// <summary>
     /// Opens the add item modal.
     /// </summary>
     [RelayCommand]
@@ -291,6 +307,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AddItemOverstockThreshold = "100";
         AddItemError = null;
         AddItemProductError = null;
+        HasLocationError = false;
 
         IsAddItemModalOpen = true;
     }
@@ -313,6 +330,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     {
         AddItemError = null;
         AddItemProductError = null;
+        HasLocationError = false;
 
         // Validate
         if (SelectedProduct == null)
@@ -323,7 +341,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
 
         if (SelectedLocation == null)
         {
-            AddItemError = "Please select a location.";
+            HasLocationError = true;
             return;
         }
 
@@ -405,6 +423,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         AddItemOverstockThreshold = "100";
         AddItemError = null;
         AddItemProductError = null;
+        HasLocationError = false;
     }
 
     #endregion
