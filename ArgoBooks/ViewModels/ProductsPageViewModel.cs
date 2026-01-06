@@ -671,7 +671,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 Name = product.Name,
                 Sku = product.Sku,
                 Description = product.Description,
-                ItemType = category?.ItemType ?? "Product",
+                ItemType = product.ItemType ?? "Product",
                 CategoryName = category?.Name ?? "-",
                 SupplierName = supplier?.Name ?? "-",
                 CountryOfOrigin = supplier?.Address.Country ?? "-",
