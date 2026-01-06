@@ -98,7 +98,7 @@ public partial class ChartSettingsService : ObservableObject
         if (!string.IsNullOrEmpty(chartSettings.ChartType) &&
             ChartTypeOptions.Contains(chartSettings.ChartType))
         {
-            _selectedChartType = chartSettings.ChartType;
+            SelectedChartType = chartSettings.ChartType;
         }
 
         // Load date range
@@ -108,14 +108,14 @@ public partial class ChartSettingsService : ObservableObject
                 chartSettings.CustomStartDate.HasValue &&
                 chartSettings.CustomEndDate.HasValue)
             {
-                _selectedDateRange = chartSettings.DateRange;
-                _startDate = chartSettings.CustomStartDate.Value;
-                _endDate = chartSettings.CustomEndDate.Value;
-                _hasAppliedCustomRange = true;
+                SelectedDateRange = chartSettings.DateRange;
+                StartDate = chartSettings.CustomStartDate.Value;
+                EndDate = chartSettings.CustomEndDate.Value;
+                HasAppliedCustomRange = true;
             }
             else if (DateRangeOptions.Contains(chartSettings.DateRange))
             {
-                _selectedDateRange = chartSettings.DateRange;
+                SelectedDateRange = chartSettings.DateRange;
                 UpdateDateRangeFromSelection();
             }
         }
@@ -124,12 +124,7 @@ public partial class ChartSettingsService : ObservableObject
             UpdateDateRangeFromSelection();
         }
 
-        // Notify all properties changed
-        OnPropertyChanged(nameof(SelectedChartType));
-        OnPropertyChanged(nameof(SelectedDateRange));
-        OnPropertyChanged(nameof(StartDate));
-        OnPropertyChanged(nameof(EndDate));
-        OnPropertyChanged(nameof(HasAppliedCustomRange));
+        // Notify computed property changed
         OnPropertyChanged(nameof(AppliedDateRangeText));
     }
 
