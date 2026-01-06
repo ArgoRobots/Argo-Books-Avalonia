@@ -324,7 +324,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetPurchasesData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Date", "Supplier ID", "Description", "Amount", "Tax", "Total", "Reference", "Payment Method" };
+        var headers = new[] { "ID", "Date", "Supplier ID", "Product", "Amount", "Tax", "Total", "Reference", "Payment Method" };
         var filtered = data.Purchases.Where(p => IsInDateRange(p.Date, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
@@ -343,11 +343,18 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetProductsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "SKU", "Description", "Category ID", "Supplier ID" };
+        var headers = new[] { "ID", "Name", "Type", "Item Type", "SKU", "Description", "Category ID", "Supplier ID" };
         var rows = data.Products.Select(p => new object[]
         {
             p.Id,
             p.Name,
+            p.Type switch
+            {
+                CategoryType.Sales => "Revenue",
+                CategoryType.Purchase => "Expenses",
+                _ => p.Type.ToString()
+            },
+            p.ItemType ?? "Product",
             p.Sku,
             p.Description ?? "",
             p.CategoryId ?? "",
@@ -414,7 +421,7 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetSalesData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Date", "Customer ID", "Description", "Amount", "Tax", "Total", "Reference", "Payment Status" };
+        var headers = new[] { "ID", "Date", "Customer ID", "Product", "Amount", "Tax", "Total", "Reference", "Payment Status" };
         var filtered = data.Sales.Where(s => IsInDateRange(s.Date, startDate, endDate));
         var rows = filtered.Select(s => new object[]
         {

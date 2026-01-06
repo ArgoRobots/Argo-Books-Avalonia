@@ -11,14 +11,31 @@ using ClosedXML.Excel;
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
+/// Options for controlling import behavior.
+/// </summary>
+public class ImportOptions
+{
+    /// <summary>
+    /// If true, automatically create placeholder entities for missing references.
+    /// </summary>
+    public bool AutoCreateMissingReferences { get; set; }
+
+    /// <summary>
+    /// Specific reference types to auto-create (if AutoCreateMissingReferences is false).
+    /// Keys: "Products", "Categories", "Customers", "Suppliers", "Locations", "Departments", etc.
+    /// </summary>
+    public HashSet<string> AutoCreateTypes { get; set; } = new();
+}
+
+/// <summary>
 /// Service for importing company data from spreadsheet formats (xlsx).
 /// </summary>
 public class SpreadsheetImportService
 {
     /// <summary>
-    /// Imports data from an Excel file into the company data.
+    /// Validates an Excel file before importing, checking for missing references.
     /// </summary>
-    public async Task ImportFromExcelAsync(
+    public async Task<ImportValidationResult> ValidateImportAsync(
         string filePath,
         CompanyData companyData,
         CancellationToken cancellationToken = default)
@@ -26,9 +43,57 @@ public class SpreadsheetImportService
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(companyData);
 
+        return await Task.Run(() =>
+        {
+            var result = new ImportValidationResult();
+
+            try
+            {
+                using var workbook = new XLWorkbook(filePath);
+
+                // First pass: collect all IDs that will be imported
+                var importedIds = CollectImportedIds(workbook);
+
+                // Second pass: validate references
+                foreach (var worksheet in workbook.Worksheets)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ValidateWorksheet(worksheet, companyData, importedIds, result);
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add($"Failed to read file: {ex.Message}");
+            }
+
+            return result;
+        }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Imports data from an Excel file into the company data using merge logic.
+    /// Existing records with matching IDs are updated, new records are added.
+    /// </summary>
+    public async Task ImportFromExcelAsync(
+        string filePath,
+        CompanyData companyData,
+        ImportOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(companyData);
+
+        options ??= new ImportOptions();
+
         await Task.Run(() =>
         {
             using var workbook = new XLWorkbook(filePath);
+
+            // If auto-creating references, do that first
+            if (options.AutoCreateMissingReferences || options.AutoCreateTypes.Count > 0)
+            {
+                CreateMissingReferences(workbook, companyData, options);
+            }
 
             foreach (var worksheet in workbook.Worksheets)
             {
@@ -43,6 +108,631 @@ public class SpreadsheetImportService
             companyData.MarkAsModified();
         }, cancellationToken);
     }
+
+    #region Validation
+
+    private Dictionary<string, HashSet<string>> CollectImportedIds(XLWorkbook workbook)
+    {
+        var ids = new Dictionary<string, HashSet<string>>();
+
+        foreach (var worksheet in workbook.Worksheets)
+        {
+            var headers = GetHeaders(worksheet);
+            if (headers.Count == 0) continue;
+
+            var rows = GetDataRows(worksheet, headers.Count);
+            var sheetName = worksheet.Name;
+
+            var idColumn = sheetName switch
+            {
+                "Invoices" => "Invoice #",
+                _ => "ID"
+            };
+
+            if (!headers.Contains(idColumn)) continue;
+
+            var entityType = GetEntityTypeFromSheetName(sheetName);
+            if (string.IsNullOrEmpty(entityType)) continue;
+
+            if (!ids.ContainsKey(entityType))
+                ids[entityType] = new HashSet<string>();
+
+            foreach (var row in rows)
+            {
+                var id = GetString(row, headers, idColumn);
+                if (!string.IsNullOrEmpty(id))
+                    ids[entityType].Add(id);
+            }
+        }
+
+        return ids;
+    }
+
+    private static string GetEntityTypeFromSheetName(string sheetName)
+    {
+        return sheetName switch
+        {
+            "Customers" => "Customers",
+            "Suppliers" => "Suppliers",
+            "Products" => "Products",
+            "Categories" => "Categories",
+            "Locations" => "Locations",
+            "Departments" => "Departments",
+            "Invoices" => "Invoices",
+            "Inventory" => "Inventory",
+            "Rental Inventory" => "RentalInventory",
+            _ => string.Empty
+        };
+    }
+
+    private void ValidateWorksheet(
+        IXLWorksheet worksheet,
+        CompanyData data,
+        Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var sheetName = worksheet.Name;
+        var headers = GetHeaders(worksheet);
+        if (headers.Count == 0) return;
+
+        var rows = GetDataRows(worksheet, headers.Count);
+        if (rows.Count == 0) return;
+
+        // Count new vs updated records
+        var idColumn = sheetName switch
+        {
+            "Invoices" => "Invoice #",
+            _ => "ID"
+        };
+
+        if (headers.Contains(idColumn))
+        {
+            var summary = new ImportSummary { TotalInFile = rows.Count };
+            var existingIds = GetExistingIds(sheetName, data);
+
+            foreach (var row in rows)
+            {
+                var id = GetString(row, headers, idColumn);
+                if (existingIds.Contains(id))
+                    summary.UpdatedRecords++;
+                else
+                    summary.NewRecords++;
+            }
+
+            result.ImportSummaries[sheetName] = summary;
+        }
+
+        // Validate references based on sheet type
+        switch (sheetName)
+        {
+            case "Products":
+                ValidateProductReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Invoices":
+                ValidateInvoiceReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Expenses":
+            case "Purchases":
+                ValidatePurchaseReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Inventory":
+                ValidateInventoryReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Payments":
+                ValidatePaymentReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Revenue":
+            case "Sales":
+                ValidateSaleReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Rental Records":
+                ValidateRentalRecordReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Categories":
+                ValidateCategoryReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Employees":
+                ValidateEmployeeReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Recurring Invoices":
+                ValidateRecurringInvoiceReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Stock Adjustments":
+                ValidateStockAdjustmentReferences(rows, headers, data, importedIds, result);
+                break;
+            case "Purchase Orders":
+                ValidatePurchaseOrderReferences(rows, headers, data, importedIds, result);
+                break;
+        }
+    }
+
+    private HashSet<string> GetExistingIds(string sheetName, CompanyData data)
+    {
+        return sheetName switch
+        {
+            "Customers" => data.Customers.Select(c => c.Id).ToHashSet(),
+            "Suppliers" => data.Suppliers.Select(s => s.Id).ToHashSet(),
+            "Products" => data.Products.Select(p => p.Id).ToHashSet(),
+            "Categories" => data.Categories.Select(c => c.Id).ToHashSet(),
+            "Locations" => data.Locations.Select(l => l.Id).ToHashSet(),
+            "Departments" => data.Departments.Select(d => d.Id).ToHashSet(),
+            "Invoices" => data.Invoices.Select(i => i.Id).ToHashSet(),
+            "Expenses" or "Purchases" => data.Purchases.Select(p => p.Id).ToHashSet(),
+            "Inventory" => data.Inventory.Select(i => i.Id).ToHashSet(),
+            "Payments" => data.Payments.Select(p => p.Id).ToHashSet(),
+            "Revenue" or "Sales" => data.Sales.Select(s => s.Id).ToHashSet(),
+            "Rental Inventory" => data.RentalInventory.Select(r => r.Id).ToHashSet(),
+            "Rental Records" => data.Rentals.Select(r => r.Id).ToHashSet(),
+            "Employees" => data.Employees.Select(e => e.Id).ToHashSet(),
+            "Recurring Invoices" => data.RecurringInvoices.Select(r => r.Id).ToHashSet(),
+            "Stock Adjustments" => data.StockAdjustments.Select(s => s.Id).ToHashSet(),
+            "Purchase Orders" => data.PurchaseOrders.Select(p => p.Id).ToHashSet(),
+            _ => new HashSet<string>()
+        };
+    }
+
+    private void ValidateProductReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingCategories = data.Categories.Select(c => c.Id).ToHashSet();
+        var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
+        var importedCategories = importedIds.GetValueOrDefault("Categories") ?? new HashSet<string>();
+        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var categoryId = GetNullableString(row, headers, "Category ID");
+            var supplierId = GetNullableString(row, headers, "Supplier ID");
+
+            if (!string.IsNullOrEmpty(categoryId) &&
+                !existingCategories.Contains(categoryId) &&
+                !importedCategories.Contains(categoryId))
+            {
+                result.AddMissingReference("Categories", categoryId);
+            }
+
+            if (!string.IsNullOrEmpty(supplierId) &&
+                !existingSuppliers.Contains(supplierId) &&
+                !importedSuppliers.Contains(supplierId))
+            {
+                result.AddMissingReference("Suppliers", supplierId);
+            }
+        }
+    }
+
+    private void ValidateInvoiceReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var customerId = GetNullableString(row, headers, "Customer ID");
+
+            if (!string.IsNullOrEmpty(customerId) &&
+                !existingCustomers.Contains(customerId) &&
+                !importedCustomers.Contains(customerId))
+            {
+                result.AddMissingReference("Customers", customerId);
+            }
+        }
+    }
+
+    private void ValidatePurchaseReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
+        var existingProducts = data.Products.Select(p => p.Name).ToHashSet();
+        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? new HashSet<string>();
+        var importedProducts = importedIds.GetValueOrDefault("Products") ?? new HashSet<string>();
+
+        // Also get product names from imported products sheet
+        var importedProductNames = new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var supplierId = GetNullableString(row, headers, "Supplier ID");
+            var productName = GetString(row, headers, "Product");
+            if (string.IsNullOrEmpty(productName))
+                productName = GetString(row, headers, "Description");
+
+            if (!string.IsNullOrEmpty(supplierId) &&
+                !existingSuppliers.Contains(supplierId) &&
+                !importedSuppliers.Contains(supplierId))
+            {
+                result.AddMissingReference("Suppliers", supplierId);
+            }
+
+            // Validate product exists (by name, since Sales/Purchases use product name)
+            if (!string.IsNullOrEmpty(productName) &&
+                !existingProducts.Contains(productName))
+            {
+                result.AddMissingReference("Products (by name)", productName);
+            }
+        }
+    }
+
+    private void ValidateInventoryReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingProducts = data.Products.Select(p => p.Id).ToHashSet();
+        var existingLocations = data.Locations.Select(l => l.Id).ToHashSet();
+        var importedProducts = importedIds.GetValueOrDefault("Products") ?? new HashSet<string>();
+        var importedLocations = importedIds.GetValueOrDefault("Locations") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var productId = GetNullableString(row, headers, "Product ID");
+            var locationId = GetNullableString(row, headers, "Location ID");
+
+            if (!string.IsNullOrEmpty(productId) &&
+                !existingProducts.Contains(productId) &&
+                !importedProducts.Contains(productId))
+            {
+                result.AddMissingReference("Products", productId);
+            }
+
+            if (!string.IsNullOrEmpty(locationId) &&
+                !existingLocations.Contains(locationId) &&
+                !importedLocations.Contains(locationId))
+            {
+                result.AddMissingReference("Locations", locationId);
+            }
+        }
+    }
+
+    private void ValidatePaymentReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingInvoices = data.Invoices.Select(i => i.Id).ToHashSet();
+        var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
+        var importedInvoices = importedIds.GetValueOrDefault("Invoices") ?? new HashSet<string>();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var invoiceId = GetNullableString(row, headers, "Invoice ID");
+            var customerId = GetNullableString(row, headers, "Customer ID");
+
+            if (!string.IsNullOrEmpty(invoiceId) &&
+                !existingInvoices.Contains(invoiceId) &&
+                !importedInvoices.Contains(invoiceId))
+            {
+                result.AddMissingReference("Invoices", invoiceId);
+            }
+
+            if (!string.IsNullOrEmpty(customerId) &&
+                !existingCustomers.Contains(customerId) &&
+                !importedCustomers.Contains(customerId))
+            {
+                result.AddMissingReference("Customers", customerId);
+            }
+        }
+    }
+
+    private void ValidateSaleReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
+        var existingProducts = data.Products.Select(p => p.Name).ToHashSet();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var customerId = GetNullableString(row, headers, "Customer ID");
+            var productName = GetString(row, headers, "Product");
+            if (string.IsNullOrEmpty(productName))
+                productName = GetString(row, headers, "Description");
+
+            if (!string.IsNullOrEmpty(customerId) &&
+                !existingCustomers.Contains(customerId) &&
+                !importedCustomers.Contains(customerId))
+            {
+                result.AddMissingReference("Customers", customerId);
+            }
+
+            // Validate product exists (by name)
+            if (!string.IsNullOrEmpty(productName) &&
+                !existingProducts.Contains(productName))
+            {
+                result.AddMissingReference("Products (by name)", productName);
+            }
+        }
+    }
+
+    private void ValidateRentalRecordReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
+        var existingRentalItems = data.RentalInventory.Select(r => r.Id).ToHashSet();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
+        var importedRentalItems = importedIds.GetValueOrDefault("RentalInventory") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var customerId = GetNullableString(row, headers, "Customer ID");
+            var rentalItemId = GetNullableString(row, headers, "Rental Item ID");
+
+            if (!string.IsNullOrEmpty(customerId) &&
+                !existingCustomers.Contains(customerId) &&
+                !importedCustomers.Contains(customerId))
+            {
+                result.AddMissingReference("Customers", customerId);
+            }
+
+            if (!string.IsNullOrEmpty(rentalItemId) &&
+                !existingRentalItems.Contains(rentalItemId) &&
+                !importedRentalItems.Contains(rentalItemId))
+            {
+                result.AddMissingReference("Rental Items", rentalItemId);
+            }
+        }
+    }
+
+    private void ValidateCategoryReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingCategories = data.Categories.Select(c => c.Id).ToHashSet();
+        var importedCategories = importedIds.GetValueOrDefault("Categories") ?? new HashSet<string>();
+
+        // Also collect IDs from this sheet for self-reference validation
+        var sheetIds = new HashSet<string>();
+        foreach (var row in rows)
+        {
+            var id = GetString(row, headers, "ID");
+            if (!string.IsNullOrEmpty(id))
+                sheetIds.Add(id);
+        }
+
+        foreach (var row in rows)
+        {
+            var parentId = GetNullableString(row, headers, "Parent ID");
+
+            if (!string.IsNullOrEmpty(parentId) &&
+                !existingCategories.Contains(parentId) &&
+                !importedCategories.Contains(parentId) &&
+                !sheetIds.Contains(parentId))
+            {
+                result.AddMissingReference("Categories (parent)", parentId);
+            }
+        }
+    }
+
+    private void ValidateEmployeeReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingDepartments = data.Departments.Select(d => d.Id).ToHashSet();
+        var importedDepartments = importedIds.GetValueOrDefault("Departments") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var departmentId = GetNullableString(row, headers, "Department ID");
+
+            if (!string.IsNullOrEmpty(departmentId) &&
+                !existingDepartments.Contains(departmentId) &&
+                !importedDepartments.Contains(departmentId))
+            {
+                result.AddMissingReference("Departments", departmentId);
+            }
+        }
+    }
+
+    private void ValidateRecurringInvoiceReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var customerId = GetNullableString(row, headers, "Customer ID");
+
+            if (!string.IsNullOrEmpty(customerId) &&
+                !existingCustomers.Contains(customerId) &&
+                !importedCustomers.Contains(customerId))
+            {
+                result.AddMissingReference("Customers", customerId);
+            }
+        }
+    }
+
+    private void ValidateStockAdjustmentReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingInventory = data.Inventory.Select(i => i.Id).ToHashSet();
+        var importedInventory = importedIds.GetValueOrDefault("Inventory") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var inventoryItemId = GetNullableString(row, headers, "Inventory Item ID");
+
+            if (!string.IsNullOrEmpty(inventoryItemId) &&
+                !existingInventory.Contains(inventoryItemId) &&
+                !importedInventory.Contains(inventoryItemId))
+            {
+                result.AddMissingReference("Inventory Items", inventoryItemId);
+            }
+        }
+    }
+
+    private void ValidatePurchaseOrderReferences(
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
+        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? new HashSet<string>();
+
+        foreach (var row in rows)
+        {
+            var supplierId = GetNullableString(row, headers, "Supplier ID");
+
+            if (!string.IsNullOrEmpty(supplierId) &&
+                !existingSuppliers.Contains(supplierId) &&
+                !importedSuppliers.Contains(supplierId))
+            {
+                result.AddMissingReference("Suppliers", supplierId);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Auto-Create Missing References
+
+    private void CreateMissingReferences(XLWorkbook workbook, CompanyData data, ImportOptions options)
+    {
+        var result = new ImportValidationResult();
+        var importedIds = CollectImportedIds(workbook);
+
+        foreach (var worksheet in workbook.Worksheets)
+        {
+            ValidateWorksheet(worksheet, data, importedIds, result);
+        }
+
+        foreach (var (refType, ids) in result.MissingReferences)
+        {
+            if (!options.AutoCreateMissingReferences && !options.AutoCreateTypes.Contains(refType))
+                continue;
+
+            foreach (var id in ids)
+            {
+                CreatePlaceholderEntity(refType, id, data);
+            }
+        }
+    }
+
+    private void CreatePlaceholderEntity(string refType, string id, CompanyData data)
+    {
+        switch (refType)
+        {
+            case "Categories":
+            case "Categories (parent)":
+                if (!data.Categories.Any(c => c.Id == id))
+                {
+                    data.Categories.Add(new Category
+                    {
+                        Id = id,
+                        Name = $"[Imported] {id}",
+                        Type = CategoryType.Sales,
+                        ItemType = "Product",
+                        Icon = "📦"
+                    });
+                }
+                break;
+
+            case "Suppliers":
+                if (!data.Suppliers.Any(s => s.Id == id))
+                {
+                    data.Suppliers.Add(new Supplier
+                    {
+                        Id = id,
+                        Name = $"[Imported] {id}"
+                    });
+                }
+                break;
+
+            case "Customers":
+                if (!data.Customers.Any(c => c.Id == id))
+                {
+                    data.Customers.Add(new Customer
+                    {
+                        Id = id,
+                        Name = $"[Imported] {id}",
+                        Status = EntityStatus.Active
+                    });
+                }
+                break;
+
+            case "Products":
+                if (!data.Products.Any(p => p.Id == id))
+                {
+                    data.Products.Add(new Product
+                    {
+                        Id = id,
+                        Name = $"[Imported] {id}",
+                        Type = CategoryType.Sales,
+                        ItemType = "Product"
+                    });
+                }
+                break;
+
+            case "Products (by name)":
+                if (!data.Products.Any(p => p.Name == id))
+                {
+                    var newId = $"PRD-IMP-{data.Products.Count + 1:D3}";
+                    data.Products.Add(new Product
+                    {
+                        Id = newId,
+                        Name = id,
+                        Type = CategoryType.Sales,
+                        ItemType = "Product"
+                    });
+                }
+                break;
+
+            case "Locations":
+                if (!data.Locations.Any(l => l.Id == id))
+                {
+                    data.Locations.Add(new Location
+                    {
+                        Id = id,
+                        Name = $"[Imported] {id}"
+                    });
+                }
+                break;
+
+            case "Departments":
+                if (!data.Departments.Any(d => d.Id == id))
+                {
+                    data.Departments.Add(new Department
+                    {
+                        Id = id,
+                        Name = $"[Imported] {id}"
+                    });
+                }
+                break;
+
+            case "Rental Items":
+                if (!data.RentalInventory.Any(r => r.Id == id))
+                {
+                    data.RentalInventory.Add(new RentalItem
+                    {
+                        Id = id,
+                        Name = $"[Imported] {id}",
+                        Status = EntityStatus.Active
+                    });
+                }
+                break;
+        }
+    }
+
+    #endregion
+
+    #region Worksheet Import
 
     private void ImportWorksheet(IXLWorksheet worksheet, CompanyData data)
     {
@@ -114,6 +804,10 @@ public class SpreadsheetImportService
                 break;
         }
     }
+
+    #endregion
+
+    #region Helper Methods
 
     private static List<string> GetHeaders(IXLWorksheet worksheet)
     {
@@ -249,240 +943,291 @@ public class SpreadsheetImportService
         return Enum.TryParse<TEnum>(value, ignoreCase: true, out var result) ? result : defaultValue;
     }
 
-    #region Import Methods
+    #endregion
+
+    #region Import Methods (Merge Logic)
 
     private void ImportCustomers(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Customers.Clear();
         foreach (var row in rows)
         {
-            var customer = new Customer
+            var id = GetString(row, headers, "ID");
+            var existing = data.Customers.FirstOrDefault(c => c.Id == id);
+
+            var customer = existing ?? new Customer();
+            customer.Id = id;
+            customer.Name = GetString(row, headers, "Name");
+            customer.CompanyName = GetNullableString(row, headers, "Company");
+            customer.Email = GetString(row, headers, "Email");
+            customer.Phone = GetString(row, headers, "Phone");
+            customer.Address = new Address
             {
-                Id = GetString(row, headers, "ID"),
-                Name = GetString(row, headers, "Name"),
-                CompanyName = GetNullableString(row, headers, "Company"),
-                Email = GetString(row, headers, "Email"),
-                Phone = GetString(row, headers, "Phone"),
-                Address = new Address
-                {
-                    Street = GetString(row, headers, "Street"),
-                    City = GetString(row, headers, "City"),
-                    State = GetString(row, headers, "State"),
-                    ZipCode = GetString(row, headers, "Zip Code"),
-                    Country = GetString(row, headers, "Country")
-                },
-                Notes = GetString(row, headers, "Notes"),
-                Status = ParseEnum(GetString(row, headers, "Status"), EntityStatus.Active),
-                TotalPurchases = GetDecimal(row, headers, "Total Purchases")
+                Street = GetString(row, headers, "Street"),
+                City = GetString(row, headers, "City"),
+                State = GetString(row, headers, "State"),
+                ZipCode = GetString(row, headers, "Zip Code"),
+                Country = GetString(row, headers, "Country")
             };
-            data.Customers.Add(customer);
+            customer.Notes = GetString(row, headers, "Notes");
+            customer.Status = ParseEnum(GetString(row, headers, "Status"), EntityStatus.Active);
+            customer.TotalPurchases = GetDecimal(row, headers, "Total Purchases");
+
+            if (existing == null)
+                data.Customers.Add(customer);
         }
     }
 
     private void ImportInvoices(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Invoices.Clear();
         foreach (var row in rows)
         {
             var invoiceNumber = GetString(row, headers, "Invoice #");
-            var invoice = new Invoice
-            {
-                Id = invoiceNumber,
-                InvoiceNumber = invoiceNumber,
-                CustomerId = GetString(row, headers, "Customer ID"),
-                IssueDate = GetDateTime(row, headers, "Issue Date"),
-                DueDate = GetDateTime(row, headers, "Due Date"),
-                Subtotal = GetDecimal(row, headers, "Subtotal"),
-                TaxAmount = GetDecimal(row, headers, "Tax"),
-                Total = GetDecimal(row, headers, "Total"),
-                AmountPaid = GetDecimal(row, headers, "Paid"),
-                Balance = GetDecimal(row, headers, "Balance"),
-                Status = ParseEnum(GetString(row, headers, "Status"), InvoiceStatus.Draft)
-            };
-            data.Invoices.Add(invoice);
+            var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceNumber);
+
+            var invoice = existing ?? new Invoice();
+            invoice.Id = invoiceNumber;
+            invoice.InvoiceNumber = invoiceNumber;
+            invoice.CustomerId = GetString(row, headers, "Customer ID");
+            invoice.IssueDate = GetDateTime(row, headers, "Issue Date");
+            invoice.DueDate = GetDateTime(row, headers, "Due Date");
+            invoice.Subtotal = GetDecimal(row, headers, "Subtotal");
+            invoice.TaxAmount = GetDecimal(row, headers, "Tax");
+            invoice.Total = GetDecimal(row, headers, "Total");
+            invoice.AmountPaid = GetDecimal(row, headers, "Paid");
+            invoice.Balance = GetDecimal(row, headers, "Balance");
+            invoice.Status = ParseEnum(GetString(row, headers, "Status"), InvoiceStatus.Draft);
+
+            if (existing == null)
+                data.Invoices.Add(invoice);
         }
     }
 
     private void ImportPurchases(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Purchases.Clear();
         foreach (var row in rows)
         {
-            var purchase = new Purchase
-            {
-                Id = GetString(row, headers, "ID"),
-                Date = GetDateTime(row, headers, "Date"),
-                SupplierId = GetNullableString(row, headers, "Supplier ID"),
-                Description = GetString(row, headers, "Description"),
-                Amount = GetDecimal(row, headers, "Amount"),
-                TaxAmount = GetDecimal(row, headers, "Tax"),
-                Total = GetDecimal(row, headers, "Total"),
-                ReferenceNumber = GetString(row, headers, "Reference"),
-                PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash)
-            };
-            data.Purchases.Add(purchase);
+            var id = GetString(row, headers, "ID");
+            var existing = data.Purchases.FirstOrDefault(p => p.Id == id);
+
+            // Support both "Product" (new) and "Description" (legacy) column names
+            var description = GetString(row, headers, "Product");
+            if (string.IsNullOrEmpty(description))
+                description = GetString(row, headers, "Description");
+
+            var purchase = existing ?? new Purchase();
+            purchase.Id = id;
+            purchase.Date = GetDateTime(row, headers, "Date");
+            purchase.SupplierId = GetNullableString(row, headers, "Supplier ID");
+            purchase.Description = description;
+            purchase.Amount = GetDecimal(row, headers, "Amount");
+            purchase.TaxAmount = GetDecimal(row, headers, "Tax");
+            purchase.Total = GetDecimal(row, headers, "Total");
+            purchase.ReferenceNumber = GetString(row, headers, "Reference");
+            purchase.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
+
+            if (existing == null)
+                data.Purchases.Add(purchase);
         }
     }
 
     private void ImportProducts(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Products.Clear();
         foreach (var row in rows)
         {
-            var product = new Product
+            var id = GetString(row, headers, "ID");
+            var existing = data.Products.FirstOrDefault(p => p.Id == id);
+
+            var typeStr = GetString(row, headers, "Type");
+            var productType = typeStr.ToLowerInvariant() switch
             {
-                Id = GetString(row, headers, "ID"),
-                Name = GetString(row, headers, "Name"),
-                Sku = GetString(row, headers, "SKU"),
-                Description = GetString(row, headers, "Description"),
-                CategoryId = GetNullableString(row, headers, "Category ID"),
-                SupplierId = GetNullableString(row, headers, "Supplier ID")
+                "revenue" or "sales" => CategoryType.Sales,
+                "expenses" or "purchase" => CategoryType.Purchase,
+                "rental" => CategoryType.Rental,
+                _ => CategoryType.Sales
             };
-            data.Products.Add(product);
+
+            var itemType = GetString(row, headers, "Item Type");
+            if (string.IsNullOrEmpty(itemType))
+                itemType = "Product";
+
+            var product = existing ?? new Product();
+            product.Id = id;
+            product.Name = GetString(row, headers, "Name");
+            product.Type = productType;
+            product.ItemType = itemType;
+            product.Sku = GetString(row, headers, "SKU");
+            product.Description = GetString(row, headers, "Description");
+            product.CategoryId = GetNullableString(row, headers, "Category ID");
+            product.SupplierId = GetNullableString(row, headers, "Supplier ID");
+
+            if (existing == null)
+                data.Products.Add(product);
         }
     }
 
     private void ImportInventory(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Inventory.Clear();
         foreach (var row in rows)
         {
-            var item = new InventoryItem
-            {
-                Id = GetString(row, headers, "ID"),
-                ProductId = GetString(row, headers, "Product ID"),
-                LocationId = GetString(row, headers, "Location ID"),
-                InStock = GetInt(row, headers, "In Stock"),
-                Reserved = GetInt(row, headers, "Reserved"),
-                ReorderPoint = GetInt(row, headers, "Reorder Point"),
-                UnitCost = GetDecimal(row, headers, "Unit Cost"),
-                LastUpdated = GetDateTime(row, headers, "Last Updated")
-            };
+            var id = GetString(row, headers, "ID");
+            var existing = data.Inventory.FirstOrDefault(i => i.Id == id);
+
+            var item = existing ?? new InventoryItem();
+            item.Id = id;
+            item.ProductId = GetString(row, headers, "Product ID");
+            item.LocationId = GetString(row, headers, "Location ID");
+            item.InStock = GetInt(row, headers, "In Stock");
+            item.Reserved = GetInt(row, headers, "Reserved");
+            item.ReorderPoint = GetInt(row, headers, "Reorder Point");
+            item.UnitCost = GetDecimal(row, headers, "Unit Cost");
+            item.LastUpdated = GetDateTime(row, headers, "Last Updated");
+
             if (item.LastUpdated == DateTime.MinValue)
                 item.LastUpdated = DateTime.UtcNow;
-            data.Inventory.Add(item);
+
+            if (existing == null)
+                data.Inventory.Add(item);
         }
     }
 
     private void ImportPayments(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Payments.Clear();
         foreach (var row in rows)
         {
-            var payment = new Payment
-            {
-                Id = GetString(row, headers, "ID"),
-                InvoiceId = GetString(row, headers, "Invoice ID"),
-                CustomerId = GetString(row, headers, "Customer ID"),
-                Date = GetDateTime(row, headers, "Date"),
-                Amount = GetDecimal(row, headers, "Amount"),
-                PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash),
-                ReferenceNumber = GetNullableString(row, headers, "Reference"),
-                Notes = GetString(row, headers, "Notes")
-            };
-            data.Payments.Add(payment);
+            var id = GetString(row, headers, "ID");
+            var existing = data.Payments.FirstOrDefault(p => p.Id == id);
+
+            var payment = existing ?? new Payment();
+            payment.Id = id;
+            payment.InvoiceId = GetString(row, headers, "Invoice ID");
+            payment.CustomerId = GetString(row, headers, "Customer ID");
+            payment.Date = GetDateTime(row, headers, "Date");
+            payment.Amount = GetDecimal(row, headers, "Amount");
+            payment.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
+            payment.ReferenceNumber = GetNullableString(row, headers, "Reference");
+            payment.Notes = GetString(row, headers, "Notes");
+
+            if (existing == null)
+                data.Payments.Add(payment);
         }
     }
 
     private void ImportSuppliers(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Suppliers.Clear();
         foreach (var row in rows)
         {
-            var supplier = new Supplier
+            var id = GetString(row, headers, "ID");
+            var existing = data.Suppliers.FirstOrDefault(s => s.Id == id);
+
+            var supplier = existing ?? new Supplier();
+            supplier.Id = id;
+            supplier.Name = GetString(row, headers, "Name");
+            supplier.Email = GetString(row, headers, "Email");
+            supplier.Phone = GetString(row, headers, "Phone");
+            supplier.Website = GetNullableString(row, headers, "Website");
+            supplier.Address = new Address
             {
-                Id = GetString(row, headers, "ID"),
-                Name = GetString(row, headers, "Name"),
-                Email = GetString(row, headers, "Email"),
-                Phone = GetString(row, headers, "Phone"),
-                Website = GetNullableString(row, headers, "Website"),
-                Address = new Address
-                {
-                    Street = GetString(row, headers, "Street"),
-                    City = GetString(row, headers, "City"),
-                    State = GetString(row, headers, "State"),
-                    ZipCode = GetString(row, headers, "Zip Code"),
-                    Country = GetString(row, headers, "Country")
-                },
-                Notes = GetString(row, headers, "Notes")
+                Street = GetString(row, headers, "Street"),
+                City = GetString(row, headers, "City"),
+                State = GetString(row, headers, "State"),
+                ZipCode = GetString(row, headers, "Zip Code"),
+                Country = GetString(row, headers, "Country")
             };
-            data.Suppliers.Add(supplier);
+            supplier.Notes = GetString(row, headers, "Notes");
+
+            if (existing == null)
+                data.Suppliers.Add(supplier);
         }
     }
 
     private void ImportSales(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Sales.Clear();
         foreach (var row in rows)
         {
-            var sale = new Sale
-            {
-                Id = GetString(row, headers, "ID"),
-                Date = GetDateTime(row, headers, "Date"),
-                CustomerId = GetNullableString(row, headers, "Customer ID"),
-                Description = GetString(row, headers, "Description"),
-                Amount = GetDecimal(row, headers, "Amount"),
-                TaxAmount = GetDecimal(row, headers, "Tax"),
-                Total = GetDecimal(row, headers, "Total"),
-                ReferenceNumber = GetString(row, headers, "Reference"),
-                PaymentStatus = GetString(row, headers, "Payment Status")
-            };
+            var id = GetString(row, headers, "ID");
+            var existing = data.Sales.FirstOrDefault(s => s.Id == id);
+
+            // Support both "Product" (new) and "Description" (legacy) column names
+            var description = GetString(row, headers, "Product");
+            if (string.IsNullOrEmpty(description))
+                description = GetString(row, headers, "Description");
+
+            var sale = existing ?? new Sale();
+            sale.Id = id;
+            sale.Date = GetDateTime(row, headers, "Date");
+            sale.CustomerId = GetNullableString(row, headers, "Customer ID");
+            sale.Description = description;
+            sale.Amount = GetDecimal(row, headers, "Amount");
+            sale.TaxAmount = GetDecimal(row, headers, "Tax");
+            sale.Total = GetDecimal(row, headers, "Total");
+            sale.ReferenceNumber = GetString(row, headers, "Reference");
+            sale.PaymentStatus = GetString(row, headers, "Payment Status");
+
             if (string.IsNullOrEmpty(sale.PaymentStatus))
                 sale.PaymentStatus = "Paid";
-            data.Sales.Add(sale);
+
+            if (existing == null)
+                data.Sales.Add(sale);
         }
     }
 
     private void ImportRentalInventory(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.RentalInventory.Clear();
         foreach (var row in rows)
         {
-            var item = new RentalItem
-            {
-                Id = GetString(row, headers, "ID"),
-                Name = GetString(row, headers, "Name"),
-                TotalQuantity = GetInt(row, headers, "Total Qty"),
-                AvailableQuantity = GetInt(row, headers, "Available"),
-                RentedQuantity = GetInt(row, headers, "Rented"),
-                DailyRate = GetDecimal(row, headers, "Daily Rate"),
-                WeeklyRate = GetDecimal(row, headers, "Weekly Rate"),
-                MonthlyRate = GetDecimal(row, headers, "Monthly Rate"),
-                SecurityDeposit = GetDecimal(row, headers, "Deposit"),
-                Status = ParseEnum(GetString(row, headers, "Status"), EntityStatus.Active)
-            };
-            data.RentalInventory.Add(item);
+            var id = GetString(row, headers, "ID");
+            var existing = data.RentalInventory.FirstOrDefault(r => r.Id == id);
+
+            var item = existing ?? new RentalItem();
+            item.Id = id;
+            item.Name = GetString(row, headers, "Name");
+            item.TotalQuantity = GetInt(row, headers, "Total Qty");
+            item.AvailableQuantity = GetInt(row, headers, "Available");
+            item.RentedQuantity = GetInt(row, headers, "Rented");
+            item.DailyRate = GetDecimal(row, headers, "Daily Rate");
+            item.WeeklyRate = GetDecimal(row, headers, "Weekly Rate");
+            item.MonthlyRate = GetDecimal(row, headers, "Monthly Rate");
+            item.SecurityDeposit = GetDecimal(row, headers, "Deposit");
+            item.Status = ParseEnum(GetString(row, headers, "Status"), EntityStatus.Active);
+
+            if (existing == null)
+                data.RentalInventory.Add(item);
         }
     }
 
     private void ImportRentalRecords(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Rentals.Clear();
         foreach (var row in rows)
         {
-            var record = new RentalRecord
-            {
-                Id = GetString(row, headers, "ID"),
-                CustomerId = GetString(row, headers, "Customer ID"),
-                RentalItemId = GetString(row, headers, "Rental Item ID"),
-                Quantity = GetInt(row, headers, "Quantity"),
-                StartDate = GetDateTime(row, headers, "Start Date"),
-                DueDate = GetDateTime(row, headers, "Due Date"),
-                ReturnDate = GetNullableDateTime(row, headers, "Return Date"),
-                TotalCost = GetDecimal(row, headers, "Total Cost"),
-                Status = ParseEnum(GetString(row, headers, "Status"), RentalStatus.Active)
-            };
+            var id = GetString(row, headers, "ID");
+            var existing = data.Rentals.FirstOrDefault(r => r.Id == id);
+
+            var record = existing ?? new RentalRecord();
+            record.Id = id;
+            record.CustomerId = GetString(row, headers, "Customer ID");
+            record.RentalItemId = GetString(row, headers, "Rental Item ID");
+            record.Quantity = GetInt(row, headers, "Quantity");
+            record.StartDate = GetDateTime(row, headers, "Start Date");
+            record.DueDate = GetDateTime(row, headers, "Due Date");
+            record.ReturnDate = GetNullableDateTime(row, headers, "Return Date");
+            record.TotalCost = GetDecimal(row, headers, "Total Cost");
+            record.Status = ParseEnum(GetString(row, headers, "Status"), RentalStatus.Active);
+
             if (record.TotalCost == 0)
                 record.TotalCost = null;
-            data.Rentals.Add(record);
+
+            if (existing == null)
+                data.Rentals.Add(record);
         }
     }
 
     private void ImportCategories(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Categories.Clear();
         foreach (var row in rows)
         {
+            var id = GetString(row, headers, "ID");
+            var existing = data.Categories.FirstOrDefault(c => c.Id == id);
+
             var typeStr = GetString(row, headers, "Type");
             var categoryType = typeStr.ToLowerInvariant() switch
             {
@@ -492,155 +1237,171 @@ public class SpreadsheetImportService
                 _ => CategoryType.Sales
             };
 
-            var category = new Category
-            {
-                Id = GetString(row, headers, "ID"),
-                Name = GetString(row, headers, "Name"),
-                Type = categoryType,
-                ParentId = GetNullableString(row, headers, "Parent ID"),
-                Description = GetNullableString(row, headers, "Description"),
-                ItemType = GetString(row, headers, "Item Type"),
-                Icon = GetString(row, headers, "Icon")
-            };
+            var category = existing ?? new Category();
+            category.Id = id;
+            category.Name = GetString(row, headers, "Name");
+            category.Type = categoryType;
+            category.ParentId = GetNullableString(row, headers, "Parent ID");
+            category.Description = GetNullableString(row, headers, "Description");
+            category.ItemType = GetString(row, headers, "Item Type");
+            category.Icon = GetString(row, headers, "Icon");
+
             if (string.IsNullOrEmpty(category.ItemType))
                 category.ItemType = "Product";
             if (string.IsNullOrEmpty(category.Icon))
                 category.Icon = "📦";
-            data.Categories.Add(category);
+
+            if (existing == null)
+                data.Categories.Add(category);
         }
     }
 
     private void ImportDepartments(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Departments.Clear();
         foreach (var row in rows)
         {
-            var department = new Department
-            {
-                Id = GetString(row, headers, "ID"),
-                Name = GetString(row, headers, "Name"),
-                Description = GetNullableString(row, headers, "Description")
-            };
-            data.Departments.Add(department);
+            var id = GetString(row, headers, "ID");
+            var existing = data.Departments.FirstOrDefault(d => d.Id == id);
+
+            var department = existing ?? new Department();
+            department.Id = id;
+            department.Name = GetString(row, headers, "Name");
+            department.Description = GetNullableString(row, headers, "Description");
+
+            if (existing == null)
+                data.Departments.Add(department);
         }
     }
 
     private void ImportEmployees(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Employees.Clear();
         foreach (var row in rows)
         {
-            var employee = new Employee
-            {
-                Id = GetString(row, headers, "ID"),
-                FirstName = GetString(row, headers, "First Name"),
-                LastName = GetString(row, headers, "Last Name"),
-                Email = GetString(row, headers, "Email"),
-                Phone = GetString(row, headers, "Phone"),
-                DateOfBirth = GetNullableDateTime(row, headers, "Date of Birth"),
-                DepartmentId = GetNullableString(row, headers, "Department ID"),
-                Position = GetString(row, headers, "Position"),
-                HireDate = GetDateTime(row, headers, "Hire Date"),
-                EmploymentType = GetString(row, headers, "Employment Type"),
-                SalaryType = GetString(row, headers, "Salary Type"),
-                SalaryAmount = GetDecimal(row, headers, "Salary Amount"),
-                PayFrequency = GetString(row, headers, "Pay Frequency"),
-                Status = ParseEnum(GetString(row, headers, "Status"), EmployeeStatus.Active)
-            };
+            var id = GetString(row, headers, "ID");
+            var existing = data.Employees.FirstOrDefault(e => e.Id == id);
+
+            var employee = existing ?? new Employee();
+            employee.Id = id;
+            employee.FirstName = GetString(row, headers, "First Name");
+            employee.LastName = GetString(row, headers, "Last Name");
+            employee.Email = GetString(row, headers, "Email");
+            employee.Phone = GetString(row, headers, "Phone");
+            employee.DateOfBirth = GetNullableDateTime(row, headers, "Date of Birth");
+            employee.DepartmentId = GetNullableString(row, headers, "Department ID");
+            employee.Position = GetString(row, headers, "Position");
+            employee.HireDate = GetDateTime(row, headers, "Hire Date");
+            employee.EmploymentType = GetString(row, headers, "Employment Type");
+            employee.SalaryType = GetString(row, headers, "Salary Type");
+            employee.SalaryAmount = GetDecimal(row, headers, "Salary Amount");
+            employee.PayFrequency = GetString(row, headers, "Pay Frequency");
+            employee.Status = ParseEnum(GetString(row, headers, "Status"), EmployeeStatus.Active);
+
             if (string.IsNullOrEmpty(employee.EmploymentType))
                 employee.EmploymentType = "Full-time";
             if (string.IsNullOrEmpty(employee.SalaryType))
                 employee.SalaryType = "Annual";
             if (string.IsNullOrEmpty(employee.PayFrequency))
                 employee.PayFrequency = "Bi-weekly";
-            data.Employees.Add(employee);
+
+            if (existing == null)
+                data.Employees.Add(employee);
         }
     }
 
     private void ImportLocations(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.Locations.Clear();
         foreach (var row in rows)
         {
-            var location = new Location
+            var id = GetString(row, headers, "ID");
+            var existing = data.Locations.FirstOrDefault(l => l.Id == id);
+
+            var location = existing ?? new Location();
+            location.Id = id;
+            location.Name = GetString(row, headers, "Name");
+            location.ContactPerson = GetString(row, headers, "Contact Person");
+            location.Phone = GetString(row, headers, "Phone");
+            location.Address = new Address
             {
-                Id = GetString(row, headers, "ID"),
-                Name = GetString(row, headers, "Name"),
-                ContactPerson = GetString(row, headers, "Contact Person"),
-                Phone = GetString(row, headers, "Phone"),
-                Address = new Address
-                {
-                    Street = GetString(row, headers, "Street"),
-                    City = GetString(row, headers, "City"),
-                    State = GetString(row, headers, "State"),
-                    ZipCode = GetString(row, headers, "Zip Code"),
-                    Country = GetString(row, headers, "Country")
-                },
-                Capacity = GetInt(row, headers, "Capacity"),
-                CurrentUtilization = GetInt(row, headers, "Utilization")
+                Street = GetString(row, headers, "Street"),
+                City = GetString(row, headers, "City"),
+                State = GetString(row, headers, "State"),
+                ZipCode = GetString(row, headers, "Zip Code"),
+                Country = GetString(row, headers, "Country")
             };
-            data.Locations.Add(location);
+            location.Capacity = GetInt(row, headers, "Capacity");
+            location.CurrentUtilization = GetInt(row, headers, "Utilization");
+
+            if (existing == null)
+                data.Locations.Add(location);
         }
     }
 
     private void ImportRecurringInvoices(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.RecurringInvoices.Clear();
         foreach (var row in rows)
         {
-            var recurring = new RecurringInvoice
-            {
-                Id = GetString(row, headers, "ID"),
-                CustomerId = GetString(row, headers, "Customer ID"),
-                Amount = GetDecimal(row, headers, "Amount"),
-                Description = GetString(row, headers, "Description"),
-                Frequency = ParseEnum(GetString(row, headers, "Frequency"), Frequency.Monthly),
-                NextInvoiceDate = GetDateTime(row, headers, "Next Date"),
-                Status = GetString(row, headers, "Status")
-            };
+            var id = GetString(row, headers, "ID");
+            var existing = data.RecurringInvoices.FirstOrDefault(r => r.Id == id);
+
+            var recurring = existing ?? new RecurringInvoice();
+            recurring.Id = id;
+            recurring.CustomerId = GetString(row, headers, "Customer ID");
+            recurring.Amount = GetDecimal(row, headers, "Amount");
+            recurring.Description = GetString(row, headers, "Description");
+            recurring.Frequency = ParseEnum(GetString(row, headers, "Frequency"), Frequency.Monthly);
+            recurring.NextInvoiceDate = GetDateTime(row, headers, "Next Date");
+            recurring.Status = GetString(row, headers, "Status");
+
             if (string.IsNullOrEmpty(recurring.Status))
                 recurring.Status = "Active";
-            data.RecurringInvoices.Add(recurring);
+
+            if (existing == null)
+                data.RecurringInvoices.Add(recurring);
         }
     }
 
     private void ImportStockAdjustments(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.StockAdjustments.Clear();
         foreach (var row in rows)
         {
-            var adjustment = new StockAdjustment
-            {
-                Id = GetString(row, headers, "ID"),
-                InventoryItemId = GetString(row, headers, "Inventory Item ID"),
-                AdjustmentType = ParseEnum(GetString(row, headers, "Type"), AdjustmentType.Set),
-                Quantity = GetInt(row, headers, "Quantity"),
-                PreviousStock = GetInt(row, headers, "Previous Stock"),
-                NewStock = GetInt(row, headers, "New Stock"),
-                Reason = GetString(row, headers, "Reason"),
-                Timestamp = GetDateTime(row, headers, "Timestamp")
-            };
+            var id = GetString(row, headers, "ID");
+            var existing = data.StockAdjustments.FirstOrDefault(s => s.Id == id);
+
+            var adjustment = existing ?? new StockAdjustment();
+            adjustment.Id = id;
+            adjustment.InventoryItemId = GetString(row, headers, "Inventory Item ID");
+            adjustment.AdjustmentType = ParseEnum(GetString(row, headers, "Type"), AdjustmentType.Set);
+            adjustment.Quantity = GetInt(row, headers, "Quantity");
+            adjustment.PreviousStock = GetInt(row, headers, "Previous Stock");
+            adjustment.NewStock = GetInt(row, headers, "New Stock");
+            adjustment.Reason = GetString(row, headers, "Reason");
+            adjustment.Timestamp = GetDateTime(row, headers, "Timestamp");
+
             if (adjustment.Timestamp == DateTime.MinValue)
                 adjustment.Timestamp = DateTime.UtcNow;
-            data.StockAdjustments.Add(adjustment);
+
+            if (existing == null)
+                data.StockAdjustments.Add(adjustment);
         }
     }
 
     private void ImportPurchaseOrders(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        data.PurchaseOrders.Clear();
         foreach (var row in rows)
         {
-            var po = new PurchaseOrder
-            {
-                Id = GetString(row, headers, "ID"),
-                SupplierId = GetString(row, headers, "Supplier ID"),
-                OrderDate = GetDateTime(row, headers, "Order Date"),
-                ExpectedDeliveryDate = GetDateTime(row, headers, "Expected Date"),
-                Total = GetDecimal(row, headers, "Total"),
-                Status = ParseEnum(GetString(row, headers, "Status"), PurchaseOrderStatus.Draft)
-            };
-            data.PurchaseOrders.Add(po);
+            var id = GetString(row, headers, "ID");
+            var existing = data.PurchaseOrders.FirstOrDefault(p => p.Id == id);
+
+            var po = existing ?? new PurchaseOrder();
+            po.Id = id;
+            po.SupplierId = GetString(row, headers, "Supplier ID");
+            po.OrderDate = GetDateTime(row, headers, "Order Date");
+            po.ExpectedDeliveryDate = GetDateTime(row, headers, "Expected Date");
+            po.Total = GetDecimal(row, headers, "Total");
+            po.Status = ParseEnum(GetString(row, headers, "Status"), PurchaseOrderStatus.Draft);
+
+            if (existing == null)
+                data.PurchaseOrders.Add(po);
         }
     }
 
