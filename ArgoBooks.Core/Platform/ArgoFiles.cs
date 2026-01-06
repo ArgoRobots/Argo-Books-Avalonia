@@ -8,13 +8,13 @@ namespace ArgoBooks.Core.Platform;
 /// Handles file associations and icon registration for Argo Books file types.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public static partial class ArgoFiles
+public static class ArgoFiles
 {
     /// <summary>
     /// Import for the Windows Shell32 API function to notify the system of association changes.
     /// </summary>
-    [LibraryImport("shell32.dll", SetLastError = true)]
-    private static partial void SHChangeNotify(uint wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
+    [DllImport("shell32.dll", SetLastError = true)]
+    private static extern void SHChangeNotify(uint wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
 
     // Shell change notification constants
     private const uint SHCNE_ASSOCCHANGED = 0x8000000;  // Notifies system of association change
