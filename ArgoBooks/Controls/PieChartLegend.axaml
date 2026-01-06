@@ -22,9 +22,9 @@
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <!-- Color indicator -->
                             <Border Grid.Column="0"
-                                    Width="10"
-                                    Height="10"
-                                    CornerRadius="5"
+                                    Width="12"
+                                    Height="12"
+                                    CornerRadius="6"
                                     VerticalAlignment="Center"
                                     Margin="0,0,8,0"
                                     Background="{Binding ColorHex}" />
@@ -32,7 +32,7 @@
                             <!-- Label -->
                             <TextBlock Grid.Column="1"
                                        Text="{Binding Label}"
-                                       FontSize="12"
+                                       FontSize="13"
                                        VerticalAlignment="Center"
                                        TextTrimming="CharacterEllipsis"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
@@ -41,7 +41,7 @@
                             <!-- Percentage/Value -->
                             <TextBlock Grid.Column="2"
                                        Text="{Binding FormattedPercentage}"
-                                       FontSize="12"
+                                       FontSize="13"
                                        VerticalAlignment="Center"
                                        Margin="8,0,0,0"
                                        Foreground="{DynamicResource TextTertiaryBrush}" />

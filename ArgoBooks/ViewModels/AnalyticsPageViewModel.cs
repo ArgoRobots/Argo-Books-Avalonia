@@ -1551,8 +1551,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadReturnReasonsChart(CompanyData data)
     {
-        var series = _chartLoaderService.LoadReturnReasonsChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadReturnReasonsChart(data, StartDate, EndDate);
         ReturnReasonsSeries = series;
+        ReturnReasonsLegend = legend;
         HasReturnReasonsData = series.Count > 0;
     }
 
@@ -1585,29 +1586,33 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadCustomerPaymentStatusChart(CompanyData data)
     {
-        var series = _chartLoaderService.LoadCustomerPaymentStatusChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadCustomerPaymentStatusChart(data, StartDate, EndDate);
         CustomerPaymentStatusSeries = series;
+        CustomerPaymentStatusLegend = legend;
         HasCustomerPaymentStatusData = series.Count > 0;
     }
 
     private void LoadActiveInactiveCustomersChart(CompanyData data)
     {
-        var series = _chartLoaderService.LoadActiveInactiveCustomersChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadActiveInactiveCustomersChart(data, StartDate, EndDate);
         ActiveInactiveCustomersSeries = series;
+        ActiveInactiveCustomersLegend = legend;
         HasActiveInactiveCustomersData = series.Count > 0;
     }
 
     private void LoadLossReasonsChart(CompanyData data)
     {
-        var series = _chartLoaderService.LoadLossReasonsChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadLossReasonsChart(data, StartDate, EndDate);
         LossReasonsSeries = series;
+        LossReasonsLegend = legend;
         HasLossReasonsData = series.Count > 0;
     }
 
     private void LoadLossesByProductChart(CompanyData data)
     {
-        var series = _chartLoaderService.LoadLossesByProductChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadLossesByProductChart(data, StartDate, EndDate);
         LossesByProductSeries = series;
+        LossesByProductLegend = legend;
         HasLossesByProductData = series.Count > 0;
     }
 
