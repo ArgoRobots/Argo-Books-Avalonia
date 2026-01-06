@@ -38,7 +38,7 @@ public partial class ChartSettingsService : ObservableObject
     /// <summary>
     /// Available chart type options.
     /// </summary>
-    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area"];
+    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area", "Scatter"];
 
     /// <summary>
     /// Available date range options.

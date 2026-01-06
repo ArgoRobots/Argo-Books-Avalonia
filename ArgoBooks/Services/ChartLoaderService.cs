@@ -267,6 +267,14 @@ public class ChartLoaderService
                 GeometryFill = new SolidColorPaint(color),
                 GeometrySize = 6
             },
+            ChartStyle.Scatter => new ScatterSeries<double>
+            {
+                Values = values,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = new SolidColorPaint(color),
+                GeometrySize = 10
+            },
             _ => new ColumnSeries<double>
             {
                 Values = values,
@@ -319,6 +327,14 @@ public class ChartLoaderService
                 GeometryStroke = new SolidColorPaint(color, 2),
                 GeometryFill = new SolidColorPaint(color),
                 GeometrySize = 6
+            },
+            ChartStyle.Scatter => new ScatterSeries<ObservablePoint>
+            {
+                Values = points,
+                Name = name,
+                Stroke = new SolidColorPaint(color, 2),
+                Fill = new SolidColorPaint(color),
+                GeometrySize = 10
             },
             _ => new ColumnSeries<ObservablePoint>
             {
@@ -2468,7 +2484,8 @@ public enum ChartStyle
     Line,
     Column,
     StepLine,
-    Area
+    Area,
+    Scatter
 }
 
 /// <summary>
