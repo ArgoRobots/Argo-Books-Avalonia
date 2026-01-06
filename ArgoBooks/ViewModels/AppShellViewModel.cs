@@ -423,6 +423,9 @@ public partial class AppShellViewModel : ViewModelBase
                     case "RentalInventory":
                         RentalInventoryModalsViewModel.OpenAddModalCommand.Execute(null);
                         break;
+                    case "RentalRecords":
+                        RentalRecordsModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
                     case "Customers":
                         CustomerModalsViewModel.OpenAddModalCommand.Execute(null);
                         break;
@@ -431,6 +434,21 @@ public partial class AppShellViewModel : ViewModelBase
                         break;
                     case "Suppliers":
                         SupplierModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Invoices":
+                        InvoiceModalsViewModel.OpenCreateModal();
+                        break;
+                    case "Expenses":
+                        ExpenseModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Revenue":
+                        RevenueModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Payments":
+                        PaymentModalsViewModel.OpenAddModalCommand.Execute(null);
+                        break;
+                    case "Categories":
+                        CategoryModalsViewModel.OpenAddModalCommand.Execute(null);
                         break;
                 }
             }
