@@ -102,6 +102,11 @@ public partial class App : Application
     public static StockLevelsModalsViewModel? StockLevelsModalsViewModel => _appShellViewModel?.StockLevelsModalsViewModel;
 
     /// <summary>
+    /// Gets the locations modals view model for shared access.
+    /// </summary>
+    public static LocationsModalsViewModel? LocationsModalsViewModel => _appShellViewModel?.LocationsModalsViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
@@ -205,6 +210,11 @@ public partial class App : Application
     /// Gets the shared column widths for the Rental Inventory table.
     /// </summary>
     public static Controls.RentalInventoryTableColumnWidths RentalInventoryColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Locations table.
+    /// </summary>
+    public static Controls.LocationsTableColumnWidths LocationsColumnWidths { get; } = new();
 
     #endregion
 
@@ -2015,6 +2025,7 @@ public partial class App : Application
             return new ProductsPage { DataContext = viewModel };
         });
         navigationService.RegisterPage("StockLevels", _ => new Views.StockLevelsPage { DataContext = new ViewModels.StockLevelsPageViewModel() });
+        navigationService.RegisterPage("Locations", _ => new Views.LocationsPage { DataContext = new ViewModels.LocationsPageViewModel() });
         navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
         navigationService.RegisterPage("Categories", param =>
         {
