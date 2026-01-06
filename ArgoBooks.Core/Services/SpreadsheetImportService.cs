@@ -870,7 +870,13 @@ public class SpreadsheetImportService
 
     private static int GetColumnIndex(List<string> headers, string columnName)
     {
-        return headers.IndexOf(columnName);
+        // Case-insensitive column lookup
+        for (int i = 0; i < headers.Count; i++)
+        {
+            if (string.Equals(headers[i], columnName, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+        return -1;
     }
 
     private static string GetString(List<object?> row, List<string> headers, string columnName)
