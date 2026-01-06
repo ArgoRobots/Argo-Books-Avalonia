@@ -1386,7 +1386,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadExpensesDistributionChart(CompanyData data)
     {
-        var (series, legend, _) = _chartLoaderService.LoadExpenseDistributionChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadExpenseDistributionChart(data, StartDate, EndDate);
         ExpensesDistributionSeries = series;
         ExpensesDistributionLegend = legend;
         HasExpensesDistributionData = series.Count > 0;
@@ -1403,7 +1403,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadRevenueDistributionChart(CompanyData data)
     {
-        var (series, legend, _) = _chartLoaderService.LoadRevenueDistributionChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadRevenueDistributionChart(data, StartDate, EndDate);
         RevenueDistributionSeries = series;
         RevenueDistributionLegend = legend;
         HasRevenueDistributionData = series.Count > 0;
@@ -1429,7 +1429,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadCountriesOfOriginChart(CompanyData data)
     {
-        var (series, legend, _) = _chartLoaderService.LoadCountriesOfOriginChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadCountriesOfOriginChart(data, StartDate, EndDate);
         CountriesOfOriginSeries = series;
         CountriesOfOriginLegend = legend;
         HasCountriesOfOriginData = series.Count > 0;
@@ -1437,7 +1437,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadCompaniesOfOriginChart(CompanyData data)
     {
-        var (series, legend, _) = _chartLoaderService.LoadCompaniesOfOriginChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadCompaniesOfOriginChart(data, StartDate, EndDate);
         CompaniesOfOriginSeries = series;
         CompaniesOfOriginLegend = legend;
         HasCompaniesOfOriginData = series.Count > 0;
@@ -1445,7 +1445,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadCountriesOfDestinationChart(CompanyData data)
     {
-        var (series, legend, _) = _chartLoaderService.LoadCountriesOfDestinationChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadCountriesOfDestinationChart(data, StartDate, EndDate);
         CountriesOfDestinationSeries = series;
         CountriesOfDestinationLegend = legend;
         HasCountriesOfDestinationData = series.Count > 0;
@@ -1454,7 +1454,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private void LoadCompaniesOfDestinationChart(CompanyData data)
     {
         // For companies of destination, use sales by customer company (where products are shipped to)
-        var (series, legend, _) = _chartLoaderService.LoadCompaniesOfDestinationChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadCompaniesOfDestinationChart(data, StartDate, EndDate);
         CompaniesOfDestinationSeries = series;
         CompaniesOfDestinationLegend = legend;
         HasCompaniesOfDestinationData = series.Count > 0;
@@ -1525,7 +1525,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadAccountantsTransactionsChart(CompanyData data)
     {
-        var (series, legend, _) = _chartLoaderService.LoadAccountantsTransactionsChart(data, StartDate, EndDate);
+        var (series, legend) = _chartLoaderService.LoadAccountantsTransactionsChart(data, StartDate, EndDate);
         AccountantsTransactionsSeries = series;
         AccountantsTransactionsLegend = legend;
         HasAccountantsTransactionsData = series.Count > 0;
@@ -1542,7 +1542,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadReturnsOverTimeChart(CompanyData data)
     {
-        var (series, labels, dates, _) = _chartLoaderService.LoadReturnsOverTimeChart(data, StartDate, EndDate);
+        var (series, labels, dates) = _chartLoaderService.LoadReturnsOverTimeChart(data, StartDate, EndDate);
         ReturnsOverTimeSeries = series;
         ReturnsOverTimeXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ReturnsOverTimeYAxes = _chartLoaderService.CreateNumberYAxes();
@@ -1551,14 +1551,14 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadReturnReasonsChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadReturnReasonsChart(data, StartDate, EndDate);
+        var series = _chartLoaderService.LoadReturnReasonsChart(data, StartDate, EndDate);
         ReturnReasonsSeries = series;
         HasReturnReasonsData = series.Count > 0;
     }
 
     private void LoadReturnFinancialImpactChart(CompanyData data)
     {
-        var (series, _, dates, _) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
         ReturnFinancialImpactSeries = series;
         ReturnFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         ReturnFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes();
@@ -1567,7 +1567,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadLossesOverTimeChart(CompanyData data)
     {
-        var (series, labels, dates, _) = _chartLoaderService.LoadLossesOverTimeChart(data, StartDate, EndDate);
+        var (series, labels, dates) = _chartLoaderService.LoadLossesOverTimeChart(data, StartDate, EndDate);
         LossesOverTimeSeries = series;
         LossesOverTimeXAxes = _chartLoaderService.CreateDateXAxes(dates);
         LossesOverTimeYAxes = _chartLoaderService.CreateNumberYAxes();
@@ -1576,7 +1576,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadLossFinancialImpactChart(CompanyData data)
     {
-        var (series, _, dates, _) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
+        var (series, _, dates) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
         LossFinancialImpactSeries = series;
         LossFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
         LossFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes();
@@ -1585,28 +1585,28 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadCustomerPaymentStatusChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadCustomerPaymentStatusChart(data, StartDate, EndDate);
+        var series = _chartLoaderService.LoadCustomerPaymentStatusChart(data, StartDate, EndDate);
         CustomerPaymentStatusSeries = series;
         HasCustomerPaymentStatusData = series.Count > 0;
     }
 
     private void LoadActiveInactiveCustomersChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadActiveInactiveCustomersChart(data, StartDate, EndDate);
+        var series = _chartLoaderService.LoadActiveInactiveCustomersChart(data, StartDate, EndDate);
         ActiveInactiveCustomersSeries = series;
         HasActiveInactiveCustomersData = series.Count > 0;
     }
 
     private void LoadLossReasonsChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadLossReasonsChart(data, StartDate, EndDate);
+        var series = _chartLoaderService.LoadLossReasonsChart(data, StartDate, EndDate);
         LossReasonsSeries = series;
         HasLossReasonsData = series.Count > 0;
     }
 
     private void LoadLossesByProductChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadLossesByProductChart(data, StartDate, EndDate);
+        var series = _chartLoaderService.LoadLossesByProductChart(data, StartDate, EndDate);
         LossesByProductSeries = series;
         HasLossesByProductData = series.Count > 0;
     }
