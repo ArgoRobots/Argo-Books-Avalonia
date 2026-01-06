@@ -805,7 +805,7 @@ public class ReportChartDataService
 
         var (startDate, endDate) = GetDateRange();
 
-        var accountantData = new Dictionary<string, decimal>();
+        var accountantData = new Dictionary<string, int>();
 
         // Sales by accountant
         if (_companyData.Sales != null)
@@ -814,7 +814,7 @@ public class ReportChartDataService
             {
                 var accountantName = _companyData.GetAccountant(sale.AccountantId ?? "")?.Name ?? "Unknown";
                 accountantData.TryAdd(accountantName, 0);
-                accountantData[accountantName] += sale.Total;
+                accountantData[accountantName] += 1;
             }
         }
 
@@ -825,12 +825,12 @@ public class ReportChartDataService
             {
                 var accountantName = _companyData.GetAccountant(purchase.AccountantId ?? "")?.Name ?? "Unknown";
                 accountantData.TryAdd(accountantName, 0);
-                accountantData[accountantName] += purchase.Total;
+                accountantData[accountantName] += 1;
             }
         }
 
         return accountantData
-            .Select(kvp => new ChartDataPoint { Label = kvp.Key, Value = (double)kvp.Value })
+            .Select(kvp => new ChartDataPoint { Label = kvp.Key, Value = kvp.Value })
             .OrderByDescending(p => p.Value)
             .ToList();
     }

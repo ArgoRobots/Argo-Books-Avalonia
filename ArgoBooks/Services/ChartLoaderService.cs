@@ -1471,7 +1471,7 @@ public class ChartLoaderService
             ChartType = ChartType.Distribution,
             Labels = dataPoints.Select(p => p.Label).ToArray(),
             Values = dataPoints.Select(p => p.Value).ToArray(),
-            SeriesName = "Amount",
+            SeriesName = "Count",
             TotalValue = total,
             StartDate = filters.StartDate,
             EndDate = filters.EndDate
