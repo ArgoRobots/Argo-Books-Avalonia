@@ -108,6 +108,13 @@ public class SpreadsheetImportService
             // Update ID counters based on imported data
             UpdateIdCounters(companyData);
 
+            // DEBUG: Dump all products after import
+            Console.WriteLine($"[DEBUG ImportFromExcel] === FINAL STATE: {companyData.Products.Count} products ===");
+            foreach (var p in companyData.Products.Where(x => x.Id.StartsWith("PRD-02") || x.Id.StartsWith("PRD-03")))
+            {
+                Console.WriteLine($"[DEBUG ImportFromExcel] Product {p.Id}: Name='{p.Name}', ItemType='{p.ItemType}'");
+            }
+
             // Mark data as modified
             companyData.MarkAsModified();
         }, cancellationToken);
@@ -1089,6 +1096,9 @@ public class SpreadsheetImportService
             product.Description = GetString(row, headers, "Description");
             product.CategoryId = GetNullableString(row, headers, "Category ID");
             product.SupplierId = GetNullableString(row, headers, "Supplier ID");
+
+            // DEBUG: Verify the value was set
+            Console.WriteLine($"[DEBUG ImportProducts] ID={id}, AFTER SET product.ItemType='{product.ItemType}', existing={existing != null}");
 
             if (existing == null)
                 data.Products.Add(product);
