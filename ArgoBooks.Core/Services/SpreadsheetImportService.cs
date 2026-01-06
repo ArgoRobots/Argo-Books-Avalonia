@@ -329,10 +329,15 @@ public class SpreadsheetImportService
         data.Products.Clear();
         foreach (var row in rows)
         {
+            var itemType = GetString(row, headers, "Type");
+            if (string.IsNullOrEmpty(itemType))
+                itemType = "Product";
+
             var product = new Product
             {
                 Id = GetString(row, headers, "ID"),
                 Name = GetString(row, headers, "Name"),
+                ItemType = itemType,
                 Sku = GetString(row, headers, "SKU"),
                 Description = GetString(row, headers, "Description"),
                 CategoryId = GetNullableString(row, headers, "Category ID"),

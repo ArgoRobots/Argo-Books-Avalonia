@@ -38,6 +38,12 @@ public class Product
     public string? CategoryId { get; set; }
 
     /// <summary>
+    /// Whether this is a Product or Service.
+    /// </summary>
+    [JsonPropertyName("itemType")]
+    public string ItemType { get; set; } = "Product";
+
+    /// <summary>
     /// Selling price per unit.
     /// </summary>
     [JsonPropertyName("unitPrice")]

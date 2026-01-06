@@ -343,11 +343,12 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetProductsData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "SKU", "Description", "Category ID", "Supplier ID" };
+        var headers = new[] { "ID", "Name", "Type", "SKU", "Description", "Category ID", "Supplier ID" };
         var rows = data.Products.Select(p => new object[]
         {
             p.Id,
             p.Name,
+            p.ItemType ?? "Product",
             p.Sku,
             p.Description ?? "",
             p.CategoryId ?? "",
