@@ -14,6 +14,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _originalTheme = "Dark";
     private string _originalAccentColor = "Blue";
     private string _originalDateFormat = "MM/DD/YYYY";
+    private int _originalMaxPieSlices = 6;
 
     [ObservableProperty]
     private bool _isOpen;
@@ -37,6 +38,14 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _anonymousDataCollection;
+
+    [ObservableProperty]
+    private int _maxPieSlices = 6;
+
+    /// <summary>
+    /// Available options for max pie slices.
+    /// </summary>
+    public int[] MaxPieSlicesOptions { get; } = [4, 5, 6, 7, 8, 10, 12];
 
     public ObservableCollection<string> Languages { get; } = new()
     {
@@ -301,7 +310,8 @@ public partial class SettingsModalViewModel : ViewModelBase
     public bool HasUnsavedChanges =>
         SelectedTheme != _originalTheme ||
         SelectedAccentColor != _originalAccentColor ||
-        SelectedDateFormat != _originalDateFormat;
+        SelectedDateFormat != _originalDateFormat ||
+        MaxPieSlices != _originalMaxPieSlices;
 
     /// <summary>
     /// Default constructor.
@@ -343,10 +353,18 @@ public partial class SettingsModalViewModel : ViewModelBase
             SelectedDateFormat = settings.Localization.DateFormat;
         }
 
+        // Load max pie slices from global settings
+        var globalSettings = App.SettingsService?.GlobalSettings;
+        if (globalSettings != null)
+        {
+            MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
+        }
+
         // Store original values for potential revert
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
         _originalDateFormat = SelectedDateFormat;
+        _originalMaxPieSlices = MaxPieSlices;
         SelectedTabIndex = tabIndex;
         IsOpen = true;
     }
@@ -413,6 +431,10 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             SelectedDateFormat = _originalDateFormat;
         }
+        if (MaxPieSlices != _originalMaxPieSlices)
+        {
+            MaxPieSlices = _originalMaxPieSlices;
+        }
     }
 
     /// <summary>
@@ -423,11 +445,13 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         // Check if date format changed before updating original values
         var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
+        var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
 
         // Update original values to current (so close doesn't revert)
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
         _originalDateFormat = SelectedDateFormat;
+        _originalMaxPieSlices = MaxPieSlices;
 
         // Save date format to company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;
@@ -437,10 +461,24 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.ChangesMade = true;
         }
 
+        // Save max pie slices to global settings
+        var globalSettings = App.SettingsService?.GlobalSettings;
+        if (globalSettings != null)
+        {
+            globalSettings.Ui.Chart.MaxPieSlices = MaxPieSlices;
+            _ = App.SettingsService?.SaveGlobalSettingsAsync();
+        }
+
         // Notify that date format changed so views can refresh
         if (dateFormatChanged)
         {
             DateFormatService.NotifyDateFormatChanged();
+        }
+
+        // Notify that chart settings changed so charts can reload
+        if (maxPieSlicesChanged)
+        {
+            ChartSettingsService.NotifyMaxPieSlicesChanged();
         }
 
         IsOpen = false;

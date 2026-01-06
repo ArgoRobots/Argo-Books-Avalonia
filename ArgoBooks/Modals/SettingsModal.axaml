@@ -141,6 +141,22 @@
                                                       VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
+
+                                <!-- Chart Settings -->
+                                <StackPanel Spacing="6" Margin="0,8,0,0">
+                                    <TextBlock Text="Max Pie Chart Slices"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding MaxPieSlicesOptions}"
+                                              SelectedItem="{Binding MaxPieSlices}"
+                                              Classes="form-combobox"
+                                              Width="100"
+                                              HorizontalAlignment="Left" />
+                                    <TextBlock Text="Additional items will be grouped into 'Other'"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
@@ -26,6 +27,14 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private readonly ChartLoaderService _chartLoaderService = new();
     private CompanyManager? _companyManager;
+
+    /// <summary>
+    /// Gets the shared chart settings service.
+    /// </summary>
+    private ChartSettingsService ChartSettingsShared => ChartSettingsService.Instance;
+
+    // Flag to prevent duplicate data loading when changing settings locally
+    private bool _isLocalSettingChange;
 
     #endregion
 
@@ -89,17 +98,77 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
 
-    [ObservableProperty]
-    private string _selectedDateRange = "This Month";
+    /// <summary>
+    /// Gets or sets the selected date range (delegates to shared service).
+    /// </summary>
+    public string SelectedDateRange
+    {
+        get => ChartSettingsShared.SelectedDateRange;
+        set
+        {
+            if (ChartSettingsShared.SelectedDateRange != value)
+            {
+                var oldValue = ChartSettingsShared.SelectedDateRange;
+                _isLocalSettingChange = true;
+                try
+                {
+                    ChartSettingsShared.SelectedDateRange = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsCustomDateRange));
+                    OnPropertyChanged(nameof(ComparisonPeriodLabel));
+
+                    if (value == "Custom Range")
+                    {
+                        OpenCustomDateRangeModal();
+                    }
+                    else if (oldValue != value)
+                    {
+                        HasAppliedCustomRange = false;
+                        LoadAllCharts();
+                    }
+                }
+                finally
+                {
+                    _isLocalSettingChange = false;
+                }
+            }
+        }
+    }
 
     // Stores the previous selection before opening custom range modal
     private string _previousDateRange = "This Month";
 
-    [ObservableProperty]
-    private DateTime _startDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+    /// <summary>
+    /// Gets or sets the start date (delegates to shared service).
+    /// </summary>
+    public DateTime StartDate
+    {
+        get => ChartSettingsShared.StartDate;
+        set
+        {
+            if (ChartSettingsShared.StartDate != value)
+            {
+                ChartSettingsShared.StartDate = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
-    [ObservableProperty]
-    private DateTime _endDate = DateTime.Now;
+    /// <summary>
+    /// Gets or sets the end date (delegates to shared service).
+    /// </summary>
+    public DateTime EndDate
+    {
+        get => ChartSettingsShared.EndDate;
+        set
+        {
+            if (ChartSettingsShared.EndDate != value)
+            {
+                ChartSettingsShared.EndDate = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
     // Temporary date values for the modal (before applying)
     [ObservableProperty]
@@ -115,18 +184,26 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private bool _isCustomDateRangeModalOpen;
 
     /// <summary>
-    /// Gets or sets whether a custom date range has been applied.
+    /// Gets or sets whether a custom date range has been applied (delegates to shared service).
     /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(AppliedDateRangeText))]
-    private bool _hasAppliedCustomRange;
+    public bool HasAppliedCustomRange
+    {
+        get => ChartSettingsShared.HasAppliedCustomRange;
+        set
+        {
+            if (ChartSettingsShared.HasAppliedCustomRange != value)
+            {
+                ChartSettingsShared.HasAppliedCustomRange = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AppliedDateRangeText));
+            }
+        }
+    }
 
     /// <summary>
     /// Gets the formatted text showing the applied custom date range.
     /// </summary>
-    public string AppliedDateRangeText => HasAppliedCustomRange
-        ? $"{StartDate:MMM d, yyyy} - {EndDate:MMM d, yyyy}"
-        : string.Empty;
+    public string AppliedDateRangeText => ChartSettingsShared.AppliedDateRangeText;
 
     /// <summary>
     /// Gets or sets the start date as DateTimeOffset for DatePicker binding.
@@ -211,25 +288,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         _ => "from last period"
     };
 
-    partial void OnSelectedDateRangeChanged(string value)
-    {
-        OnPropertyChanged(nameof(IsCustomDateRange));
-        OnPropertyChanged(nameof(ComparisonPeriodLabel));
-
-        if (value == "Custom Range")
-        {
-            // Open the modal for custom date range selection
-            OpenCustomDateRangeModal();
-        }
-        else
-        {
-            // Reset the applied custom range flag when selecting a preset
-            HasAppliedCustomRange = false;
-            UpdateDateRangeFromSelection();
-            LoadAllCharts();
-        }
-    }
-
     /// <summary>
     /// Opens the custom date range modal.
     /// </summary>
@@ -301,62 +359,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         // If no custom range was previously applied, revert to the previous selection
         if (!HasAppliedCustomRange)
         {
-            SelectedDateRange = _previousDateRange;
-        }
-    }
-
-    /// <summary>
-    /// Updates the start and end dates based on the selected date range option.
-    /// </summary>
-    private void UpdateDateRangeFromSelection()
-    {
-        var now = DateTime.Now;
-
-        switch (SelectedDateRange)
-        {
-            case "This Month":
-                StartDate = new DateTime(now.Year, now.Month, 1);
-                EndDate = now;
-                break;
-
-            case "Last Month":
-                var lastMonth = now.AddMonths(-1);
-                StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
-                EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
-                break;
-
-            case "This Quarter":
-                var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
-                StartDate = quarterStart;
-                EndDate = now;
-                break;
-
-            case "Last Quarter":
-                var lastQuarterEnd = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1);
-                var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
-                lastQuarterStart = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
-                StartDate = lastQuarterStart;
-                EndDate = lastQuarterEnd;
-                break;
-
-            case "This Year":
-                StartDate = new DateTime(now.Year, 1, 1);
-                EndDate = now;
-                break;
-
-            case "Last Year":
-                StartDate = new DateTime(now.Year - 1, 1, 1);
-                EndDate = new DateTime(now.Year - 1, 12, 31);
-                break;
-
-            case "All Time":
-                StartDate = new DateTime(2000, 1, 1);
-                EndDate = now;
-                break;
-
-            case "Custom Range":
-                // Keep current values, let user modify
-                break;
+            ChartSettingsShared.SelectedDateRange = _previousDateRange;
+            OnPropertyChanged(nameof(SelectedDateRange));
         }
     }
 
@@ -598,29 +602,62 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     #region Chart Type Toggle
 
-    [ObservableProperty]
-    private bool _useLineChart = true;
-
-    partial void OnUseLineChartChanged(bool value)
+    /// <summary>
+    /// Gets or sets whether to use line chart (for backwards compatibility).
+    /// </summary>
+    public bool UseLineChart
     {
-        // Sync with SelectedChartType for backwards compatibility
-        SelectedChartType = value ? "Line" : "Column";
+        get => ChartSettingsShared.SelectedChartType == "Line";
+        set
+        {
+            var newChartType = value ? "Line" : "Column";
+            if (ChartSettingsShared.SelectedChartType != newChartType)
+            {
+                _isLocalSettingChange = true;
+                try
+                {
+                    ChartSettingsShared.SelectedChartType = newChartType;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SelectedChartType));
+                    LoadAllCharts();
+                }
+                finally
+                {
+                    _isLocalSettingChange = false;
+                }
+            }
+        }
     }
 
     /// <summary>
     /// Available chart type options for the selector.
     /// </summary>
-    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area"];
+    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area", "Scatter"];
 
-    [ObservableProperty]
-    private string _selectedChartType = "Line";
-
-    partial void OnSelectedChartTypeChanged(string value)
+    /// <summary>
+    /// Gets or sets the selected chart type (delegates to shared service).
+    /// </summary>
+    public string SelectedChartType
     {
-        // Sync UseLineChart for backwards compatibility
-        _useLineChart = value == "Line";
-        OnPropertyChanged(nameof(UseLineChart));
-        LoadAllCharts();
+        get => ChartSettingsShared.SelectedChartType;
+        set
+        {
+            if (ChartSettingsShared.SelectedChartType != value)
+            {
+                _isLocalSettingChange = true;
+                try
+                {
+                    ChartSettingsShared.SelectedChartType = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(UseLineChart));
+                    LoadAllCharts();
+                }
+                finally
+                {
+                    _isLocalSettingChange = false;
+                }
+            }
+        }
     }
 
     #endregion
@@ -671,6 +708,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _expensesDistributionSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _expensesDistributionLegend = [];
+
+    [ObservableProperty]
     private bool _hasExpensesDistributionData;
 
     #endregion
@@ -691,6 +731,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _revenueDistributionSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _revenueDistributionLegend = [];
 
     [ObservableProperty]
     private bool _hasRevenueDistributionData;
@@ -731,10 +774,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _countriesOfOriginSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _countriesOfOriginLegend = [];
+
+    [ObservableProperty]
     private bool _hasCountriesOfOriginData;
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _companiesOfOriginSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _companiesOfOriginLegend = [];
 
     [ObservableProperty]
     private bool _hasCompaniesOfOriginData;
@@ -743,10 +792,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _countriesOfDestinationSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _countriesOfDestinationLegend = [];
+
+    [ObservableProperty]
     private bool _hasCountriesOfDestinationData;
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _companiesOfDestinationSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _companiesOfDestinationLegend = [];
 
     [ObservableProperty]
     private bool _hasCompaniesOfDestinationData;
@@ -807,6 +862,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _accountantsTransactionsSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _accountantsTransactionsLegend = [];
+
+    [ObservableProperty]
     private bool _hasAccountantsTransactionsData;
 
     #endregion
@@ -845,6 +903,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _returnReasonsSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _returnReasonsLegend = [];
+
+    [ObservableProperty]
     private bool _hasReturnReasonsData;
 
     [ObservableProperty]
@@ -867,10 +928,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _customerPaymentStatusSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _customerPaymentStatusLegend = [];
+
+    [ObservableProperty]
     private bool _hasCustomerPaymentStatusData;
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _activeInactiveCustomersSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _activeInactiveCustomersLegend = [];
 
     [ObservableProperty]
     private bool _hasActiveInactiveCustomersData;
@@ -907,10 +974,16 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     private ObservableCollection<ISeries> _lossReasonsSeries = [];
 
     [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _lossReasonsLegend = [];
+
+    [ObservableProperty]
     private bool _hasLossReasonsData;
 
     [ObservableProperty]
     private ObservableCollection<ISeries> _lossesByProductSeries = [];
+
+    [ObservableProperty]
+    private ObservableCollection<PieLegendItem> _lossesByProductLegend = [];
 
     [ObservableProperty]
     private bool _hasLossesByProductData;
@@ -1007,8 +1080,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     public AnalyticsPageViewModel()
     {
-        // Initialize with default values
-        UpdateDateRangeFromSelection();
+        // Initialize the shared chart settings service
+        ChartSettingsShared.Initialize();
+
+        // Subscribe to chart settings changes from other pages
+        ChartSettingsShared.ChartTypeChanged += OnChartSettingsChartTypeChanged;
+        ChartSettingsShared.DateRangeChanged += OnChartSettingsDateRangeChanged;
 
         // Subscribe to theme changes to reload charts with new colors
         ThemeService.Instance.ThemeChanged += (_, _) =>
@@ -1022,6 +1099,39 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         {
             LoadAllCharts();
         };
+
+        // Subscribe to max pie slices changes to refresh pie charts
+        ChartSettingsService.MaxPieSlicesChanged += (_, _) =>
+        {
+            LoadAllCharts();
+        };
+    }
+
+    private void OnChartSettingsChartTypeChanged(object? sender, string chartType)
+    {
+        // Only reload if the change came from another page
+        if (!_isLocalSettingChange)
+        {
+            OnPropertyChanged(nameof(SelectedChartType));
+            OnPropertyChanged(nameof(UseLineChart));
+            LoadAllCharts();
+        }
+    }
+
+    private void OnChartSettingsDateRangeChanged(object? sender, string dateRange)
+    {
+        // Only reload if the change came from another page
+        if (!_isLocalSettingChange)
+        {
+            OnPropertyChanged(nameof(SelectedDateRange));
+            OnPropertyChanged(nameof(StartDate));
+            OnPropertyChanged(nameof(EndDate));
+            OnPropertyChanged(nameof(HasAppliedCustomRange));
+            OnPropertyChanged(nameof(AppliedDateRangeText));
+            OnPropertyChanged(nameof(IsCustomDateRange));
+            OnPropertyChanged(nameof(ComparisonPeriodLabel));
+            LoadAllCharts();
+        }
     }
 
     /// <summary>
@@ -1031,9 +1141,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     /// <summary>
     /// Gets the draw margin for pie charts to center them better when legend is on the right.
-    /// Adds margins to shift pie toward center and reduce its size.
+    /// Adds margins to shift pie toward center and leave space for the legend.
     /// </summary>
-    public Margin PieChartDrawMargin => new(0, 40, 0, 0);
+    public Margin PieChartDrawMargin => new(0, 40, 120, 0);
 
     #endregion
 
@@ -1187,6 +1297,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         {
             _companyManager.CompanyDataChanged -= OnCompanyDataChanged;
         }
+
+        // Unsubscribe from chart settings events
+        ChartSettingsShared.ChartTypeChanged -= OnChartSettingsChartTypeChanged;
+        ChartSettingsShared.DateRangeChanged -= OnChartSettingsDateRangeChanged;
     }
 
     private void OnCompanyDataChanged(object? sender, EventArgs e)
@@ -1214,6 +1328,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             "Column" => ChartStyle.Column,
             "Step Line" => ChartStyle.StepLine,
             "Area" => ChartStyle.Area,
+            "Scatter" => ChartStyle.Scatter,
             _ => ChartStyle.Line
         };
 
@@ -1271,8 +1386,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadExpensesDistributionChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadExpenseDistributionChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadExpenseDistributionChart(data, StartDate, EndDate);
         ExpensesDistributionSeries = series;
+        ExpensesDistributionLegend = legend;
         HasExpensesDistributionData = series.Count > 0;
     }
 
@@ -1287,8 +1403,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadRevenueDistributionChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadRevenueDistributionChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadRevenueDistributionChart(data, StartDate, EndDate);
         RevenueDistributionSeries = series;
+        RevenueDistributionLegend = legend;
         HasRevenueDistributionData = series.Count > 0;
     }
 
@@ -1312,30 +1429,34 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadCountriesOfOriginChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadCountriesOfOriginChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadCountriesOfOriginChart(data, StartDate, EndDate);
         CountriesOfOriginSeries = series;
+        CountriesOfOriginLegend = legend;
         HasCountriesOfOriginData = series.Count > 0;
     }
 
     private void LoadCompaniesOfOriginChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadCompaniesOfOriginChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadCompaniesOfOriginChart(data, StartDate, EndDate);
         CompaniesOfOriginSeries = series;
+        CompaniesOfOriginLegend = legend;
         HasCompaniesOfOriginData = series.Count > 0;
     }
 
     private void LoadCountriesOfDestinationChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadCountriesOfDestinationChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadCountriesOfDestinationChart(data, StartDate, EndDate);
         CountriesOfDestinationSeries = series;
+        CountriesOfDestinationLegend = legend;
         HasCountriesOfDestinationData = series.Count > 0;
     }
 
     private void LoadCompaniesOfDestinationChart(CompanyData data)
     {
         // For companies of destination, use sales by customer company (where products are shipped to)
-        var (series, _) = _chartLoaderService.LoadCompaniesOfDestinationChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadCompaniesOfDestinationChart(data, StartDate, EndDate);
         CompaniesOfDestinationSeries = series;
+        CompaniesOfDestinationLegend = legend;
         HasCompaniesOfDestinationData = series.Count > 0;
     }
 
@@ -1404,8 +1525,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadAccountantsTransactionsChart(CompanyData data)
     {
-        var (series, _) = _chartLoaderService.LoadAccountantsTransactionsChart(data, StartDate, EndDate);
+        var (series, legend, _) = _chartLoaderService.LoadAccountantsTransactionsChart(data, StartDate, EndDate);
         AccountantsTransactionsSeries = series;
+        AccountantsTransactionsLegend = legend;
         HasAccountantsTransactionsData = series.Count > 0;
     }
 

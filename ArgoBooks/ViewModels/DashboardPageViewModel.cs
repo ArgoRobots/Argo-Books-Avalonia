@@ -26,21 +26,89 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     #region Date Range
 
     /// <summary>
+    /// Gets the shared chart settings service.
+    /// </summary>
+    private ChartSettingsService ChartSettings => ChartSettingsService.Instance;
+
+    // Flag to prevent duplicate data loading when changing settings locally
+    private bool _isLocalSettingChange;
+
+    /// <summary>
     /// Available date range options.
     /// </summary>
     public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
 
-    [ObservableProperty]
-    private string _selectedDateRange = "This Month";
+    /// <summary>
+    /// Gets or sets the selected date range (delegates to shared service).
+    /// </summary>
+    public string SelectedDateRange
+    {
+        get => ChartSettings.SelectedDateRange;
+        set
+        {
+            if (ChartSettings.SelectedDateRange != value)
+            {
+                var oldValue = ChartSettings.SelectedDateRange;
+                _isLocalSettingChange = true;
+                try
+                {
+                    ChartSettings.SelectedDateRange = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsCustomDateRange));
+                    OnPropertyChanged(nameof(ComparisonPeriodLabel));
+
+                    if (value == "Custom Range")
+                    {
+                        OpenCustomDateRangeModal();
+                    }
+                    else if (oldValue != value)
+                    {
+                        HasAppliedCustomRange = false;
+                        LoadDashboardData();
+                    }
+                }
+                finally
+                {
+                    _isLocalSettingChange = false;
+                }
+            }
+        }
+    }
 
     // Stores the previous selection before opening custom range modal
     private string _previousDateRange = "This Month";
 
-    [ObservableProperty]
-    private DateTime _startDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+    /// <summary>
+    /// Gets or sets the start date (delegates to shared service).
+    /// </summary>
+    public DateTime StartDate
+    {
+        get => ChartSettings.StartDate;
+        set
+        {
+            if (ChartSettings.StartDate != value)
+            {
+                ChartSettings.StartDate = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
-    [ObservableProperty]
-    private DateTime _endDate = DateTime.Now;
+    /// <summary>
+    /// Gets or sets the end date (delegates to shared service).
+    /// </summary>
+    public DateTime EndDate
+    {
+        get => ChartSettings.EndDate;
+        set
+        {
+            if (ChartSettings.EndDate != value)
+            {
+                ChartSettings.EndDate = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
     // Temporary date values for the modal (before applying)
     [ObservableProperty]
@@ -56,18 +124,26 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private bool _isCustomDateRangeModalOpen;
 
     /// <summary>
-    /// Gets or sets whether a custom date range has been applied.
+    /// Gets or sets whether a custom date range has been applied (delegates to shared service).
     /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(AppliedDateRangeText))]
-    private bool _hasAppliedCustomRange;
+    public bool HasAppliedCustomRange
+    {
+        get => ChartSettings.HasAppliedCustomRange;
+        set
+        {
+            if (ChartSettings.HasAppliedCustomRange != value)
+            {
+                ChartSettings.HasAppliedCustomRange = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(AppliedDateRangeText));
+            }
+        }
+    }
 
     /// <summary>
     /// Gets the formatted text showing the applied custom date range.
     /// </summary>
-    public string AppliedDateRangeText => HasAppliedCustomRange
-        ? $"{StartDate:MMM d, yyyy} - {EndDate:MMM d, yyyy}"
-        : string.Empty;
+    public string AppliedDateRangeText => ChartSettings.AppliedDateRangeText;
 
     /// <summary>
     /// Gets or sets the start date as DateTimeOffset for DatePicker binding.
@@ -152,25 +228,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         _ => "from last period"
     };
 
-    partial void OnSelectedDateRangeChanged(string value)
-    {
-        OnPropertyChanged(nameof(IsCustomDateRange));
-        OnPropertyChanged(nameof(ComparisonPeriodLabel));
-
-        if (value == "Custom Range")
-        {
-            // Open the modal for custom date range selection
-            OpenCustomDateRangeModal();
-        }
-        else
-        {
-            // Reset the applied custom range flag when selecting a preset
-            HasAppliedCustomRange = false;
-            UpdateDateRangeFromSelection();
-            LoadDashboardData();
-        }
-    }
-
     /// <summary>
     /// Opens the custom date range modal.
     /// </summary>
@@ -242,62 +299,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // If no custom range was previously applied, revert to the previous selection
         if (!HasAppliedCustomRange)
         {
-            SelectedDateRange = _previousDateRange;
-        }
-    }
-
-    /// <summary>
-    /// Updates the start and end dates based on the selected date range option.
-    /// </summary>
-    private void UpdateDateRangeFromSelection()
-    {
-        var now = DateTime.Now;
-
-        switch (SelectedDateRange)
-        {
-            case "This Month":
-                StartDate = new DateTime(now.Year, now.Month, 1);
-                EndDate = now;
-                break;
-
-            case "Last Month":
-                var lastMonth = now.AddMonths(-1);
-                StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
-                EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
-                break;
-
-            case "This Quarter":
-                var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
-                StartDate = quarterStart;
-                EndDate = now;
-                break;
-
-            case "Last Quarter":
-                var lastQuarterEnd = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1);
-                var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
-                lastQuarterStart = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
-                StartDate = lastQuarterStart;
-                EndDate = lastQuarterEnd;
-                break;
-
-            case "This Year":
-                StartDate = new DateTime(now.Year, 1, 1);
-                EndDate = now;
-                break;
-
-            case "Last Year":
-                StartDate = new DateTime(now.Year - 1, 1, 1);
-                EndDate = new DateTime(now.Year - 1, 12, 31);
-                break;
-
-            case "All Time":
-                StartDate = new DateTime(2000, 1, 1);
-                EndDate = now;
-                break;
-
-            case "Custom Range":
-                // Keep current values, let user modify
-                break;
+            ChartSettings.SelectedDateRange = _previousDateRange;
+            OnPropertyChanged(nameof(SelectedDateRange));
         }
     }
 
@@ -350,14 +353,31 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Available chart type options for the selector.
     /// </summary>
-    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area"];
+    public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area", "Scatter"];
 
-    [ObservableProperty]
-    private string _selectedChartType = "Line";
-
-    partial void OnSelectedChartTypeChanged(string value)
+    /// <summary>
+    /// Gets or sets the selected chart type (delegates to shared service).
+    /// </summary>
+    public string SelectedChartType
     {
-        LoadDashboardData();
+        get => ChartSettings.SelectedChartType;
+        set
+        {
+            if (ChartSettings.SelectedChartType != value)
+            {
+                _isLocalSettingChange = true;
+                try
+                {
+                    ChartSettings.SelectedChartType = value;
+                    OnPropertyChanged();
+                    LoadDashboardData();
+                }
+                finally
+                {
+                    _isLocalSettingChange = false;
+                }
+            }
+        }
     }
 
     #endregion
@@ -495,6 +515,13 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         RecentTransactions = [];
         ActiveRentalsList = [];
 
+        // Initialize the shared chart settings service
+        ChartSettings.Initialize();
+
+        // Subscribe to chart settings changes from other pages
+        ChartSettings.ChartTypeChanged += OnChartSettingsChartTypeChanged;
+        ChartSettings.DateRangeChanged += OnChartSettingsDateRangeChanged;
+
         // Subscribe to theme changes to reload charts with new colors
         ThemeService.Instance.ThemeChanged += (_, _) =>
         {
@@ -508,6 +535,32 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             LoadDashboardData();
         };
+    }
+
+    private void OnChartSettingsChartTypeChanged(object? sender, string chartType)
+    {
+        // Only reload if the change came from another page
+        if (!_isLocalSettingChange)
+        {
+            OnPropertyChanged(nameof(SelectedChartType));
+            LoadDashboardData();
+        }
+    }
+
+    private void OnChartSettingsDateRangeChanged(object? sender, string dateRange)
+    {
+        // Only reload if the change came from another page
+        if (!_isLocalSettingChange)
+        {
+            OnPropertyChanged(nameof(SelectedDateRange));
+            OnPropertyChanged(nameof(StartDate));
+            OnPropertyChanged(nameof(EndDate));
+            OnPropertyChanged(nameof(HasAppliedCustomRange));
+            OnPropertyChanged(nameof(AppliedDateRangeText));
+            OnPropertyChanged(nameof(IsCustomDateRange));
+            OnPropertyChanged(nameof(ComparisonPeriodLabel));
+            LoadDashboardData();
+        }
     }
 
     /// <summary>
@@ -540,6 +593,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             _companyManager.CompanyDataChanged -= OnCompanyDataChanged;
         }
+
+        // Unsubscribe from chart settings events
+        ChartSettings.ChartTypeChanged -= OnChartSettingsChartTypeChanged;
+        ChartSettings.DateRangeChanged -= OnChartSettingsDateRangeChanged;
     }
 
     private void OnCompanyDataChanged(object? sender, EventArgs e)
@@ -714,6 +771,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             "Column" => ChartStyle.Column,
             "Step Line" => ChartStyle.StepLine,
             "Area" => ChartStyle.Area,
+            "Scatter" => ChartStyle.Scatter,
             _ => ChartStyle.Line
         };
 
