@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="200"
+             x:Class="ArgoBooks.Controls.AnimatedContextMenu"
+             x:DataType="controls:AnimatedContextMenu">
+
+    <Panel>
+        <!-- Transparent overlay to capture clicks outside the menu -->
+        <Border x:Name="Overlay"
+                Background="Transparent"
+                IsVisible="{Binding IsOpen, RelativeSource={RelativeSource AncestorType=controls:AnimatedContextMenu}}"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                PointerPressed="OnOverlayPointerPressed" />
+
+        <!-- Positioning container -->
+        <Border x:Name="MenuBorder"
+                IsVisible="{Binding IsOpen, RelativeSource={RelativeSource AncestorType=controls:AnimatedContextMenu}}"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top">
+            <Border.RenderTransform>
+                <TranslateTransform X="{Binding MenuX, RelativeSource={RelativeSource AncestorType=controls:AnimatedContextMenu}}"
+                                    Y="{Binding MenuY, RelativeSource={RelativeSource AncestorType=controls:AnimatedContextMenu}}" />
+            </Border.RenderTransform>
+
+            <!-- Animation container -->
+            <Border x:Name="AnimationBorder"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="6"
+                    MinWidth="140"
+                    BoxShadow="0 4 12 0 #40000000"
+                    Opacity="0"
+                    RenderTransformOrigin="0,0">
+                <Border.RenderTransform>
+                    <TranslateTransform Y="-8" />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <Border.Styles>
+                    <Style Selector="Button.context-menu-item">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Padding" Value="10,8" />
+                        <Setter Property="CornerRadius" Value="4" />
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                        <Setter Property="Cursor" Value="Hand" />
+                    </Style>
+                    <Style Selector="Button.context-menu-item:pointerover">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                    </Style>
+                    <Style Selector="Button.context-menu-item:pressed">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
+                    </Style>
+                    <Style Selector="Button.context-menu-item.danger:pointerover">
+                        <Setter Property="Background" Value="#FFEBEE" />
+                    </Style>
+                    <Style Selector="Button.context-menu-item.danger:pressed">
+                        <Setter Property="Background" Value="#FFCDD2" />
+                    </Style>
+                </Border.Styles>
+
+                <ContentPresenter x:Name="PART_ContentPresenter"
+                                  Content="{Binding MenuContent, RelativeSource={RelativeSource AncestorType=controls:AnimatedContextMenu}}" />
+            </Border>
+        </Border>
+    </Panel>
+</UserControl>

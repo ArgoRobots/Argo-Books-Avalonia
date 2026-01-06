@@ -376,15 +376,6 @@ public partial class ReportsPage : UserControl
         }
     }
 
-    private void OnContextMenuBackdropPressed(object? sender, PointerPressedEventArgs e)
-    {
-        // Hide context menu when clicking on backdrop
-        if (DataContext is ReportsPageViewModel vm)
-        {
-            vm.HideContextMenuCommand.Execute(null);
-        }
-    }
-
     private void OnCanvasPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         // Zoom at cursor position
