@@ -22,7 +22,6 @@ public partial class ReportsPage : UserControl
     private TextBlock? _asterisk;
     private Border? _saveConfirmationBorder;
     private Border? _noChangesBorder;
-    private Border? _contextMenuAnimationBorder;
     private bool _isAsteriskInitialized;
     private bool _isPanning;
     private Point _panStartPoint;
@@ -57,7 +56,6 @@ public partial class ReportsPage : UserControl
         _saveButtonContainer = this.FindControl<Grid>("SaveButtonContainer");
         _saveConfirmationBorder = this.FindControl<Border>("SaveConfirmationBorder");
         _noChangesBorder = this.FindControl<Border>("NoChangesBorder");
-        _contextMenuAnimationBorder = this.FindControl<Border>("ContextMenuAnimationBorder");
         _elementToolbox = this.FindControl<Border>("ElementToolbox");
 
         // Wire up toolbar scrollbar visibility detection
@@ -317,11 +315,6 @@ public partial class ReportsPage : UserControl
         {
             AnimateNoChangesMessage();
         }
-        // Animate the context menu
-        else if (e.PropertyName == nameof(ReportsPageViewModel.IsContextMenuOpen))
-        {
-            AnimateContextMenu();
-        }
     }
 
     /// <summary>
@@ -359,36 +352,6 @@ public partial class ReportsPage : UserControl
         _noChangesBorder.Opacity = vm.ShowNoChangesMessage ? 1 : 0;
     }
 
-    private void AnimateContextMenu()
-    {
-        if (_contextMenuAnimationBorder == null || DataContext is not ReportsPageViewModel vm) return;
-
-        if (vm.IsContextMenuOpen)
-        {
-            // Animate in
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                if (_contextMenuAnimationBorder != null)
-                {
-                    _contextMenuAnimationBorder.Opacity = 1;
-                    _contextMenuAnimationBorder.RenderTransform = new TranslateTransform(0, 0);
-                }
-            }, Avalonia.Threading.DispatcherPriority.Render);
-        }
-        else
-        {
-            // Reset for next open
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                if (_contextMenuAnimationBorder != null)
-                {
-                    _contextMenuAnimationBorder.Opacity = 0;
-                    _contextMenuAnimationBorder.RenderTransform = new TranslateTransform(0, -8);
-                }
-            }, Avalonia.Threading.DispatcherPriority.Background);
-        }
-    }
-
     private void OnElementPropertyChanged(object? sender, Core.Models.Reports.ReportElementBase element)
     {
         // Refresh the specific element's content when its properties change
@@ -410,15 +373,6 @@ public partial class ReportsPage : UserControl
         if (DataContext is ReportsPageViewModel vm)
         {
             vm.ShowContextMenu(e.X, e.Y);
-        }
-    }
-
-    private void OnContextMenuBackdropPressed(object? sender, PointerPressedEventArgs e)
-    {
-        // Hide context menu when clicking on backdrop
-        if (DataContext is ReportsPageViewModel vm)
-        {
-            vm.HideContextMenuCommand.Execute(null);
         }
     }
 

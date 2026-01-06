@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="200"
+             x:Class="ArgoBooks.Controls.ReportsContextMenu"
+             x:DataType="controls:ReportsContextMenu">
+
+    <controls:AnimatedContextMenu IsOpen="{Binding IsOpen, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}"
+                                   MenuX="{Binding MenuX, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}"
+                                   MenuY="{Binding MenuY, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}"
+                                   CloseCommand="{Binding CloseCommand, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}">
+        <controls:AnimatedContextMenu.MenuContent>
+            <StackPanel Spacing="2" MinWidth="140">
+                <!-- Bring to Front -->
+                <Button Classes="context-menu-item"
+                        Command="{Binding BringToFrontCommand, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M3 5h2V3c-1.1 0-2 .9-2 2zm0 8h2v-2H3v2zm4 8h2v-2H7v2zM3 9h2V7H3v2zm10-6h-2v2h2V3zm6 0v2h2c0-1.1-.9-2-2-2zM5 21v-2H3c0 1.1.9 2 2 2zm-2-4h2v-2H3v2zM9 3H7v2h2V3zm2 18h2v-2h-2v2zm8-8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2zm0-12h2V7h-2v2zm0 8h2v-2h-2v2zm-4 4h2v-2h-2v2zm0-16h2V3h-2v2z"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBlock Text="Bring to Front" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Send to Back -->
+                <Button Classes="context-menu-item"
+                        Command="{Binding SendToBackCommand, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M9 7H7v2h2V7zm0 4H7v2h2v-2zm0-8c-1.11 0-2 .9-2 2h2V3zm4 12h-2v2h2v-2zm6-12v2h2c0-1.1-.9-2-2-2zm-6 0h-2v2h2V3zM9 17v-2H7c0 1.1.89 2 2 2zm10-4h2v-2h-2v2zm0-4h2V7h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2zM5 7H3v12c0 1.1.89 2 2 2h12v-2H5V7zm10-2h2V3h-2v2zm0 12h2v-2h-2v2z"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBlock Text="Send to Back" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Separator -->
+                <Border Height="1"
+                        Background="{DynamicResource BorderBrush}"
+                        Margin="4,4" />
+
+                <!-- Duplicate -->
+                <Button Classes="context-menu-item"
+                        Command="{Binding DuplicateCommand, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBlock Text="Duplicate" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <!-- Delete -->
+                <Button Classes="context-menu-item danger"
+                        Command="{Binding DeleteCommand, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource DangerBrush}" />
+                        <TextBlock Text="Delete" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </controls:AnimatedContextMenu.MenuContent>
+    </controls:AnimatedContextMenu>
+</UserControl>
