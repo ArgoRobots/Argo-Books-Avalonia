@@ -1485,22 +1485,23 @@ public class ChartLoaderService
     /// <summary>
     /// Loads customer payment status chart (Paid vs Pending vs Overdue).
     /// </summary>
-    public ObservableCollection<ISeries> LoadCustomerPaymentStatusChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadCustomerPaymentStatusChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
+        var legend = new ObservableCollection<PieLegendItem>();
 
         if (companyData?.Sales == null)
-            return series;
+            return (series, legend);
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-30);
 
         var salesInRange = companyData.Sales.Where(s => s.Date >= start && s.Date <= end).ToList();
         if (salesInRange.Count == 0)
-            return series;
+            return (series, legend);
 
         var paid = salesInRange.Count(s => s.PaymentStatus == "Paid" || s.PaymentStatus == "Complete");
         var pending = salesInRange.Count(s => s.PaymentStatus == "Pending" || string.IsNullOrEmpty(s.PaymentStatus));
@@ -1510,19 +1511,27 @@ public class ChartLoaderService
 
         var statusData = new[]
         {
-            ("Paid", paid, SKColor.Parse("#22C55E")),
-            ("Pending", pending, SKColor.Parse("#F59E0B")),
-            ("Overdue", overdue, SKColor.Parse("#EF4444"))
+            ("Paid", paid, "#22C55E"),
+            ("Pending", pending, "#F59E0B"),
+            ("Overdue", overdue, "#EF4444")
         }.Where(x => x.Item2 > 0).ToList();
 
-        foreach (var (name, count, color) in statusData)
+        foreach (var (name, count, colorHex) in statusData)
         {
+            var percentage = total > 0 ? (count / (double)total) * 100 : 0;
             series.Add(new PieSeries<double>
             {
                 Values = [count],
                 Name = name,
-                Fill = new SolidColorPaint(color),
+                Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
                 Pushout = 0
+            });
+            legend.Add(new PieLegendItem
+            {
+                Label = name,
+                Value = count,
+                Percentage = percentage,
+                ColorHex = colorHex
             });
         }
 
@@ -1539,21 +1548,22 @@ public class ChartLoaderService
             EndDate = end
         };
 
-        return series;
+        return (series, legend);
     }
 
     /// <summary>
     /// Loads active vs inactive customers chart.
     /// </summary>
-    public ObservableCollection<ISeries> LoadActiveInactiveCustomersChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadActiveInactiveCustomersChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
         var series = new ObservableCollection<ISeries>();
+        var legend = new ObservableCollection<PieLegendItem>();
 
         if (companyData is not { Customers: not null, Sales: not null })
-            return series;
+            return (series, legend);
 
         var end = endDate ?? DateTime.Now;
         var start = startDate ?? end.AddDays(-90); // Look at 90 days for activity
@@ -1569,10 +1579,11 @@ public class ChartLoaderService
         var total = companyData.Customers.Count;
 
         if (total == 0)
-            return series;
+            return (series, legend);
 
         if (activeCount > 0)
         {
+            var percentage = (activeCount / (double)total) * 100;
             series.Add(new PieSeries<double>
             {
                 Values = [activeCount],
@@ -1580,16 +1591,31 @@ public class ChartLoaderService
                 Fill = new SolidColorPaint(SKColor.Parse("#22C55E")),
                 Pushout = 0
             });
+            legend.Add(new PieLegendItem
+            {
+                Label = "Active",
+                Value = activeCount,
+                Percentage = percentage,
+                ColorHex = "#22C55E"
+            });
         }
 
         if (inactiveCount > 0)
         {
+            var percentage = (inactiveCount / (double)total) * 100;
             series.Add(new PieSeries<double>
             {
                 Values = [inactiveCount],
                 Name = "Inactive",
                 Fill = new SolidColorPaint(SKColor.Parse("#6B7280")),
                 Pushout = 0
+            });
+            legend.Add(new PieLegendItem
+            {
+                Label = "Inactive",
+                Value = inactiveCount,
+                Percentage = percentage,
+                ColorHex = "#6B7280"
             });
         }
 
@@ -1610,42 +1636,30 @@ public class ChartLoaderService
             EndDate = end
         };
 
-        return series;
+        return (series, legend);
     }
 
     /// <summary>
     /// Loads loss reasons chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public ObservableCollection<ISeries> LoadLossReasonsChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadLossReasonsChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-
         var filters = CreateFilters(startDate, endDate);
         filters.IncludeLosses = true;
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetLossReasons().Take(8).ToList();
+        var dataPoints = dataService.GetLossReasons().ToList();
 
         if (dataPoints.Count == 0)
-            return series;
+            return ([], []);
 
         var total = (int)dataPoints.Sum(p => p.Value);
 
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByTitle["Loss Reasons"] = new ChartExportData
@@ -1660,42 +1674,30 @@ public class ChartLoaderService
             EndDate = filters.EndDate
         };
 
-        return series;
+        return (series, legend);
     }
 
     /// <summary>
     /// Loads losses by product chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public ObservableCollection<ISeries> LoadLossesByProductChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadLossesByProductChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-
         var filters = CreateFilters(startDate, endDate);
         filters.IncludeLosses = true;
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetLossesByProduct().Take(8).ToList();
+        var dataPoints = dataService.GetLossesByProduct().ToList();
 
         if (dataPoints.Count == 0)
-            return series;
+            return ([], []);
 
         var total = dataPoints.Sum(p => p.Value);
 
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         _chartExportDataByTitle["Losses by Product"] = new ChartExportData
@@ -1710,7 +1712,7 @@ public class ChartLoaderService
             EndDate = filters.EndDate
         };
 
-        return series;
+        return (series, legend);
     }
 
     /// <summary>
@@ -1762,35 +1764,23 @@ public class ChartLoaderService
     /// Loads return reasons as a pie chart.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
-    public ObservableCollection<ISeries> LoadReturnReasonsChart(
+    public (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> Legend) LoadReturnReasonsChart(
         CompanyData? companyData,
         DateTime? startDate = null,
         DateTime? endDate = null)
     {
-        var series = new ObservableCollection<ISeries>();
-
         var filters = CreateFilters(startDate, endDate);
         filters.IncludeReturns = true;
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetReturnReasons().Take(8).ToList();
+        var dataPoints = dataService.GetReturnReasons().ToList();
 
         if (dataPoints.Count == 0)
-            return series;
+            return ([], []);
 
         var total = (int)dataPoints.Sum(p => p.Value);
 
-        for (int i = 0; i < dataPoints.Count; i++)
-        {
-            var item = dataPoints[i];
-            series.Add(new PieSeries<double>
-            {
-                Values = [item.Value],
-                Name = TruncateLegendLabel(item.Label),
-                Fill = new SolidColorPaint(GetColorForIndex(i)),
-                Pushout = 0
-            });
-        }
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
 
         // Store export data
         var exportData = new ChartExportData
@@ -1807,7 +1797,7 @@ public class ChartLoaderService
         _chartExportDataByTitle["Return Reasons"] = exportData;
         _chartExportDataByTitle["Returns by Category"] = exportData;
 
-        return series;
+        return (series, legend);
     }
 
     /// <summary>

@@ -902,14 +902,28 @@
                                 Padding="10"
                                 Margin="0,0,12,0">
                             <Panel>
-                                <!-- Pie Chart - using Companies of Origin for top customers -->
-                                <lvc:PieChart Title="{Binding TopCustomersByRevenueTitle}"
-                                              PointerPressed="OnChartPointerPressed"
-                                              Series="{Binding CompaniesOfOriginSeries}"
-                                              LegendPosition="Right"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              DrawMargin="{Binding PieChartDrawMargin}"
-                                              IsVisible="{Binding HasCompaniesOfOriginData}" />
+                                <!-- Pie Chart with custom legend -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasCompaniesOfOriginData}">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Top Customers by Revenue"
+                                               HorizontalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,4" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <lvc:PieChart Grid.Column="0"
+                                                      PointerPressed="OnChartPointerPressed"
+                                                      Series="{Binding CompaniesOfOriginSeries}"
+                                                      LegendPosition="Hidden" />
+                                        <controls:PieChartLegend Grid.Column="1"
+                                                                 Items="{Binding CompaniesOfOriginLegend}"
+                                                                 MaxHeightOverride="240"
+                                                                 Width="160"
+                                                                 Margin="8,0,0,0"
+                                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -932,13 +946,29 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <lvc:PieChart Title="{Binding CustomerPaymentStatusTitle}"
-                                              PointerPressed="OnChartPointerPressed"
-                                              Series="{Binding CustomerPaymentStatusSeries}"
-                                              LegendPosition="Right"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              DrawMargin="{Binding PieChartDrawMargin}"
-                                              IsVisible="{Binding HasCustomerPaymentStatusData}" />
+                                <!-- Pie Chart with custom legend -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasCustomerPaymentStatusData}">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Customer Payment Status"
+                                               HorizontalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,4" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <lvc:PieChart Grid.Column="0"
+                                                      PointerPressed="OnChartPointerPressed"
+                                                      Series="{Binding CustomerPaymentStatusSeries}"
+                                                      LegendPosition="Hidden" />
+                                        <controls:PieChartLegend Grid.Column="1"
+                                                                 Items="{Binding CustomerPaymentStatusLegend}"
+                                                                 MaxHeightOverride="240"
+                                                                 Width="160"
+                                                                 Margin="8,0,0,0"
+                                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
+                                <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasCustomerPaymentStatusData}">
@@ -1024,13 +1054,29 @@
                                 Padding="10"
                                 Margin="0,0,12,0">
                             <Panel>
-                                <lvc:PieChart Title="{Binding ActiveVsInactiveCustomersTitle}"
-                                              PointerPressed="OnChartPointerPressed"
-                                              Series="{Binding ActiveInactiveCustomersSeries}"
-                                              LegendPosition="Right"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              DrawMargin="{Binding PieChartDrawMargin}"
-                                              IsVisible="{Binding HasActiveInactiveCustomersData}" />
+                                <!-- Pie Chart with custom legend -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasActiveInactiveCustomersData}">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Active vs Inactive Customers"
+                                               HorizontalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,4" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <lvc:PieChart Grid.Column="0"
+                                                      PointerPressed="OnChartPointerPressed"
+                                                      Series="{Binding ActiveInactiveCustomersSeries}"
+                                                      LegendPosition="Hidden" />
+                                        <controls:PieChartLegend Grid.Column="1"
+                                                                 Items="{Binding ActiveInactiveCustomersLegend}"
+                                                                 MaxHeightOverride="240"
+                                                                 Width="160"
+                                                                 Margin="8,0,0,0"
+                                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
+                                <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasActiveInactiveCustomersData}">
@@ -1149,14 +1195,28 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <!-- Pie Chart with data -->
-                                <lvc:PieChart Title="{Binding ReturnReasonsTitle}"
-                                              PointerPressed="OnChartPointerPressed"
-                                              Series="{Binding ReturnReasonsSeries}"
-                                              LegendPosition="Right"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              DrawMargin="{Binding PieChartDrawMargin}"
-                                              IsVisible="{Binding HasReturnReasonsData}" />
+                                <!-- Pie Chart with custom legend -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasReturnReasonsData}">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Return Reasons"
+                                               HorizontalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,4" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <lvc:PieChart Grid.Column="0"
+                                                      PointerPressed="OnChartPointerPressed"
+                                                      Series="{Binding ReturnReasonsSeries}"
+                                                      LegendPosition="Hidden" />
+                                        <controls:PieChartLegend Grid.Column="1"
+                                                                 Items="{Binding ReturnReasonsLegend}"
+                                                                 MaxHeightOverride="240"
+                                                                 Width="160"
+                                                                 Margin="8,0,0,0"
+                                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -1211,14 +1271,28 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <!-- Pie Chart - reusing Return Reasons -->
-                                <lvc:PieChart Title="{Binding ReturnsByCategoryTitle}"
-                                              PointerPressed="OnChartPointerPressed"
-                                              Series="{Binding ReturnReasonsSeries}"
-                                              LegendPosition="Right"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              DrawMargin="{Binding PieChartDrawMargin}"
-                                              IsVisible="{Binding HasReturnReasonsData}" />
+                                <!-- Pie Chart with custom legend - reusing Return Reasons -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasReturnReasonsData}">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Returns by Category"
+                                               HorizontalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,4" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <lvc:PieChart Grid.Column="0"
+                                                      PointerPressed="OnChartPointerPressed"
+                                                      Series="{Binding ReturnReasonsSeries}"
+                                                      LegendPosition="Hidden" />
+                                        <controls:PieChartLegend Grid.Column="1"
+                                                                 Items="{Binding ReturnReasonsLegend}"
+                                                                 MaxHeightOverride="240"
+                                                                 Width="160"
+                                                                 Margin="8,0,0,0"
+                                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -1244,14 +1318,28 @@
                                 Padding="10"
                                 Margin="0,0,12,0">
                             <Panel>
-                                <!-- Pie Chart - reusing Expense Distribution -->
-                                <lvc:PieChart Title="{Binding ReturnsByProductTitle}"
-                                              PointerPressed="OnChartPointerPressed"
-                                              Series="{Binding ExpensesDistributionSeries}"
-                                              LegendPosition="Right"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              DrawMargin="{Binding PieChartDrawMargin}"
-                                              IsVisible="{Binding HasExpensesDistributionData}" />
+                                <!-- Pie Chart with custom legend - reusing Expense Distribution -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasExpensesDistributionData}">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Returns by Product"
+                                               HorizontalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,4" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <lvc:PieChart Grid.Column="0"
+                                                      PointerPressed="OnChartPointerPressed"
+                                                      Series="{Binding ExpensesDistributionSeries}"
+                                                      LegendPosition="Hidden" />
+                                        <controls:PieChartLegend Grid.Column="1"
+                                                                 Items="{Binding ExpensesDistributionLegend}"
+                                                                 MaxHeightOverride="240"
+                                                                 Width="160"
+                                                                 Margin="8,0,0,0"
+                                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -1371,14 +1459,28 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <!-- Pie Chart - Loss Reasons -->
-                                <lvc:PieChart Title="{Binding LossReasonsTitle}"
-                                              PointerPressed="OnChartPointerPressed"
-                                              Series="{Binding LossReasonsSeries}"
-                                              LegendPosition="Right"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              DrawMargin="{Binding PieChartDrawMargin}"
-                                              IsVisible="{Binding HasLossReasonsData}" />
+                                <!-- Pie Chart with custom legend -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasLossReasonsData}">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Loss Reasons"
+                                               HorizontalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,4" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <lvc:PieChart Grid.Column="0"
+                                                      PointerPressed="OnChartPointerPressed"
+                                                      Series="{Binding LossReasonsSeries}"
+                                                      LegendPosition="Hidden" />
+                                        <controls:PieChartLegend Grid.Column="1"
+                                                                 Items="{Binding LossReasonsLegend}"
+                                                                 MaxHeightOverride="240"
+                                                                 Width="160"
+                                                                 Margin="8,0,0,0"
+                                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -1433,14 +1535,28 @@
                                 Padding="10"
                                 Margin="12,0,0,0">
                             <Panel>
-                                <!-- Pie Chart - reusing Expense Distribution -->
-                                <lvc:PieChart Title="{Binding LossesByCategoryTitle}"
-                                              PointerPressed="OnChartPointerPressed"
-                                              Series="{Binding ExpensesDistributionSeries}"
-                                              LegendPosition="Right"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              DrawMargin="{Binding PieChartDrawMargin}"
-                                              IsVisible="{Binding HasExpensesDistributionData}" />
+                                <!-- Pie Chart with custom legend - reusing Expense Distribution -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasExpensesDistributionData}">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Losses by Category"
+                                               HorizontalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,4" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <lvc:PieChart Grid.Column="0"
+                                                      PointerPressed="OnChartPointerPressed"
+                                                      Series="{Binding ExpensesDistributionSeries}"
+                                                      LegendPosition="Hidden" />
+                                        <controls:PieChartLegend Grid.Column="1"
+                                                                 Items="{Binding ExpensesDistributionLegend}"
+                                                                 MaxHeightOverride="240"
+                                                                 Width="160"
+                                                                 Margin="8,0,0,0"
+                                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -1466,14 +1582,28 @@
                                 Padding="10"
                                 Margin="0,0,12,0">
                             <Panel>
-                                <!-- Pie Chart - Losses by Product -->
-                                <lvc:PieChart Title="{Binding LossesByProductTitle}"
-                                              PointerPressed="OnChartPointerPressed"
-                                              Series="{Binding LossesByProductSeries}"
-                                              LegendPosition="Right"
-                                              LegendTextPaint="{Binding LegendTextPaint}"
-                                              DrawMargin="{Binding PieChartDrawMargin}"
-                                              IsVisible="{Binding HasLossesByProductData}" />
+                                <!-- Pie Chart with custom legend -->
+                                <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasLossesByProductData}">
+                                    <TextBlock Grid.Row="0"
+                                               Text="Losses by Product"
+                                               HorizontalAlignment="Center"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               Margin="0,8,0,4" />
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                        <lvc:PieChart Grid.Column="0"
+                                                      PointerPressed="OnChartPointerPressed"
+                                                      Series="{Binding LossesByProductSeries}"
+                                                      LegendPosition="Hidden" />
+                                        <controls:PieChartLegend Grid.Column="1"
+                                                                 Items="{Binding LossesByProductLegend}"
+                                                                 MaxHeightOverride="240"
+                                                                 Width="160"
+                                                                 Margin="8,0,0,0"
+                                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
