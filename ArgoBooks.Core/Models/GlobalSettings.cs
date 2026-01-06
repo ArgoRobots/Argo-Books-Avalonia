@@ -35,6 +35,15 @@ public class UiSettings
     public bool ReportsElementPanelCollapsed { get; set; } = false;
     public string Theme { get; set; } = "Dark";
     public string AccentColor { get; set; } = "Blue";
+    public ChartSettings Chart { get; set; } = new();
+}
+
+public class ChartSettings
+{
+    public string ChartType { get; set; } = "Line";
+    public string DateRange { get; set; } = "This Month";
+    public DateTime? CustomStartDate { get; set; }
+    public DateTime? CustomEndDate { get; set; }
 }
 
 public class LicenseSettings

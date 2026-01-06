@@ -90,10 +90,10 @@
                 </StackPanel>
 
                 <!-- Chart Type Selector -->
-                <controls:ChartTypeSelector Grid.Column="1" VerticalAlignment="Top" Margin="0,0,16,0" />
+                <controls:ChartTypeSelector Grid.Column="1" VerticalAlignment="Center" Margin="0,0,16,0" />
 
                 <!-- Date Range Selector -->
-                <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Top" />
+                <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Center" />
             </Grid>
 
             <!-- Statistics Cards Row -->

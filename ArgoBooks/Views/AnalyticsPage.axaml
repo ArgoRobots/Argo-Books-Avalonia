@@ -39,12 +39,12 @@
 
                         <!-- Chart Type Selector -->
                         <controls:ChartTypeSelector Grid.Column="1"
-                                                    VerticalAlignment="Top"
+                                                    VerticalAlignment="Center"
                                                     Margin="0,0,16,0"
                                                     IsVisible="{Binding !IsGeographicTabSelected}" />
 
                         <!-- Date Range Controls -->
-                        <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Top" />
+                        <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Center" />
                     </Grid>
                 </Border>
 
