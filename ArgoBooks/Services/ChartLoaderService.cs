@@ -25,7 +25,6 @@ public class ChartLoaderService
     // Chart text size matching WinForms version
     private const float AxisTextSize = 14f;
     private const float LegendTextSize = 14f;
-    private const float TooltipTextSize = 14f;
 
     // Chart colors
     private static readonly SKColor RevenueColor = SKColor.Parse("#6495ED"); // Cornflower Blue (matches WinForms)
@@ -219,12 +218,12 @@ public class ChartLoaderService
     /// Gets or sets the current data for export functionality.
     /// This is used by Google Sheets and Excel exporters.
     /// </summary>
-    public ChartExportData? CurrentExportData { get; private set; }
+    private ChartExportData? CurrentExportData { get; set; }
 
     /// <summary>
     /// Gets or sets the pie chart data for export functionality.
     /// </summary>
-    public ChartExportData? PieChartExportData { get; private set; }
+    private ChartExportData? PieChartExportData { get; set; }
 
     /// <summary>
     /// Dictionary storing export data for each chart by its title.
@@ -594,7 +593,7 @@ public class ChartLoaderService
     /// <param name="seriesName">The name of the series.</param>
     /// <param name="color">The color for the series.</param>
     /// <returns>A configured ISeries for LiveChartsCore.</returns>
-    public ISeries ConvertToSeries(List<ChartDataPoint> dataPoints, string seriesName, SKColor color)
+    private ISeries ConvertToSeries(List<ChartDataPoint> dataPoints, string seriesName, SKColor color)
     {
         if (dataPoints.Count == 0)
         {
@@ -626,7 +625,7 @@ public class ChartLoaderService
         if (dataPoints.Count == 0)
             return series;
 
-        var colors = GetDistributionColors(dataPoints.Count);
+        var colors = GetDistributionColors();
 
         for (int i = 0; i < dataPoints.Count; i++)
         {
@@ -642,7 +641,7 @@ public class ChartLoaderService
                 Fill = new SolidColorPaint(color),
                 DataLabelsSize = LegendTextSize,
                 DataLabelsPaint = new SolidColorPaint(_textColor),
-                DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Outer
+                DataLabelsPosition = PolarLabelsPosition.Outer
             });
         }
 
@@ -671,7 +670,7 @@ public class ChartLoaderService
     /// <summary>
     /// Gets an array of colors for distribution charts.
     /// </summary>
-    private static SKColor[] GetDistributionColors(int count)
+    private static SKColor[] GetDistributionColors()
     {
         // Predefined colors for distribution charts (matching WinForms/dashboard style)
         return
@@ -1408,7 +1407,7 @@ public class ChartLoaderService
         var dataPoints = salesInRange
             .GroupBy(s =>
             {
-                var customerId = GetEffectiveCustomerId(s, companyData);
+                var customerId = GetEffectiveCustomerId(s);
                 if (!string.IsNullOrEmpty(customerId))
                 {
                     var customer = companyData.GetCustomer(customerId);
@@ -1521,7 +1520,7 @@ public class ChartLoaderService
         {
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)count },
+                Values = [(double)count],
                 Name = name,
                 Fill = new SolidColorPaint(color),
                 Pushout = 0
@@ -1578,7 +1577,7 @@ public class ChartLoaderService
         {
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)activeCount },
+                Values = [(double)activeCount],
                 Name = "Active",
                 Fill = new SolidColorPaint(SKColor.Parse("#22C55E")),
                 Pushout = 0
@@ -1589,7 +1588,7 @@ public class ChartLoaderService
         {
             series.Add(new PieSeries<double>
             {
-                Values = new[] { (double)inactiveCount },
+                Values = [(double)inactiveCount],
                 Name = "Inactive",
                 Fill = new SolidColorPaint(SKColor.Parse("#6B7280")),
                 Pushout = 0
@@ -2062,12 +2061,12 @@ public class ChartLoaderService
             _chartExportDataByTitle[data.ChartTitle] = data;
 
             // Store aliases for UI titles that differ from internal titles
-            var aliases = data.ChartTitle switch
+            string[] aliases = data.ChartTitle switch
             {
-                "Expenses Overview" => new[] { "Purchase Trends", "Total Expenses" },
-                "Revenue Overview" => new[] { "Sales Trends", "Total Revenue" },
-                "Profits Overview" => new[] { "Profit Over Time", "Profits over Time" },
-                _ => Array.Empty<string>()
+                "Expenses Overview" => ["Purchase Trends", "Total Expenses"],
+                "Revenue Overview" => ["Sales Trends", "Total Revenue"],
+                "Profits Overview" => ["Profit Over Time", "Profits over Time"],
+                _ => []
             };
 
             foreach (var alias in aliases)
@@ -2257,48 +2256,6 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Gets the effective category ID for a sale, checking LineItems if not set directly.
-    /// </summary>
-    private static string? GetEffectiveCategoryId(Sale sale, CompanyData companyData)
-    {
-        // First check if CategoryId is set directly on the sale
-        if (!string.IsNullOrEmpty(sale.CategoryId))
-            return sale.CategoryId;
-
-        // Otherwise, look at the first LineItem's product
-        var firstProductId = sale.LineItems?.FirstOrDefault()?.ProductId;
-        if (!string.IsNullOrEmpty(firstProductId))
-        {
-            var product = companyData.GetProduct(firstProductId);
-            if (product != null && !string.IsNullOrEmpty(product.CategoryId))
-                return product.CategoryId;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Gets the effective category ID for a purchase, checking LineItems if not set directly.
-    /// </summary>
-    private static string? GetEffectiveCategoryId(Purchase purchase, CompanyData companyData)
-    {
-        // First check if CategoryId is set directly on the purchase
-        if (!string.IsNullOrEmpty(purchase.CategoryId))
-            return purchase.CategoryId;
-
-        // Otherwise, look at the first LineItem's product
-        var firstProductId = purchase.LineItems?.FirstOrDefault()?.ProductId;
-        if (!string.IsNullOrEmpty(firstProductId))
-        {
-            var product = companyData.GetProduct(firstProductId);
-            if (product != null && !string.IsNullOrEmpty(product.CategoryId))
-                return product.CategoryId;
-        }
-
-        return null;
-    }
-
-    /// <summary>
     /// Gets the effective supplier ID for a purchase, checking LineItems if not set directly.
     /// </summary>
     private static string? GetEffectiveSupplierId(Purchase purchase, CompanyData companyData)
@@ -2320,16 +2277,11 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Gets the effective customer ID for a sale, checking LineItems if not set directly.
-    /// For sales, we may look at the product's supplier as a fallback for some charts.
+    /// Gets the effective customer ID for a sale.
     /// </summary>
-    private static string? GetEffectiveCustomerId(Sale sale, CompanyData companyData)
+    private static string? GetEffectiveCustomerId(Sale sale)
     {
-        // First check if CustomerId is set directly on the sale
-        if (!string.IsNullOrEmpty(sale.CustomerId))
-            return sale.CustomerId;
-
-        return null;
+        return sale.CustomerId;
     }
 
     /// <summary>
@@ -2337,10 +2289,10 @@ public class ChartLoaderService
     /// </summary>
     /// <param name="index">The series index.</param>
     /// <returns>A hex color string for the series.</returns>
-    public static string GetColorHexForIndex(int index)
+    private static string GetColorHexForIndex(int index)
     {
-        var colors = new[]
-        {
+        string[] colors =
+        [
             "#6495ED", // Cornflower Blue
             "#EF4444", // Red
             "#22C55E", // Green
@@ -2351,7 +2303,7 @@ public class ChartLoaderService
             "#F97316", // Orange
             "#6366F1", // Indigo
             "#84CC16", // Lime
-        };
+        ];
 
         return colors[index % colors.Length];
     }
@@ -2361,7 +2313,7 @@ public class ChartLoaderService
     /// </summary>
     /// <param name="index">The series index.</param>
     /// <returns>An SKColor for the series.</returns>
-    public static SKColor GetColorForIndex(int index)
+    private static SKColor GetColorForIndex(int index)
     {
         return SKColor.Parse(GetColorHexForIndex(index));
     }
@@ -2371,7 +2323,7 @@ public class ChartLoaderService
     /// </summary>
     /// <param name="dataPoints">The source data points.</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
-    public static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
+    private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
         List<ChartDataPoint> dataPoints)
     {
         var maxSlices = ChartSettingsService.GetMaxPieSlices();
@@ -2384,7 +2336,7 @@ public class ChartLoaderService
     /// <param name="dataPoints">The source data points.</param>
     /// <param name="maxSlices">Maximum number of slices before grouping into "Other".</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
-    public static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
+    private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
         List<ChartDataPoint> dataPoints,
         int maxSlices)
     {
@@ -2465,7 +2417,7 @@ public class ChartLoaderService
     /// </summary>
     /// <param name="items">The source items as label/value pairs.</param>
     /// <returns>A tuple containing the series collection and legend items.</returns>
-    public static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
+    private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
         IEnumerable<(string Label, double Value)> items)
     {
         var dataPoints = items.Select(i => new ChartDataPoint
