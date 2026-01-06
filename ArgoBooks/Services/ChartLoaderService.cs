@@ -2355,7 +2355,8 @@ public class ChartLoaderService
                 Values = [roundedValue],
                 Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(SKColor.Parse(colorHex)),
-                Pushout = 0
+                Pushout = 0,
+                ToolTipLabelFormatter = point => $"{point.Context.Series.Name}: ${point.Coordinate.PrimaryValue:N2}"
             });
 
             legendItems.Add(new PieLegendItem
@@ -2379,7 +2380,8 @@ public class ChartLoaderService
                 Values = [otherValue],
                 Name = "Other",
                 Fill = new SolidColorPaint(SKColor.Parse(otherColorHex)),
-                Pushout = 0
+                Pushout = 0,
+                ToolTipLabelFormatter = point => $"{point.Context.Series.Name}: ${point.Coordinate.PrimaryValue:N2}"
             });
 
             legendItems.Add(new PieLegendItem
