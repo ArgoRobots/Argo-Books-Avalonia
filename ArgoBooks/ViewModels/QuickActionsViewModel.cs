@@ -110,14 +110,17 @@ public partial class QuickActionsViewModel : ViewModelBase
     {
         // Quick Actions - Creation tasks
         _allActions.AddRange([
-            new QuickActionItem("New Invoice", "Create a new invoice", "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z", QuickActionType.QuickAction, "Invoices"),
-            new QuickActionItem("New Expense", "Record a new expense", "M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z", QuickActionType.QuickAction, "Expenses"),
+            new QuickActionItem("New Invoice", "Create a new invoice", "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z", QuickActionType.QuickAction, "Invoices", "OpenAddModal"),
+            new QuickActionItem("New Expense", "Record a new expense", "M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z", QuickActionType.QuickAction, "Expenses", "OpenAddModal"),
+            new QuickActionItem("New Revenue", "Record a new revenue entry", "M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z", QuickActionType.QuickAction, "Revenue", "OpenAddModal"),
             new QuickActionItem("Scan Receipt", "Scan and import a receipt", "M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z", QuickActionType.QuickAction, "Receipts"),
             new QuickActionItem("New Customer", "Add a new customer", "M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z", QuickActionType.QuickAction, "Customers", "OpenAddModal"),
             new QuickActionItem("New Product", "Add a new product or service", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z", QuickActionType.QuickAction, "Products", "OpenAddModal"),
             new QuickActionItem("New Supplier", "Add a new supplier", "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z", QuickActionType.QuickAction, "Suppliers", "OpenAddModal"),
-            new QuickActionItem("Record Payment", "Record a payment received", "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z", QuickActionType.QuickAction, "Payments"),
+            new QuickActionItem("Record Payment", "Record a payment received", "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z", QuickActionType.QuickAction, "Payments", "OpenAddModal"),
             new QuickActionItem("New Rental Item", "Add a new rental item", "M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zM7 4V3h10v1H7zm0 14V6h10v12H7zm0 3v-1h10v1H7z", QuickActionType.QuickAction, "RentalInventory", "OpenAddModal"),
+            new QuickActionItem("New Rental Record", "Create a new rental transaction", "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z", QuickActionType.QuickAction, "RentalRecords", "OpenAddModal"),
+            new QuickActionItem("New Category", "Add a new category", "M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84z", QuickActionType.QuickAction, "Categories", "OpenAddModal"),
         ]);
 
         // Navigation - Go to pages
@@ -150,10 +153,10 @@ public partial class QuickActionsViewModel : ViewModelBase
 
         // Tools & Settings
         _allActions.AddRange([
-            new QuickActionItem("Settings", "Configure application settings", "M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z", QuickActionType.Tools, "Settings"),
-            new QuickActionItem("Help & Support", "Get help and documentation", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z", QuickActionType.Tools, "Help"),
-            new QuickActionItem("Export Data", "Export your data", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z", QuickActionType.Tools, null),
-            new QuickActionItem("Import Data", "Import data from file", "M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z", QuickActionType.Tools, null),
+            new QuickActionItem("Settings", "Configure application settings", "M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z", QuickActionType.Tools, null, "OpenSettings"),
+            new QuickActionItem("Help & Support", "Get help and documentation", "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z", QuickActionType.Tools, null, "OpenHelp"),
+            new QuickActionItem("Export Data", "Export your data", "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z", QuickActionType.Tools, null, "OpenExport"),
+            new QuickActionItem("Import Data", "Import data from file", "M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z", QuickActionType.Tools, null, "OpenImport"),
         ]);
     }
 

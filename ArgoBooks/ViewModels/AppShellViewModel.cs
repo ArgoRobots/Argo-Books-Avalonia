@@ -416,23 +416,55 @@ public partial class AppShellViewModel : ViewModelBase
         QuickActionsViewModel.ActionRequested += (_, e) =>
         {
             // Handle actions that open modals after navigation
-            if (e.ActionName == "OpenAddModal")
+            switch (e.ActionName)
             {
-                switch (e.NavigationTarget)
-                {
-                    case "RentalInventory":
-                        RentalInventoryModalsViewModel.OpenAddModalCommand.Execute(null);
-                        break;
-                    case "Customers":
-                        CustomerModalsViewModel.OpenAddModalCommand.Execute(null);
-                        break;
-                    case "Products":
-                        ProductModalsViewModel.OpenAddModalCommand.Execute(null);
-                        break;
-                    case "Suppliers":
-                        SupplierModalsViewModel.OpenAddModalCommand.Execute(null);
-                        break;
-                }
+                case "OpenAddModal":
+                    switch (e.NavigationTarget)
+                    {
+                        case "RentalInventory":
+                            RentalInventoryModalsViewModel.OpenAddModalCommand.Execute(null);
+                            break;
+                        case "RentalRecords":
+                            RentalRecordsModalsViewModel.OpenAddModalCommand.Execute(null);
+                            break;
+                        case "Customers":
+                            CustomerModalsViewModel.OpenAddModalCommand.Execute(null);
+                            break;
+                        case "Products":
+                            ProductModalsViewModel.OpenAddModalCommand.Execute(null);
+                            break;
+                        case "Suppliers":
+                            SupplierModalsViewModel.OpenAddModalCommand.Execute(null);
+                            break;
+                        case "Invoices":
+                            InvoiceModalsViewModel.OpenCreateModal();
+                            break;
+                        case "Expenses":
+                            ExpenseModalsViewModel.OpenAddModalCommand.Execute(null);
+                            break;
+                        case "Revenue":
+                            RevenueModalsViewModel.OpenAddModalCommand.Execute(null);
+                            break;
+                        case "Payments":
+                            PaymentModalsViewModel.OpenAddModalCommand.Execute(null);
+                            break;
+                        case "Categories":
+                            CategoryModalsViewModel.OpenAddModalCommand.Execute(null);
+                            break;
+                    }
+                    break;
+                case "OpenSettings":
+                    SettingsModalViewModel.OpenCommand.Execute(null);
+                    break;
+                case "OpenHelp":
+                    HelpPanelViewModel.ToggleCommand.Execute(null);
+                    break;
+                case "OpenExport":
+                    ExportAsModalViewModel.OpenCommand.Execute(null);
+                    break;
+                case "OpenImport":
+                    ImportModalViewModel.OpenCommand.Execute(null);
+                    break;
             }
         };
 
