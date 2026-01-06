@@ -1361,20 +1361,15 @@ public partial class App : Application
                             Title = "Missing References Found",
                             Message = $"The import file references {missingCount} item(s) that don't exist:\n\n{missingSummary}\n\nWould you like to create placeholder entries for these missing items?",
                             PrimaryButtonText = "Create & Import",
-                            SecondaryButtonText = "Import Anyway",
                             CancelButtonText = "Cancel"
                         });
 
-                        if (result == ViewModels.ConfirmationResult.Cancel)
+                        if (result != ViewModels.ConfirmationResult.Primary)
                         {
                             return;
                         }
 
-                        if (result == ViewModels.ConfirmationResult.Primary)
-                        {
-                            importOptions.AutoCreateMissingReferences = true;
-                        }
-                        // If Secondary, proceed without creating missing references
+                        importOptions.AutoCreateMissingReferences = true;
                     }
                 }
 
