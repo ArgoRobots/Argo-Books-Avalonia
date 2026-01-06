@@ -329,7 +329,16 @@ public class SpreadsheetImportService
         data.Products.Clear();
         foreach (var row in rows)
         {
-            var itemType = GetString(row, headers, "Type");
+            var typeStr = GetString(row, headers, "Type");
+            var productType = typeStr.ToLowerInvariant() switch
+            {
+                "revenue" or "sales" => CategoryType.Sales,
+                "expenses" or "purchase" => CategoryType.Purchase,
+                "rental" => CategoryType.Rental,
+                _ => CategoryType.Sales
+            };
+
+            var itemType = GetString(row, headers, "Item Type");
             if (string.IsNullOrEmpty(itemType))
                 itemType = "Product";
 
@@ -337,6 +346,7 @@ public class SpreadsheetImportService
             {
                 Id = GetString(row, headers, "ID"),
                 Name = GetString(row, headers, "Name"),
+                Type = productType,
                 ItemType = itemType,
                 Sku = GetString(row, headers, "SKU"),
                 Description = GetString(row, headers, "Description"),

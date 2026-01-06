@@ -44,6 +44,12 @@ public class Product
     public string ItemType { get; set; } = "Product";
 
     /// <summary>
+    /// Product type (Sales/Revenue, Purchase/Expenses, Rental).
+    /// </summary>
+    [JsonPropertyName("type")]
+    public CategoryType Type { get; set; } = CategoryType.Sales;
+
+    /// <summary>
     /// Selling price per unit.
     /// </summary>
     [JsonPropertyName("unitPrice")]
