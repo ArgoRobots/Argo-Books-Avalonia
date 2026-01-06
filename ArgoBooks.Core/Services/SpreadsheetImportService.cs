@@ -49,7 +49,9 @@ public class SpreadsheetImportService
 
             try
             {
-                using var workbook = new XLWorkbook(filePath);
+                // Open file with read sharing to allow importing even if file is open in Excel
+                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var workbook = new XLWorkbook(fileStream);
 
                 // First pass: collect all IDs that will be imported
                 var importedIds = CollectImportedIds(workbook);
@@ -87,7 +89,9 @@ public class SpreadsheetImportService
 
         await Task.Run(() =>
         {
-            using var workbook = new XLWorkbook(filePath);
+            // Open file with read sharing to allow importing even if file is open in Excel
+            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var workbook = new XLWorkbook(fileStream);
 
             // If auto-creating references, do that first
             if (options.AutoCreateMissingReferences || options.AutoCreateTypes.Count > 0)
@@ -1047,8 +1051,14 @@ public class SpreadsheetImportService
             };
 
             var itemType = GetString(row, headers, "Item Type");
-            if (string.IsNullOrEmpty(itemType))
-                itemType = "Product";
+            // Normalize item type to proper casing (case-insensitive match)
+            itemType = itemType.ToLowerInvariant() switch
+            {
+                "service" => "Service",
+                "product" => "Product",
+                "" => "Product",
+                _ => "Product"
+            };
 
             var product = existing ?? new Product();
             product.Id = id;
@@ -1243,11 +1253,16 @@ public class SpreadsheetImportService
             category.Type = categoryType;
             category.ParentId = GetNullableString(row, headers, "Parent ID");
             category.Description = GetNullableString(row, headers, "Description");
-            category.ItemType = GetString(row, headers, "Item Type");
+            // Normalize item type to proper casing (case-insensitive match)
+            var itemTypeStr = GetString(row, headers, "Item Type");
+            category.ItemType = itemTypeStr.ToLowerInvariant() switch
+            {
+                "service" => "Service",
+                "product" => "Product",
+                "" => "Product",
+                _ => "Product"
+            };
             category.Icon = GetString(row, headers, "Icon");
-
-            if (string.IsNullOrEmpty(category.ItemType))
-                category.ItemType = "Product";
             if (string.IsNullOrEmpty(category.Icon))
                 category.Icon = "📦";
 

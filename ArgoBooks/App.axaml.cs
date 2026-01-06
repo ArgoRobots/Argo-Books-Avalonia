@@ -1336,12 +1336,20 @@ public partial class App : Application
 
                 _mainWindowViewModel?.HideLoading();
 
-                // Check for critical errors
+                // Check for critical errors - show in modal
                 if (validationResult.Errors.Count > 0)
                 {
-                    _appShellViewModel?.AddNotification("Import Failed",
-                        $"Import validation failed:\n{string.Join("\n", validationResult.Errors)}",
-                        NotificationType.Error);
+                    var errorDialog = ConfirmationDialog;
+                    if (errorDialog != null)
+                    {
+                        await errorDialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        {
+                            Title = "Import Failed",
+                            Message = $"Import validation failed:\n\n{string.Join("\n", validationResult.Errors)}",
+                            PrimaryButtonText = "OK",
+                            CancelButtonText = ""
+                        });
+                    }
                     return;
                 }
 
@@ -1414,7 +1422,17 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Import Failed", $"Failed to import data: {ex.Message}", NotificationType.Error);
+                var errorDialog = ConfirmationDialog;
+                if (errorDialog != null)
+                {
+                    await errorDialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                    {
+                        Title = "Import Failed",
+                        Message = $"Failed to import data:\n\n{ex.Message}",
+                        PrimaryButtonText = "OK",
+                        CancelButtonText = ""
+                    });
+                }
             }
         };
     }
