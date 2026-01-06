@@ -1042,6 +1042,14 @@ public class SpreadsheetImportService
 
     private void ImportProducts(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
+        // DEBUG: Print headers
+        Console.WriteLine($"[DEBUG ImportProducts] Headers count: {headers.Count}");
+        Console.WriteLine($"[DEBUG ImportProducts] Headers: {string.Join(", ", headers)}");
+
+        // DEBUG: Check if "Item Type" column exists
+        var itemTypeIndex = GetColumnIndex(headers, "Item Type");
+        Console.WriteLine($"[DEBUG ImportProducts] 'Item Type' column index: {itemTypeIndex}");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -1056,15 +1064,21 @@ public class SpreadsheetImportService
                 _ => CategoryType.Sales
             };
 
-            var itemType = GetString(row, headers, "Item Type");
+            var itemTypeRaw = GetString(row, headers, "Item Type");
+            // DEBUG: Print raw value
+            Console.WriteLine($"[DEBUG ImportProducts] ID={id}, Raw ItemType='{itemTypeRaw}', Length={itemTypeRaw.Length}");
+
             // Normalize item type to proper casing (case-insensitive match, trim whitespace)
-            itemType = itemType.Trim().ToLowerInvariant() switch
+            var itemType = itemTypeRaw.Trim().ToLowerInvariant() switch
             {
                 "service" => "Service",
                 "product" => "Product",
                 "" => "Product",
                 _ => "Product"
             };
+
+            // DEBUG: Print normalized value
+            Console.WriteLine($"[DEBUG ImportProducts] ID={id}, Normalized ItemType='{itemType}'");
 
             var product = existing ?? new Product();
             product.Id = id;
