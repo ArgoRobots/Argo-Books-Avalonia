@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -317,12 +318,12 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
-            var products = companyData.Products ?? [];
+            var searchProducts = companyData.Products ?? [];
             filtered = filtered
                 .Select(i => new
                 {
                     Item = i,
-                    Product = products.FirstOrDefault(p => p.Id == i.ProductId),
+                    Product = searchProducts.FirstOrDefault(p => p.Id == i.ProductId),
                     SkuScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, i.Sku)
                 })
                 .Where(x => x.Product != null)
@@ -592,7 +593,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
             Timestamp = DateTime.UtcNow
         };
 
-        companyData.StockAdjustments ??= [];
         companyData.StockAdjustments.Add(adjustmentRecord);
         companyData.MarkAsModified();
 
