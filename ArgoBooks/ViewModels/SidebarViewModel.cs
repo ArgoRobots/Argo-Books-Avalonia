@@ -195,7 +195,6 @@ public partial class SidebarViewModel : ViewModelBase
             "M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z")); // fa-sliders-h
         _locationsItem = CreateItem("Locations", "Locations",
             "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"); // fa-map-marker-alt
-        _locationsItem.IsVisible = HasEnterprise; // Hidden until enterprise plan
         InventoryItems.Add(_locationsItem);
         _transfersItem = CreateItem("Transfers", "Transfers",
             "M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"); // fa-exchange-alt
