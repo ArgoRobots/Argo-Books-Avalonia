@@ -125,22 +125,15 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding FileFormats}"
-                                              SelectedItem="{Binding SelectedFileFormat}"
-                                              HorizontalAlignment="Stretch"
-                                              Classes="form-select">
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock>
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0}">
-                                                            <Binding Path="." />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                                    <Border Background="{DynamicResource SurfaceBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="6"
+                                            Padding="12,10">
+                                        <TextBlock Text="Excel Workbook (.xlsx)"
+                                                   FontSize="14"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    </Border>
                                 </StackPanel>
 
                                 <!-- Date Range -->
