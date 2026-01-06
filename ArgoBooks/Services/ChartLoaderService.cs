@@ -1520,7 +1520,7 @@ public class ChartLoaderService
         {
             series.Add(new PieSeries<double>
             {
-                Values = [(double)count],
+                Values = [count],
                 Name = name,
                 Fill = new SolidColorPaint(color),
                 Pushout = 0
@@ -1554,7 +1554,7 @@ public class ChartLoaderService
         var series = new ObservableCollection<ISeries>();
         int total = 0;
 
-        if (companyData?.Customers == null || companyData.Sales == null)
+        if (companyData is not { Customers: not null, Sales: not null })
             return (series, total);
 
         var end = endDate ?? DateTime.Now;
@@ -1577,7 +1577,7 @@ public class ChartLoaderService
         {
             series.Add(new PieSeries<double>
             {
-                Values = [(double)activeCount],
+                Values = [activeCount],
                 Name = "Active",
                 Fill = new SolidColorPaint(SKColor.Parse("#22C55E")),
                 Pushout = 0
@@ -1588,7 +1588,7 @@ public class ChartLoaderService
         {
             series.Add(new PieSeries<double>
             {
-                Values = [(double)inactiveCount],
+                Values = [inactiveCount],
                 Name = "Inactive",
                 Fill = new SolidColorPaint(SKColor.Parse("#6B7280")),
                 Pushout = 0
@@ -1991,7 +1991,7 @@ public class ChartLoaderService
             {
                 // First try customer country
                 var customer = companyData.GetCustomer(s.CustomerId ?? "");
-                if (customer?.Address?.Country != null && !string.IsNullOrEmpty(customer.Address.Country))
+                if (!string.IsNullOrEmpty(customer?.Address?.Country))
                     return GetCountryIsoCode(customer.Address.Country);
 
                 // Fall back to product's supplier country
@@ -2002,7 +2002,7 @@ public class ChartLoaderService
                     if (product != null && !string.IsNullOrEmpty(product.SupplierId))
                     {
                         var supplier = companyData.GetSupplier(product.SupplierId);
-                        if (supplier?.Address?.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
+                        if (!string.IsNullOrEmpty(supplier?.Address?.Country))
                             return GetCountryIsoCode(supplier.Address.Country);
                     }
                 }
@@ -2412,22 +2412,6 @@ public class ChartLoaderService
         return (series, legendItems);
     }
 
-    /// <summary>
-    /// Creates pie chart series and legend items from raw label/value pairs with "Other" grouping.
-    /// </summary>
-    /// <param name="items">The source items as label/value pairs.</param>
-    /// <returns>A tuple containing the series collection and legend items.</returns>
-    private static (ObservableCollection<ISeries> Series, ObservableCollection<PieLegendItem> LegendItems) CreatePieSeriesWithLegend(
-        IEnumerable<(string Label, double Value)> items)
-    {
-        var dataPoints = items.Select(i => new ChartDataPoint
-        {
-            Label = i.Label,
-            Value = i.Value
-        }).ToList();
-
-        return CreatePieSeriesWithLegend(dataPoints);
-    }
 }
 
 /// <summary>
