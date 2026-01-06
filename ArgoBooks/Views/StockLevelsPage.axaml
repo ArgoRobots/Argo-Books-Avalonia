@@ -223,6 +223,26 @@
                                         <TextBlock Text="Filter" />
                                     </StackPanel>
                                 </Button>
+
+                                <!-- Adjust Stock Button -->
+                                <Button Classes="secondary-button"
+                                        Command="{Binding OpenBulkAdjustModalCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
+                                                  Width="16" Height="16" />
+                                        <TextBlock Text="Adjust Stock" />
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Add Item Button -->
+                                <Button Classes="primary-button"
+                                        Command="{Binding OpenAddItemModalCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                  Width="16" Height="16" />
+                                        <TextBlock Text="Add Item" />
+                                    </StackPanel>
+                                </Button>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -832,6 +852,222 @@
                 </Grid>
             </Border>
         </Grid>
+
+        <!-- Adjust Stock Modal -->
+        <Panel IsVisible="{Binding IsAdjustStockModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12" Width="500"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Modal Header -->
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Adjust Stock"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{Binding SelectedItem.ProductName}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseAdjustStockModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Modal Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="16">
+                            <!-- Adjustment Type -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Adjustment Type" /><Run Text="*" Foreground="#dc2626" />
+                                </TextBlock>
+                                <ComboBox ItemsSource="{Binding AdjustmentTypes}"
+                                          SelectedItem="{Binding AdjustmentType}"
+                                          Classes="form-combobox"
+                                          HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Current Stock (Read-only) -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="Current Stock" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding SelectedItem.InStock}"
+                                             IsReadOnly="True"
+                                             Classes="form-input"
+                                             Background="{DynamicResource SurfaceAltBrush}" />
+                                </StackPanel>
+
+                                <!-- Adjustment Quantity -->
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Quantity" /><Run Text="*" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <TextBox Text="{Binding AdjustmentQuantity, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="Enter quantity" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- New Stock Level (Calculated, Read-only) -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="New Stock Level" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding CalculatedNewStock}"
+                                         IsReadOnly="True"
+                                         Classes="form-input"
+                                         Background="{DynamicResource SurfaceAltBrush}" />
+                            </StackPanel>
+
+                            <!-- Reason/Notes -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Reason/Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding AdjustmentReason, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         MinHeight="80"
+                                         MaxHeight="120"
+                                         Watermark="Enter reason for adjustment..." />
+                            </StackPanel>
+
+                            <!-- Error Message -->
+                            <TextBlock Text="{Binding AdjustmentError}"
+                                       FontSize="12"
+                                       Foreground="#dc2626"
+                                       IsVisible="{Binding AdjustmentError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Modal Footer -->
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAdjustStockModalCommand}" />
+                            <Button Classes="primary-button" Content="Apply Adjustment" Command="{Binding SaveAdjustmentCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Add Item Modal -->
+        <Panel IsVisible="{Binding IsAddItemModalOpen}">
+            <Border Background="#80000000" />
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12" Width="600"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Modal Header -->
+                    <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Add Inventory Item"
+                                       FontSize="18" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseAddItemModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Modal Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24" Spacing="16">
+                            <!-- Product Selection -->
+                            <StackPanel Spacing="6">
+                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                    <Run Text="Product" /><Run Text="*" Foreground="#dc2626" />
+                                </TextBlock>
+                                <ComboBox ItemsSource="{Binding AvailableProducts}"
+                                          SelectedItem="{Binding SelectedProduct}"
+                                          Classes="form-combobox"
+                                          HorizontalAlignment="Stretch">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Text="{Binding AddItemProductError}" FontSize="12" Foreground="#dc2626"
+                                           IsVisible="{Binding AddItemProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                            </StackPanel>
+
+                            <!-- SKU and Location -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock Text="SKU" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding AddItemSku, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="Auto-generated if empty" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Location" /><Run Text="*" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <ComboBox ItemsSource="{Binding AvailableLocationsList}"
+                                              SelectedItem="{Binding SelectedLocation}"
+                                              Classes="form-combobox"
+                                              HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Initial Quantity and Reorder Point -->
+                            <Grid ColumnDefinitions="*,16,*">
+                                <StackPanel Grid.Column="0" Spacing="6">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                        <Run Text="Initial Quantity" /><Run Text="*" Foreground="#dc2626" />
+                                    </TextBlock>
+                                    <TextBox Text="{Binding AddItemQuantity, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="0" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Spacing="6">
+                                    <TextBlock Text="Reorder Point" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding AddItemReorderPoint, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             Watermark="10" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Overstock Threshold -->
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Overstock Threshold" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding AddItemOverstockThreshold, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         Watermark="100" />
+                            </StackPanel>
+
+                            <!-- Error Message -->
+                            <TextBlock Text="{Binding AddItemError}"
+                                       FontSize="12"
+                                       Foreground="#dc2626"
+                                       IsVisible="{Binding AddItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Modal Footer -->
+                    <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddItemModalCommand}" />
+                            <Button Classes="primary-button" Content="Add Item" Command="{Binding SaveNewItemCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
     </Grid>
 
     <UserControl.Styles>
@@ -941,6 +1177,27 @@
         </Style>
         <Style Selector="Button.column-header:pointerover TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+
+        <!-- Form Input -->
+        <Style Selector="TextBox.form-input">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+
+        <!-- Form ComboBox -->
+        <Style Selector="ComboBox.form-combobox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
     </UserControl.Styles>
 </UserControl>

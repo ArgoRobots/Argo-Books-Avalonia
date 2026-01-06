@@ -174,6 +174,77 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     /// </summary>
     public ObservableCollection<string> AdjustmentTypes { get; } = ["Add", "Remove", "Set"];
 
+    /// <summary>
+    /// Calculated new stock level based on adjustment type and quantity.
+    /// </summary>
+    public string CalculatedNewStock
+    {
+        get
+        {
+            if (SelectedItem == null || !int.TryParse(AdjustmentQuantity, out var qty))
+                return SelectedItem?.InStock.ToString() ?? "0";
+
+            return AdjustmentType switch
+            {
+                "Add" => (SelectedItem.InStock + qty).ToString(),
+                "Remove" => Math.Max(0, SelectedItem.InStock - qty).ToString(),
+                "Set" => qty.ToString(),
+                _ => SelectedItem.InStock.ToString()
+            };
+        }
+    }
+
+    partial void OnAdjustmentQuantityChanged(string value)
+    {
+        OnPropertyChanged(nameof(CalculatedNewStock));
+    }
+
+    partial void OnAdjustmentTypeChanged(string value)
+    {
+        OnPropertyChanged(nameof(CalculatedNewStock));
+    }
+
+    #endregion
+
+    #region Add Item Modal State
+
+    [ObservableProperty]
+    private bool _isAddItemModalOpen;
+
+    [ObservableProperty]
+    private Product? _selectedProduct;
+
+    [ObservableProperty]
+    private Location? _selectedLocation;
+
+    [ObservableProperty]
+    private string _addItemSku = string.Empty;
+
+    [ObservableProperty]
+    private string _addItemQuantity = string.Empty;
+
+    [ObservableProperty]
+    private string _addItemReorderPoint = "10";
+
+    [ObservableProperty]
+    private string _addItemOverstockThreshold = "100";
+
+    [ObservableProperty]
+    private string? _addItemError;
+
+    [ObservableProperty]
+    private string? _addItemProductError;
+
+    /// <summary>
+    /// Available products for Add Item modal.
+    /// </summary>
+    public ObservableCollection<Product> AvailableProducts { get; } = [];
+
+    /// <summary>
+    /// Available locations for Add Item modal.
+    /// </summary>
+    public ObservableCollection<Location> AvailableLocationsList { get; } = [];
+
     #endregion
 
     #region Constructor
@@ -677,6 +748,174 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         CurrentPage = 1;
         FilterItems();
         CloseFilterModal();
+    }
+
+    #endregion
+
+    #region Add Item Modal
+
+    /// <summary>
+    /// Opens the add item modal.
+    /// </summary>
+    [RelayCommand]
+    private void OpenAddItemModal()
+    {
+        // Load available products and locations
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        AvailableProducts.Clear();
+        foreach (var product in companyData.Products?.Where(p => p.TrackInventory) ?? [])
+        {
+            AvailableProducts.Add(product);
+        }
+
+        AvailableLocationsList.Clear();
+        foreach (var location in companyData.Locations ?? [])
+        {
+            AvailableLocationsList.Add(location);
+        }
+
+        // Set defaults
+        SelectedProduct = AvailableProducts.FirstOrDefault();
+        SelectedLocation = AvailableLocationsList.FirstOrDefault();
+        AddItemSku = string.Empty;
+        AddItemQuantity = "0";
+        AddItemReorderPoint = "10";
+        AddItemOverstockThreshold = "100";
+        AddItemError = null;
+        AddItemProductError = null;
+
+        IsAddItemModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the add item modal.
+    /// </summary>
+    [RelayCommand]
+    private void CloseAddItemModal()
+    {
+        IsAddItemModalOpen = false;
+        ClearAddItemFields();
+    }
+
+    /// <summary>
+    /// Saves a new inventory item.
+    /// </summary>
+    [RelayCommand]
+    private void SaveNewItem()
+    {
+        AddItemError = null;
+        AddItemProductError = null;
+
+        // Validate
+        if (SelectedProduct == null)
+        {
+            AddItemProductError = "Please select a product.";
+            return;
+        }
+
+        if (SelectedLocation == null)
+        {
+            AddItemError = "Please select a location.";
+            return;
+        }
+
+        if (!int.TryParse(AddItemQuantity, out var quantity) || quantity < 0)
+        {
+            AddItemError = "Please enter a valid quantity.";
+            return;
+        }
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        // Check if item already exists for this product/location
+        var existingItem = companyData.Inventory?.FirstOrDefault(i =>
+            i.ProductId == SelectedProduct.Id && i.LocationId == SelectedLocation.Id);
+
+        if (existingItem != null)
+        {
+            AddItemError = "An inventory item already exists for this product and location.";
+            return;
+        }
+
+        // Generate new ID
+        companyData.IdCounters.InventoryItem++;
+        var newId = $"INV-ITM-{companyData.IdCounters.InventoryItem:D5}";
+
+        // Parse thresholds
+        int.TryParse(AddItemReorderPoint, out var reorderPoint);
+        int.TryParse(AddItemOverstockThreshold, out var overstockThreshold);
+
+        var newItem = new InventoryItem
+        {
+            Id = newId,
+            ProductId = SelectedProduct.Id,
+            Sku = string.IsNullOrWhiteSpace(AddItemSku) ? SelectedProduct.Sku : AddItemSku.Trim(),
+            LocationId = SelectedLocation.Id,
+            InStock = quantity,
+            Reserved = 0,
+            ReorderPoint = reorderPoint,
+            OverstockThreshold = overstockThreshold,
+            UnitCost = SelectedProduct.CostPrice,
+            LastUpdated = DateTime.UtcNow
+        };
+        newItem.Status = newItem.CalculateStatus();
+
+        companyData.Inventory?.Add(newItem);
+        companyData.MarkAsModified();
+
+        // Record undo action
+        var itemToUndo = newItem;
+        App.UndoRedoManager?.RecordAction(new DelegateAction(
+            $"Add inventory item for '{SelectedProduct.Name}'",
+            () =>
+            {
+                companyData.Inventory?.Remove(itemToUndo);
+                companyData.MarkAsModified();
+                LoadItems();
+            },
+            () =>
+            {
+                companyData.Inventory?.Add(itemToUndo);
+                companyData.MarkAsModified();
+                LoadItems();
+            }));
+
+        // Reload and close
+        LoadItems();
+        CloseAddItemModal();
+    }
+
+    private void ClearAddItemFields()
+    {
+        SelectedProduct = null;
+        SelectedLocation = null;
+        AddItemSku = string.Empty;
+        AddItemQuantity = string.Empty;
+        AddItemReorderPoint = "10";
+        AddItemOverstockThreshold = "100";
+        AddItemError = null;
+        AddItemProductError = null;
+    }
+
+    #endregion
+
+    #region Bulk Adjust Modal
+
+    /// <summary>
+    /// Opens a bulk adjust stock modal (placeholder - uses first selected item for now).
+    /// </summary>
+    [RelayCommand]
+    private void OpenBulkAdjustModal()
+    {
+        // For now, just show a message or open adjust for first item
+        var firstItem = DisplayItems.FirstOrDefault();
+        if (firstItem != null)
+        {
+            OpenAdjustStockModal(firstItem);
+        }
     }
 
     #endregion
