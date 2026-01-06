@@ -46,6 +46,22 @@ public class ChartLoaderService
         return new SolidColorPaint(textColor) { FontFamily = "Segoe UI" };
     }
 
+    // Maximum length for legend labels to prevent overflow
+    private const int MaxLegendLabelLength = 18;
+
+    /// <summary>
+    /// Truncates a legend label to prevent pie chart legend overflow.
+    /// </summary>
+    private static string TruncateLegendLabel(string? label)
+    {
+        if (string.IsNullOrEmpty(label))
+            return "Unknown";
+
+        return label.Length > MaxLegendLabelLength
+            ? label[..(MaxLegendLabelLength - 1)] + "…"
+            : label;
+    }
+
     /// <summary>
     /// Creates a chart title visual element with consistent styling.
     /// </summary>
@@ -621,7 +637,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [point.Value],
-                Name = point.Label,
+                Name = TruncateLegendLabel(point.Label),
                 Fill = new SolidColorPaint(color),
                 DataLabelsSize = LegendTextSize,
                 DataLabelsPaint = new SolidColorPaint(_textColor),
@@ -988,7 +1004,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1042,7 +1058,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1292,7 +1308,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1345,7 +1361,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1418,7 +1434,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1493,7 +1509,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1543,7 +1559,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1729,7 +1745,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1780,7 +1796,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
@@ -1877,7 +1893,7 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [item.Value],
-                Name = item.Label,
+                Name = TruncateLegendLabel(item.Label),
                 Fill = new SolidColorPaint(GetColorForIndex(i)),
                 Pushout = 0
             });
