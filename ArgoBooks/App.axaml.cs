@@ -1,3 +1,4 @@
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
@@ -5,6 +6,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
@@ -382,6 +384,9 @@ public partial class App : Application
     {
         try
         {
+            // Register file type associations on Windows
+            RegisterFileTypeAssociationsAsync();
+
             // Load global settings
             if (SettingsService != null)
             {
@@ -409,6 +414,98 @@ public partial class App : Application
         {
             // Log error but don't crash the app
             System.Diagnostics.Debug.WriteLine($"Error during async initialization: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Registers file type associations for .argo files on Windows.
+    /// Extracts the embedded icon to disk and associates it with the file extension.
+    /// </summary>
+    private static void RegisterFileTypeAssociationsAsync()
+    {
+        try
+        {
+            // Only register on Windows
+            if (!OperatingSystem.IsWindows())
+                return;
+
+            var platformService = PlatformServiceFactory.GetPlatformService();
+
+            // Extract the icon from embedded resources to a file
+            var iconPath = ExtractIconToFile();
+            if (string.IsNullOrEmpty(iconPath))
+                return;
+
+            // Register file type associations
+            platformService.RegisterFileTypeAssociations(iconPath);
+        }
+        catch (Exception ex)
+        {
+            // Log but don't crash - file association is not critical
+            System.Diagnostics.Debug.WriteLine($"Failed to register file type associations: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Extracts the embedded icon resource to a file in LocalAppData.
+    /// </summary>
+    /// <returns>Path to the extracted icon file, or null if extraction failed.</returns>
+    private static string? ExtractIconToFile()
+    {
+        try
+        {
+            // Destination path in LocalAppData
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var iconDirectory = Path.Combine(localAppData, "ArgoBooks");
+            var iconPath = Path.Combine(iconDirectory, "argo-logo.ico");
+
+            // Ensure directory exists
+            Directory.CreateDirectory(iconDirectory);
+
+            // Try Avalonia's asset loader first (for AvaloniaResource items)
+            try
+            {
+                var uri = new Uri("avares://ArgoBooks/Assets/argo-logo.ico");
+                using var avaloniaStream = Avalonia.Platform.AssetLoader.Open(uri);
+                using var fileStream = new FileStream(iconPath, FileMode.Create, FileAccess.Write);
+                avaloniaStream.CopyTo(fileStream);
+                return iconPath;
+            }
+            catch
+            {
+                // Avalonia asset loader failed, try other methods
+            }
+
+            // Try manifest resource stream
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "ArgoBooks.Assets.argo-logo.ico";
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream != null)
+            {
+                using var fileStream = new FileStream(iconPath, FileMode.Create, FileAccess.Write);
+                stream.CopyTo(fileStream);
+                return iconPath;
+            }
+
+            // Fall back to copying from the executable directory if available
+            var exeDir = Path.GetDirectoryName(Environment.ProcessPath);
+            if (!string.IsNullOrEmpty(exeDir))
+            {
+                var sourceIcon = Path.Combine(exeDir, "Assets", "argo-logo.ico");
+                if (File.Exists(sourceIcon))
+                {
+                    File.Copy(sourceIcon, iconPath, overwrite: true);
+                    return iconPath;
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine("Could not find icon resource");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to extract icon: {ex.Message}");
+            return null;
         }
     }
 

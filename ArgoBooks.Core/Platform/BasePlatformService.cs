@@ -87,6 +87,13 @@ public abstract class BasePlatformService : IPlatformService
         return Environment.MachineName;
     }
 
+    /// <inheritdoc />
+    public virtual void RegisterFileTypeAssociations(string iconPath)
+    {
+        // Default implementation does nothing
+        // Platform-specific implementations (Windows) should override this
+    }
+
     /// <summary>
     /// Gets the application name used in paths.
     /// </summary>

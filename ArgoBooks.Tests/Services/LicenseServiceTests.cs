@@ -381,6 +381,11 @@ public class LicenseServiceTests
         /// Returns a stable mock machine ID for testing.
         /// </summary>
         public string GetMachineId() => "MOCK-MACHINE-ID-12345";
+
+        /// <summary>
+        /// Mock implementation that does nothing.
+        /// </summary>
+        public void RegisterFileTypeAssociations(string iconPath) { }
     }
 
     #endregion
