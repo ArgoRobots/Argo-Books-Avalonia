@@ -33,10 +33,6 @@
                                    Value="{Binding ActiveCustomers}"
                                    Icon="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                    IconColor="Success" />
-                <controls:StatCard Label="Overdue Payments"
-                                   Value="{Binding OverduePayments}"
-                                   Icon="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
-                                   IconColor="Warning" />
                 <controls:StatCard Label="Banned Customers"
                                    Value="{Binding BannedCustomers}"
                                    Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"
@@ -267,78 +263,6 @@
                                                                    HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                 </Panel>
 
-                                <!-- Payment Status Column Header -->
-                                <Panel Width="{Binding ColumnWidths.PaymentStatusColumnWidth}">
-                                    <Button Classes="column-header" Margin="8,12"
-                                            Command="{Binding SortByCommand}" CommandParameter="PaymentStatus">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Payment" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <Panel Width="12" Height="12">
-                                                <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}">
-                                                    <PathIcon.IsVisible>
-                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                      ConverterParameter="PaymentStatus:Ascending">
-                                                            <Binding Path="SortColumn" />
-                                                            <Binding Path="SortDirection" />
-                                                        </MultiBinding>
-                                                    </PathIcon.IsVisible>
-                                                </PathIcon>
-                                                <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}">
-                                                    <PathIcon.IsVisible>
-                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                      ConverterParameter="PaymentStatus:Descending">
-                                                            <Binding Path="SortColumn" />
-                                                            <Binding Path="SortDirection" />
-                                                        </MultiBinding>
-                                                    </PathIcon.IsVisible>
-                                                </PathIcon>
-                                            </Panel>
-                                        </StackPanel>
-                                    </Button>
-                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    <controls:ColumnResizeGripper ColumnName="PaymentStatus" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                </Panel>
-
-                                <!-- Outstanding Column Header -->
-                                <Panel Width="{Binding ColumnWidths.OutstandingColumnWidth}">
-                                    <Button Classes="column-header" Margin="8,12"
-                                            Command="{Binding SortByCommand}" CommandParameter="Outstanding">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Outstanding" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <Panel Width="12" Height="12">
-                                                <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}">
-                                                    <PathIcon.IsVisible>
-                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                      ConverterParameter="Outstanding:Ascending">
-                                                            <Binding Path="SortColumn" />
-                                                            <Binding Path="SortDirection" />
-                                                        </MultiBinding>
-                                                    </PathIcon.IsVisible>
-                                                </PathIcon>
-                                                <PathIcon Data="M7 10l5 5 5-5z" Width="12" Height="12"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}">
-                                                    <PathIcon.IsVisible>
-                                                        <MultiBinding Converter="{StaticResource SortIndicatorConverter}"
-                                                                      ConverterParameter="Outstanding:Descending">
-                                                            <Binding Path="SortColumn" />
-                                                            <Binding Path="SortDirection" />
-                                                        </MultiBinding>
-                                                    </PathIcon.IsVisible>
-                                                </PathIcon>
-                                            </Panel>
-                                        </StackPanel>
-                                    </Button>
-                                    <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                    <controls:ColumnResizeGripper ColumnName="Outstanding" ColumnWidths="{Binding ColumnWidths}"
-                                                                   HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                </Panel>
-
                                 <!-- Last Rental Column Header -->
                                 <Panel Width="{Binding ColumnWidths.LastRentalColumnWidth}">
                                     <Button Classes="column-header" Margin="8,12"
@@ -456,33 +380,6 @@
                                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    VerticalAlignment="Center"
                                                                    TextTrimming="CharacterEllipsis"
-                                                                   Margin="8,0" />
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                    </Panel>
-
-                                                    <!-- Payment Status Badge -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.PaymentStatusColumnWidth}">
-                                                        <Border VerticalAlignment="Center"
-                                                                HorizontalAlignment="Left"
-                                                                Padding="8,4"
-                                                                CornerRadius="4"
-                                                                Margin="8,0"
-                                                                Background="{Binding PaymentStatus, Converter={x:Static local:StringConverters.ToPaymentStatusBackground}}">
-                                                            <TextBlock Text="{Binding PaymentStatus}"
-                                                                       FontSize="12"
-                                                                       FontWeight="Medium"
-                                                                       Foreground="{Binding PaymentStatus, Converter={x:Static local:StringConverters.ToPaymentStatusForeground}}" />
-                                                        </Border>
-                                                        <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
-                                                    </Panel>
-
-                                                    <!-- Outstanding Amount -->
-                                                    <Panel Width="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).ColumnWidths.OutstandingColumnWidth}">
-                                                        <TextBlock Text="{Binding OutstandingFormatted}"
-                                                                   FontSize="14"
-                                                                   FontWeight="Medium"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   VerticalAlignment="Center"
                                                                    Margin="8,0" />
                                                         <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                                     </Panel>

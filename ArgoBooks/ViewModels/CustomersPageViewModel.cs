@@ -23,9 +23,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     private int _activeCustomers;
 
     [ObservableProperty]
-    private int _overduePayments;
-
-    [ObservableProperty]
     private int _bannedCustomers;
 
     #endregion
@@ -51,16 +48,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     }
 
     [ObservableProperty]
-    private string _filterPaymentStatus = "All";
-
-    [ObservableProperty]
     private string _filterCustomerStatus = "All";
-
-    [ObservableProperty]
-    private string? _filterOutstandingMin;
-
-    [ObservableProperty]
-    private string? _filterOutstandingMax;
 
     [ObservableProperty]
     private DateTime? _filterLastRentalFrom;
@@ -81,11 +69,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     /// Customers for display in the table.
     /// </summary>
     public ObservableCollection<CustomerDisplayItem> Customers { get; } = [];
-
-    /// <summary>
-    /// Payment status options for filter.
-    /// </summary>
-    public ObservableCollection<string> PaymentStatusOptions { get; } = ["All", "Current", "Overdue", "Delinquent"];
 
     /// <summary>
     /// Customer status options for filter.
@@ -312,10 +295,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         var modals = App.CustomerModalsViewModel;
         if (modals != null)
         {
-            FilterPaymentStatus = modals.FilterPaymentStatus;
             FilterCustomerStatus = modals.FilterCustomerStatus;
-            FilterOutstandingMin = modals.FilterOutstandingMin;
-            FilterOutstandingMax = modals.FilterOutstandingMax;
             FilterLastRentalFrom = modals.FilterLastRentalFrom;
             FilterLastRentalTo = modals.FilterLastRentalTo;
         }
@@ -328,10 +308,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void OnFiltersCleared(object? sender, EventArgs e)
     {
-        FilterPaymentStatus = "All";
         FilterCustomerStatus = "All";
-        FilterOutstandingMin = null;
-        FilterOutstandingMax = null;
         FilterLastRentalFrom = null;
         FilterLastRentalTo = null;
         SearchQuery = null;
@@ -367,11 +344,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     {
         TotalCustomers = _allCustomers.Count;
         ActiveCustomers = _allCustomers.Count(c => c.Status == EntityStatus.Active);
-
-        // Count customers with overdue payments (those with outstanding balance and overdue status)
-        // In a real scenario, this would be based on invoice/rental status
-        OverduePayments = _allCustomers.Count(c => c is { TotalPurchases: > 0, Status: EntityStatus.Active });
-
         BannedCustomers = _allCustomers.Count(c => c.Status == EntityStatus.Archived);
     }
 
@@ -411,20 +383,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply payment status filter
-        if (FilterPaymentStatus != "All")
-        {
-            // In a real scenario, this would be based on actual payment data
-            // For now, we'll simulate based on total purchases
-            filtered = FilterPaymentStatus switch
-            {
-                "Current" => filtered.Where(c => c.TotalPurchases == 0).ToList(),
-                "Overdue" => filtered.Where(c => c.TotalPurchases is > 0 and < 500).ToList(),
-                "Delinquent" => filtered.Where(c => c.TotalPurchases >= 500).ToList(),
-                _ => filtered
-            };
-        }
-
         // Apply customer status filter
         if (FilterCustomerStatus != "All")
         {
@@ -436,16 +394,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 _ => EntityStatus.Active
             };
             filtered = filtered.Where(c => c.Status == status).ToList();
-        }
-
-        // Apply outstanding amount filter
-        if (decimal.TryParse(FilterOutstandingMin, out var minAmount))
-        {
-            filtered = filtered.Where(c => c.TotalPurchases >= minAmount).ToList();
-        }
-        if (decimal.TryParse(FilterOutstandingMax, out var maxAmount))
-        {
-            filtered = filtered.Where(c => c.TotalPurchases <= maxAmount).ToList();
         }
 
         // Apply last rental date filter
@@ -461,14 +409,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         // Create display items
         var displayItems = filtered.Select(customer =>
         {
-            // Determine payment status based on total purchases
-            var paymentStatus = customer.TotalPurchases switch
-            {
-                0 => "Current",
-                < 500 => "Overdue",
-                _ => "Delinquent"
-            };
-
             // Get address as string
             var addressParts = new List<string>();
             if (!string.IsNullOrWhiteSpace(customer.Address.Street))
@@ -486,8 +426,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                 Email = string.IsNullOrWhiteSpace(customer.Email) ? "-" : customer.Email,
                 Phone = string.IsNullOrWhiteSpace(customer.Phone) ? "-" : customer.Phone,
                 Address = addressString,
-                PaymentStatus = paymentStatus,
-                Outstanding = customer.TotalPurchases,
                 LastRental = customer.LastTransactionDate,
                 Status = customer.Status
             };
@@ -505,8 +443,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
                     ["Email"] = c => c.Email,
                     ["Phone"] = c => c.Phone,
                     ["Address"] = c => c.Address,
-                    ["PaymentStatus"] = c => c.PaymentStatus,
-                    ["Outstanding"] = c => c.Outstanding,
                     ["LastRental"] = c => c.LastRental
                 },
                 c => c.Name);
@@ -860,10 +796,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void ClearFilters()
     {
-        FilterPaymentStatus = "All";
         FilterCustomerStatus = "All";
-        FilterOutstandingMin = null;
-        FilterOutstandingMax = null;
         FilterLastRentalFrom = null;
         FilterLastRentalTo = null;
         SearchQuery = null;
@@ -1040,12 +973,6 @@ public partial class CustomerDisplayItem : ObservableObject
     private string _address = string.Empty;
 
     [ObservableProperty]
-    private string _paymentStatus = "Current";
-
-    [ObservableProperty]
-    private decimal _outstanding;
-
-    [ObservableProperty]
     private DateTime? _lastRental;
 
     [ObservableProperty]
@@ -1068,11 +995,6 @@ public partial class CustomerDisplayItem : ObservableObject
             return "?";
         }
     }
-
-    /// <summary>
-    /// Gets the formatted outstanding amount.
-    /// </summary>
-    public string OutstandingFormatted => Outstanding == 0 ? "$0.00" : $"${Outstanding:N2}";
 
     /// <summary>
     /// Gets the formatted last rental date.
