@@ -97,6 +97,11 @@ public partial class App : Application
     public static RevenueModalsViewModel? RevenueModalsViewModel => _appShellViewModel?.RevenueModalsViewModel;
 
     /// <summary>
+    /// Gets the stock levels modals view model for shared access.
+    /// </summary>
+    public static StockLevelsModalsViewModel? StockLevelsModalsViewModel => _appShellViewModel?.StockLevelsModalsViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>

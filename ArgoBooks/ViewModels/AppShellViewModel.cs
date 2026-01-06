@@ -166,6 +166,11 @@ public partial class AppShellViewModel : ViewModelBase
     public RevenueModalsViewModel RevenueModalsViewModel { get; }
 
     /// <summary>
+    /// Gets the stock levels modals view model.
+    /// </summary>
+    public StockLevelsModalsViewModel StockLevelsModalsViewModel { get; }
+
+    /// <summary>
     /// Gets the unsaved changes dialog view model.
     /// </summary>
     public UnsavedChangesDialogViewModel UnsavedChangesDialogViewModel { get; }
@@ -294,6 +299,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create revenue modals
         RevenueModalsViewModel = new RevenueModalsViewModel();
+
+        // Create stock levels modals
+        StockLevelsModalsViewModel = new StockLevelsModalsViewModel();
 
         // Create unsaved changes dialog
         UnsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();

@@ -1,9 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
-using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -145,105 +143,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     #region Modal State
 
     [ObservableProperty]
-    private bool _isAdjustStockModalOpen;
-
-    [ObservableProperty]
     private bool _isFilterModalOpen;
-
-    #endregion
-
-    #region Adjust Stock Modal Fields
-
-    [ObservableProperty]
-    private StockLevelDisplayItem? _selectedItem;
-
-    [ObservableProperty]
-    private string _adjustmentQuantity = string.Empty;
-
-    [ObservableProperty]
-    private string _adjustmentType = "Add";
-
-    [ObservableProperty]
-    private string _adjustmentReason = string.Empty;
-
-    [ObservableProperty]
-    private string? _adjustmentError;
-
-    /// <summary>
-    /// Adjustment type options for dropdown.
-    /// </summary>
-    public ObservableCollection<string> AdjustmentTypes { get; } = ["Add", "Remove", "Set"];
-
-    /// <summary>
-    /// Calculated new stock level based on adjustment type and quantity.
-    /// </summary>
-    public string CalculatedNewStock
-    {
-        get
-        {
-            if (SelectedItem == null || !int.TryParse(AdjustmentQuantity, out var qty))
-                return SelectedItem?.InStock.ToString() ?? "0";
-
-            return AdjustmentType switch
-            {
-                "Add" => (SelectedItem.InStock + qty).ToString(),
-                "Remove" => Math.Max(0, SelectedItem.InStock - qty).ToString(),
-                "Set" => qty.ToString(),
-                _ => SelectedItem.InStock.ToString()
-            };
-        }
-    }
-
-    partial void OnAdjustmentQuantityChanged(string value)
-    {
-        OnPropertyChanged(nameof(CalculatedNewStock));
-    }
-
-    partial void OnAdjustmentTypeChanged(string value)
-    {
-        OnPropertyChanged(nameof(CalculatedNewStock));
-    }
-
-    #endregion
-
-    #region Add Item Modal State
-
-    [ObservableProperty]
-    private bool _isAddItemModalOpen;
-
-    [ObservableProperty]
-    private Product? _selectedProduct;
-
-    [ObservableProperty]
-    private Location? _selectedLocation;
-
-    [ObservableProperty]
-    private string _addItemSku = string.Empty;
-
-    [ObservableProperty]
-    private string _addItemQuantity = string.Empty;
-
-    [ObservableProperty]
-    private string _addItemReorderPoint = "10";
-
-    [ObservableProperty]
-    private string _addItemOverstockThreshold = "100";
-
-    [ObservableProperty]
-    private string? _addItemError;
-
-    [ObservableProperty]
-    private string? _addItemProductError;
-
-    /// <summary>
-    /// Available products for Add Item modal.
-    /// </summary>
-    public ObservableCollection<Product> AvailableProducts { get; } = [];
-
-    /// <summary>
-    /// Available locations for Add Item modal.
-    /// </summary>
-    public ObservableCollection<Location> AvailableLocationsList { get; } = [];
 
     #endregion
 
@@ -261,6 +161,20 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         {
             App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         }
+
+        // Subscribe to modal events to refresh when items are saved
+        if (App.StockLevelsModalsViewModel != null)
+        {
+            App.StockLevelsModalsViewModel.ItemSaved += OnModalItemSaved;
+        }
+    }
+
+    /// <summary>
+    /// Handles item saved events from the modals.
+    /// </summary>
+    private void OnModalItemSaved(object? sender, EventArgs e)
+    {
+        LoadItems();
     }
 
     /// <summary>
@@ -583,123 +497,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     private void OpenAdjustStockModal(StockLevelDisplayItem? item)
     {
         if (item == null) return;
-
-        SelectedItem = item;
-        AdjustmentQuantity = string.Empty;
-        AdjustmentType = "Add";
-        AdjustmentReason = string.Empty;
-        AdjustmentError = null;
-        IsAdjustStockModalOpen = true;
-    }
-
-    /// <summary>
-    /// Closes the adjust stock modal.
-    /// </summary>
-    [RelayCommand]
-    private void CloseAdjustStockModal()
-    {
-        IsAdjustStockModalOpen = false;
-        SelectedItem = null;
-        ClearAdjustmentFields();
-    }
-
-    /// <summary>
-    /// Saves the stock adjustment.
-    /// </summary>
-    [RelayCommand]
-    private void SaveAdjustment()
-    {
-        if (SelectedItem == null) return;
-
-        AdjustmentError = null;
-
-        // Validate quantity
-        if (!int.TryParse(AdjustmentQuantity, out var quantity) || quantity < 0)
-        {
-            AdjustmentError = "Please enter a valid quantity.";
-            return;
-        }
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        var inventoryItem = companyData.Inventory?.FirstOrDefault(i => i.Id == SelectedItem.Id);
-        if (inventoryItem == null) return;
-
-        // Store old values for undo
-        var oldInStock = inventoryItem.InStock;
-        var oldStatus = inventoryItem.Status;
-
-        // Calculate new stock
-        var newStock = AdjustmentType switch
-        {
-            "Add" => inventoryItem.InStock + quantity,
-            "Remove" => Math.Max(0, inventoryItem.InStock - quantity),
-            "Set" => quantity,
-            _ => inventoryItem.InStock
-        };
-
-        // Apply the change
-        inventoryItem.InStock = newStock;
-        inventoryItem.Status = inventoryItem.CalculateStatus();
-        inventoryItem.LastUpdated = DateTime.UtcNow;
-
-        // Create stock adjustment record
-        companyData.IdCounters.StockAdjustment++;
-        var adjustmentRecord = new StockAdjustment
-        {
-            Id = $"ADJ-{companyData.IdCounters.StockAdjustment:D5}",
-            InventoryItemId = inventoryItem.Id,
-            AdjustmentType = AdjustmentType switch
-            {
-                "Add" => Core.Enums.AdjustmentType.Add,
-                "Remove" => Core.Enums.AdjustmentType.Remove,
-                "Set" => Core.Enums.AdjustmentType.Set,
-                _ => Core.Enums.AdjustmentType.Add
-            },
-            Quantity = quantity,
-            PreviousStock = oldInStock,
-            NewStock = newStock,
-            Reason = AdjustmentReason,
-            Timestamp = DateTime.UtcNow
-        };
-
-        companyData.StockAdjustments.Add(adjustmentRecord);
-        companyData.MarkAsModified();
-
-        // Record undo action
-        var itemToUndo = inventoryItem;
-        var adjustmentToUndo = adjustmentRecord;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
-            $"Adjust stock for '{SelectedItem.ProductName}'",
-            () =>
-            {
-                itemToUndo.InStock = oldInStock;
-                itemToUndo.Status = oldStatus;
-                companyData.StockAdjustments?.Remove(adjustmentToUndo);
-                companyData.MarkAsModified();
-                LoadItems();
-            },
-            () =>
-            {
-                itemToUndo.InStock = newStock;
-                itemToUndo.Status = itemToUndo.CalculateStatus();
-                companyData.StockAdjustments?.Add(adjustmentToUndo);
-                companyData.MarkAsModified();
-                LoadItems();
-            }));
-
-        // Reload and close
-        LoadItems();
-        CloseAdjustStockModal();
-    }
-
-    private void ClearAdjustmentFields()
-    {
-        AdjustmentQuantity = string.Empty;
-        AdjustmentType = "Add";
-        AdjustmentReason = string.Empty;
-        AdjustmentError = null;
+        App.StockLevelsModalsViewModel?.OpenAdjustStockModal(item.Id, item.ProductName, item.InStock);
     }
 
     #endregion
@@ -760,144 +558,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void OpenAddItemModal()
     {
-        // Load available products and locations
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        AvailableProducts.Clear();
-        foreach (var product in companyData.Products?.Where(p => p.TrackInventory) ?? [])
-        {
-            AvailableProducts.Add(product);
-        }
-
-        AvailableLocationsList.Clear();
-        foreach (var location in companyData.Locations ?? [])
-        {
-            AvailableLocationsList.Add(location);
-        }
-
-        // Set defaults
-        SelectedProduct = AvailableProducts.FirstOrDefault();
-        SelectedLocation = AvailableLocationsList.FirstOrDefault();
-        AddItemSku = string.Empty;
-        AddItemQuantity = "0";
-        AddItemReorderPoint = "10";
-        AddItemOverstockThreshold = "100";
-        AddItemError = null;
-        AddItemProductError = null;
-
-        IsAddItemModalOpen = true;
-    }
-
-    /// <summary>
-    /// Closes the add item modal.
-    /// </summary>
-    [RelayCommand]
-    private void CloseAddItemModal()
-    {
-        IsAddItemModalOpen = false;
-        ClearAddItemFields();
-    }
-
-    /// <summary>
-    /// Saves a new inventory item.
-    /// </summary>
-    [RelayCommand]
-    private void SaveNewItem()
-    {
-        AddItemError = null;
-        AddItemProductError = null;
-
-        // Validate
-        if (SelectedProduct == null)
-        {
-            AddItemProductError = "Please select a product.";
-            return;
-        }
-
-        if (SelectedLocation == null)
-        {
-            AddItemError = "Please select a location.";
-            return;
-        }
-
-        if (!int.TryParse(AddItemQuantity, out var quantity) || quantity < 0)
-        {
-            AddItemError = "Please enter a valid quantity.";
-            return;
-        }
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        // Check if item already exists for this product/location
-        var existingItem = companyData.Inventory?.FirstOrDefault(i =>
-            i.ProductId == SelectedProduct.Id && i.LocationId == SelectedLocation.Id);
-
-        if (existingItem != null)
-        {
-            AddItemError = "An inventory item already exists for this product and location.";
-            return;
-        }
-
-        // Generate new ID
-        companyData.IdCounters.InventoryItem++;
-        var newId = $"INV-ITM-{companyData.IdCounters.InventoryItem:D5}";
-
-        // Parse thresholds
-        int.TryParse(AddItemReorderPoint, out var reorderPoint);
-        int.TryParse(AddItemOverstockThreshold, out var overstockThreshold);
-
-        var newItem = new InventoryItem
-        {
-            Id = newId,
-            ProductId = SelectedProduct.Id,
-            Sku = string.IsNullOrWhiteSpace(AddItemSku) ? SelectedProduct.Sku : AddItemSku.Trim(),
-            LocationId = SelectedLocation.Id,
-            InStock = quantity,
-            Reserved = 0,
-            ReorderPoint = reorderPoint,
-            OverstockThreshold = overstockThreshold,
-            UnitCost = SelectedProduct.CostPrice,
-            LastUpdated = DateTime.UtcNow
-        };
-        newItem.Status = newItem.CalculateStatus();
-
-        companyData.Inventory?.Add(newItem);
-        companyData.MarkAsModified();
-
-        // Record undo action
-        var itemToUndo = newItem;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
-            $"Add inventory item for '{SelectedProduct.Name}'",
-            () =>
-            {
-                companyData.Inventory?.Remove(itemToUndo);
-                companyData.MarkAsModified();
-                LoadItems();
-            },
-            () =>
-            {
-                companyData.Inventory?.Add(itemToUndo);
-                companyData.MarkAsModified();
-                LoadItems();
-            }));
-
-        // Reload and close
-        LoadItems();
-        CloseAddItemModal();
-    }
-
-    private void ClearAddItemFields()
-    {
-        SelectedProduct = null;
-        SelectedLocation = null;
-        AddItemSku = string.Empty;
-        AddItemQuantity = string.Empty;
-        AddItemReorderPoint = "10";
-        AddItemOverstockThreshold = "100";
-        AddItemError = null;
-        AddItemProductError = null;
+        App.StockLevelsModalsViewModel?.OpenAddItemModalCommand.Execute(null);
     }
 
     #endregion
@@ -910,11 +571,11 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void OpenBulkAdjustModal()
     {
-        // For now, just show a message or open adjust for first item
+        // For now, open adjust for first item
         var firstItem = DisplayItems.FirstOrDefault();
         if (firstItem != null)
         {
-            OpenAdjustStockModal(firstItem);
+            App.StockLevelsModalsViewModel?.OpenAdjustStockModal(firstItem.Id, firstItem.ProductName, firstItem.InStock);
         }
     }
 
