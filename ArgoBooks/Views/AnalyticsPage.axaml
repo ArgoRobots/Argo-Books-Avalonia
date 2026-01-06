@@ -217,9 +217,9 @@
                                     <controls:PieChartLegend Grid.Column="1"
                                                              Items="{Binding RevenueDistributionLegend}"
                                                              MaxHeightOverride="240"
-                                                             Width="140"
-                                                             Margin="8,30,0,0"
-                                                             VerticalAlignment="Top" />
+                                                             Width="160"
+                                                             Margin="8,0,0,0"
+                                                             VerticalAlignment="Center" />
                                 </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -285,9 +285,9 @@
                                     <controls:PieChartLegend Grid.Column="1"
                                                              Items="{Binding ExpensesDistributionLegend}"
                                                              MaxHeightOverride="240"
-                                                             Width="140"
-                                                             Margin="8,30,0,0"
-                                                             VerticalAlignment="Top" />
+                                                             Width="160"
+                                                             Margin="8,0,0,0"
+                                                             VerticalAlignment="Center" />
                                 </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -328,9 +328,9 @@
                                     <controls:PieChartLegend Grid.Column="1"
                                                              Items="{Binding CountriesOfOriginLegend}"
                                                              MaxHeightOverride="240"
-                                                             Width="140"
-                                                             Margin="8,30,0,0"
-                                                             VerticalAlignment="Top" />
+                                                             Width="160"
+                                                             Margin="8,0,0,0"
+                                                             VerticalAlignment="Center" />
                                 </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -364,9 +364,9 @@
                                     <controls:PieChartLegend Grid.Column="1"
                                                              Items="{Binding CompaniesOfOriginLegend}"
                                                              MaxHeightOverride="240"
-                                                             Width="140"
-                                                             Margin="8,30,0,0"
-                                                             VerticalAlignment="Top" />
+                                                             Width="160"
+                                                             Margin="8,0,0,0"
+                                                             VerticalAlignment="Center" />
                                 </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -403,9 +403,9 @@
                                     <controls:PieChartLegend Grid.Column="1"
                                                              Items="{Binding CountriesOfDestinationLegend}"
                                                              MaxHeightOverride="240"
-                                                             Width="140"
-                                                             Margin="8,30,0,0"
-                                                             VerticalAlignment="Top" />
+                                                             Width="160"
+                                                             Margin="8,0,0,0"
+                                                             VerticalAlignment="Center" />
                                 </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -439,9 +439,9 @@
                                     <controls:PieChartLegend Grid.Column="1"
                                                              Items="{Binding CompaniesOfDestinationLegend}"
                                                              MaxHeightOverride="240"
-                                                             Width="140"
-                                                             Margin="8,30,0,0"
-                                                             VerticalAlignment="Top" />
+                                                             Width="160"
+                                                             Margin="8,0,0,0"
+                                                             VerticalAlignment="Center" />
                                 </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
@@ -594,9 +594,9 @@
                                     <controls:PieChartLegend Grid.Column="1"
                                                              Items="{Binding AccountantsTransactionsLegend}"
                                                              MaxHeightOverride="240"
-                                                             Width="140"
-                                                             Margin="8,30,0,0"
-                                                             VerticalAlignment="Top" />
+                                                             Width="160"
+                                                             Margin="8,0,0,0"
+                                                             VerticalAlignment="Center" />
                                 </Grid>
                                 <!-- No data placeholder -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"

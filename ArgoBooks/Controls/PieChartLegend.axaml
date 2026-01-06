@@ -21,15 +21,13 @@
                         </Border.Styles>
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <!-- Color indicator -->
-                            <Ellipse Grid.Column="0"
-                                     Width="10"
-                                     Height="10"
-                                     VerticalAlignment="Center"
-                                     Margin="0,0,8,0">
-                                <Ellipse.Fill>
-                                    <SolidColorBrush Color="{Binding ColorHex}" />
-                                </Ellipse.Fill>
-                            </Ellipse>
+                            <Border Grid.Column="0"
+                                    Width="10"
+                                    Height="10"
+                                    CornerRadius="5"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,8,0"
+                                    Background="{Binding ColorHex}" />
 
                             <!-- Label -->
                             <TextBlock Grid.Column="1"

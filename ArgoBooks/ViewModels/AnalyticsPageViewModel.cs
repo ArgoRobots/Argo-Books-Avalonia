@@ -1099,6 +1099,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         {
             LoadAllCharts();
         };
+
+        // Subscribe to max pie slices changes to refresh pie charts
+        ChartSettingsService.MaxPieSlicesChanged += (_, _) =>
+        {
+            LoadAllCharts();
+        };
     }
 
     private void OnChartSettingsChartTypeChanged(object? sender, string chartType)
