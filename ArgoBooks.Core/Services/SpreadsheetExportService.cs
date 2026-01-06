@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
 using ClosedXML.Excel;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
