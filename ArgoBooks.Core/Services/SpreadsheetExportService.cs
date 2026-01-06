@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
 using ClosedXML.Excel;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -470,15 +471,21 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetCategoriesData(CompanyData data)
     {
-        var headers = new[] { "ID", "Name", "Type", "Parent ID", "Description", "Item Type" };
+        var headers = new[] { "ID", "Name", "Type", "Parent ID", "Description", "Item Type", "Icon" };
         var rows = data.Categories.Select(c => new object[]
         {
             c.Id,
             c.Name,
-            c.Type.ToString(),
+            c.Type switch
+            {
+                CategoryType.Sales => "Revenue",
+                CategoryType.Purchase => "Expenses",
+                _ => c.Type.ToString()
+            },
             c.ParentId ?? "",
             c.Description ?? "",
-            c.ItemType ?? ""
+            c.ItemType ?? "",
+            c.Icon ?? "📦"
         }).ToList();
         return (headers, rows);
     }

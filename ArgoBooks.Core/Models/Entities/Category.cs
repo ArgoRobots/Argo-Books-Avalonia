@@ -51,10 +51,10 @@ public class Category
     public string Color { get; set; } = "#4A90D9";
 
     /// <summary>
-    /// Icon name for UI display.
+    /// Icon emoji for UI display.
     /// </summary>
     [JsonPropertyName("icon")]
-    public string Icon { get; set; } = "box";
+    public string Icon { get; set; } = "📦";
 
     /// <summary>
     /// Default tax rate for items in this category.
