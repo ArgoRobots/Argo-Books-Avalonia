@@ -308,12 +308,17 @@ public class SpreadsheetImportService
         data.Purchases.Clear();
         foreach (var row in rows)
         {
+            // Support both "Product" (new) and "Description" (legacy) column names
+            var description = GetString(row, headers, "Product");
+            if (string.IsNullOrEmpty(description))
+                description = GetString(row, headers, "Description");
+
             var purchase = new Purchase
             {
                 Id = GetString(row, headers, "ID"),
                 Date = GetDateTime(row, headers, "Date"),
                 SupplierId = GetNullableString(row, headers, "Supplier ID"),
-                Description = GetString(row, headers, "Description"),
+                Description = description,
                 Amount = GetDecimal(row, headers, "Amount"),
                 TaxAmount = GetDecimal(row, headers, "Tax"),
                 Total = GetDecimal(row, headers, "Total"),
@@ -430,12 +435,17 @@ public class SpreadsheetImportService
         data.Sales.Clear();
         foreach (var row in rows)
         {
+            // Support both "Product" (new) and "Description" (legacy) column names
+            var description = GetString(row, headers, "Product");
+            if (string.IsNullOrEmpty(description))
+                description = GetString(row, headers, "Description");
+
             var sale = new Sale
             {
                 Id = GetString(row, headers, "ID"),
                 Date = GetDateTime(row, headers, "Date"),
                 CustomerId = GetNullableString(row, headers, "Customer ID"),
-                Description = GetString(row, headers, "Description"),
+                Description = description,
                 Amount = GetDecimal(row, headers, "Amount"),
                 TaxAmount = GetDecimal(row, headers, "Tax"),
                 Total = GetDecimal(row, headers, "Total"),
