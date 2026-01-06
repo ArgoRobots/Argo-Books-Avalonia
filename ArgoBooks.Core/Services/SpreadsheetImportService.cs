@@ -108,13 +108,6 @@ public class SpreadsheetImportService
             // Update ID counters based on imported data
             UpdateIdCounters(companyData);
 
-            // DEBUG: Dump all products after import
-            Console.WriteLine($"[DEBUG ImportFromExcel] === FINAL STATE: {companyData.Products.Count} products ===");
-            foreach (var p in companyData.Products.Where(x => x.Id.StartsWith("PRD-02") || x.Id.StartsWith("PRD-03")))
-            {
-                Console.WriteLine($"[DEBUG ImportFromExcel] Product {p.Id}: Name='{p.Name}', ItemType='{p.ItemType}'");
-            }
-
             // Mark data as modified
             companyData.MarkAsModified();
         }, cancellationToken);
@@ -1049,14 +1042,6 @@ public class SpreadsheetImportService
 
     private void ImportProducts(CompanyData data, List<string> headers, List<List<object?>> rows)
     {
-        // DEBUG: Print headers
-        Console.WriteLine($"[DEBUG ImportProducts] Headers count: {headers.Count}");
-        Console.WriteLine($"[DEBUG ImportProducts] Headers: {string.Join(", ", headers)}");
-
-        // DEBUG: Check if "Item Type" column exists
-        var itemTypeIndex = GetColumnIndex(headers, "Item Type");
-        Console.WriteLine($"[DEBUG ImportProducts] 'Item Type' column index: {itemTypeIndex}");
-
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -1072,9 +1057,6 @@ public class SpreadsheetImportService
             };
 
             var itemTypeRaw = GetString(row, headers, "Item Type");
-            // DEBUG: Print raw value
-            Console.WriteLine($"[DEBUG ImportProducts] ID={id}, Raw ItemType='{itemTypeRaw}', Length={itemTypeRaw.Length}");
-
             // Normalize item type to proper casing (case-insensitive match, trim whitespace)
             var itemType = itemTypeRaw.Trim().ToLowerInvariant() switch
             {
@@ -1083,9 +1065,6 @@ public class SpreadsheetImportService
                 "" => "Product",
                 _ => "Product"
             };
-
-            // DEBUG: Print normalized value
-            Console.WriteLine($"[DEBUG ImportProducts] ID={id}, Normalized ItemType='{itemType}'");
 
             var product = existing ?? new Product();
             product.Id = id;
@@ -1096,9 +1075,6 @@ public class SpreadsheetImportService
             product.Description = GetString(row, headers, "Description");
             product.CategoryId = GetNullableString(row, headers, "Category ID");
             product.SupplierId = GetNullableString(row, headers, "Supplier ID");
-
-            // DEBUG: Verify the value was set
-            Console.WriteLine($"[DEBUG ImportProducts] ID={id}, AFTER SET product.ItemType='{product.ItemType}', existing={existing != null}");
 
             if (existing == null)
                 data.Products.Add(product);
