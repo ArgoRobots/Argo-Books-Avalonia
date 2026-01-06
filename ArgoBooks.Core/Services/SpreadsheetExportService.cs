@@ -174,17 +174,6 @@ public class SpreadsheetExportService
 
         // Auto-fit columns
         ws.Columns().AdjustToContents();
-
-        // Cap the "Item Type" column width in Products sheet (it's typically "Product" or "Service")
-        if (ws.Name == "Products" && headers.Contains("Item Type"))
-        {
-            var itemTypeColIndex = Array.IndexOf(headers, "Item Type") + 1;
-            var itemTypeCol = ws.Column(itemTypeColIndex);
-            if (itemTypeCol.Width > 12)
-            {
-                itemTypeCol.Width = 12;
-            }
-        }
     }
 
     private void AppendCsvSection(StringBuilder sb, string dataItem, CompanyData data, DateTime? startDate, DateTime? endDate)
