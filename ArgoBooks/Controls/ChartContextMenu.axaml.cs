@@ -2,6 +2,8 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
+using Avalonia.Threading;
 
 namespace ArgoBooks.Controls;
 
@@ -141,6 +143,36 @@ public partial class ChartContextMenu : UserControl
     public ChartContextMenu()
     {
         InitializeComponent();
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == IsOpenProperty)
+        {
+            var animationBorder = this.FindControl<Border>("AnimationBorder");
+            if (animationBorder == null) return;
+
+            if (IsOpen)
+            {
+                // Animate in
+                Dispatcher.UIThread.Post(() =>
+                {
+                    animationBorder.Opacity = 1;
+                    animationBorder.RenderTransform = new TranslateTransform(0, 0);
+                }, DispatcherPriority.Render);
+            }
+            else
+            {
+                // Reset for next open
+                Dispatcher.UIThread.Post(() =>
+                {
+                    animationBorder.Opacity = 0;
+                    animationBorder.RenderTransform = new TranslateTransform(0, -8);
+                }, DispatcherPriority.Background);
+            }
+        }
     }
 
     /// <summary>

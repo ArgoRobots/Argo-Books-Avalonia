@@ -892,13 +892,26 @@
 
                             <!-- Context Menu Panel -->
                             <Border Canvas.Left="{Binding ContextMenuX}"
-                                    Canvas.Top="{Binding ContextMenuY}"
-                                    Background="{DynamicResource SurfaceBrush}"
-                                    BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="6"
-                                    Padding="4"
-                                    BoxShadow="0 4 12 0 #40000000">
+                                    Canvas.Top="{Binding ContextMenuY}">
+                                <!-- Animation wrapper -->
+                                <Border x:Name="ContextMenuAnimationBorder"
+                                        Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        Padding="4"
+                                        BoxShadow="0 4 12 0 #40000000"
+                                        Opacity="0"
+                                        RenderTransformOrigin="0,0">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform Y="-8" />
+                                    </Border.RenderTransform>
+                                    <Border.Transitions>
+                                        <Transitions>
+                                            <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                                        </Transitions>
+                                    </Border.Transitions>
                                 <Border.Styles>
                                     <Style Selector="Button.context-menu-item">
                                         <Setter Property="Background" Value="Transparent" />
@@ -963,6 +976,7 @@
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
+                                </Border>
                             </Border>
                         </Canvas>
                     </Grid>

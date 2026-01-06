@@ -17,20 +17,34 @@
                 PointerPressed="OnOverlayPointerPressed" />
 
         <Border x:Name="MenuBorder"
-            Background="{DynamicResource SurfaceBrush}"
-            BorderBrush="{DynamicResource BorderBrush}"
-            BorderThickness="1"
-            CornerRadius="6"
-            Padding="6"
             IsVisible="{Binding IsOpen, RelativeSource={RelativeSource AncestorType=controls:ChartContextMenu}}"
             HorizontalAlignment="Left"
-            VerticalAlignment="Top"
-            MinWidth="200"
-            BoxShadow="0 4 12 0 #40000000">
+            VerticalAlignment="Top">
         <Border.RenderTransform>
             <TranslateTransform X="{Binding MenuX, RelativeSource={RelativeSource AncestorType=controls:ChartContextMenu}}"
                                 Y="{Binding MenuY, RelativeSource={RelativeSource AncestorType=controls:ChartContextMenu}}" />
         </Border.RenderTransform>
+
+        <!-- Inner animation border -->
+        <Border x:Name="AnimationBorder"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="6"
+                MinWidth="200"
+                BoxShadow="0 4 12 0 #40000000"
+                Opacity="0"
+                RenderTransformOrigin="0,0">
+            <Border.RenderTransform>
+                <TranslateTransform Y="-8" />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
         <Border.Styles>
             <Style Selector="Button.context-menu-item">
                 <Setter Property="Background" Value="Transparent" />
@@ -119,6 +133,7 @@
                 </Button>
             </StackPanel>
         </StackPanel>
+        </Border>
     </Border>
     </Panel>
 </UserControl>
