@@ -98,6 +98,13 @@ public interface IPlatformService
     /// </remarks>
     /// <returns>A stable machine identifier string.</returns>
     string GetMachineId();
+
+    /// <summary>
+    /// Registers file type associations for the platform.
+    /// On Windows, this sets up the .argo file extension with the app icon.
+    /// </summary>
+    /// <param name="iconPath">Path to the application icon file.</param>
+    void RegisterFileTypeAssociations(string iconPath);
 }
 
 /// <summary>
