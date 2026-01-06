@@ -264,7 +264,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     #region Add Item Commands
 
     /// <summary>
-    /// Navigates to create a new location (closes current modal and opens Locations add modal).
+    /// Navigates to Locations page and opens the create location modal.
     /// </summary>
     [RelayCommand]
     private void NavigateToCreateLocation()
@@ -272,8 +272,8 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         // Close this modal
         IsAddItemModalOpen = false;
 
-        // Open the Locations add modal
-        App.LocationsModalsViewModel?.OpenAddModal();
+        // Navigate to Locations page with openAddModal parameter
+        App.NavigationService?.NavigateTo("Locations", new Dictionary<string, object?> { { "openAddModal", true } });
     }
 
     /// <summary>

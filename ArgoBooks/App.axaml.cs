@@ -2025,7 +2025,16 @@ public partial class App : Application
             return new ProductsPage { DataContext = viewModel };
         });
         navigationService.RegisterPage("StockLevels", _ => new Views.StockLevelsPage { DataContext = new ViewModels.StockLevelsPageViewModel() });
-        navigationService.RegisterPage("Locations", _ => new Views.LocationsPage { DataContext = new ViewModels.LocationsPageViewModel() });
+        navigationService.RegisterPage("Locations", param =>
+        {
+            var viewModel = new ViewModels.LocationsPageViewModel();
+            // Check if we should open the add modal
+            if (param is Dictionary<string, object?> dict && dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
+            {
+                LocationsModalsViewModel?.OpenAddModal();
+            }
+            return new Views.LocationsPage { DataContext = viewModel };
+        });
         navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
         navigationService.RegisterPage("Categories", param =>
         {
