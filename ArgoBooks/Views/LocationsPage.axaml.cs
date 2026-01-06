@@ -11,9 +11,9 @@ public partial class LocationsPage : UserControl
 
     private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)
     {
-        if (DataContext is ViewModels.LocationsPageViewModel viewModel)
+        if (DataContext is ViewModels.LocationsPageViewModel viewModel && e.WidthChanged)
         {
-            viewModel.ColumnWidths.RecalculateColumnWidths(e.NewSize.Width - 48); // 48 = left + right padding
+            viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
         }
     }
 }
