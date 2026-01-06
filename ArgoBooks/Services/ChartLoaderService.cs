@@ -353,10 +353,11 @@ public class ChartLoaderService
     private IEnumerable<ISeries> CreateProfitDateTimeSeries(DateTime[] dates, double[] values, string name)
     {
         // For column charts, split into positive (green) and negative (red) series
-        // Column is the default when not Line, StepLine, or Area
+        // Column is the default when not Line, StepLine, Area, or Scatter
         var isColumnStyle = SelectedChartStyle != ChartStyle.Line &&
                            SelectedChartStyle != ChartStyle.StepLine &&
-                           SelectedChartStyle != ChartStyle.Area;
+                           SelectedChartStyle != ChartStyle.Area &&
+                           SelectedChartStyle != ChartStyle.Scatter;
 
         if (isColumnStyle)
         {
