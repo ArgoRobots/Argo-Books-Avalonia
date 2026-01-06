@@ -115,9 +115,10 @@
                     VerticalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
                 <StackPanel Spacing="16" HorizontalAlignment="Center">
-                    <controls:LoadingSpinner SizePreset="Large"
-                                             SpinnerBrush="{DynamicResource PrimaryBrush}"
-                                             IsSpinning="{Binding IsLoading}" />
+                    <ProgressBar IsIndeterminate="True"
+                                 Width="120"
+                                 Height="4"
+                                 Foreground="{DynamicResource PrimaryBrush}" />
                     <TextBlock Text="{Binding LoadingMessage}"
                                FontSize="{StaticResource FontSizeMd}"
                                Foreground="{DynamicResource TextSecondaryBrush}"
