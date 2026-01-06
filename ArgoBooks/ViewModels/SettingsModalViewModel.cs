@@ -354,7 +354,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
 
         // Load max pie slices from global settings
-        var globalSettings = App.SettingsService?.GetSettings();
+        var globalSettings = App.SettingsService?.GlobalSettings;
         if (globalSettings != null)
         {
             MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
@@ -462,11 +462,11 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
 
         // Save max pie slices to global settings
-        var globalSettings = App.SettingsService?.GetSettings();
+        var globalSettings = App.SettingsService?.GlobalSettings;
         if (globalSettings != null)
         {
             globalSettings.Ui.Chart.MaxPieSlices = MaxPieSlices;
-            App.SettingsService?.SaveSettings(globalSettings);
+            _ = App.SettingsService?.SaveGlobalSettingsAsync();
         }
 
         // Notify that date format changed so views can refresh

@@ -289,7 +289,7 @@ public partial class ChartSettingsService : ObservableObject
     /// </summary>
     public static int GetMaxPieSlices()
     {
-        var settings = App.SettingsService?.GetSettings();
+        var settings = App.SettingsService?.GlobalSettings;
         return settings?.Ui.Chart.MaxPieSlices ?? 6;
     }
 }
