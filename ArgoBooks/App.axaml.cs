@@ -1325,15 +1325,65 @@ public partial class App : Application
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;
 
-            // Create snapshot of current data for undo
-            var snapshot = CreateCompanyDataSnapshot(companyData);
-
-            _mainWindowViewModel?.ShowLoading("Importing data...");
+            _mainWindowViewModel?.ShowLoading("Validating import file...");
 
             try
             {
                 var importService = new Core.Services.SpreadsheetImportService();
-                await importService.ImportFromExcelAsync(filePath, companyData);
+
+                // First validate the import file
+                var validationResult = await importService.ValidateImportAsync(filePath, companyData);
+
+                _mainWindowViewModel?.HideLoading();
+
+                // Check for critical errors
+                if (validationResult.Errors.Count > 0)
+                {
+                    _appShellViewModel?.AddNotification("Import Failed",
+                        $"Import validation failed:\n{string.Join("\n", validationResult.Errors)}",
+                        NotificationType.Error);
+                    return;
+                }
+
+                // Check for missing references and ask user
+                var importOptions = new Core.Services.ImportOptions();
+
+                if (validationResult.HasMissingReferences)
+                {
+                    var missingCount = validationResult.TotalMissingReferences;
+                    var missingSummary = validationResult.GetMissingReferencesSummary();
+
+                    var dialog = ConfirmationDialog;
+                    if (dialog != null)
+                    {
+                        var result = await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        {
+                            Title = "Missing References Found",
+                            Message = $"The import file references {missingCount} item(s) that don't exist:\n\n{missingSummary}\n\nWould you like to create placeholder entries for these missing items?",
+                            PrimaryButtonText = "Create & Import",
+                            SecondaryButtonText = "Import Anyway",
+                            CancelButtonText = "Cancel"
+                        });
+
+                        if (result == ViewModels.ConfirmationResult.Cancel)
+                        {
+                            return;
+                        }
+
+                        if (result == ViewModels.ConfirmationResult.Primary)
+                        {
+                            importOptions.AutoCreateMissingReferences = true;
+                        }
+                        // If Secondary, proceed without creating missing references
+                    }
+                }
+
+                // Create snapshot of current data for undo
+                var snapshot = CreateCompanyDataSnapshot(companyData);
+
+                _mainWindowViewModel?.ShowLoading("Importing data...");
+
+                await importService.ImportFromExcelAsync(filePath, companyData, importOptions);
 
                 _mainWindowViewModel?.HideLoading();
 
@@ -1350,7 +1400,21 @@ public partial class App : Application
                 // Mark as changed - this will trigger CompanyDataChanged event
                 CompanyManager.MarkAsChanged();
 
-                _appShellViewModel?.AddNotification("Import Complete", "Data has been imported successfully. Please save to persist changes.", NotificationType.Success);
+                // Build success message with summary
+                var successMessage = "Data has been imported successfully.";
+                if (validationResult.ImportSummaries.Count > 0)
+                {
+                    var summaryLines = validationResult.ImportSummaries
+                        .Where(s => s.Value.TotalInFile > 0)
+                        .Select(s => $"{s.Key}: {s.Value.NewRecords} new, {s.Value.UpdatedRecords} updated");
+                    if (summaryLines.Any())
+                    {
+                        successMessage += $"\n\n{string.Join("\n", summaryLines)}";
+                    }
+                }
+                successMessage += "\n\nPlease save to persist changes.";
+
+                _appShellViewModel?.AddNotification("Import Complete", successMessage, NotificationType.Success);
             }
             catch (Exception ex)
             {
