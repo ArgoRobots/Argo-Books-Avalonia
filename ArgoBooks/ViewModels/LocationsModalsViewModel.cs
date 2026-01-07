@@ -185,7 +185,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.UtcNow
         };
 
-        companyData.Locations ??= new List<Location>();
+        if (companyData.Locations == null) return;
         companyData.Locations.Add(newLocation);
         companyData.MarkAsModified();
 

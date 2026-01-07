@@ -44,6 +44,9 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private string _activeTab = "All";
 
+    [ObservableProperty]
+    private int _selectedTabIndex;
+
     /// <summary>
     /// Tab options for filtering.
     /// </summary>
@@ -53,6 +56,18 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     {
         CurrentPage = 1;
         FilterAdjustments();
+    }
+
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        ActiveTab = value switch
+        {
+            0 => "All",
+            1 => "Add",
+            2 => "Remove",
+            3 => "Set",
+            _ => "All"
+        };
     }
 
     #endregion

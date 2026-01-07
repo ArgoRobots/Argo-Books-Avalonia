@@ -44,6 +44,9 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private string _activeTab = "All";
 
+    [ObservableProperty]
+    private int _selectedTabIndex;
+
     /// <summary>
     /// Tab options for filtering.
     /// </summary>
@@ -53,6 +56,19 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     {
         CurrentPage = 1;
         FilterOrders();
+    }
+
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        ActiveTab = value switch
+        {
+            0 => "All",
+            1 => "Pending",
+            2 => "Approved",
+            3 => "On Order",
+            4 => "Received",
+            _ => "All"
+        };
     }
 
     #endregion

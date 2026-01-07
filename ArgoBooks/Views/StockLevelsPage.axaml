@@ -39,138 +39,29 @@
 
         <!-- Main Content -->
         <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24">
-            <!-- Statistics Cards (Row 0) -->
-            <Grid Grid.Row="0" ColumnDefinitions="*,*,*,*,*" RowDefinitions="Auto" Margin="0,0,0,24">
-                <Grid.Styles>
-                    <Style Selector="Border.stat-card">
-                        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-                        <Setter Property="CornerRadius" Value="12" />
-                        <Setter Property="Padding" Value="20" />
-                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-                        <Setter Property="BorderThickness" Value="1" />
-                    </Style>
-                </Grid.Styles>
-
-                <!-- Total Items -->
-                <Border Grid.Column="0" Classes="stat-card" Margin="0,0,12,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#DBEAFE"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.37v6.71l6-3.38z"
-                                      Width="24" Height="24"
-                                      Foreground="#3B82F6" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding TotalItems}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Total Units"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- In Stock -->
-                <Border Grid.Column="1" Classes="stat-card" Margin="6,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#DCFCE7"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-                                      Width="24" Height="24"
-                                      Foreground="#22C55E" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding InStockCount}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="In Stock"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Low Stock -->
-                <Border Grid.Column="2" Classes="stat-card" Margin="6,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#FEF3C7"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
-                                      Width="24" Height="24"
-                                      Foreground="#F59E0B" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding LowStockCount}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Low Stock"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Out of Stock -->
-                <Border Grid.Column="3" Classes="stat-card" Margin="6,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#FEE2E2"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                                      Width="24" Height="24"
-                                      Foreground="#EF4444" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding OutOfStockCount}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Out of Stock"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- Overstock -->
-                <Border Grid.Column="4" Classes="stat-card" Margin="12,0,0,0">
-                    <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0"
-                                Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="#EDE9FE"
-                                Margin="0,0,16,0">
-                            <PathIcon Data="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"
-                                      Width="24" Height="24"
-                                      Foreground="#8B5CF6" />
-                        </Border>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding OverstockCount}"
-                                       FontSize="28"
-                                       FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Overstock"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </Grid>
+            <!-- Statistics Cards Row -->
+            <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
+                <controls:StatCard Label="Total Units"
+                                   Value="{Binding TotalItems}"
+                                   Icon="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.37v6.71l6-3.38z"
+                                   IconColor="Primary" />
+                <controls:StatCard Label="In Stock"
+                                   Value="{Binding InStockCount}"
+                                   Icon="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                   IconColor="Success" />
+                <controls:StatCard Label="Low Stock"
+                                   Value="{Binding LowStockCount}"
+                                   Icon="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+                                   IconColor="Warning" />
+                <controls:StatCard Label="Out of Stock"
+                                   Value="{Binding OutOfStockCount}"
+                                   Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                   IconColor="Danger" />
+                <controls:StatCard Label="Overstock"
+                                   Value="{Binding OverstockCount}"
+                                   Icon="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"
+                                   IconColor="Secondary" />
+            </controls:StatCardsRow>
 
             <!-- Main Content Card (Row 1) -->
             <Border Grid.Row="1"
