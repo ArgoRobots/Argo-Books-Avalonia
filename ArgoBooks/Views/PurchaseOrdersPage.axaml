@@ -118,35 +118,35 @@
                         <StackPanel Orientation="Horizontal" Spacing="0">
                             <!-- All Tab -->
                             <Button Classes="tab-button"
-                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringEqualsConverter.Instance}, ConverterParameter=All}"
+                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=All}"
                                     Command="{Binding SwitchTabCommand}"
                                     CommandParameter="All">
                                 <TextBlock Text="All" />
                             </Button>
                             <!-- Pending Tab -->
                             <Button Classes="tab-button"
-                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringEqualsConverter.Instance}, ConverterParameter=Pending}"
+                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Pending}"
                                     Command="{Binding SwitchTabCommand}"
                                     CommandParameter="Pending">
                                 <TextBlock Text="Pending" />
                             </Button>
                             <!-- Approved Tab -->
                             <Button Classes="tab-button"
-                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringEqualsConverter.Instance}, ConverterParameter=Approved}"
+                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Approved}"
                                     Command="{Binding SwitchTabCommand}"
                                     CommandParameter="Approved">
                                 <TextBlock Text="Approved" />
                             </Button>
                             <!-- On Order Tab -->
                             <Button Classes="tab-button"
-                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringEqualsConverter.Instance}, ConverterParameter=On Order}"
+                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=On Order}"
                                     Command="{Binding SwitchTabCommand}"
                                     CommandParameter="On Order">
                                 <TextBlock Text="On Order" />
                             </Button>
                             <!-- Received Tab -->
                             <Button Classes="tab-button"
-                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringEqualsConverter.Instance}, ConverterParameter=Received}"
+                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Received}"
                                     Command="{Binding SwitchTabCommand}"
                                     CommandParameter="Received">
                                 <TextBlock Text="Received" />

@@ -102,7 +102,7 @@
                                     <StackPanel>
                                         <!-- Header -->
                                         <Grid ColumnDefinitions="2*,*,*,80,Auto" Margin="0,0,0,8"
-                                              IsVisible="{Binding LineItems.Count, Converter={x:Static IntConverters.IsGreaterThanZero}}">
+                                              IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
                                             <TextBlock Grid.Column="0" Text="Product" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Grid.Column="1" Text="Qty" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Grid.Column="2" Text="Unit Cost" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -156,7 +156,7 @@
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
                                                    Margin="0,20"
-                                                   IsVisible="{Binding LineItems.Count, Converter={x:Static IntConverters.IsZero}}" />
+                                                   IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsZero}}" />
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

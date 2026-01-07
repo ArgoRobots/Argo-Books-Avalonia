@@ -118,28 +118,28 @@
                         <StackPanel Orientation="Horizontal" Spacing="0">
                             <!-- All Tab -->
                             <Button Classes="tab-button"
-                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringEqualsConverter.Instance}, ConverterParameter=All}"
+                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=All}"
                                     Command="{Binding SwitchTabCommand}"
                                     CommandParameter="All">
                                 <TextBlock Text="All" />
                             </Button>
                             <!-- Add Tab -->
                             <Button Classes="tab-button"
-                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringEqualsConverter.Instance}, ConverterParameter=Add}"
+                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Add}"
                                     Command="{Binding SwitchTabCommand}"
                                     CommandParameter="Add">
                                 <TextBlock Text="Added" />
                             </Button>
                             <!-- Remove Tab -->
                             <Button Classes="tab-button"
-                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringEqualsConverter.Instance}, ConverterParameter=Remove}"
+                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Remove}"
                                     Command="{Binding SwitchTabCommand}"
                                     CommandParameter="Remove">
                                 <TextBlock Text="Removed" />
                             </Button>
                             <!-- Set Tab -->
                             <Button Classes="tab-button"
-                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringEqualsConverter.Instance}, ConverterParameter=Set}"
+                                    Classes.active="{Binding ActiveTab, Converter={x:Static local:StringConverters.Equals}, ConverterParameter=Set}"
                                     Command="{Binding SwitchTabCommand}"
                                     CommandParameter="Set">
                                 <TextBlock Text="Set" />
