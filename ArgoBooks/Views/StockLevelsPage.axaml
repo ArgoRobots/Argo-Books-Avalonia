@@ -752,14 +752,12 @@
             <Border Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     Width="480"
-                    MaxHeight="500"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
-                <Grid RowDefinitions="Auto,*,Auto">
+                <StackPanel>
                     <!-- Modal Header -->
-                    <Border Grid.Row="0"
-                            Padding="24,20"
+                    <Border Padding="24,20"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
@@ -777,49 +775,46 @@
                     </Border>
 
                     <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" Padding="24">
-                        <StackPanel Spacing="16">
-                            <!-- Category -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Category"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding AvailableCategories}"
-                                          SelectedItem="{Binding FilterCategory}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
-
-                            <!-- Location -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Location"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding AvailableLocations}"
-                                          SelectedItem="{Binding FilterLocation}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
-
-                            <!-- Stock Status -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Stock Status"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding StatusOptions}"
-                                          SelectedItem="{Binding FilterStatus}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
+                    <StackPanel Spacing="16" Margin="24">
+                        <!-- Category -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Category"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding AvailableCategories}"
+                                      SelectedItem="{Binding FilterCategory}"
+                                      Classes="form-combobox"
+                                      HorizontalAlignment="Stretch" />
                         </StackPanel>
-                    </ScrollViewer>
+
+                        <!-- Location -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Location"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding AvailableLocations}"
+                                      SelectedItem="{Binding FilterLocation}"
+                                      Classes="form-combobox"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- Stock Status -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Stock Status"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding StatusOptions}"
+                                      SelectedItem="{Binding FilterStatus}"
+                                      Classes="form-combobox"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </StackPanel>
 
                     <!-- Modal Footer -->
-                    <Border Grid.Row="2"
-                            Padding="24,16"
+                    <Border Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
@@ -839,7 +834,7 @@
                                     Command="{Binding ApplyFiltersCommand}" />
                         </Grid>
                     </Border>
-                </Grid>
+                </StackPanel>
             </Border>
         </Border>
     </Panel>

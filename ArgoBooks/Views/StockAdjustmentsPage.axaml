@@ -811,14 +811,12 @@
             <Border Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     Width="480"
-                    MaxHeight="500"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
-                <Grid RowDefinitions="Auto,*,Auto">
+                <StackPanel>
                     <!-- Modal Header -->
-                    <Border Grid.Row="0"
-                            Padding="24,20"
+                    <Border Padding="24,20"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
@@ -836,57 +834,44 @@
                     </Border>
 
                     <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" Padding="24">
-                        <StackPanel Spacing="16">
-                            <!-- Date Range -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="From Date"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <CalendarDatePicker SelectedDate="{Binding StartDate}"
-                                                        HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="To Date"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <CalendarDatePicker SelectedDate="{Binding EndDate}"
-                                                        HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                    <StackPanel Spacing="16" Margin="24">
+                        <!-- Date Range -->
+                        <Grid ColumnDefinitions="*,16,*">
+                            <controls:ArgoDatePicker Grid.Column="0"
+                                                     Label="From Date"
+                                                     SelectedDate="{Binding StartDate}" />
+                            <controls:ArgoDatePicker Grid.Column="2"
+                                                     Label="To Date"
+                                                     SelectedDate="{Binding EndDate}" />
+                        </Grid>
 
-                            <!-- Location -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Location"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding LocationOptions}"
-                                          SelectedItem="{Binding FilterLocation}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
-
-                            <!-- Product -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Product"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding ProductOptions}"
-                                          SelectedItem="{Binding FilterProduct}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
+                        <!-- Location -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Location"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding LocationOptions}"
+                                      SelectedItem="{Binding FilterLocation}"
+                                      Classes="form-combobox"
+                                      HorizontalAlignment="Stretch" />
                         </StackPanel>
-                    </ScrollViewer>
+
+                        <!-- Product -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Product"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding ProductOptions}"
+                                      SelectedItem="{Binding FilterProduct}"
+                                      Classes="form-combobox"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </StackPanel>
 
                     <!-- Modal Footer -->
-                    <Border Grid.Row="2"
-                            Padding="24,16"
+                    <Border Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
@@ -906,7 +891,7 @@
                                     Command="{Binding ApplyFiltersCommand}" />
                         </Grid>
                     </Border>
-                </Grid>
+                </StackPanel>
             </Border>
         </Border>
     </Panel>

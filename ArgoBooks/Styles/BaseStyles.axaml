@@ -189,53 +189,6 @@
         <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
     </Style>
 
-    <!-- Global CalendarDatePicker Styling -->
-    <Style Selector="CalendarDatePicker">
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="Padding" Value="12,8" />
-        <Setter Property="MinHeight" Value="40" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-    </Style>
-    <Style Selector="CalendarDatePicker /template/ Button#PART_Button">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="8,0" />
-    </Style>
-    <Style Selector="CalendarDatePicker /template/ Button#PART_Button PathIcon">
-        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-        <Setter Property="Width" Value="16" />
-        <Setter Property="Height" Value="16" />
-    </Style>
-    <Style Selector="CalendarDatePicker:pointerover /template/ Border#Background">
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderHoverBrush}" />
-    </Style>
-    <Style Selector="CalendarDatePicker:focus /template/ Border#Background">
-        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-    </Style>
-    <Style Selector="CalendarDatePicker /template/ TextBox#PART_TextBox">
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="MinHeight" Value="0" />
-    </Style>
-    <Style Selector="CalendarDatePicker /template/ TextBox#PART_TextBox /template/ Border#PART_BorderElement">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-    </Style>
-    <Style Selector="CalendarDatePicker /template/ TextBox#PART_TextBox:pointerover /template/ Border#PART_BorderElement">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-    </Style>
-    <Style Selector="CalendarDatePicker /template/ TextBox#PART_TextBox:focus /template/ Border#PART_BorderElement">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-    </Style>
-
     <!-- Transaction Row Highlight Style with fade animation -->
     <Style Selector="Border.highlighted-row">
         <Setter Property="Background" Value="#3060A5FA" />
