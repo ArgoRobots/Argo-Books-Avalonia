@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace ArgoBooks.Controls;
+namespace ArgoBooks.Controls.ColumnWidths;
 
 /// <summary>
 /// Manages column widths for the Invoices table.

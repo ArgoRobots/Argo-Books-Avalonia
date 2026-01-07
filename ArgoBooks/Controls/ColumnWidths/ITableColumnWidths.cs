@@ -1,4 +1,4 @@
-namespace ArgoBooks.Controls;
+namespace ArgoBooks.Controls.ColumnWidths;
 
 /// <summary>
 /// Interface for table column width managers.

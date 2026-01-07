@@ -1,4 +1,5 @@
 using ArgoBooks.Controls;
+using ArgoBooks.Controls.ColumnWidths;
 using Avalonia.Controls;
 using Avalonia.Input;
 
