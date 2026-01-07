@@ -433,11 +433,8 @@
                                                                 Width="4"
                                                                 CornerRadius="2"
                                                                 Margin="0,0,12,0"
-                                                                VerticalAlignment="Stretch">
-                                                            <Border.Background>
-                                                                <SolidColorBrush Color="{Binding AccentColor}" />
-                                                            </Border.Background>
-                                                        </Border>
+                                                                VerticalAlignment="Stretch"
+                                                                Background="{Binding AccentColor}" />
                                                         <TextBlock Grid.Column="1"
                                                                    Text="{Binding Name}"
                                                                    FontSize="15"
@@ -489,9 +486,7 @@
                                                                             </Setter>
                                                                         </Style>
                                                                         <Style Selector="Border.selected">
-                                                                            <Setter Property="BorderBrush">
-                                                                                <SolidColorBrush Color="{Binding IconForeground}" />
-                                                                            </Setter>
+                                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                                         </Style>
                                                                     </Border.Styles>
                                                                     <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
@@ -499,16 +494,11 @@
                                                                         <StackPanel Spacing="4">
                                                                             <StackPanel Orientation="Horizontal" Spacing="12">
                                                                                 <Border CornerRadius="8"
-                                                                                        Padding="8">
-                                                                                    <Border.Background>
-                                                                                        <SolidColorBrush Color="{Binding IconBackground}" />
-                                                                                    </Border.Background>
+                                                                                        Padding="8"
+                                                                                        Background="{Binding IconBackground}">
                                                                                     <PathIcon Data="{Binding IconData}"
-                                                                                              Width="18" Height="18">
-                                                                                        <PathIcon.Foreground>
-                                                                                            <SolidColorBrush Color="{Binding IconForeground}" />
-                                                                                        </PathIcon.Foreground>
-                                                                                    </PathIcon>
+                                                                                              Width="18" Height="18"
+                                                                                              Foreground="{Binding IconForeground}" />
                                                                                 </Border>
                                                                                 <TextBlock Text="{Binding Name}"
                                                                                            FontSize="14"
