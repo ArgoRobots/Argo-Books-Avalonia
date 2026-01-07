@@ -191,7 +191,7 @@ public partial class SidebarViewModel : ViewModelBase
         // Inventory Section (mockup: Stock Levels, Adjustments, Locations, Transfers, Purchase Orders)
         InventoryItems.Add(CreateItem("Stock Levels", "StockLevels",
             "M22 18V3H2v15H0v2h24v-2h-2zm-2-1H4V5h16v12zM6 15h2v-5H6v5zm4 0h2V8h-2v7zm4 0h2v-3h-2v3z")); // fa-warehouse
-        InventoryItems.Add(CreateItem("Adjustments", "Adjustments",
+        InventoryItems.Add(CreateItem("Adjustments", "StockAdjustments",
             "M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z")); // fa-sliders-h
         _locationsItem = CreateItem("Locations", "Locations",
             "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"); // fa-map-marker-alt

@@ -36,10 +36,15 @@ public static class PlatformServiceFactory
     {
         return platformType switch
         {
-            PlatformType.Windows => new WindowsPlatformService(),
-            PlatformType.MacOS => new MacPlatformService(),
+            PlatformType.Windows when OperatingSystem.IsWindows() => new WindowsPlatformService(),
+            PlatformType.MacOS when OperatingSystem.IsMacOS() => new MacPlatformService(),
+            PlatformType.Linux when OperatingSystem.IsLinux() => new LinuxPlatformService(),
+            PlatformType.Browser when OperatingSystem.IsBrowser() => new BrowserPlatformService(),
+            // Fallback for cross-platform scenarios (e.g., testing)
+            PlatformType.Windows => new LinuxPlatformService(),
+            PlatformType.MacOS => new LinuxPlatformService(),
             PlatformType.Linux => new LinuxPlatformService(),
-            PlatformType.Browser => new BrowserPlatformService(),
+            PlatformType.Browser => new LinuxPlatformService(),
             _ => throw new ArgumentOutOfRangeException(nameof(platformType))
         };
     }

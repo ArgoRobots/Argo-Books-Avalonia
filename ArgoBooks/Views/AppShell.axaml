@@ -143,6 +143,12 @@
         <!-- Locations Modals -->
         <modals:LocationsModals DataContext="{Binding LocationsModalsViewModel}" />
 
+        <!-- Stock Adjustments Modals -->
+        <modals:StockAdjustmentsModals DataContext="{Binding StockAdjustmentsModalsViewModel}" />
+
+        <!-- Purchase Orders Modals -->
+        <modals:PurchaseOrdersModals DataContext="{Binding PurchaseOrdersModalsViewModel}" />
+
         <!-- Unsaved Changes Dialog -->
         <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}" />
     </Panel>
