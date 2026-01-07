@@ -20,6 +20,9 @@ public partial class DepartmentsPage : UserControl
         {
             if (DataContext is DepartmentsPageViewModel viewModel)
             {
+                var position = e.GetPosition(this);
+                viewModel.ColumnMenuX = position.X;
+                viewModel.ColumnMenuY = position.Y;
                 viewModel.IsColumnMenuOpen = true;
             }
         }

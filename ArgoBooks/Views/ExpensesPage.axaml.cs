@@ -20,6 +20,9 @@ public partial class ExpensesPage : UserControl
         {
             if (DataContext is ExpensesPageViewModel viewModel)
             {
+                var position = e.GetPosition(this);
+                viewModel.ColumnMenuX = position.X;
+                viewModel.ColumnMenuY = position.Y;
                 viewModel.IsColumnMenuOpen = true;
             }
         }

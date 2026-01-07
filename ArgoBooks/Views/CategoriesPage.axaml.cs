@@ -20,6 +20,9 @@ public partial class CategoriesPage : UserControl
         {
             if (DataContext is CategoriesPageViewModel viewModel)
             {
+                var position = e.GetPosition(this);
+                viewModel.ColumnMenuX = position.X;
+                viewModel.ColumnMenuY = position.Y;
                 viewModel.IsColumnMenuOpen = true;
             }
         }

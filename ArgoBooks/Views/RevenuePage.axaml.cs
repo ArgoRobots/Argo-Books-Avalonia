@@ -20,6 +20,9 @@ public partial class RevenuePage : UserControl
         {
             if (DataContext is RevenuePageViewModel viewModel)
             {
+                var position = e.GetPosition(this);
+                viewModel.ColumnMenuX = position.X;
+                viewModel.ColumnMenuY = position.Y;
                 viewModel.IsColumnMenuOpen = true;
             }
         }

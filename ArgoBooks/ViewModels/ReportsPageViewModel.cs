@@ -1410,7 +1410,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         new(ReportChartStyle.Bar, "Bar Chart"),
         new(ReportChartStyle.Line, "Line Chart"),
         new(ReportChartStyle.StepLine, "Step Line"),
-        new(ReportChartStyle.Area, "Area Chart")
+        new(ReportChartStyle.Area, "Area Chart"),
+        new(ReportChartStyle.Scatter, "Scatter Chart")
     ];
 
     public ObservableCollection<ImageScaleMode> ImageScaleModes { get; } =

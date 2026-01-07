@@ -146,7 +146,8 @@ public enum ReportChartStyle
     Bar,
     Line,
     StepLine,
-    Area
+    Area,
+    Scatter
 }
 
 /// <summary>
