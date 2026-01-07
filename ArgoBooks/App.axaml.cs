@@ -112,6 +112,11 @@ public partial class App : Application
     public static StockAdjustmentsModalsViewModel? StockAdjustmentsModalsViewModel => _appShellViewModel?.StockAdjustmentsModalsViewModel;
 
     /// <summary>
+    /// Gets the purchase orders modals view model for shared access.
+    /// </summary>
+    public static PurchaseOrdersModalsViewModel? PurchaseOrdersModalsViewModel => _appShellViewModel?.PurchaseOrdersModalsViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
@@ -225,6 +230,11 @@ public partial class App : Application
     /// Gets the shared column widths for the Stock Adjustments table.
     /// </summary>
     public static Controls.StockAdjustmentsTableColumnWidths StockAdjustmentsColumnWidths { get; } = new();
+
+    /// <summary>
+    /// Gets the shared column widths for the Purchase Orders table.
+    /// </summary>
+    public static Controls.PurchaseOrdersTableColumnWidths PurchaseOrdersColumnWidths { get; } = new();
 
     #endregion
 
@@ -2064,7 +2074,7 @@ public partial class App : Application
             return new Views.LocationsPage { DataContext = viewModel };
         });
         navigationService.RegisterPage("StockAdjustments", _ => new Views.StockAdjustmentsPage { DataContext = new ViewModels.StockAdjustmentsPageViewModel() });
-        navigationService.RegisterPage("PurchaseOrders", _ => CreatePlaceholderPage("Purchase Orders", "Create and track purchase orders"));
+        navigationService.RegisterPage("PurchaseOrders", _ => new Views.PurchaseOrdersPage { DataContext = new ViewModels.PurchaseOrdersPageViewModel() });
         navigationService.RegisterPage("Categories", param =>
         {
             var viewModel = new CategoriesPageViewModel();
