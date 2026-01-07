@@ -428,20 +428,14 @@
                                             <DataTemplate x:DataType="vm:ChartCategoryGroup">
                                                 <StackPanel Spacing="12">
                                                     <!-- Category Header with Select All -->
-                                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                                        <Border Grid.Column="0"
-                                                                Width="4"
-                                                                CornerRadius="2"
-                                                                Margin="0,0,12,0"
-                                                                VerticalAlignment="Stretch"
-                                                                Background="{Binding AccentColor}" />
-                                                        <TextBlock Grid.Column="1"
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Grid.Column="0"
                                                                    Text="{Binding Name}"
                                                                    FontSize="15"
                                                                    FontWeight="SemiBold"
                                                                    VerticalAlignment="Center"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                        <CheckBox Grid.Column="2"
+                                                        <CheckBox Grid.Column="1"
                                                                   Content="Select All"
                                                                   FontSize="12"
                                                                   IsChecked="{Binding IsAllSelected, Mode=OneWay}"
@@ -469,52 +463,63 @@
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate x:DataType="vm:ChartOption">
-                                                                <Border Margin="0,0,12,12"
+                                                                <Button Margin="0,0,12,12"
                                                                         Padding="14"
                                                                         CornerRadius="8"
                                                                         Width="280"
-                                                                        Background="{DynamicResource SurfaceAltBrush}"
-                                                                        BorderThickness="2"
+                                                                        HorizontalContentAlignment="Stretch"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).ToggleChartCommand}"
+                                                                        CommandParameter="{Binding}"
                                                                         Classes.selected="{Binding IsSelected}">
-                                                                    <Border.Styles>
-                                                                        <Style Selector="Border">
+                                                                    <Button.Styles>
+                                                                        <Style Selector="Button">
+                                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                                            <Setter Property="BorderThickness" Value="2" />
                                                                             <Setter Property="BorderBrush" Value="Transparent" />
+                                                                        </Style>
+                                                                        <Style Selector="Button /template/ ContentPresenter#PART_ContentPresenter">
+                                                                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                                                            <Setter Property="CornerRadius" Value="8" />
                                                                             <Setter Property="Transitions">
                                                                                 <Transitions>
+                                                                                    <BrushTransition Property="Background" Duration="0:0:0.15" />
                                                                                     <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
                                                                                 </Transitions>
                                                                             </Setter>
                                                                         </Style>
-                                                                        <Style Selector="Border.selected">
+                                                                        <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                                            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                                                        </Style>
+                                                                        <Style Selector="Button.selected">
                                                                             <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                                         </Style>
-                                                                    </Border.Styles>
-                                                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                                              HorizontalAlignment="Stretch">
-                                                                        <StackPanel Spacing="4">
-                                                                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                                                                <Border CornerRadius="8"
-                                                                                        Padding="8"
-                                                                                        Background="{Binding IconBackground}">
-                                                                                    <PathIcon Data="{Binding IconData}"
-                                                                                              Width="18" Height="18"
-                                                                                              Foreground="{Binding IconForeground}" />
-                                                                                </Border>
-                                                                                <TextBlock Text="{Binding Name}"
-                                                                                           FontSize="14"
-                                                                                           FontWeight="SemiBold"
-                                                                                           VerticalAlignment="Center"
-                                                                                           TextTrimming="CharacterEllipsis"
-                                                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                                            </StackPanel>
-                                                                            <TextBlock Text="{Binding Description}"
-                                                                                       FontSize="12"
-                                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                                       TextWrapping="Wrap"
-                                                                                       Margin="0,4,0,0" />
+                                                                        <Style Selector="Button.selected /template/ ContentPresenter#PART_ContentPresenter">
+                                                                            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                                        </Style>
+                                                                    </Button.Styles>
+                                                                    <StackPanel Spacing="4">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                                                            <Border CornerRadius="8"
+                                                                                    Padding="8"
+                                                                                    Background="{Binding IconBackground}">
+                                                                                <PathIcon Data="{Binding IconData}"
+                                                                                          Width="18" Height="18"
+                                                                                          Foreground="{Binding IconForeground}" />
+                                                                            </Border>
+                                                                            <TextBlock Text="{Binding Name}"
+                                                                                       FontSize="14"
+                                                                                       FontWeight="SemiBold"
+                                                                                       VerticalAlignment="Center"
+                                                                                       TextTrimming="CharacterEllipsis"
+                                                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                                                         </StackPanel>
-                                                                    </CheckBox>
-                                                                </Border>
+                                                                        <TextBlock Text="{Binding Description}"
+                                                                                   FontSize="12"
+                                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                                   TextWrapping="Wrap"
+                                                                                   Margin="0,4,0,0" />
+                                                                    </StackPanel>
+                                                                </Button>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
