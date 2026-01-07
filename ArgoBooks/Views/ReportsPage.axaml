@@ -942,12 +942,11 @@
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <StackPanel Spacing="4">
-                                    <TextBlock Text="Chart Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding ChartTypeOptions}"
-                                              SelectedItem="{Binding SelectedChartDataTypeOption}"
-                                              HorizontalAlignment="Stretch" />
-                                </StackPanel>
+                                <controls:SearchableDropdown
+                                    Label="Chart Type"
+                                    Placeholder="Search chart types..."
+                                    ItemsSource="{Binding ChartTypeOptions}"
+                                    SelectedItem="{Binding SelectedChartDataTypeOption}" />
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="Chart Style" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding ChartStyleOptions}"

@@ -128,22 +128,13 @@
                         </Grid>
                     </Border>
 
-                    <!-- Column Menu Popup -->
-                    <Popup IsOpen="{Binding IsColumnMenuOpen, Mode=TwoWay}"
-                           Placement="Pointer"
-                           IsLightDismissEnabled="True">
-                        <Border Background="{DynamicResource SurfaceBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
-                                Padding="8"
-                                BoxShadow="0 4 16 0 #20000000">
-                            <StackPanel Spacing="4" Width="180">
-                                <TextBlock Text="Show Columns"
-                                           FontSize="13"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           Margin="8,4,8,8" />
+                    <!-- Column Visibility Menu -->
+                    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                                    MenuX="{Binding ColumnMenuX}"
+                                                    MenuY="{Binding ColumnMenuY}"
+                                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+                        <controls:ColumnVisibilityMenu.ColumnsContent>
+                            <StackPanel Spacing="4">
                                 <CheckBox IsChecked="{Binding ShowIdColumn}" Content="Invoice #" Classes="column-toggle" />
                                 <CheckBox IsChecked="{Binding ShowAccountantColumn}" Content="Accountant" Classes="column-toggle" />
                                 <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="Customer" Classes="column-toggle" />
@@ -152,8 +143,8 @@
                                 <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="Amount" Classes="column-toggle" />
                                 <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
                             </StackPanel>
-                        </Border>
-                    </Popup>
+                        </controls:ColumnVisibilityMenu.ColumnsContent>
+                    </controls:ColumnVisibilityMenu>
 
                     <!-- Table Content -->
                     <ScrollViewer Grid.Row="1"

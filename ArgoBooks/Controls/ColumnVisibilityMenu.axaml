@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="300"
+             x:Class="ArgoBooks.Controls.ColumnVisibilityMenu"
+             x:DataType="controls:ColumnVisibilityMenu">
+
+    <controls:AnimatedContextMenu IsOpen="{Binding IsOpen, RelativeSource={RelativeSource AncestorType=controls:ColumnVisibilityMenu}}"
+                                   MenuX="{Binding MenuX, RelativeSource={RelativeSource AncestorType=controls:ColumnVisibilityMenu}}"
+                                   MenuY="{Binding MenuY, RelativeSource={RelativeSource AncestorType=controls:ColumnVisibilityMenu}}"
+                                   CloseCommand="{Binding CloseCommand, RelativeSource={RelativeSource AncestorType=controls:ColumnVisibilityMenu}}">
+        <controls:AnimatedContextMenu.MenuContent>
+            <StackPanel Spacing="4" Width="180">
+                <TextBlock Text="Show Columns"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           Margin="8,4,8,8" />
+                <ContentPresenter Content="{Binding ColumnsContent, RelativeSource={RelativeSource AncestorType=controls:ColumnVisibilityMenu}}" />
+            </StackPanel>
+        </controls:AnimatedContextMenu.MenuContent>
+    </controls:AnimatedContextMenu>
+
+    <UserControl.Styles>
+        <!-- Column Toggle Checkbox -->
+        <Style Selector="CheckBox.column-toggle">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="CheckBox.column-toggle:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+    </UserControl.Styles>
+</UserControl>

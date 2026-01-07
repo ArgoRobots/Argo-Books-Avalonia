@@ -96,30 +96,21 @@
                         </Grid>
                     </Border>
 
-                    <!-- Column Menu Popup -->
-                    <Popup IsOpen="{Binding IsColumnMenuOpen, Mode=TwoWay}"
-                           Placement="Pointer"
-                           IsLightDismissEnabled="True">
-                        <Border Background="{DynamicResource SurfaceBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
-                                Padding="8"
-                                BoxShadow="0 4 16 0 #20000000">
-                            <StackPanel Spacing="4" Width="180">
-                                <TextBlock Text="Show Columns"
-                                           FontSize="13"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           Margin="8,4,8,8" />
+                    <!-- Column Visibility Menu -->
+                    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                                    MenuX="{Binding ColumnMenuX}"
+                                                    MenuY="{Binding ColumnMenuY}"
+                                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+                        <controls:ColumnVisibilityMenu.ColumnsContent>
+                            <StackPanel Spacing="4">
                                 <CheckBox IsChecked="{Binding ShowNameColumn}" Content="Category Name" Classes="column-toggle" />
                                 <CheckBox IsChecked="{Binding ShowParentColumn}" Content="Parent Category" Classes="column-toggle" />
                                 <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="Description" Classes="column-toggle" />
                                 <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="Type" Classes="column-toggle" />
                                 <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="Products/Services" Classes="column-toggle" />
                             </StackPanel>
-                        </Border>
-                    </Popup>
+                        </controls:ColumnVisibilityMenu.ColumnsContent>
+                    </controls:ColumnVisibilityMenu>
 
                     <!-- Categories Table -->
                     <ScrollViewer Grid.Row="1"

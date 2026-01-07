@@ -76,6 +76,12 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private bool _isColumnMenuOpen;
 
     [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
+    [ObservableProperty]
     private bool _showIdColumn = true;
 
     [ObservableProperty]
