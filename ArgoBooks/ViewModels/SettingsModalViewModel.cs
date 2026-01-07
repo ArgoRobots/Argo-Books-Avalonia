@@ -47,6 +47,22 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public int[] MaxPieSlicesOptions { get; } = [4, 5, 6, 7, 8, 10, 12];
 
+    /// <summary>
+    /// Priority/common languages shown at the top of the dropdown.
+    /// </summary>
+    public string[] PriorityLanguages { get; } = ["English", "French", "German", "Italian"];
+
+    /// <summary>
+    /// Priority/common currencies shown at the top of the dropdown.
+    /// </summary>
+    public string[] PriorityCurrencies { get; } =
+    [
+        "USD - US Dollar ($)",
+        "EUR - Euro (€)",
+        "CAD - Canadian Dollar ($)",
+        "AUD - Australian Dollar ($)"
+    ];
+
     public ObservableCollection<string> Languages { get; } = new()
     {
         "Albanian",

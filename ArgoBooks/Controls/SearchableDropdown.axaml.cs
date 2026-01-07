@@ -26,6 +26,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
     private TextBox? _searchTextBox;
+    private ScrollViewer? _itemsScrollViewer;
     private int _highlightedIndex = -1;
     private bool _isSettingFromSelectedItem;
 
@@ -78,6 +79,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
     public static readonly StyledProperty<ICommand?> EmptyCreateCommandProperty =
         AvaloniaProperty.Register<SearchableDropdown, ICommand?>(nameof(EmptyCreateCommand));
+
+    public static readonly StyledProperty<IEnumerable?> PriorityItemsProperty =
+        AvaloniaProperty.Register<SearchableDropdown, IEnumerable?>(nameof(PriorityItems));
 
     #endregion
 
@@ -228,9 +232,28 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Gets or sets the priority items shown at the top of the dropdown.
+    /// </summary>
+    public IEnumerable? PriorityItems
+    {
+        get => GetValue(PriorityItemsProperty);
+        set => SetValue(PriorityItemsProperty, value);
+    }
+
+    /// <summary>
     /// Gets the filtered items based on search text.
     /// </summary>
     public ObservableCollection<object> FilteredItems { get; } = new();
+
+    /// <summary>
+    /// Gets the filtered priority items based on search text.
+    /// </summary>
+    public ObservableCollection<object> FilteredPriorityItems { get; } = new();
+
+    /// <summary>
+    /// Gets whether there are filtered priority items to display.
+    /// </summary>
+    public bool HasFilteredPriorityItems => FilteredPriorityItems.Count > 0;
 
     /// <summary>
     /// Gets whether there are filtered items to display.
@@ -369,6 +392,18 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
             _searchTextBox.GotFocus += OnSearchTextBoxGotFocus;
             _searchTextBox.KeyDown += OnSearchTextBoxKeyDown;
         }
+
+        _itemsScrollViewer = this.FindControl<ScrollViewer>("ItemsScrollViewer");
+        if (_itemsScrollViewer != null)
+        {
+            _itemsScrollViewer.PointerWheelChanged += OnItemsScrollViewerPointerWheelChanged;
+        }
+    }
+
+    private void OnItemsScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        // Always handle the event to prevent propagation to parent scroll viewers
+        e.Handled = true;
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -478,18 +513,38 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     private void UpdateFilteredItems()
     {
         FilteredItems.Clear();
+        FilteredPriorityItems.Clear();
 
         if (ItemsSource == null)
             return;
 
         var searchText = SearchText ?? string.Empty;
+        var prioritySet = new HashSet<object>();
+
+        // Build a set of priority items for quick lookup
+        if (PriorityItems != null)
+        {
+            foreach (var item in PriorityItems)
+            {
+                if (item != null)
+                    prioritySet.Add(item);
+            }
+        }
 
         if (string.IsNullOrEmpty(searchText))
         {
-            // No search - show all items
-            foreach (var item in ItemsSource)
+            // No search - show priority items first, then all other items
+            foreach (var item in PriorityItems ?? Enumerable.Empty<object>())
             {
                 if (item != null)
+                {
+                    FilteredPriorityItems.Add(item);
+                }
+            }
+
+            foreach (var item in ItemsSource)
+            {
+                if (item != null && !prioritySet.Contains(item))
                 {
                     FilteredItems.Add(item);
                 }
@@ -498,11 +553,28 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         else
         {
             // Use Levenshtein distance for fuzzy matching
+            var scoredPriorityItems = new List<(object Item, double Score)>();
             var scoredItems = new List<(object Item, double Score)>();
 
-            foreach (var item in ItemsSource)
+            // Score priority items
+            foreach (var item in PriorityItems ?? Enumerable.Empty<object>())
             {
                 if (item == null)
+                    continue;
+
+                var displayText = GetDisplayText(item);
+                var score = LevenshteinDistance.ComputeSearchScore(searchText, displayText);
+
+                if (score >= 0)
+                {
+                    scoredPriorityItems.Add((item, score));
+                }
+            }
+
+            // Score regular items (excluding priority items)
+            foreach (var item in ItemsSource)
+            {
+                if (item == null || prioritySet.Contains(item))
                     continue;
 
                 var displayText = GetDisplayText(item);
@@ -515,6 +587,11 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
             }
 
             // Sort by score descending and add to filtered items
+            foreach (var (item, _) in scoredPriorityItems.OrderByDescending(x => x.Score))
+            {
+                FilteredPriorityItems.Add(item);
+            }
+
             foreach (var (item, _) in scoredItems.OrderByDescending(x => x.Score))
             {
                 FilteredItems.Add(item);
@@ -523,6 +600,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
         // Notify property changed for computed properties
         RaisePropertyChanged(nameof(HasFilteredItems));
+        RaisePropertyChanged(nameof(HasFilteredPriorityItems));
         RaisePropertyChanged(nameof(HasItems));
         RaisePropertyChanged(nameof(ShowEmptyCreate));
     }

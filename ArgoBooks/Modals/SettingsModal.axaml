@@ -85,6 +85,7 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:SearchableDropdown ItemsSource="{Binding Languages}"
                                                                   SelectedItem="{Binding SelectedLanguage}"
+                                                                  PriorityItems="{Binding PriorityLanguages}"
                                                                   Placeholder="Search languages..." />
                                 </StackPanel>
 
@@ -96,6 +97,7 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
                                                                   SelectedItem="{Binding SelectedCurrency}"
+                                                                  PriorityItems="{Binding PriorityCurrencies}"
                                                                   Placeholder="Search currencies..." />
                                 </StackPanel>
 
