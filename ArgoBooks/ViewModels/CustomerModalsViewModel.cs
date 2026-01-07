@@ -520,8 +520,131 @@ public partial class CustomerModalsViewModel : ObservableObject
 
         _historyCustomer = item;
         HistoryCustomerName = item.Name;
-        CustomerHistory.Clear();
+        LoadCustomerHistory(item.Id);
         IsHistoryModalOpen = true;
+    }
+
+    /// <summary>
+    /// Loads the transaction history for a customer.
+    /// </summary>
+    private void LoadCustomerHistory(string customerId)
+    {
+        CustomerHistory.Clear();
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+            return;
+
+        var historyItems = new List<CustomerHistoryItem>();
+
+        // Add invoices
+        var invoices = companyData.Invoices?.Where(i => i.CustomerId == customerId) ?? [];
+        foreach (var invoice in invoices)
+        {
+            historyItems.Add(new CustomerHistoryItem
+            {
+                Date = invoice.IssueDate,
+                Type = "Invoice",
+                Description = $"Invoice #{invoice.InvoiceNumber}",
+                Amount = invoice.Total,
+                Status = invoice.Status.ToString()
+            });
+        }
+
+        // Add payments
+        var payments = companyData.Payments?.Where(p => p.CustomerId == customerId) ?? [];
+        foreach (var payment in payments)
+        {
+            historyItems.Add(new CustomerHistoryItem
+            {
+                Date = payment.PaymentDate,
+                Type = "Payment",
+                Description = $"Payment - {payment.PaymentMethod}",
+                Amount = -payment.Amount, // Negative because it reduces balance
+                Status = "Completed"
+            });
+        }
+
+        // Add rentals
+        var rentals = companyData.RentalRecords?.Where(r => r.CustomerId == customerId) ?? [];
+        foreach (var rental in rentals)
+        {
+            var product = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.ItemId);
+            historyItems.Add(new CustomerHistoryItem
+            {
+                Date = rental.StartDate,
+                Type = "Rental",
+                Description = $"Rental - {product?.Name ?? "Unknown Item"}",
+                Amount = rental.TotalAmount,
+                Status = rental.Status.ToString()
+            });
+        }
+
+        // Add returns
+        var returns = companyData.Returns?.Where(r => r.CustomerId == customerId) ?? [];
+        foreach (var returnItem in returns)
+        {
+            var product = companyData.Products?.FirstOrDefault(p => p.Id == returnItem.ProductId);
+            historyItems.Add(new CustomerHistoryItem
+            {
+                Date = returnItem.ReturnDate,
+                Type = "Return",
+                Description = $"Return - {product?.Name ?? "Unknown Product"}",
+                Amount = -returnItem.RefundAmount,
+                Status = returnItem.Status.ToString()
+            });
+        }
+
+        // Apply filters
+        var filtered = ApplyHistoryFiltersInternal(historyItems);
+
+        // Sort by date descending and add to collection
+        foreach (var historyItem in filtered.OrderByDescending(h => h.Date))
+        {
+            CustomerHistory.Add(historyItem);
+        }
+    }
+
+    /// <summary>
+    /// Applies the history filters to the given items.
+    /// </summary>
+    private List<CustomerHistoryItem> ApplyHistoryFiltersInternal(List<CustomerHistoryItem> items)
+    {
+        var filtered = items.AsEnumerable();
+
+        // Filter by type
+        if (HistoryFilterType != "All")
+        {
+            filtered = filtered.Where(h => h.Type == HistoryFilterType);
+        }
+
+        // Filter by status
+        if (HistoryFilterStatus != "All")
+        {
+            filtered = filtered.Where(h => h.Status == HistoryFilterStatus);
+        }
+
+        // Filter by date range
+        if (HistoryFilterDateFrom.HasValue)
+        {
+            filtered = filtered.Where(h => h.Date.Date >= HistoryFilterDateFrom.Value.Date);
+        }
+        if (HistoryFilterDateTo.HasValue)
+        {
+            filtered = filtered.Where(h => h.Date.Date <= HistoryFilterDateTo.Value.Date);
+        }
+
+        // Filter by amount range
+        if (decimal.TryParse(HistoryFilterAmountMin, out var minAmount))
+        {
+            filtered = filtered.Where(h => Math.Abs(h.Amount) >= minAmount);
+        }
+        if (decimal.TryParse(HistoryFilterAmountMax, out var maxAmount))
+        {
+            filtered = filtered.Where(h => Math.Abs(h.Amount) <= maxAmount);
+        }
+
+        return filtered.ToList();
     }
 
     [RelayCommand]
@@ -547,6 +670,10 @@ public partial class CustomerModalsViewModel : ObservableObject
     [RelayCommand]
     public void ApplyHistoryFilters()
     {
+        if (_historyCustomer != null)
+        {
+            LoadCustomerHistory(_historyCustomer.Id);
+        }
         CloseHistoryFilterModal();
     }
 
@@ -559,6 +686,10 @@ public partial class CustomerModalsViewModel : ObservableObject
         HistoryFilterDateTo = null;
         HistoryFilterAmountMin = null;
         HistoryFilterAmountMax = null;
+        if (_historyCustomer != null)
+        {
+            LoadCustomerHistory(_historyCustomer.Id);
+        }
         CloseHistoryFilterModal();
     }
 
