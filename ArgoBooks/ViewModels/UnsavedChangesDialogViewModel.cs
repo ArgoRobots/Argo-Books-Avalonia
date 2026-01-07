@@ -1,50 +1,8 @@
 using System.Collections.ObjectModel;
-using System.Globalization;
-using Avalonia.Data.Converters;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
-
-/// <summary>
-/// Converter that converts a boolean to an angle for rotation animations.
-/// </summary>
-public class BoolToAngleConverter : IValueConverter
-{
-    public double TrueAngle { get; set; } = 90;
-    public double FalseAngle { get; set; } = 0;
-
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        return value is true ? TrueAngle : FalseAngle;
-    }
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotSupportedException();
-    }
-}
-
-/// <summary>
-/// Converter that converts a ChangeType enum to a boolean for visibility.
-/// </summary>
-public class ChangeTypeToVisibilityConverter : IValueConverter
-{
-    /// <summary>
-    /// Gets or sets the target change type to match.
-    /// </summary>
-    public ChangeType TargetType { get; set; } = ChangeType.Modified;
-
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        return value is ChangeType changeType && changeType == TargetType;
-    }
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotSupportedException();
-    }
-}
 
 /// <summary>
 /// Represents a single change item in the unsaved changes list.

@@ -603,33 +603,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
     #region Chart Type Toggle
 
     /// <summary>
-    /// Gets or sets whether to use line chart (for backwards compatibility).
-    /// </summary>
-    public bool UseLineChart
-    {
-        get => ChartSettingsShared.SelectedChartType == "Line";
-        set
-        {
-            var newChartType = value ? "Line" : "Column";
-            if (ChartSettingsShared.SelectedChartType != newChartType)
-            {
-                _isLocalSettingChange = true;
-                try
-                {
-                    ChartSettingsShared.SelectedChartType = newChartType;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(SelectedChartType));
-                    LoadAllCharts();
-                }
-                finally
-                {
-                    _isLocalSettingChange = false;
-                }
-            }
-        }
-    }
-
-    /// <summary>
     /// Available chart type options for the selector.
     /// </summary>
     public string[] ChartTypeOptions { get; } = ["Line", "Column", "Step Line", "Area", "Scatter"];
@@ -649,7 +622,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                 {
                     ChartSettingsShared.SelectedChartType = value;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(UseLineChart));
                     LoadAllCharts();
                 }
                 finally
@@ -1113,7 +1085,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         if (!_isLocalSettingChange)
         {
             OnPropertyChanged(nameof(SelectedChartType));
-            OnPropertyChanged(nameof(UseLineChart));
             LoadAllCharts();
         }
     }
