@@ -287,7 +287,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         if (companyData == null) return;
 
         AvailableProducts.Clear();
-        foreach (var product in companyData.Products?.Where(p => p.TrackInventory) ?? [])
+        foreach (var product in companyData.Products?.Where(p => p.Type == Core.Enums.CategoryType.Purchase) ?? [])
         {
             AvailableProducts.Add(product);
         }
@@ -427,4 +427,109 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Filter Modal State
+
+    /// <summary>
+    /// Raised when filters are applied.
+    /// </summary>
+    public event EventHandler<FilterAppliedEventArgs>? FiltersApplied;
+
+    [ObservableProperty]
+    private bool _isFilterModalOpen;
+
+    [ObservableProperty]
+    private string _filterCategory = "All";
+
+    [ObservableProperty]
+    private string _filterLocation = "All";
+
+    [ObservableProperty]
+    private string _filterStatus = "All";
+
+    /// <summary>
+    /// Available categories for filter dropdown.
+    /// </summary>
+    public ObservableCollection<string> FilterCategories { get; } = ["All"];
+
+    /// <summary>
+    /// Available locations for filter dropdown.
+    /// </summary>
+    public ObservableCollection<string> FilterLocations { get; } = ["All"];
+
+    /// <summary>
+    /// Status options for filter dropdown.
+    /// </summary>
+    public ObservableCollection<string> FilterStatusOptions { get; } = ["All", "In Stock", "Low Stock", "Out of Stock", "Overstock"];
+
+    /// <summary>
+    /// Opens the filter modal.
+    /// </summary>
+    public void OpenFilterModal(IEnumerable<string> categories, IEnumerable<string> locations,
+        string currentCategory, string currentLocation, string currentStatus)
+    {
+        FilterCategories.Clear();
+        FilterCategories.Add("All");
+        foreach (var cat in categories.Where(c => c != "All"))
+            FilterCategories.Add(cat);
+
+        FilterLocations.Clear();
+        FilterLocations.Add("All");
+        foreach (var loc in locations.Where(l => l != "All"))
+            FilterLocations.Add(loc);
+
+        FilterCategory = currentCategory;
+        FilterLocation = currentLocation;
+        FilterStatus = currentStatus;
+        IsFilterModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the filter modal.
+    /// </summary>
+    [RelayCommand]
+    private void CloseFilterModal()
+    {
+        IsFilterModalOpen = false;
+    }
+
+    /// <summary>
+    /// Applies the current filters.
+    /// </summary>
+    [RelayCommand]
+    private void ApplyFilters()
+    {
+        FiltersApplied?.Invoke(this, new FilterAppliedEventArgs(FilterCategory, FilterLocation, FilterStatus));
+        IsFilterModalOpen = false;
+    }
+
+    /// <summary>
+    /// Clears all filters.
+    /// </summary>
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        FilterCategory = "All";
+        FilterLocation = "All";
+        FilterStatus = "All";
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Event args for filter applied events.
+/// </summary>
+public class FilterAppliedEventArgs : EventArgs
+{
+    public string Category { get; }
+    public string Location { get; }
+    public string Status { get; }
+
+    public FilterAppliedEventArgs(string category, string location, string status)
+    {
+        Category = category;
+        Location = location;
+        Status = status;
+    }
 }

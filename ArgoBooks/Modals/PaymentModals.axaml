@@ -419,23 +419,5 @@
             <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
 
-        <!-- Form DatePicker -->
-        <Style Selector="DatePicker.form-datepicker">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="MinHeight" Value="36" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-        </Style>
-        <Style Selector="DatePicker.form-datepicker /template/ Grid#PART_FlyoutButtonContentGrid">
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="DatePicker.form-datepicker /template/ TextBlock">
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="DatePicker.form-datepicker /template/ Border#PART_BorderElement">
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
     </UserControl.Styles>
 </UserControl>

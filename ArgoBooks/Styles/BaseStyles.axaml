@@ -204,4 +204,22 @@
         </Style.Animations>
     </Style>
 
+    <!-- Form DatePicker -->
+    <Style Selector="DatePicker.form-datepicker">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="MinHeight" Value="36" />
+    </Style>
+    <Style Selector="DatePicker.form-datepicker /template/ Button">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="10,6" />
+    </Style>
+    <Style Selector="DatePicker.form-datepicker /template/ Button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+    </Style>
+
 </Styles>

@@ -402,6 +402,110 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     }
 
     #endregion
+
+    #region Filter Modal State
+
+    /// <summary>
+    /// Raised when filters are applied.
+    /// </summary>
+    public event EventHandler<AdjustmentsFilterAppliedEventArgs>? FiltersApplied;
+
+    [ObservableProperty]
+    private bool _isFilterModalOpen;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterStartDate;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterEndDate;
+
+    [ObservableProperty]
+    private string _filterProduct = "All";
+
+    [ObservableProperty]
+    private string _filterType = "All";
+
+    /// <summary>
+    /// Available products for filter dropdown.
+    /// </summary>
+    public ObservableCollection<string> FilterProducts { get; } = ["All"];
+
+    /// <summary>
+    /// Adjustment type options for filter dropdown.
+    /// </summary>
+    public ObservableCollection<string> FilterTypeOptions { get; } = ["All", "Add", "Remove", "Set"];
+
+    /// <summary>
+    /// Opens the filter modal.
+    /// </summary>
+    public void OpenFilterModal(IEnumerable<string> products,
+        DateTimeOffset? startDate, DateTimeOffset? endDate,
+        string currentProduct, string currentType)
+    {
+        FilterProducts.Clear();
+        FilterProducts.Add("All");
+        foreach (var prod in products.Where(p => p != "All"))
+            FilterProducts.Add(prod);
+
+        FilterStartDate = startDate;
+        FilterEndDate = endDate;
+        FilterProduct = currentProduct;
+        FilterType = currentType;
+        IsFilterModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the filter modal.
+    /// </summary>
+    [RelayCommand]
+    private void CloseFilterModal()
+    {
+        IsFilterModalOpen = false;
+    }
+
+    /// <summary>
+    /// Applies the current filters.
+    /// </summary>
+    [RelayCommand]
+    private void ApplyFilters()
+    {
+        FiltersApplied?.Invoke(this, new AdjustmentsFilterAppliedEventArgs(
+            FilterStartDate, FilterEndDate, FilterProduct, FilterType));
+        IsFilterModalOpen = false;
+    }
+
+    /// <summary>
+    /// Clears all filters.
+    /// </summary>
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        FilterStartDate = null;
+        FilterEndDate = null;
+        FilterProduct = "All";
+        FilterType = "All";
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Event args for filter applied events.
+/// </summary>
+public class AdjustmentsFilterAppliedEventArgs : EventArgs
+{
+    public DateTimeOffset? StartDate { get; }
+    public DateTimeOffset? EndDate { get; }
+    public string Product { get; }
+    public string Type { get; }
+
+    public AdjustmentsFilterAppliedEventArgs(DateTimeOffset? startDate, DateTimeOffset? endDate, string product, string type)
+    {
+        StartDate = startDate;
+        EndDate = endDate;
+        Product = product;
+        Type = type;
+    }
 }
 
 /// <summary>

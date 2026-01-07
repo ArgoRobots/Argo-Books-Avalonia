@@ -118,16 +118,6 @@
                         </Border>
                     </StackPanel>
 
-                    <!-- Email Field -->
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Email"
-                                   FontSize="13"
-                                   FontWeight="Medium"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                        <TextBox Text="{Binding Email}"
-                                 Classes="form-input"
-                                 IsReadOnly="True" />
-                    </StackPanel>
                 </StackPanel>
 
                 <!-- Modal Footer -->

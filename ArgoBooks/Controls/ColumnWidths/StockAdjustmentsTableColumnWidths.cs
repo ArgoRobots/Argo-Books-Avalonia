@@ -1,10 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace ArgoBooks.Controls;
+namespace ArgoBooks.Controls.ColumnWidths;
 
 /// <summary>
 /// Manages column widths for the Stock Adjustments table.
-/// Columns: Date | Reference | Product | Location | Type | Quantity | Previous | New | Reason | User | Actions
+/// Columns: Date | Reference | Product | Location | Type | Quantity | Previous | New | Reason | Actions
 /// </summary>
 public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
 {
@@ -38,16 +38,13 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
     private double _reasonColumnWidth = 160;
 
     [ObservableProperty]
-    private double _userColumnWidth = 100;
-
-    [ObservableProperty]
     private double _actionsColumnWidth = 100;
 
     #endregion
 
     public StockAdjustmentsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Date", "Reference", "Product", "Location", "Type", "Quantity", "Previous", "New", "Reason", "User", "Actions" };
+        ColumnOrder = new[] { "Date", "Reference", "Product", "Location", "Type", "Quantity", "Previous", "New", "Reason", "Actions" };
 
         // Date column
         RegisterColumn("Date", new ColumnDef
@@ -120,14 +117,6 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
             MinWidth = 140,
             PreferredWidth = 160
         }, w => ReasonColumnWidth = w);
-
-        // User column
-        RegisterColumn("User", new ColumnDef
-        {
-            StarValue = 0.8,
-            MinWidth = 80,
-            PreferredWidth = 100
-        }, w => UserColumnWidth = w);
 
         // Actions column (fixed width)
         RegisterColumn("Actions", new ColumnDef

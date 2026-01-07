@@ -231,16 +231,6 @@ public class ChartLoaderService
     private readonly Dictionary<string, ChartExportData> _chartExportDataByTitle = new();
 
     /// <summary>
-    /// Gets or sets whether to use line charts instead of column charts.
-    /// </summary>
-    [Obsolete("Use ChartStyle property instead")]
-    public bool UseLineChart
-    {
-        get => SelectedChartStyle == ChartStyle.Line;
-        set => SelectedChartStyle = value ? ChartStyle.Line : ChartStyle.Column;
-    }
-
-    /// <summary>
     /// Gets or sets the chart style for rendering series.
     /// </summary>
     public ChartStyle SelectedChartStyle { get; set; } = ChartStyle.Line;

@@ -116,7 +116,8 @@
                             IsVisible="{Binding $parent[controls:SearchableDropdown].ShowAddNew}" />
 
                     <!-- Items List -->
-                    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                    <ScrollViewer x:Name="ItemsScrollViewer"
+                                  HorizontalScrollBarVisibility="Disabled"
                                   VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <!-- No Results Message -->
@@ -125,7 +126,42 @@
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        Padding="12,16"
                                        HorizontalAlignment="Center"
-                                       IsVisible="{Binding !$parent[controls:SearchableDropdown].HasFilteredItems}" />
+                                       IsVisible="{Binding !$parent[controls:SearchableDropdown].HasAnyFilteredItems}" />
+
+                            <!-- Priority Items -->
+                            <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredPriorityItems}"
+                                          IsVisible="{Binding $parent[controls:SearchableDropdown].HasFilteredPriorityItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Classes="ghost"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Left"
+                                                Padding="12,10"
+                                                Tag="{Binding}"
+                                                Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
+                                                CommandParameter="{Binding}">
+                                            <Button.Styles>
+                                                <Style Selector="Button.selected /template/ ContentPresenter">
+                                                    <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+                                                </Style>
+                                            </Button.Styles>
+                                            <TextBlock Text="{Binding}" />
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- Separator between priority and regular items -->
+                            <Border Height="1"
+                                    Background="{DynamicResource BorderLightBrush}"
+                                    Margin="12,4">
+                                <Border.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="HasFilteredPriorityItems" RelativeSource="{RelativeSource AncestorType=controls:SearchableDropdown}" />
+                                        <Binding Path="HasFilteredItems" RelativeSource="{RelativeSource AncestorType=controls:SearchableDropdown}" />
+                                    </MultiBinding>
+                                </Border.IsVisible>
+                            </Border>
 
                             <!-- Filtered Items -->
                             <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredItems}">

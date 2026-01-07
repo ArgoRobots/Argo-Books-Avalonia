@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
+using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Data;

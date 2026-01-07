@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Data;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -28,7 +29,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _selectedLanguage = "English";
 
     [ObservableProperty]
-    private string _selectedCurrency = "USD - US Dollar";
+    private string _selectedCurrency = "USD - US Dollar ($)";
 
     [ObservableProperty]
     private string _selectedDateFormat = "MM/DD/YYYY";
@@ -47,27 +48,25 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public int[] MaxPieSlicesOptions { get; } = [4, 5, 6, 7, 8, 10, 12];
 
-    public ObservableCollection<string> Languages { get; } = new()
-    {
-        "English",
-        "French",
-        "Spanish",
-        "German",
-        "Portuguese",
-        "Chinese (Simplified)",
-        "Japanese"
-    };
+    /// <summary>
+    /// Priority/common languages shown at the top of the dropdown.
+    /// </summary>
+    public IReadOnlyList<string> PriorityLanguages => Data.Languages.Priority;
 
-    public ObservableCollection<string> Currencies { get; } = new()
-    {
-        "USD - US Dollar",
-        "CAD - Canadian Dollar",
-        "EUR - Euro",
-        "GBP - British Pound",
-        "AUD - Australian Dollar",
-        "JPY - Japanese Yen",
-        "CNY - Chinese Yuan"
-    };
+    /// <summary>
+    /// Priority/common currencies shown at the top of the dropdown.
+    /// </summary>
+    public IReadOnlyList<string> PriorityCurrencies => Data.Currencies.Priority;
+
+    /// <summary>
+    /// All available languages.
+    /// </summary>
+    public IReadOnlyList<string> Languages => Data.Languages.All;
+
+    /// <summary>
+    /// All available currencies.
+    /// </summary>
+    public IReadOnlyList<string> Currencies => Data.Currencies.All;
 
     public ObservableCollection<string> DateFormats { get; } = new()
     {

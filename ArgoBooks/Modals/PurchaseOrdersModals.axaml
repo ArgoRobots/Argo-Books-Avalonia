@@ -605,16 +605,6 @@
             <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
 
-        <!-- Form DatePicker -->
-        <Style Selector="CalendarDatePicker.form-datepicker">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12,10" />
-            <Setter Property="FontSize" Value="14" />
-        </Style>
-
         <!-- Link Button -->
         <Style Selector="Button.link-button">
             <Setter Property="Background" Value="Transparent" />

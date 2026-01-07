@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:converters="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="550" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.UnsavedChangesDialog"
              x:DataType="vm:UnsavedChangesDialogViewModel"
@@ -14,11 +15,11 @@
 
     <UserControl.Resources>
         <!-- Bool to Angle Converter for expand/collapse arrow -->
-        <vm:BoolToAngleConverter x:Key="BoolToAngleConverter" TrueAngle="90" FalseAngle="0" />
+        <converters:BoolToAngleConverter x:Key="BoolToAngleConverter" TrueAngle="90" FalseAngle="0" />
         <!-- Change Type Converters -->
-        <vm:ChangeTypeToVisibilityConverter x:Key="IsAddedConverter" TargetType="Added" />
-        <vm:ChangeTypeToVisibilityConverter x:Key="IsModifiedConverter" TargetType="Modified" />
-        <vm:ChangeTypeToVisibilityConverter x:Key="IsDeletedConverter" TargetType="Deleted" />
+        <converters:ChangeTypeToVisibilityConverter x:Key="IsAddedConverter" TargetType="Added" />
+        <converters:ChangeTypeToVisibilityConverter x:Key="IsModifiedConverter" TargetType="Modified" />
+        <converters:ChangeTypeToVisibilityConverter x:Key="IsDeletedConverter" TargetType="Deleted" />
     </UserControl.Resources>
 
     <!-- Modal Overlay -->

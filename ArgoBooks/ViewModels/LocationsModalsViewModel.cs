@@ -23,6 +23,11 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? LocationDeleted;
 
+    /// <summary>
+    /// Raised when filters are applied.
+    /// </summary>
+    public event EventHandler<LocationsFilterAppliedEventArgs>? FiltersApplied;
+
     #endregion
 
     #region Modal State
@@ -413,6 +418,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ApplyFilters()
     {
+        FiltersApplied?.Invoke(this, new LocationsFilterAppliedEventArgs(FilterType, FilterStatus));
         CloseFilterModal();
     }
 
@@ -463,4 +469,19 @@ public partial class LocationsModalsViewModel : ViewModelBase
     }
 
     #endregion
+}
+
+/// <summary>
+/// Event args for filter applied events.
+/// </summary>
+public class LocationsFilterAppliedEventArgs : EventArgs
+{
+    public string Type { get; }
+    public string Status { get; }
+
+    public LocationsFilterAppliedEventArgs(string type, string status)
+    {
+        Type = type;
+        Status = status;
+    }
 }
