@@ -215,12 +215,6 @@ public partial class NotificationPanelViewModel : ViewModelBase
 
         // Close the panel
         Close();
-
-        // TODO: Navigate to the notification's action route if set
-        if (!string.IsNullOrEmpty(notification.ActionRoute))
-        {
-            // _navigationService?.NavigateTo(notification.ActionRoute, notification.ActionParameters);
-        }
     }
 
     /// <summary>
