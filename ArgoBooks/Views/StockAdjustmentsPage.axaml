@@ -837,12 +837,22 @@
                     <StackPanel Spacing="16" Margin="24">
                         <!-- Date Range -->
                         <Grid ColumnDefinitions="*,16,*">
-                            <controls:ArgoDatePicker Grid.Column="0"
-                                                     Label="From Date"
-                                                     SelectedDate="{Binding StartDate}" />
-                            <controls:ArgoDatePicker Grid.Column="2"
-                                                     Label="To Date"
-                                                     SelectedDate="{Binding EndDate}" />
+                            <StackPanel Grid.Column="0" Spacing="8">
+                                <TextBlock Text="From Date"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <CalendarDatePicker SelectedDate="{Binding StartDate}"
+                                                    HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="8">
+                                <TextBlock Text="To Date"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <CalendarDatePicker SelectedDate="{Binding EndDate}"
+                                                    HorizontalAlignment="Stretch" />
+                            </StackPanel>
                         </Grid>
 
                         <!-- Location -->
