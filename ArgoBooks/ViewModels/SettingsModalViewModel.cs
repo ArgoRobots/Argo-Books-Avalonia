@@ -28,7 +28,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _selectedLanguage = "English";
 
     [ObservableProperty]
-    private string _selectedCurrency = "USD - US Dollar";
+    private string _selectedCurrency = "USD - US Dollar ($)";
 
     [ObservableProperty]
     private string _selectedDateFormat = "MM/DD/YYYY";
@@ -49,24 +49,92 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     public ObservableCollection<string> Languages { get; } = new()
     {
-        "English",
-        "French",
-        "Spanish",
-        "German",
-        "Portuguese",
+        "Albanian",
+        "Arabic",
+        "Basque",
+        "Belarusian",
+        "Bengali",
+        "Bosnian",
+        "Bulgarian",
+        "Catalan",
         "Chinese (Simplified)",
-        "Japanese"
+        "Chinese (Traditional)",
+        "Croatian",
+        "Czech",
+        "Danish",
+        "Dutch",
+        "English",
+        "Estonian",
+        "Filipino",
+        "Finnish",
+        "French",
+        "Galician",
+        "German",
+        "Greek",
+        "Hebrew",
+        "Hindi",
+        "Hungarian",
+        "Icelandic",
+        "Indonesian",
+        "Irish",
+        "Italian",
+        "Japanese",
+        "Korean",
+        "Latvian",
+        "Lithuanian",
+        "Luxembourgish",
+        "Macedonian",
+        "Malay",
+        "Maltese",
+        "Norwegian",
+        "Persian",
+        "Polish",
+        "Portuguese",
+        "Romanian",
+        "Russian",
+        "Serbian",
+        "Slovak",
+        "Slovenian",
+        "Spanish",
+        "Swahili",
+        "Swedish",
+        "Thai",
+        "Turkish",
+        "Ukrainian",
+        "Urdu",
+        "Vietnamese"
     };
 
     public ObservableCollection<string> Currencies { get; } = new()
     {
-        "USD - US Dollar",
-        "CAD - Canadian Dollar",
-        "EUR - Euro",
-        "GBP - British Pound",
-        "AUD - Australian Dollar",
-        "JPY - Japanese Yen",
-        "CNY - Chinese Yuan"
+        "ALL - Albanian Lek (L)",
+        "AUD - Australian Dollar ($)",
+        "BAM - Bosnia-Herzegovina Mark (KM)",
+        "BGN - Bulgarian Lev (лв)",
+        "BRL - Brazilian Real (R$)",
+        "BYN - Belarusian Ruble (Br)",
+        "CAD - Canadian Dollar ($)",
+        "CHF - Swiss Franc (CHF)",
+        "CNY - Chinese Yuan (¥)",
+        "CZK - Czech Koruna (Kč)",
+        "DKK - Danish Krone (kr)",
+        "EUR - Euro (€)",
+        "GBP - British Pound (£)",
+        "HUF - Hungarian Forint (Ft)",
+        "ISK - Icelandic Króna (kr)",
+        "JPY - Japanese Yen (¥)",
+        "KRW - South Korean Won (₩)",
+        "MKD - Macedonian Denar (ден)",
+        "NOK - Norwegian Krone (kr)",
+        "PLN - Polish Złoty (zł)",
+        "RON - Romanian Leu (lei)",
+        "RSD - Serbian Dinar (дин)",
+        "RUB - Russian Ruble (₽)",
+        "SEK - Swedish Krona (kr)",
+        "TRY - Turkish Lira (₺)",
+        "TWD - Taiwan Dollar (NT$)",
+        "UAH - Ukrainian Hryvnia (₴)",
+        "USD - US Dollar ($)"
     };
 
     public ObservableCollection<string> DateFormats { get; } = new()

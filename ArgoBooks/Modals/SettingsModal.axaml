@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.SettingsModal"
              x:DataType="vm:SettingsModalViewModel">
@@ -82,9 +83,9 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding Languages}"
-                                              SelectedItem="{Binding SelectedLanguage}"
-                                              Classes="form-combobox" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding Languages}"
+                                                                  SelectedItem="{Binding SelectedLanguage}"
+                                                                  Placeholder="Search languages..." />
                                 </StackPanel>
 
                                 <!-- Currency -->
@@ -93,9 +94,9 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding Currencies}"
-                                              SelectedItem="{Binding SelectedCurrency}"
-                                              Classes="form-combobox" />
+                                    <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
+                                                                  SelectedItem="{Binding SelectedCurrency}"
+                                                                  Placeholder="Search currencies..." />
                                 </StackPanel>
 
                                 <!-- Date Format -->
