@@ -157,8 +157,13 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         var normalizedPath = _platformService.NormalizePath(filePath);
         var recentCompanies = _globalSettings.RecentCompanies;
 
-        // Remove existing entry if present
-        recentCompanies.Remove(normalizedPath);
+        // Remove existing entry if present (using platform-appropriate comparison)
+        var existingIndex = recentCompanies.FindIndex(p =>
+            _platformService.PathComparer.Equals(p, normalizedPath));
+        if (existingIndex >= 0)
+        {
+            recentCompanies.RemoveAt(existingIndex);
+        }
 
         // Add to the beginning
         recentCompanies.Insert(0, normalizedPath);
@@ -177,7 +182,15 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         ArgumentException.ThrowIfNullOrEmpty(filePath);
 
         var normalizedPath = _platformService.NormalizePath(filePath);
-        _globalSettings.RecentCompanies.Remove(normalizedPath);
+        var recentCompanies = _globalSettings.RecentCompanies;
+
+        // Remove using platform-appropriate comparison
+        var existingIndex = recentCompanies.FindIndex(p =>
+            _platformService.PathComparer.Equals(p, normalizedPath));
+        if (existingIndex >= 0)
+        {
+            recentCompanies.RemoveAt(existingIndex);
+        }
     }
 
     /// <inheritdoc />
@@ -198,14 +211,17 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
             return _globalSettings.RecentCompanies.AsReadOnly();
         }
 
+        // Filter to existing files and deduplicate using platform-appropriate comparison
+        // (handles case-insensitive duplicates on Windows)
         return _globalSettings.RecentCompanies
             .Where(File.Exists)
+            .Distinct(_platformService.PathComparer)
             .ToList()
             .AsReadOnly();
     }
 
     /// <summary>
-    /// Removes recent companies that no longer exist on disk.
+    /// Removes recent companies that no longer exist on disk and deduplicates entries.
     /// </summary>
     /// <returns>Number of entries removed.</returns>
     public int CleanupRecentCompanies()
@@ -213,16 +229,36 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
         if (!_platformService.SupportsFileSystem)
             return 0;
 
-        var toRemove = _globalSettings.RecentCompanies
+        var recentCompanies = _globalSettings.RecentCompanies;
+        var originalCount = recentCompanies.Count;
+
+        // Remove entries where file doesn't exist
+        var toRemove = recentCompanies
             .Where(path => !File.Exists(path))
             .ToList();
 
         foreach (var path in toRemove)
         {
-            _globalSettings.RecentCompanies.Remove(path);
+            recentCompanies.Remove(path);
         }
 
-        return toRemove.Count;
+        // Remove case-insensitive duplicates (keep first occurrence)
+        var seen = new HashSet<string>(_platformService.PathComparer);
+        var duplicateIndices = new List<int>();
+        for (var i = 0; i < recentCompanies.Count; i++)
+        {
+            if (!seen.Add(recentCompanies[i]))
+            {
+                duplicateIndices.Add(i);
+            }
+        }
+        // Remove in reverse order to preserve indices
+        for (var i = duplicateIndices.Count - 1; i >= 0; i--)
+        {
+            recentCompanies.RemoveAt(duplicateIndices[i]);
+        }
+
+        return originalCount - recentCompanies.Count;
     }
 
     /// <summary>

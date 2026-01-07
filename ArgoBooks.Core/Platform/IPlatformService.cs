@@ -105,6 +105,12 @@ public interface IPlatformService
     /// </summary>
     /// <param name="iconPath">Path to the application icon file.</param>
     void RegisterFileTypeAssociations(string iconPath);
+
+    /// <summary>
+    /// Gets the string comparer appropriate for file paths on this platform.
+    /// Windows uses case-insensitive comparison, other platforms use case-sensitive.
+    /// </summary>
+    StringComparer PathComparer { get; }
 }
 
 /// <summary>
