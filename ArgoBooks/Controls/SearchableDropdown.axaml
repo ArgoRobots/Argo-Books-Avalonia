@@ -125,14 +125,8 @@
                                        FontSize="{StaticResource FontSizeSm}"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        Padding="12,16"
-                                       HorizontalAlignment="Center">
-                                <TextBlock.IsVisible>
-                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                        <Binding Path="!HasFilteredItems" RelativeSource="{RelativeSource AncestorType=controls:SearchableDropdown}" />
-                                        <Binding Path="!HasFilteredPriorityItems" RelativeSource="{RelativeSource AncestorType=controls:SearchableDropdown}" />
-                                    </MultiBinding>
-                                </TextBlock.IsVisible>
-                            </TextBlock>
+                                       HorizontalAlignment="Center"
+                                       IsVisible="{Binding !HasAnyFilteredItems, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
 
                             <!-- Priority Items -->
                             <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredPriorityItems}"

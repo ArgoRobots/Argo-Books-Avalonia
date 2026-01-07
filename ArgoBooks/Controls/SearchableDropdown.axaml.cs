@@ -261,6 +261,11 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public bool HasFilteredItems => FilteredItems.Count > 0;
 
     /// <summary>
+    /// Gets whether there are any filtered items (priority or regular) to display.
+    /// </summary>
+    public bool HasAnyFilteredItems => FilteredItems.Count > 0 || FilteredPriorityItems.Count > 0;
+
+    /// <summary>
     /// Gets whether the items source has any items.
     /// </summary>
     public bool HasItems => ItemsSource?.Cast<object>().Any() == true;
@@ -601,6 +606,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         // Notify property changed for computed properties
         RaisePropertyChanged(nameof(HasFilteredItems));
         RaisePropertyChanged(nameof(HasFilteredPriorityItems));
+        RaisePropertyChanged(nameof(HasAnyFilteredItems));
         RaisePropertyChanged(nameof(HasItems));
         RaisePropertyChanged(nameof(ShowEmptyCreate));
     }
