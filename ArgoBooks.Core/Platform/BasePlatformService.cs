@@ -94,6 +94,9 @@ public abstract class BasePlatformService : IPlatformService
         // Platform-specific implementations (Windows) should override this
     }
 
+    /// <inheritdoc />
+    public virtual StringComparer PathComparer => StringComparer.Ordinal;
+
     /// <summary>
     /// Gets the application name used in paths.
     /// </summary>
