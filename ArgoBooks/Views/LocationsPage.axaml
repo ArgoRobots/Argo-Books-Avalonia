@@ -566,6 +566,7 @@
             <Border Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     Width="480"
+                    MaxHeight="400"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
