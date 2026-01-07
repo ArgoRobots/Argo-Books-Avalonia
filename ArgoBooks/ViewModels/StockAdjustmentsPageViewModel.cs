@@ -171,8 +171,8 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private void OnFiltersApplied(object? sender, AdjustmentsFilterAppliedEventArgs e)
     {
-        StartDate = e.StartDate;
-        EndDate = e.EndDate;
+        StartDate = e.StartDate?.DateTime;
+        EndDate = e.EndDate?.DateTime;
         FilterProduct = e.Product;
         // Note: FilterType maps to adjustment type filter
         CurrentPage = 1;
