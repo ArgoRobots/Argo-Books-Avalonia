@@ -149,92 +149,92 @@ public partial class App : Application
     /// <summary>
     /// Gets the shared column widths for the Revenue table.
     /// </summary>
-    public static Controls.RevenueTableColumnWidths RevenueColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.RevenueTableColumnWidths RevenueColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Expenses table.
     /// </summary>
-    public static Controls.TableColumnWidths ExpensesColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.TableColumnWidths ExpensesColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Invoices table.
     /// </summary>
-    public static Controls.InvoicesTableColumnWidths InvoicesColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.InvoicesTableColumnWidths InvoicesColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Customers table.
     /// </summary>
-    public static Controls.CustomersTableColumnWidths CustomersColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.CustomersTableColumnWidths CustomersColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Suppliers table.
     /// </summary>
-    public static Controls.SuppliersTableColumnWidths SuppliersColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.SuppliersTableColumnWidths SuppliersColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Products table.
     /// </summary>
-    public static Controls.ProductsTableColumnWidths ProductsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.ProductsTableColumnWidths ProductsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Categories table.
     /// </summary>
-    public static Controls.CategoriesTableColumnWidths CategoriesColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.CategoriesTableColumnWidths CategoriesColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Stock Levels table.
     /// </summary>
-    public static Controls.StockLevelsTableColumnWidths StockLevelsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.StockLevelsTableColumnWidths StockLevelsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Departments table.
     /// </summary>
-    public static Controls.DepartmentsTableColumnWidths DepartmentsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.DepartmentsTableColumnWidths DepartmentsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Payments table.
     /// </summary>
-    public static Controls.PaymentsTableColumnWidths PaymentsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.PaymentsTableColumnWidths PaymentsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Receipts table.
     /// </summary>
-    public static Controls.ReceiptsTableColumnWidths ReceiptsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.ReceiptsTableColumnWidths ReceiptsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Returns table.
     /// </summary>
-    public static Controls.ReturnsTableColumnWidths ReturnsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.ReturnsTableColumnWidths ReturnsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Lost/Damaged table.
     /// </summary>
-    public static Controls.LostDamagedTableColumnWidths LostDamagedColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.LostDamagedTableColumnWidths LostDamagedColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Rental Records table.
     /// </summary>
-    public static Controls.RentalRecordsTableColumnWidths RentalRecordsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.RentalRecordsTableColumnWidths RentalRecordsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Rental Inventory table.
     /// </summary>
-    public static Controls.RentalInventoryTableColumnWidths RentalInventoryColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.RentalInventoryTableColumnWidths RentalInventoryColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Locations table.
     /// </summary>
-    public static Controls.LocationsTableColumnWidths LocationsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.LocationsTableColumnWidths LocationsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Stock Adjustments table.
     /// </summary>
-    public static Controls.StockAdjustmentsTableColumnWidths StockAdjustmentsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.StockAdjustmentsTableColumnWidths StockAdjustmentsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Purchase Orders table.
     /// </summary>
-    public static Controls.PurchaseOrdersTableColumnWidths PurchaseOrdersColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.PurchaseOrdersTableColumnWidths PurchaseOrdersColumnWidths { get; } = new();
 
     #endregion
 
