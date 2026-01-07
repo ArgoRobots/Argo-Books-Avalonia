@@ -207,7 +207,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         // Update location options
         LocationOptions.Clear();
         LocationOptions.Add("All");
-        var locations = companyData.Locations?.Select(l => l.Name).Distinct().OrderBy(n => n) ?? [];
+        var locations = companyData.Locations?.Select(l => l.Name).Distinct().OrderBy(n => n).ToList() ?? new List<string>();
         foreach (var location in locations)
         {
             LocationOptions.Add(location);
@@ -216,7 +216,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         // Update product options
         ProductOptions.Clear();
         ProductOptions.Add("All");
-        var products = companyData.Products?.Select(p => p.Name).Distinct().OrderBy(n => n) ?? [];
+        var products = companyData.Products?.Select(p => p.Name).Distinct().OrderBy(n => n).ToList() ?? new List<string>();
         foreach (var product in products)
         {
             ProductOptions.Add(product);
@@ -387,8 +387,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
                     ["Reason"] = a => a.Reason,
                     ["User"] = a => a.UserDisplay
                 },
-                a => a.Date,
-                defaultDescending: true);
+                a => a.Date);
         }
 
         // Calculate pagination

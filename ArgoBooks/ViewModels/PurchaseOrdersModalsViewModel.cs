@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
@@ -317,7 +318,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         CloseAddModal();
     }
 
-    private void SaveNewOrder(dynamic companyData, decimal shipping)
+    private void SaveNewOrder(CompanyData companyData, decimal shipping)
     {
         // Generate ID
         companyData.IdCounters.PurchaseOrder++;
@@ -374,7 +375,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             }));
     }
 
-    private void SaveEditedOrder(dynamic companyData, decimal shipping)
+    private void SaveEditedOrder(CompanyData companyData, decimal shipping)
     {
         var order = companyData.PurchaseOrders?.FirstOrDefault(o => o.Id == EditingOrderId);
         if (order == null) return;
@@ -801,7 +802,7 @@ public partial class OrderLineItemViewModel : ObservableObject
             {
                 ProductId = value.Id;
                 ProductName = value.Name;
-                UnitCost = value.Cost.ToString("F2");
+                UnitCost = value.CostPrice.ToString("F2");
                 OnPropertyChanged();
             }
         }

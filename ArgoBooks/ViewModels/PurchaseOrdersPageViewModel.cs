@@ -209,7 +209,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         // Update supplier options
         SupplierOptions.Clear();
         SupplierOptions.Add("All");
-        var suppliers = companyData.Suppliers?.Select(s => s.Name).Distinct().OrderBy(n => n) ?? [];
+        var suppliers = companyData.Suppliers?.Select(s => s.Name).Distinct().OrderBy(n => n).ToList() ?? new List<string>();
         foreach (var supplier in suppliers)
         {
             SupplierOptions.Add(supplier);
@@ -375,8 +375,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                     ["Status"] = o => o.StatusDisplay,
                     ["Expected"] = o => o.ExpectedDeliveryDate
                 },
-                o => o.OrderDate,
-                defaultDescending: true);
+                o => o.OrderDate);
         }
 
         // Calculate pagination
