@@ -111,27 +111,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Column Visibility Menu -->
-                    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
-                                                    MenuX="{Binding ColumnMenuX}"
-                                                    MenuY="{Binding ColumnMenuY}"
-                                                    CloseCommand="{Binding CloseColumnMenuCommand}">
-                        <controls:ColumnVisibilityMenu.ColumnsContent>
-                            <StackPanel Spacing="4">
-                                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="ID" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowAccountantColumn}" Content="Accountant" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowItemColumn}" Content="Item" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="Customer" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="Qty" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowStartDateColumn}" Content="Start Date" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowDueDateColumn}" Content="Due Date" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="Total" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowDepositColumn}" Content="Deposit" Classes="column-toggle" />
-                            </StackPanel>
-                        </controls:ColumnVisibilityMenu.ColumnsContent>
-                    </controls:ColumnVisibilityMenu>
-
                     <!-- Table Content -->
                     <ScrollViewer Grid.Row="1"
                                   x:Name="HorizontalTableScroll"
@@ -575,6 +554,27 @@
             </Border>
         </Grid>
     </Grid>
+
+    <!-- Column Visibility Menu -->
+    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                    MenuX="{Binding ColumnMenuX}"
+                                    MenuY="{Binding ColumnMenuY}"
+                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+        <controls:ColumnVisibilityMenu.ColumnsContent>
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="ID" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAccountantColumn}" Content="Accountant" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowItemColumn}" Content="Item" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="Customer" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="Qty" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStartDateColumn}" Content="Start Date" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDueDateColumn}" Content="Due Date" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="Total" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDepositColumn}" Content="Deposit" Classes="column-toggle" />
+            </StackPanel>
+        </controls:ColumnVisibilityMenu.ColumnsContent>
+    </controls:ColumnVisibilityMenu>
     </Panel>
 
     <UserControl.Styles>

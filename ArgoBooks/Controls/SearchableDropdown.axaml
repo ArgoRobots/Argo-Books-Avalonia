@@ -154,14 +154,8 @@
                             <!-- Separator between priority and regular items -->
                             <Border Height="1"
                                     Background="{DynamicResource BorderLightBrush}"
-                                    Margin="12,4">
-                                <Border.IsVisible>
-                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
-                                        <Binding Path="HasFilteredPriorityItems" RelativeSource="{RelativeSource AncestorType=controls:SearchableDropdown}" />
-                                        <Binding Path="HasFilteredItems" RelativeSource="{RelativeSource AncestorType=controls:SearchableDropdown}" />
-                                    </MultiBinding>
-                                </Border.IsVisible>
-                            </Border>
+                                    Margin="12,4"
+                                    IsVisible="{Binding $parent[controls:SearchableDropdown].ShowPrioritySeparator}" />
 
                             <!-- Filtered Items -->
                             <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredItems}">

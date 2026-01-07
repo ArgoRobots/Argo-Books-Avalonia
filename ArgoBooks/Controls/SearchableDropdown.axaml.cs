@@ -266,6 +266,11 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     public bool HasAnyFilteredItems => FilteredItems.Count > 0 || FilteredPriorityItems.Count > 0;
 
     /// <summary>
+    /// Gets whether to show the separator between priority and regular items.
+    /// </summary>
+    public bool ShowPrioritySeparator => HasFilteredPriorityItems && HasFilteredItems;
+
+    /// <summary>
     /// Gets whether the items source has any items.
     /// </summary>
     public bool HasItems => ItemsSource?.Cast<object>().Any() == true;
@@ -607,6 +612,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         RaisePropertyChanged(nameof(HasFilteredItems));
         RaisePropertyChanged(nameof(HasFilteredPriorityItems));
         RaisePropertyChanged(nameof(HasAnyFilteredItems));
+        RaisePropertyChanged(nameof(ShowPrioritySeparator));
         RaisePropertyChanged(nameof(HasItems));
         RaisePropertyChanged(nameof(ShowEmptyCreate));
     }
