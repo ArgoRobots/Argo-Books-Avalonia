@@ -79,7 +79,6 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     private string? _modalRateError;
 
     private RentalRecord? _editingRecord;
-    private RentalRecordDisplayItem? _deletingRecord;
 
     partial void OnModalItemChanged(RentalItemOption? value)
     {

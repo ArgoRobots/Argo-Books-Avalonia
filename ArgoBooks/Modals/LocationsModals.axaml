@@ -266,60 +266,6 @@
             </Border>
         </Panel>
 
-        <!-- Delete Confirmation Modal -->
-        <Panel IsVisible="{Binding IsDeleteConfirmOpen}">
-            <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1" CornerRadius="12" Width="400"
-                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
-                <StackPanel Margin="24" Spacing="16">
-                    <!-- Warning Icon -->
-                    <Border Width="48" Height="48"
-                            CornerRadius="24"
-                            Background="#FEE2E2"
-                            HorizontalAlignment="Center">
-                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                                  Width="24" Height="24"
-                                  Foreground="#DC2626" />
-                    </Border>
-
-                    <!-- Title -->
-                    <TextBlock Text="Delete Location"
-                               FontSize="18"
-                               FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}"
-                               HorizontalAlignment="Center" />
-
-                    <!-- Message -->
-                    <TextBlock TextWrapping="Wrap"
-                               TextAlignment="Center"
-                               FontSize="14"
-                               Foreground="{DynamicResource TextSecondaryBrush}">
-                        <Run Text="Are you sure you want to delete" />
-                        <Run Text="{Binding DeletingLocationName}" FontWeight="SemiBold" />
-                        <Run Text="? This action cannot be undone." />
-                    </TextBlock>
-
-                    <!-- Buttons -->
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Center"
-                                Spacing="12"
-                                Margin="0,8,0,0">
-                        <Button Classes="secondary-button"
-                                Content="Cancel"
-                                Command="{Binding CloseDeleteConfirmCommand}"
-                                Width="100" />
-                        <Button Classes="danger-button"
-                                Content="Delete"
-                                Command="{Binding ConfirmDeleteCommand}"
-                                Width="100" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Panel>
-
         <!-- Filter Modal -->
         <Panel IsVisible="{Binding IsFilterModalOpen}">
             <Border Background="#80000000" />

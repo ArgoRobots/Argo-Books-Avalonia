@@ -327,7 +327,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = "Delete Stock Adjustment",
-            Message = $"Are you sure you want to delete this stock adjustment?\n\nProduct: {item.ProductName}\nQuantity: {item.QuantityChange}",
+            Message = $"Are you sure you want to delete this stock adjustment?\n\nProduct: {item.ProductName}\nQuantity: {item.Quantity}",
             PrimaryButtonText = "Delete",
             CancelButtonText = "Cancel",
             IsPrimaryDestructive = true

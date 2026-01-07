@@ -720,7 +720,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = "Delete Purchase Order",
-            Message = $"Are you sure you want to delete this purchase order?\n\nPO #: {item.PoNumber}\nTotal: {item.TotalFormatted}",
+            Message = $"Are you sure you want to delete this purchase order?\n\nPO #: {item.PoNumber}\nTotal: {item.TotalDisplay}",
             PrimaryButtonText = "Delete",
             CancelButtonText = "Cancel",
             IsPrimaryDestructive = true

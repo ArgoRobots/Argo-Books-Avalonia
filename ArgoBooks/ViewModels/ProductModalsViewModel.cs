@@ -104,11 +104,6 @@ public partial class ProductModalsViewModel : ObservableObject
     private Product? _editingProduct;
 
     /// <summary>
-    /// The product being deleted.
-    /// </summary>
-    private ProductDisplayItem? _deletingProduct;
-
-    /// <summary>
     /// Whether we're in expenses tab (purchase) or revenue tab (sales).
     /// </summary>
     private bool _isExpensesTab = true;

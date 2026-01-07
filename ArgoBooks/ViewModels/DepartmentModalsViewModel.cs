@@ -38,13 +38,6 @@ public partial class DepartmentModalsViewModel : ObservableObject
     private string? _modalDepartmentNameError;
 
     private Department? _editingDepartment;
-    private DepartmentDisplayItem? _deletingDepartment;
-
-    #endregion
-
-    #region Delete Properties
-
-    public string DeletingDepartmentName => _deletingDepartment?.Name ?? string.Empty;
 
     #endregion
 

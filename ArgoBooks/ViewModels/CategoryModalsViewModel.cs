@@ -52,7 +52,6 @@ public partial class CategoryModalsViewModel : ObservableObject
     private bool _deleteSubcategories;
 
     private Category? _editingCategory;
-    private CategoryDisplayItem? _deletingCategory;
     private CategoryDisplayItem? _addingSubCategoryParent;
     private CategoryDisplayItem? _movingCategory;
     private bool _isExpensesTab = true;
@@ -80,21 +79,6 @@ public partial class CategoryModalsViewModel : ObservableObject
 
     #endregion
 
-    #region Delete Properties
-
-    public string DeletingCategoryName => _deletingCategory?.Name ?? string.Empty;
-
-    public bool DeletingCategoryHasChildren
-    {
-        get
-        {
-            if (_deletingCategory == null) return false;
-            var companyData = App.CompanyManager?.CompanyData;
-            return companyData?.Categories.Any(c => c.ParentId == _deletingCategory.Id) ?? false;
-        }
-    }
-
-    #endregion
 
     #region Dropdown Options
 

@@ -17,8 +17,6 @@ public partial class InvoiceModals : UserControl
         {
             if (vm.IsCreateEditModalOpen)
                 vm.CloseCreateEditModalCommand.Execute(null);
-            else if (vm.IsDeleteConfirmOpen)
-                vm.CloseDeleteConfirmCommand.Execute(null);
             else if (vm.IsFilterModalOpen)
                 vm.CloseFilterModalCommand.Execute(null);
             else if (vm.IsHistoryModalOpen)

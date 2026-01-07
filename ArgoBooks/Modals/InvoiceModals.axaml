@@ -317,67 +317,6 @@
             </Border>
         </Panel>
 
-        <!-- ======================= DELETE CONFIRMATION MODAL ======================= -->
-        <Panel IsVisible="{Binding IsDeleteConfirmOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <Border HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Width="400"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
-                <StackPanel Spacing="16" Margin="24">
-                    <!-- Icon and Title -->
-                    <StackPanel Spacing="16" HorizontalAlignment="Center">
-                        <Border Width="56" Height="56"
-                                CornerRadius="28"
-                                Background="#FEE2E2"
-                                HorizontalAlignment="Center">
-                            <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
-                                      Width="24" Height="24"
-                                      Foreground="#DC2626" />
-                        </Border>
-                        <TextBlock Text="Delete Invoice"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                   HorizontalAlignment="Center" />
-                    </StackPanel>
-
-                    <!-- Message -->
-                    <TextBlock TextWrapping="Wrap"
-                               TextAlignment="Center"
-                               FontSize="14"
-                               Foreground="{DynamicResource TextSecondaryBrush}">
-                        <Run Text="Are you sure you want to delete invoice " />
-                        <Run Text="{Binding DeleteInvoiceId}" FontWeight="SemiBold" />
-                        <Run Text=" for " />
-                        <Run Text="{Binding DeleteInvoiceAmount}" FontWeight="SemiBold" />
-                        <Run Text="? This action cannot be undone." />
-                    </TextBlock>
-
-                    <!-- Buttons -->
-                    <Grid ColumnDefinitions="*,*" Margin="0,8,0,0">
-                        <Button Grid.Column="0"
-                                Classes="secondary-button"
-                                Content="Cancel"
-                                Margin="0,0,6,0"
-                                HorizontalAlignment="Stretch"
-                                Command="{Binding CloseDeleteConfirmCommand}" />
-                        <Button Grid.Column="1"
-                                Classes="danger-button"
-                                Content="Delete"
-                                Margin="6,0,0,0"
-                                HorizontalAlignment="Stretch"
-                                Command="{Binding DeleteInvoiceCommand}" />
-                    </Grid>
-                </StackPanel>
-            </Border>
-        </Panel>
-
         <!-- ======================= FILTER MODAL ======================= -->
         <Panel IsVisible="{Binding IsFilterModalOpen}">
             <!-- Overlay -->

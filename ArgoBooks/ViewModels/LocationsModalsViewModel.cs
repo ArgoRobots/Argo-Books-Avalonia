@@ -87,11 +87,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// </summary>
     private Location? _editingLocation;
 
-    /// <summary>
-    /// The location being deleted.
-    /// </summary>
-    private LocationDisplayItem? _deletingLocation;
-
     #endregion
 
     #region Dropdown Options

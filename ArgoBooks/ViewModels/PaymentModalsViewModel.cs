@@ -62,11 +62,6 @@ public partial class PaymentModalsViewModel : ObservableObject
     /// </summary>
     private Payment? _editingPayment;
 
-    /// <summary>
-    /// The payment being deleted.
-    /// </summary>
-    private PaymentDisplayItem? _deletingPayment;
-
     #endregion
 
     #region Filter Fields

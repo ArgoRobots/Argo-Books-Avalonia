@@ -70,7 +70,6 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     private string? _modalDailyRateError;
 
     private RentalItem? _editingItem;
-    private RentalItemDisplayItem? _deletingItem;
 
     #endregion
 

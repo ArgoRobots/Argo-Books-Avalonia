@@ -544,7 +544,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         {
             historyItems.Add(new CustomerHistoryItem
             {
-                Date = payment.PaymentDate,
+                Date = payment.Date,
                 Type = "Payment",
                 Description = $"Payment - {payment.PaymentMethod}",
                 Amount = -payment.Amount, // Negative because it reduces balance
@@ -553,7 +553,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         }
 
         // Add rentals
-        var rentals = companyData.RentalRecords?.Where(r => r.CustomerId == customerId) ?? [];
+        var rentals = companyData.Rentals?.Where(r => r.CustomerId == customerId) ?? [];
         foreach (var rental in rentals)
         {
             var product = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.ItemId);
@@ -571,7 +571,8 @@ public partial class CustomerModalsViewModel : ObservableObject
         var returns = companyData.Returns?.Where(r => r.CustomerId == customerId) ?? [];
         foreach (var returnItem in returns)
         {
-            var product = companyData.Products?.FirstOrDefault(p => p.Id == returnItem.ProductId);
+            var firstItem = returnItem.Items?.FirstOrDefault();
+            var product = firstItem != null ? companyData.Products?.FirstOrDefault(p => p.Id == firstItem.ProductId) : null;
             historyItems.Add(new CustomerHistoryItem
             {
                 Date = returnItem.ReturnDate,

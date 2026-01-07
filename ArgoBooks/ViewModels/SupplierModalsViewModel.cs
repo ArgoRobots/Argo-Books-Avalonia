@@ -70,7 +70,6 @@ public partial class SupplierModalsViewModel : ObservableObject
     private string? _modalEmailError;
 
     private Supplier? _editingSupplier;
-    private SupplierDisplayItem? _deletingSupplier;
 
     #endregion
 
@@ -84,12 +83,6 @@ public partial class SupplierModalsViewModel : ObservableObject
 
     public ObservableCollection<string> CountryOptions { get; } = ["All"];
     public ObservableCollection<string> StatusOptions { get; } = ["All", "Active", "Inactive"];
-
-    #endregion
-
-    #region Delete Properties
-
-    public string DeletingSupplierName => _deletingSupplier?.Name ?? string.Empty;
 
     #endregion
 
