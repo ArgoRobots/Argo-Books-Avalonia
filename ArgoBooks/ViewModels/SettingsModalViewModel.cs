@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Data;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -50,108 +51,22 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <summary>
     /// Priority/common languages shown at the top of the dropdown.
     /// </summary>
-    public string[] PriorityLanguages { get; } = ["English", "French", "German", "Italian"];
+    public IReadOnlyList<string> PriorityLanguages => Data.Languages.Priority;
 
     /// <summary>
     /// Priority/common currencies shown at the top of the dropdown.
     /// </summary>
-    public string[] PriorityCurrencies { get; } =
-    [
-        "USD - US Dollar ($)",
-        "EUR - Euro (€)",
-        "CAD - Canadian Dollar ($)",
-        "AUD - Australian Dollar ($)"
-    ];
+    public IReadOnlyList<string> PriorityCurrencies => Data.Currencies.Priority;
 
-    public ObservableCollection<string> Languages { get; } = new()
-    {
-        "Albanian",
-        "Arabic",
-        "Basque",
-        "Belarusian",
-        "Bengali",
-        "Bosnian",
-        "Bulgarian",
-        "Catalan",
-        "Chinese (Simplified)",
-        "Chinese (Traditional)",
-        "Croatian",
-        "Czech",
-        "Danish",
-        "Dutch",
-        "English",
-        "Estonian",
-        "Filipino",
-        "Finnish",
-        "French",
-        "Galician",
-        "German",
-        "Greek",
-        "Hebrew",
-        "Hindi",
-        "Hungarian",
-        "Icelandic",
-        "Indonesian",
-        "Irish",
-        "Italian",
-        "Japanese",
-        "Korean",
-        "Latvian",
-        "Lithuanian",
-        "Luxembourgish",
-        "Macedonian",
-        "Malay",
-        "Maltese",
-        "Norwegian",
-        "Persian",
-        "Polish",
-        "Portuguese",
-        "Romanian",
-        "Russian",
-        "Serbian",
-        "Slovak",
-        "Slovenian",
-        "Spanish",
-        "Swahili",
-        "Swedish",
-        "Thai",
-        "Turkish",
-        "Ukrainian",
-        "Urdu",
-        "Vietnamese"
-    };
+    /// <summary>
+    /// All available languages.
+    /// </summary>
+    public IReadOnlyList<string> Languages => Data.Languages.All;
 
-    public ObservableCollection<string> Currencies { get; } = new()
-    {
-        "ALL - Albanian Lek (L)",
-        "AUD - Australian Dollar ($)",
-        "BAM - Bosnia-Herzegovina Mark (KM)",
-        "BGN - Bulgarian Lev (лв)",
-        "BRL - Brazilian Real (R$)",
-        "BYN - Belarusian Ruble (Br)",
-        "CAD - Canadian Dollar ($)",
-        "CHF - Swiss Franc (CHF)",
-        "CNY - Chinese Yuan (¥)",
-        "CZK - Czech Koruna (Kč)",
-        "DKK - Danish Krone (kr)",
-        "EUR - Euro (€)",
-        "GBP - British Pound (£)",
-        "HUF - Hungarian Forint (Ft)",
-        "ISK - Icelandic Króna (kr)",
-        "JPY - Japanese Yen (¥)",
-        "KRW - South Korean Won (₩)",
-        "MKD - Macedonian Denar (ден)",
-        "NOK - Norwegian Krone (kr)",
-        "PLN - Polish Złoty (zł)",
-        "RON - Romanian Leu (lei)",
-        "RSD - Serbian Dinar (дин)",
-        "RUB - Russian Ruble (₽)",
-        "SEK - Swedish Krona (kr)",
-        "TRY - Turkish Lira (₺)",
-        "TWD - Taiwan Dollar (NT$)",
-        "UAH - Ukrainian Hryvnia (₴)",
-        "USD - US Dollar ($)"
-    };
+    /// <summary>
+    /// All available currencies.
+    /// </summary>
+    public IReadOnlyList<string> Currencies => Data.Currencies.All;
 
     public ObservableCollection<string> DateFormats { get; } = new()
     {
