@@ -91,13 +91,6 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
 
     #endregion
 
-    #region Modal State
-
-    [ObservableProperty]
-    private bool _isFilterModalOpen;
-
-    #endregion
-
     #region Constructor
 
     /// <summary>
@@ -118,7 +111,19 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
         {
             App.LocationsModalsViewModel.LocationSaved += OnModalLocationSaved;
             App.LocationsModalsViewModel.LocationDeleted += OnModalLocationDeleted;
+            App.LocationsModalsViewModel.FiltersApplied += OnFiltersApplied;
         }
+    }
+
+    /// <summary>
+    /// Handles filter applied events from the modals.
+    /// </summary>
+    private void OnFiltersApplied(object? sender, LocationsFilterAppliedEventArgs e)
+    {
+        FilterType = e.Type;
+        FilterStatus = e.Status;
+        CurrentPage = 1;
+        FilterLocations();
     }
 
     /// <summary>
@@ -388,46 +393,12 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     #region Filter Modal
 
     /// <summary>
-    /// Opens the filter modal.
+    /// Opens the filter modal via the modals ViewModel.
     /// </summary>
     [RelayCommand]
     private void OpenFilterModal()
     {
-        IsFilterModalOpen = true;
-    }
-
-    /// <summary>
-    /// Closes the filter modal.
-    /// </summary>
-    [RelayCommand]
-    private void CloseFilterModal()
-    {
-        IsFilterModalOpen = false;
-    }
-
-    /// <summary>
-    /// Applies the current filters and closes the modal.
-    /// </summary>
-    [RelayCommand]
-    private void ApplyFilters()
-    {
-        CurrentPage = 1;
-        FilterLocations();
-        CloseFilterModal();
-    }
-
-    /// <summary>
-    /// Clears all filters.
-    /// </summary>
-    [RelayCommand]
-    private void ClearFilters()
-    {
-        FilterType = "All";
-        FilterStatus = "All";
-        SearchQuery = null;
-        CurrentPage = 1;
-        FilterLocations();
-        CloseFilterModal();
+        App.LocationsModalsViewModel?.OpenFilterModal();
     }
 
     #endregion

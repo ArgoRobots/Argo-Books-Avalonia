@@ -424,7 +424,7 @@
                                                                        FontSize="13"
                                                                        FontFamily="Consolas, monospace"
                                                                        FontWeight="Medium"
-                                                                       Foreground="{DynamicResource PrimaryBrush}"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
                                                                        TextTrimming="CharacterEllipsis"
                                                                        Margin="8,0" />

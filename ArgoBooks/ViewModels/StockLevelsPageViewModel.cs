@@ -145,12 +145,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
 
     #endregion
 
-    #region Modal State
-
-    [ObservableProperty]
-    private bool _isFilterModalOpen;
-
-    #endregion
 
     #region Constructor
 
@@ -171,7 +165,20 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         if (App.StockLevelsModalsViewModel != null)
         {
             App.StockLevelsModalsViewModel.ItemSaved += OnModalItemSaved;
+            App.StockLevelsModalsViewModel.FiltersApplied += OnFiltersApplied;
         }
+    }
+
+    /// <summary>
+    /// Handles filter applied events from the modals.
+    /// </summary>
+    private void OnFiltersApplied(object? sender, FilterAppliedEventArgs e)
+    {
+        FilterCategory = e.Category;
+        FilterLocation = e.Location;
+        FilterStatus = e.Status;
+        CurrentPage = 1;
+        FilterItems();
     }
 
     /// <summary>
@@ -514,47 +521,17 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     #region Filter Modal
 
     /// <summary>
-    /// Opens the filter modal.
+    /// Opens the filter modal via the modals ViewModel.
     /// </summary>
     [RelayCommand]
     private void OpenFilterModal()
     {
-        IsFilterModalOpen = true;
-    }
-
-    /// <summary>
-    /// Closes the filter modal.
-    /// </summary>
-    [RelayCommand]
-    private void CloseFilterModal()
-    {
-        IsFilterModalOpen = false;
-    }
-
-    /// <summary>
-    /// Applies the current filters and closes the modal.
-    /// </summary>
-    [RelayCommand]
-    private void ApplyFilters()
-    {
-        CurrentPage = 1;
-        FilterItems();
-        CloseFilterModal();
-    }
-
-    /// <summary>
-    /// Clears all filters.
-    /// </summary>
-    [RelayCommand]
-    private void ClearFilters()
-    {
-        FilterCategory = "All";
-        FilterLocation = "All";
-        FilterStatus = "All";
-        SearchQuery = null;
-        CurrentPage = 1;
-        FilterItems();
-        CloseFilterModal();
+        App.StockLevelsModalsViewModel?.OpenFilterModal(
+            AvailableCategories,
+            AvailableLocations,
+            FilterCategory,
+            FilterLocation,
+            FilterStatus);
     }
 
     #endregion

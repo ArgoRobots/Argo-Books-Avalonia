@@ -131,12 +131,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
 
     #endregion
 
-    #region Modal State
-
-    [ObservableProperty]
-    private bool _isFilterModalOpen;
-
-    #endregion
 
     #region Constructor
 
@@ -168,7 +162,21 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         {
             App.StockAdjustmentsModalsViewModel.AdjustmentSaved += OnAdjustmentMade;
             App.StockAdjustmentsModalsViewModel.AdjustmentDeleted += OnAdjustmentMade;
+            App.StockAdjustmentsModalsViewModel.FiltersApplied += OnFiltersApplied;
         }
+    }
+
+    /// <summary>
+    /// Handles filter applied events from the modals.
+    /// </summary>
+    private void OnFiltersApplied(object? sender, AdjustmentsFilterAppliedEventArgs e)
+    {
+        StartDate = e.StartDate;
+        EndDate = e.EndDate;
+        FilterProduct = e.Product;
+        // Note: FilterType maps to adjustment type filter
+        CurrentPage = 1;
+        FilterAdjustments();
     }
 
     /// <summary>
@@ -482,49 +490,17 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     #region Filter Modal
 
     /// <summary>
-    /// Opens the filter modal.
+    /// Opens the filter modal via the modals ViewModel.
     /// </summary>
     [RelayCommand]
     private void OpenFilterModal()
     {
-        IsFilterModalOpen = true;
-    }
-
-    /// <summary>
-    /// Closes the filter modal.
-    /// </summary>
-    [RelayCommand]
-    private void CloseFilterModal()
-    {
-        IsFilterModalOpen = false;
-    }
-
-    /// <summary>
-    /// Applies the current filters and closes the modal.
-    /// </summary>
-    [RelayCommand]
-    private void ApplyFilters()
-    {
-        CurrentPage = 1;
-        FilterAdjustments();
-        CloseFilterModal();
-    }
-
-    /// <summary>
-    /// Clears all filters.
-    /// </summary>
-    [RelayCommand]
-    private void ClearFilters()
-    {
-        FilterLocation = "All";
-        FilterProduct = "All";
-        StartDate = null;
-        EndDate = null;
-        SearchQuery = null;
-        ActiveTab = "All";
-        CurrentPage = 1;
-        FilterAdjustments();
-        CloseFilterModal();
+        App.StockAdjustmentsModalsViewModel?.OpenFilterModal(
+            ProductOptions,
+            StartDate,
+            EndDate,
+            FilterProduct,
+            "All");
     }
 
     #endregion
