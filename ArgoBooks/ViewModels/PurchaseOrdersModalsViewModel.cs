@@ -710,34 +710,28 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the delete confirmation dialog.
     /// </summary>
-    public void OpenDeleteConfirm(PurchaseOrderDisplayItem item)
+    public async void OpenDeleteConfirm(PurchaseOrderDisplayItem item)
     {
-        DeletingOrder = item;
-        IsDeleteConfirmOpen = true;
-    }
+        if (item == null) return;
 
-    /// <summary>
-    /// Closes the delete confirmation dialog.
-    /// </summary>
-    [RelayCommand]
-    private void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        DeletingOrder = null;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
 
-    /// <summary>
-    /// Confirms and performs the deletion.
-    /// </summary>
-    [RelayCommand]
-    private void ConfirmDelete()
-    {
-        if (DeletingOrder == null) return;
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Purchase Order",
+            Message = $"Are you sure you want to delete this purchase order?\n\nPO #: {item.PoNumber}\nTotal: {item.TotalFormatted}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
+
+        if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.PurchaseOrders == null) return;
 
-        var order = companyData.PurchaseOrders.FirstOrDefault(o => o.Id == DeletingOrder.Id);
+        var order = companyData.PurchaseOrders.FirstOrDefault(o => o.Id == item.Id);
         if (order == null) return;
 
         var deletedOrder = order;
@@ -745,7 +739,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        var orderPoNumber = DeletingOrder.PoNumber;
+        var orderPoNumber = item.PoNumber;
         App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Delete order '{orderPoNumber}'",
             () =>
@@ -762,7 +756,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             }));
 
         OrderDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
 
     #endregion

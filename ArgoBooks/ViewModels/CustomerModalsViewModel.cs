@@ -21,9 +21,6 @@ public partial class CustomerModalsViewModel : ObservableObject
     private bool _isEditModalOpen;
 
     [ObservableProperty]
-    private bool _isDeleteConfirmOpen;
-
-    [ObservableProperty]
     private bool _isFilterModalOpen;
 
     [ObservableProperty]
@@ -85,11 +82,6 @@ public partial class CustomerModalsViewModel : ObservableObject
     /// The customer being edited (null for add).
     /// </summary>
     private Customer? _editingCustomer;
-
-    /// <summary>
-    /// The customer being deleted.
-    /// </summary>
-    private CustomerDisplayItem? _deletingCustomer;
 
     /// <summary>
     /// The customer whose history is being viewed.
@@ -417,34 +409,32 @@ public partial class CustomerModalsViewModel : ObservableObject
 
     #region Delete Customer
 
-    public void OpenDeleteConfirm(CustomerDisplayItem? item)
+    public async void OpenDeleteConfirm(CustomerDisplayItem? item)
     {
         if (item == null)
             return;
 
-        _deletingCustomer = item;
-        OnPropertyChanged(nameof(DeletingCustomerName));
-        IsDeleteConfirmOpen = true;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null)
+            return;
 
-    [RelayCommand]
-    public void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingCustomer = null;
-    }
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Customer",
+            Message = $"Are you sure you want to delete this customer?\n\n{item.Name}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
 
-    [RelayCommand]
-    public void ConfirmDelete()
-    {
-        if (_deletingCustomer == null)
+        if (result != ConfirmationResult.Primary)
             return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
-        var customer = companyData.Customers.FirstOrDefault(c => c.Id == _deletingCustomer.Id);
+        var customer = companyData.Customers.FirstOrDefault(c => c.Id == item.Id);
         if (customer != null)
         {
             var deletedCustomer = customer;
@@ -468,10 +458,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         }
 
         CustomerDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
-
-    public string DeletingCustomerName => _deletingCustomer?.Name ?? string.Empty;
 
     #endregion
 

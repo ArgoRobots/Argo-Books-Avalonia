@@ -317,34 +317,28 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the delete confirmation dialog.
     /// </summary>
-    public void OpenDeleteConfirm(StockAdjustmentDisplayItem item)
+    public async void OpenDeleteConfirm(StockAdjustmentDisplayItem item)
     {
-        DeletingAdjustment = item;
-        IsDeleteConfirmOpen = true;
-    }
+        if (item == null) return;
 
-    /// <summary>
-    /// Closes the delete confirmation dialog.
-    /// </summary>
-    [RelayCommand]
-    private void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        DeletingAdjustment = null;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
 
-    /// <summary>
-    /// Confirms and performs the deletion.
-    /// </summary>
-    [RelayCommand]
-    private void ConfirmDelete()
-    {
-        if (DeletingAdjustment == null) return;
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Stock Adjustment",
+            Message = $"Are you sure you want to delete this stock adjustment?\n\nProduct: {item.ProductName}\nQuantity: {item.QuantityChange}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
+
+        if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.StockAdjustments == null) return;
 
-        var adjustment = companyData.StockAdjustments.FirstOrDefault(a => a.Id == DeletingAdjustment.Id);
+        var adjustment = companyData.StockAdjustments.FirstOrDefault(a => a.Id == item.Id);
         if (adjustment == null) return;
 
         // Find the inventory item and reverse the adjustment
@@ -368,7 +362,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        var adjustmentProductName = DeletingAdjustment.ProductName;
+        var adjustmentProductName = item.ProductName;
         App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Delete adjustment for '{adjustmentProductName}'",
             () =>
@@ -396,9 +390,8 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
                 AdjustmentDeleted?.Invoke(this, EventArgs.Empty);
             }));
 
-        // Notify and close
+        // Notify
         AdjustmentDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
 
     #endregion

@@ -193,23 +193,28 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     #region Delete
 
-    public void OpenDeleteConfirm(RevenueDisplayItem? item)
+    public async void OpenDeleteConfirm(RevenueDisplayItem? item)
     {
         if (item == null) return;
 
-        DeleteTransactionIdInternal = item.Id;
-        DeleteRevenueId = item.Id;
-        DeleteRevenueDescription = item.ProductDescription;
-        DeleteRevenueAmount = item.TotalFormatted;
-        IsDeleteConfirmOpen = true;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
 
-    protected override void DeleteTransaction()
-    {
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Revenue",
+            Message = $"Are you sure you want to delete this revenue?\n\nID: {item.Id}\nDescription: {item.ProductDescription}\nAmount: {item.TotalFormatted}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
+
+        if (result != ConfirmationResult.Primary) return;
+
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Sales == null) return;
 
-        var sale = companyData.Sales.FirstOrDefault(s => s.Id == DeleteTransactionIdInternal);
+        var sale = companyData.Sales.FirstOrDefault(s => s.Id == item.Id);
         if (sale == null) return;
 
         // Find and remove associated receipt
@@ -247,7 +252,11 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         App.CompanyManager?.MarkAsChanged();
 
         RaiseTransactionDeleted();
-        CloseDeleteConfirm();
+    }
+
+    protected override void DeleteTransaction()
+    {
+        // No longer used - delete logic is now in OpenDeleteConfirm
     }
 
     #endregion

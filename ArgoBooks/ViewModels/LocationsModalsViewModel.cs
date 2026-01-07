@@ -328,37 +328,29 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// <summary>
     /// Opens the delete confirmation dialog.
     /// </summary>
-    public void OpenDeleteConfirm(LocationDisplayItem? item)
+    public async void OpenDeleteConfirm(LocationDisplayItem? item)
     {
         if (item == null) return;
-        _deletingLocation = item;
-        IsDeleteConfirmOpen = true;
-    }
 
-    /// <summary>
-    /// Closes the delete confirmation dialog.
-    /// </summary>
-    [RelayCommand]
-    private void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingLocation = null;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
 
-    /// <summary>
-    /// Confirms and deletes the location.
-    /// </summary>
-    [RelayCommand]
-    private void ConfirmDelete()
-    {
-        if (_deletingLocation == null)
-            return;
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Location",
+            Message = $"Are you sure you want to delete this location?\n\n{item.Name}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
+
+        if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
-        var location = companyData.Locations?.FirstOrDefault(l => l.Id == _deletingLocation.Id);
+        var location = companyData.Locations?.FirstOrDefault(l => l.Id == item.Id);
         if (location != null)
         {
             var deletedLocation = location;
@@ -383,13 +375,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
         }
 
         LocationDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
-
-    /// <summary>
-    /// Gets the name of the location being deleted (for display in confirmation).
-    /// </summary>
-    public string DeletingLocationName => _deletingLocation?.Name ?? string.Empty;
 
     #endregion
 

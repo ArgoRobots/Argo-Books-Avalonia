@@ -276,30 +276,28 @@ public partial class SupplierModalsViewModel : ObservableObject
 
     #region Delete Supplier
 
-    public void OpenDeleteConfirm(SupplierDisplayItem? item)
+    public async void OpenDeleteConfirm(SupplierDisplayItem? item)
     {
         if (item == null) return;
-        _deletingSupplier = item;
-        OnPropertyChanged(nameof(DeletingSupplierName));
-        IsDeleteConfirmOpen = true;
-    }
 
-    [RelayCommand]
-    public void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingSupplier = null;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
 
-    [RelayCommand]
-    public void ConfirmDelete()
-    {
-        if (_deletingSupplier == null) return;
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Supplier",
+            Message = $"Are you sure you want to delete this supplier?\n\n{item.Name}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
+
+        if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        var supplier = companyData.Suppliers.FirstOrDefault(s => s.Id == _deletingSupplier.Id);
+        var supplier = companyData.Suppliers.FirstOrDefault(s => s.Id == item.Id);
         if (supplier == null) return;
 
         var deletedSupplier = supplier;
@@ -312,7 +310,6 @@ public partial class SupplierModalsViewModel : ObservableObject
             () => { companyData.Suppliers.Remove(deletedSupplier); companyData.MarkAsModified(); SupplierDeleted?.Invoke(this, EventArgs.Empty); }));
 
         SupplierDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
 
     #endregion
