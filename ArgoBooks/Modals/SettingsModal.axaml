@@ -28,8 +28,8 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="12"
-                Width="650"
-                Height="600"
+                Width="750"
+                Height="700"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 BoxShadow="0 8 32 0 #40000000"
@@ -120,6 +120,24 @@
                                               Classes="form-combobox" />
                                 </StackPanel>
 
+                                <!-- Chart Settings -->
+                                <StackPanel Spacing="6" Margin="0,8,0,0">
+                                    <TextBlock Text="Max Pie Chart Slices"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <ComboBox ItemsSource="{Binding MaxPieSlicesOptions}"
+                                                  SelectedItem="{Binding MaxPieSlices}"
+                                                  Classes="form-combobox"
+                                                  Width="100" />
+                                        <TextBlock Text="Additional items will be grouped into 'Other'"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </StackPanel>
+
                                 <!-- Privacy -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
@@ -141,22 +159,6 @@
                                                       VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
-
-                                <!-- Chart Settings -->
-                                <StackPanel Spacing="6" Margin="0,8,0,0">
-                                    <TextBlock Text="Max Pie Chart Slices"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding MaxPieSlicesOptions}"
-                                              SelectedItem="{Binding MaxPieSlices}"
-                                              Classes="form-combobox"
-                                              Width="100"
-                                              HorizontalAlignment="Left" />
-                                    <TextBlock Text="Additional items will be grouped into 'Other'"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
