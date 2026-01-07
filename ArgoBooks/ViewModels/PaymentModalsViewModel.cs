@@ -62,11 +62,6 @@ public partial class PaymentModalsViewModel : ObservableObject
     /// </summary>
     private Payment? _editingPayment;
 
-    /// <summary>
-    /// The payment being deleted.
-    /// </summary>
-    private PaymentDisplayItem? _deletingPayment;
-
     #endregion
 
     #region Filter Fields
@@ -417,35 +412,32 @@ public partial class PaymentModalsViewModel : ObservableObject
 
     #region Delete Payment
 
-    public void OpenDeleteConfirm(PaymentDisplayItem? item)
+    public async void OpenDeleteConfirm(PaymentDisplayItem? item)
     {
         if (item == null)
             return;
 
-        _deletingPayment = item;
-        OnPropertyChanged(nameof(DeletingPaymentId));
-        OnPropertyChanged(nameof(DeletingPaymentAmount));
-        IsDeleteConfirmOpen = true;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null)
+            return;
 
-    [RelayCommand]
-    public void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingPayment = null;
-    }
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Payment",
+            Message = $"Are you sure you want to delete this payment?\n\nPayment ID: {item.Id}\nAmount: {item.AmountFormatted}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
 
-    [RelayCommand]
-    public void ConfirmDelete()
-    {
-        if (_deletingPayment == null)
+        if (result != ConfirmationResult.Primary)
             return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
-        var payment = companyData.Payments.FirstOrDefault(p => p.Id == _deletingPayment.Id);
+        var payment = companyData.Payments.FirstOrDefault(p => p.Id == item.Id);
         if (payment != null)
         {
             var deletedPayment = payment;
@@ -469,11 +461,7 @@ public partial class PaymentModalsViewModel : ObservableObject
         }
 
         PaymentDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
-
-    public string DeletingPaymentId => _deletingPayment?.Id ?? string.Empty;
-    public string DeletingPaymentAmount => _deletingPayment?.AmountFormatted ?? "$0.00";
 
     #endregion
 

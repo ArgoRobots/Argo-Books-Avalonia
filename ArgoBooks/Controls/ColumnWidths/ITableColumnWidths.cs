@@ -41,4 +41,14 @@ public interface IColumnMenuViewModel : ITablePageViewModel
     /// Gets or sets whether the column menu is open.
     /// </summary>
     bool IsColumnMenuOpen { get; set; }
+
+    /// <summary>
+    /// Gets or sets the X position of the column menu.
+    /// </summary>
+    double ColumnMenuX { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Y position of the column menu.
+    /// </summary>
+    double ColumnMenuY { get; set; }
 }

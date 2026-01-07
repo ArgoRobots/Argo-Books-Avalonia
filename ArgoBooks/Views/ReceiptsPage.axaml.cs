@@ -34,6 +34,9 @@ public partial class ReceiptsPage : UserControl
         {
             if (DataContext is ReceiptsPageViewModel viewModel)
             {
+                var position = e.GetPosition(this);
+                viewModel.ColumnMenuX = position.X;
+                viewModel.ColumnMenuY = position.Y;
                 viewModel.IsColumnMenuOpen = true;
             }
         }

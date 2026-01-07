@@ -70,7 +70,6 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
     private string? _modalDailyRateError;
 
     private RentalItem? _editingItem;
-    private RentalItemDisplayItem? _deletingItem;
 
     #endregion
 
@@ -443,38 +442,36 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
     #region Delete Item
 
-    public void OpenDeleteConfirm(RentalItemDisplayItem? item)
+    public async void OpenDeleteConfirm(RentalItemDisplayItem? item)
     {
         if (item == null)
             return;
 
-        _deletingItem = item;
-        OnPropertyChanged(nameof(DeletingItemName));
-        IsDeleteConfirmOpen = true;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null)
+            return;
 
-    [RelayCommand]
-    public void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingItem = null;
-    }
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Rental Item",
+            Message = $"Are you sure you want to delete this rental item?\n\n{item.Name}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
 
-    [RelayCommand]
-    public void ConfirmDelete()
-    {
-        if (_deletingItem == null)
+        if (result != ConfirmationResult.Primary)
             return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
-        var item = companyData.RentalInventory.FirstOrDefault(i => i.Id == _deletingItem.Id);
-        if (item != null)
+        var rentalItem = companyData.RentalInventory.FirstOrDefault(i => i.Id == item.Id);
+        if (rentalItem != null)
         {
-            var deletedItem = item;
-            companyData.RentalInventory.Remove(item);
+            var deletedItem = rentalItem;
+            companyData.RentalInventory.Remove(rentalItem);
             companyData.MarkAsModified();
 
             App.UndoRedoManager?.RecordAction(new DelegateAction(
@@ -494,10 +491,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         }
 
         ItemDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
-
-    public string DeletingItemName => _deletingItem?.Name ?? string.Empty;
 
     #endregion
 

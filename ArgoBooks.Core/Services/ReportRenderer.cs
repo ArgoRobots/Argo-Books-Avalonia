@@ -359,7 +359,8 @@ public class ReportRenderer : IDisposable
             // Choose rendering based on chart style
             if (chart.ChartStyle == ReportChartStyle.Line ||
                 chart.ChartStyle == ReportChartStyle.StepLine ||
-                chart.ChartStyle == ReportChartStyle.Area)
+                chart.ChartStyle == ReportChartStyle.Area ||
+                chart.ChartStyle == ReportChartStyle.Scatter)
             {
                 RenderLineChart(canvas, barChartArea, chartData, chart);
             }
@@ -701,39 +702,42 @@ public class ReportRenderer : IDisposable
             canvas.DrawPath(path, fillPaint);
         }
 
-        // Draw the line
-        using var linePaint = new SKPaint
+        // Draw the line (skip for Scatter charts - only points)
+        if (chart.ChartStyle != ReportChartStyle.Scatter)
         {
-            Color = lineColor,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 2 * _renderScale,
-            IsAntialias = true,
-            StrokeCap = SKStrokeCap.Round,
-            StrokeJoin = SKStrokeJoin.Round
-        };
-
-        using var linePath = new SKPath();
-        linePath.MoveTo(points[0]);
-
-        if (chart.ChartStyle == ReportChartStyle.StepLine)
-        {
-            // Step line - horizontal then vertical
-            for (int i = 1; i < points.Length; i++)
+            using var linePaint = new SKPaint
             {
-                linePath.LineTo(points[i].X, points[i - 1].Y); // Horizontal
-                linePath.LineTo(points[i].X, points[i].Y);     // Vertical
-            }
-        }
-        else
-        {
-            // Regular line
-            for (int i = 1; i < points.Length; i++)
-            {
-                linePath.LineTo(points[i]);
-            }
-        }
+                Color = lineColor,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 2 * _renderScale,
+                IsAntialias = true,
+                StrokeCap = SKStrokeCap.Round,
+                StrokeJoin = SKStrokeJoin.Round
+            };
 
-        canvas.DrawPath(linePath, linePaint);
+            using var linePath = new SKPath();
+            linePath.MoveTo(points[0]);
+
+            if (chart.ChartStyle == ReportChartStyle.StepLine)
+            {
+                // Step line - horizontal then vertical
+                for (int i = 1; i < points.Length; i++)
+                {
+                    linePath.LineTo(points[i].X, points[i - 1].Y); // Horizontal
+                    linePath.LineTo(points[i].X, points[i].Y);     // Vertical
+                }
+            }
+            else
+            {
+                // Regular line
+                for (int i = 1; i < points.Length; i++)
+                {
+                    linePath.LineTo(points[i]);
+                }
+            }
+
+            canvas.DrawPath(linePath, linePaint);
+        }
 
         // Draw points
         using var pointPaint = new SKPaint

@@ -20,6 +20,9 @@ public partial class InvoicesPage : UserControl
         {
             if (DataContext is InvoicesPageViewModel viewModel)
             {
+                var position = e.GetPosition(this);
+                viewModel.ColumnMenuX = position.X;
+                viewModel.ColumnMenuY = position.Y;
                 viewModel.IsColumnMenuOpen = true;
             }
         }

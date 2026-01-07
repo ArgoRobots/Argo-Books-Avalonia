@@ -79,7 +79,6 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
     private string? _modalRateError;
 
     private RentalRecord? _editingRecord;
-    private RentalRecordDisplayItem? _deletingRecord;
 
     partial void OnModalItemChanged(RentalItemOption? value)
     {
@@ -542,58 +541,56 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
     #region Delete Record
 
-    public void OpenDeleteConfirm(RentalRecordDisplayItem? record)
+    public async void OpenDeleteConfirm(RentalRecordDisplayItem? record)
     {
         if (record == null)
             return;
 
-        _deletingRecord = record;
-        OnPropertyChanged(nameof(DeletingRecordId));
-        IsDeleteConfirmOpen = true;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null)
+            return;
 
-    [RelayCommand]
-    public void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingRecord = null;
-    }
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Rental Record",
+            Message = $"Are you sure you want to delete this rental record?\n\nRecord ID: {record.Id}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
 
-    [RelayCommand]
-    public void ConfirmDelete()
-    {
-        if (_deletingRecord == null)
+        if (result != ConfirmationResult.Primary)
             return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
-        var record = companyData.Rentals.FirstOrDefault(r => r.Id == _deletingRecord.Id);
-        if (record != null)
+        var rentalRecord = companyData.Rentals.FirstOrDefault(r => r.Id == record.Id);
+        if (rentalRecord != null)
         {
-            var deletedRecord = record;
+            var deletedRecord = rentalRecord;
 
             // Restore inventory if record was active
             RentalItem? item = null;
             int oldAvailable = 0, oldRented = 0;
-            if (record.Status == RentalStatus.Active || record.Status == RentalStatus.Overdue)
+            if (rentalRecord.Status == RentalStatus.Active || rentalRecord.Status == RentalStatus.Overdue)
             {
-                item = companyData.RentalInventory.FirstOrDefault(i => i.Id == record.RentalItemId);
+                item = companyData.RentalInventory.FirstOrDefault(i => i.Id == rentalRecord.RentalItemId);
                 if (item != null)
                 {
                     oldAvailable = item.AvailableQuantity;
                     oldRented = item.RentedQuantity;
-                    item.AvailableQuantity += record.Quantity;
-                    item.RentedQuantity -= record.Quantity;
+                    item.AvailableQuantity += rentalRecord.Quantity;
+                    item.RentedQuantity -= rentalRecord.Quantity;
                 }
             }
 
-            companyData.Rentals.Remove(record);
+            companyData.Rentals.Remove(rentalRecord);
             companyData.MarkAsModified();
 
             var itemToUpdate = item;
-            var wasActive = record.Status == RentalStatus.Active || record.Status == RentalStatus.Overdue;
+            var wasActive = rentalRecord.Status == RentalStatus.Active || rentalRecord.Status == RentalStatus.Overdue;
             App.UndoRedoManager?.RecordAction(new DelegateAction(
                 $"Delete rental '{deletedRecord.Id}'",
                 () =>
@@ -621,10 +618,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         }
 
         RecordDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
-
-    public string DeletingRecordId => _deletingRecord?.Id ?? string.Empty;
 
     #endregion
 

@@ -306,32 +306,28 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #region Delete Confirmation
 
-    public void OpenDeleteConfirm(InvoiceDisplayItem? item)
+    public async void OpenDeleteConfirm(InvoiceDisplayItem? item)
     {
         if (item == null) return;
 
-        _deleteInvoiceIdInternal = item.Id;
-        DeleteInvoiceId = item.Id;
-        DeleteInvoiceAmount = item.TotalFormatted;
-        IsDeleteConfirmOpen = true;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
 
-    [RelayCommand]
-    private void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deleteInvoiceIdInternal = string.Empty;
-        DeleteInvoiceId = string.Empty;
-        DeleteInvoiceAmount = string.Empty;
-    }
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Invoice",
+            Message = $"Are you sure you want to delete this invoice?\n\nInvoice: {item.Id}\nAmount: {item.TotalFormatted}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
 
-    [RelayCommand]
-    private void DeleteInvoice()
-    {
+        if (result != ConfirmationResult.Primary) return;
+
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData?.Invoices == null) return;
 
-        var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == _deleteInvoiceIdInternal);
+        var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
         // Create undo action
@@ -357,7 +353,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
 
     #endregion

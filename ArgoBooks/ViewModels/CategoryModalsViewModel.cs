@@ -52,7 +52,6 @@ public partial class CategoryModalsViewModel : ObservableObject
     private bool _deleteSubcategories;
 
     private Category? _editingCategory;
-    private CategoryDisplayItem? _deletingCategory;
     private CategoryDisplayItem? _addingSubCategoryParent;
     private CategoryDisplayItem? _movingCategory;
     private bool _isExpensesTab = true;
@@ -80,21 +79,6 @@ public partial class CategoryModalsViewModel : ObservableObject
 
     #endregion
 
-    #region Delete Properties
-
-    public string DeletingCategoryName => _deletingCategory?.Name ?? string.Empty;
-
-    public bool DeletingCategoryHasChildren
-    {
-        get
-        {
-            if (_deletingCategory == null) return false;
-            var companyData = App.CompanyManager?.CompanyData;
-            return companyData?.Categories.Any(c => c.ParentId == _deletingCategory.Id) ?? false;
-        }
-    }
-
-    #endregion
 
     #region Dropdown Options
 
@@ -290,38 +274,59 @@ public partial class CategoryModalsViewModel : ObservableObject
 
     #region Delete Category
 
-    public void OpenDeleteConfirm(CategoryDisplayItem? item)
+    public async void OpenDeleteConfirm(CategoryDisplayItem? item)
     {
         if (item == null) return;
-        _deletingCategory = item;
-        DeleteSubcategories = false;
-        OnPropertyChanged(nameof(DeletingCategoryName));
-        OnPropertyChanged(nameof(DeletingCategoryHasChildren));
-        IsDeleteConfirmOpen = true;
-    }
-
-    [RelayCommand]
-    public void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingCategory = null;
-    }
-
-    [RelayCommand]
-    public void ConfirmDelete()
-    {
-        if (_deletingCategory == null) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        var category = companyData.Categories.FirstOrDefault(c => c.Id == _deletingCategory.Id);
+        var category = companyData.Categories.FirstOrDefault(c => c.Id == item.Id);
         if (category == null) return;
 
         var children = companyData.Categories.Where(c => c.ParentId == category.Id).ToList();
+        var hasChildren = children.Count > 0;
+
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
+
+        // If category has children, ask about subcategories
+        var deleteSubcategories = false;
+        if (hasChildren)
+        {
+            var subResult = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Category",
+                Message = $"This category has {children.Count} subcategories.\n\nDo you want to delete them as well, or move them to the top level?",
+                PrimaryButtonText = "Delete All",
+                SecondaryButtonText = "Move to Top Level",
+                CancelButtonText = "Cancel",
+                IsPrimaryDestructive = true
+            });
+
+            if (subResult == ConfirmationResult.Cancel || subResult == ConfirmationResult.None)
+                return;
+
+            deleteSubcategories = subResult == ConfirmationResult.Primary;
+        }
+        else
+        {
+            var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Delete Category",
+                Message = $"Are you sure you want to delete this category?\n\n{item.Name}",
+                PrimaryButtonText = "Delete",
+                CancelButtonText = "Cancel",
+                IsPrimaryDestructive = true
+            });
+
+            if (result != ConfirmationResult.Primary)
+                return;
+        }
+
         var childOriginalParents = children.ToDictionary(c => c.Id, c => c.ParentId);
         var deletedChildren = new List<Category>();
-        var shouldDeleteSubcategories = DeleteSubcategories;
+        var shouldDeleteSubcategories = deleteSubcategories;
 
         if (shouldDeleteSubcategories)
         {
@@ -357,7 +362,6 @@ public partial class CategoryModalsViewModel : ObservableObject
             }));
 
         CategoryDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
 
     #endregion

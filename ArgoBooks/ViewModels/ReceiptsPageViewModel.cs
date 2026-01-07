@@ -237,6 +237,12 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isColumnMenuOpen;
 
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
     public ReceiptsTableColumnWidths ColumnWidths => App.ReceiptsColumnWidths;
 
     [ObservableProperty]

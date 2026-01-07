@@ -1410,7 +1410,8 @@ public partial class ReportsPageViewModel : ViewModelBase
         new(ReportChartStyle.Bar, "Bar Chart"),
         new(ReportChartStyle.Line, "Line Chart"),
         new(ReportChartStyle.StepLine, "Step Line"),
-        new(ReportChartStyle.Area, "Area Chart")
+        new(ReportChartStyle.Area, "Area Chart"),
+        new(ReportChartStyle.Scatter, "Scatter Chart")
     ];
 
     public ObservableCollection<ImageScaleMode> ImageScaleModes { get; } =
@@ -1815,23 +1816,39 @@ public partial class ReportsPageViewModel : ViewModelBase
         AvailableCharts.Add(new ChartOption(ChartDataType.ExpensesDistribution, ChartDataType.ExpensesDistribution.GetDisplayName(), "Expenses by category"));
 
         // Financial charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.SalesVsExpenses, ChartDataType.SalesVsExpenses.GetDisplayName(), "Compare revenue and costs"));
         AvailableCharts.Add(new ChartOption(ChartDataType.TotalProfits, ChartDataType.TotalProfits.GetDisplayName(), "Profit over time"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.SalesVsExpenses, ChartDataType.SalesVsExpenses.GetDisplayName(), "Compare revenue and costs"));
         AvailableCharts.Add(new ChartOption(ChartDataType.GrowthRates, ChartDataType.GrowthRates.GetDisplayName(), "Period-over-period growth"));
 
         // Transaction charts
         AvailableCharts.Add(new ChartOption(ChartDataType.AverageTransactionValue, ChartDataType.AverageTransactionValue.GetDisplayName(), "Average transaction amounts"));
         AvailableCharts.Add(new ChartOption(ChartDataType.TotalTransactions, ChartDataType.TotalTransactions.GetDisplayName(), "Transaction volume"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.AverageShippingCosts, ChartDataType.AverageShippingCosts.GetDisplayName(), "Average shipping costs"));
 
         // Geographic charts
         AvailableCharts.Add(new ChartOption(ChartDataType.WorldMap, ChartDataType.WorldMap.GetDisplayName(), "Geographic distribution"));
         AvailableCharts.Add(new ChartOption(ChartDataType.CountriesOfOrigin, ChartDataType.CountriesOfOrigin.GetDisplayName(), "Sales by origin country"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.CountriesOfDestination, ChartDataType.CountriesOfDestination.GetDisplayName(), "Sales by destination country"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.CompaniesOfOrigin, ChartDataType.CompaniesOfOrigin.GetDisplayName(), "Sales by supplier company"));
 
-        // Return/Loss charts
+        // Accountant charts
+        AvailableCharts.Add(new ChartOption(ChartDataType.AccountantsTransactions, ChartDataType.AccountantsTransactions.GetDisplayName(), "Transactions by accountant"));
+
+        // Return charts
         AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsOverTime, ChartDataType.ReturnsOverTime.GetDisplayName(), "Return trends"));
         AvailableCharts.Add(new ChartOption(ChartDataType.ReturnReasons, ChartDataType.ReturnReasons.GetDisplayName(), "Why items are returned"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnFinancialImpact, ChartDataType.ReturnFinancialImpact.GetDisplayName(), "Financial impact of returns"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsByCategory, ChartDataType.ReturnsByCategory.GetDisplayName(), "Returns by category"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsByProduct, ChartDataType.ReturnsByProduct.GetDisplayName(), "Returns by product"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.PurchaseVsSaleReturns, ChartDataType.PurchaseVsSaleReturns.GetDisplayName(), "Purchase vs sale returns"));
+
+        // Loss charts
         AvailableCharts.Add(new ChartOption(ChartDataType.LossesOverTime, ChartDataType.LossesOverTime.GetDisplayName(), "Loss trends"));
         AvailableCharts.Add(new ChartOption(ChartDataType.LossReasons, ChartDataType.LossReasons.GetDisplayName(), "Why items are lost"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.LossFinancialImpact, ChartDataType.LossFinancialImpact.GetDisplayName(), "Financial impact of losses"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.LossesByCategory, ChartDataType.LossesByCategory.GetDisplayName(), "Losses by category"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.LossesByProduct, ChartDataType.LossesByProduct.GetDisplayName(), "Losses by product"));
+        AvailableCharts.Add(new ChartOption(ChartDataType.PurchaseVsSaleLosses, ChartDataType.PurchaseVsSaleLosses.GetDisplayName(), "Purchase vs sale losses"));
     }
 
     private void LoadTemplate(string templateName)

@@ -104,11 +104,6 @@ public partial class ProductModalsViewModel : ObservableObject
     private Product? _editingProduct;
 
     /// <summary>
-    /// The product being deleted.
-    /// </summary>
-    private ProductDisplayItem? _deletingProduct;
-
-    /// <summary>
     /// Whether we're in expenses tab (purchase) or revenue tab (sales).
     /// </summary>
     private bool _isExpensesTab = true;
@@ -395,34 +390,32 @@ public partial class ProductModalsViewModel : ObservableObject
 
     #region Delete Product
 
-    public void OpenDeleteConfirm(ProductDisplayItem? item)
+    public async void OpenDeleteConfirm(ProductDisplayItem? item)
     {
         if (item == null)
             return;
 
-        _deletingProduct = item;
-        OnPropertyChanged(nameof(DeletingProductName));
-        IsDeleteConfirmOpen = true;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null)
+            return;
 
-    [RelayCommand]
-    public void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingProduct = null;
-    }
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Product",
+            Message = $"Are you sure you want to delete this product?\n\n{item.Name}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
 
-    [RelayCommand]
-    public void ConfirmDelete()
-    {
-        if (_deletingProduct == null)
+        if (result != ConfirmationResult.Primary)
             return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
-        var product = companyData.Products.FirstOrDefault(p => p.Id == _deletingProduct.Id);
+        var product = companyData.Products.FirstOrDefault(p => p.Id == item.Id);
         if (product != null)
         {
             var deletedProduct = product;
@@ -446,10 +439,7 @@ public partial class ProductModalsViewModel : ObservableObject
         }
 
         ProductDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
-
-    public string DeletingProductName => _deletingProduct?.Name ?? string.Empty;
 
     #endregion
 

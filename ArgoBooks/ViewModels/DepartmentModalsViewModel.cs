@@ -38,13 +38,6 @@ public partial class DepartmentModalsViewModel : ObservableObject
     private string? _modalDepartmentNameError;
 
     private Department? _editingDepartment;
-    private DepartmentDisplayItem? _deletingDepartment;
-
-    #endregion
-
-    #region Delete Properties
-
-    public string DeletingDepartmentName => _deletingDepartment?.Name ?? string.Empty;
 
     #endregion
 
@@ -163,30 +156,28 @@ public partial class DepartmentModalsViewModel : ObservableObject
 
     #region Delete Department
 
-    public void OpenDeleteConfirm(DepartmentDisplayItem? item)
+    public async void OpenDeleteConfirm(DepartmentDisplayItem? item)
     {
         if (item == null) return;
-        _deletingDepartment = item;
-        OnPropertyChanged(nameof(DeletingDepartmentName));
-        IsDeleteConfirmOpen = true;
-    }
 
-    [RelayCommand]
-    public void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingDepartment = null;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null) return;
 
-    [RelayCommand]
-    public void ConfirmDelete()
-    {
-        if (_deletingDepartment == null) return;
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Department",
+            Message = $"Are you sure you want to delete this department?\n\n{item.Name}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
+
+        if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        var department = companyData.Departments.FirstOrDefault(d => d.Id == _deletingDepartment.Id);
+        var department = companyData.Departments.FirstOrDefault(d => d.Id == item.Id);
         if (department == null) return;
 
         var deletedDept = department;
@@ -199,7 +190,6 @@ public partial class DepartmentModalsViewModel : ObservableObject
             () => { companyData.Departments.Remove(deletedDept); companyData.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); }));
 
         DepartmentDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
 
     #endregion

@@ -111,35 +111,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Column Menu Popup -->
-                    <Popup IsOpen="{Binding IsColumnMenuOpen, Mode=TwoWay}"
-                           Placement="Pointer"
-                           IsLightDismissEnabled="True">
-                        <Border Background="{DynamicResource SurfaceBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="8"
-                                Padding="8"
-                                BoxShadow="0 4 16 0 #20000000">
-                            <StackPanel Spacing="4" Width="180">
-                                <TextBlock Text="Show Columns"
-                                           FontSize="13"
-                                           FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                           Margin="8,4,8,8" />
-                                <CheckBox IsChecked="{Binding ShowItemColumn}" Content="Item" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="Supplier" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowTotalQtyColumn}" Content="Total Qty" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowAvailableColumn}" Content="Available" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowRentedColumn}" Content="Rented" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowDailyRateColumn}" Content="Daily Rate" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowWeeklyRateColumn}" Content="Weekly Rate" Classes="column-toggle" />
-                                <CheckBox IsChecked="{Binding ShowDepositColumn}" Content="Deposit" Classes="column-toggle" />
-                            </StackPanel>
-                        </Border>
-                    </Popup>
-
                     <!-- Table Content -->
                     <ScrollViewer Grid.Row="1"
                                   x:Name="HorizontalTableScroll"
@@ -551,6 +522,26 @@
             </Border>
         </Grid>
     </Grid>
+
+    <!-- Column Visibility Menu -->
+    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                    MenuX="{Binding ColumnMenuX}"
+                                    MenuY="{Binding ColumnMenuY}"
+                                    CloseCommand="{Binding CloseColumnMenuCommand}">
+        <controls:ColumnVisibilityMenu.ColumnsContent>
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding ShowItemColumn}" Content="Item" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="Supplier" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowTotalQtyColumn}" Content="Total Qty" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAvailableColumn}" Content="Available" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowRentedColumn}" Content="Rented" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDailyRateColumn}" Content="Daily Rate" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowWeeklyRateColumn}" Content="Weekly Rate" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDepositColumn}" Content="Deposit" Classes="column-toggle" />
+            </StackPanel>
+        </controls:ColumnVisibilityMenu.ColumnsContent>
+    </controls:ColumnVisibilityMenu>
     </Panel>
 
     <UserControl.Styles>

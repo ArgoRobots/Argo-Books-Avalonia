@@ -147,6 +147,12 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private bool _isColumnMenuOpen;
 
+    [ObservableProperty]
+    private double _columnMenuX;
+
+    [ObservableProperty]
+    private double _columnMenuY;
+
     /// <summary>
     /// Column widths manager for the table (shared across page navigations).
     /// </summary>

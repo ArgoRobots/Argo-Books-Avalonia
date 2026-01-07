@@ -21,9 +21,6 @@ public partial class CustomerModalsViewModel : ObservableObject
     private bool _isEditModalOpen;
 
     [ObservableProperty]
-    private bool _isDeleteConfirmOpen;
-
-    [ObservableProperty]
     private bool _isFilterModalOpen;
 
     [ObservableProperty]
@@ -85,11 +82,6 @@ public partial class CustomerModalsViewModel : ObservableObject
     /// The customer being edited (null for add).
     /// </summary>
     private Customer? _editingCustomer;
-
-    /// <summary>
-    /// The customer being deleted.
-    /// </summary>
-    private CustomerDisplayItem? _deletingCustomer;
 
     /// <summary>
     /// The customer whose history is being viewed.
@@ -417,34 +409,32 @@ public partial class CustomerModalsViewModel : ObservableObject
 
     #region Delete Customer
 
-    public void OpenDeleteConfirm(CustomerDisplayItem? item)
+    public async void OpenDeleteConfirm(CustomerDisplayItem? item)
     {
         if (item == null)
             return;
 
-        _deletingCustomer = item;
-        OnPropertyChanged(nameof(DeletingCustomerName));
-        IsDeleteConfirmOpen = true;
-    }
+        var dialog = App.ConfirmationDialog;
+        if (dialog == null)
+            return;
 
-    [RelayCommand]
-    public void CloseDeleteConfirm()
-    {
-        IsDeleteConfirmOpen = false;
-        _deletingCustomer = null;
-    }
+        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+        {
+            Title = "Delete Customer",
+            Message = $"Are you sure you want to delete this customer?\n\n{item.Name}",
+            PrimaryButtonText = "Delete",
+            CancelButtonText = "Cancel",
+            IsPrimaryDestructive = true
+        });
 
-    [RelayCommand]
-    public void ConfirmDelete()
-    {
-        if (_deletingCustomer == null)
+        if (result != ConfirmationResult.Primary)
             return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
             return;
 
-        var customer = companyData.Customers.FirstOrDefault(c => c.Id == _deletingCustomer.Id);
+        var customer = companyData.Customers.FirstOrDefault(c => c.Id == item.Id);
         if (customer != null)
         {
             var deletedCustomer = customer;
@@ -468,10 +458,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         }
 
         CustomerDeleted?.Invoke(this, EventArgs.Empty);
-        CloseDeleteConfirm();
     }
-
-    public string DeletingCustomerName => _deletingCustomer?.Name ?? string.Empty;
 
     #endregion
 
@@ -520,8 +507,132 @@ public partial class CustomerModalsViewModel : ObservableObject
 
         _historyCustomer = item;
         HistoryCustomerName = item.Name;
-        CustomerHistory.Clear();
+        LoadCustomerHistory(item.Id);
         IsHistoryModalOpen = true;
+    }
+
+    /// <summary>
+    /// Loads the transaction history for a customer.
+    /// </summary>
+    private void LoadCustomerHistory(string customerId)
+    {
+        CustomerHistory.Clear();
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+            return;
+
+        var historyItems = new List<CustomerHistoryItem>();
+
+        // Add invoices
+        var invoices = companyData.Invoices?.Where(i => i.CustomerId == customerId) ?? [];
+        foreach (var invoice in invoices)
+        {
+            historyItems.Add(new CustomerHistoryItem
+            {
+                Date = invoice.IssueDate,
+                Type = "Invoice",
+                Description = $"Invoice #{invoice.InvoiceNumber}",
+                Amount = invoice.Total,
+                Status = invoice.Status.ToString()
+            });
+        }
+
+        // Add payments
+        var payments = companyData.Payments?.Where(p => p.CustomerId == customerId) ?? [];
+        foreach (var payment in payments)
+        {
+            historyItems.Add(new CustomerHistoryItem
+            {
+                Date = payment.Date,
+                Type = "Payment",
+                Description = $"Payment - {payment.PaymentMethod}",
+                Amount = -payment.Amount, // Negative because it reduces balance
+                Status = "Completed"
+            });
+        }
+
+        // Add rentals
+        var rentals = companyData.Rentals?.Where(r => r.CustomerId == customerId) ?? [];
+        foreach (var rental in rentals)
+        {
+            var item = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.RentalItemId);
+            historyItems.Add(new CustomerHistoryItem
+            {
+                Date = rental.StartDate,
+                Type = "Rental",
+                Description = $"Rental - {item?.Name ?? "Unknown Item"}",
+                Amount = rental.TotalCost ?? 0,
+                Status = rental.Status.ToString()
+            });
+        }
+
+        // Add returns
+        var returns = companyData.Returns?.Where(r => r.CustomerId == customerId) ?? [];
+        foreach (var returnItem in returns)
+        {
+            var firstItem = returnItem.Items?.FirstOrDefault();
+            var product = firstItem != null ? companyData.Products?.FirstOrDefault(p => p.Id == firstItem.ProductId) : null;
+            historyItems.Add(new CustomerHistoryItem
+            {
+                Date = returnItem.ReturnDate,
+                Type = "Return",
+                Description = $"Return - {product?.Name ?? "Unknown Product"}",
+                Amount = -returnItem.RefundAmount,
+                Status = returnItem.Status.ToString()
+            });
+        }
+
+        // Apply filters
+        var filtered = ApplyHistoryFiltersInternal(historyItems);
+
+        // Sort by date descending and add to collection
+        foreach (var historyItem in filtered.OrderByDescending(h => h.Date))
+        {
+            CustomerHistory.Add(historyItem);
+        }
+    }
+
+    /// <summary>
+    /// Applies the history filters to the given items.
+    /// </summary>
+    private List<CustomerHistoryItem> ApplyHistoryFiltersInternal(List<CustomerHistoryItem> items)
+    {
+        var filtered = items.AsEnumerable();
+
+        // Filter by type
+        if (HistoryFilterType != "All")
+        {
+            filtered = filtered.Where(h => h.Type == HistoryFilterType);
+        }
+
+        // Filter by status
+        if (HistoryFilterStatus != "All")
+        {
+            filtered = filtered.Where(h => h.Status == HistoryFilterStatus);
+        }
+
+        // Filter by date range
+        if (HistoryFilterDateFrom.HasValue)
+        {
+            filtered = filtered.Where(h => h.Date.Date >= HistoryFilterDateFrom.Value.Date);
+        }
+        if (HistoryFilterDateTo.HasValue)
+        {
+            filtered = filtered.Where(h => h.Date.Date <= HistoryFilterDateTo.Value.Date);
+        }
+
+        // Filter by amount range
+        if (decimal.TryParse(HistoryFilterAmountMin, out var minAmount))
+        {
+            filtered = filtered.Where(h => Math.Abs(h.Amount) >= minAmount);
+        }
+        if (decimal.TryParse(HistoryFilterAmountMax, out var maxAmount))
+        {
+            filtered = filtered.Where(h => Math.Abs(h.Amount) <= maxAmount);
+        }
+
+        return filtered.ToList();
     }
 
     [RelayCommand]
@@ -547,6 +658,10 @@ public partial class CustomerModalsViewModel : ObservableObject
     [RelayCommand]
     public void ApplyHistoryFilters()
     {
+        if (_historyCustomer != null)
+        {
+            LoadCustomerHistory(_historyCustomer.Id);
+        }
         CloseHistoryFilterModal();
     }
 
@@ -559,6 +674,10 @@ public partial class CustomerModalsViewModel : ObservableObject
         HistoryFilterDateTo = null;
         HistoryFilterAmountMin = null;
         HistoryFilterAmountMax = null;
+        if (_historyCustomer != null)
+        {
+            LoadCustomerHistory(_historyCustomer.Id);
+        }
         CloseHistoryFilterModal();
     }
 
