@@ -640,11 +640,6 @@
             <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
 
-        <!-- Form DatePicker -->
-        <Style Selector="DatePicker.form-datepicker">
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-        </Style>
-
         <!-- Column Header Button -->
         <Style Selector="Button.column-header">
             <Setter Property="Background" Value="Transparent" />
