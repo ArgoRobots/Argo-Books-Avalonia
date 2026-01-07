@@ -126,7 +126,7 @@
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        Padding="12,16"
                                        HorizontalAlignment="Center"
-                                       IsVisible="{Binding !HasAnyFilteredItems, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
+                                       IsVisible="{Binding !$parent[controls:SearchableDropdown].HasAnyFilteredItems}" />
 
                             <!-- Priority Items -->
                             <ItemsControl ItemsSource="{Binding $parent[controls:SearchableDropdown].FilteredPriorityItems}"
