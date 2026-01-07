@@ -464,7 +464,7 @@
                                                     <ItemsControl ItemsSource="{Binding Charts}">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
-                                                                <UniformGrid Columns="3" />
+                                                                <WrapPanel Orientation="Horizontal" />
                                                             </ItemsPanelTemplate>
                                                         </ItemsControl.ItemsPanel>
                                                         <ItemsControl.ItemTemplate>
@@ -472,6 +472,7 @@
                                                                 <Border Margin="0,0,12,12"
                                                                         Padding="14"
                                                                         CornerRadius="8"
+                                                                        Width="280"
                                                                         Background="{DynamicResource SurfaceAltBrush}"
                                                                         BorderThickness="2"
                                                                         Classes.selected="{Binding IsSelected}">
