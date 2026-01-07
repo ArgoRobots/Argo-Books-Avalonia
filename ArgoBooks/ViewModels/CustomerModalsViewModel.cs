@@ -556,13 +556,13 @@ public partial class CustomerModalsViewModel : ObservableObject
         var rentals = companyData.Rentals?.Where(r => r.CustomerId == customerId) ?? [];
         foreach (var rental in rentals)
         {
-            var product = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.ItemId);
+            var item = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.RentalItemId);
             historyItems.Add(new CustomerHistoryItem
             {
                 Date = rental.StartDate,
                 Type = "Rental",
-                Description = $"Rental - {product?.Name ?? "Unknown Item"}",
-                Amount = rental.TotalAmount,
+                Description = $"Rental - {item?.Name ?? "Unknown Item"}",
+                Amount = rental.TotalCost ?? 0,
                 Status = rental.Status.ToString()
             });
         }
