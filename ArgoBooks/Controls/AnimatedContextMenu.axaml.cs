@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -10,9 +12,20 @@ namespace ArgoBooks.Controls;
 /// <summary>
 /// A reusable animated context menu with fade-in animation.
 /// Provides overlay backdrop, positioning, and common styling.
+/// Automatically adjusts position to prevent overflow outside container bounds.
 /// </summary>
-public partial class AnimatedContextMenu : UserControl
+public partial class AnimatedContextMenu : UserControl, INotifyPropertyChanged
 {
+    public new event PropertyChangedEventHandler? PropertyChanged;
+
+    private void RaisePropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private double _adjustedMenuX;
+    private double _adjustedMenuY;
+
     #region Styled Properties
 
     public static readonly StyledProperty<bool> IsOpenProperty =
@@ -62,6 +75,38 @@ public partial class AnimatedContextMenu : UserControl
     }
 
     /// <summary>
+    /// Gets the adjusted X position that prevents horizontal overflow.
+    /// </summary>
+    public double AdjustedMenuX
+    {
+        get => _adjustedMenuX;
+        private set
+        {
+            if (Math.Abs(_adjustedMenuX - value) > 0.001)
+            {
+                _adjustedMenuX = value;
+                RaisePropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the adjusted Y position that prevents vertical overflow.
+    /// </summary>
+    public double AdjustedMenuY
+    {
+        get => _adjustedMenuY;
+        private set
+        {
+            if (Math.Abs(_adjustedMenuY - value) > 0.001)
+            {
+                _adjustedMenuY = value;
+                RaisePropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets or sets the command to close the context menu.
     /// </summary>
     public ICommand? CloseCommand
@@ -97,9 +142,10 @@ public partial class AnimatedContextMenu : UserControl
 
             if (IsOpen)
             {
-                // Animate in
+                // Calculate adjusted position and animate in
                 Dispatcher.UIThread.Post(() =>
                 {
+                    CalculateAdjustedPosition(animationBorder);
                     animationBorder.Opacity = 1;
                     animationBorder.RenderTransform = new TranslateTransform(0, 0);
                 }, DispatcherPriority.Render);
@@ -114,6 +160,63 @@ public partial class AnimatedContextMenu : UserControl
                 }, DispatcherPriority.Background);
             }
         }
+        else if (change.Property == MenuXProperty || change.Property == MenuYProperty)
+        {
+            // Recalculate when position changes while open
+            if (IsOpen)
+            {
+                var animationBorder = this.FindControl<Border>("AnimationBorder");
+                if (animationBorder != null)
+                {
+                    Dispatcher.UIThread.Post(() => CalculateAdjustedPosition(animationBorder), DispatcherPriority.Render);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Calculates the adjusted menu position to prevent overflow outside container bounds.
+    /// </summary>
+    private void CalculateAdjustedPosition(Border menuBorder)
+    {
+        // Get the container bounds (this control should fill the page)
+        var containerWidth = Bounds.Width;
+        var containerHeight = Bounds.Height;
+
+        // Measure the menu to get its size
+        menuBorder.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var menuWidth = menuBorder.DesiredSize.Width;
+        var menuHeight = menuBorder.DesiredSize.Height;
+
+        // Use a small margin to keep menu away from edges
+        const double margin = 8;
+
+        // Calculate adjusted X position
+        var adjustedX = MenuX;
+        if (MenuX + menuWidth > containerWidth - margin)
+        {
+            // Would overflow right - shift left
+            adjustedX = Math.Max(margin, containerWidth - menuWidth - margin);
+        }
+        if (adjustedX < margin)
+        {
+            adjustedX = margin;
+        }
+
+        // Calculate adjusted Y position
+        var adjustedY = MenuY;
+        if (MenuY + menuHeight > containerHeight - margin)
+        {
+            // Would overflow bottom - shift up
+            adjustedY = Math.Max(margin, containerHeight - menuHeight - margin);
+        }
+        if (adjustedY < margin)
+        {
+            adjustedY = margin;
+        }
+
+        AdjustedMenuX = adjustedX;
+        AdjustedMenuY = adjustedY;
     }
 
     /// <summary>

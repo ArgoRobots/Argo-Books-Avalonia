@@ -22,8 +22,8 @@
                 HorizontalAlignment="Left"
                 VerticalAlignment="Top">
             <Border.RenderTransform>
-                <TranslateTransform X="{Binding MenuX, RelativeSource={RelativeSource AncestorType=controls:AnimatedContextMenu}}"
-                                    Y="{Binding MenuY, RelativeSource={RelativeSource AncestorType=controls:AnimatedContextMenu}}" />
+                <TranslateTransform X="{Binding AdjustedMenuX, RelativeSource={RelativeSource AncestorType=controls:AnimatedContextMenu}}"
+                                    Y="{Binding AdjustedMenuY, RelativeSource={RelativeSource AncestorType=controls:AnimatedContextMenu}}" />
             </Border.RenderTransform>
 
             <!-- Animation container -->
