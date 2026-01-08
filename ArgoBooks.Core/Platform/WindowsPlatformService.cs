@@ -35,6 +35,7 @@ public class WindowsPlatformService : BasePlatformService
     public override bool SupportsBiometrics => true; // Windows Hello
 
     /// <inheritdoc />
+    [SupportedOSPlatform("windows10.0.10240.0")]
     public override async Task<bool> IsBiometricAvailableAsync()
     {
 #if WINDOWS
@@ -53,6 +54,7 @@ public class WindowsPlatformService : BasePlatformService
     }
 
     /// <inheritdoc />
+    [SupportedOSPlatform("windows10.0.10240.0")]
     public override async Task<bool> AuthenticateWithBiometricAsync(string reason)
     {
 #if WINDOWS

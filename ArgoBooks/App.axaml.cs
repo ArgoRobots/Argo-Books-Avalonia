@@ -1196,16 +1196,12 @@ public partial class App : Application
         // Windows Hello authentication requested (before enabling)
         settings.WindowsHelloAuthRequested += async (_, _) =>
         {
-            if (PlatformService == null)
-            {
-                settings.OnWindowsHelloAuthResult(false);
-                return;
-            }
+            var platformService = PlatformServiceFactory.GetPlatformService();
 
             try
             {
                 // Check if Windows Hello is available
-                var available = await PlatformService.IsBiometricAvailableAsync();
+                var available = await platformService.IsBiometricAvailableAsync();
                 if (!available)
                 {
                     _appShellViewModel?.AddNotification("Windows Hello", "Windows Hello is not available on this device.", NotificationType.Warning);
@@ -1214,7 +1210,7 @@ public partial class App : Application
                 }
 
                 // Request authentication
-                var success = await PlatformService.AuthenticateWithBiometricAsync("Verify your identity to enable Windows Hello");
+                var success = await platformService.AuthenticateWithBiometricAsync("Verify your identity to enable Windows Hello");
                 settings.OnWindowsHelloAuthResult(success);
 
                 if (!success)
