@@ -583,7 +583,7 @@ public partial class App : Application
             _mainWindowViewModel.HideLoading();
 
             // Clear undo/redo history for fresh start with new company
-            UndoRedoManager?.Clear();
+            UndoRedoManager.Clear();
 
             // Reset unsaved changes state - opening a company starts with no unsaved changes
             _mainWindowViewModel.HasUnsavedChanges = false;
@@ -604,7 +604,7 @@ public partial class App : Application
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
             // Clear undo/redo history when company is closed
-            UndoRedoManager?.Clear();
+            UndoRedoManager.Clear();
 
             // Clear tracked changes when company is closed
             _changeTrackingService?.ClearAllChanges();
@@ -622,7 +622,7 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
 
             // Mark undo/redo state as saved so IsAtSavedState returns true
-            UndoRedoManager?.MarkSaved();
+            UndoRedoManager.MarkSaved();
 
             // Clear tracked changes after saving
             _changeTrackingService?.ClearAllChanges();
@@ -770,7 +770,7 @@ public partial class App : Application
             if (CompanyManager?.IsCompanyOpen == true)
             {
                 // Use UndoRedoManager's saved state which correctly handles undo back to original
-                if (UndoRedoManager?.IsAtSavedState == false)
+                if (UndoRedoManager.IsAtSavedState == false)
                 {
                     var result = await ShowUnsavedChangesDialogAsync();
                     switch (result)
@@ -1551,7 +1551,7 @@ public partial class App : Application
                 var importedSnapshot = CreateCompanyDataSnapshot(companyData);
 
                 // Record undo action
-                UndoRedoManager?.RecordAction(new DelegateAction(
+                UndoRedoManager.RecordAction(new DelegateAction(
                     "Import spreadsheet data",
                     () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
                     () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }

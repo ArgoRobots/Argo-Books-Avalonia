@@ -223,6 +223,13 @@
     <Style Selector="Button.icon-button PathIcon">
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
     </Style>
+    <!-- Icon Button Danger Variant (red on hover) -->
+    <Style Selector="Button.icon-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#FEE2E2" />
+    </Style>
+    <Style Selector="Button.icon-button.danger:pointerover PathIcon">
+        <Setter Property="Foreground" Value="#DC2626" />
+    </Style>
 
     <!-- Icon Button Small (smaller variant for compact areas) -->
     <Style Selector="Button.icon-button-small">
@@ -242,6 +249,13 @@
     </Style>
     <Style Selector="Button.icon-button-small PathIcon">
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+    <!-- Icon Button Small Danger Variant (red on hover) -->
+    <Style Selector="Button.icon-button-small.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#FEE2E2" />
+    </Style>
+    <Style Selector="Button.icon-button-small.danger:pointerover PathIcon">
+        <Setter Property="Foreground" Value="#DC2626" />
     </Style>
 
     <!-- Link Button (looks like a hyperlink, with underline on hover) -->
