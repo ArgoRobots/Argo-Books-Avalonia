@@ -590,40 +590,6 @@
     </Panel>
 
     <UserControl.Styles>
-        <!-- Text Button -->
-        <Style Selector="Button.text-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.text-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.text-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-
-        <!-- Warning Button -->
-        <Style Selector="Button.warning-button">
-            <Setter Property="Background" Value="#F59E0B" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.warning-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#F59E0B" />
-        </Style>
-        <Style Selector="Button.warning-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#D97706" />
-        </Style>
-
         <!-- NumericUpDown in forms -->
         <Style Selector="NumericUpDown.form-numericupdown">
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />

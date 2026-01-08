@@ -710,31 +710,6 @@
             <Setter Property="BorderThickness" Value="0" />
         </Style>
 
-        <!-- Small Icon Button -->
-        <Style Selector="Button.icon-button-small">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Width" Value="28" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.icon-button-small /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.icon-button-small:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-        <Style Selector="Button.icon-button-small PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-        </Style>
-        <Style Selector="Button.icon-button-small.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#FEE2E2" />
-        </Style>
-        <Style Selector="Button.icon-button-small.danger:pointerover PathIcon">
-            <Setter Property="Foreground" Value="#DC2626" />
-        </Style>
 
         <!-- Page Size ComboBox -->
         <Style Selector="ComboBox.page-size-combobox">
@@ -747,22 +722,5 @@
             <Setter Property="MinHeight" Value="28" />
         </Style>
 
-        <!-- Danger Button -->
-        <Style Selector="Button.danger-button">
-            <Setter Property="Background" Value="#DC2626" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#DC2626" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-        <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#B91C1C" />
-        </Style>
     </UserControl.Styles>
 </UserControl>

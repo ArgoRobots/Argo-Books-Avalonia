@@ -518,7 +518,4 @@
             </Border>
         </Panel>
     </Panel>
-
-    <UserControl.Styles>
-    </UserControl.Styles>
 </UserControl>

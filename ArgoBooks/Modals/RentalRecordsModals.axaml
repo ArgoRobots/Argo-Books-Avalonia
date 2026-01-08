@@ -612,24 +612,4 @@
         </Panel>
     </Panel>
 
-    <UserControl.Styles>
-        <!-- Success Button -->
-        <Style Selector="Button.success-button">
-            <Setter Property="Background" Value="#16a34a" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.success-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#16a34a" />
-        </Style>
-        <Style Selector="Button.success-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#15803d" />
-        </Style>
-
-    </UserControl.Styles>
 </UserControl>

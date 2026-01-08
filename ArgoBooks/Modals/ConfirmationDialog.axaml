@@ -101,7 +101,4 @@
             </Grid>
         </Border>
     </Grid>
-
-    <UserControl.Styles>
-    </UserControl.Styles>
 </UserControl>
