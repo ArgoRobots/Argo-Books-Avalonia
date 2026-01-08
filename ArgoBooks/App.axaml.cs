@@ -348,7 +348,7 @@ public partial class App : Application
             WireModalChangeEvents();
 
             // Sync HasUnsavedChanges with undo/redo state (both MainWindow and Header)
-            UndoRedoManager!.StateChanged += (_, _) =>
+            UndoRedoManager.StateChanged += (_, _) =>
             {
                 var hasChanges = !UndoRedoManager.IsAtSavedState;
                 _mainWindowViewModel.HasUnsavedChanges = hasChanges;
@@ -597,7 +597,7 @@ public partial class App : Application
         {
             _mainWindowViewModel.CloseCompany();
             _appShellViewModel.SetCompanyInfo(null);
-            _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("", null);
+            _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("");
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(null);
             _mainWindowViewModel.HideLoading();
             _mainWindowViewModel.HasUnsavedChanges = false;
@@ -637,8 +637,6 @@ public partial class App : Application
         // Use async callback for password requests (allows proper awaiting)
         CompanyManager.PasswordRequestCallback = async (filePath) =>
         {
-            if (_appShellViewModel == null || _mainWindowViewModel == null) return null;
-
             // Hide the loading modal before showing password prompt
             _mainWindowViewModel.HideLoading();
 
@@ -750,7 +748,7 @@ public partial class App : Application
                 }
                 catch (Exception ex)
                 {
-                    _appShellViewModel!.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
+                    _appShellViewModel.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
                 }
             }
         };
@@ -848,8 +846,8 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                _mainWindowViewModel!.HideLoading();
-                _appShellViewModel!.AddNotification("Error", $"Failed to create company: {ex.Message}", NotificationType.Error);
+                _mainWindowViewModel.HideLoading();
+                _appShellViewModel.AddNotification("Error", $"Failed to create company: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -959,7 +957,7 @@ public partial class App : Application
         // Edit current company
         companySwitcher.EditCompanyRequested += (_, _) =>
         {
-            if (CompanyManager?.IsCompanyOpen != true || _appShellViewModel == null) return;
+            if (CompanyManager?.IsCompanyOpen != true) return;
 
             var settings = CompanyManager.CurrentCompanySettings;
             var logoPath = CompanyManager.CurrentCompanyLogoPath;
@@ -1035,7 +1033,7 @@ public partial class App : Application
                             CompanyManager.UpdateFilePath(newPath);
                         }
 
-                        _appShellViewModel!.HeaderViewModel.ShowSavedFeedback();
+                        _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
                     }
 
                     // Update UI
@@ -1052,7 +1050,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                _appShellViewModel!.AddNotification("Error", $"Failed to update company: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", $"Failed to update company: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1127,7 +1125,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 settings.HasPassword = false;
-                _appShellViewModel!.AddNotification("Error", $"Failed to set password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", $"Failed to set password: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1154,7 +1152,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                _appShellViewModel!.AddNotification("Error", $"Failed to change password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", $"Failed to change password: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1181,7 +1179,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                _appShellViewModel!.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1322,7 +1320,7 @@ public partial class App : Application
             if (args.Format == "backup")
             {
                 // Backup export - not implemented yet
-                _appShellViewModel!.AddNotification("Info", "Backup export will be available in a future update.", NotificationType.Info);
+                _appShellViewModel.AddNotification("Info", "Backup export will be available in a future update.");
                 return;
             }
 
@@ -1431,8 +1429,8 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                _mainWindowViewModel!.HideLoading();
-                _appShellViewModel!.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
+                _mainWindowViewModel.HideLoading();
+                _appShellViewModel.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
             }
         };
     }
@@ -1459,7 +1457,7 @@ public partial class App : Application
             // Only Excel import is supported for now
             if (format.ToUpperInvariant() != "EXCEL")
             {
-                _appShellViewModel.AddNotification("Info", $"{format} import will be available in a future update.", NotificationType.Info);
+                _appShellViewModel.AddNotification("Info", $"{format} import will be available in a future update.");
                 return;
             }
 
@@ -1477,7 +1475,7 @@ public partial class App : Application
                 }
             });
 
-            if (file == null || file.Count == 0) return;
+            if (file.Count == 0) return;
 
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;
@@ -1578,7 +1576,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                _mainWindowViewModel!.HideLoading();
+                _mainWindowViewModel.HideLoading();
                 var errorDialog = ConfirmationDialog;
                 if (errorDialog != null)
                 {
@@ -1708,7 +1706,7 @@ public partial class App : Application
             // Must run on UI thread
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                if (CompanyManager?.IsCompanyOpen != true) return;
+                if (CompanyManager.IsCompanyOpen != true) return;
 
                 // Check for unsaved changes
                 if (CompanyManager.HasUnsavedChanges)
@@ -1728,17 +1726,16 @@ public partial class App : Application
                 }
 
                 // Close the company - this will trigger navigation back to welcome screen
-                var filePath = CompanyManager.CurrentFilePath;
                 await CompanyManager.CloseCompanyAsync();
 
                 // Show notification
-                _appShellViewModel!.AddNotification(
+                _appShellViewModel.AddNotification(
                     "Session Locked",
                     "Your session was locked due to inactivity. Please reopen your company file.",
                     NotificationType.Warning);
 
                 // Re-enable idle detection for next session
-                _idleDetectionService!.ResetIdleTimer();
+                _idleDetectionService.ResetIdleTimer();
             });
         };
 
@@ -1746,7 +1743,7 @@ public partial class App : Application
         CompanyManager.CompanyOpened += (_, _) =>
         {
             var companySettings = CompanyManager.CurrentCompanySettings;
-            if (companySettings != null && _idleDetectionService != null)
+            if (companySettings != null)
             {
                 var security = companySettings.Security;
                 _idleDetectionService.Configure(security.AutoLockEnabled, security.AutoLockMinutes);
@@ -1769,15 +1766,15 @@ public partial class App : Application
         // Disable idle detection when company closes
         CompanyManager.CompanyClosed += (_, _) =>
         {
-            _idleDetectionService!.Configure(false, 0);
+            _idleDetectionService.Configure(false, 0);
         };
 
         // Record activity on main window pointer/key events
         if (desktop.MainWindow != null)
         {
-            desktop.MainWindow.PointerMoved += (_, _) => _idleDetectionService!.RecordActivity();
-            desktop.MainWindow.KeyDown += (_, _) => _idleDetectionService!.RecordActivity();
-            desktop.MainWindow.PointerPressed += (_, _) => _idleDetectionService!.RecordActivity();
+            desktop.MainWindow.PointerMoved += (_, _) => _idleDetectionService.RecordActivity();
+            desktop.MainWindow.KeyDown += (_, _) => _idleDetectionService.RecordActivity();
+            desktop.MainWindow.PointerPressed += (_, _) => _idleDetectionService.RecordActivity();
         }
     }
 
