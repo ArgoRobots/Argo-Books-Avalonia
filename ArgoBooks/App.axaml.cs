@@ -387,7 +387,7 @@ public partial class App : Application
                     }
                     catch (Exception ex)
                     {
-                        _appShellViewModel?.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
+                        _appShellViewModel!.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
                     }
                 }
             };
@@ -637,10 +637,10 @@ public partial class App : Application
         // Use async callback for password requests (allows proper awaiting)
         CompanyManager.PasswordRequestCallback = async (filePath) =>
         {
-            if (_appShellViewModel?.PasswordPromptModalViewModel == null) return null;
+            if (_appShellViewModel == null || _mainWindowViewModel == null) return null;
 
             // Hide the loading modal before showing password prompt
-            _mainWindowViewModel?.HideLoading();
+            _mainWindowViewModel.HideLoading();
 
             // Get company name from footer if possible
             var footer = await CompanyManager.GetFileInfoAsync(filePath);
@@ -651,7 +651,7 @@ public partial class App : Application
             // Show loading again after user enters password (if they didn't cancel)
             if (!string.IsNullOrEmpty(password))
             {
-                _mainWindowViewModel?.ShowLoading("Opening company...");
+                _mainWindowViewModel.ShowLoading("Opening company...");
             }
 
             return password;
@@ -750,7 +750,7 @@ public partial class App : Application
                 }
                 catch (Exception ex)
                 {
-                    _appShellViewModel?.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
+                    _appShellViewModel!.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
                 }
             }
         };
@@ -827,7 +827,7 @@ public partial class App : Application
 
             var filePath = file.Path.LocalPath;
 
-            _mainWindowViewModel?.ShowLoading("Creating company...");
+            _mainWindowViewModel!.ShowLoading("Creating company...");
             try
             {
                 var companyInfo = new CompanyInfo
@@ -848,8 +848,8 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Error", $"Failed to create company: {ex.Message}", NotificationType.Error);
+                _mainWindowViewModel!.HideLoading();
+                _appShellViewModel!.AddNotification("Error", $"Failed to create company: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -895,7 +895,7 @@ public partial class App : Application
         // Create new company - show create company wizard
         _welcomeScreenViewModel.CreateNewCompanyRequested += (_, _) =>
         {
-            _appShellViewModel?.CreateCompanyViewModel.OpenCommand.Execute(null);
+            _appShellViewModel!.CreateCompanyViewModel.OpenCommand.Execute(null);
         };
 
         // Open company - show file picker
@@ -1035,24 +1035,24 @@ public partial class App : Application
                             CompanyManager.UpdateFilePath(newPath);
                         }
 
-                        _appShellViewModel?.HeaderViewModel.ShowSavedFeedback();
+                        _appShellViewModel!.HeaderViewModel.ShowSavedFeedback();
                     }
 
                     // Update UI
-                    _mainWindowViewModel?.OpenCompany(args.CompanyName);
+                    _mainWindowViewModel!.OpenCompany(args.CompanyName);
                     var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
-                    _appShellViewModel?.SetCompanyInfo(args.CompanyName, logo);
-                    _appShellViewModel?.CompanySwitcherPanelViewModel.SetCurrentCompany(
+                    _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
+                    _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
                         args.CompanyName,
                         CompanyManager.CurrentFilePath,
                         logo);
                 }
 
-                _appShellViewModel?.AddNotification("Updated", "Company information updated.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Updated", "Company information updated.", NotificationType.Success);
             }
             catch (Exception ex)
             {
-                _appShellViewModel?.AddNotification("Error", $"Failed to update company: {ex.Message}", NotificationType.Error);
+                _appShellViewModel!.AddNotification("Error", $"Failed to update company: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1122,12 +1122,12 @@ public partial class App : Application
                 // Mark as having changes so SavedFeedback shows "Saved" not "No changes found"
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
-                _appShellViewModel?.AddNotification("Success", "Password has been set.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Success", "Password has been set.", NotificationType.Success);
             }
             catch (Exception ex)
             {
                 settings.HasPassword = false;
-                _appShellViewModel?.AddNotification("Error", $"Failed to set password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel!.AddNotification("Error", $"Failed to set password: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1149,12 +1149,12 @@ public partial class App : Application
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
                 settings.OnPasswordChanged();
-                _appShellViewModel?.AddNotification("Success", "Password has been changed.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Success", "Password has been changed.", NotificationType.Success);
             }
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                _appShellViewModel?.AddNotification("Error", $"Failed to change password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel!.AddNotification("Error", $"Failed to change password: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1176,12 +1176,12 @@ public partial class App : Application
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(null);
                 settings.OnPasswordRemoved();
-                _appShellViewModel?.AddNotification("Success", "Password has been removed.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Success", "Password has been removed.", NotificationType.Success);
             }
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                _appShellViewModel?.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel!.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1322,20 +1322,20 @@ public partial class App : Application
             if (args.Format == "backup")
             {
                 // Backup export - not implemented yet
-                _appShellViewModel?.AddNotification("Info", "Backup export will be available in a future update.", NotificationType.Info);
+                _appShellViewModel!.AddNotification("Info", "Backup export will be available in a future update.", NotificationType.Info);
                 return;
             }
 
             // Spreadsheet export
             if (args.SelectedDataItems.Count == 0)
             {
-                _appShellViewModel?.AddNotification("Warning", "Please select at least one data type to export.", NotificationType.Warning);
+                _appShellViewModel.AddNotification("Warning", "Please select at least one data type to export.", NotificationType.Warning);
                 return;
             }
 
             if (CompanyManager?.CompanyData == null)
             {
-                _appShellViewModel?.AddNotification("Error", "No company is currently open.", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", "No company is currently open.", NotificationType.Error);
                 return;
             }
 
@@ -1366,7 +1366,7 @@ public partial class App : Application
             if (file == null) return;
 
             var filePath = file.Path.LocalPath;
-            _mainWindowViewModel?.ShowLoading("Exporting data...");
+            _mainWindowViewModel!.ShowLoading("Exporting data...");
 
             try
             {
@@ -1402,7 +1402,7 @@ public partial class App : Application
                         break;
                 }
 
-                _mainWindowViewModel?.HideLoading();
+                _mainWindowViewModel.HideLoading();
 
                 // Open the containing folder
                 try
@@ -1431,8 +1431,8 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
+                _mainWindowViewModel!.HideLoading();
+                _appShellViewModel!.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
             }
         };
     }
@@ -1452,14 +1452,14 @@ public partial class App : Application
         {
             if (CompanyManager?.CompanyData == null)
             {
-                _appShellViewModel?.AddNotification("Error", "No company is currently open.", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", "No company is currently open.", NotificationType.Error);
                 return;
             }
 
             // Only Excel import is supported for now
             if (format.ToUpperInvariant() != "EXCEL")
             {
-                _appShellViewModel?.AddNotification("Info", $"{format} import will be available in a future update.", NotificationType.Info);
+                _appShellViewModel.AddNotification("Info", $"{format} import will be available in a future update.", NotificationType.Info);
                 return;
             }
 
@@ -1482,7 +1482,7 @@ public partial class App : Application
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;
 
-            _mainWindowViewModel?.ShowLoading("Validating import file...");
+            _mainWindowViewModel!.ShowLoading("Validating import file...");
 
             try
             {
@@ -1491,7 +1491,7 @@ public partial class App : Application
                 // First validate the import file
                 var validationResult = await importService.ValidateImportAsync(filePath, companyData);
 
-                _mainWindowViewModel?.HideLoading();
+                _mainWindowViewModel.HideLoading();
 
                 // Check for critical errors - show in modal
                 if (validationResult.Errors.Count > 0)
@@ -1541,11 +1541,11 @@ public partial class App : Application
                 // Create snapshot of current data for undo
                 var snapshot = CreateCompanyDataSnapshot(companyData);
 
-                _mainWindowViewModel?.ShowLoading("Importing data...");
+                _mainWindowViewModel.ShowLoading("Importing data...");
 
                 await importService.ImportFromExcelAsync(filePath, companyData, importOptions);
 
-                _mainWindowViewModel?.HideLoading();
+                _mainWindowViewModel.HideLoading();
 
                 // Create snapshot of imported data for redo
                 var importedSnapshot = CreateCompanyDataSnapshot(companyData);
@@ -1574,11 +1574,11 @@ public partial class App : Application
                 }
                 successMessage += "\n\nPlease save to persist changes.";
 
-                _appShellViewModel?.AddNotification("Import Complete", successMessage, NotificationType.Success);
+                _appShellViewModel.AddNotification("Import Complete", successMessage, NotificationType.Success);
             }
             catch (Exception ex)
             {
-                _mainWindowViewModel?.HideLoading();
+                _mainWindowViewModel!.HideLoading();
                 var errorDialog = ConfirmationDialog;
                 if (errorDialog != null)
                 {
@@ -1758,7 +1758,7 @@ public partial class App : Application
                     60 => "1 hour",
                     _ => $"{security.AutoLockMinutes} minutes"
                 };
-                if (_appShellViewModel?.SettingsModalViewModel != null)
+                if (_appShellViewModel.SettingsModalViewModel != null)
                 {
                     // Use SetAutoLockWithoutNotify to avoid triggering MarkAsChanged during load
                     _appShellViewModel.SettingsModalViewModel.SetAutoLockWithoutNotify(timeoutString);
@@ -1845,25 +1845,20 @@ public partial class App : Application
             // Wrong password - show error and retry
             _mainWindowViewModel.HideLoading();
 
-            if (passwordModal != null)
+            passwordModal.ShowError("Invalid password. Please try again.");
+
+            // Wait for the user to retry
+            var newPassword = await passwordModal.WaitForPasswordAsync();
+
+            if (string.IsNullOrEmpty(newPassword))
             {
-                passwordModal.ShowError("Invalid password. Please try again.");
-
-                // Wait for the user to retry
-                var newPassword = await passwordModal.WaitForPasswordAsync();
-
-                if (string.IsNullOrEmpty(newPassword))
-                {
-                    // User cancelled
-                    passwordModal.Close();
-                    return false;
-                }
-
-                // Retry with the new password
-                return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
+                // User cancelled
+                passwordModal.Close();
+                return false;
             }
 
-            return false;
+            // Retry with the new password
+            return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (FileNotFoundException)
         {
@@ -1915,25 +1910,20 @@ public partial class App : Application
             // Wrong password again - show error and retry
             _mainWindowViewModel.HideLoading();
 
-            if (passwordModal != null)
+            passwordModal.ShowError("Invalid password. Please try again.");
+
+            // Wait for the user to retry
+            var newPassword = await passwordModal.WaitForPasswordAsync();
+
+            if (string.IsNullOrEmpty(newPassword))
             {
-                passwordModal.ShowError("Invalid password. Please try again.");
-
-                // Wait for the user to retry
-                var newPassword = await passwordModal.WaitForPasswordAsync();
-
-                if (string.IsNullOrEmpty(newPassword))
-                {
-                    // User cancelled
-                    passwordModal.Close();
-                    return false;
-                }
-
-                // Retry recursively
-                return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
+                // User cancelled
+                passwordModal.Close();
+                return false;
             }
 
-            return false;
+            // Retry recursively
+            return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (Exception ex)
         {
@@ -1961,7 +1951,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            _appShellViewModel?.AddNotification("Error", $"Failed to save file: {ex.Message}", NotificationType.Error);
+            _appShellViewModel!.AddNotification("Error", $"Failed to save file: {ex.Message}", NotificationType.Error);
         }
     }
 
@@ -2102,16 +2092,16 @@ public partial class App : Application
             {
                 if (args.IsExporting)
                 {
-                    _mainWindowViewModel?.ShowLoading("Exporting to Google Sheets...");
+                    _mainWindowViewModel!.ShowLoading("Exporting to Google Sheets...");
                 }
                 else if (args.IsSuccess)
                 {
-                    _mainWindowViewModel?.HideLoading();
+                    _mainWindowViewModel!.HideLoading();
                     // No notification - the browser opens automatically
                 }
                 else if (!string.IsNullOrEmpty(args.ErrorMessage))
                 {
-                    _mainWindowViewModel?.HideLoading();
+                    _mainWindowViewModel!.HideLoading();
                     appShellViewModel.AddNotification("Export Failed", args.ErrorMessage, NotificationType.Error);
                 }
             };
@@ -2159,9 +2149,9 @@ public partial class App : Application
         {
             var viewModel = new ProductsPageViewModel();
             // Set plan status from app shell
-            viewModel.HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false;
+            viewModel.HasStandard = _appShellViewModel!.SidebarViewModel.HasStandard;
             // Wire up upgrade request to open upgrade modal
-            viewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
+            viewModel.UpgradeRequested += (_, _) => _appShellViewModel.UpgradeModalViewModel.OpenCommand.Execute(null);
             if (param is Dictionary<string, object?> dict)
             {
                 // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)
@@ -2227,7 +2217,7 @@ public partial class App : Application
         {
             var viewModel = new ReceiptsPageViewModel();
             // Set plan status from app shell
-            viewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
+            viewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
             return new ReceiptsPage { DataContext = viewModel };
         });
 
