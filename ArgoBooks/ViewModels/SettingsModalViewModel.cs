@@ -162,9 +162,18 @@ public partial class SettingsModalViewModel : ViewModelBase
     public bool NeedsPasswordForWindowsHello => HasStandard && !HasPassword;
 
     /// <summary>
-    /// Event raised when Windows Hello setting changes.
+    /// Event raised when Windows Hello setting changes (after successful authentication).
     /// </summary>
     public event EventHandler<WindowsHelloEventArgs>? WindowsHelloChanged;
+
+    /// <summary>
+    /// Event raised to request Windows Hello authentication before enabling.
+    /// The handler should authenticate and call OnWindowsHelloAuthResult with the result.
+    /// </summary>
+    public event EventHandler? WindowsHelloAuthRequested;
+
+    // Flag to prevent recursive updates when setting Windows Hello programmatically
+    private bool _isUpdatingWindowsHello;
 
     /// <summary>
     /// Event raised when user wants to upgrade their plan.
@@ -305,7 +314,51 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     partial void OnWindowsHelloEnabledChanged(bool value)
     {
-        WindowsHelloChanged?.Invoke(this, new WindowsHelloEventArgs(value));
+        // Skip if we're programmatically updating (e.g., after auth result)
+        if (_isUpdatingWindowsHello) return;
+
+        if (value)
+        {
+            // User is trying to enable - request authentication first
+            WindowsHelloAuthRequested?.Invoke(this, EventArgs.Empty);
+            // The actual enabling will happen in OnWindowsHelloAuthResult
+        }
+        else
+        {
+            // Disabling doesn't require authentication
+            WindowsHelloChanged?.Invoke(this, new WindowsHelloEventArgs(false));
+        }
+    }
+
+    /// <summary>
+    /// Called after Windows Hello authentication attempt.
+    /// </summary>
+    /// <param name="success">Whether authentication was successful.</param>
+    public void OnWindowsHelloAuthResult(bool success)
+    {
+        _isUpdatingWindowsHello = true;
+        if (success)
+        {
+            // Authentication succeeded - keep enabled and fire event
+            WindowsHelloChanged?.Invoke(this, new WindowsHelloEventArgs(true));
+        }
+        else
+        {
+            // Authentication failed or cancelled - revert the toggle
+            WindowsHelloEnabled = false;
+        }
+        _isUpdatingWindowsHello = false;
+    }
+
+    /// <summary>
+    /// Sets Windows Hello enabled state without triggering authentication.
+    /// Used when loading settings from company file.
+    /// </summary>
+    public void SetWindowsHelloWithoutAuth(bool enabled)
+    {
+        _isUpdatingWindowsHello = true;
+        WindowsHelloEnabled = enabled;
+        _isUpdatingWindowsHello = false;
     }
 
     /// <summary>
