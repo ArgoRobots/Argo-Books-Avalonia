@@ -696,25 +696,27 @@
                                           HorizontalAlignment="Stretch" />
                             </StackPanel>
 
-                            <!-- Date Range -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="From Date"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding FilterDateFrom}"
-                                                        HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="To Date"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding FilterDateTo}"
-                                                        HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                            <!-- From Date -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="From Date"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <DatePicker SelectedDate="{Binding FilterDateFrom}"
+                                            Classes="form-datepicker"
+                                            HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- To Date -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="To Date"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <DatePicker SelectedDate="{Binding FilterDateTo}"
+                                            Classes="form-datepicker"
+                                            HorizontalAlignment="Stretch" />
+                            </StackPanel>
 
                             <!-- Amount Range -->
                             <Grid ColumnDefinitions="*,16,*">

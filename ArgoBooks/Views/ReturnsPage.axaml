@@ -20,26 +20,27 @@
     </Design.DataContext>
 
     <Panel>
-        <!-- Main Content -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <Grid RowDefinitions="Auto,Auto,*" Margin="24">
-                <!-- Tab Navigation (Row 0) -->
-                <Border Grid.Row="0"
-                        Background="{DynamicResource SurfaceBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="0,0,0,1"
-                        Margin="0,0,0,24">
-                    <TabControl SelectedIndex="{Binding SelectedTabIndex}"
-                                Margin="0"
-                                Classes="page-tabs">
-                        <TabItem Header="Expense Returns" />
-                        <TabItem Header="Customer Returns" />
-                    </TabControl>
-                </Border>
+        <Grid RowDefinitions="Auto,*">
+            <!-- Tab Bar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+                            Margin="0"
+                            Classes="page-tabs">
+                    <TabItem Header="Expense Returns" />
+                    <TabItem Header="Customer Returns" />
+                </TabControl>
+            </Border>
 
-                <!-- Statistics Cards Row -->
-                <controls:StatCardsRow Grid.Row="1" Margin="0,0,0,24">
+            <!-- Main Content -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <Grid RowDefinitions="Auto,*" Margin="24">
+                    <!-- Statistics Cards Row -->
+                    <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                     <controls:StatCard Label="Total Returns"
                                        Value="{Binding TotalReturns}"
                                        Icon="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7h-2z"
@@ -58,8 +59,8 @@
                                        IconColor="Info" />
                 </controls:StatCardsRow>
 
-                <!-- Main Content Card (Row 2) -->
-                <Border Grid.Row="2"
+                <!-- Main Content Card (Row 1) -->
+                <Border Grid.Row="1"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
                         BorderBrush="{DynamicResource BorderBrush}"
@@ -473,6 +474,7 @@
                 </Border>
             </Grid>
         </ScrollViewer>
+        </Grid>
 
         <!-- Filter Modal Overlay -->
         <Border Background="#80000000"
@@ -506,25 +508,27 @@
                     <!-- Modal Content -->
                     <ScrollViewer Grid.Row="1" Padding="24">
                         <StackPanel Spacing="16">
-                            <!-- Date Range -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="From Date"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding FilterDateFrom}"
-                                                        HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="To Date"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding FilterDateTo}"
-                                                        HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
+                            <!-- From Date -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="From Date"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <DatePicker SelectedDate="{Binding FilterDateFrom}"
+                                            Classes="form-datepicker"
+                                            HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- To Date -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="To Date"
+                                           FontSize="13"
+                                           FontWeight="Medium"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <DatePicker SelectedDate="{Binding FilterDateTo}"
+                                            Classes="form-datepicker"
+                                            HorizontalAlignment="Stretch" />
+                            </StackPanel>
 
                             <!-- Status -->
                             <StackPanel Spacing="8">
