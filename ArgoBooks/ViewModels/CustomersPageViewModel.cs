@@ -102,12 +102,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private bool _isFilterModalOpen;
 
-    [ObservableProperty]
-    private bool _isHistoryModalOpen;
-
-    [ObservableProperty]
-    private bool _isHistoryFilterModalOpen;
-
     #endregion
 
     #region Modal Form Fields
@@ -163,69 +157,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     /// The customer being deleted.
     /// </summary>
     private CustomerDisplayItem? _deletingCustomer;
-
-    /// <summary>
-    /// The customer whose history is being viewed.
-    /// </summary>
-    private CustomerDisplayItem? _historyCustomer;
-
-    #endregion
-
-    #region Customer History
-
-    [ObservableProperty]
-    private string _historyCustomerName = string.Empty;
-
-    /// <summary>
-    /// Transaction history for the selected customer.
-    /// </summary>
-    public ObservableCollection<CustomerHistoryItem> CustomerHistory { get; } = [];
-
-    /// <summary>
-    /// Transaction type filter for history.
-    /// </summary>
-    [ObservableProperty]
-    private string _historyFilterType = "All";
-
-    /// <summary>
-    /// Status filter for history.
-    /// </summary>
-    [ObservableProperty]
-    private string _historyFilterStatus = "All";
-
-    /// <summary>
-    /// Date from filter for history.
-    /// </summary>
-    [ObservableProperty]
-    private DateTime? _historyFilterDateFrom;
-
-    /// <summary>
-    /// Date to filter for history.
-    /// </summary>
-    [ObservableProperty]
-    private DateTime? _historyFilterDateTo;
-
-    /// <summary>
-    /// Amount min filter for history.
-    /// </summary>
-    [ObservableProperty]
-    private string? _historyFilterAmountMin;
-
-    /// <summary>
-    /// Amount max filter for history.
-    /// </summary>
-    [ObservableProperty]
-    private string? _historyFilterAmountMax;
-
-    /// <summary>
-    /// Transaction type options for history filter.
-    /// </summary>
-    public ObservableCollection<string> HistoryTypeOptions { get; } = ["All", "Rental", "Purchase", "Return", "Payment"];
-
-    /// <summary>
-    /// Status options for history filter.
-    /// </summary>
-    public ObservableCollection<string> HistoryStatusOptions { get; } = ["All", "Completed", "Pending", "Overdue", "Refunded"];
 
     #endregion
 
@@ -817,78 +748,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     private void OpenHistoryModal(CustomerDisplayItem? item)
     {
         App.CustomerModalsViewModel?.OpenHistoryModal(item);
-    }
-
-    /// <summary>
-    /// Closes the history modal.
-    /// </summary>
-    [RelayCommand]
-    private void CloseHistoryModal()
-    {
-        IsHistoryModalOpen = false;
-        _historyCustomer = null;
-        CustomerHistory.Clear();
-    }
-
-    /// <summary>
-    /// Opens the history filter modal.
-    /// </summary>
-    [RelayCommand]
-    private void OpenHistoryFilterModal()
-    {
-        IsHistoryFilterModalOpen = true;
-    }
-
-    /// <summary>
-    /// Closes the history filter modal.
-    /// </summary>
-    [RelayCommand]
-    private void CloseHistoryFilterModal()
-    {
-        IsHistoryFilterModalOpen = false;
-    }
-
-    /// <summary>
-    /// Applies history filters.
-    /// </summary>
-    [RelayCommand]
-    private void ApplyHistoryFilters()
-    {
-        if (_historyCustomer != null)
-        {
-            LoadCustomerHistory(_historyCustomer.Id);
-        }
-        CloseHistoryFilterModal();
-    }
-
-    /// <summary>
-    /// Clears history filters.
-    /// </summary>
-    [RelayCommand]
-    private void ClearHistoryFilters()
-    {
-        HistoryFilterType = "All";
-        HistoryFilterStatus = "All";
-        HistoryFilterDateFrom = null;
-        HistoryFilterDateTo = null;
-        HistoryFilterAmountMin = null;
-        HistoryFilterAmountMax = null;
-        if (_historyCustomer != null)
-        {
-            LoadCustomerHistory(_historyCustomer.Id);
-        }
-        CloseHistoryFilterModal();
-    }
-
-    /// <summary>
-    /// Loads transaction history for a customer.
-    /// </summary>
-    private void LoadCustomerHistory(string customerId)
-    {
-        CustomerHistory.Clear();
-
-        // TODO: In a real implementation, this would load from Sales/Rentals/etc.
-        // For now, the history will be empty until transaction data is available.
     }
 
     #endregion

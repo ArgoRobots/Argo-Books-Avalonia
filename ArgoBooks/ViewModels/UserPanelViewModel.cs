@@ -174,16 +174,6 @@ public partial class UserPanelViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Opens keyboard shortcuts reference.
-    /// </summary>
-    [RelayCommand]
-    private void OpenKeyboardShortcuts()
-    {
-        Close();
-        // TODO: Show keyboard shortcuts modal
-    }
-
-    /// <summary>
     /// Switches to a different account.
     /// </summary>
     [RelayCommand]

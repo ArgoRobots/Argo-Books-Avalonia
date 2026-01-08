@@ -138,14 +138,5 @@ public partial class ProfileModalViewModel : ViewModelBase
         HasAvatar = false;
     }
 
-    /// <summary>
-    /// Opens the change password dialog.
-    /// </summary>
-    [RelayCommand]
-    private void ChangePassword()
-    {
-        // TODO: Show change password modal
-    }
-
     #endregion
 }

@@ -225,7 +225,6 @@ public partial class HeaderViewModel : ViewModelBase
             }
         }
 
-        // TODO: Implement global search navigation
         _navigationService?.NavigateTo("Search", new Dictionary<string, object?> { { "query", SearchQuery } });
     }
 
@@ -310,24 +309,6 @@ public partial class HeaderViewModel : ViewModelBase
     {
         // This will be connected to the AppShell to toggle sidebar
         ToggleSidebarRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>
-    /// Performs an undo operation.
-    /// </summary>
-    [RelayCommand]
-    private void Undo()
-    {
-        // TODO: Implement undo logic
-    }
-
-    /// <summary>
-    /// Performs a redo operation.
-    /// </summary>
-    [RelayCommand]
-    private void Redo()
-    {
-        // TODO: Implement redo logic
     }
 
     /// <summary>

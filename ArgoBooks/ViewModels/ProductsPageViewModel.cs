@@ -389,6 +389,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private void OnPlanStatusChanged(object? sender, PlanStatusChangedEventArgs e)
     {
         HasStandard = e.HasStandard;
+        _ = e.HasPremium; // Available for future use
     }
 
     /// <summary>

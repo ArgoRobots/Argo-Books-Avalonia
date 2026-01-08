@@ -1716,13 +1716,13 @@ public partial class App : Application
                     // Auto-save before locking
                     try
                     {
-                        _mainWindowViewModel?.ShowLoading("Auto-saving before lock...");
+                        _mainWindowViewModel!.ShowLoading("Auto-saving before lock...");
                         await CompanyManager.SaveCompanyAsync();
-                        _mainWindowViewModel?.HideLoading();
+                        _mainWindowViewModel.HideLoading();
                     }
                     catch
                     {
-                        _mainWindowViewModel?.HideLoading();
+                        _mainWindowViewModel!.HideLoading();
                         // Continue to close even if save fails - user can reopen
                     }
                 }
@@ -1732,13 +1732,13 @@ public partial class App : Application
                 await CompanyManager.CloseCompanyAsync();
 
                 // Show notification
-                _appShellViewModel?.AddNotification(
+                _appShellViewModel!.AddNotification(
                     "Session Locked",
                     "Your session was locked due to inactivity. Please reopen your company file.",
                     NotificationType.Warning);
 
                 // Re-enable idle detection for next session
-                _idleDetectionService?.ResetIdleTimer();
+                _idleDetectionService!.ResetIdleTimer();
             });
         };
 
@@ -1769,15 +1769,15 @@ public partial class App : Application
         // Disable idle detection when company closes
         CompanyManager.CompanyClosed += (_, _) =>
         {
-            _idleDetectionService?.Configure(false, 0);
+            _idleDetectionService!.Configure(false, 0);
         };
 
         // Record activity on main window pointer/key events
         if (desktop.MainWindow != null)
         {
-            desktop.MainWindow.PointerMoved += (_, _) => _idleDetectionService?.RecordActivity();
-            desktop.MainWindow.KeyDown += (_, _) => _idleDetectionService?.RecordActivity();
-            desktop.MainWindow.PointerPressed += (_, _) => _idleDetectionService?.RecordActivity();
+            desktop.MainWindow.PointerMoved += (_, _) => _idleDetectionService!.RecordActivity();
+            desktop.MainWindow.KeyDown += (_, _) => _idleDetectionService!.RecordActivity();
+            desktop.MainWindow.PointerPressed += (_, _) => _idleDetectionService!.RecordActivity();
         }
     }
 
@@ -1829,7 +1829,7 @@ public partial class App : Application
             if (success)
             {
                 // Close the password modal if it was open
-                passwordModal?.Close();
+                passwordModal.Close();
                 await LoadRecentCompaniesAsync();
                 return true;
             }
@@ -1868,7 +1868,7 @@ public partial class App : Application
         catch (FileNotFoundException)
         {
             _mainWindowViewModel.HideLoading();
-            passwordModal?.Close();
+            passwordModal.Close();
             _appShellViewModel.AddNotification("File Not Found", "The company file no longer exists.", NotificationType.Error);
             SettingsService?.RemoveRecentCompany(filePath);
             await LoadRecentCompaniesAsync();
@@ -1877,7 +1877,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             _mainWindowViewModel.HideLoading();
-            passwordModal?.Close();
+            passwordModal.Close();
             _appShellViewModel.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
             return false;
         }
@@ -1900,7 +1900,7 @@ public partial class App : Application
             var success = await CompanyManager.OpenCompanyAsync(filePath, password);
             if (success)
             {
-                passwordModal?.Close();
+                passwordModal.Close();
                 await LoadRecentCompaniesAsync();
                 return true;
             }
@@ -1938,7 +1938,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             _mainWindowViewModel.HideLoading();
-            passwordModal?.Close();
+            passwordModal.Close();
             _appShellViewModel.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
             return false;
         }
@@ -2231,18 +2231,6 @@ public partial class App : Application
             return new ReceiptsPage { DataContext = viewModel };
         });
 
-        // Settings and Help
-        navigationService.RegisterPage("Settings", _ => CreatePlaceholderPage("Settings", "Configure application settings"));
-        navigationService.RegisterPage("Help", _ => CreatePlaceholderPage("Help", "Get help and documentation"));
-
-        // Search (with parameter support)
-        navigationService.RegisterPage("Search", param =>
-        {
-            var query = param is Dictionary<string, object?> dict && dict.TryGetValue("query", out var q)
-                ? q?.ToString() ?? ""
-                : "";
-            return CreatePlaceholderPage("Search Results", $"Searching for: {query}");
-        });
     }
 
     /// <summary>
