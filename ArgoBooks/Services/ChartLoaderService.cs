@@ -2034,9 +2034,10 @@ public class ChartLoaderService
             // Store aliases for UI titles that differ from internal titles
             string[] aliases = data.ChartTitle switch
             {
-                "Expenses Overview" => ["Purchase Trends", "Total Expenses"],
-                "Revenue Overview" => ["Sales Trends", "Total Revenue"],
+                "Expenses Overview" => ["Purchase Trends", "Total Expenses", "Expense Trends"],
+                "Revenue Overview" => ["Sales Trends", "Total Revenue", "Revenue Trends"],
                 "Profits Overview" => ["Profit Over Time", "Profits over Time"],
+                "Total Transactions" => ["Total Transactions Over Time"],
                 _ => []
             };
 
@@ -2063,10 +2064,20 @@ public class ChartLoaderService
             return data;
         }
 
-        // Handle dynamic titles with patterns (e.g., "Total expenses: $171.00")
+        // Handle dynamic titles with patterns (e.g., "Total expenses: $171.00", "Total profits: $5,206.01")
         if (chartId.StartsWith("Total expenses:", StringComparison.OrdinalIgnoreCase))
         {
             return _chartExportDataByTitle.GetValueOrDefault("Expenses Overview") ?? CurrentExportData;
+        }
+
+        if (chartId.StartsWith("Total profits:", StringComparison.OrdinalIgnoreCase))
+        {
+            return _chartExportDataByTitle.GetValueOrDefault("Profits Overview") ?? CurrentExportData;
+        }
+
+        if (chartId.StartsWith("Total revenue:", StringComparison.OrdinalIgnoreCase))
+        {
+            return _chartExportDataByTitle.GetValueOrDefault("Revenue Overview") ?? CurrentExportData;
         }
 
         if (chartId.StartsWith("Distribution of expenses", StringComparison.OrdinalIgnoreCase))
@@ -2078,12 +2089,18 @@ public class ChartLoaderService
         // Many charts share the same underlying data series
         var mappedTitle = chartId switch
         {
+            // Analytics page Dashboard tab
+            "Revenue Trends" => "Revenue Overview",
+            "Expense Trends" => "Expenses Overview",
+            "Profit Over Time" => "Profits Overview",
+
             // Performance tab charts that share data with other charts
             "Processing Time Trends" => "Average Transaction Value",
             "Workload Distribution" => "Total Transactions",
+            "Total Transactions Over Time" => "Total Transactions",
 
             // Customers tab charts that share data with other charts
-            "Top Customers by Revenue" => "Companies of Origin",
+            "Top Customers by Revenue" => "Companies of Destination",
             "Customer Growth" => "Growth Rates",
             "Customer Lifetime Value" => "Average Transaction Value",
             "Rentals per Customer" => "Total Transactions",
@@ -2091,15 +2108,18 @@ public class ChartLoaderService
             // Returns tab charts that share data with other charts
             "Returns by Category" => "Return Reasons",
             "Returns by Product" => "Expense Distribution",
-            "Purchase vs Sale Returns" => "Sales vs Expenses",
+            "Purchase vs Sale Returns" => "Expenses vs Revenue",
 
             // Losses tab charts that share data with other charts
-            "Losses by Category" => "Expense Distribution",
-            "Purchase vs Sale Losses" => "Sales vs Expenses",
+            "Losses by Category" => "Loss Reasons",
+            "Purchase vs Sale Losses" => "Expenses vs Revenue",
 
             // Legacy Dashboard page chart identifiers
             "ExpenseDistributionChart" => "Expense Distribution",
             "ExpensesChart" => "Expenses Overview",
+
+            // Dashboard dynamic titles
+            "Total profits" => "Profits Overview",
 
             _ => null
         };
