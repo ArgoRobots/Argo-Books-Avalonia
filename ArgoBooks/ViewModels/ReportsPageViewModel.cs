@@ -258,6 +258,9 @@ public partial class ReportsPageViewModel : ViewModelBase
     // Chart selection - all charts in one list, use IsSelected property
     public ObservableCollection<ChartOption> AvailableCharts { get; } = [];
 
+    // Chart categories for grouped display
+    public ObservableCollection<ChartCategoryGroup> ChartCategories { get; } = [];
+
     public bool HasSelectedCharts => AvailableCharts.Any(c => c.IsSelected);
 
     partial void OnSelectedTemplateNameChanged(string value)
@@ -276,6 +279,16 @@ public partial class ReportsPageViewModel : ViewModelBase
         if (chart != null)
         {
             chart.IsSelected = !chart.IsSelected;
+            OnPropertyChanged(nameof(HasSelectedCharts));
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleSelectAllInCategory(ChartCategoryGroup category)
+    {
+        if (category != null)
+        {
+            category.ToggleSelectAll();
             OnPropertyChanged(nameof(HasSelectedCharts));
         }
     }
@@ -1806,49 +1819,133 @@ public partial class ReportsPageViewModel : ViewModelBase
     private void InitializeChartOptions()
     {
         AvailableCharts.Clear();
+        ChartCategories.Clear();
+
+        // Define category colors and icons
+        const string revenueColor = "#2196F3";       // Blue
+        const string revenueLight = "#E3F2FD";
+        const string expenseColor = "#F44336";       // Red
+        const string expenseLight = "#FFEBEE";
+        const string financialColor = "#4CAF50";     // Green
+        const string financialLight = "#E8F5E9";
+        const string transactionColor = "#FF9800";   // Orange
+        const string transactionLight = "#FFF3E0";
+        const string geographicColor = "#9C27B0";    // Purple
+        const string geographicLight = "#F3E5F5";
+        const string accountantColor = "#00BCD4";    // Cyan
+        const string accountantLight = "#E0F7FA";
+        const string returnColor = "#E91E63";        // Pink
+        const string returnLight = "#FCE4EC";
+        const string lossColor = "#795548";          // Brown
+        const string lossLight = "#EFEBE9";
+
+        // SVG icons for different chart types
+        const string lineChartIcon = "M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z";
+        const string barChartIcon = "M3 13.125C3 12.504 3.504 12 4.125 12H6.375C6.996 12 7.5 12.504 7.5 13.125V19.875C7.5 20.496 6.996 21 6.375 21H4.125C3.504 21 3 20.496 3 19.875V13.125ZM9.75 8.625C9.75 8.004 10.254 7.5 10.875 7.5H13.125C13.746 7.5 14.25 8.004 14.25 8.625V19.875C14.25 20.496 13.746 21 13.125 21H10.875C10.254 21 9.75 20.496 9.75 19.875V8.625ZM16.5 4.125C16.5 3.504 17.004 3 17.625 3H19.875C20.496 3 21 3.504 21 4.125V19.875C21 20.496 20.496 21 19.875 21H17.625C17.004 21 16.5 20.496 16.5 19.875V4.125Z";
+        const string pieChartIcon = "M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2.03 0v8.99H22c-.47-4.74-4.24-8.52-8.97-8.99zm0 11.01V22c4.74-.47 8.5-4.25 8.97-8.99h-8.97z";
+        const string trendUpIcon = "M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z";
+        const string compareIcon = "M9.5 3H4C2.9 3 2 3.9 2 5v14c0 1.1.9 2 2 2h5.5V3zm5 0v18H20c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-5.5z";
+        const string growthIcon = "M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z";
+        const string transactionIcon = "M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z";
+        const string shippingIcon = "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z";
+        const string globeIcon = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z";
+        const string locationIcon = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z";
+        const string buildingIcon = "M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z";
+        const string personIcon = "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z";
+        const string returnIcon = "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z";
+        const string reasonIcon = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z";
+        const string impactIcon = "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z";
+        const string categoryIcon = "M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z";
+        const string productIcon = "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-7-7l-4 5h8z";
+        const string vsIcon = "M12 3C6.5 3 2 6.58 2 11c0 2.13 1.02 4.05 2.67 5.45v4.05l3.58-2.03c1.2.39 2.48.53 3.75.53 5.5 0 10-3.58 10-8s-4.5-8-10-8z";
+        const string lossIcon = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z";
 
         // Revenue charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalRevenue, ChartDataType.TotalRevenue.GetDisplayName(), "Revenue over time"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.RevenueDistribution, ChartDataType.RevenueDistribution.GetDisplayName(), "Revenue by category"));
+        var revenueCharts = new ObservableCollection<ChartOption>
+        {
+            new(ChartDataType.TotalRevenue, "Total Revenue", "Revenue over time", "Revenue", lineChartIcon, revenueColor, revenueLight),
+            new(ChartDataType.RevenueDistribution, "Revenue Distribution", "Revenue by category", "Revenue", pieChartIcon, revenueColor, revenueLight)
+        };
 
         // Expense charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalExpenses, ChartDataType.TotalExpenses.GetDisplayName(), "Expenses over time"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.ExpensesDistribution, ChartDataType.ExpensesDistribution.GetDisplayName(), "Expenses by category"));
+        var expenseCharts = new ObservableCollection<ChartOption>
+        {
+            new(ChartDataType.TotalExpenses, "Total Expenses", "Expenses over time", "Expenses", lineChartIcon, expenseColor, expenseLight),
+            new(ChartDataType.ExpensesDistribution, "Expense Distribution", "Expenses by category", "Expenses", pieChartIcon, expenseColor, expenseLight)
+        };
 
         // Financial charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalProfits, ChartDataType.TotalProfits.GetDisplayName(), "Profit over time"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.SalesVsExpenses, ChartDataType.SalesVsExpenses.GetDisplayName(), "Compare revenue and costs"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.GrowthRates, ChartDataType.GrowthRates.GetDisplayName(), "Period-over-period growth"));
+        var financialCharts = new ObservableCollection<ChartOption>
+        {
+            new(ChartDataType.TotalProfits, "Total Profits", "Profit over time", "Financial", trendUpIcon, financialColor, financialLight),
+            new(ChartDataType.SalesVsExpenses, "Expenses vs Revenue", "Compare revenue and costs", "Financial", compareIcon, financialColor, financialLight),
+            new(ChartDataType.GrowthRates, "Growth Rates", "Period-over-period growth", "Financial", growthIcon, financialColor, financialLight)
+        };
 
         // Transaction charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.AverageTransactionValue, ChartDataType.AverageTransactionValue.GetDisplayName(), "Average transaction amounts"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.TotalTransactions, ChartDataType.TotalTransactions.GetDisplayName(), "Transaction volume"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.AverageShippingCosts, ChartDataType.AverageShippingCosts.GetDisplayName(), "Average shipping costs"));
+        var transactionCharts = new ObservableCollection<ChartOption>
+        {
+            new(ChartDataType.AverageTransactionValue, "Average Transaction", "Average transaction amounts", "Transactions", transactionIcon, transactionColor, transactionLight),
+            new(ChartDataType.TotalTransactions, "Total Transactions", "Transaction volume", "Transactions", barChartIcon, transactionColor, transactionLight),
+            new(ChartDataType.AverageShippingCosts, "Average Shipping Costs", "Average shipping costs", "Transactions", shippingIcon, transactionColor, transactionLight)
+        };
 
         // Geographic charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.WorldMap, ChartDataType.WorldMap.GetDisplayName(), "Geographic distribution"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.CountriesOfOrigin, ChartDataType.CountriesOfOrigin.GetDisplayName(), "Sales by origin country"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.CountriesOfDestination, ChartDataType.CountriesOfDestination.GetDisplayName(), "Sales by destination country"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.CompaniesOfOrigin, ChartDataType.CompaniesOfOrigin.GetDisplayName(), "Sales by supplier company"));
+        var geographicCharts = new ObservableCollection<ChartOption>
+        {
+            new(ChartDataType.WorldMap, "Geographic Distribution", "Geographic distribution", "Geographic", globeIcon, geographicColor, geographicLight),
+            new(ChartDataType.CountriesOfOrigin, "Countries of Origin", "Sales by origin country", "Geographic", locationIcon, geographicColor, geographicLight),
+            new(ChartDataType.CountriesOfDestination, "Countries of Destination", "Sales by destination country", "Geographic", locationIcon, geographicColor, geographicLight),
+            new(ChartDataType.CompaniesOfOrigin, "Companies of Origin", "Sales by supplier company", "Geographic", buildingIcon, geographicColor, geographicLight)
+        };
 
         // Accountant charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.AccountantsTransactions, ChartDataType.AccountantsTransactions.GetDisplayName(), "Transactions by accountant"));
+        var accountantCharts = new ObservableCollection<ChartOption>
+        {
+            new(ChartDataType.AccountantsTransactions, "Transactions by Accountant", "Transactions by accountant", "Personnel", personIcon, accountantColor, accountantLight)
+        };
 
         // Return charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsOverTime, ChartDataType.ReturnsOverTime.GetDisplayName(), "Return trends"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnReasons, ChartDataType.ReturnReasons.GetDisplayName(), "Why items are returned"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnFinancialImpact, ChartDataType.ReturnFinancialImpact.GetDisplayName(), "Financial impact of returns"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsByCategory, ChartDataType.ReturnsByCategory.GetDisplayName(), "Returns by category"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.ReturnsByProduct, ChartDataType.ReturnsByProduct.GetDisplayName(), "Returns by product"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.PurchaseVsSaleReturns, ChartDataType.PurchaseVsSaleReturns.GetDisplayName(), "Purchase vs sale returns"));
+        var returnCharts = new ObservableCollection<ChartOption>
+        {
+            new(ChartDataType.ReturnsOverTime, "Returns Over Time", "Return trends", "Returns", returnIcon, returnColor, returnLight),
+            new(ChartDataType.ReturnReasons, "Return Reasons", "Why items are returned", "Returns", reasonIcon, returnColor, returnLight),
+            new(ChartDataType.ReturnFinancialImpact, "Return Financial Impact", "Financial impact of returns", "Returns", impactIcon, returnColor, returnLight),
+            new(ChartDataType.ReturnsByCategory, "Returns by Category", "Returns by category", "Returns", categoryIcon, returnColor, returnLight),
+            new(ChartDataType.ReturnsByProduct, "Returns by Product", "Returns by product", "Returns", productIcon, returnColor, returnLight),
+            new(ChartDataType.PurchaseVsSaleReturns, "Purchase vs Sale Returns", "Purchase vs sale returns", "Returns", vsIcon, returnColor, returnLight)
+        };
 
         // Loss charts
-        AvailableCharts.Add(new ChartOption(ChartDataType.LossesOverTime, ChartDataType.LossesOverTime.GetDisplayName(), "Loss trends"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.LossReasons, ChartDataType.LossReasons.GetDisplayName(), "Why items are lost"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.LossFinancialImpact, ChartDataType.LossFinancialImpact.GetDisplayName(), "Financial impact of losses"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.LossesByCategory, ChartDataType.LossesByCategory.GetDisplayName(), "Losses by category"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.LossesByProduct, ChartDataType.LossesByProduct.GetDisplayName(), "Losses by product"));
-        AvailableCharts.Add(new ChartOption(ChartDataType.PurchaseVsSaleLosses, ChartDataType.PurchaseVsSaleLosses.GetDisplayName(), "Purchase vs sale losses"));
+        var lossCharts = new ObservableCollection<ChartOption>
+        {
+            new(ChartDataType.LossesOverTime, "Losses Over Time", "Loss trends", "Losses", lossIcon, lossColor, lossLight),
+            new(ChartDataType.LossReasons, "Loss Reasons", "Why items are lost", "Losses", reasonIcon, lossColor, lossLight),
+            new(ChartDataType.LossFinancialImpact, "Loss Financial Impact", "Financial impact of losses", "Losses", impactIcon, lossColor, lossLight),
+            new(ChartDataType.LossesByCategory, "Losses by Category", "Losses by category", "Losses", categoryIcon, lossColor, lossLight),
+            new(ChartDataType.LossesByProduct, "Losses by Product", "Losses by product", "Losses", productIcon, lossColor, lossLight),
+            new(ChartDataType.PurchaseVsSaleLosses, "Purchase vs Sale Losses", "Purchase vs sale losses", "Losses", vsIcon, lossColor, lossLight)
+        };
+
+        // Add all charts to AvailableCharts (flat list for backward compatibility)
+        foreach (var chart in revenueCharts) AvailableCharts.Add(chart);
+        foreach (var chart in expenseCharts) AvailableCharts.Add(chart);
+        foreach (var chart in financialCharts) AvailableCharts.Add(chart);
+        foreach (var chart in transactionCharts) AvailableCharts.Add(chart);
+        foreach (var chart in geographicCharts) AvailableCharts.Add(chart);
+        foreach (var chart in accountantCharts) AvailableCharts.Add(chart);
+        foreach (var chart in returnCharts) AvailableCharts.Add(chart);
+        foreach (var chart in lossCharts) AvailableCharts.Add(chart);
+
+        // Create category groups for grouped display
+        ChartCategories.Add(new ChartCategoryGroup("Revenue", revenueColor, revenueCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Expenses", expenseColor, expenseCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Financial", financialColor, financialCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Transactions", transactionColor, transactionCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Geographic", geographicColor, geographicCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Personnel", accountantColor, accountantCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Returns", returnColor, returnCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
+        ChartCategories.Add(new ChartCategoryGroup("Losses", lossColor, lossCharts, () => OnPropertyChanged(nameof(HasSelectedCharts))));
     }
 
     private void LoadTemplate(string templateName)
@@ -2090,23 +2187,89 @@ public partial class ReportsPageViewModel : ViewModelBase
 }
 
 /// <summary>
-/// Represents a chart option for selection.
+/// Represents a chart option for selection with category and icon information.
 /// </summary>
 public partial class ChartOption : ObservableObject
 {
-    public ChartOption(ChartDataType chartType, string name, string description)
+    public ChartOption(ChartDataType chartType, string name, string description, string category, string iconData, string iconForeground, string iconBackground)
     {
         ChartType = chartType;
         Name = name;
         Description = description;
+        Category = category;
+        IconData = iconData;
+        IconForeground = iconForeground;
+        IconBackground = iconBackground;
     }
 
     public ChartDataType ChartType { get; }
     public string Name { get; }
     public string Description { get; }
+    public string Category { get; }
+    public string IconData { get; }
+    public string IconForeground { get; }
+    public string IconBackground { get; }
 
     [ObservableProperty]
     private bool _isSelected;
+}
+
+/// <summary>
+/// Represents a category group of chart options with "Select All" functionality.
+/// </summary>
+public partial class ChartCategoryGroup : ObservableObject
+{
+    private readonly Action _onSelectionChanged;
+
+    public ChartCategoryGroup(string name, string accentColor, ObservableCollection<ChartOption> charts, Action onSelectionChanged)
+    {
+        Name = name;
+        AccentColor = accentColor;
+        Charts = charts;
+        _onSelectionChanged = onSelectionChanged;
+
+        // Subscribe to each chart's selection changes
+        foreach (var chart in Charts)
+        {
+            chart.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(ChartOption.IsSelected))
+                {
+                    OnPropertyChanged(nameof(IsAllSelected));
+                    OnPropertyChanged(nameof(IsSomeSelected));
+                    _onSelectionChanged?.Invoke();
+                }
+            };
+        }
+    }
+
+    public string Name { get; }
+    public string AccentColor { get; }
+    public ObservableCollection<ChartOption> Charts { get; }
+
+    /// <summary>
+    /// Gets whether all charts in this category are selected.
+    /// </summary>
+    public bool IsAllSelected => Charts.All(c => c.IsSelected);
+
+    /// <summary>
+    /// Gets whether some (but not all) charts in this category are selected.
+    /// </summary>
+    public bool IsSomeSelected => Charts.Any(c => c.IsSelected) && !IsAllSelected;
+
+    /// <summary>
+    /// Toggles selection of all charts in this category.
+    /// </summary>
+    public void ToggleSelectAll()
+    {
+        var newState = !IsAllSelected;
+        foreach (var chart in Charts)
+        {
+            chart.IsSelected = newState;
+        }
+        OnPropertyChanged(nameof(IsAllSelected));
+        OnPropertyChanged(nameof(IsSomeSelected));
+    }
 }
 
 /// <summary>
