@@ -225,7 +225,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding RevenueDistributionLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -302,7 +302,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ExpensesDistributionLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -354,7 +354,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CountriesOfOriginLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -399,7 +399,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CompaniesOfOriginLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -447,7 +447,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CountriesOfDestinationLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -492,7 +492,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CompaniesOfDestinationLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -656,7 +656,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding AccountantsTransactionsLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -927,7 +927,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CompaniesOfOriginLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -972,7 +972,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CustomerPaymentStatusLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1081,7 +1081,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ActiveInactiveCustomersLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1223,7 +1223,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ReturnReasonsLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1300,7 +1300,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ReturnReasonsLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1348,7 +1348,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ExpensesDistributionLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1490,7 +1490,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding LossReasonsLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1567,7 +1567,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ExpensesDistributionLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1615,7 +1615,7 @@
                                                                  PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding LossesByProductLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>

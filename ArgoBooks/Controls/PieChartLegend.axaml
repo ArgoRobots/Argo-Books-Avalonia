@@ -5,7 +5,8 @@
              xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="200"
              x:Class="ArgoBooks.Controls.PieChartLegend"
-             x:DataType="controls:PieChartLegend">
+             x:DataType="controls:PieChartLegend"
+             Background="Transparent">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled"
