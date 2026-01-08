@@ -301,26 +301,22 @@
                     <!-- Modal Content -->
                     <StackPanel Spacing="16" Margin="24">
                         <!-- Date Range -->
-                        <Grid ColumnDefinitions="*,16,*">
-                            <StackPanel Grid.Column="0" Spacing="8">
-                                <TextBlock Text="From Date"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <DatePicker SelectedDate="{Binding FilterStartDate}"
-                                            Classes="form-datepicker"
-                                            HorizontalAlignment="Stretch" />
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Date Range"
+                                       FontSize="13"
+                                       FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <StackPanel Spacing="8">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="From" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <DatePicker SelectedDate="{Binding FilterStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="To" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <DatePicker SelectedDate="{Binding FilterEndDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
+                                </StackPanel>
                             </StackPanel>
-                            <StackPanel Grid.Column="2" Spacing="8">
-                                <TextBlock Text="To Date"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <DatePicker SelectedDate="{Binding FilterEndDate}"
-                                            Classes="form-datepicker"
-                                            HorizontalAlignment="Stretch" />
-                            </StackPanel>
-                        </Grid>
+                        </StackPanel>
 
                         <!-- Product -->
                         <StackPanel Spacing="8">
