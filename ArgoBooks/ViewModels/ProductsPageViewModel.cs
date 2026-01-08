@@ -376,6 +376,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             App.ProductModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ProductModalsViewModel.FiltersCleared += OnFiltersCleared;
             App.ProductModalsViewModel.OpenCategoriesRequested += OnOpenCategoriesRequested;
+            App.ProductModalsViewModel.OpenSuppliersRequested += OnOpenSuppliersRequested;
         }
 
         // Subscribe to plan status changes so we update when user upgrades
@@ -436,6 +437,11 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     private void OnOpenCategoriesRequested(object? sender, EventArgs e)
     {
         App.NavigationService?.NavigateTo("Categories", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", SelectedTabIndex } });
+    }
+
+    private void OnOpenSuppliersRequested(object? sender, EventArgs e)
+    {
+        App.NavigationService?.NavigateTo("Suppliers", new Dictionary<string, object?> { { "openAddModal", true } });
     }
 
     #endregion

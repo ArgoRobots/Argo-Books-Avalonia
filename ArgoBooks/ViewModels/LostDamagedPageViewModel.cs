@@ -50,28 +50,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         FilterItems();
     }
 
-    [ObservableProperty]
-    private string _filterType = "All";
-
-    [ObservableProperty]
-    private string _filterStatus = "All";
-
-    [ObservableProperty]
-    private string _filterReason = "All";
-
-    [ObservableProperty]
-    private DateTimeOffset? _filterDateFrom;
-
-    [ObservableProperty]
-    private DateTimeOffset? _filterDateTo;
-
-    [ObservableProperty]
-    private bool _isFilterModalOpen;
-
-    public ObservableCollection<string> TypeOptions { get; } = ["All", "Lost", "Damaged"];
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Written Off", "Insurance Claim", "Recovered", "Pending"];
-    public ObservableCollection<string> ReasonOptions { get; } = ["All", "Damaged", "Lost", "Stolen", "Expired", "Other"];
-
     #endregion
 
     #region Items Collection
@@ -150,6 +128,26 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         {
             App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         }
+
+        // Subscribe to filter modal events
+        if (App.LostDamagedModalsViewModel != null)
+        {
+            App.LostDamagedModalsViewModel.FiltersApplied += OnFiltersApplied;
+            App.LostDamagedModalsViewModel.FiltersCleared += OnFiltersCleared;
+        }
+    }
+
+    private void OnFiltersApplied(object? sender, EventArgs e)
+    {
+        CurrentPage = 1;
+        FilterItems();
+    }
+
+    private void OnFiltersCleared(object? sender, EventArgs e)
+    {
+        SearchQuery = null;
+        CurrentPage = 1;
+        FilterItems();
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -196,6 +194,13 @@ public partial class LostDamagedPageViewModel : ViewModelBase
 
         var filtered = _allItems.ToList();
 
+        // Get filter values from modals view model
+        var modals = App.LostDamagedModalsViewModel;
+        var filterType = modals?.FilterType ?? "All";
+        var filterReason = modals?.FilterReason ?? "All";
+        var filterDateFrom = modals?.FilterDateFrom;
+        var filterDateTo = modals?.FilterDateTo;
+
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
@@ -208,9 +213,9 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         }
 
         // Apply type filter
-        if (FilterType != "All")
+        if (filterType != "All")
         {
-            filtered = FilterType switch
+            filtered = filterType switch
             {
                 "Lost" => filtered.Where(item =>
                     item.Reason == LostDamagedReason.Lost ||
@@ -224,20 +229,20 @@ public partial class LostDamagedPageViewModel : ViewModelBase
         }
 
         // Apply reason filter
-        if (FilterReason != "All")
+        if (filterReason != "All")
         {
-            var reason = Enum.TryParse<LostDamagedReason>(FilterReason, out var r) ? r : LostDamagedReason.Other;
+            var reason = Enum.TryParse<LostDamagedReason>(filterReason, out var r) ? r : LostDamagedReason.Other;
             filtered = filtered.Where(item => item.Reason == reason).ToList();
         }
 
         // Apply date filter
-        if (FilterDateFrom.HasValue)
+        if (filterDateFrom.HasValue)
         {
-            filtered = filtered.Where(item => item.DateDiscovered >= FilterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(item => item.DateDiscovered >= filterDateFrom.Value.DateTime).ToList();
         }
-        if (FilterDateTo.HasValue)
+        if (filterDateTo.HasValue)
         {
-            filtered = filtered.Where(item => item.DateDiscovered <= FilterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(item => item.DateDiscovered <= filterDateTo.Value.DateTime).ToList();
         }
 
         // Sort by date descending (newest first)
@@ -353,35 +358,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenFilterModal()
     {
-        IsFilterModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseFilterModal()
-    {
-        IsFilterModalOpen = false;
-    }
-
-    [RelayCommand]
-    private void ApplyFilters()
-    {
-        CurrentPage = 1;
-        FilterItems();
-        IsFilterModalOpen = false;
-    }
-
-    [RelayCommand]
-    private void ClearFilters()
-    {
-        FilterType = "All";
-        FilterStatus = "All";
-        FilterReason = "All";
-        FilterDateFrom = null;
-        FilterDateTo = null;
-        SearchQuery = null;
-        CurrentPage = 1;
-        FilterItems();
-        IsFilterModalOpen = false;
+        App.LostDamagedModalsViewModel?.OpenFilterModal();
     }
 
     #endregion

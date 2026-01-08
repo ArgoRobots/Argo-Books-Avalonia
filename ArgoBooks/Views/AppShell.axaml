@@ -149,6 +149,15 @@
         <!-- Purchase Orders Modals -->
         <modals:PurchaseOrdersModals DataContext="{Binding PurchaseOrdersModalsViewModel}" />
 
+        <!-- Receipts Modals -->
+        <modals:ReceiptsModals DataContext="{Binding ReceiptsModalsViewModel}" />
+
+        <!-- Lost/Damaged Modals -->
+        <modals:LostDamagedModals DataContext="{Binding LostDamagedModalsViewModel}" />
+
+        <!-- Returns Modals -->
+        <modals:ReturnsModals DataContext="{Binding ReturnsModalsViewModel}" />
+
         <!-- Unsaved Changes Dialog -->
         <modals:UnsavedChangesDialog DataContext="{Binding UnsavedChangesDialogViewModel}" />
     </Panel>

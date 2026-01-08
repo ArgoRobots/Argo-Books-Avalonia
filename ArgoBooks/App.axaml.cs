@@ -117,6 +117,21 @@ public partial class App : Application
     public static PurchaseOrdersModalsViewModel? PurchaseOrdersModalsViewModel => _appShellViewModel?.PurchaseOrdersModalsViewModel;
 
     /// <summary>
+    /// Gets the receipts modals view model for shared access.
+    /// </summary>
+    public static ReceiptsModalsViewModel? ReceiptsModalsViewModel => _appShellViewModel?.ReceiptsModalsViewModel;
+
+    /// <summary>
+    /// Gets the lost/damaged modals view model for shared access.
+    /// </summary>
+    public static LostDamagedModalsViewModel? LostDamagedModalsViewModel => _appShellViewModel?.LostDamagedModalsViewModel;
+
+    /// <summary>
+    /// Gets the returns modals view model for shared access.
+    /// </summary>
+    public static ReturnsModalsViewModel? ReturnsModalsViewModel => _appShellViewModel?.ReturnsModalsViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
