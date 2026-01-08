@@ -503,7 +503,7 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <CalendarDatePicker SelectedDate="{Binding FilterDateFrom}"
+                                    <DatePicker SelectedDate="{Binding FilterDateFrom}"
                                                         HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="8">
@@ -511,7 +511,7 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <CalendarDatePicker SelectedDate="{Binding FilterDateTo}"
+                                    <DatePicker SelectedDate="{Binding FilterDateTo}"
                                                         HorizontalAlignment="Stretch" />
                                 </StackPanel>
                             </Grid>

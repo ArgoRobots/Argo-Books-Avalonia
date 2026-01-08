@@ -67,17 +67,17 @@
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="Order Date" /><Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <CalendarDatePicker SelectedDate="{Binding OrderDate}"
-                                                        Classes="form-datepicker"
-                                                        HorizontalAlignment="Stretch" />
+                                    <DatePicker SelectedDate="{Binding OrderDate}"
+                                                Classes="form-datepicker"
+                                                HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                         <Run Text="Expected Delivery" /><Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <CalendarDatePicker SelectedDate="{Binding ExpectedDeliveryDate}"
-                                                        Classes="form-datepicker"
-                                                        HorizontalAlignment="Stretch" />
+                                    <DatePicker SelectedDate="{Binding ExpectedDeliveryDate}"
+                                                Classes="form-datepicker"
+                                                HorizontalAlignment="Stretch" />
                                 </StackPanel>
                             </Grid>
 

@@ -174,6 +174,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         ClearAddModalFields();
         IsEditMode = false;
         EditingOrderId = null;
+
+        // Add a default empty line item
+        AddLineItem();
+
         IsAddModalOpen = true;
     }
 

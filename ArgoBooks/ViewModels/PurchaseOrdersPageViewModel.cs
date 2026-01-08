@@ -294,7 +294,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         }
 
         // Apply supplier filter
-        if (FilterSupplier != "All")
+        if (!string.IsNullOrEmpty(FilterSupplier) && FilterSupplier != "All")
         {
             filtered = filtered.Where(o =>
             {
@@ -304,7 +304,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         }
 
         // Apply status filter
-        if (FilterStatus != "All")
+        if (!string.IsNullOrEmpty(FilterStatus) && FilterStatus != "All")
         {
             var statusEnum = FilterStatus switch
             {
