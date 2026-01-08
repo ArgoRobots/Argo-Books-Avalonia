@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -9,7 +10,8 @@ namespace ArgoBooks.Panels;
 public partial class UserPanel : UserControl
 {
     private int _focusedIndex = -1;
-    private readonly int _menuItemCount = 4; // Total menu items (0-3)
+    // Menu item names in visual order
+    private readonly string[] _menuItemNames = ["MenuItem0", "MenuItemPlan", "MenuItem1", "MenuItem2", "MenuItem3"];
 
     public UserPanel()
     {
@@ -90,32 +92,52 @@ public partial class UserPanel : UserControl
 
     private void NavigateUp()
     {
+        var visibleItems = GetVisibleMenuItems();
+        if (visibleItems.Count == 0) return;
+
         if (_focusedIndex <= 0)
-            _focusedIndex = _menuItemCount - 1;
+            _focusedIndex = visibleItems.Count - 1;
         else
             _focusedIndex--;
-        FocusMenuItem(_focusedIndex);
+        FocusMenuItem(visibleItems[_focusedIndex]);
     }
 
     private void NavigateDown()
     {
-        if (_focusedIndex >= _menuItemCount - 1)
+        var visibleItems = GetVisibleMenuItems();
+        if (visibleItems.Count == 0) return;
+
+        if (_focusedIndex >= visibleItems.Count - 1)
             _focusedIndex = 0;
         else
             _focusedIndex++;
-        FocusMenuItem(_focusedIndex);
+        FocusMenuItem(visibleItems[_focusedIndex]);
     }
 
-    private void FocusMenuItem(int index)
+    private List<Button> GetVisibleMenuItems()
     {
-        var menuItem = this.FindControl<Button>($"MenuItem{index}");
+        var items = new List<Button>();
+        foreach (var name in _menuItemNames)
+        {
+            var menuItem = this.FindControl<Button>(name);
+            if (menuItem?.IsVisible == true)
+                items.Add(menuItem);
+        }
+        return items;
+    }
+
+    private void FocusMenuItem(Button? menuItem)
+    {
         menuItem?.Focus();
     }
 
     private void ActivateCurrentItem()
     {
-        var menuItem = this.FindControl<Button>($"MenuItem{_focusedIndex}");
-        if (menuItem?.Command != null && menuItem.Command.CanExecute(menuItem.CommandParameter))
+        var visibleItems = GetVisibleMenuItems();
+        if (_focusedIndex < 0 || _focusedIndex >= visibleItems.Count) return;
+
+        var menuItem = visibleItems[_focusedIndex];
+        if (menuItem.Command != null && menuItem.Command.CanExecute(menuItem.CommandParameter))
         {
             menuItem.Command.Execute(menuItem.CommandParameter);
         }

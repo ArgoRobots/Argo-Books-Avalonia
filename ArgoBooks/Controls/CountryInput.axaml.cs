@@ -340,11 +340,13 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
                 c.Code.Equals(searchText, StringComparison.OrdinalIgnoreCase));
         }
 
+        // Get the last priority country code (Canada = "CA")
+        var lastPriorityCode = Countries.Priority.LastOrDefault()?.Code;
+
         foreach (var item in filtered.Take(50))
         {
-            // Only show separator when displaying the full list
-            item.ShowSeparatorAfter = showingFullList && item.IsPriority &&
-                item.Code == PhoneInput.AllDialCodes.LastOrDefault(c => c.IsPriority)?.Code;
+            // Only show separator when displaying the full list, after the last priority country
+            item.ShowSeparatorAfter = showingFullList && item.Code == lastPriorityCode;
             FilteredCountries.Add(item);
         }
 
