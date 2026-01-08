@@ -86,6 +86,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
 
+    public ObservableCollection<ProductOption> ProductOptions { get; } = [];
+
     public ObservableCollection<string> StatusOptions { get; } = ["Draft", "Pending", "Sent", "Partial", "Paid", "Cancelled"];
 
     // Computed totals
@@ -149,6 +151,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         App.NavigationService?.NavigateTo("Customers", new Dictionary<string, object?> { { "openAddModal", true } });
     }
 
+    /// <summary>
+    /// Navigates to Products page and opens the create product modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateProduct()
+    {
+        // Close the current modal
+        IsCreateEditModalOpen = false;
+
+        // Navigate to Products page with openAddModal parameter (Sales tab)
+        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true }, { "selectedTabIndex", 1 } });
+    }
+
     #endregion
 
     #region Delete Confirmation
@@ -210,6 +225,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public InvoiceModalsViewModel()
     {
         LoadCustomerOptions(includeAllOption: false);
+        LoadProductOptions();
     }
 
     private void LoadCustomerOptions(bool includeAllOption = false)
@@ -231,6 +247,27 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
     }
 
+    private void LoadProductOptions()
+    {
+        ProductOptions.Clear();
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Products == null)
+            return;
+
+        // Load products for sales/invoices (use UnitPrice for selling price)
+        foreach (var product in companyData.Products.OrderBy(p => p.Name))
+        {
+            ProductOptions.Add(new ProductOption
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                UnitPrice = product.UnitPrice
+            });
+        }
+    }
+
     #endregion
 
     #region Create Modal
@@ -238,6 +275,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     public void OpenCreateModal()
     {
         LoadCustomerOptions(includeAllOption: false);
+        LoadProductOptions();
         ResetForm();
         IsEditMode = false;
         ModalTitle = "Create Invoice";
@@ -254,6 +292,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (item == null) return;
 
         LoadCustomerOptions(includeAllOption: false);
+        LoadProductOptions();
 
         var invoice = App.CompanyManager?.CompanyData?.Invoices?.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
@@ -497,9 +536,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
-        if (LineItems.Any(i => string.IsNullOrWhiteSpace(i.Description)))
+        // Validate that all line items have a product selected
+        var hasProductErrors = false;
+        foreach (var lineItem in LineItems)
         {
-            ValidationMessage = "All line items must have a description";
+            if (lineItem.SelectedProduct == null)
+            {
+                lineItem.HasProductError = true;
+                hasProductErrors = true;
+            }
+        }
+
+        if (hasProductErrors)
+        {
+            ValidationMessage = "Please select a product for all line items";
             HasValidationMessage = true;
             return;
         }
@@ -675,9 +725,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             return;
         }
 
-        if (LineItems.Any(i => string.IsNullOrWhiteSpace(i.Description)))
+        // Validate that all line items have a product selected
+        var hasProductErrors = false;
+        foreach (var lineItem in LineItems)
         {
-            ValidationMessage = "All line items must have a description";
+            if (lineItem.SelectedProduct == null)
+            {
+                lineItem.HasProductError = true;
+                hasProductErrors = true;
+            }
+        }
+
+        if (hasProductErrors)
+        {
+            ValidationMessage = "Please select a product for all line items";
             HasValidationMessage = true;
             return;
         }
@@ -827,6 +888,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         ModalNotes = string.Empty;
         TaxRate = 0;
         LineItems.Clear();
+        AddLineItem(); // Add one default line item
         HasCustomerError = false;
         ValidationMessage = string.Empty;
         HasValidationMessage = false;
@@ -841,6 +903,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 public partial class LineItemDisplayModel : ObservableObject
 {
     [ObservableProperty]
+    private ProductOption? _selectedProduct;
+
+    [ObservableProperty]
     private string _description = string.Empty;
 
     [ObservableProperty]
@@ -849,8 +914,21 @@ public partial class LineItemDisplayModel : ObservableObject
     [ObservableProperty]
     private decimal _unitPrice;
 
+    [ObservableProperty]
+    private bool _hasProductError;
+
     public decimal Amount => Quantity * UnitPrice;
     public string AmountFormatted => $"${Amount:N2}";
+
+    partial void OnSelectedProductChanged(ProductOption? value)
+    {
+        if (value != null)
+        {
+            Description = value.Name;
+            UnitPrice = value.UnitPrice;
+            HasProductError = false;
+        }
+    }
 
     partial void OnQuantityChanged(decimal value)
     {
