@@ -186,6 +186,21 @@ public partial class AppShellViewModel : ViewModelBase
     public PurchaseOrdersModalsViewModel PurchaseOrdersModalsViewModel { get; }
 
     /// <summary>
+    /// Gets the receipts modals view model.
+    /// </summary>
+    public ReceiptsModalsViewModel ReceiptsModalsViewModel { get; }
+
+    /// <summary>
+    /// Gets the lost/damaged modals view model.
+    /// </summary>
+    public LostDamagedModalsViewModel LostDamagedModalsViewModel { get; }
+
+    /// <summary>
+    /// Gets the returns modals view model.
+    /// </summary>
+    public ReturnsModalsViewModel ReturnsModalsViewModel { get; }
+
+    /// <summary>
     /// Gets the unsaved changes dialog view model.
     /// </summary>
     public UnsavedChangesDialogViewModel UnsavedChangesDialogViewModel { get; }
@@ -326,6 +341,15 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create purchase orders modals
         PurchaseOrdersModalsViewModel = new PurchaseOrdersModalsViewModel();
+
+        // Create receipts modals
+        ReceiptsModalsViewModel = new ReceiptsModalsViewModel();
+
+        // Create lost/damaged modals
+        LostDamagedModalsViewModel = new LostDamagedModalsViewModel();
+
+        // Create returns modals
+        ReturnsModalsViewModel = new ReturnsModalsViewModel();
 
         // Create unsaved changes dialog
         UnsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();

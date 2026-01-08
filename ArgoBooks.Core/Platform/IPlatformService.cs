@@ -62,6 +62,19 @@ public interface IPlatformService
     bool SupportsBiometrics { get; }
 
     /// <summary>
+    /// Checks if Windows Hello (or platform biometrics) is available and configured on this device.
+    /// </summary>
+    /// <returns>True if biometric authentication is available.</returns>
+    Task<bool> IsBiometricAvailableAsync();
+
+    /// <summary>
+    /// Authenticates the user using Windows Hello (or platform biometrics).
+    /// </summary>
+    /// <param name="reason">The reason for authentication shown to the user.</param>
+    /// <returns>True if authentication succeeded, false otherwise.</returns>
+    Task<bool> AuthenticateWithBiometricAsync(string reason);
+
+    /// <summary>
     /// Gets whether the platform supports automatic updates.
     /// </summary>
     bool SupportsAutoUpdate { get; }

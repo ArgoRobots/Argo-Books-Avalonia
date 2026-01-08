@@ -1,5 +1,8 @@
 using System.Runtime.Versioning;
 using Microsoft.Win32;
+#if WINDOWS
+using Windows.Security.Credentials.UI;
+#endif
 
 namespace ArgoBooks.Core.Platform;
 
@@ -30,6 +33,75 @@ public class WindowsPlatformService : BasePlatformService
 
     /// <inheritdoc />
     public override bool SupportsBiometrics => true; // Windows Hello
+
+    /// <inheritdoc />
+    [SupportedOSPlatform("windows10.0.10240.0")]
+    public override async Task<bool> IsBiometricAvailableAsync()
+    {
+#if WINDOWS
+        try
+        {
+            var availability = await UserConsentVerifier.CheckAvailabilityAsync();
+            return availability == UserConsentVerifierAvailability.Available;
+        }
+        catch
+        {
+            return false;
+        }
+#else
+        return await Task.FromResult(false);
+#endif
+    }
+
+    /// <summary>
+    /// Gets detailed information about Windows Hello availability.
+    /// </summary>
+    [SupportedOSPlatform("windows10.0.10240.0")]
+    public async Task<string> GetBiometricAvailabilityDetailsAsync()
+    {
+#if WINDOWS
+        try
+        {
+            var availability = await UserConsentVerifier.CheckAvailabilityAsync();
+            return availability switch
+            {
+                UserConsentVerifierAvailability.Available => "Available",
+                UserConsentVerifierAvailability.DeviceBusy => "Device is busy",
+                UserConsentVerifierAvailability.DeviceNotPresent => "No biometric device found",
+                UserConsentVerifierAvailability.DisabledByPolicy => "Disabled by policy",
+                UserConsentVerifierAvailability.NotConfiguredForUser => "Not configured for current user. Please set up Windows Hello in Windows Settings > Accounts > Sign-in options.",
+                _ => $"Unknown status: {availability}"
+            };
+        }
+        catch (Exception ex)
+        {
+            return $"Error checking availability: {ex.Message}";
+        }
+#else
+        // This means the app was built with the cross-platform target (net10.0)
+        // instead of the Windows-specific target (net10.0-windows10.0.17763.0)
+        return await Task.FromResult("Windows Hello requires the Windows-specific build. Please rebuild the application targeting 'net10.0-windows10.0.17763.0'.");
+#endif
+    }
+
+    /// <inheritdoc />
+    [SupportedOSPlatform("windows10.0.10240.0")]
+    public override async Task<bool> AuthenticateWithBiometricAsync(string reason)
+    {
+#if WINDOWS
+        try
+        {
+            var result = await UserConsentVerifier.RequestVerificationAsync(reason);
+            return result == UserConsentVerificationResult.Verified;
+        }
+        catch
+        {
+            return false;
+        }
+#else
+        return await Task.FromResult(false);
+#endif
+    }
 
     /// <inheritdoc />
     public override bool SupportsAutoUpdate => true;

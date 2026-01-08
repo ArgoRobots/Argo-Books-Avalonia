@@ -1,9 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFrameworks>net10.0;net10.0-windows10.0.17763.0</TargetFrameworks>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <!-- Windows-specific settings for Windows Hello WinRT APIs -->
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+        <UseWindowsForms>false</UseWindowsForms>
+        <UseWPF>false</UseWPF>
     </PropertyGroup>
 
     <ItemGroup>

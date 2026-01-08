@@ -117,6 +117,21 @@ public partial class App : Application
     public static PurchaseOrdersModalsViewModel? PurchaseOrdersModalsViewModel => _appShellViewModel?.PurchaseOrdersModalsViewModel;
 
     /// <summary>
+    /// Gets the receipts modals view model for shared access.
+    /// </summary>
+    public static ReceiptsModalsViewModel? ReceiptsModalsViewModel => _appShellViewModel?.ReceiptsModalsViewModel;
+
+    /// <summary>
+    /// Gets the lost/damaged modals view model for shared access.
+    /// </summary>
+    public static LostDamagedModalsViewModel? LostDamagedModalsViewModel => _appShellViewModel?.LostDamagedModalsViewModel;
+
+    /// <summary>
+    /// Gets the returns modals view model for shared access.
+    /// </summary>
+    public static ReturnsModalsViewModel? ReturnsModalsViewModel => _appShellViewModel?.ReturnsModalsViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
@@ -626,11 +641,22 @@ public partial class App : Application
         {
             if (_appShellViewModel?.PasswordPromptModalViewModel == null) return null;
 
+            // Hide the loading modal before showing password prompt
+            _mainWindowViewModel?.HideLoading();
+
             // Get company name from footer if possible
             var footer = await CompanyManager.GetFileInfoAsync(filePath);
             var companyName = footer?.CompanyName ?? Path.GetFileNameWithoutExtension(filePath);
 
-            return await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(companyName, filePath);
+            var password = await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(companyName, filePath);
+
+            // Show loading again after user enters password (if they didn't cancel)
+            if (!string.IsNullOrEmpty(password))
+            {
+                _mainWindowViewModel?.ShowLoading("Opening company...");
+            }
+
+            return password;
         };
     }
 
@@ -1181,6 +1207,102 @@ public partial class App : Application
                 CompanyManager.MarkAsChanged();
             }
         };
+
+        // Windows Hello authentication requested (before enabling)
+        settings.WindowsHelloAuthRequested += async (_, _) =>
+        {
+            var platformService = PlatformServiceFactory.GetPlatformService();
+
+            try
+            {
+                // Check if Windows Hello is available
+                var available = await platformService.IsBiometricAvailableAsync();
+                if (!available)
+                {
+                    // Get detailed reason why Windows Hello is not available
+                    var details = "Unknown reason";
+                    if (platformService is ArgoBooks.Core.Platform.WindowsPlatformService winService)
+                    {
+#pragma warning disable CA1416 // Platform compatibility - already checked by type check above
+                        details = await winService.GetBiometricAvailabilityDetailsAsync();
+#pragma warning restore CA1416
+                    }
+
+                    var dialog = ConfirmationDialog;
+                    if (dialog != null)
+                    {
+                        await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        {
+                            Title = "Windows Hello Not Available",
+                            Message = $"Windows Hello cannot be enabled on this device.\n\nReason: {details}",
+                            PrimaryButtonText = "OK",
+                            CancelButtonText = ""
+                        });
+                    }
+                    settings.OnWindowsHelloAuthResult(false);
+                    return;
+                }
+
+                // Request authentication
+                var success = await platformService.AuthenticateWithBiometricAsync("Verify your identity to enable Windows Hello");
+                settings.OnWindowsHelloAuthResult(success);
+
+                if (!success)
+                {
+                    var dialog = ConfirmationDialog;
+                    if (dialog != null)
+                    {
+                        await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        {
+                            Title = "Windows Hello",
+                            Message = "Authentication was cancelled or failed. Windows Hello has not been enabled.",
+                            PrimaryButtonText = "OK",
+                            CancelButtonText = ""
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var dialog = ConfirmationDialog;
+                if (dialog != null)
+                {
+                    await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                    {
+                        Title = "Windows Hello Error",
+                        Message = $"Failed to authenticate with Windows Hello:\n\n{ex.Message}",
+                        PrimaryButtonText = "OK",
+                        CancelButtonText = ""
+                    });
+                }
+                settings.OnWindowsHelloAuthResult(false);
+            }
+        };
+
+        // Windows Hello setting changed (after successful authentication)
+        settings.WindowsHelloChanged += (_, args) =>
+        {
+            // Save to company settings
+            if (CompanyManager?.CurrentCompanySettings != null)
+            {
+                CompanyManager.CurrentCompanySettings.Security.BiometricEnabled = args.Enabled;
+                CompanyManager.MarkAsChanged();
+            }
+        };
+
+        // Load Windows Hello setting when company opens
+        if (CompanyManager != null)
+        {
+            CompanyManager.CompanyOpened += (_, _) =>
+            {
+                var securitySettings = CompanyManager.CurrentCompanySettings?.Security;
+                if (securitySettings != null)
+                {
+                    // Use SetWindowsHelloWithoutAuth to avoid triggering authentication on load
+                    settings.SetWindowsHelloWithoutAuth(securitySettings.BiometricEnabled);
+                }
+            };
+        }
     }
 
     /// <summary>

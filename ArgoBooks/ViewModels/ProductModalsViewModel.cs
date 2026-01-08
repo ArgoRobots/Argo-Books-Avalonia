@@ -136,6 +136,7 @@ public partial class ProductModalsViewModel : ObservableObject
     public ObservableCollection<string> ItemTypeOptions { get; } = ["All", "Product", "Service"];
 
     public bool HasCategories => CategoryItems.Count > 0;
+    public bool HasSuppliers => AvailableSuppliers.Count > 0;
 
     #endregion
 
@@ -146,6 +147,7 @@ public partial class ProductModalsViewModel : ObservableObject
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
     public event EventHandler? OpenCategoriesRequested;
+    public event EventHandler? OpenSuppliersRequested;
 
     #endregion
 
@@ -179,6 +181,14 @@ public partial class ProductModalsViewModel : ObservableObject
         IsAddModalOpen = false;
         IsEditModalOpen = false;
         OpenCategoriesRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    public void OpenSuppliersWithAddModal()
+    {
+        IsAddModalOpen = false;
+        IsEditModalOpen = false;
+        OpenSuppliersRequested?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]

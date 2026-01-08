@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using ArgoBooks.Data;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
@@ -325,9 +326,11 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
         var searchText = _searchText?.Trim().ToLowerInvariant() ?? string.Empty;
 
+        bool showingFullList = string.IsNullOrEmpty(searchText) || searchText == SelectedCountry?.Name.ToLowerInvariant();
+
         IEnumerable<CountryDialCode> filtered;
 
-        if (string.IsNullOrEmpty(searchText) || searchText == SelectedCountry?.Name.ToLowerInvariant())
+        if (showingFullList)
         {
             filtered = PhoneInput.AllDialCodes;
         }
@@ -338,8 +341,13 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
                 c.Code.Equals(searchText, StringComparison.OrdinalIgnoreCase));
         }
 
+        // Get the last priority country code (Canada = "CA")
+        var lastPriorityCode = Countries.Priority.LastOrDefault()?.Code;
+
         foreach (var item in filtered.Take(50))
         {
+            // Only show separator when displaying the full list, after the last priority country
+            item.ShowSeparatorAfter = showingFullList && item.Code == lastPriorityCode;
             FilteredCountries.Add(item);
         }
 

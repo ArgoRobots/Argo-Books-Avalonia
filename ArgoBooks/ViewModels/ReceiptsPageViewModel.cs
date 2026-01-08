@@ -79,34 +79,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         FilterReceipts();
     }
 
-    [ObservableProperty]
-    private string _filterType = "All";
-
-    [ObservableProperty]
-    private string _filterSource = "All";
-
-    [ObservableProperty]
-    private string _filterFileType = "All";
-
-    [ObservableProperty]
-    private string? _filterAmountMin;
-
-    [ObservableProperty]
-    private string? _filterAmountMax;
-
-    [ObservableProperty]
-    private DateTimeOffset? _filterDateFrom;
-
-    [ObservableProperty]
-    private DateTimeOffset? _filterDateTo;
-
-    [ObservableProperty]
-    private bool _isFilterModalOpen;
-
-    public ObservableCollection<string> TypeOptions { get; } = ["All", "Expense", "Revenue"];
-    public ObservableCollection<string> SourceOptions { get; } = ["All", "Manual", "AI Scanned"];
-    public ObservableCollection<string> FileTypeOptions { get; } = ["All", "Image", "PDF"];
-
     #endregion
 
     #region Selection
@@ -310,6 +282,26 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         }
+
+        // Subscribe to filter modal events
+        if (App.ReceiptsModalsViewModel != null)
+        {
+            App.ReceiptsModalsViewModel.FiltersApplied += OnFiltersApplied;
+            App.ReceiptsModalsViewModel.FiltersCleared += OnFiltersCleared;
+        }
+    }
+
+    private void OnFiltersApplied(object? sender, EventArgs e)
+    {
+        CurrentPage = 1;
+        FilterReceipts();
+    }
+
+    private void OnFiltersCleared(object? sender, EventArgs e)
+    {
+        SearchQuery = null;
+        CurrentPage = 1;
+        FilterReceipts();
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -355,6 +347,16 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
         var filtered = _allReceipts.ToList();
 
+        // Get filter values from modals view model
+        var modals = App.ReceiptsModalsViewModel;
+        var filterType = modals?.FilterType ?? "All";
+        var filterSource = modals?.FilterSource ?? "All";
+        var filterFileType = modals?.FilterFileType ?? "All";
+        var filterAmountMin = modals?.FilterAmountMin;
+        var filterAmountMax = modals?.FilterAmountMax;
+        var filterDateFrom = modals?.FilterDateFrom;
+        var filterDateTo = modals?.FilterDateTo;
+
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
@@ -368,15 +370,15 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         }
 
         // Apply type filter
-        if (FilterType != "All")
+        if (filterType != "All")
         {
-            filtered = filtered.Where(r => r.TransactionType == FilterType).ToList();
+            filtered = filtered.Where(r => r.TransactionType == filterType).ToList();
         }
 
         // Apply source filter
-        if (FilterSource != "All")
+        if (filterSource != "All")
         {
-            filtered = FilterSource switch
+            filtered = filterSource switch
             {
                 "AI Scanned" => filtered.Where(r => r.IsAiScanned).ToList(),
                 "Manual" => filtered.Where(r => !r.IsAiScanned).ToList(),
@@ -385,9 +387,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         }
 
         // Apply file type filter
-        if (FilterFileType != "All")
+        if (filterFileType != "All")
         {
-            filtered = FilterFileType switch
+            filtered = filterFileType switch
             {
                 "Image" => filtered.Where(r => IsImageFile(r.FileType)).ToList(),
                 "PDF" => filtered.Where(r => r.FileType.Contains("pdf", StringComparison.OrdinalIgnoreCase)).ToList(),
@@ -396,23 +398,23 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         }
 
         // Apply amount filter
-        if (decimal.TryParse(FilterAmountMin, out var minAmount))
+        if (decimal.TryParse(filterAmountMin, out var minAmount))
         {
             filtered = filtered.Where(r => r.Amount >= minAmount).ToList();
         }
-        if (decimal.TryParse(FilterAmountMax, out var maxAmount))
+        if (decimal.TryParse(filterAmountMax, out var maxAmount))
         {
             filtered = filtered.Where(r => r.Amount <= maxAmount).ToList();
         }
 
         // Apply date filter
-        if (FilterDateFrom.HasValue)
+        if (filterDateFrom.HasValue)
         {
-            filtered = filtered.Where(r => r.Date >= FilterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.Date >= filterDateFrom.Value.DateTime).ToList();
         }
-        if (FilterDateTo.HasValue)
+        if (filterDateTo.HasValue)
         {
-            filtered = filtered.Where(r => r.Date <= FilterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.Date <= filterDateTo.Value.DateTime).ToList();
         }
 
         // Sort by date descending (newest first)
@@ -526,37 +528,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenFilterModal()
     {
-        IsFilterModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseFilterModal()
-    {
-        IsFilterModalOpen = false;
-    }
-
-    [RelayCommand]
-    private void ApplyFilters()
-    {
-        CurrentPage = 1;
-        FilterReceipts();
-        IsFilterModalOpen = false;
-    }
-
-    [RelayCommand]
-    private void ClearFilters()
-    {
-        FilterType = "All";
-        FilterSource = "All";
-        FilterFileType = "All";
-        FilterAmountMin = null;
-        FilterAmountMax = null;
-        FilterDateFrom = null;
-        FilterDateTo = null;
-        SearchQuery = null;
-        CurrentPage = 1;
-        FilterReceipts();
-        IsFilterModalOpen = false;
+        App.ReceiptsModalsViewModel?.OpenFilterModal();
     }
 
     #endregion

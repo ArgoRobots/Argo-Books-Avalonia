@@ -33,7 +33,7 @@
                        Width="20" Height="14"
                        Stretch="UniformToFill"
                        VerticalAlignment="Center"
-                       Margin="12,0,8,0"
+                       Margin="12,0,0,0"
                        IsVisible="{Binding #Root.SelectedCountryFlag, Converter={x:Static ObjectConverters.IsNotNull}}" />
 
                 <!-- Search/Display TextBox -->
@@ -43,7 +43,7 @@
                          Watermark="Select country"
                          Background="Transparent"
                          BorderThickness="0"
-                         Padding="4,10"
+                         Padding="12,10"
                          FontSize="14"
                          VerticalAlignment="Center" />
 
@@ -116,22 +116,29 @@
                         </ListBox.Styles>
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="controls:CountryDialCode">
-                                <Grid ColumnDefinitions="30,*">
-                                    <!-- Flag Image -->
-                                    <Image Grid.Column="0"
-                                           Source="{Binding FlagImage}"
-                                           Width="20" Height="14"
-                                           Stretch="UniformToFill"
-                                           VerticalAlignment="Center"
-                                           Margin="0,0,8,0" />
-                                    <!-- Country Name -->
-                                    <TextBlock Grid.Column="1"
-                                               Text="{Binding Name}"
-                                               FontSize="14"
+                                <StackPanel>
+                                    <Grid ColumnDefinitions="30,*">
+                                        <!-- Flag Image -->
+                                        <Image Grid.Column="0"
+                                               Source="{Binding FlagImage}"
+                                               Width="20" Height="14"
+                                               Stretch="UniformToFill"
                                                VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                               TextTrimming="CharacterEllipsis" />
-                                </Grid>
+                                               Margin="0,0,8,0" />
+                                        <!-- Country Name -->
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Name}"
+                                                   FontSize="14"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                    <!-- Separator after priority countries -->
+                                    <Border Height="1"
+                                            Background="{DynamicResource BorderBrush}"
+                                            Margin="-10,8,-10,0"
+                                            IsVisible="{Binding ShowSeparatorAfter}" />
+                                </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>

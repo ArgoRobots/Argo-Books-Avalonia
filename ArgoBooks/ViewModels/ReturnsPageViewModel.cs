@@ -65,29 +65,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
         FilterReturns();
     }
 
-    [ObservableProperty]
-    private string _filterStatus = "All";
-
-    [ObservableProperty]
-    private string _filterReason = "All";
-
-    [ObservableProperty]
-    private string? _filterSupplierCustomer;
-
-    [ObservableProperty]
-    private DateTimeOffset? _filterDateFrom;
-
-    [ObservableProperty]
-    private DateTimeOffset? _filterDateTo;
-
-    [ObservableProperty]
-    private bool _isFilterModalOpen;
-
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Pending", "Approved", "Completed", "Rejected"];
-    public ObservableCollection<string> ReasonOptions { get; } = ["All", "Defective Product", "Wrong Item", "Changed Mind", "Shipping Damage", "Not as Described", "Other"];
-    public ObservableCollection<string> SupplierOptions { get; } = [];
-    public ObservableCollection<string> CustomerOptions { get; } = [];
-
     #endregion
 
     #region Returns Collection
@@ -166,6 +143,26 @@ public partial class ReturnsPageViewModel : ViewModelBase
         {
             App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
         }
+
+        // Subscribe to filter modal events
+        if (App.ReturnsModalsViewModel != null)
+        {
+            App.ReturnsModalsViewModel.FiltersApplied += OnFiltersApplied;
+            App.ReturnsModalsViewModel.FiltersCleared += OnFiltersCleared;
+        }
+    }
+
+    private void OnFiltersApplied(object? sender, EventArgs e)
+    {
+        CurrentPage = 1;
+        FilterReturns();
+    }
+
+    private void OnFiltersCleared(object? sender, EventArgs e)
+    {
+        SearchQuery = null;
+        CurrentPage = 1;
+        FilterReturns();
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -187,30 +184,8 @@ public partial class ReturnsPageViewModel : ViewModelBase
             return;
 
         _allReturns.AddRange(companyData.Returns);
-        LoadFilterOptions();
         UpdateStatistics();
         FilterReturns();
-    }
-
-    private void LoadFilterOptions()
-    {
-        SupplierOptions.Clear();
-        SupplierOptions.Add("All");
-        CustomerOptions.Clear();
-        CustomerOptions.Add("All");
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        foreach (var supplier in companyData.Suppliers)
-        {
-            SupplierOptions.Add(supplier.Name);
-        }
-
-        foreach (var customer in companyData.Customers)
-        {
-            CustomerOptions.Add(customer.Name);
-        }
     }
 
     private void UpdateStatistics()
@@ -234,6 +209,13 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
         var filtered = _allReturns.ToList();
 
+        // Get filter values from modals view model
+        var modals = App.ReturnsModalsViewModel;
+        var filterStatus = modals?.FilterStatus ?? "All";
+        var filterReason = modals?.FilterReason ?? "All";
+        var filterDateFrom = modals?.FilterDateFrom;
+        var filterDateTo = modals?.FilterDateTo;
+
         // Filter by tab (expense vs customer)
         var returnType = IsExpenseTabActive ? "Expense" : "Customer";
         filtered = filtered.Where(r => r.ReturnType == returnType).ToList();
@@ -251,27 +233,27 @@ public partial class ReturnsPageViewModel : ViewModelBase
         }
 
         // Apply status filter
-        if (FilterStatus != "All")
+        if (filterStatus != "All")
         {
-            filtered = filtered.Where(r => r.Status.ToString() == FilterStatus).ToList();
+            filtered = filtered.Where(r => r.Status.ToString() == filterStatus).ToList();
         }
 
         // Apply reason filter
-        if (FilterReason != "All")
+        if (filterReason != "All")
         {
             filtered = filtered.Where(r =>
-                r.Items.Any(item => item.Reason.Equals(FilterReason, StringComparison.OrdinalIgnoreCase))
+                r.Items.Any(item => item.Reason.Equals(filterReason, StringComparison.OrdinalIgnoreCase))
             ).ToList();
         }
 
         // Apply date filter
-        if (FilterDateFrom.HasValue)
+        if (filterDateFrom.HasValue)
         {
-            filtered = filtered.Where(r => r.ReturnDate >= FilterDateFrom.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.ReturnDate >= filterDateFrom.Value.DateTime).ToList();
         }
-        if (FilterDateTo.HasValue)
+        if (filterDateTo.HasValue)
         {
-            filtered = filtered.Where(r => r.ReturnDate <= FilterDateTo.Value.DateTime).ToList();
+            filtered = filtered.Where(r => r.ReturnDate <= filterDateTo.Value.DateTime).ToList();
         }
 
         // Sort by date descending (newest first)
@@ -409,35 +391,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
     [RelayCommand]
     private void OpenFilterModal()
     {
-        IsFilterModalOpen = true;
-    }
-
-    [RelayCommand]
-    private void CloseFilterModal()
-    {
-        IsFilterModalOpen = false;
-    }
-
-    [RelayCommand]
-    private void ApplyFilters()
-    {
-        CurrentPage = 1;
-        FilterReturns();
-        IsFilterModalOpen = false;
-    }
-
-    [RelayCommand]
-    private void ClearFilters()
-    {
-        FilterStatus = "All";
-        FilterReason = "All";
-        FilterSupplierCustomer = null;
-        FilterDateFrom = null;
-        FilterDateTo = null;
-        SearchQuery = null;
-        CurrentPage = 1;
-        FilterReturns();
-        IsFilterModalOpen = false;
+        App.ReturnsModalsViewModel?.OpenFilterModal();
     }
 
     #endregion

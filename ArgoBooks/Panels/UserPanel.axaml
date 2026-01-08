@@ -101,7 +101,8 @@
                     </Button>
 
                     <!-- My Plan (only visible when has Premium) -->
-                    <Button Classes="menu-item"
+                    <Button x:Name="MenuItemPlan"
+                            Classes="menu-item"
                             Command="{Binding OpenMyPlanCommand}"
                             IsVisible="{Binding HasPremium}">
                         <Grid ColumnDefinitions="Auto,*">

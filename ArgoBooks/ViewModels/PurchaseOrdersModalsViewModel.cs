@@ -26,6 +26,16 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? OrderDeleted;
 
+    /// <summary>
+    /// Raised when filters are applied.
+    /// </summary>
+    public event EventHandler? FiltersApplied;
+
+    /// <summary>
+    /// Raised when filters are cleared.
+    /// </summary>
+    public event EventHandler? FiltersCleared;
+
     #endregion
 
     #region Add/Edit Modal State
@@ -43,10 +53,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     private Supplier? _selectedSupplier;
 
     [ObservableProperty]
-    private DateTime _orderDate = DateTime.Today;
+    private DateTimeOffset? _orderDate = new DateTimeOffset(DateTime.Today);
 
     [ObservableProperty]
-    private DateTime _expectedDeliveryDate = DateTime.Today.AddDays(7);
+    private DateTimeOffset? _expectedDeliveryDate = new DateTimeOffset(DateTime.Today.AddDays(7));
 
     [ObservableProperty]
     private string _shippingCost = "0";
@@ -200,8 +210,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         IsEditMode = true;
         EditingOrderId = order.Id;
         SelectedSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == order.SupplierId);
-        OrderDate = order.OrderDate;
-        ExpectedDeliveryDate = order.ExpectedDeliveryDate;
+        OrderDate = new DateTimeOffset(order.OrderDate);
+        ExpectedDeliveryDate = new DateTimeOffset(order.ExpectedDeliveryDate);
         ShippingCost = order.ShippingCost.ToString("F2");
         Notes = order.Notes;
 
@@ -346,8 +356,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             Id = orderId,
             PoNumber = poNumber,
             SupplierId = SelectedSupplier!.Id,
-            OrderDate = OrderDate,
-            ExpectedDeliveryDate = ExpectedDeliveryDate,
+            OrderDate = OrderDate?.DateTime ?? DateTime.Today,
+            ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7),
             LineItems = lineItems,
             Subtotal = subtotal,
             ShippingCost = shipping,
@@ -396,8 +406,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
         // Update order
         order.SupplierId = SelectedSupplier!.Id;
-        order.OrderDate = OrderDate;
-        order.ExpectedDeliveryDate = ExpectedDeliveryDate;
+        order.OrderDate = OrderDate?.DateTime ?? DateTime.Today;
+        order.ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7);
         order.LineItems = LineItems.Select(li => new PurchaseOrderLineItem
         {
             ProductId = li.ProductId,
@@ -433,8 +443,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             () =>
             {
                 editedOrder.SupplierId = SelectedSupplier!.Id;
-                editedOrder.OrderDate = OrderDate;
-                editedOrder.ExpectedDeliveryDate = ExpectedDeliveryDate;
+                editedOrder.OrderDate = OrderDate?.DateTime ?? DateTime.Today;
+                editedOrder.ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7);
                 editedOrder.LineItems = newLineItems;
                 editedOrder.Subtotal = order.Subtotal;
                 editedOrder.ShippingCost = shipping;
@@ -472,8 +482,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     private void ClearAddModalFields()
     {
         SelectedSupplier = null;
-        OrderDate = DateTime.Today;
-        ExpectedDeliveryDate = DateTime.Today.AddDays(7);
+        OrderDate = new DateTimeOffset(DateTime.Today);
+        ExpectedDeliveryDate = new DateTimeOffset(DateTime.Today.AddDays(7));
         ShippingCost = "0";
         Notes = string.Empty;
         AddModalError = null;
@@ -760,6 +770,92 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             }));
 
         OrderDeleted?.Invoke(this, EventArgs.Empty);
+    }
+
+    #endregion
+
+    #region Filter Modal
+
+    [ObservableProperty]
+    private bool _isFilterModalOpen;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterStartDate;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterEndDate;
+
+    [ObservableProperty]
+    private string _filterSupplier = "All";
+
+    [ObservableProperty]
+    private string _filterStatus = "All";
+
+    /// <summary>
+    /// Supplier options for filter dropdown.
+    /// </summary>
+    public ObservableCollection<string> FilterSupplierOptions { get; } = ["All"];
+
+    /// <summary>
+    /// Status options for filter dropdown.
+    /// </summary>
+    public ObservableCollection<string> FilterStatusOptions { get; } =
+        ["All", "Draft", "Pending", "Approved", "Sent", "On Order", "Partially Received", "Received", "Cancelled"];
+
+    /// <summary>
+    /// Opens the filter modal.
+    /// </summary>
+    public void OpenFilterModal()
+    {
+        LoadFilterSupplierOptions();
+        IsFilterModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the filter modal.
+    /// </summary>
+    [RelayCommand]
+    private void CloseFilterModal()
+    {
+        IsFilterModalOpen = false;
+    }
+
+    /// <summary>
+    /// Applies the current filters.
+    /// </summary>
+    [RelayCommand]
+    private void ApplyFilters()
+    {
+        FiltersApplied?.Invoke(this, EventArgs.Empty);
+        CloseFilterModal();
+    }
+
+    /// <summary>
+    /// Clears all filters.
+    /// </summary>
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        FilterStartDate = null;
+        FilterEndDate = null;
+        FilterSupplier = "All";
+        FilterStatus = "All";
+        FiltersCleared?.Invoke(this, EventArgs.Empty);
+        CloseFilterModal();
+    }
+
+    private void LoadFilterSupplierOptions()
+    {
+        FilterSupplierOptions.Clear();
+        FilterSupplierOptions.Add("All");
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Suppliers == null) return;
+
+        foreach (var supplier in companyData.Suppliers.OrderBy(s => s.Name))
+        {
+            FilterSupplierOptions.Add(supplier.Name);
+        }
     }
 
     #endregion

@@ -20,26 +20,27 @@
     </Design.DataContext>
 
     <Panel>
-        <!-- Main Content -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <Grid RowDefinitions="Auto,Auto,*" Margin="24">
-                <!-- Tab Navigation (Row 0) -->
-                <Border Grid.Row="0"
-                        Background="{DynamicResource SurfaceBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="0,0,0,1"
-                        Margin="0,0,0,24">
-                    <TabControl SelectedIndex="{Binding SelectedTabIndex}"
-                                Margin="0"
-                                Classes="page-tabs">
-                        <TabItem Header="Expense Returns" />
-                        <TabItem Header="Customer Returns" />
-                    </TabControl>
-                </Border>
+        <Grid RowDefinitions="Auto,*">
+            <!-- Tab Bar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1">
+                <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+                            Margin="0"
+                            Classes="page-tabs">
+                    <TabItem Header="Expense Returns" />
+                    <TabItem Header="Customer Returns" />
+                </TabControl>
+            </Border>
 
-                <!-- Statistics Cards Row -->
-                <controls:StatCardsRow Grid.Row="1" Margin="0,0,0,24">
+            <!-- Main Content -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <Grid RowDefinitions="Auto,*" Margin="24">
+                    <!-- Statistics Cards Row -->
+                    <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                     <controls:StatCard Label="Total Returns"
                                        Value="{Binding TotalReturns}"
                                        Icon="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7h-2z"
@@ -58,8 +59,8 @@
                                        IconColor="Info" />
                 </controls:StatCardsRow>
 
-                <!-- Main Content Card (Row 2) -->
-                <Border Grid.Row="2"
+                <!-- Main Content Card (Row 1) -->
+                <Border Grid.Row="1"
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
                         BorderBrush="{DynamicResource BorderBrush}"
@@ -473,108 +474,7 @@
                 </Border>
             </Grid>
         </ScrollViewer>
-
-        <!-- Filter Modal Overlay -->
-        <Border Background="#80000000"
-                IsVisible="{Binding IsFilterModalOpen}">
-            <Border Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    Width="480"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
-                <Grid RowDefinitions="Auto,*,Auto">
-                    <!-- Modal Header -->
-                    <Border Grid.Row="0"
-                            Padding="24,20"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,0,0,1">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Filter Returns"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <Button Grid.Column="1"
-                                    Classes="icon-button"
-                                    Command="{Binding CloseFilterModalCommand}">
-                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                                          Width="20" Height="20" />
-                            </Button>
-                        </Grid>
-                    </Border>
-
-                    <!-- Modal Content -->
-                    <ScrollViewer Grid.Row="1" Padding="24">
-                        <StackPanel Spacing="16">
-                            <!-- Date Range -->
-                            <Grid ColumnDefinitions="*,16,*">
-                                <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="From Date"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding FilterDateFrom}"
-                                                        HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="To Date"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <DatePicker SelectedDate="{Binding FilterDateTo}"
-                                                        HorizontalAlignment="Stretch" />
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- Status -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Status"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding StatusOptions}"
-                                          SelectedItem="{Binding FilterStatus}"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
-
-                            <!-- Reason -->
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Reason"
-                                           FontSize="13"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding ReasonOptions}"
-                                          SelectedItem="{Binding FilterReason}"
-                                          HorizontalAlignment="Stretch" />
-                            </StackPanel>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!-- Modal Footer -->
-                    <Border Grid.Row="2"
-                            Padding="24,16"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="0,1,0,0">
-                        <Grid ColumnDefinitions="*,Auto,Auto">
-                            <Button Grid.Column="0"
-                                    Content="Clear Filters"
-                                    Classes="secondary-button"
-                                    HorizontalAlignment="Left"
-                                    Command="{Binding ClearFiltersCommand}" />
-                            <Button Grid.Column="1"
-                                    Content="Cancel"
-                                    Classes="secondary-button"
-                                    Margin="0,0,12,0"
-                                    Command="{Binding CloseFilterModalCommand}" />
-                            <Button Grid.Column="2"
-                                    Content="Apply Filters"
-                                    Classes="primary-button"
-                                    Command="{Binding ApplyFiltersCommand}" />
-                        </Grid>
-                    </Border>
-                </Grid>
-            </Border>
-        </Border>
+        </Grid>
 
         <!-- View Details Modal Overlay -->
         <Border Background="#80000000"
