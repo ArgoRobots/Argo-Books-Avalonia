@@ -39,7 +39,6 @@ public class LocalizationSettings
     public string Language { get; set; } = "en-US";
     public string Currency { get; set; } = "USD";
     public string DateFormat { get; set; } = "MM/DD/YYYY";
-    public string TimeZone { get; set; } = "America/New_York";
 }
 
 public class AppearanceSettings

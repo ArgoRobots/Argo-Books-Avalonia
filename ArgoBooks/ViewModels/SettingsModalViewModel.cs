@@ -35,9 +35,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _selectedDateFormat = "MM/DD/YYYY";
 
     [ObservableProperty]
-    private string _selectedTimeZone = "(UTC-05:00) Eastern Time";
-
-    [ObservableProperty]
     private bool _anonymousDataCollection;
 
     [ObservableProperty]
@@ -74,18 +71,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         "DD/MM/YYYY",
         "YYYY-MM-DD",
         "MMM D, YYYY"
-    };
-
-    public ObservableCollection<string> TimeZones { get; } = new()
-    {
-        "(UTC-08:00) Pacific Time",
-        "(UTC-07:00) Mountain Time",
-        "(UTC-06:00) Central Time",
-        "(UTC-05:00) Eastern Time",
-        "(UTC+00:00) UTC",
-        "(UTC+01:00) Central European Time",
-        "(UTC+08:00) China Standard Time",
-        "(UTC+09:00) Japan Standard Time"
     };
 
     #endregion
