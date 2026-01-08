@@ -40,20 +40,4 @@
         </StackPanel>
     </StackPanel>
 
-    <UserControl.Styles>
-        <!-- Link Button - no background -->
-        <Style Selector="Button.link-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-        <Style Selector="Button.link-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.link-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.link-button:pointerover TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
-        </Style>
-    </UserControl.Styles>
 </UserControl>

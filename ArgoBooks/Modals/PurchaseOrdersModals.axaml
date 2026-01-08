@@ -626,28 +626,6 @@
             <Setter Property="HorizontalAlignment" Value="Stretch" />
         </Style>
 
-        <!-- Link Button -->
-        <Style Selector="Button.link-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Padding" Value="4" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.link-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.link-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.link-button PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="Button.link-button TextBlock">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="Medium" />
-        </Style>
-
         <!-- Danger Button -->
         <Style Selector="Button.danger-button">
             <Setter Property="Background" Value="#DC2626" />

@@ -244,22 +244,6 @@
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         </Style>
 
-        <!-- Link Button -->
-        <Style Selector="Button.link-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.link-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.link-button:pointerover">
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
-        </Style>
-
         <!-- Spinning Animation -->
         <Style Selector="PathIcon.spinning">
             <Style.Animations>

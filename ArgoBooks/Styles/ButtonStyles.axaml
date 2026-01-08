@@ -150,7 +150,7 @@
         <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
     </Style>
 
-    <!-- Link Button (looks like a hyperlink) -->
+    <!-- Link Button (looks like a hyperlink, with underline on hover) -->
     <Style Selector="Button.link">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
@@ -165,6 +165,25 @@
     </Style>
     <Style Selector="Button.link:pressed /template/ ContentPresenter">
         <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryDarkBrush}" />
+    </Style>
+
+    <!-- Link Button (inline text link, color change on hover) -->
+    <Style Selector="Button.link-button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.link-button /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.link-button:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
+    </Style>
+    <Style Selector="Button.link-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
     </Style>
 
     <!-- Pagination Button -->
