@@ -16,6 +16,12 @@
         <local:PageEqualsConverter x:Key="PageEqualsConverter" />
     </UserControl.Resources>
 
+    <UserControl.Styles>
+        <Style Selector="Button:disabled PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <Design.DataContext>
         <vm:StockLevelsPageViewModel />
     </Design.DataContext>
