@@ -582,6 +582,12 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     }
 
     [RelayCommand]
+    private void ContinueDraftInvoice(InvoiceDisplayItem? item)
+    {
+        App.InvoiceModalsViewModel?.ContinueDraftInvoice(item);
+    }
+
+    [RelayCommand]
     private void OpenDeleteConfirm(InvoiceDisplayItem? item)
     {
         App.InvoiceModalsViewModel?.OpenDeleteConfirm(item);
@@ -662,6 +668,16 @@ public partial class InvoiceDisplayItem : ObservableObject
     public string DueDateFormatted => DueDate.ToString("MMM d, yyyy");
     public string TotalFormatted => $"${Total:N2}";
     public string BalanceFormatted => $"${Balance:N2}";
+
+    /// <summary>
+    /// Whether this invoice is a draft.
+    /// </summary>
+    public bool IsDraft => Status == InvoiceStatus.Draft;
+
+    /// <summary>
+    /// Whether this invoice can be edited (only Pending invoices - drafts use Continue instead).
+    /// </summary>
+    public bool CanEdit => Status == InvoiceStatus.Pending;
 }
 
 /// <summary>

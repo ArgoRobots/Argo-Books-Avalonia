@@ -381,14 +381,12 @@ public partial class App : Application
             {
                 if (CompanyManager?.IsCompanyOpen == true)
                 {
-                    _mainWindowViewModel?.ShowLoading("Saving...");
                     try
                     {
                         await CompanyManager.SaveCompanyAsync();
                     }
                     catch (Exception ex)
                     {
-                        _mainWindowViewModel?.HideLoading();
                         _appShellViewModel?.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
                     }
                 }
@@ -746,14 +744,12 @@ public partial class App : Application
         {
             if (CompanyManager?.IsCompanyOpen == true)
             {
-                _mainWindowViewModel?.ShowLoading("Saving...");
                 try
                 {
                     await CompanyManager.SaveCompanyAsync();
                 }
                 catch (Exception ex)
                 {
-                    _mainWindowViewModel?.HideLoading();
                     _appShellViewModel?.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
                 }
             }
@@ -780,7 +776,6 @@ public partial class App : Application
                     switch (result)
                     {
                         case UnsavedChangesResult.Save:
-                            _mainWindowViewModel?.ShowLoading("Saving...");
                             await CompanyManager.SaveCompanyAsync();
                             await CompanyManager.CloseCompanyAsync();
                             break;
@@ -1958,7 +1953,6 @@ public partial class App : Application
         if (file == null) return;
 
         var filePath = file.Path.LocalPath;
-        _mainWindowViewModel?.ShowLoading("Saving...");
 
         try
         {
@@ -1967,7 +1961,6 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            _mainWindowViewModel?.HideLoading();
             _appShellViewModel?.AddNotification("Error", $"Failed to save file: {ex.Message}", NotificationType.Error);
         }
     }

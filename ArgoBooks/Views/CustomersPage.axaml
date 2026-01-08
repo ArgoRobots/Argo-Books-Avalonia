@@ -125,7 +125,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="Name">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Customer" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
@@ -161,7 +161,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="Email">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Email" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
@@ -197,7 +197,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="Phone">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Phone" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
@@ -233,7 +233,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="Address">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Address" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
@@ -269,7 +269,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="LastRental">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Last Rental" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
@@ -304,7 +304,7 @@
                                     <TextBlock Text="Actions"
                                                FontSize="12"
                                                FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                HorizontalAlignment="Left"
                                                Margin="8,12" />
                                 </Panel>
@@ -560,47 +560,5 @@
         <!-- Note: Modals are now rendered at AppShell level for full-screen coverage -->
     </Grid>
 
-    <UserControl.Styles>
-        <!-- Search Input -->
-        <Style Selector="TextBox.search-input">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0,10,12,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="MinWidth" Value="180" />
-        </Style>
-        <Style Selector="TextBox.search-input /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-        <!-- Page Size ComboBox -->
-        <Style Selector="ComboBox.page-size-combobox">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="MinHeight" Value="28" />
-        </Style>
-
-        <!-- Column Header Button -->
-        <Style Selector="Button.column-header">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.column-header /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.column-header:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.column-header:pointerover TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-        </Style>
-    </UserControl.Styles>
+    <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>

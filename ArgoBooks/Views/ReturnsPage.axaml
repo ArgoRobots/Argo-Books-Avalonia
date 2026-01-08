@@ -137,7 +137,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <!-- ID Column Header -->
                                         <Panel Width="{Binding ColumnWidths.IdColumnWidth}">
-                                            <TextBlock Text="ID" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="ID" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -145,7 +145,7 @@
 
                                         <!-- Product Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ProductColumnWidth}">
-                                            <TextBlock Text="Product" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="Product" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -153,7 +153,7 @@
 
                                         <!-- Supplier/Customer Column Header -->
                                         <Panel Width="{Binding ColumnWidths.SupplierCustomerColumnWidth}">
-                                            <TextBlock FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12">
+                                            <TextBlock FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12">
                                                 <TextBlock.Text>
                                                     <MultiBinding StringFormat="{}{0}">
                                                         <Binding Path="$parent[UserControl].((vm:ReturnsPageViewModel)DataContext).IsExpenseTabActive" Converter="{x:Static local:BoolConverters.ToSupplierOrCustomerHeader}" />
@@ -167,7 +167,7 @@
 
                                         <!-- Date Column Header -->
                                         <Panel Width="{Binding ColumnWidths.DateColumnWidth}">
-                                            <TextBlock Text="Date" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="Date" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -175,7 +175,7 @@
 
                                         <!-- Reason Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ReasonColumnWidth}">
-                                            <TextBlock Text="Reason" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="Reason" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Reason" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -183,7 +183,7 @@
 
                                         <!-- Processed Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ProcessedColumnWidth}">
-                                            <TextBlock Text="Processed" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="Processed" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Processed" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -191,7 +191,7 @@
 
                                         <!-- Refund Column Header -->
                                         <Panel Width="{Binding ColumnWidths.RefundColumnWidth}">
-                                            <TextBlock Text="Refund" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="Refund" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Refund" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -199,7 +199,7 @@
 
                                         <!-- Status Column Header -->
                                         <Panel Width="{Binding ColumnWidths.StatusColumnWidth}">
-                                            <TextBlock Text="Status" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="Status" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -207,7 +207,7 @@
 
                                         <!-- Actions Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                            <TextBlock Text="Actions" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" HorizontalAlignment="Center" />
+                                            <TextBlock Text="Actions" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" HorizontalAlignment="Left" />
                                         </Panel>
                                     </StackPanel>
                                 </Border>
@@ -275,7 +275,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.DateColumnWidth}">
                                                                 <TextBlock Text="{Binding DateFormatted}"
                                                                            FontSize="12"
-                                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
                                                                 <Border Width="1" Background="{DynamicResource BorderBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -285,7 +285,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ReasonColumnWidth}">
                                                                 <TextBlock Text="{Binding Reason}"
                                                                            FontSize="12"
-                                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
@@ -296,7 +296,7 @@
                                                             <Panel Width="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ColumnWidths.ProcessedColumnWidth}">
                                                                 <TextBlock Text="{Binding ProcessedBy}"
                                                                            FontSize="12"
-                                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                                            TextTrimming="CharacterEllipsis"
                                                                            VerticalAlignment="Center"
                                                                            Margin="8,0" />
@@ -375,7 +375,7 @@
                                         <TextBlock Text="No returns found"
                                                    FontSize="16"
                                                    FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                    HorizontalAlignment="Center" />
                                         <TextBlock Text="Returns will appear here when items are returned to suppliers or by customers."
                                                    FontSize="14"
@@ -406,7 +406,7 @@
                                             VerticalAlignment="Center">
                                     <TextBlock Text="{Binding PaginationText}"
                                                FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                VerticalAlignment="Center" />
                                     <TextBlock Text="|"
                                                FontSize="13"
@@ -415,7 +415,7 @@
                                                Margin="8,0" />
                                     <TextBlock Text="Per page:"
                                                FontSize="13"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                VerticalAlignment="Center" />
                                     <ComboBox ItemsSource="{Binding PageSizeOptions}"
                                               SelectedItem="{Binding PageSize}"
@@ -585,7 +585,7 @@
                                         MinHeight="80">
                                     <TextBlock Text="{Binding ViewDetailsNotes}"
                                                FontSize="14"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                TextWrapping="Wrap" />
                                 </Border>
                             </StackPanel>
@@ -652,7 +652,7 @@
                             <TextBlock Text="Return to undo:"
                                        FontSize="13"
                                        FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                             <TextBlock Text="{Binding UndoReturnItemDescription}"
                                        FontSize="14"
                                        FontWeight="Medium"
@@ -663,7 +663,7 @@
                         <StackPanel Spacing="8">
                             <TextBlock FontSize="13"
                                        FontWeight="Medium"
-                                       Foreground="{DynamicResource TextSecondaryBrush}">
+                                       Foreground="{DynamicResource TextPrimaryBrush}">
                                 <Run Text="Reason for undo" />
                                 <Run Text="(optional)" Foreground="{DynamicResource TextTertiaryBrush}" />
                             </TextBlock>
@@ -698,77 +698,5 @@
         </Border>
     </Panel>
 
-    <UserControl.Styles>
-        <!-- TabControl - page tabs styling -->
-        <Style Selector="TabControl.page-tabs">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="TabControl.page-tabs /template/ ItemsPresenter#PART_ItemsPresenter">
-            <Setter Property="Margin" Value="24,0" />
-        </Style>
-        <Style Selector="TabControl.page-tabs /template/ Border#PART_InnerBorder">
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-        <Style Selector="TabControl.page-tabs /template/ ContentPresenter#PART_SelectedContentHost">
-            <Setter Property="IsVisible" Value="False" />
-        </Style>
-
-        <!-- Tab Item Styling -->
-        <Style Selector="TabControl.page-tabs TabItem">
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Padding" Value="4,12,4,10" />
-            <Setter Property="Margin" Value="8,0" />
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="TabControl.page-tabs TabItem:pointerover">
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        </Style>
-        <Style Selector="TabControl.page-tabs TabItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="TextBlock.Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        </Style>
-        <Style Selector="TabControl.page-tabs TabItem:selected">
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="TabControl.page-tabs TabItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="TabControl.page-tabs TabItem:selected /template/ Border#PART_SelectedPipe">
-            <Setter Property="IsVisible" Value="True" />
-            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Height" Value="2" />
-            <Setter Property="VerticalAlignment" Value="Bottom" />
-            <Setter Property="Margin" Value="0,0,0,0" />
-            <Setter Property="CornerRadius" Value="1" />
-        </Style>
-
-        <!-- Search Input -->
-        <Style Selector="TextBox.search-input">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0,10,12,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="MinWidth" Value="180" />
-        </Style>
-        <Style Selector="TextBox.search-input /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-        </Style>
-
-
-        <!-- Page Size ComboBox -->
-        <Style Selector="ComboBox.page-size-combobox">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="MinHeight" Value="28" />
-        </Style>
-
-    </UserControl.Styles>
+    <!-- Styles are now consolidated in Styles/TableStyles.axaml -->
 </UserControl>

@@ -118,7 +118,7 @@
                                         Padding="12,8"
                                         IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
                                     <Grid ColumnDefinitions="2*,80,90,70,Auto">
-                                        <TextBlock Grid.Column="0" Text="Description" FontSize="12" FontWeight="Medium"
+                                        <TextBlock Grid.Column="0" Text="Product" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    Margin="0,0,8,0" />
                                         <TextBlock Grid.Column="1" Text="Qty" FontSize="12" FontWeight="Medium"
@@ -144,11 +144,23 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="0,0,0,1">
                                                 <Grid ColumnDefinitions="2*,80,90,70,Auto">
-                                                    <TextBox Grid.Column="0"
-                                                             Text="{Binding Description, Mode=TwoWay}"
-                                                             Classes="form-input"
-                                                             Watermark="Item description"
-                                                             Margin="0,0,8,0" />
+                                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                        <controls:SearchableDropdown
+                                                                 ItemsSource="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).ProductOptions}"
+                                                                 SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                                                                 DisplayMemberPath="Name"
+                                                                 Placeholder="Search for a product..."
+                                                                 ShowAddNew="False"
+                                                                 EmptyMessage="No products found."
+                                                                 EmptyCreateLinkText="Create one"
+                                                                 EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).NavigateToCreateProductCommand}"
+                                                                 HasError="{Binding HasProductError}" />
+                                                        <TextBlock Text="Please select a product"
+                                                                   FontSize="12"
+                                                                   Foreground="#dc2626"
+                                                                   Margin="0,2,0,0"
+                                                                   IsVisible="{Binding HasProductError}" />
+                                                    </StackPanel>
                                                     <NumericUpDown Grid.Column="1"
                                                                    Value="{Binding Quantity, Mode=TwoWay}"
                                                                    Minimum="1"
@@ -156,6 +168,7 @@
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
+                                                                   VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
                                                     <NumericUpDown Grid.Column="2"
                                                                    Value="{Binding UnitPrice, Mode=TwoWay}"
@@ -164,16 +177,19 @@
                                                                    Classes="line-item-input"
                                                                    ShowButtonSpinner="False"
                                                                    HorizontalAlignment="Stretch"
+                                                                   VerticalAlignment="Top"
                                                                    Margin="0,0,8,0" />
                                                     <TextBlock Grid.Column="3"
                                                                Text="{Binding AmountFormatted}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               HorizontalAlignment="Right" />
+                                                               VerticalAlignment="Top"
+                                                               HorizontalAlignment="Right"
+                                                               Margin="0,10,0,0" />
                                                     <Button Grid.Column="4"
                                                             Classes="icon-button danger"
+                                                            VerticalAlignment="Top"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
                                                             CommandParameter="{Binding}"
                                                             ToolTip.Tip="Remove item">
@@ -186,16 +202,6 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
 
-                                <!-- Empty State for Line Items -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="24,16"
-                                        IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsZero}}">
-                                    <TextBlock Text="No line items added. Click 'Add Item' to add products or services."
-                                               FontSize="14"
-                                               Foreground="{DynamicResource TextSecondaryBrush}"
-                                               HorizontalAlignment="Center" />
-                                </Border>
                             </StackPanel>
 
                             <!-- Totals Section -->
