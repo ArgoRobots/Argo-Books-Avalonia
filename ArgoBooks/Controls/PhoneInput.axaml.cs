@@ -198,10 +198,21 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 
     /// <summary>
     /// Complete list of country dial codes with phone format patterns.
-    /// Generated from the shared Countries data.
+    /// Generated from the shared Countries data, with priority countries listed first.
     /// </summary>
-    public static readonly List<CountryDialCode> AllDialCodes =
-        Countries.All.Select(c => new CountryDialCode(c.Code, c.Name, c.DialCode, c.PhoneFormat, c.FlagFileName)).ToList();
+    public static readonly List<CountryDialCode> AllDialCodes = CreateAllDialCodes();
+
+    private static List<CountryDialCode> CreateAllDialCodes()
+    {
+        var priorityCount = Countries.Priority.Count;
+        var result = Countries.AllWithPriorityFirst
+            .Select((c, index) => new CountryDialCode(c.Code, c.Name, c.DialCode, c.PhoneFormat, c.FlagFileName)
+            {
+                ShowSeparatorAfter = index == priorityCount - 1 // Last priority country
+            })
+            .ToList();
+        return result;
+    }
 
     #endregion
 
@@ -490,9 +501,11 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 
         var searchText = _countrySearchText.Trim().ToLowerInvariant();
 
+        bool showingFullList = string.IsNullOrEmpty(searchText) || searchText.StartsWith('+');
+
         IEnumerable<CountryDialCode> filtered;
 
-        if (string.IsNullOrEmpty(searchText) || searchText.StartsWith('+'))
+        if (showingFullList)
         {
             // Show all when empty or when showing dial code
             filtered = AllDialCodes;
@@ -508,6 +521,9 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 
         foreach (var item in filtered.Take(50))
         {
+            // Only show separator when displaying the full list
+            item.ShowSeparatorAfter = showingFullList && item.IsPriority &&
+                item.Code == AllDialCodes.LastOrDefault(c => c.IsPriority)?.Code;
             FilteredDialCodes.Add(item);
         }
 
@@ -623,6 +639,16 @@ public class CountryDialCode
     /// Flag file name (matches the PNG file in Assets/CountryFlags).
     /// </summary>
     public string FlagFileName { get; }
+
+    /// <summary>
+    /// Gets whether this is a priority/common country.
+    /// </summary>
+    public bool IsPriority => Countries.IsPriority(Code);
+
+    /// <summary>
+    /// Gets whether this country should show a separator after it (last priority country).
+    /// </summary>
+    public bool ShowSeparatorAfter { get; set; }
 
     /// <summary>
     /// Path to the flag image asset.

@@ -6,6 +6,21 @@ namespace ArgoBooks.Data;
 public static class Countries
 {
     /// <summary>
+    /// ISO codes for priority/common countries shown at the top of country lists.
+    /// </summary>
+    private static readonly string[] PriorityCodes =
+    [
+        "US", // United States
+        "CN", // China
+        "DE", // Germany
+        "JP", // Japan
+        "GB", // United Kingdom
+        "FR", // France
+        "IT", // Italy
+        "CA"  // Canada
+    ];
+
+    /// <summary>
     /// Complete list of country data with dial codes and phone format patterns.
     /// </summary>
     public static readonly IReadOnlyList<CountryInfo> All =
@@ -211,6 +226,26 @@ public static class Countries
     /// Gets just the country names for simple dropdowns.
     /// </summary>
     public static IReadOnlyList<string> Names { get; } = All.Select(c => c.Name).ToList();
+
+    /// <summary>
+    /// Gets the priority/common countries that should appear at the top of country lists.
+    /// </summary>
+    public static IReadOnlyList<CountryInfo> Priority { get; } =
+        PriorityCodes
+            .Select(code => All.First(c => c.Code == code))
+            .ToList();
+
+    /// <summary>
+    /// Gets all countries with priority countries listed first, followed by all countries alphabetically.
+    /// </summary>
+    public static IReadOnlyList<CountryInfo> AllWithPriorityFirst { get; } =
+        Priority.Concat(All).ToList();
+
+    /// <summary>
+    /// Checks if a country is in the priority list.
+    /// </summary>
+    public static bool IsPriority(string code) =>
+        PriorityCodes.Contains(code, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Finds a country by name.

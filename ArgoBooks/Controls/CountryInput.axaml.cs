@@ -325,9 +325,11 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
         var searchText = _searchText?.Trim().ToLowerInvariant() ?? string.Empty;
 
+        bool showingFullList = string.IsNullOrEmpty(searchText) || searchText == SelectedCountry?.Name.ToLowerInvariant();
+
         IEnumerable<CountryDialCode> filtered;
 
-        if (string.IsNullOrEmpty(searchText) || searchText == SelectedCountry?.Name.ToLowerInvariant())
+        if (showingFullList)
         {
             filtered = PhoneInput.AllDialCodes;
         }
@@ -340,6 +342,9 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
         foreach (var item in filtered.Take(50))
         {
+            // Only show separator when displaying the full list
+            item.ShowSeparatorAfter = showingFullList && item.IsPriority &&
+                item.Code == PhoneInput.AllDialCodes.LastOrDefault(c => c.IsPriority)?.Code;
             FilteredCountries.Add(item);
         }
 
