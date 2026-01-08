@@ -172,32 +172,19 @@ public partial class ChartSettingsService : ObservableObject
         DateRangeChanged?.Invoke(this, value);
     }
 
-    partial void OnStartDateChanged(DateTime value)
+    partial void OnStartDateChanged(DateTime _)
     {
         OnPropertyChanged(nameof(AppliedDateRangeText));
     }
 
-    partial void OnEndDateChanged(DateTime value)
+    partial void OnEndDateChanged(DateTime _)
     {
         OnPropertyChanged(nameof(AppliedDateRangeText));
     }
 
-    partial void OnHasAppliedCustomRangeChanged(bool value)
+    partial void OnHasAppliedCustomRangeChanged(bool _)
     {
         OnPropertyChanged(nameof(AppliedDateRangeText));
-    }
-
-    /// <summary>
-    /// Applies a custom date range.
-    /// </summary>
-    public void ApplyCustomDateRange(DateTime startDate, DateTime endDate)
-    {
-        StartDate = startDate;
-        EndDate = endDate;
-        HasAppliedCustomRange = true;
-        SelectedDateRange = "Custom Range";
-        SaveToGlobalSettings();
-        DateRangeChanged?.Invoke(this, "Custom Range");
     }
 
     /// <summary>

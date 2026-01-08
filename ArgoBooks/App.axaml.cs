@@ -387,7 +387,7 @@ public partial class App : Application
                     }
                     catch (Exception ex)
                     {
-                        _appShellViewModel!.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
+                        _appShellViewModel.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
                     }
                 }
             };
@@ -825,7 +825,7 @@ public partial class App : Application
 
             var filePath = file.Path.LocalPath;
 
-            _mainWindowViewModel!.ShowLoading("Creating company...");
+            _mainWindowViewModel.ShowLoading("Creating company...");
             try
             {
                 var companyInfo = new CompanyInfo
@@ -893,7 +893,7 @@ public partial class App : Application
         // Create new company - show create company wizard
         _welcomeScreenViewModel.CreateNewCompanyRequested += (_, _) =>
         {
-            _appShellViewModel!.CreateCompanyViewModel.OpenCommand.Execute(null);
+            _appShellViewModel.CreateCompanyViewModel.OpenCommand.Execute(null);
         };
 
         // Open company - show file picker
@@ -1037,7 +1037,7 @@ public partial class App : Application
                     }
 
                     // Update UI
-                    _mainWindowViewModel!.OpenCompany(args.CompanyName);
+                    _mainWindowViewModel.OpenCompany(args.CompanyName);
                     var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
                     _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
                     _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
@@ -1364,7 +1364,7 @@ public partial class App : Application
             if (file == null) return;
 
             var filePath = file.Path.LocalPath;
-            _mainWindowViewModel!.ShowLoading("Exporting data...");
+            _mainWindowViewModel.ShowLoading("Exporting data...");
 
             try
             {
@@ -1480,7 +1480,7 @@ public partial class App : Application
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;
 
-            _mainWindowViewModel!.ShowLoading("Validating import file...");
+            _mainWindowViewModel.ShowLoading("Validating import file...");
 
             try
             {
@@ -1714,13 +1714,13 @@ public partial class App : Application
                     // Auto-save before locking
                     try
                     {
-                        _mainWindowViewModel!.ShowLoading("Auto-saving before lock...");
+                        _mainWindowViewModel.ShowLoading("Auto-saving before lock...");
                         await CompanyManager.SaveCompanyAsync();
                         _mainWindowViewModel.HideLoading();
                     }
                     catch
                     {
-                        _mainWindowViewModel!.HideLoading();
+                        _mainWindowViewModel.HideLoading();
                         // Continue to close even if save fails - user can reopen
                     }
                 }
@@ -1948,7 +1948,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            _appShellViewModel!.AddNotification("Error", $"Failed to save file: {ex.Message}", NotificationType.Error);
+            _appShellViewModel.AddNotification("Error", $"Failed to save file: {ex.Message}", NotificationType.Error);
         }
     }
 
@@ -2089,16 +2089,16 @@ public partial class App : Application
             {
                 if (args.IsExporting)
                 {
-                    _mainWindowViewModel!.ShowLoading("Exporting to Google Sheets...");
+                    _mainWindowViewModel.ShowLoading("Exporting to Google Sheets...");
                 }
                 else if (args.IsSuccess)
                 {
-                    _mainWindowViewModel!.HideLoading();
+                    _mainWindowViewModel.HideLoading();
                     // No notification - the browser opens automatically
                 }
                 else if (!string.IsNullOrEmpty(args.ErrorMessage))
                 {
-                    _mainWindowViewModel!.HideLoading();
+                    _mainWindowViewModel.HideLoading();
                     appShellViewModel.AddNotification("Export Failed", args.ErrorMessage, NotificationType.Error);
                 }
             };
@@ -2146,7 +2146,7 @@ public partial class App : Application
         {
             var viewModel = new ProductsPageViewModel();
             // Set plan status from app shell
-            viewModel.HasStandard = _appShellViewModel!.SidebarViewModel.HasStandard;
+            viewModel.HasStandard = _appShellViewModel.SidebarViewModel.HasStandard;
             // Wire up upgrade request to open upgrade modal
             viewModel.UpgradeRequested += (_, _) => _appShellViewModel.UpgradeModalViewModel.OpenCommand.Execute(null);
             if (param is Dictionary<string, object?> dict)
@@ -2214,7 +2214,7 @@ public partial class App : Application
         {
             var viewModel = new ReceiptsPageViewModel();
             // Set plan status from app shell
-            viewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
+            viewModel.HasPremium = _appShellViewModel.SidebarViewModel.HasPremium;
             return new ReceiptsPage { DataContext = viewModel };
         });
 
