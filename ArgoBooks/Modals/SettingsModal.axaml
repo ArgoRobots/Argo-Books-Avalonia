@@ -576,19 +576,26 @@
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <!-- Show description when enabled (has both Standard and password) -->
                                             <TextBlock Text="Use fingerprint or face recognition to unlock"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
-                                                       IsVisible="{Binding HasStandard}" />
+                                                       IsVisible="{Binding CanEnableWindowsHello}" />
+                                            <!-- Show "requires password" message when has Standard but no password -->
+                                            <TextBlock Text="Requires a password to be set first"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       IsVisible="{Binding NeedsPasswordForWindowsHello}" />
+                                            <!-- Show "requires Standard" message when doesn't have Standard plan -->
                                             <TextBlock Text="Requires Standard plan or higher"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        IsVisible="{Binding !HasStandard}" />
                                         </StackPanel>
-                                        <!-- Toggle when user has standard -->
+                                        <!-- Toggle when user has standard AND password -->
                                         <ToggleSwitch Grid.Column="1"
                                                       IsChecked="{Binding WindowsHelloEnabled}"
-                                                      IsVisible="{Binding HasStandard}"
+                                                      IsVisible="{Binding CanEnableWindowsHello}"
                                                       VerticalAlignment="Center" />
                                         <!-- Upgrade button when user doesn't have standard -->
                                         <Button Grid.Column="1"

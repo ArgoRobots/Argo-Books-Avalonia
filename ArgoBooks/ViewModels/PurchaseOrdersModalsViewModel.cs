@@ -43,10 +43,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     private Supplier? _selectedSupplier;
 
     [ObservableProperty]
-    private DateTime _orderDate = DateTime.Today;
+    private DateTimeOffset? _orderDate = new DateTimeOffset(DateTime.Today);
 
     [ObservableProperty]
-    private DateTime _expectedDeliveryDate = DateTime.Today.AddDays(7);
+    private DateTimeOffset? _expectedDeliveryDate = new DateTimeOffset(DateTime.Today.AddDays(7));
 
     [ObservableProperty]
     private string _shippingCost = "0";
@@ -200,8 +200,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         IsEditMode = true;
         EditingOrderId = order.Id;
         SelectedSupplier = AvailableSuppliers.FirstOrDefault(s => s.Id == order.SupplierId);
-        OrderDate = order.OrderDate;
-        ExpectedDeliveryDate = order.ExpectedDeliveryDate;
+        OrderDate = new DateTimeOffset(order.OrderDate);
+        ExpectedDeliveryDate = new DateTimeOffset(order.ExpectedDeliveryDate);
         ShippingCost = order.ShippingCost.ToString("F2");
         Notes = order.Notes;
 
@@ -346,8 +346,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             Id = orderId,
             PoNumber = poNumber,
             SupplierId = SelectedSupplier!.Id,
-            OrderDate = OrderDate,
-            ExpectedDeliveryDate = ExpectedDeliveryDate,
+            OrderDate = OrderDate?.DateTime ?? DateTime.Today,
+            ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7),
             LineItems = lineItems,
             Subtotal = subtotal,
             ShippingCost = shipping,
@@ -396,8 +396,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
         // Update order
         order.SupplierId = SelectedSupplier!.Id;
-        order.OrderDate = OrderDate;
-        order.ExpectedDeliveryDate = ExpectedDeliveryDate;
+        order.OrderDate = OrderDate?.DateTime ?? DateTime.Today;
+        order.ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7);
         order.LineItems = LineItems.Select(li => new PurchaseOrderLineItem
         {
             ProductId = li.ProductId,
@@ -433,8 +433,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             () =>
             {
                 editedOrder.SupplierId = SelectedSupplier!.Id;
-                editedOrder.OrderDate = OrderDate;
-                editedOrder.ExpectedDeliveryDate = ExpectedDeliveryDate;
+                editedOrder.OrderDate = OrderDate?.DateTime ?? DateTime.Today;
+                editedOrder.ExpectedDeliveryDate = ExpectedDeliveryDate?.DateTime ?? DateTime.Today.AddDays(7);
                 editedOrder.LineItems = newLineItems;
                 editedOrder.Subtotal = order.Subtotal;
                 editedOrder.ShippingCost = shipping;
@@ -472,8 +472,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     private void ClearAddModalFields()
     {
         SelectedSupplier = null;
-        OrderDate = DateTime.Today;
-        ExpectedDeliveryDate = DateTime.Today.AddDays(7);
+        OrderDate = new DateTimeOffset(DateTime.Today);
+        ExpectedDeliveryDate = new DateTimeOffset(DateTime.Today.AddDays(7));
         ShippingCost = "0";
         Notes = string.Empty;
         AddModalError = null;

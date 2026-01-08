@@ -1181,6 +1181,30 @@ public partial class App : Application
                 CompanyManager.MarkAsChanged();
             }
         };
+
+        // Windows Hello setting changed
+        settings.WindowsHelloChanged += (_, args) =>
+        {
+            // Save to company settings
+            if (CompanyManager?.CurrentCompanySettings != null)
+            {
+                CompanyManager.CurrentCompanySettings.Security.BiometricEnabled = args.Enabled;
+                CompanyManager.MarkAsChanged();
+            }
+        };
+
+        // Load Windows Hello setting when company opens
+        if (CompanyManager != null)
+        {
+            CompanyManager.CompanyOpened += (_, _) =>
+            {
+                var securitySettings = CompanyManager.CurrentCompanySettings?.Security;
+                if (securitySettings != null)
+                {
+                    settings.WindowsHelloEnabled = securitySettings.BiometricEnabled;
+                }
+            };
+        }
     }
 
     /// <summary>

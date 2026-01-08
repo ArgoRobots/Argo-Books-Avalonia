@@ -1,5 +1,8 @@
 using System.Runtime.Versioning;
 using Microsoft.Win32;
+#if WINDOWS
+using Windows.Security.Credentials.UI;
+#endif
 
 namespace ArgoBooks.Core.Platform;
 
@@ -30,6 +33,42 @@ public class WindowsPlatformService : BasePlatformService
 
     /// <inheritdoc />
     public override bool SupportsBiometrics => true; // Windows Hello
+
+    /// <inheritdoc />
+    public override async Task<bool> IsBiometricAvailableAsync()
+    {
+#if WINDOWS
+        try
+        {
+            var availability = await UserConsentVerifier.CheckAvailabilityAsync();
+            return availability == UserConsentVerifierAvailability.Available;
+        }
+        catch
+        {
+            return false;
+        }
+#else
+        return await Task.FromResult(false);
+#endif
+    }
+
+    /// <inheritdoc />
+    public override async Task<bool> AuthenticateWithBiometricAsync(string reason)
+    {
+#if WINDOWS
+        try
+        {
+            var result = await UserConsentVerifier.RequestVerificationAsync(reason);
+            return result == UserConsentVerificationResult.Verified;
+        }
+        catch
+        {
+            return false;
+        }
+#else
+        return await Task.FromResult(false);
+#endif
+    }
 
     /// <inheritdoc />
     public override bool SupportsAutoUpdate => true;

@@ -151,6 +151,22 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _hasPassword;
 
     /// <summary>
+    /// Whether Windows Hello can be enabled (requires Standard plan AND password).
+    /// </summary>
+    public bool CanEnableWindowsHello => HasStandard && HasPassword;
+
+    /// <summary>
+    /// Whether the user needs to set a password before enabling Windows Hello.
+    /// Shows when user has Standard plan but no password.
+    /// </summary>
+    public bool NeedsPasswordForWindowsHello => HasStandard && !HasPassword;
+
+    /// <summary>
+    /// Event raised when Windows Hello setting changes.
+    /// </summary>
+    public event EventHandler<WindowsHelloEventArgs>? WindowsHelloChanged;
+
+    /// <summary>
     /// Event raised when user wants to upgrade their plan.
     /// </summary>
     public event EventHandler? UpgradeRequested;
@@ -256,13 +272,40 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Called when HasPassword changes - sync with FileEncryptionEnabled.
+    /// Called when HasPassword changes - sync with FileEncryptionEnabled and notify Windows Hello properties.
     /// </summary>
     partial void OnHasPasswordChanged(bool value)
     {
         _isUpdatingEncryption = true;
         FileEncryptionEnabled = value;
         _isUpdatingEncryption = false;
+
+        // Notify Windows Hello computed properties
+        OnPropertyChanged(nameof(CanEnableWindowsHello));
+        OnPropertyChanged(nameof(NeedsPasswordForWindowsHello));
+
+        // Disable Windows Hello if password is removed
+        if (!value && WindowsHelloEnabled)
+        {
+            WindowsHelloEnabled = false;
+        }
+    }
+
+    /// <summary>
+    /// Called when HasStandard changes - notify Windows Hello properties.
+    /// </summary>
+    partial void OnHasStandardChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanEnableWindowsHello));
+        OnPropertyChanged(nameof(NeedsPasswordForWindowsHello));
+    }
+
+    /// <summary>
+    /// Called when Windows Hello setting changes.
+    /// </summary>
+    partial void OnWindowsHelloEnabledChanged(bool value)
+    {
+        WindowsHelloChanged?.Invoke(this, new WindowsHelloEventArgs(value));
     }
 
     /// <summary>
@@ -806,5 +849,21 @@ public class AutoLockSettingsEventArgs : EventArgs
             return minutes;
 
         return 0;
+    }
+}
+
+/// <summary>
+/// Event args for Windows Hello setting changes.
+/// </summary>
+public class WindowsHelloEventArgs : EventArgs
+{
+    /// <summary>
+    /// Whether Windows Hello is enabled.
+    /// </summary>
+    public bool Enabled { get; }
+
+    public WindowsHelloEventArgs(bool enabled)
+    {
+        Enabled = enabled;
     }
 }
