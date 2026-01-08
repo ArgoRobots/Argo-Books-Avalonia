@@ -329,7 +329,7 @@
                                                     <!-- Receipt # -->
                                                     <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
                                                         <TextBlock Text="Receipt #" FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                                    Margin="8,12,8,12" />
                                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -339,7 +339,7 @@
                                                     <!-- Vendor -->
                                                     <Panel Width="{Binding ColumnWidths.VendorColumnWidth}" IsVisible="{Binding ShowVendorColumn}">
                                                         <TextBlock Text="Vendor" FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                                    Margin="8,12,8,12" />
                                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -349,7 +349,7 @@
                                                     <!-- Date -->
                                                     <Panel Width="{Binding ColumnWidths.DateColumnWidth}" IsVisible="{Binding ShowDateColumn}">
                                                         <TextBlock Text="Date" FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                                    Margin="8,12,8,12" />
                                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -359,7 +359,7 @@
                                                     <!-- Type -->
                                                     <Panel Width="{Binding ColumnWidths.TypeColumnWidth}" IsVisible="{Binding ShowTypeColumn}">
                                                         <TextBlock Text="Type" FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                                    Margin="8,12,8,12" />
                                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -369,7 +369,7 @@
                                                     <!-- Amount -->
                                                     <Panel Width="{Binding ColumnWidths.AmountColumnWidth}" IsVisible="{Binding ShowAmountColumn}">
                                                         <TextBlock Text="Amount" FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                                    Margin="8,12,8,12" />
                                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />

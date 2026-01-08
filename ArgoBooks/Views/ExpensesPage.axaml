@@ -229,7 +229,7 @@
                                 <!-- Discount -->
                                 <Panel Width="{Binding ColumnWidths.DiscountColumnWidth}" IsVisible="{Binding ShowDiscountColumn}">
                                     <TextBlock Text="Discount" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                Margin="8,12,8,12" />
                                     <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -249,7 +249,7 @@
                                 <!-- Receipt -->
                                 <Panel Width="{Binding ColumnWidths.ReceiptColumnWidth}" IsVisible="{Binding ShowReceiptColumn}">
                                     <TextBlock Text="Receipt" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
                                                HorizontalAlignment="Center"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                Margin="8,12,8,12" />

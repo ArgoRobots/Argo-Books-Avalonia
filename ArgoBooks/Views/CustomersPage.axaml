@@ -125,7 +125,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="Name">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Customer" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
@@ -161,7 +161,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="Email">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Email" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
@@ -197,7 +197,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="Phone">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Phone" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
@@ -233,7 +233,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="Address">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Address" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">
@@ -269,7 +269,7 @@
                                             Command="{Binding SortByCommand}" CommandParameter="LastRental">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
                                             <TextBlock Text="Last Rental" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                           Foreground="{DynamicResource TextTertiaryBrush}">

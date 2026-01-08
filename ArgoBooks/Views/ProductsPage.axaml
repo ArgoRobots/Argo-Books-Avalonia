@@ -223,7 +223,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Name">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Product Name" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -259,7 +259,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Type">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Type" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -295,7 +295,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Description">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Description" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -331,7 +331,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Category">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Category" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -367,7 +367,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Supplier">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Supplier" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -403,7 +403,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Country">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Country" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -438,7 +438,7 @@
                                         <TextBlock Text="Reorder"
                                                    FontSize="12"
                                                    FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                    Margin="8,12" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Reorder" ColumnWidths="{Binding ColumnWidths}"
@@ -450,7 +450,7 @@
                                         <TextBlock Text="Overstock"
                                                    FontSize="12"
                                                    FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                    Margin="8,12" />
                                         <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                         <controls:ColumnResizeGripper ColumnName="Overstock" ColumnWidths="{Binding ColumnWidths}"
@@ -482,7 +482,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Name">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Product Name" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -518,7 +518,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Type">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Type" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -554,7 +554,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Description">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Description" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
@@ -590,7 +590,7 @@
                                                 Command="{Binding SortByCommand}" CommandParameter="Category">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <TextBlock Text="Category" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
                                                               Foreground="{DynamicResource TextTertiaryBrush}">
