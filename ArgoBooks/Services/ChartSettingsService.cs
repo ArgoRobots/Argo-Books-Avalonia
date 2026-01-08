@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;

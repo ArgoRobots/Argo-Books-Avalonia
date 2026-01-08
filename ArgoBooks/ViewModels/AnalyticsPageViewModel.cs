@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Reports;

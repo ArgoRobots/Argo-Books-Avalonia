@@ -1,11 +1,7 @@
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Entities;
-using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Reports;
-using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;

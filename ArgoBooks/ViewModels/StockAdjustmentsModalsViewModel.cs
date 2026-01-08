@@ -1,6 +1,4 @@
 using System.Collections.ObjectModel;
-using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
