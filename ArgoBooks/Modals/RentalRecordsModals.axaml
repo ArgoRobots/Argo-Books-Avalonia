@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:conv="using:ArgoBooks.Converters"
              xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.RentalRecordsModals"
              x:DataType="vm:RentalRecordsModalsViewModel">
@@ -42,10 +43,13 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Rental Item" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableItems}"
-                                          SelectedItem="{Binding ModalItem}"
-                                          PlaceholderText="Select rental item"
-                                          Classes="form-combobox" />
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableItems}"
+                                                            SelectedItem="{Binding ModalItem}"
+                                                            Placeholder="Search rental items..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No rental items available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateRentalItemCommand}" />
                                 <TextBlock Text="{Binding ModalItemError}" Foreground="#dc2626" FontSize="12"
                                            IsVisible="{Binding ModalItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -55,10 +59,14 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Customer" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableCustomers}"
-                                          SelectedItem="{Binding ModalCustomer}"
-                                          PlaceholderText="Select customer"
-                                          Classes="form-combobox" />
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableCustomers}"
+                                                            SelectedItem="{Binding ModalCustomer}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search customers..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No customers available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
                                 <TextBlock Text="{Binding ModalCustomerError}" Foreground="#dc2626" FontSize="12"
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -170,10 +178,13 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Rental Item" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableItems}"
-                                          SelectedItem="{Binding ModalItem}"
-                                          PlaceholderText="Select rental item"
-                                          Classes="form-combobox" />
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableItems}"
+                                                            SelectedItem="{Binding ModalItem}"
+                                                            Placeholder="Search rental items..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No rental items available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateRentalItemCommand}" />
                                 <TextBlock Text="{Binding ModalItemError}" Foreground="#dc2626" FontSize="12"
                                            IsVisible="{Binding ModalItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
@@ -183,10 +194,14 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Customer" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableCustomers}"
-                                          SelectedItem="{Binding ModalCustomer}"
-                                          PlaceholderText="Select customer"
-                                          Classes="form-combobox" />
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableCustomers}"
+                                                            SelectedItem="{Binding ModalCustomer}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search customers..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No customers available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
                                 <TextBlock Text="{Binding ModalCustomerError}" Foreground="#dc2626" FontSize="12"
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>

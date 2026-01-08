@@ -278,6 +278,28 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         ClearModalFields();
     }
 
+    /// <summary>
+    /// Navigates to Rental Inventory page and opens the create item modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateRentalItem()
+    {
+        IsAddModalOpen = false;
+        IsEditModalOpen = false;
+        App.NavigationService?.NavigateTo("RentalInventory", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
+    /// <summary>
+    /// Navigates to Customers page and opens the create customer modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateCustomer()
+    {
+        IsAddModalOpen = false;
+        IsEditModalOpen = false;
+        App.NavigationService?.NavigateTo("Customers", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
     [RelayCommand]
     public void SaveNewRecord()
     {

@@ -277,6 +277,19 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Navigates to Products page and opens the create product modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateProduct()
+    {
+        // Close this modal
+        IsAddItemModalOpen = false;
+
+        // Navigate to Products page with openAddModal parameter
+        App.NavigationService?.NavigateTo("Products", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
+    /// <summary>
     /// Opens the add item modal.
     /// </summary>
     [RelayCommand]

@@ -246,6 +246,16 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Navigates to Suppliers page and opens the create supplier modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateSupplier()
+    {
+        IsAddModalOpen = false;
+        App.NavigationService?.NavigateTo("Suppliers", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
+    /// <summary>
     /// Adds a new line item to the order.
     /// </summary>
     [RelayCommand]
