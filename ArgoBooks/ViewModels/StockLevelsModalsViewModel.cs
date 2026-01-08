@@ -300,7 +300,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         if (companyData == null) return;
 
         AvailableProducts.Clear();
-        foreach (var product in companyData.Products?.Where(p => p.Type == Core.Enums.CategoryType.Purchase) ?? [])
+        foreach (var product in companyData.Products?.Where(p => p.Type == CategoryType.Purchase) ?? [])
         {
             AvailableProducts.Add(product);
         }

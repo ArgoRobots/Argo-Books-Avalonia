@@ -1161,7 +1161,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         }
 
         // Check if Google credentials are configured
-        if (!ArgoBooks.Core.Services.GoogleCredentialsManager.AreCredentialsConfigured())
+        if (!GoogleCredentialsManager.AreCredentialsConfigured())
         {
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
             {
@@ -1186,18 +1186,18 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
             // Use Pie chart type for distribution charts, Line or Column for time-based charts
             ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;
-            if (chartExportData?.ChartType == Services.ChartType.Distribution)
+            if (chartExportData?.ChartType == ChartType.Distribution)
             {
-                chartType = ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Pie;
+                chartType = GoogleSheetsService.ChartType.Pie;
             }
             else
             {
                 chartType = _chartLoaderService.SelectedChartStyle == ChartStyle.Line
-                    ? ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Line
-                    : ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column;
+                    ? GoogleSheetsService.ChartType.Line
+                    : GoogleSheetsService.ChartType.Column;
             }
 
-            var googleSheetsService = new ArgoBooks.Core.Services.GoogleSheetsService();
+            var googleSheetsService = new GoogleSheetsService();
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
                 exportData,
                 chartTitle,
@@ -1208,7 +1208,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
             if (!string.IsNullOrEmpty(url))
             {
                 // Open the spreadsheet in the browser
-                ArgoBooks.Core.Services.GoogleSheetsService.OpenInBrowser(url);
+                GoogleSheetsService.OpenInBrowser(url);
 
                 GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
                 {

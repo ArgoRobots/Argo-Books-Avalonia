@@ -842,7 +842,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
 
         // Check if Google credentials are configured
-        if (!ArgoBooks.Core.Services.GoogleCredentialsManager.AreCredentialsConfigured())
+        if (!GoogleCredentialsManager.AreCredentialsConfigured())
         {
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
             {
@@ -867,18 +867,18 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
             // Use Pie chart type for distribution charts, Line or Column for time-based charts
             ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;
-            if (chartExportData?.ChartType == Services.ChartType.Distribution)
+            if (chartExportData?.ChartType == ChartType.Distribution)
             {
-                chartType = ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Pie;
+                chartType = GoogleSheetsService.ChartType.Pie;
             }
             else
             {
                 chartType = _chartLoaderService.SelectedChartStyle == ChartStyle.Line
-                    ? ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Line
-                    : ArgoBooks.Core.Services.GoogleSheetsService.ChartType.Column;
+                    ? GoogleSheetsService.ChartType.Line
+                    : GoogleSheetsService.ChartType.Column;
             }
 
-            var googleSheetsService = new ArgoBooks.Core.Services.GoogleSheetsService();
+            var googleSheetsService = new GoogleSheetsService();
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
                 exportData,
                 chartTitle,
@@ -889,7 +889,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             if (!string.IsNullOrEmpty(url))
             {
                 // Open the spreadsheet in the browser
-                ArgoBooks.Core.Services.GoogleSheetsService.OpenInBrowser(url);
+                GoogleSheetsService.OpenInBrowser(url);
 
                 GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
                 {
@@ -1228,7 +1228,7 @@ public class ExcelExportEventArgs : EventArgs
     /// <summary>
     /// Gets or sets the chart type for export formatting.
     /// </summary>
-    public Services.ChartType ChartType { get; set; }
+    public ChartType ChartType { get; set; }
 
     /// <summary>
     /// Gets or sets additional series for multi-series charts.
@@ -1243,7 +1243,7 @@ public class ExcelExportEventArgs : EventArgs
     /// <summary>
     /// Returns true if this is a distribution/pie chart.
     /// </summary>
-    public bool IsDistribution => ChartType == Services.ChartType.Distribution;
+    public bool IsDistribution => ChartType == ChartType.Distribution;
 }
 
 /// <summary>
