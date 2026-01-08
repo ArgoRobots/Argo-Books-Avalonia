@@ -85,18 +85,6 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         FilterOrders();
     }
 
-    [ObservableProperty]
-    private DateTime? _startDate;
-
-    [ObservableProperty]
-    private DateTime? _endDate;
-
-    [ObservableProperty]
-    private string _filterSupplier = "All";
-
-    [ObservableProperty]
-    private string _filterStatus = "All";
-
     #endregion
 
     #region Orders Collection
@@ -111,16 +99,6 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     /// </summary>
     public ObservableCollection<PurchaseOrderDisplayItem> Orders { get; } = [];
 
-    /// <summary>
-    /// Supplier options for filter.
-    /// </summary>
-    public ObservableCollection<string> SupplierOptions { get; } = ["All"];
-
-    /// <summary>
-    /// Status options for filter.
-    /// </summary>
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Draft", "Pending", "Approved", "Sent", "On Order", "Partially Received", "Received", "Cancelled"];
-
     #endregion
 
     #region Pagination
@@ -130,13 +108,6 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
 
     /// <inheritdoc />
     protected override void OnSortOrPageChanged() => FilterOrders();
-
-    #endregion
-
-    #region Modal State
-
-    [ObservableProperty]
-    private bool _isFilterModalOpen;
 
     #endregion
 
@@ -164,7 +135,28 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         {
             App.PurchaseOrdersModalsViewModel.OrderSaved += OnOrderSaved;
             App.PurchaseOrdersModalsViewModel.OrderDeleted += OnOrderDeleted;
+            App.PurchaseOrdersModalsViewModel.FiltersApplied += OnFiltersApplied;
+            App.PurchaseOrdersModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+    }
+
+    /// <summary>
+    /// Handles filters applied event from modals.
+    /// </summary>
+    private void OnFiltersApplied(object? sender, EventArgs e)
+    {
+        CurrentPage = 1;
+        FilterOrders();
+    }
+
+    /// <summary>
+    /// Handles filters cleared event from modals.
+    /// </summary>
+    private void OnFiltersCleared(object? sender, EventArgs e)
+    {
+        SearchQuery = null;
+        CurrentPage = 1;
+        FilterOrders();
     }
 
     /// <summary>
@@ -209,28 +201,8 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
 
         _allOrders.AddRange(companyData.PurchaseOrders);
 
-        // Load filter options
-        LoadFilterOptions();
         UpdateStatistics();
         FilterOrders();
-    }
-
-    /// <summary>
-    /// Loads filter options from the data.
-    /// </summary>
-    private void LoadFilterOptions()
-    {
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
-
-        // Update supplier options
-        SupplierOptions.Clear();
-        SupplierOptions.Add("All");
-        var suppliers = companyData.Suppliers?.Select(s => s.Name).Distinct().OrderBy(n => n).ToList() ?? new List<string>();
-        foreach (var supplier in suppliers)
-        {
-            SupplierOptions.Add(supplier);
-        }
     }
 
     /// <summary>
@@ -283,30 +255,37 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
             }
         }
 
+        // Get filter values from modals ViewModel
+        var modals = App.PurchaseOrdersModalsViewModel;
+        var startDate = modals?.FilterStartDate?.DateTime;
+        var endDate = modals?.FilterEndDate?.DateTime;
+        var filterSupplier = modals?.FilterSupplier ?? "All";
+        var filterStatus = modals?.FilterStatus ?? "All";
+
         // Apply date range filter
-        if (StartDate.HasValue)
+        if (startDate.HasValue)
         {
-            filtered = filtered.Where(o => o.OrderDate.Date >= StartDate.Value.Date).ToList();
+            filtered = filtered.Where(o => o.OrderDate.Date >= startDate.Value.Date).ToList();
         }
-        if (EndDate.HasValue)
+        if (endDate.HasValue)
         {
-            filtered = filtered.Where(o => o.OrderDate.Date <= EndDate.Value.Date).ToList();
+            filtered = filtered.Where(o => o.OrderDate.Date <= endDate.Value.Date).ToList();
         }
 
         // Apply supplier filter
-        if (!string.IsNullOrEmpty(FilterSupplier) && FilterSupplier != "All")
+        if (!string.IsNullOrEmpty(filterSupplier) && filterSupplier != "All")
         {
             filtered = filtered.Where(o =>
             {
                 var supplier = suppliers.FirstOrDefault(s => s.Id == o.SupplierId);
-                return supplier?.Name == FilterSupplier;
+                return supplier?.Name == filterSupplier;
             }).ToList();
         }
 
         // Apply status filter
-        if (!string.IsNullOrEmpty(FilterStatus) && FilterStatus != "All")
+        if (!string.IsNullOrEmpty(filterStatus) && filterStatus != "All")
         {
-            var statusEnum = FilterStatus switch
+            var statusEnum = filterStatus switch
             {
                 "Draft" => PurchaseOrderStatus.Draft,
                 "Pending" => PurchaseOrderStatus.Pending,
@@ -551,44 +530,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
     [RelayCommand]
     private void OpenFilterModal()
     {
-        IsFilterModalOpen = true;
-    }
-
-    /// <summary>
-    /// Closes the filter modal.
-    /// </summary>
-    [RelayCommand]
-    private void CloseFilterModal()
-    {
-        IsFilterModalOpen = false;
-    }
-
-    /// <summary>
-    /// Applies the current filters and closes the modal.
-    /// </summary>
-    [RelayCommand]
-    private void ApplyFilters()
-    {
-        CurrentPage = 1;
-        FilterOrders();
-        CloseFilterModal();
-    }
-
-    /// <summary>
-    /// Clears all filters.
-    /// </summary>
-    [RelayCommand]
-    private void ClearFilters()
-    {
-        FilterSupplier = "All";
-        FilterStatus = "All";
-        StartDate = null;
-        EndDate = null;
-        SearchQuery = null;
-        ActiveTab = "All";
-        CurrentPage = 1;
-        FilterOrders();
-        CloseFilterModal();
+        App.PurchaseOrdersModalsViewModel?.OpenFilterModal();
     }
 
     #endregion

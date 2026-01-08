@@ -26,6 +26,16 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// </summary>
     public event EventHandler? OrderDeleted;
 
+    /// <summary>
+    /// Raised when filters are applied.
+    /// </summary>
+    public event EventHandler? FiltersApplied;
+
+    /// <summary>
+    /// Raised when filters are cleared.
+    /// </summary>
+    public event EventHandler? FiltersCleared;
+
     #endregion
 
     #region Add/Edit Modal State
@@ -760,6 +770,92 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             }));
 
         OrderDeleted?.Invoke(this, EventArgs.Empty);
+    }
+
+    #endregion
+
+    #region Filter Modal
+
+    [ObservableProperty]
+    private bool _isFilterModalOpen;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterStartDate;
+
+    [ObservableProperty]
+    private DateTimeOffset? _filterEndDate;
+
+    [ObservableProperty]
+    private string _filterSupplier = "All";
+
+    [ObservableProperty]
+    private string _filterStatus = "All";
+
+    /// <summary>
+    /// Supplier options for filter dropdown.
+    /// </summary>
+    public ObservableCollection<string> FilterSupplierOptions { get; } = ["All"];
+
+    /// <summary>
+    /// Status options for filter dropdown.
+    /// </summary>
+    public ObservableCollection<string> FilterStatusOptions { get; } =
+        ["All", "Draft", "Pending", "Approved", "Sent", "On Order", "Partially Received", "Received", "Cancelled"];
+
+    /// <summary>
+    /// Opens the filter modal.
+    /// </summary>
+    public void OpenFilterModal()
+    {
+        LoadFilterSupplierOptions();
+        IsFilterModalOpen = true;
+    }
+
+    /// <summary>
+    /// Closes the filter modal.
+    /// </summary>
+    [RelayCommand]
+    private void CloseFilterModal()
+    {
+        IsFilterModalOpen = false;
+    }
+
+    /// <summary>
+    /// Applies the current filters.
+    /// </summary>
+    [RelayCommand]
+    private void ApplyFilters()
+    {
+        FiltersApplied?.Invoke(this, EventArgs.Empty);
+        CloseFilterModal();
+    }
+
+    /// <summary>
+    /// Clears all filters.
+    /// </summary>
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        FilterStartDate = null;
+        FilterEndDate = null;
+        FilterSupplier = "All";
+        FilterStatus = "All";
+        FiltersCleared?.Invoke(this, EventArgs.Empty);
+        CloseFilterModal();
+    }
+
+    private void LoadFilterSupplierOptions()
+    {
+        FilterSupplierOptions.Clear();
+        FilterSupplierOptions.Add("All");
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Suppliers == null) return;
+
+        foreach (var supplier in companyData.Suppliers.OrderBy(s => s.Name))
+        {
+            FilterSupplierOptions.Add(supplier.Name);
+        }
     }
 
     #endregion
