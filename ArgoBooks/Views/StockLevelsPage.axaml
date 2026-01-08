@@ -487,7 +487,8 @@
                                         <TextBlock Text="Actions"
                                                    FontSize="12"
                                                    FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   HorizontalAlignment="Left"
                                                    Margin="8,12" />
                                     </Panel>
                                 </StackPanel>

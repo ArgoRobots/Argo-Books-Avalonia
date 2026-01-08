@@ -215,9 +215,9 @@
                                     <!-- Actions (Fixed) -->
                                     <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
                                         <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                   HorizontalAlignment="Right"
+                                                   HorizontalAlignment="Left"
                                                    Margin="8,12,8,12" />
                                     </Panel>
                                 </StackPanel>
@@ -344,6 +344,14 @@
                                                                         HorizontalAlignment="Right"
                                                                         Spacing="4"
                                                                         Margin="8,0">
+                                                                <Button Classes="icon-button"
+                                                                        ToolTip.Tip="Edit"
+                                                                        IsVisible="{Binding CanEdit}"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenEditModalCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
                                                                 <Button Classes="icon-button"
                                                                         ToolTip.Tip="View History"
                                                                         Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"

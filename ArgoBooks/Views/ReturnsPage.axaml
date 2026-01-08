@@ -207,7 +207,7 @@
 
                                         <!-- Actions Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                            <TextBlock Text="Actions" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="8,12" HorizontalAlignment="Center" />
+                                            <TextBlock Text="Actions" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" HorizontalAlignment="Left" />
                                         </Panel>
                                     </StackPanel>
                                 </Border>

@@ -379,9 +379,9 @@
                                                     <!-- Actions (Fixed) -->
                                                     <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
                                                         <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                                   HorizontalAlignment="Right"
+                                                                   HorizontalAlignment="Left"
                                                                    Margin="8,12,8,12" />
                                                     </Panel>
                                                 </StackPanel>

@@ -662,6 +662,11 @@ public partial class InvoiceDisplayItem : ObservableObject
     public string DueDateFormatted => DueDate.ToString("MMM d, yyyy");
     public string TotalFormatted => $"${Total:N2}";
     public string BalanceFormatted => $"${Balance:N2}";
+
+    /// <summary>
+    /// Whether this invoice can be edited (only Draft and Pending invoices can be edited).
+    /// </summary>
+    public bool CanEdit => Status == InvoiceStatus.Draft || Status == InvoiceStatus.Pending;
 }
 
 /// <summary>
