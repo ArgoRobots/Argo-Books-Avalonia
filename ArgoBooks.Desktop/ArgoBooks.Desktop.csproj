@@ -8,6 +8,11 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
     </PropertyGroup>
 
+    <!-- Windows-specific settings for WinRT APIs -->
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="Avalonia.Desktop" />
         <PackageReference Include="Avalonia.Diagnostics">

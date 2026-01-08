@@ -6,6 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <!-- Windows-specific settings for Windows Hello WinRT APIs -->
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+        <UseWindowsForms>false</UseWindowsForms>
+        <UseWPF>false</UseWPF>
+    </PropertyGroup>
+
     <ItemGroup>
         <!-- Note: System.Text.Json and System.Formats.Tar are built into .NET 7+ -->
 

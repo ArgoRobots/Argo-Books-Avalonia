@@ -69,7 +69,7 @@ public class WindowsPlatformService : BasePlatformService
                 UserConsentVerifierAvailability.DeviceBusy => "Device is busy",
                 UserConsentVerifierAvailability.DeviceNotPresent => "No biometric device found",
                 UserConsentVerifierAvailability.DisabledByPolicy => "Disabled by policy",
-                UserConsentVerifierAvailability.NotConfiguredForUser => "Not configured for current user",
+                UserConsentVerifierAvailability.NotConfiguredForUser => "Not configured for current user. Please set up Windows Hello in Windows Settings > Accounts > Sign-in options.",
                 _ => $"Unknown status: {availability}"
             };
         }
@@ -78,7 +78,9 @@ public class WindowsPlatformService : BasePlatformService
             return $"Error checking availability: {ex.Message}";
         }
 #else
-        return await Task.FromResult("Windows Hello API not available (non-Windows build)");
+        // This means the app was built with the cross-platform target (net10.0)
+        // instead of the Windows-specific target (net10.0-windows10.0.17763.0)
+        return await Task.FromResult("Windows Hello requires the Windows-specific build. Please rebuild the application targeting 'net10.0-windows10.0.17763.0'.");
 #endif
     }
 

@@ -986,12 +986,12 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
 
-        <!-- TabControl - remove default underline -->
+        <!-- TabControl - remove default underline and center tabs -->
         <Style Selector="TabControl">
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="TabControl /template/ ItemsPresenter#PART_ItemsPresenter">
-            <Setter Property="Margin" Value="24,0" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
         </Style>
         <Style Selector="TabControl /template/ Border#PART_InnerBorder">
             <Setter Property="BorderThickness" Value="0" />
