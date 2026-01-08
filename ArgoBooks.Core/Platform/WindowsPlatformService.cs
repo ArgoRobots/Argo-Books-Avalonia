@@ -53,6 +53,35 @@ public class WindowsPlatformService : BasePlatformService
 #endif
     }
 
+    /// <summary>
+    /// Gets detailed information about Windows Hello availability.
+    /// </summary>
+    [SupportedOSPlatform("windows10.0.10240.0")]
+    public async Task<string> GetBiometricAvailabilityDetailsAsync()
+    {
+#if WINDOWS
+        try
+        {
+            var availability = await UserConsentVerifier.CheckAvailabilityAsync();
+            return availability switch
+            {
+                UserConsentVerifierAvailability.Available => "Available",
+                UserConsentVerifierAvailability.DeviceBusy => "Device is busy",
+                UserConsentVerifierAvailability.DeviceNotPresent => "No biometric device found",
+                UserConsentVerifierAvailability.DisabledByPolicy => "Disabled by policy",
+                UserConsentVerifierAvailability.NotConfiguredForUser => "Not configured for current user",
+                _ => $"Unknown status: {availability}"
+            };
+        }
+        catch (Exception ex)
+        {
+            return $"Error checking availability: {ex.Message}";
+        }
+#else
+        return await Task.FromResult("Windows Hello API not available (non-Windows build)");
+#endif
+    }
+
     /// <inheritdoc />
     [SupportedOSPlatform("windows10.0.10240.0")]
     public override async Task<bool> AuthenticateWithBiometricAsync(string reason)

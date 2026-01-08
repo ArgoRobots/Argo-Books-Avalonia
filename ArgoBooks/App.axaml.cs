@@ -1204,7 +1204,24 @@ public partial class App : Application
                 var available = await platformService.IsBiometricAvailableAsync();
                 if (!available)
                 {
-                    _appShellViewModel?.AddNotification("Windows Hello", "Windows Hello is not available on this device.", NotificationType.Warning);
+                    // Get detailed reason why Windows Hello is not available
+                    var details = "Unknown reason";
+                    if (platformService is ArgoBooks.Core.Platform.WindowsPlatformService winService)
+                    {
+                        details = await winService.GetBiometricAvailabilityDetailsAsync();
+                    }
+
+                    var dialog = ConfirmationDialog;
+                    if (dialog != null)
+                    {
+                        await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        {
+                            Title = "Windows Hello Not Available",
+                            Message = $"Windows Hello cannot be enabled on this device.\n\nReason: {details}",
+                            PrimaryButtonText = "OK",
+                            CancelButtonText = ""
+                        });
+                    }
                     settings.OnWindowsHelloAuthResult(false);
                     return;
                 }
@@ -1215,12 +1232,32 @@ public partial class App : Application
 
                 if (!success)
                 {
-                    _appShellViewModel?.AddNotification("Windows Hello", "Authentication was not successful.", NotificationType.Warning);
+                    var dialog = ConfirmationDialog;
+                    if (dialog != null)
+                    {
+                        await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        {
+                            Title = "Windows Hello",
+                            Message = "Authentication was cancelled or failed. Windows Hello has not been enabled.",
+                            PrimaryButtonText = "OK",
+                            CancelButtonText = ""
+                        });
+                    }
                 }
             }
             catch (Exception ex)
             {
-                _appShellViewModel?.AddNotification("Windows Hello", $"Authentication failed: {ex.Message}", NotificationType.Error);
+                var dialog = ConfirmationDialog;
+                if (dialog != null)
+                {
+                    await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                    {
+                        Title = "Windows Hello Error",
+                        Message = $"Failed to authenticate with Windows Hello:\n\n{ex.Message}",
+                        PrimaryButtonText = "OK",
+                        CancelButtonText = ""
+                    });
+                }
                 settings.OnWindowsHelloAuthResult(false);
             }
         };
