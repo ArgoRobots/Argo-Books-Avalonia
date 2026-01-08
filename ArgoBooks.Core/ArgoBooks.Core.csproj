@@ -23,6 +23,7 @@
 
         <!-- Excel -->
         <PackageReference Include="ClosedXML" />
+        <PackageReference Include="EPPlus" />
 
         <!-- Google APIs -->
         <PackageReference Include="Google.Apis.Sheets.v4" />

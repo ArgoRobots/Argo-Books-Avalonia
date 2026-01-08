@@ -924,20 +924,33 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         }
     }
 
+    /// <summary>
+    /// Event raised when exporting to Excel is requested.
+    /// The View should subscribe to this and handle the file save dialog.
+    /// </summary>
+    public event EventHandler<ExcelExportEventArgs>? ExcelExportRequested;
+
     /// <inheritdoc />
     protected override void OnExportToExcel()
     {
-        var exportData = _chartLoaderService.GetExcelExportData();
-        if (exportData.Rows.Count == 0)
+        var exportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
+        if (exportData == null || exportData.Labels.Length == 0)
         {
             // No data to export
             return;
         }
 
-        // TODO: Implement Excel export using ClosedXML or EPPlus
-        // The data is already formatted in exportData with headers, rows, and total
-        // For now, this is a placeholder - the data structure is ready for export
-        System.Diagnostics.Debug.WriteLine($"Excel export: {exportData.Rows.Count} rows ready for export.");
+        // Raise event for View to handle file save dialog
+        ExcelExportRequested?.Invoke(this, new ExcelExportEventArgs
+        {
+            ChartId = SelectedChartId,
+            ChartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : exportData.ChartTitle,
+            Labels = exportData.Labels,
+            Values = exportData.Values,
+            SeriesName = exportData.SeriesName,
+            ChartType = exportData.ChartType,
+            AdditionalSeries = exportData.AdditionalSeries
+        });
     }
 
     /// <inheritdoc />
@@ -1180,6 +1193,57 @@ public class SaveChartImageEventArgs : EventArgs
     /// Gets or sets the identifier of the chart to save.
     /// </summary>
     public string ChartId { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Event arguments for Excel export requests.
+/// </summary>
+public class ExcelExportEventArgs : EventArgs
+{
+    /// <summary>
+    /// Gets or sets the identifier of the chart to export.
+    /// </summary>
+    public string ChartId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the title of the chart.
+    /// </summary>
+    public string ChartTitle { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the labels (categories/dates) for the chart data.
+    /// </summary>
+    public string[] Labels { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the primary series values.
+    /// </summary>
+    public double[] Values { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the name of the primary series.
+    /// </summary>
+    public string SeriesName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the chart type for export formatting.
+    /// </summary>
+    public Services.ChartType ChartType { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional series for multi-series charts.
+    /// </summary>
+    public List<(string Name, double[] Values)> AdditionalSeries { get; set; } = [];
+
+    /// <summary>
+    /// Returns true if this is a multi-series chart.
+    /// </summary>
+    public bool IsMultiSeries => AdditionalSeries.Count > 0;
+
+    /// <summary>
+    /// Returns true if this is a distribution/pie chart.
+    /// </summary>
+    public bool IsDistribution => ChartType == Services.ChartType.Distribution;
 }
 
 /// <summary>

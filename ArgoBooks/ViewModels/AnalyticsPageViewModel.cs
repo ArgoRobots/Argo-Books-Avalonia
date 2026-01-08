@@ -1243,6 +1243,35 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         }
     }
 
+    /// <summary>
+    /// Event raised when exporting to Excel is requested.
+    /// The View should subscribe to this and handle the file save dialog.
+    /// </summary>
+    public event EventHandler<ExcelExportEventArgs>? ExcelExportRequested;
+
+    /// <inheritdoc />
+    protected override void OnExportToExcel()
+    {
+        var exportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
+        if (exportData == null || exportData.Labels.Length == 0)
+        {
+            // No data to export
+            return;
+        }
+
+        // Raise event for View to handle file save dialog
+        ExcelExportRequested?.Invoke(this, new ExcelExportEventArgs
+        {
+            ChartId = SelectedChartId,
+            ChartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : exportData.ChartTitle,
+            Labels = exportData.Labels,
+            Values = exportData.Values,
+            SeriesName = exportData.SeriesName,
+            ChartType = exportData.ChartType,
+            AdditionalSeries = exportData.AdditionalSeries
+        });
+    }
+
     #endregion
 
     #region Initialization
