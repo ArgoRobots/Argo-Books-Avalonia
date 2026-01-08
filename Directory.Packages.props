@@ -32,6 +32,7 @@
 
         <!-- Excel -->
         <PackageVersion Include="ClosedXML" Version="0.104.2" />
+        <PackageVersion Include="EPPlus" Version="7.5.2" />
 
         <!-- Auto-Update (Desktop only) -->
         <PackageVersion Include="NetSparkleUpdater.UI.Avalonia" Version="2.3.0" />
