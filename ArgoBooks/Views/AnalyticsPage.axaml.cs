@@ -4,6 +4,8 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using ArgoBooks.Controls;
+using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
 using LiveChartsCore.SkiaSharpView.SKCharts;
@@ -35,6 +37,7 @@ public partial class AnalyticsPage : UserControl
         if (DataContext is AnalyticsPageViewModel viewModel)
         {
             viewModel.SaveChartImageRequested += OnSaveChartImageRequested;
+            viewModel.ExcelExportRequested += OnExcelExportRequested;
         }
     }
 
@@ -224,6 +227,95 @@ public partial class AnalyticsPage : UserControl
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to save chart: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Handles the Excel export request from the ViewModel.
+    /// </summary>
+    private async void OnExcelExportRequested(object? sender, ExcelExportEventArgs e)
+    {
+        // Get the top-level window for the file picker
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        // Create safe filename from chart title
+        var safeName = string.Join("_", e.ChartTitle.Split(Path.GetInvalidFileNameChars()));
+        safeName = safeName.Replace(" ", "_");
+        var suggestedFileName = $"{safeName}_{DateTime.Now:yyyy-MM-dd}";
+
+        // Show save file dialog
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export Chart to Excel",
+            SuggestedFileName = suggestedFileName,
+            DefaultExtension = "xlsx",
+            FileTypeChoices = new[]
+            {
+                new FilePickerFileType("Excel Workbook") { Patterns = new[] { "*.xlsx" } }
+            }
+        });
+
+        if (file == null) return;
+
+        try
+        {
+            var filePath = file.Path.LocalPath;
+
+            // Export based on chart type
+            if (e.IsMultiSeries)
+            {
+                // Multi-series chart (e.g., Sales vs Expenses)
+                var seriesData = new Dictionary<string, double[]>
+                {
+                    { e.SeriesName, e.Values }
+                };
+                foreach (var (name, values) in e.AdditionalSeries)
+                {
+                    seriesData[name] = values;
+                }
+
+                await ChartExcelExportService.ExportMultiSeriesChartAsync(
+                    filePath,
+                    e.ChartTitle,
+                    e.Labels,
+                    seriesData,
+                    labelHeader: "Date",
+                    isCurrency: true);
+            }
+            else if (e.IsDistribution)
+            {
+                // Distribution/Pie chart
+                await ChartExcelExportService.ExportDistributionChartAsync(
+                    filePath,
+                    e.ChartTitle,
+                    e.Labels,
+                    e.Values,
+                    categoryHeader: "Category",
+                    valueHeader: e.SeriesName,
+                    isCurrency: true);
+            }
+            else
+            {
+                // Single-series time chart
+                var isCurrency = e.ChartType != ChartType.Comparison ||
+                                 !e.SeriesName.Contains("Count", StringComparison.OrdinalIgnoreCase);
+
+                await ChartExcelExportService.ExportChartAsync(
+                    filePath,
+                    e.ChartTitle,
+                    e.Labels,
+                    e.Values,
+                    column1Header: "Date",
+                    column2Header: e.SeriesName,
+                    isCurrency: isCurrency);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Chart exported to Excel: {filePath}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to export chart to Excel: {ex.Message}");
         }
     }
 
