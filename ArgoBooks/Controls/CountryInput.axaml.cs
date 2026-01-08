@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using ArgoBooks.Data;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;

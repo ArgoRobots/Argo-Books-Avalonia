@@ -1208,7 +1208,9 @@ public partial class App : Application
                     var details = "Unknown reason";
                     if (platformService is ArgoBooks.Core.Platform.WindowsPlatformService winService)
                     {
+#pragma warning disable CA1416 // Platform compatibility - already checked by type check above
                         details = await winService.GetBiometricAvailabilityDetailsAsync();
+#pragma warning restore CA1416
                     }
 
                     var dialog = ConfirmationDialog;
