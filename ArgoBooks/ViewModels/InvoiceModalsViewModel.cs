@@ -283,6 +283,71 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         IsCreateEditModalOpen = true;
     }
 
+    /// <summary>
+    /// Opens the create modal populated with draft invoice data for continuing work.
+    /// Unlike edit mode, this shows the Preview button and allows sending the invoice.
+    /// </summary>
+    public void ContinueDraftInvoice(InvoiceDisplayItem? item)
+    {
+        if (item == null) return;
+
+        LoadCustomerOptions(includeAllOption: false);
+        LoadProductOptions();
+
+        var invoice = App.CompanyManager?.CompanyData?.Invoices?.FirstOrDefault(i => i.Id == item.Id);
+        if (invoice == null) return;
+
+        // Only allow continuing draft invoices
+        if (invoice.Status != InvoiceStatus.Draft)
+        {
+            App.AddNotification(
+                "Cannot Continue Invoice",
+                "Only draft invoices can be continued. Use Edit for other invoice statuses.",
+                NotificationType.Warning);
+            return;
+        }
+
+        _editingInvoiceId = invoice.Id;
+        IsEditMode = true; // We're editing an existing invoice
+        ModalTitle = "Continue Invoice";
+        SaveButtonText = "Preview"; // Show Preview button like create mode
+
+        // Populate form
+        SelectedCustomer = CustomerOptions.FirstOrDefault(c => c.Id == invoice.CustomerId);
+        ModalIssueDate = new DateTimeOffset(invoice.IssueDate);
+        ModalDueDate = new DateTimeOffset(invoice.DueDate);
+        ModalStatus = invoice.Status.ToString();
+        ModalNotes = invoice.Notes;
+        TaxRate = invoice.TaxRate;
+
+        // Populate line items
+        LineItems.Clear();
+        foreach (var lineItem in invoice.LineItems)
+        {
+            var displayItem = new LineItemDisplayModel
+            {
+                SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == lineItem.ProductId),
+                Description = lineItem.Description,
+                Quantity = lineItem.Quantity,
+                UnitPrice = lineItem.UnitPrice
+            };
+            displayItem.PropertyChanged += (_, _) => UpdateTotals();
+            LineItems.Add(displayItem);
+        }
+
+        // Add a default line item if none exist
+        if (LineItems.Count == 0)
+        {
+            AddLineItem();
+        }
+
+        UpdateTotals();
+        HasCustomerError = false;
+        ValidationMessage = string.Empty;
+        HasValidationMessage = false;
+        IsCreateEditModalOpen = true;
+    }
+
     #endregion
 
     #region Edit Modal

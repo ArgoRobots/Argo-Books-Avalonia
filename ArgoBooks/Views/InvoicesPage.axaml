@@ -345,6 +345,14 @@
                                                                         Spacing="4"
                                                                         Margin="8,0">
                                                                 <Button Classes="icon-button"
+                                                                        ToolTip.Tip="Continue"
+                                                                        IsVisible="{Binding IsDraft}"
+                                                                        Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ContinueDraftInvoiceCommand}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <PathIcon Data="M8 5v14l11-7z"
+                                                                              Width="16" Height="16" />
+                                                                </Button>
+                                                                <Button Classes="icon-button"
                                                                         ToolTip.Tip="Edit"
                                                                         IsVisible="{Binding CanEdit}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenEditModalCommand}"
