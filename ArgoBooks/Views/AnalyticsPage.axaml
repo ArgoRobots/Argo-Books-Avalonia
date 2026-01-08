@@ -1826,18 +1826,6 @@
             <Setter Property="CornerRadius" Value="1" />
         </Style>
 
-        <!-- Form ComboBox -->
-        <Style Selector="ComboBox.form-combobox">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-
         <!-- Chart Toggle Switch -->
         <Style Selector="ToggleSwitch.chart-toggle">
             <Setter Property="Width" Value="44" />

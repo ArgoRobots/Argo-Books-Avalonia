@@ -141,26 +141,6 @@
     </Panel>
 
     <UserControl.Styles>
-        <!-- Icon Button -->
-        <Style Selector="Button.icon-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Width" Value="28" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-        <Style Selector="Button.icon-button PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-        </Style>
-
         <!-- Upload Area -->
         <Style Selector="Border.upload-area">
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
@@ -182,32 +162,6 @@
         </Style>
         <Style Selector="Button.upload-button /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
-        </Style>
-
-        <!-- Form Input -->
-        <Style Selector="TextBox.form-input">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        </Style>
-        <Style Selector="TextBox.form-input /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        </Style>
-        <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-        <Style Selector="TextBox.form-input:pointerover /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderHoverBrush}" />
-        </Style>
-        <Style Selector="TextBox.form-input:disabled">
-            <Setter Property="Opacity" Value="0.7" />
         </Style>
 
     </UserControl.Styles>
