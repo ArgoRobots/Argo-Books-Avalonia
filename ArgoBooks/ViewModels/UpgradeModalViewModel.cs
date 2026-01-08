@@ -279,7 +279,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Failed to save license: {ex.Message}");
+                        Debug.WriteLine($"Failed to save license: {ex.Message}");
                     }
                 }
 

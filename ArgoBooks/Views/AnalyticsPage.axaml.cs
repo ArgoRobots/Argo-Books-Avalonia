@@ -49,7 +49,7 @@ public partial class AnalyticsPage : UserControl
         PointerPressed += OnPagePointerPressed;
 
         // Attach handler at page level with handledEventsToo to intercept events handled by LiveCharts
-        this.AddHandler(
+        AddHandler(
             PointerWheelChangedEvent,
             OnChartPointerWheelChanged,
             RoutingStrategies.Tunnel,

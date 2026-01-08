@@ -38,7 +38,7 @@ public partial class DashboardPage : UserControl
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         // Attach handler at page level with handledEventsToo to intercept events handled by LiveCharts
-        this.AddHandler(
+        AddHandler(
             PointerWheelChangedEvent,
             OnChartPointerWheelChanged,
             RoutingStrategies.Tunnel,

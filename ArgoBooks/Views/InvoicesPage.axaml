@@ -10,9 +10,6 @@
              x:DataType="vm:InvoicesPageViewModel">
 
     <UserControl.Resources>
-        <local:SortIndicatorConverter x:Key="SortIndicatorConverter" />
-        <local:PageActiveBackgroundConverter x:Key="PageActiveBackgroundConverter" />
-        <local:PageActiveForegroundConverter x:Key="PageActiveForegroundConverter" />
         <local:PageEqualsConverter x:Key="PageEqualsConverter" />
     </UserControl.Resources>
 

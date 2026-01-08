@@ -367,7 +367,7 @@ public partial class ReportsPage : UserControl
         }
     }
 
-    private void OnCanvasContextMenuRequested(object? sender, Controls.Reports.ContextMenuRequestedEventArgs e)
+    private void OnCanvasContextMenuRequested(object? sender, ContextMenuRequestedEventArgs e)
     {
         // Show context menu at the requested position
         if (DataContext is ReportsPageViewModel vm)

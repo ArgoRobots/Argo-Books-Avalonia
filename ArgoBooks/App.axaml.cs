@@ -1216,7 +1216,7 @@ public partial class App : Application
                 {
                     // Get detailed reason why Windows Hello is not available
                     var details = "Unknown reason";
-                    if (platformService is ArgoBooks.Core.Platform.WindowsPlatformService winService)
+                    if (platformService is WindowsPlatformService winService)
                     {
 #pragma warning disable CA1416 // Platform compatibility - already checked by type check above
                         details = await winService.GetBiometricAvailabilityDetailsAsync();
@@ -1226,7 +1226,7 @@ public partial class App : Application
                     var dialog = ConfirmationDialog;
                     if (dialog != null)
                     {
-                        await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        await dialog.ShowAsync(new ConfirmationDialogOptions
                         {
                             Title = "Windows Hello Not Available",
                             Message = $"Windows Hello cannot be enabled on this device.\n\nReason: {details}",
@@ -1247,7 +1247,7 @@ public partial class App : Application
                     var dialog = ConfirmationDialog;
                     if (dialog != null)
                     {
-                        await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        await dialog.ShowAsync(new ConfirmationDialogOptions
                         {
                             Title = "Windows Hello",
                             Message = "Authentication was cancelled or failed. Windows Hello has not been enabled.",
@@ -1262,7 +1262,7 @@ public partial class App : Application
                 var dialog = ConfirmationDialog;
                 if (dialog != null)
                 {
-                    await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                    await dialog.ShowAsync(new ConfirmationDialogOptions
                     {
                         Title = "Windows Hello Error",
                         Message = $"Failed to authenticate with Windows Hello:\n\n{ex.Message}",
@@ -1370,7 +1370,7 @@ public partial class App : Application
 
             try
             {
-                var exportService = new Core.Services.SpreadsheetExportService();
+                var exportService = new SpreadsheetExportService();
 
                 switch (args.Format.ToLowerInvariant())
                 {
@@ -1486,7 +1486,7 @@ public partial class App : Application
 
             try
             {
-                var importService = new Core.Services.SpreadsheetImportService();
+                var importService = new SpreadsheetImportService();
 
                 // First validate the import file
                 var validationResult = await importService.ValidateImportAsync(filePath, companyData);
@@ -1499,7 +1499,7 @@ public partial class App : Application
                     var errorDialog = ConfirmationDialog;
                     if (errorDialog != null)
                     {
-                        await errorDialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        await errorDialog.ShowAsync(new ConfirmationDialogOptions
                         {
                             Title = "Import Failed",
                             Message = $"Import validation failed:\n\n{string.Join("\n", validationResult.Errors)}",
@@ -1511,7 +1511,7 @@ public partial class App : Application
                 }
 
                 // Check for missing references and ask user
-                var importOptions = new Core.Services.ImportOptions();
+                var importOptions = new ImportOptions();
 
                 if (validationResult.HasMissingReferences)
                 {
@@ -1521,7 +1521,7 @@ public partial class App : Application
                     var dialog = ConfirmationDialog;
                     if (dialog != null)
                     {
-                        var result = await dialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                        var result = await dialog.ShowAsync(new ConfirmationDialogOptions
                         {
                             Title = "Missing References Found",
                             Message = $"The import file references {missingCount} item(s) that don't exist:\n\n{missingSummary}\n\nWould you like to create placeholder entries for these missing items?",
@@ -1529,7 +1529,7 @@ public partial class App : Application
                             CancelButtonText = "Cancel"
                         });
 
-                        if (result != ViewModels.ConfirmationResult.Primary)
+                        if (result != ConfirmationResult.Primary)
                         {
                             return;
                         }
@@ -1551,7 +1551,7 @@ public partial class App : Application
                 var importedSnapshot = CreateCompanyDataSnapshot(companyData);
 
                 // Record undo action
-                UndoRedoManager?.RecordAction(new Services.DelegateAction(
+                UndoRedoManager?.RecordAction(new DelegateAction(
                     "Import spreadsheet data",
                     () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
                     () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
@@ -1582,7 +1582,7 @@ public partial class App : Application
                 var errorDialog = ConfirmationDialog;
                 if (errorDialog != null)
                 {
-                    await errorDialog.ShowAsync(new ViewModels.ConfirmationDialogOptions
+                    await errorDialog.ShowAsync(new ConfirmationDialogOptions
                     {
                         Title = "Import Failed",
                         Message = $"Failed to import data:\n\n{ex.Message}",
@@ -2177,19 +2177,19 @@ public partial class App : Application
             }
             return new ProductsPage { DataContext = viewModel };
         });
-        navigationService.RegisterPage("StockLevels", _ => new Views.StockLevelsPage { DataContext = new ViewModels.StockLevelsPageViewModel() });
+        navigationService.RegisterPage("StockLevels", _ => new StockLevelsPage { DataContext = new StockLevelsPageViewModel() });
         navigationService.RegisterPage("Locations", param =>
         {
-            var viewModel = new ViewModels.LocationsPageViewModel();
+            var viewModel = new LocationsPageViewModel();
             // Check if we should open the add modal
             if (param is Dictionary<string, object?> dict && dict.TryGetValue("openAddModal", out var openAdd) && openAdd is true)
             {
                 LocationsModalsViewModel?.OpenAddModal();
             }
-            return new Views.LocationsPage { DataContext = viewModel };
+            return new LocationsPage { DataContext = viewModel };
         });
-        navigationService.RegisterPage("StockAdjustments", _ => new Views.StockAdjustmentsPage { DataContext = new ViewModels.StockAdjustmentsPageViewModel() });
-        navigationService.RegisterPage("PurchaseOrders", _ => new Views.PurchaseOrdersPage { DataContext = new ViewModels.PurchaseOrdersPageViewModel() });
+        navigationService.RegisterPage("StockAdjustments", _ => new StockAdjustmentsPage { DataContext = new StockAdjustmentsPageViewModel() });
+        navigationService.RegisterPage("PurchaseOrders", _ => new PurchaseOrdersPage { DataContext = new PurchaseOrdersPageViewModel() });
         navigationService.RegisterPage("Categories", param =>
         {
             var viewModel = new CategoriesPageViewModel();
