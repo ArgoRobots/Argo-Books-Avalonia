@@ -13,7 +13,6 @@
              x:DataType="vm:ReportsPageViewModel">
 
     <UserControl.Resources>
-        <converters:EqualityConverter x:Key="EqualityConverter" />
         <converters:EqualConverter x:Key="EqualConverter" />
     </UserControl.Resources>
 
