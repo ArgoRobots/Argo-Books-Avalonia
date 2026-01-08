@@ -92,15 +92,36 @@ public partial class AnalyticsPage : UserControl
         {
             if (DataContext is AnalyticsPageViewModel viewModel)
             {
-                // Store reference to the clicked chart for later use in save/export operations
-                _clickedChart = sender as Control;
+                var clickedControl = sender as Control;
+
+                // For PieChartLegend, find the associated PieChart sibling
+                if (clickedControl is PieChartLegend legend)
+                {
+                    // Navigate: PieChartLegend → Parent Grid → find PieChart sibling
+                    if (legend.Parent is Grid parentGrid)
+                    {
+                        foreach (var child in parentGrid.Children)
+                        {
+                            if (child is PieChart siblingChart)
+                            {
+                                _clickedChart = siblingChart;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Store reference to the clicked chart for later use in save/export operations
+                    _clickedChart = clickedControl;
+                }
 
                 // Try to find the chart title from the parent container
-                _clickedChartName = GetChartTitle(sender as Control) ?? "Chart";
+                _clickedChartName = GetChartTitle(clickedControl) ?? "Chart";
 
                 // Get position relative to this page (the Panel container) for proper menu placement
                 var position = e.GetPosition(this);
-                var isPieChart = sender is PieChart;
+                var isPieChart = sender is PieChart || sender is PieChartLegend;
                 var isGeoMap = sender is GeoMap;
 
                 // Use the chart title as the chart ID for export operations
@@ -120,26 +141,54 @@ public partial class AnalyticsPage : UserControl
     }
 
     /// <summary>
-    /// Attempts to find the chart title from the chart's Title property.
+    /// Attempts to find the chart title from the chart's Title property or from a sibling TextBlock.
     /// </summary>
-    private static string? GetChartTitle(Control? chart)
+    private static string? GetChartTitle(Control? control)
     {
-        if (chart == null) return null;
+        if (control == null) return null;
 
         // Get the title directly from LiveCharts chart controls
         // The Title property is a LabelVisual which has a Text property
-        if (chart is CartesianChart cartesianChart &&
+        if (control is CartesianChart cartesianChart &&
             cartesianChart.Title is LabelVisual cartesianLabel &&
             !string.IsNullOrWhiteSpace(cartesianLabel.Text))
         {
             return cartesianLabel.Text;
         }
 
-        if (chart is PieChart pieChart &&
+        if (control is PieChart pieChart &&
             pieChart.Title is LabelVisual pieLabel &&
             !string.IsNullOrWhiteSpace(pieLabel.Text))
         {
             return pieLabel.Text;
+        }
+
+        // For pie charts and legends without a Title property, look for a TextBlock title
+        // in the parent container structure:
+        // Grid (RowDefinitions="Auto,*")
+        //   ├─ TextBlock Row="0" (the title)
+        //   └─ Grid Row="1"
+        //       ├─ PieChart/GeoMap Column="0"
+        //       └─ PieChartLegend Column="1"
+        if (control is PieChart or PieChartLegend or GeoMap)
+        {
+            // Navigate up: Control → Grid (Column container) → Grid (Row container)
+            var columnGrid = control.Parent as Grid;
+            var rowGrid = columnGrid?.Parent as Grid;
+
+            if (rowGrid != null)
+            {
+                // Find the TextBlock in Row 0 (the title)
+                foreach (var child in rowGrid.Children)
+                {
+                    if (child is TextBlock textBlock &&
+                        Grid.GetRow(textBlock) == 0 &&
+                        !string.IsNullOrWhiteSpace(textBlock.Text))
+                    {
+                        return textBlock.Text;
+                    }
+                }
+            }
         }
 
         return null;

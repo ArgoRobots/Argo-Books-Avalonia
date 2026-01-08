@@ -222,9 +222,10 @@
                                                       Series="{Binding RevenueDistributionSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding RevenueDistributionLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -298,9 +299,10 @@
                                                       Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ExpensesDistributionLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -349,9 +351,10 @@
                                                       Series="{Binding CountriesOfOriginSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CountriesOfOriginLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -393,9 +396,10 @@
                                                       Series="{Binding CompaniesOfOriginSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CompaniesOfOriginLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -440,9 +444,10 @@
                                                       Series="{Binding CountriesOfDestinationSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CountriesOfDestinationLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -484,9 +489,10 @@
                                                       Series="{Binding CompaniesOfDestinationSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CompaniesOfDestinationLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -647,9 +653,10 @@
                                                       Series="{Binding AccountantsTransactionsSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding AccountantsTransactionsLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -917,9 +924,10 @@
                                                       Series="{Binding CompaniesOfOriginSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CompaniesOfOriginLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -961,9 +969,10 @@
                                                       Series="{Binding CustomerPaymentStatusSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding CustomerPaymentStatusLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1069,9 +1078,10 @@
                                                       Series="{Binding ActiveInactiveCustomersSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ActiveInactiveCustomersLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1210,9 +1220,10 @@
                                                       Series="{Binding ReturnReasonsSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ReturnReasonsLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1286,9 +1297,10 @@
                                                       Series="{Binding ReturnReasonsSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ReturnReasonsLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1333,9 +1345,10 @@
                                                       Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ExpensesDistributionLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1474,9 +1487,10 @@
                                                       Series="{Binding LossReasonsSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding LossReasonsLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1550,9 +1564,10 @@
                                                       Series="{Binding ExpensesDistributionSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding ExpensesDistributionLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
@@ -1597,9 +1612,10 @@
                                                       Series="{Binding LossesByProductSeries}"
                                                       LegendPosition="Hidden" />
                                         <controls:PieChartLegend Grid.Column="1"
+                                                                 PointerPressed="OnChartPointerPressed"
                                                                  Items="{Binding LossesByProductLegend}"
                                                                  MaxHeightOverride="240"
-                                                                 Width="160"
+                                                                 Width="200"
                                                                  Margin="8,0,0,0"
                                                                  VerticalAlignment="Center" />
                                     </Grid>
