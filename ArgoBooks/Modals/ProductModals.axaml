@@ -83,32 +83,14 @@
 
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <!-- No Suppliers Message -->
-                                <Border IsVisible="{Binding !HasSuppliers}"
-                                        CornerRadius="6"
-                                        BorderThickness="1"
-                                        Background="{DynamicResource SurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        Padding="12,10">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="No suppliers available."
-                                                   FontSize="13"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <Button Classes="link-button"
-                                                Content="Create one"
-                                                Command="{Binding OpenSuppliersWithAddModalCommand}"
-                                                VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Border>
-                                <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding ModalSupplier}" Classes="form-combobox" PlaceholderText="Select supplier"
-                                          IsVisible="{Binding HasSuppliers}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate DataType="vm:SupplierOption">
-                                            <TextBlock Text="{Binding Name}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
+                                                            SelectedItem="{Binding ModalSupplier}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search suppliers..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No suppliers available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                             </StackPanel>
 
                             <StackPanel Spacing="6">
@@ -215,32 +197,14 @@
 
                             <StackPanel Spacing="6">
                                 <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <!-- No Suppliers Message -->
-                                <Border IsVisible="{Binding !HasSuppliers}"
-                                        CornerRadius="6"
-                                        BorderThickness="1"
-                                        Background="{DynamicResource SurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        Padding="12,10">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <TextBlock Text="No suppliers available."
-                                                   FontSize="13"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <Button Classes="link-button"
-                                                Content="Create one"
-                                                Command="{Binding OpenSuppliersWithAddModalCommand}"
-                                                VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Border>
-                                <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding ModalSupplier}" Classes="form-combobox" PlaceholderText="Select supplier"
-                                          IsVisible="{Binding HasSuppliers}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate DataType="vm:SupplierOption">
-                                            <TextBlock Text="{Binding Name}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
+                                                            SelectedItem="{Binding ModalSupplier}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search suppliers..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No suppliers available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                             </StackPanel>
 
                             <StackPanel Spacing="6">
@@ -343,71 +307,4 @@
             </Border>
         </Panel>
     </Panel>
-
-    <UserControl.Styles>
-        <Style Selector="Button.icon-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Width" Value="32" />
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.icon-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-        <Style Selector="Button.icon-button PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
-        </Style>
-
-        <!-- Link Button Style -->
-        <Style Selector="Button.link-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.link-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.link-button:pointerover">
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
-        </Style>
-        <Style Selector="Button.link-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-
-        <Style Selector="TextBox.form-input">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        </Style>
-        <Style Selector="TextBox.form-input /template/ Border#PART_BorderElement">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        </Style>
-        <Style Selector="TextBox.form-input:focus /template/ Border#PART_BorderElement">
-            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-        </Style>
-
-        <Style Selector="ComboBox.form-combobox">
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="12,10" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-        </Style>
-    </UserControl.Styles>
 </UserControl>

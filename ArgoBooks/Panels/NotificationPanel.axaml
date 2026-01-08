@@ -228,22 +228,6 @@
     </Panel>
 
     <UserControl.Styles>
-        <!-- Text Button Style -->
-        <Style Selector="Button.text-button">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style Selector="Button.text-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.text-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-
         <!-- Notification Item Style -->
         <Style Selector="Button.notification-item">
             <Setter Property="Background" Value="Transparent" />

@@ -136,7 +136,6 @@ public partial class ProductModalsViewModel : ObservableObject
     public ObservableCollection<string> ItemTypeOptions { get; } = ["All", "Product", "Service"];
 
     public bool HasCategories => CategoryItems.Count > 0;
-    public bool HasSuppliers => AvailableSuppliers.Count > 0;
 
     #endregion
 

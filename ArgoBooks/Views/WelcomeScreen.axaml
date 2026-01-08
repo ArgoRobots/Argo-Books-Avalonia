@@ -357,29 +357,6 @@
             <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
         </Style>
 
-        <!-- Icon Button Small -->
-        <Style Selector="Button.icon-button-small">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Width" Value="28" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Opacity" Value="0" />
-        </Style>
-        <Style Selector="Button.icon-button-small /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="Button.icon-button-small:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-        </Style>
-        <Style Selector="Button.icon-button-small PathIcon">
-            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
-        </Style>
-        <Style Selector="Button.recent-item:pointerover Button.icon-button-small">
-            <Setter Property="Opacity" Value="1" />
-        </Style>
 
         <!-- Footer Link -->
         <Style Selector="Button.footer-link">
