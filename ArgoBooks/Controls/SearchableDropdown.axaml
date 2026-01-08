@@ -22,14 +22,35 @@
                        IsVisible="{Binding IsRequired, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
         </StackPanel>
 
-        <!-- Dropdown Container -->
+        <!-- Empty State Container (shown when no items available) -->
+        <Border x:Name="EmptyStateBorder"
+                CornerRadius="{StaticResource RadiusMd}"
+                BorderThickness="1"
+                Background="{DynamicResource SurfaceAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                Padding="12,10"
+                IsVisible="{Binding ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="{Binding EmptyMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                           FontSize="13"
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           VerticalAlignment="Center" />
+                <Button Classes="link-button"
+                        Content="{Binding EmptyCreateLinkText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                        Command="{Binding EmptyCreateCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                        VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <!-- Dropdown Container (hidden when no items available) -->
         <Border x:Name="DropdownBorder"
                 CornerRadius="{StaticResource RadiusMd}"
                 BorderThickness="1"
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 Classes.error="{Binding HasError, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
-                Classes.focused="{Binding IsDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
+                Classes.focused="{Binding IsDropdownOpen, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
+                IsVisible="{Binding !ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
             <Border.Styles>
                 <Style Selector="Border.error">
                     <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}" />
@@ -184,23 +205,6 @@
             </Border>
         </Popup>
 
-        <!-- Empty State Message with Create Link -->
-        <StackPanel Orientation="Horizontal"
-                    Spacing="4"
-                    Margin="0,2,0,0"
-                    IsVisible="{Binding ShowEmptyCreate, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
-            <TextBlock Text="{Binding EmptyMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
-                       FontSize="{StaticResource FontSizeSm}"
-                       Foreground="{DynamicResource TextTertiaryBrush}"
-                       VerticalAlignment="Center" />
-            <Button Classes="link"
-                    Content="{Binding EmptyCreateLinkText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
-                    Command="{Binding EmptyCreateCommand, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
-                    FontSize="{StaticResource FontSizeSm}"
-                    Padding="0"
-                    VerticalAlignment="Center" />
-        </StackPanel>
-
         <!-- Helper Text / Error Message -->
         <TextBlock FontSize="{StaticResource FontSizeXs}"
                    Margin="0,2,0,0"
@@ -214,4 +218,25 @@
                    Text="{Binding ErrorMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                    IsVisible="{Binding HasError, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}" />
     </StackPanel>
+
+    <UserControl.Styles>
+        <!-- Link Button Style -->
+        <Style Selector="Button.link-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.link-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.link-button:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
+        </Style>
+        <Style Selector="Button.link-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </UserControl.Styles>
 </UserControl>

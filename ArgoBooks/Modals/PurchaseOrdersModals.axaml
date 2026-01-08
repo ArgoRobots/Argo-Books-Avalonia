@@ -46,16 +46,14 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Supplier" /><Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableSuppliers}"
-                                          SelectedItem="{Binding SelectedSupplier}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate DataType="entities:Supplier">
-                                            <TextBlock Text="{Binding Name}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
+                                                            SelectedItem="{Binding SelectedSupplier}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search suppliers..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No suppliers available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}" />
                                 <TextBlock Text="Please select a supplier"
                                            FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding HasSupplierError}" />

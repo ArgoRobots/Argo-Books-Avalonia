@@ -43,20 +43,14 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Inventory Item" /><Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableInventoryItems}"
-                                          SelectedItem="{Binding SelectedInventoryOption}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="{Binding DisplayText}" />
-                                                <TextBlock Text="{Binding CurrentStock, StringFormat='(Stock: {0})'}"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableInventoryItems}"
+                                                            SelectedItem="{Binding SelectedInventoryOption}"
+                                                            DisplayMemberPath="DisplayText"
+                                                            Placeholder="Search inventory items..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No inventory items available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateInventoryItemCommand}" />
                                 <TextBlock Text="Please select an inventory item"
                                            FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding HasInventoryError}" />

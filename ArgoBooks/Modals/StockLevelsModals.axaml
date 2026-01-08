@@ -139,16 +139,14 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Product" /><Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableProducts}"
-                                          SelectedItem="{Binding SelectedProduct}"
-                                          Classes="form-combobox"
-                                          HorizontalAlignment="Stretch">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Name}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableProducts}"
+                                                            SelectedItem="{Binding SelectedProduct}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search products..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No products available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateProductCommand}" />
                                 <TextBlock Text="{Binding AddItemProductError}" FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding AddItemProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.RentalInventoryModals"
              x:DataType="vm:RentalInventoryModalsViewModel">
@@ -54,7 +55,14 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Supplier" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding ModalSupplier}" Classes="form-combobox" />
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
+                                                            SelectedItem="{Binding ModalSupplier}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search suppliers..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No suppliers available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}" />
                             </StackPanel>
 
                             <!-- Quantity -->
@@ -164,7 +172,14 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Supplier" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding ModalSupplier}" Classes="form-combobox" />
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
+                                                            SelectedItem="{Binding ModalSupplier}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search suppliers..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No suppliers available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}" />
                             </StackPanel>
 
                             <!-- Quantity and Status Row -->
@@ -336,7 +351,14 @@
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                     <Run Text="Customer" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
-                                <ComboBox ItemsSource="{Binding AvailableCustomers}" SelectedItem="{Binding RentOutCustomer}" Classes="form-combobox" />
+                                <controls:SearchableDropdown ItemsSource="{Binding AvailableCustomers}"
+                                                            SelectedItem="{Binding RentOutCustomer}"
+                                                            DisplayMemberPath="Name"
+                                                            Placeholder="Search customers..."
+                                                            ShowAddNew="False"
+                                                            EmptyMessage="No customers available."
+                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
                                 <TextBlock Text="{Binding RentOutCustomerError}" FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding RentOutCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>

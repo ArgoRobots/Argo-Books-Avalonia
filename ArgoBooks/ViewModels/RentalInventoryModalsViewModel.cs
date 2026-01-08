@@ -239,6 +239,29 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         ClearModalFields();
     }
 
+    /// <summary>
+    /// Navigates to Suppliers page and opens the create supplier modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateSupplier()
+    {
+        IsAddModalOpen = false;
+        IsEditModalOpen = false;
+        App.NavigationService?.NavigateTo("Suppliers", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
+    /// <summary>
+    /// Navigates to Customers page and opens the create customer modal.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToCreateCustomer()
+    {
+        IsAddModalOpen = false;
+        IsEditModalOpen = false;
+        IsRentOutModalOpen = false;
+        App.NavigationService?.NavigateTo("Customers", new Dictionary<string, object?> { { "openAddModal", true } });
+    }
+
     [RelayCommand]
     public void SaveNewItem()
     {
