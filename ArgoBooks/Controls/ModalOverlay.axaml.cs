@@ -2,6 +2,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media.Transformation;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -122,6 +123,27 @@ public partial class ModalOverlay : UserControl
     {
         if (isOpen)
         {
+            // Set initial state before animation
+            if (Backdrop != null)
+                Backdrop.Opacity = 0;
+            if (ContentContainer != null)
+            {
+                ContentContainer.Opacity = 0;
+                ContentContainer.RenderTransform = TransformOperations.Parse("scale(0.95)");
+            }
+
+            // Trigger animation to final state (on next frame so transitions kick in)
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (Backdrop != null)
+                    Backdrop.Opacity = 1;
+                if (ContentContainer != null)
+                {
+                    ContentContainer.Opacity = 1;
+                    ContentContainer.RenderTransform = TransformOperations.Parse("scale(1)");
+                }
+            }, Avalonia.Threading.DispatcherPriority.Render);
+
             Focus();
             Opened?.Invoke(this, EventArgs.Empty);
         }
