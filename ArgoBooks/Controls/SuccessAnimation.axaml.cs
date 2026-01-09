@@ -1,10 +1,7 @@
 using System.Windows.Input;
 using Avalonia;
-using Avalonia.Animation;
-using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Media;
-using Avalonia.Styling;
 using Avalonia.Threading;
 
 namespace ArgoBooks.Controls;
@@ -149,38 +146,31 @@ public partial class SuccessAnimation : UserControl
     {
         Dispatcher.UIThread.Post(() =>
         {
-            // Reset circle
-            if (SuccessCircle?.RenderTransform is ScaleTransform circleScale)
+            // Reset glow
+            if (SuccessGlow != null)
             {
-                circleScale.ScaleX = 0;
-                circleScale.ScaleY = 0;
+                SuccessGlow.Opacity = 0;
+                SuccessGlow.RenderTransform = TransformOperations.Parse("scale(0)");
             }
 
-            // Reset glow
-            if (SuccessGlow?.RenderTransform is ScaleTransform glowScale)
+            // Reset circle
+            if (SuccessCircle != null)
             {
-                glowScale.ScaleX = 0;
-                glowScale.ScaleY = 0;
+                SuccessCircle.RenderTransform = TransformOperations.Parse("scale(0)");
             }
 
             // Reset text
             if (SuccessTextPanel != null)
             {
                 SuccessTextPanel.Opacity = 0;
-                if (SuccessTextPanel.RenderTransform is TranslateTransform textTranslate)
-                {
-                    textTranslate.Y = 20;
-                }
+                SuccessTextPanel.RenderTransform = TransformOperations.Parse("translateY(20px)");
             }
 
             // Reset continue button
             if (ContinueButtonPanel != null)
             {
                 ContinueButtonPanel.Opacity = 0;
-                if (ContinueButtonPanel.RenderTransform is TranslateTransform buttonTranslate)
-                {
-                    buttonTranslate.Y = 20;
-                }
+                ContinueButtonPanel.RenderTransform = TransformOperations.Parse("translateY(20px)");
             }
         }, DispatcherPriority.Background);
     }
@@ -189,199 +179,45 @@ public partial class SuccessAnimation : UserControl
     {
         await Dispatcher.UIThread.InvokeAsync(async () =>
         {
-            // Animate the glow first
+            // Animate the glow
             if (SuccessGlow != null)
             {
-                var glowAnimation = new Animation
-                {
-                    Duration = TimeSpan.FromMilliseconds(600),
-                    Easing = new CubicEaseOut(),
-                    FillMode = FillMode.Forward,
-                    Children =
-                    {
-                        new KeyFrame
-                        {
-                            Cue = new Cue(0),
-                            Setters =
-                            {
-                                new Setter(ScaleTransform.ScaleXProperty, 0.0),
-                                new Setter(ScaleTransform.ScaleYProperty, 0.0)
-                            }
-                        },
-                        new KeyFrame
-                        {
-                            Cue = new Cue(1),
-                            Setters =
-                            {
-                                new Setter(ScaleTransform.ScaleXProperty, 1.15),
-                                new Setter(ScaleTransform.ScaleYProperty, 1.15)
-                            }
-                        }
-                    }
-                };
-                _ = glowAnimation.RunAsync(SuccessGlow);
+                SuccessGlow.Opacity = 0.4;
+                SuccessGlow.RenderTransform = TransformOperations.Parse("scale(1.15)");
             }
 
             // Animate the success circle with elastic bounce
             if (SuccessCircle != null)
             {
-                var circleAnimation = new Animation
-                {
-                    Duration = TimeSpan.FromMilliseconds(600),
-                    Easing = new ElasticEaseOut(),
-                    FillMode = FillMode.Forward,
-                    Children =
-                    {
-                        new KeyFrame
-                        {
-                            Cue = new Cue(0),
-                            Setters =
-                            {
-                                new Setter(ScaleTransform.ScaleXProperty, 0.0),
-                                new Setter(ScaleTransform.ScaleYProperty, 0.0)
-                            }
-                        },
-                        new KeyFrame
-                        {
-                            Cue = new Cue(1),
-                            Setters =
-                            {
-                                new Setter(ScaleTransform.ScaleXProperty, 1.0),
-                                new Setter(ScaleTransform.ScaleYProperty, 1.0)
-                            }
-                        }
-                    }
-                };
-
-                await circleAnimation.RunAsync(SuccessCircle);
+                SuccessCircle.RenderTransform = TransformOperations.Parse("scale(1)");
             }
 
-            // Animate text panel after circle
+            // Wait for circle animation
+            await Task.Delay(500);
+
+            // Animate text panel
             if (SuccessTextPanel != null)
             {
-                var textFadeAnimation = new Animation
-                {
-                    Duration = TimeSpan.FromMilliseconds(400),
-                    Easing = new CubicEaseOut(),
-                    FillMode = FillMode.Forward,
-                    Children =
-                    {
-                        new KeyFrame
-                        {
-                            Cue = new Cue(0),
-                            Setters =
-                            {
-                                new Setter(OpacityProperty, 0.0)
-                            }
-                        },
-                        new KeyFrame
-                        {
-                            Cue = new Cue(1),
-                            Setters =
-                            {
-                                new Setter(OpacityProperty, 1.0)
-                            }
-                        }
-                    }
-                };
-                _ = textFadeAnimation.RunAsync(SuccessTextPanel);
-
-                var textSlideAnimation = new Animation
-                {
-                    Duration = TimeSpan.FromMilliseconds(400),
-                    Easing = new CubicEaseOut(),
-                    FillMode = FillMode.Forward,
-                    Children =
-                    {
-                        new KeyFrame
-                        {
-                            Cue = new Cue(0),
-                            Setters =
-                            {
-                                new Setter(TranslateTransform.YProperty, 20.0)
-                            }
-                        },
-                        new KeyFrame
-                        {
-                            Cue = new Cue(1),
-                            Setters =
-                            {
-                                new Setter(TranslateTransform.YProperty, 0.0)
-                            }
-                        }
-                    }
-                };
-                await textSlideAnimation.RunAsync(SuccessTextPanel);
+                SuccessTextPanel.Opacity = 1;
+                SuccessTextPanel.RenderTransform = TransformOperations.Parse("translateY(0)");
             }
 
-            // Show continue button after delay
+            // Wait for text animation
+            await Task.Delay(300);
+
+            // Show continue button after additional delay
             if (ShowContinueButton)
             {
                 await Task.Delay(ContinueButtonDelayMs);
-                await PlayContinueButtonAnimationAsync();
+
+                if (ContinueButtonPanel != null)
+                {
+                    ContinueButtonPanel.Opacity = 1;
+                    ContinueButtonPanel.RenderTransform = TransformOperations.Parse("translateY(0)");
+                }
             }
 
             AnimationCompleted?.Invoke(this, EventArgs.Empty);
         });
-    }
-
-    private async Task PlayContinueButtonAnimationAsync()
-    {
-        if (ContinueButtonPanel != null)
-        {
-            var fadeAnimation = new Animation
-            {
-                Duration = TimeSpan.FromMilliseconds(400),
-                Easing = new CubicEaseOut(),
-                FillMode = FillMode.Forward,
-                Children =
-                {
-                    new KeyFrame
-                    {
-                        Cue = new Cue(0),
-                        Setters =
-                        {
-                            new Setter(OpacityProperty, 0.0)
-                        }
-                    },
-                    new KeyFrame
-                    {
-                        Cue = new Cue(1),
-                        Setters =
-                        {
-                            new Setter(OpacityProperty, 1.0)
-                        }
-                    }
-                }
-            };
-            _ = fadeAnimation.RunAsync(ContinueButtonPanel);
-
-            var slideAnimation = new Animation
-            {
-                Duration = TimeSpan.FromMilliseconds(400),
-                Easing = new CubicEaseOut(),
-                FillMode = FillMode.Forward,
-                Children =
-                {
-                    new KeyFrame
-                    {
-                        Cue = new Cue(0),
-                        Setters =
-                        {
-                            new Setter(TranslateTransform.YProperty, 20.0)
-                        }
-                    },
-                    new KeyFrame
-                    {
-                        Cue = new Cue(1),
-                        Setters =
-                        {
-                            new Setter(TranslateTransform.YProperty, 0.0)
-                        }
-                    }
-                }
-            };
-            await slideAnimation.RunAsync(ContinueButtonPanel);
-        }
     }
 }

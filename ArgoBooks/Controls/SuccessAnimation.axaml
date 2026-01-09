@@ -17,7 +17,8 @@
             <Border x:Name="SuccessGlow"
                     Width="120" Height="120"
                     CornerRadius="60"
-                    Opacity="0.4"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
                 <Border.Background>
@@ -26,9 +27,12 @@
                         <GradientStop Color="Transparent" Offset="1" />
                     </RadialGradientBrush>
                 </Border.Background>
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0" ScaleY="0" />
-                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.4" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
             </Border>
             <!-- Main circle -->
             <Border x:Name="SuccessCircle"
@@ -37,6 +41,8 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     ClipToBounds="True"
+                    RenderTransformOrigin="0.5,0.5"
+                    RenderTransform="scale(0)"
                     BoxShadow="0 4 20 0 #4022C55E">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -44,9 +50,11 @@
                         <GradientStop Color="#16A34A" Offset="1" />
                     </LinearGradientBrush>
                 </Border.Background>
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0" ScaleY="0" />
-                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Easing="ElasticEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                           Width="48" Height="48"
                           Foreground="White"
@@ -56,10 +64,18 @@
         </Panel>
 
         <!-- Success Text -->
-        <StackPanel x:Name="SuccessTextPanel" Spacing="8" HorizontalAlignment="Center" Opacity="0">
-            <StackPanel.RenderTransform>
-                <TranslateTransform Y="20" />
-            </StackPanel.RenderTransform>
+        <StackPanel x:Name="SuccessTextPanel"
+                    Spacing="8"
+                    HorizontalAlignment="Center"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5"
+                    RenderTransform="translateY(20px)">
+            <StackPanel.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                </Transitions>
+            </StackPanel.Transitions>
             <TextBlock x:Name="TitleText"
                        Text="{Binding Title, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}}"
                        FontSize="20"
@@ -81,10 +97,15 @@
         <Panel x:Name="ContinueButtonPanel"
                HorizontalAlignment="Center"
                Opacity="0"
+               RenderTransformOrigin="0.5,0.5"
+               RenderTransform="translateY(20px)"
                IsVisible="{Binding ShowContinueButton, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}}">
-            <Panel.RenderTransform>
-                <TranslateTransform Y="20" />
-            </Panel.RenderTransform>
+            <Panel.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                </Transitions>
+            </Panel.Transitions>
             <Button Classes="primary-button"
                     Content="{Binding ContinueButtonText, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}}"
                     Command="{Binding ContinueCommand, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}}"
