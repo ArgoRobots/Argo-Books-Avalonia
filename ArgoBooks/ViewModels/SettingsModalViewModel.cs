@@ -14,6 +14,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _originalTheme;
     private string _originalAccentColor;
     private string _originalDateFormat = "MM/DD/YYYY";
+    private string _originalCurrency = "USD - US Dollar ($)";
     private int _originalMaxPieSlices = 6;
 
     [ObservableProperty]
@@ -390,6 +391,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedTheme != _originalTheme ||
         SelectedAccentColor != _originalAccentColor ||
         SelectedDateFormat != _originalDateFormat ||
+        SelectedCurrency != _originalCurrency ||
         MaxPieSlices != _originalMaxPieSlices;
 
     /// <summary>
@@ -425,11 +427,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedTheme = ThemeService.Instance.CurrentThemeName;
         SelectedAccentColor = ThemeService.Instance.CurrentAccentColor;
 
-        // Load date format from company settings
+        // Load date format and currency from company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;
         if (settings != null)
         {
             SelectedDateFormat = settings.Localization.DateFormat;
+            // Convert currency code to display string
+            SelectedCurrency = CurrencyService.GetDisplayString(settings.Localization.Currency);
         }
 
         // Load max pie slices from global settings
@@ -443,6 +447,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
         _originalDateFormat = SelectedDateFormat;
+        _originalCurrency = SelectedCurrency;
         _originalMaxPieSlices = MaxPieSlices;
         SelectedTabIndex = tabIndex;
         IsOpen = true;
@@ -510,6 +515,10 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             SelectedDateFormat = _originalDateFormat;
         }
+        if (SelectedCurrency != _originalCurrency)
+        {
+            SelectedCurrency = _originalCurrency;
+        }
         if (MaxPieSlices != _originalMaxPieSlices)
         {
             MaxPieSlices = _originalMaxPieSlices;
@@ -527,21 +536,25 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void Save()
     {
-        // Check if date format changed before updating original values
+        // Check what changed before updating original values
         var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
+        var currencyChanged = SelectedCurrency != _originalCurrency;
         var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
 
         // Update original values to current (so close doesn't revert)
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
         _originalDateFormat = SelectedDateFormat;
+        _originalCurrency = SelectedCurrency;
         _originalMaxPieSlices = MaxPieSlices;
 
-        // Save date format to company settings
+        // Save date format and currency to company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;
         if (settings != null)
         {
             settings.Localization.DateFormat = SelectedDateFormat;
+            // Extract currency code from display string (e.g., "USD - US Dollar ($)" -> "USD")
+            settings.Localization.Currency = CurrencyService.ParseCurrencyCode(SelectedCurrency);
             settings.ChangesMade = true;
         }
 
@@ -557,6 +570,12 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (dateFormatChanged)
         {
             DateFormatService.NotifyDateFormatChanged();
+        }
+
+        // Notify that currency changed so views can refresh
+        if (currencyChanged)
+        {
+            CurrencyService.NotifyCurrencyChanged();
         }
 
         // Notify that chart settings changed so charts can reload

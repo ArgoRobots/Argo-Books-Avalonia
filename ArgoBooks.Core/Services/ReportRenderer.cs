@@ -1,6 +1,7 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Charts;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Reports;
 using SkiaSharp;
 
@@ -1277,11 +1278,11 @@ public class ReportRenderer : IDisposable
                     "Company" => trans.Company,
                     "Product" => trans.Product,
                     "Qty" => trans.Qty.ToString("N0"),
-                    "Unit Price" => trans.UnitPrice.ToString("C2"),
-                    "Total" => trans.Total.ToString("C2"),
+                    "Unit Price" => FormatCurrency(trans.UnitPrice),
+                    "Total" => FormatCurrency(trans.Total),
                     "Status" => trans.Status,
                     "Accountant" => trans.Accountant,
-                    "Shipping" => trans.Shipping.ToString("C2"),
+                    "Shipping" => FormatCurrency(trans.Shipping),
                     _ => ""
                 };
                 row.Add(value);
@@ -1899,6 +1900,15 @@ public class ReportRenderer : IDisposable
         }
 
         return (_config.Filters.StartDate, _config.Filters.EndDate);
+    }
+
+    /// <summary>
+    /// Formats a currency amount using the company's currency setting.
+    /// </summary>
+    private string FormatCurrency(decimal amount)
+    {
+        var currencyCode = _companyData?.Settings?.Localization?.Currency ?? "USD";
+        return CurrencyInfo.FormatAmount(amount, currencyCode);
     }
 
     #endregion

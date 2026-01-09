@@ -281,7 +281,67 @@ public class FileService(
             ReportTemplates = await ReadJsonAsync<List<Models.Reports.ReportTemplate>>(tempDirectory, "reportTemplates.json", cancellationToken) ?? []
         };
 
+        // Migrate legacy data: set USD values for transactions that don't have them
+        MigrateCurrencyData(data);
+
         return data;
+    }
+
+    /// <summary>
+    /// Migrates legacy company data to support multi-currency.
+    /// For existing transactions without USD fields, assumes amounts are in USD.
+    /// </summary>
+    private static void MigrateCurrencyData(CompanyData data)
+    {
+        // Migrate Sales
+        foreach (var sale in data.Sales)
+        {
+            if (sale.TotalUSD == 0 && sale.Total != 0)
+            {
+                // Legacy data - assume amounts are in USD
+                sale.OriginalCurrency = "USD";
+                sale.TotalUSD = sale.Total;
+                sale.UnitPriceUSD = sale.UnitPrice;
+                sale.ShippingCostUSD = sale.ShippingCost;
+                sale.TaxAmountUSD = sale.TaxAmount;
+                sale.DiscountUSD = sale.Discount;
+            }
+        }
+
+        // Migrate Purchases
+        foreach (var purchase in data.Purchases)
+        {
+            if (purchase.TotalUSD == 0 && purchase.Total != 0)
+            {
+                purchase.OriginalCurrency = "USD";
+                purchase.TotalUSD = purchase.Total;
+                purchase.UnitPriceUSD = purchase.UnitPrice;
+                purchase.ShippingCostUSD = purchase.ShippingCost;
+                purchase.TaxAmountUSD = purchase.TaxAmount;
+                purchase.DiscountUSD = purchase.Discount;
+            }
+        }
+
+        // Migrate Invoices
+        foreach (var invoice in data.Invoices)
+        {
+            if (invoice.TotalUSD == 0 && invoice.Total != 0)
+            {
+                invoice.OriginalCurrency = "USD";
+                invoice.TotalUSD = invoice.Total;
+                invoice.BalanceUSD = invoice.Balance;
+            }
+        }
+
+        // Migrate Payments
+        foreach (var payment in data.Payments)
+        {
+            if (payment.AmountUSD == 0 && payment.Amount != 0)
+            {
+                payment.OriginalCurrency = "USD";
+                payment.AmountUSD = payment.Amount;
+            }
+        }
     }
 
     /// <summary>

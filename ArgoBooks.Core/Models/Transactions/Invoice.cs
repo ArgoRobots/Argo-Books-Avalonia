@@ -135,4 +135,39 @@ public class Invoice
     public bool IsOverdue => Status != InvoiceStatus.Paid &&
                              Status != InvoiceStatus.Cancelled &&
                              DateTime.UtcNow.Date > DueDate.Date;
+
+    #region Currency Support
+
+    /// <summary>
+    /// The ISO currency code in which this invoice was originally created (e.g., "USD", "EUR", "CAD").
+    /// Defaults to "USD" for backward compatibility with existing data.
+    /// </summary>
+    [JsonPropertyName("originalCurrency")]
+    public string OriginalCurrency { get; set; } = "USD";
+
+    /// <summary>
+    /// The total amount converted to USD at the time of creation.
+    /// </summary>
+    [JsonPropertyName("totalUSD")]
+    public decimal TotalUSD { get; set; }
+
+    /// <summary>
+    /// The balance converted to USD.
+    /// </summary>
+    [JsonPropertyName("balanceUSD")]
+    public decimal BalanceUSD { get; set; }
+
+    /// <summary>
+    /// Gets the effective total in USD, falling back to Total for legacy data.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveTotalUSD => TotalUSD > 0 ? TotalUSD : Total;
+
+    /// <summary>
+    /// Gets the effective balance in USD, falling back to Balance for legacy data.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveBalanceUSD => BalanceUSD > 0 ? BalanceUSD : Balance;
+
+    #endregion
 }

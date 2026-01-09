@@ -1076,6 +1076,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         {
             LoadAllCharts();
         };
+
+        // Subscribe to currency changes to refresh all monetary displays
+        CurrencyService.CurrencyChanged += (_, _) =>
+        {
+            LoadAllCharts();
+        };
     }
 
     private void OnChartSettingsChartTypeChanged(object? sender, string chartType)
@@ -1379,7 +1385,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var (series, labels, dates, _) = _chartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
         ExpensesTrendsSeries = series;
         ExpensesTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        ExpensesTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        ExpensesTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasExpensesTrendsData = series.Count > 0;
     }
 
@@ -1396,7 +1402,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var (series, labels, dates, _) = _chartLoaderService.LoadRevenueOverviewChart(data, StartDate, EndDate);
         RevenueTrendsSeries = series;
         RevenueTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        RevenueTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        RevenueTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasRevenueTrendsData = series.Count > 0;
     }
 
@@ -1413,7 +1419,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var (series, labels, dates, _) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
         ProfitTrendsSeries = series;
         ProfitTrendsXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        ProfitTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        ProfitTrendsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasProfitTrendsData = series.Count > 0;
     }
 
@@ -1422,7 +1428,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var (series, _, dates) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
         SalesVsExpensesSeries = series;
         SalesVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasSalesVsExpensesData = series.Count > 0;
     }
 
@@ -1500,7 +1506,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var (series, _, dates) = _chartLoaderService.LoadAverageTransactionValueChart(data, StartDate, EndDate);
         AvgTransactionValueSeries = series;
         AvgTransactionValueXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        AvgTransactionValueYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        AvgTransactionValueYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasAvgTransactionValueData = series.Count > 0;
     }
 
@@ -1518,7 +1524,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var (series, _, dates) = _chartLoaderService.LoadAverageShippingCostsChart(data, StartDate, EndDate);
         AvgShippingCostsSeries = series;
         AvgShippingCostsXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        AvgShippingCostsYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        AvgShippingCostsYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasAvgShippingCostsData = series.Count > 0;
     }
 
@@ -1561,7 +1567,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var (series, _, dates) = _chartLoaderService.LoadReturnFinancialImpactChart(data, StartDate, EndDate);
         ReturnFinancialImpactSeries = series;
         ReturnFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        ReturnFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        ReturnFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasReturnFinancialImpactData = series.Count > 0;
     }
 
@@ -1579,7 +1585,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var (series, _, dates) = _chartLoaderService.LoadLossFinancialImpactChart(data, StartDate, EndDate);
         LossFinancialImpactSeries = series;
         LossFinancialImpactXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        LossFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        LossFinancialImpactYAxes = _chartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasLossFinancialImpactData = series.Count > 0;
     }
 
@@ -1664,15 +1670,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         var marginChange = margin - prevMargin;
 
         // Update properties
-        TotalPurchases = totalPurchasesAmount.ToString("C0");
+        TotalPurchases = CurrencyService.FormatWholeNumber(totalPurchasesAmount);
         PurchasesChangeValue = hasPrevPeriodData && prevPurchases > 0 ? (double)purchasesChange : null;
         PurchasesChangeText = hasPrevPeriodData && prevPurchases > 0 ? $"{Math.Abs(purchasesChange):F1}%" : null;
 
-        TotalSales = totalSalesAmount.ToString("C0");
+        TotalSales = CurrencyService.FormatWholeNumber(totalSalesAmount);
         SalesChangeValue = hasPrevPeriodData && prevSales > 0 ? (double)salesChange : null;
         SalesChangeText = hasPrevPeriodData && prevSales > 0 ? $"{Math.Abs(salesChange):F1}%" : null;
 
-        NetProfit = netProfit.ToString("C0");
+        NetProfit = CurrencyService.FormatWholeNumber(netProfit);
         ProfitChangeValue = hasPrevPeriodData && prevNetProfit != 0 ? (double)profitChange : null;
         ProfitChangeText = hasPrevPeriodData && prevNetProfit != 0 ? $"{Math.Abs(profitChange):F1}%" : null;
 
@@ -1764,11 +1770,11 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         TotalTransactionsChangeValue = hasPrevPeriodData ? transactionsChange : null;
         TotalTransactionsChangeText = hasPrevPeriodData ? $"{(transactionsChange >= 0 ? "+" : "")}{transactionsChange:F1}%" : null;
 
-        AvgTransactionValue = avgTransactionValue.ToString("C0");
+        AvgTransactionValue = CurrencyService.FormatWholeNumber(avgTransactionValue);
         AvgTransactionChangeValue = hasPrevPeriodData && prevAvgTransactionValue > 0 ? (double)avgTransactionChange : null;
         AvgTransactionChangeText = hasPrevPeriodData && prevAvgTransactionValue > 0 ? $"{(avgTransactionChange >= 0 ? "+" : "")}{avgTransactionChange:F1}%" : null;
 
-        AvgShippingCost = avgShipping.ToString("C2");
+        AvgShippingCost = CurrencyService.Format(avgShipping);
         AvgShippingChangeValue = hasPrevPeriodData && prevAvgShipping > 0 ? (double)shippingChange : null;
         AvgShippingChangeText = hasPrevPeriodData && prevAvgShipping > 0 ? $"{(shippingChange >= 0 ? "+" : "")}{shippingChange:F1}%" : null;
     }
@@ -1809,7 +1815,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         RetentionChangeValue = null;
         RetentionChangeText = null;
 
-        AvgCustomerValue = avgValue.ToString("C0");
+        AvgCustomerValue = CurrencyService.FormatWholeNumber(avgValue);
         AvgCustomerValueChangeValue = null;
         AvgCustomerValueChangeText = null;
     }
@@ -1852,7 +1858,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         ReturnRateChangeValue = hasPrevPeriodData && prevSalesTransactions > 0 ? returnRateChange : null;
         ReturnRateChangeText = hasPrevPeriodData && prevSalesTransactions > 0 ? $"{(returnRateChange >= 0 ? "+" : "")}{returnRateChange:F1}%" : null;
 
-        ReturnsFinancialImpact = financialImpact.ToString("C0");
+        ReturnsFinancialImpact = CurrencyService.FormatWholeNumber(financialImpact);
         ReturnsImpactChangeValue = hasPrevPeriodData && prevFinancialImpact > 0 ? (double)impactChange : null;
         ReturnsImpactChangeText = hasPrevPeriodData && prevFinancialImpact > 0 ? $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%" : null;
 
@@ -1907,7 +1913,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
         LossRateChangeValue = hasPrevPeriodData && prevTotalTransactions > 0 ? lossRateChange : null;
         LossRateChangeText = hasPrevPeriodData && prevTotalTransactions > 0 ? $"{(lossRateChange >= 0 ? "+" : "")}{lossRateChange:F1}%" : null;
 
-        LossesFinancialImpact = financialImpact.ToString("C0");
+        LossesFinancialImpact = CurrencyService.FormatWholeNumber(financialImpact);
         LossesImpactChangeValue = hasPrevPeriodData && prevFinancialImpact > 0 ? (double)impactChange : null;
         LossesImpactChangeText = hasPrevPeriodData && prevFinancialImpact > 0 ? $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%" : null;
 

@@ -529,6 +529,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         {
             LoadDashboardData();
         };
+
+        // Subscribe to currency changes to refresh all monetary displays
+        CurrencyService.CurrencyChanged += (_, _) =>
+        {
+            LoadDashboardData();
+        };
     }
 
     private void OnChartSettingsChartTypeChanged(object? sender, string chartType)
@@ -774,7 +780,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         ProfitsChartSeries = series;
         ProfitsChartXAxes = ChartLoaderService.CreateDateXAxes(dates);
-        ProfitsChartYAxes = ChartLoaderService.CreateCurrencyYAxes();
+        ProfitsChartYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         ProfitsChartTitle = $"Total profits: {FormatCurrency(totalProfit)}";
         HasProfitsChartData = series.Count > 0 && labels.Length > 0;
     }
@@ -787,7 +793,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         var (series, _, dates) = ChartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
         SalesVsExpensesSeries = series;
         SalesVsExpensesXAxes = ChartLoaderService.CreateDateXAxes(dates);
-        SalesVsExpensesYAxes = ChartLoaderService.CreateCurrencyYAxes();
+        SalesVsExpensesYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasSalesVsExpensesData = series.Count > 0 && dates.Length > 0;
     }
 
@@ -1032,9 +1038,21 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #region Helper Methods
 
+    /// <summary>
+    /// Formats a currency amount using the current display currency.
+    /// For legacy data (USD), converts to current currency if exchange rates are available.
+    /// </summary>
     private static string FormatCurrency(decimal amount)
     {
-        return amount.ToString("C2");
+        return CurrencyService.Format(amount);
+    }
+
+    /// <summary>
+    /// Formats a currency amount from USD using the current display currency with conversion.
+    /// </summary>
+    private static string FormatCurrencyFromUSD(decimal amountUSD, DateTime date)
+    {
+        return CurrencyService.FormatFromUSD(amountUSD, date);
     }
 
     private static string FormatDate(DateTime date)

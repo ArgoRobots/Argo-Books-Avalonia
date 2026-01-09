@@ -60,4 +60,27 @@ public class Payment
     /// </summary>
     [JsonPropertyName("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    #region Currency Support
+
+    /// <summary>
+    /// The ISO currency code in which this payment was received (e.g., "USD", "EUR", "CAD").
+    /// Defaults to "USD" for backward compatibility with existing data.
+    /// </summary>
+    [JsonPropertyName("originalCurrency")]
+    public string OriginalCurrency { get; set; } = "USD";
+
+    /// <summary>
+    /// The payment amount converted to USD at the time of entry.
+    /// </summary>
+    [JsonPropertyName("amountUSD")]
+    public decimal AmountUSD { get; set; }
+
+    /// <summary>
+    /// Gets the effective amount in USD, falling back to Amount for legacy data.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveAmountUSD => AmountUSD > 0 ? AmountUSD : Amount;
+
+    #endregion
 }
