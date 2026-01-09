@@ -61,6 +61,9 @@
     <!-- Surface Alternate (for neutral backgrounds) -->
     <Color x:Key="SurfaceAltColor">#374151</Color>
 
+    <!-- Secondary Button Background (slightly lighter than SurfaceAlt for contrast in modal footers) -->
+    <Color x:Key="SecondaryButtonBgColor">#4B5563</Color>
+
     <!-- Icon Background Tints (darker variants) -->
     <Color x:Key="PrimaryIconBgColor">#1E3A5F</Color>
     <Color x:Key="SuccessIconBgColor">#064E3B</Color>
@@ -113,6 +116,7 @@
     <SolidColorBrush x:Key="LoadingOverlayBrush" Color="{StaticResource LoadingOverlayColor}" />
 
     <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
+    <SolidColorBrush x:Key="SecondaryButtonBgBrush" Color="{StaticResource SecondaryButtonBgColor}" />
 
     <!-- Icon Background Tint Brushes -->
     <SolidColorBrush x:Key="PrimaryIconBgBrush" Color="{StaticResource PrimaryIconBgColor}" />

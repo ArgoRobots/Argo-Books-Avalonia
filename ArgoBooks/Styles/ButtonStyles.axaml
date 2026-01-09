@@ -77,7 +77,7 @@
 
     <!-- Secondary Button (page header variant) -->
     <Style Selector="Button.secondary-button">
-        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SecondaryButtonBgBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="6" />
@@ -86,7 +86,7 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
     <Style Selector="Button.secondary-button /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SecondaryButtonBgBrush}" />
     </Style>
     <Style Selector="Button.secondary-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
