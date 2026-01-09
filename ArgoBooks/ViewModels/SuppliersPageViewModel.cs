@@ -95,11 +95,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     /// </summary>
     public ObservableCollection<string> AvailableCountries { get; } = [];
 
-    /// <summary>
-    /// Available status options for filter.
-    /// </summary>
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Active", "Inactive"];
-
     #endregion
 
     #region Modal State

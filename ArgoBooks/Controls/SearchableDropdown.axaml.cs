@@ -301,20 +301,6 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
     #endregion
 
-    #region Events
-
-    /// <summary>
-    /// Event raised when the selected item changes.
-    /// </summary>
-    public event EventHandler<object?>? SelectionChanged;
-
-    /// <summary>
-    /// Event raised when "Add new" is clicked.
-    /// </summary>
-    public event EventHandler? AddNewRequested;
-
-    #endregion
-
     public SearchableDropdown()
     {
         ToggleDropdownCommand = new RelayCommand(ToggleDropdown);
@@ -372,14 +358,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         _isSettingFromSelectedItem = true;
         try
         {
-            if (newValue != null)
-            {
-                SearchText = GetDisplayText(newValue);
-            }
-            else
-            {
-                SearchText = string.Empty;
-            }
+            SearchText = newValue != null ? GetDisplayText(newValue) : string.Empty;
         }
         finally
         {
@@ -498,8 +477,6 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         SearchText = GetDisplayText(item);
         IsDropdownOpen = false;
         _highlightedIndex = -1;
-
-        SelectionChanged?.Invoke(this, item);
     }
 
     private void OnSearchTextChanged()
@@ -619,11 +596,5 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
         var property = item.GetType().GetProperty(DisplayMemberPath);
         return property?.GetValue(item)?.ToString() ?? item.ToString() ?? string.Empty;
-    }
-
-    private void OnAddNewClicked()
-    {
-        AddNewRequested?.Invoke(this, EventArgs.Empty);
-        IsDropdownOpen = false;
     }
 }

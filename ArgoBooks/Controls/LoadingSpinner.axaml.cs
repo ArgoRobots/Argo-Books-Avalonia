@@ -89,7 +89,6 @@ public partial class LoadingSpinner : UserControl
         get
         {
             var center = ComputedSize / 2;
-            var radius = center - StrokeThickness / 2;
             return new Point(center, StrokeThickness / 2);
         }
     }

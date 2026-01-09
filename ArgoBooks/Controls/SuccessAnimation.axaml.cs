@@ -1,7 +1,6 @@
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media;
 using Avalonia.Media.Transformation;
 using Avalonia.Threading;
 
@@ -30,7 +29,7 @@ public partial class SuccessAnimation : UserControl
         AvaloniaProperty.Register<SuccessAnimation, ICommand?>(nameof(ContinueCommand));
 
     public static readonly StyledProperty<bool> IsPlayingProperty =
-        AvaloniaProperty.Register<SuccessAnimation, bool>(nameof(IsPlaying), false);
+        AvaloniaProperty.Register<SuccessAnimation, bool>(nameof(IsPlaying));
 
     public static readonly StyledProperty<int> ContinueButtonDelayMsProperty =
         AvaloniaProperty.Register<SuccessAnimation, int>(nameof(ContinueButtonDelayMs), 1500);

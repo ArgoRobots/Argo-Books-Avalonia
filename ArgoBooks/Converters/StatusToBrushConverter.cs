@@ -29,7 +29,7 @@ public class StatusToBrushConverter : IValueConverter
         if (value is not string status)
             return new SolidColorBrush(Color.Parse(_defaultColor));
 
-        var color = _statusColors.TryGetValue(status, out var colorHex) ? colorHex : _defaultColor;
+        var color = _statusColors.GetValueOrDefault(status, _defaultColor);
         return new SolidColorBrush(Color.Parse(color));
     }
 
