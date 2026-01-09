@@ -132,6 +132,11 @@ public partial class App : Application
     public static ReturnsModalsViewModel? ReturnsModalsViewModel => _appShellViewModel?.ReturnsModalsViewModel;
 
     /// <summary>
+    /// Gets the report modals view model for shared access.
+    /// </summary>
+    public static ReportModalsViewModel? ReportModalsViewModel => _appShellViewModel?.ReportModalsViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>
