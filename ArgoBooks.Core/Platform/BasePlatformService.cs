@@ -65,6 +65,25 @@ public abstract class BasePlatformService : IPlatformService
     public virtual Task<bool> AuthenticateWithBiometricAsync(string reason) => Task.FromResult(false);
 
     /// <inheritdoc />
+    public virtual void StorePasswordForBiometric(string fileId, string password)
+    {
+        // Default implementation does nothing - platforms that support biometrics should override
+    }
+
+    /// <inheritdoc />
+    public virtual string? GetPasswordForBiometric(string fileId)
+    {
+        // Default implementation returns null - platforms that support biometrics should override
+        return null;
+    }
+
+    /// <inheritdoc />
+    public virtual void ClearPasswordForBiometric(string fileId)
+    {
+        // Default implementation does nothing - platforms that support biometrics should override
+    }
+
+    /// <inheritdoc />
     public virtual bool SupportsAutoUpdate => true;
 
     /// <inheritdoc />

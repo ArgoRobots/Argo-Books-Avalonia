@@ -33,12 +33,27 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasError;
 
+    [ObservableProperty]
+    private bool _windowsHelloAvailable;
+
+    [ObservableProperty]
+    private bool _isWindowsHelloAuthenticating;
+
+    [ObservableProperty]
+    private bool _showWindowsHelloSuccess;
+
     private TaskCompletionSource<string?>? _completionSource;
+    private TaskCompletionSource<bool>? _windowsHelloSuccessCompletionSource;
 
     /// <summary>
     /// Event raised when the password textbox should be focused.
     /// </summary>
     public event EventHandler? FocusPasswordRequested;
+
+    /// <summary>
+    /// Event raised when Windows Hello authentication is requested.
+    /// </summary>
+    public event EventHandler? WindowsHelloAuthRequested;
 
     /// <summary>
     /// Gets the task that completes when the user submits a password.
@@ -73,8 +88,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     /// </summary>
     /// <param name="companyName">Name of the company file.</param>
     /// <param name="filePath">Path to the file.</param>
+    /// <param name="windowsHelloAvailable">Whether Windows Hello is available and enabled for this file.</param>
     /// <returns>The entered password, or null if cancelled.</returns>
-    public Task<string?> ShowAsync(string companyName, string filePath)
+    public Task<string?> ShowAsync(string companyName, string filePath, bool windowsHelloAvailable = false)
     {
         CompanyName = companyName;
         FilePath = filePath;
@@ -83,6 +99,9 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         HasError = false;
         IsLoading = false;
         IsPasswordVisible = false;
+        WindowsHelloAvailable = windowsHelloAvailable;
+        IsWindowsHelloAuthenticating = false;
+        ShowWindowsHelloSuccess = false;
         IsOpen = true;
 
         _completionSource = new TaskCompletionSource<string?>();
@@ -97,6 +116,7 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
         ErrorMessage = message;
         HasError = true;
         IsLoading = false;
+        IsWindowsHelloAuthenticating = false;
         Password = string.Empty;
         IsOpen = true; // Ensure modal stays/reopens
 
@@ -108,6 +128,39 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Called when Windows Hello authentication succeeds.
+    /// Shows success animation and then completes with a special marker.
+    /// </summary>
+    public void OnWindowsHelloSuccess()
+    {
+        IsWindowsHelloAuthenticating = false;
+        ShowWindowsHelloSuccess = true;
+        _windowsHelloSuccessCompletionSource = new TaskCompletionSource<bool>();
+    }
+
+    /// <summary>
+    /// Called when the success animation continue button is clicked.
+    /// </summary>
+    [RelayCommand]
+    private void ContinueAfterSuccess()
+    {
+        ShowWindowsHelloSuccess = false;
+        IsOpen = false;
+        _windowsHelloSuccessCompletionSource?.TrySetResult(true);
+        // Complete with special marker to indicate Windows Hello was used
+        _completionSource?.TrySetResult("__WINDOWS_HELLO__");
+    }
+
+    /// <summary>
+    /// Called when Windows Hello authentication fails.
+    /// </summary>
+    public void OnWindowsHelloFailed()
+    {
+        IsWindowsHelloAuthenticating = false;
+        // Don't show error - user may have cancelled, just let them try password
+    }
+
+    /// <summary>
     /// Closes the modal after successful password entry.
     /// Call this when the password was accepted.
     /// </summary>
@@ -115,6 +168,8 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     {
         IsOpen = false;
         IsLoading = false;
+        IsWindowsHelloAuthenticating = false;
+        ShowWindowsHelloSuccess = false;
         Password = string.Empty;
         ErrorMessage = string.Empty;
         HasError = false;
@@ -153,6 +208,21 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Authenticates using Windows Hello.
+    /// </summary>
+    [RelayCommand]
+    private void UseWindowsHello()
+    {
+        if (!WindowsHelloAvailable) return;
+
+        HasError = false;
+        IsWindowsHelloAuthenticating = true;
+
+        // Request Windows Hello authentication from the app
+        WindowsHelloAuthRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// Cancels the password prompt.
     /// </summary>
     [RelayCommand]
@@ -160,6 +230,8 @@ public partial class PasswordPromptModalViewModel : ViewModelBase
     {
         IsOpen = false;
         Password = string.Empty;
+        IsWindowsHelloAuthenticating = false;
+        ShowWindowsHelloSuccess = false;
         _completionSource?.TrySetResult(null);
     }
 

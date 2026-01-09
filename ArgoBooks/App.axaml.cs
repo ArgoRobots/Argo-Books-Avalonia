@@ -637,20 +637,87 @@ public partial class App : Application
             // Hide the loading modal before showing password prompt
             _mainWindowViewModel.HideLoading();
 
-            // Get company name from footer if possible
+            // Get company name and settings from footer if possible
             var footer = await CompanyManager.GetFileInfoAsync(filePath);
             var companyName = footer?.CompanyName ?? Path.GetFileNameWithoutExtension(filePath);
 
-            var password = await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(companyName, filePath);
+            // Check if Windows Hello is enabled for this file and available on the system
+            var windowsHelloEnabled = footer?.BiometricEnabled ?? false;
+            var windowsHelloAvailable = false;
+            var platformService = PlatformServiceFactory.GetPlatformService();
 
-            // Show loading again after user enters password (if they didn't cancel)
-            if (!string.IsNullOrEmpty(password))
+            if (windowsHelloEnabled)
             {
+                windowsHelloAvailable = await platformService.IsBiometricAvailableAsync();
+            }
+
+            var password = await _appShellViewModel.PasswordPromptModalViewModel.ShowAsync(
+                companyName, filePath, windowsHelloAvailable);
+
+            // Handle Windows Hello success - retrieve stored password
+            if (password == "__WINDOWS_HELLO__")
+            {
+                var fileId = GetBiometricFileId(filePath);
+                password = platformService.GetPasswordForBiometric(fileId);
+
+                if (string.IsNullOrEmpty(password))
+                {
+                    // Password not found in secure storage - fall back to manual entry
+                    _appShellViewModel.PasswordPromptModalViewModel.ShowError(
+                        "Stored password not found. Please enter the password manually.");
+                    password = await _appShellViewModel.PasswordPromptModalViewModel.WaitForPasswordAsync();
+                }
+                else
+                {
+                    _mainWindowViewModel.ShowLoading("Opening company...");
+                }
+            }
+            else if (!string.IsNullOrEmpty(password))
+            {
+                // Show loading again after user enters password (if they didn't cancel)
                 _mainWindowViewModel.ShowLoading("Opening company...");
             }
 
             return password;
         };
+
+        // Wire up Windows Hello authentication request from password modal
+        _appShellViewModel.PasswordPromptModalViewModel.WindowsHelloAuthRequested += async (_, _) =>
+        {
+            var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
+            var platformService = PlatformServiceFactory.GetPlatformService();
+
+            try
+            {
+                var success = await platformService.AuthenticateWithBiometricAsync(
+                    $"Verify your identity to open {passwordModal.CompanyName}");
+
+                if (success)
+                {
+                    passwordModal.OnWindowsHelloSuccess();
+                }
+                else
+                {
+                    passwordModal.OnWindowsHelloFailed();
+                }
+            }
+            catch
+            {
+                passwordModal.OnWindowsHelloFailed();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Generates a stable file ID for biometric password storage from a file path.
+    /// </summary>
+    private static string GetBiometricFileId(string filePath)
+    {
+        // Use a hash of the normalized file path as the ID
+        var normalizedPath = Path.GetFullPath(filePath).ToLowerInvariant();
+        var bytes = System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(normalizedPath));
+        return Convert.ToHexString(bytes)[..32]; // First 32 hex chars (16 bytes)
     }
 
     /// <summary>
@@ -1277,6 +1344,29 @@ public partial class App : Application
             {
                 CompanyManager.CurrentCompanySettings.Security.BiometricEnabled = args.Enabled;
                 CompanyManager.MarkAsChanged();
+
+                // Store or clear password for biometric unlock
+                if (CompanyManager.CurrentFilePath != null)
+                {
+                    var fileId = GetBiometricFileId(CompanyManager.CurrentFilePath);
+                    var platformService = PlatformServiceFactory.GetPlatformService();
+
+                    if (args.Enabled && CompanyManager.IsEncrypted)
+                    {
+                        // Store the current password for biometric unlock
+                        // Note: We need to get the password from CompanyManager
+                        var password = CompanyManager.GetCurrentPassword();
+                        if (!string.IsNullOrEmpty(password))
+                        {
+                            platformService.StorePasswordForBiometric(fileId, password);
+                        }
+                    }
+                    else
+                    {
+                        // Clear stored password
+                        platformService.ClearPasswordForBiometric(fileId);
+                    }
+                }
             }
         };
 

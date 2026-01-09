@@ -167,7 +167,8 @@ public class FileService(
             PasswordHash = passwordHash,
             CompanyName = GetCompanyNameFromDirectory(tempDirectory),
             Accountants = await GetAccountantNamesAsync(tempDirectory, cancellationToken),
-            ModifiedAt = DateTime.UtcNow
+            ModifiedAt = DateTime.UtcNow,
+            BiometricEnabled = GetBiometricEnabledFromDirectory(tempDirectory)
         };
 
         // Check if file exists to preserve created date
@@ -357,6 +358,27 @@ public class FileService(
             return Path.GetFileName(subdirs[0]);
 
         return Path.GetFileName(tempDirectory);
+    }
+
+    private bool GetBiometricEnabledFromDirectory(string tempDirectory)
+    {
+        // Read the biometric enabled setting from the company settings
+        try
+        {
+            var settingsPath = FindFileInDirectory(tempDirectory, "appSettings.json");
+            if (settingsPath != null && File.Exists(settingsPath))
+            {
+                var json = File.ReadAllText(settingsPath);
+                var settings = JsonSerializer.Deserialize<CompanySettings>(json, JsonOptions);
+                return settings?.Security.BiometricEnabled ?? false;
+            }
+        }
+        catch
+        {
+            // Default to false
+        }
+
+        return false;
     }
 
     private static string GetCompanyDirectory(string tempDirectory)
