@@ -2,6 +2,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Transformation;
 using Avalonia.Threading;
 
 namespace ArgoBooks.Controls;
