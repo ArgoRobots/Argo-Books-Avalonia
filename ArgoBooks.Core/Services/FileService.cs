@@ -287,39 +287,40 @@ public class FileService(
     /// <summary>
     /// Saves all company data to a temporary directory.
     /// </summary>
+    /// <param name="companyDirectory">The company subdirectory (not the temp root) where data files should be saved.</param>
+    /// <param name="data">The company data to save.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task SaveCompanyDataAsync(
-        string tempDirectory,
+        string companyDirectory,
         CompanyData data,
         CancellationToken cancellationToken = default)
     {
-        // Find or create the company subdirectory
-        var companyDir = GetCompanyDirectory(tempDirectory);
-
-        await WriteJsonAsync(companyDir, "appSettings.json", data.Settings, cancellationToken);
-        await WriteJsonAsync(companyDir, "idCounters.json", data.IdCounters, cancellationToken);
-        await WriteJsonAsync(companyDir, "customers.json", data.Customers, cancellationToken);
-        await WriteJsonAsync(companyDir, "products.json", data.Products, cancellationToken);
-        await WriteJsonAsync(companyDir, "suppliers.json", data.Suppliers, cancellationToken);
-        await WriteJsonAsync(companyDir, "employees.json", data.Employees, cancellationToken);
-        await WriteJsonAsync(companyDir, "departments.json", data.Departments, cancellationToken);
-        await WriteJsonAsync(companyDir, "categories.json", data.Categories, cancellationToken);
-        await WriteJsonAsync(companyDir, "accountants.json", data.Accountants, cancellationToken);
-        await WriteJsonAsync(companyDir, "locations.json", data.Locations, cancellationToken);
-        await WriteJsonAsync(companyDir, "sales.json", data.Sales, cancellationToken);
-        await WriteJsonAsync(companyDir, "purchases.json", data.Purchases, cancellationToken);
-        await WriteJsonAsync(companyDir, "invoices.json", data.Invoices, cancellationToken);
-        await WriteJsonAsync(companyDir, "payments.json", data.Payments, cancellationToken);
-        await WriteJsonAsync(companyDir, "recurringInvoices.json", data.RecurringInvoices, cancellationToken);
-        await WriteJsonAsync(companyDir, "inventory.json", data.Inventory, cancellationToken);
-        await WriteJsonAsync(companyDir, "stockAdjustments.json", data.StockAdjustments, cancellationToken);
-        await WriteJsonAsync(companyDir, "stockTransfers.json", data.StockTransfers, cancellationToken);
-        await WriteJsonAsync(companyDir, "purchaseOrders.json", data.PurchaseOrders, cancellationToken);
-        await WriteJsonAsync(companyDir, "rentalInventory.json", data.RentalInventory, cancellationToken);
-        await WriteJsonAsync(companyDir, "rentals.json", data.Rentals, cancellationToken);
-        await WriteJsonAsync(companyDir, "returns.json", data.Returns, cancellationToken);
-        await WriteJsonAsync(companyDir, "lostDamaged.json", data.LostDamaged, cancellationToken);
-        await WriteJsonAsync(companyDir, "receipts.json", data.Receipts, cancellationToken);
-        await WriteJsonAsync(companyDir, "reportTemplates.json", data.ReportTemplates, cancellationToken);
+        // Write directly to the provided company directory - caller is responsible for providing the correct path
+        await WriteJsonAsync(companyDirectory, "appSettings.json", data.Settings, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "idCounters.json", data.IdCounters, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "customers.json", data.Customers, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "products.json", data.Products, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "suppliers.json", data.Suppliers, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "employees.json", data.Employees, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "departments.json", data.Departments, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "categories.json", data.Categories, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "accountants.json", data.Accountants, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "locations.json", data.Locations, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "sales.json", data.Sales, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "purchases.json", data.Purchases, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "invoices.json", data.Invoices, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "payments.json", data.Payments, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "recurringInvoices.json", data.RecurringInvoices, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "inventory.json", data.Inventory, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "stockAdjustments.json", data.StockAdjustments, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "stockTransfers.json", data.StockTransfers, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "purchaseOrders.json", data.PurchaseOrders, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "rentalInventory.json", data.RentalInventory, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "rentals.json", data.Rentals, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "returns.json", data.Returns, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "lostDamaged.json", data.LostDamaged, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "receipts.json", data.Receipts, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "reportTemplates.json", data.ReportTemplates, cancellationToken);
 
         data.MarkAsSaved();
     }
