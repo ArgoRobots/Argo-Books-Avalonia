@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using ArgoBooks.Core.Services;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -230,7 +231,7 @@ public partial class AppShellViewModel : ViewModelBase
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
-    public AppShellViewModel() : this(null, null)
+    public AppShellViewModel() : this(null)
     {
     }
 
@@ -238,36 +239,35 @@ public partial class AppShellViewModel : ViewModelBase
     /// Constructor with dependency injection.
     /// </summary>
     /// <param name="navigationService">Navigation service.</param>
-    /// <param name="settingsService">Settings service.</param>
-    public AppShellViewModel(INavigationService? navigationService, ISettingsService? settingsService)
+    public AppShellViewModel(INavigationService? navigationService)
     {
         _navigationService = navigationService;
 
         // Create sidebar with navigation service
-        SidebarViewModel = new SidebarViewModel(navigationService, settingsService);
+        SidebarViewModel = new SidebarViewModel(navigationService);
 
         // Create header with navigation service
         HeaderViewModel = new HeaderViewModel(navigationService);
 
         // Create quick actions panel with navigation service and link to sidebar
-        QuickActionsViewModel = new QuickActionsViewModel(navigationService);
+        QuickActionsViewModel = new QuickActionsViewModel();
         QuickActionsViewModel.SetSidebarViewModel(SidebarViewModel);
 
         // Create notification panel with header view model (shares notifications)
         NotificationPanelViewModel = new NotificationPanelViewModel(HeaderViewModel);
 
         // Create user panel with navigation service and header view model
-        UserPanelViewModel = new UserPanelViewModel(navigationService, HeaderViewModel);
+        UserPanelViewModel = new UserPanelViewModel(HeaderViewModel);
 
         // Create file menu panel with navigation service and link to sidebar for dynamic positioning
-        FileMenuPanelViewModel = new FileMenuPanelViewModel(navigationService);
+        FileMenuPanelViewModel = new FileMenuPanelViewModel();
         FileMenuPanelViewModel.SetSidebarViewModel(SidebarViewModel);
 
         // Create profile modal with navigation service and header view model
-        ProfileModalViewModel = new ProfileModalViewModel(navigationService, HeaderViewModel);
+        ProfileModalViewModel = new ProfileModalViewModel(HeaderViewModel);
 
         // Create help panel with navigation service
-        HelpPanelViewModel = new HelpPanelViewModel(navigationService);
+        HelpPanelViewModel = new HelpPanelViewModel();
 
         // Create upgrade modal
         UpgradeModalViewModel = new UpgradeModalViewModel();
@@ -801,7 +801,7 @@ public class ObservableDictionary<TKey, TValue> : ObservableCollection<KeyValueP
         set
         {
             _dictionary[key] = value;
-            OnCollectionChanged(new System.Collections.Specialized.NotifyCollectionChangedEventArgs(
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(
                 System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
         }
     }

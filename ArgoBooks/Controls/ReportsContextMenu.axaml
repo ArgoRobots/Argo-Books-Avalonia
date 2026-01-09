@@ -7,6 +7,31 @@
              x:Class="ArgoBooks.Controls.ReportsContextMenu"
              x:DataType="controls:ReportsContextMenu">
 
+    <UserControl.Styles>
+        <!-- Context menu item styles (defined in AnimatedContextMenu, duplicated here for designer support) -->
+        <Style Selector="Button.context-menu-item">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.context-menu-item:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+        </Style>
+        <Style Selector="Button.context-menu-item:pressed">
+            <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
+        </Style>
+        <Style Selector="Button.context-menu-item.danger:pointerover">
+            <Setter Property="Background" Value="#FFEBEE" />
+        </Style>
+        <Style Selector="Button.context-menu-item.danger:pressed">
+            <Setter Property="Background" Value="#FFCDD2" />
+        </Style>
+    </UserControl.Styles>
+
     <controls:AnimatedContextMenu IsOpen="{Binding IsOpen, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}"
                                    MenuX="{Binding MenuX, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}"
                                    MenuY="{Binding MenuY, RelativeSource={RelativeSource AncestorType=controls:ReportsContextMenu}}"

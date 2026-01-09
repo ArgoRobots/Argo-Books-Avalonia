@@ -12,8 +12,6 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class HelpPanelViewModel : ViewModelBase
 {
-    private readonly INavigationService? _navigationService;
-
     [ObservableProperty]
     private bool _isOpen;
 
@@ -25,14 +23,6 @@ public partial class HelpPanelViewModel : ViewModelBase
     /// </summary>
     public HelpPanelViewModel()
     {
-    }
-
-    /// <summary>
-    /// Constructor with dependencies.
-    /// </summary>
-    public HelpPanelViewModel(INavigationService? navigationService)
-    {
-        _navigationService = navigationService;
     }
 
     #region Commands

@@ -214,12 +214,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
         LoadDepartments();
 
         // Subscribe to undo/redo state changes to refresh UI
-        // This is necessary because a new ViewModel instance is created on each navigation,
-        // but undo/redo actions capture the old ViewModel instance
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to shared modal events to refresh data
         if (App.DepartmentModalsViewModel != null)

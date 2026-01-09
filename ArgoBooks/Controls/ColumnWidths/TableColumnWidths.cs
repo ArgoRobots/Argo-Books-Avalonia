@@ -54,8 +54,11 @@ public partial class TableColumnWidths : TableColumnWidthsBase
 
     public TableColumnWidths()
     {
-        ColumnOrder = new[] { "Id", "Accountant", "Product", "Supplier", "Date", "Quantity",
-            "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions" };
+        ColumnOrder =
+        [
+            "Id", "Accountant", "Product", "Supplier", "Date", "Quantity",
+            "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions"
+        ];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 1.2, MinWidth = 60, PreferredWidth = 100 }, w => IdColumnWidth = w);
         RegisterColumn("Accountant", new ColumnDef { StarValue = 1.0, MinWidth = 70, PreferredWidth = 120 }, w => AccountantColumnWidth = w);

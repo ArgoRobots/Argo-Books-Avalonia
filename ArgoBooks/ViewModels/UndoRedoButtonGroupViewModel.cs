@@ -55,12 +55,12 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     /// <summary>
     /// Undo history items.
     /// </summary>
-    public ObservableCollection<UndoRedoHistoryItem> UndoHistory { get; } = new();
+    public ObservableCollection<UndoRedoHistoryItem> UndoHistory { get; } = [];
 
     /// <summary>
     /// Redo history items.
     /// </summary>
-    public ObservableCollection<UndoRedoHistoryItem> RedoHistory { get; } = new();
+    public ObservableCollection<UndoRedoHistoryItem> RedoHistory { get; } = [];
 
     /// <summary>
     /// Event raised when the undo dropdown should be shown.

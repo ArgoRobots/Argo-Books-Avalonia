@@ -93,11 +93,11 @@ public partial class DashboardPage : UserControl
             Title = "Save Chart as Image",
             SuggestedFileName = suggestedFileName,
             DefaultExtension = "png",
-            FileTypeChoices = new[]
-            {
-                new FilePickerFileType("PNG Image") { Patterns = new[] { "*.png" } },
-                new FilePickerFileType("JPEG Image") { Patterns = new[] { "*.jpg", "*.jpeg" } }
-            }
+            FileTypeChoices =
+            [
+                new FilePickerFileType("PNG Image") { Patterns = ["*.png"] },
+                new FilePickerFileType("JPEG Image") { Patterns = ["*.jpg", "*.jpeg"] }
+            ]
         });
 
         if (file == null) return;
@@ -168,10 +168,10 @@ public partial class DashboardPage : UserControl
             Title = "Export Chart to Excel",
             SuggestedFileName = suggestedFileName,
             DefaultExtension = "xlsx",
-            FileTypeChoices = new[]
-            {
-                new FilePickerFileType("Excel Workbook") { Patterns = new[] { "*.xlsx" } }
-            }
+            FileTypeChoices =
+            [
+                new FilePickerFileType("Excel Workbook") { Patterns = ["*.xlsx"] }
+            ]
         });
 
         if (file == null) return;

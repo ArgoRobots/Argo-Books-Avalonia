@@ -1,0 +1,107 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="300"
+             x:Class="ArgoBooks.Controls.SuccessAnimation"
+             x:DataType="controls:SuccessAnimation">
+
+    <StackPanel VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Spacing="24"
+                Margin="48">
+        <!-- Animated Success Circle with Glow -->
+        <Panel HorizontalAlignment="Center">
+            <!-- Glow effect behind the circle -->
+            <Border x:Name="SuccessGlow"
+                    Width="120" Height="120"
+                    CornerRadius="60"
+                    Opacity="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <Border.Background>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#22C55E" Offset="0" />
+                        <GradientStop Color="Transparent" Offset="1" />
+                    </RadialGradientBrush>
+                </Border.Background>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.4" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+            </Border>
+            <!-- Main circle -->
+            <Border x:Name="SuccessCircle"
+                    Width="100" Height="100"
+                    CornerRadius="50"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    ClipToBounds="True"
+                    Opacity="0"
+                    BoxShadow="0 4 20 0 #4022C55E">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#22C55E" Offset="0" />
+                        <GradientStop Color="#16A34A" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.5" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                          Width="48" Height="48"
+                          Foreground="White"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center" />
+            </Border>
+        </Panel>
+
+        <!-- Success Text -->
+        <StackPanel x:Name="SuccessTextPanel"
+                    Spacing="8"
+                    HorizontalAlignment="Center"
+                    Opacity="0">
+            <StackPanel.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                </Transitions>
+            </StackPanel.Transitions>
+            <TextBlock x:Name="TitleText"
+                       Text="{Binding Title, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}}"
+                       FontSize="20"
+                       FontWeight="SemiBold"
+                       Foreground="#22C55E"
+                       HorizontalAlignment="Center" />
+            <TextBlock x:Name="MessageText"
+                       Text="{Binding Message, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}}"
+                       FontSize="14"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       HorizontalAlignment="Center"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       MaxWidth="300"
+                       IsVisible="{Binding Message, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+
+        <!-- Continue Button (appears after delay with animation) -->
+        <Panel x:Name="ContinueButtonPanel"
+               HorizontalAlignment="Center"
+               Opacity="0"
+               IsVisible="{Binding ShowContinueButton, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}}">
+            <Panel.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                </Transitions>
+            </Panel.Transitions>
+            <Button Classes="primary-button"
+                    Content="{Binding ContinueButtonText, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}}"
+                    Command="{Binding ContinueCommand, RelativeSource={RelativeSource AncestorType=controls:SuccessAnimation}}"
+                    HorizontalAlignment="Center"
+                    Padding="32,12" />
+        </Panel>
+    </StackPanel>
+</UserControl>

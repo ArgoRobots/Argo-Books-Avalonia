@@ -100,22 +100,22 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private bool _showDateColumn = true;
 
     [ObservableProperty]
-    private bool _showQuantityColumn = false;
+    private bool _showQuantityColumn;
 
     [ObservableProperty]
-    private bool _showUnitPriceColumn = false;
+    private bool _showUnitPriceColumn;
 
     [ObservableProperty]
-    private bool _showAmountColumn = false;
+    private bool _showAmountColumn;
 
     [ObservableProperty]
-    private bool _showTaxColumn = false;
+    private bool _showTaxColumn;
 
     [ObservableProperty]
-    private bool _showShippingColumn = false;
+    private bool _showShippingColumn;
 
     [ObservableProperty]
-    private bool _showDiscountColumn = false;
+    private bool _showDiscountColumn;
 
     [ObservableProperty]
     private bool _showTotalColumn = true;
@@ -194,10 +194,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         LoadDropdownOptions();
 
         // Subscribe to undo/redo state changes to refresh UI
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to expense modal events to refresh data
         if (App.ExpenseModalsViewModel != null)
@@ -349,7 +346,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
         // Returns count (linked to returns data)
         var companyData = App.CompanyManager?.CompanyData;
-        ReturnsCount = companyData?.Returns?.Count(r =>
+        ReturnsCount = companyData?.Returns.Count(r =>
             _allExpenses.Any(p => p.Id == r.OriginalTransactionId)) ?? 0;
     }
 
@@ -517,14 +514,14 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private static string GetStatusDisplay(Purchase purchase, Core.Data.CompanyData? companyData)
     {
         // Check for lost/damaged related to this purchase
-        var relatedLostDamaged = companyData?.LostDamaged?.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
+        var relatedLostDamaged = companyData?.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == purchase.Id);
         if (relatedLostDamaged != null)
         {
             return "Lost/Damaged";
         }
 
         // Check for returns related to this purchase
-        var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
+        var relatedReturn = companyData?.Returns.FirstOrDefault(r => r.OriginalTransactionId == purchase.Id);
 
         if (relatedReturn is { Status: ReturnStatus.Completed })
         {
@@ -629,7 +626,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             return;
 
         // Try to get the receipt path - check if file exists, otherwise load from stored data
-        var receiptPath = GetReceiptImagePath(item.Id, item.ReceiptFilePath);
+        var receiptPath = GetReceiptImagePath(item.Id);
         if (string.IsNullOrEmpty(receiptPath))
             return;
 
@@ -639,7 +636,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         IsReceiptFullscreen = false;
     }
 
-    private string? GetReceiptImagePath(string expenseId, string? originalPath)
+    private string? GetReceiptImagePath(string expenseId)
     {
         // Always load from company file to ensure consistency
         var companyData = App.CompanyManager?.CompanyData;
@@ -647,7 +644,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         var expense = companyData?.Purchases.FirstOrDefault(p => p.Id == expenseId);
         if (expense == null || string.IsNullOrEmpty(expense.ReceiptId)) return null;
 
-        var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
+        var receipt = companyData?.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
         if (receipt == null || string.IsNullOrEmpty(receipt.FileData)) return null;
 
         try

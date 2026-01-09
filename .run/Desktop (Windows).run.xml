@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Desktop (Windows)" type="DotNetProject" factoryName=".NET Project">
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$/ArgoBooks.Desktop/ArgoBooks.Desktop.csproj" />
+    <option name="PROJECT_EXE_PATH_TRACKING" value="true" />
+    <option name="PROJECT_ARGUMENTS" value="" />
+    <option name="PROJECT_KIND" value="DotNetCore" />
+    <option name="PROJECT_TFM" value="net10.0-windows10.0.17763.0" />
+    <option name="USE_EXTERNAL_CONSOLE" value="false" />
+    <method v="2">
+      <option name="Build" />
+    </method>
+  </configuration>
+</component>

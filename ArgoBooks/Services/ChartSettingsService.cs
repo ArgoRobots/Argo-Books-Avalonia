@@ -172,17 +172,17 @@ public partial class ChartSettingsService : ObservableObject
         DateRangeChanged?.Invoke(this, value);
     }
 
-    partial void OnStartDateChanged(DateTime _)
+    partial void OnStartDateChanged(DateTime value)
     {
         OnPropertyChanged(nameof(AppliedDateRangeText));
     }
 
-    partial void OnEndDateChanged(DateTime _)
+    partial void OnEndDateChanged(DateTime value)
     {
         OnPropertyChanged(nameof(AppliedDateRangeText));
     }
 
-    partial void OnHasAppliedCustomRangeChanged(bool _)
+    partial void OnHasAppliedCustomRangeChanged(bool value)
     {
         OnPropertyChanged(nameof(AppliedDateRangeText));
     }

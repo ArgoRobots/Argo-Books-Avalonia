@@ -180,13 +180,13 @@ public partial class DepartmentModalsViewModel : ObservableObject
         if (department == null) return;
 
         var deletedDept = department;
-        companyData.Departments.Remove(department);
-        companyData.MarkAsModified();
+        companyData?.Departments.Remove(department);
+        companyData?.MarkAsModified();
 
         App.UndoRedoManager?.RecordAction(new DelegateAction(
             $"Delete department '{deletedDept.Name}'",
-            () => { companyData.Departments.Add(deletedDept); companyData.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); },
-            () => { companyData.Departments.Remove(deletedDept); companyData.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); }));
+            () => { companyData?.Departments.Add(deletedDept); companyData?.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); },
+            () => { companyData?.Departments.Remove(deletedDept); companyData?.MarkAsModified(); DepartmentDeleted?.Invoke(this, EventArgs.Empty); }));
 
         DepartmentDeleted?.Invoke(this, EventArgs.Empty);
     }

@@ -11,8 +11,8 @@ namespace ArgoBooks.ViewModels;
 public partial class SettingsModalViewModel : ViewModelBase
 {
     // Store original values for reverting on cancel
-    private string _originalTheme = "Dark";
-    private string _originalAccentColor = "Blue";
+    private string _originalTheme;
+    private string _originalAccentColor;
     private string _originalDateFormat = "MM/DD/YYYY";
     private int _originalMaxPieSlices = 6;
 
@@ -64,13 +64,13 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public IReadOnlyList<string> Currencies => Data.Currencies.All;
 
-    public ObservableCollection<string> DateFormats { get; } = new()
-    {
+    public ObservableCollection<string> DateFormats { get; } =
+    [
         "MM/DD/YYYY",
         "DD/MM/YYYY",
         "YYYY-MM-DD",
         "MMM D, YYYY"
-    };
+    ];
 
     #endregion
 
@@ -93,27 +93,27 @@ public partial class SettingsModalViewModel : ViewModelBase
     #region Appearance Settings
 
     [ObservableProperty]
-    private string _selectedTheme = "Dark";
+    private string _selectedTheme;
 
     [ObservableProperty]
-    private string _selectedAccentColor = "Blue";
+    private string _selectedAccentColor;
 
-    public ObservableCollection<string> Themes { get; } = new()
-    {
+    public ObservableCollection<string> Themes { get; } =
+    [
         "Light",
         "Dark",
         "System"
-    };
+    ];
 
-    public ObservableCollection<AccentColorItem> AccentColors { get; } = new()
-    {
-        new AccentColorItem("Blue", "#3B82F6"),
-        new AccentColorItem("Green", "#10B981"),
-        new AccentColorItem("Purple", "#8B5CF6"),
-        new AccentColorItem("Pink", "#EC4899"),
-        new AccentColorItem("Orange", "#F97316"),
-        new AccentColorItem("Teal", "#14B8A6")
-    };
+    public ObservableCollection<AccentColorItem> AccentColors { get; } =
+    [
+        new("Blue", "#3B82F6"),
+        new("Green", "#10B981"),
+        new("Purple", "#8B5CF6"),
+        new("Pink", "#EC4899"),
+        new("Orange", "#F97316"),
+        new("Teal", "#14B8A6")
+    ];
 
     #endregion
 
@@ -372,14 +372,14 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public event EventHandler<AutoLockSettingsEventArgs>? AutoLockSettingsChanged;
 
-    public ObservableCollection<string> AutoLockOptions { get; } = new()
-    {
+    public ObservableCollection<string> AutoLockOptions { get; } =
+    [
         "Never",
         "5 minutes",
         "15 minutes",
         "30 minutes",
         "1 hour"
-    };
+    ];
 
     #endregion
 
@@ -459,7 +459,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             var dialog = App.ConfirmationDialog;
             if (dialog != null)
             {
-                var result = await dialog.ShowAsync(new ConfirmationDialogOptions
+                var result = await dialog.ShowAsync(new ConfirmationDialogOptions()
                 {
                     Title = "Unsaved Changes",
                     Message = "You have unsaved changes. Do you want to save them before closing?",
@@ -517,6 +517,11 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Event raised when the company file should be saved (after security settings change).
+    /// </summary>
+    public event EventHandler? SaveCompanyRequested;
+
+    /// <summary>
     /// Saves the settings and closes the modal.
     /// </summary>
     [RelayCommand]
@@ -558,6 +563,12 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (maxPieSlicesChanged)
         {
             ChartSettingsService.NotifyMaxPieSlicesChanged();
+        }
+
+        // Save the company file if there are unsaved changes (e.g., security settings)
+        if (App.CompanyManager?.HasUnsavedChanges == true)
+        {
+            SaveCompanyRequested?.Invoke(this, EventArgs.Empty);
         }
 
         IsOpen = false;

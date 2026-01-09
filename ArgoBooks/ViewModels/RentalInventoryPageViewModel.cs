@@ -153,10 +153,8 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
     {
         LoadItems();
 
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        // Subscribe to undo/redo state changes to refresh UI
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         if (App.RentalInventoryModalsViewModel != null)
         {

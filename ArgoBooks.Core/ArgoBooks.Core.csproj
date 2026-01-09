@@ -35,4 +35,10 @@
         <PackageReference Include="Google.Apis.Sheets.v4" />
         <PackageReference Include="Google.Apis.Drive.v3" />
     </ItemGroup>
+
+    <!-- Windows-specific packages -->
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+        <!-- DPAPI for secure credential storage -->
+        <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+    </ItemGroup>
 </Project>

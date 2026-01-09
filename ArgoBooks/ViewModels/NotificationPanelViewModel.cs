@@ -39,30 +39,32 @@ public partial class NotificationPanelViewModel : ViewModelBase
     /// </summary>
     public NotificationPanelViewModel()
     {
-        Notifications = new ObservableCollection<NotificationItem>
-        {
-            new()
+        Notifications =
+        [
+            new NotificationItem
             {
                 Title = "Low Stock Alert",
                 Message = "Widget A is running low (5 remaining)",
                 Type = NotificationType.Warning,
                 Timestamp = DateTime.Now.AddMinutes(-15)
             },
-            new()
+
+            new NotificationItem
             {
                 Title = "Payment Received",
                 Message = "$1,500.00 from ABC Company",
                 Type = NotificationType.Success,
                 Timestamp = DateTime.Now.AddHours(-2)
             },
-            new()
+
+            new NotificationItem
             {
                 Title = "Invoice Overdue",
                 Message = "INV-2024-001 is 5 days overdue",
                 Type = NotificationType.Error,
                 Timestamp = DateTime.Now.AddDays(-1)
             }
-        };
+        ];
     }
 
     /// <summary>

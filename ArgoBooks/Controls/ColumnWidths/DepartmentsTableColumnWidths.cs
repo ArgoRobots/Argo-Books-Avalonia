@@ -21,7 +21,7 @@ public partial class DepartmentsTableColumnWidths : TableColumnWidthsBase
 
     public DepartmentsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Department", "Description", "Employees", "Actions" };
+        ColumnOrder = ["Department", "Description", "Employees", "Actions"];
 
         RegisterColumn("Department", new ColumnDef { StarValue = 1.2, MinWidth = 140, PreferredWidth = 200 }, w => DepartmentColumnWidth = w);
         RegisterColumn("Description", new ColumnDef { StarValue = 1.6, MinWidth = 160, PreferredWidth = 280 }, w => DescriptionColumnWidth = w);

@@ -11,7 +11,6 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class FileMenuPanelViewModel : ViewModelBase
 {
-    private readonly INavigationService? _navigationService;
     private SidebarViewModel? _sidebarViewModel;
 
     // Header button offset from sidebar edge (matches header's left padding)
@@ -80,14 +79,6 @@ public partial class FileMenuPanelViewModel : ViewModelBase
         RecentCompanies.Add(new RecentCompanyItem { Name = "My Company Inc.", Icon = "Building" });
         RecentCompanies.Add(new RecentCompanyItem { Name = "Side Business LLC", Icon = "Store" });
         RecentCompanies.Add(new RecentCompanyItem { Name = "Consulting Services", Icon = "Briefcase" });
-    }
-
-    /// <summary>
-    /// Constructor with dependencies.
-    /// </summary>
-    public FileMenuPanelViewModel(INavigationService? navigationService)
-    {
-        _navigationService = navigationService;
     }
 
     /// <summary>

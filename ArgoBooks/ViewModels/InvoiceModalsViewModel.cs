@@ -74,7 +74,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private string _modalNotes = string.Empty;
 
     [ObservableProperty]
-    private decimal _taxRate = 0;
+    private decimal _taxRate;
 
     [ObservableProperty]
     private string _validationMessage = string.Empty;
@@ -167,8 +167,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     #endregion
 
     #region Delete Confirmation
-
-    private string _deleteInvoiceIdInternal = string.Empty;
 
     [ObservableProperty]
     private string _deleteInvoiceId = string.Empty;
@@ -294,7 +292,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         LoadCustomerOptions(includeAllOption: false);
         LoadProductOptions();
 
-        var invoice = App.CompanyManager?.CompanyData?.Invoices?.FirstOrDefault(i => i.Id == item.Id);
+        var invoice = App.CompanyManager?.CompanyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
         // Only allow continuing draft invoices
@@ -359,7 +357,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         LoadCustomerOptions(includeAllOption: false);
         LoadProductOptions();
 
-        var invoice = App.CompanyManager?.CompanyData?.Invoices?.FirstOrDefault(i => i.Id == item.Id);
+        var invoice = App.CompanyManager?.CompanyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
         // Prevent editing invoices that have been sent
@@ -430,7 +428,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var invoice = companyData?.Invoices?.FirstOrDefault(i => i.Id == item.Id);
+        var invoice = companyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
         // Create undo action
@@ -439,20 +437,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             $"Delete invoice {invoice.Id}",
             () =>
             {
-                companyData.Invoices.Add(deletedInvoice);
+                companyData?.Invoices.Add(deletedInvoice);
                 InvoiceDeleted?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData.Invoices.Remove(deletedInvoice);
+                companyData?.Invoices.Remove(deletedInvoice);
                 InvoiceDeleted?.Invoke(this, EventArgs.Empty);
             });
 
         // Remove the invoice
-        companyData.Invoices.Remove(invoice);
+        companyData?.Invoices?.Remove(invoice);
 
         // Record undo action and mark as changed
-        App.UndoRedoManager?.RecordAction(action);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceDeleted?.Invoke(this, EventArgs.Empty);

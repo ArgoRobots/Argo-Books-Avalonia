@@ -44,7 +44,8 @@ public partial class StockLevelsTableColumnWidths : TableColumnWidthsBase
 
     public StockLevelsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Product", "Sku", "Category", "Location", "InStock", "Reserved", "Available", "ReorderPoint", "Status", "Actions" };
+        ColumnOrder = ["Product", "Sku", "Category", "Location", "InStock", "Reserved", "Available", "ReorderPoint", "Status", "Actions"
+        ];
 
         // Product column - main identifier
         RegisterColumn("Product", new ColumnDef

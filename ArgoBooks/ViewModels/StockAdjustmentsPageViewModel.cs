@@ -147,10 +147,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         LoadAdjustments();
 
         // Subscribe to undo/redo state changes to refresh UI
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to modal events to refresh when adjustments are made
         if (App.StockLevelsModalsViewModel != null)
@@ -231,7 +228,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         // Update location options
         LocationOptions.Clear();
         LocationOptions.Add("All");
-        var locations = companyData.Locations?.Select(l => l.Name).Distinct().OrderBy(n => n).ToList() ?? new List<string>();
+        var locations = companyData.Locations?.Select(l => l.Name).Distinct().OrderBy(n => n).ToList() ?? [];
         foreach (var location in locations)
         {
             LocationOptions.Add(location);
@@ -240,7 +237,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         // Update product options
         ProductOptions.Clear();
         ProductOptions.Add("All");
-        var products = companyData.Products?.Select(p => p.Name).Distinct().OrderBy(n => n).ToList() ?? new List<string>();
+        var products = companyData.Products?.Select(p => p.Name).Distinct().OrderBy(n => n).ToList() ?? [];
         foreach (var product in products)
         {
             ProductOptions.Add(product);

@@ -13,7 +13,6 @@ namespace ArgoBooks.ViewModels;
 public partial class SidebarViewModel : ViewModelBase
 {
     private readonly INavigationService? _navigationService;
-    private readonly ISettingsService? _settingsService;
 
     #region Sidebar State
 
@@ -126,17 +125,16 @@ public partial class SidebarViewModel : ViewModelBase
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
-    public SidebarViewModel() : this(null, null)
+    public SidebarViewModel() : this(null)
     {
     }
 
     /// <summary>
     /// Constructor with dependency injection.
     /// </summary>
-    public SidebarViewModel(INavigationService? navigationService, ISettingsService? settingsService)
+    public SidebarViewModel(INavigationService? navigationService)
     {
         _navigationService = navigationService;
-        _settingsService = settingsService;
 
         InitializeNavigationItems();
     }

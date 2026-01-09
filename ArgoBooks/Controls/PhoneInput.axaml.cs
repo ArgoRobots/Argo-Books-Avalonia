@@ -183,7 +183,7 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Gets the filtered dial codes based on search.
     /// </summary>
-    public ObservableCollection<CountryDialCode> FilteredDialCodes { get; } = new();
+    public ObservableCollection<CountryDialCode> FilteredDialCodes { get; } = [];
 
     #endregion
 

@@ -125,7 +125,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     private ScaleTransform? _zoomTransform;
 
     // Selection state
-    private readonly List<ReportElementBase> _selectedElements = new();
+    private readonly List<ReportElementBase> _selectedElements = [];
     private ReportElementBase? _hoveredElement;
 
     // Interaction state
@@ -535,14 +535,14 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         return new Dictionary<ResizeHandle, Point>
         {
-            [ResizeHandle.TopLeft] = new Point(x, y),
-            [ResizeHandle.Top] = new Point(x + w / 2, y),
-            [ResizeHandle.TopRight] = new Point(x + w, y),
-            [ResizeHandle.Left] = new Point(x, y + h / 2),
-            [ResizeHandle.Right] = new Point(x + w, y + h / 2),
-            [ResizeHandle.BottomLeft] = new Point(x, y + h),
-            [ResizeHandle.Bottom] = new Point(x + w / 2, y + h),
-            [ResizeHandle.BottomRight] = new Point(x + w, y + h)
+            [ResizeHandle.TopLeft] = new(x, y),
+            [ResizeHandle.Top] = new(x + w / 2, y),
+            [ResizeHandle.TopRight] = new(x + w, y),
+            [ResizeHandle.Left] = new(x, y + h / 2),
+            [ResizeHandle.Right] = new(x + w, y + h / 2),
+            [ResizeHandle.BottomLeft] = new(x, y + h),
+            [ResizeHandle.Bottom] = new(x + w / 2, y + h),
+            [ResizeHandle.BottomRight] = new(x + w, y + h)
         };
     }
 

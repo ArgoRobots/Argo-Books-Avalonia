@@ -39,7 +39,8 @@ public partial class RentalInventoryTableColumnWidths : TableColumnWidthsBase
 
     public RentalInventoryTableColumnWidths()
     {
-        ColumnOrder = new[] { "Item", "Supplier", "Status", "TotalQty", "Available", "Rented", "DailyRate", "WeeklyRate", "Deposit", "Actions" };
+        ColumnOrder = ["Item", "Supplier", "Status", "TotalQty", "Available", "Rented", "DailyRate", "WeeklyRate", "Deposit", "Actions"
+        ];
 
         RegisterColumn("Item", new ColumnDef { StarValue = 1.4, MinWidth = 120, PreferredWidth = 150 }, w => ItemColumnWidth = w);
         RegisterColumn("Supplier", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 120 }, w => SupplierColumnWidth = w);

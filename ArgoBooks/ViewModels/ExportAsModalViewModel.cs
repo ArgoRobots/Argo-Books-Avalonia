@@ -73,15 +73,12 @@ public partial class ExportAsModalViewModel : ViewModelBase
     /// <summary>
     /// Available file formats for spreadsheet export.
     /// </summary>
-    public ObservableCollection<string> FileFormats { get; } = new()
-    {
-        "xlsx"
-    };
+    public ObservableCollection<string> FileFormats { get; } = ["xlsx"];
 
     /// <summary>
     /// Data items available for export.
     /// </summary>
-    public ObservableCollection<ExportDataItem> DataItems { get; } = new();
+    public ObservableCollection<ExportDataItem> DataItems { get; } = [];
 
     /// <summary>
     /// Default constructor.
@@ -239,7 +236,7 @@ public class ExportEventArgs(string format, List<string> selectedDataItems, Date
     public DateTime? StartDate { get; } = startDate;
     public DateTime? EndDate { get; } = endDate;
 
-    public ExportEventArgs(string format, bool includeAttachments) : this(format, new List<string>(), null, null)
+    public ExportEventArgs(string format, bool includeAttachments) : this(format, [], null, null)
     {
         IncludeAttachments = includeAttachments;
     }

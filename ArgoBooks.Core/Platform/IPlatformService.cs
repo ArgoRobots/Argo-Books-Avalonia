@@ -75,6 +75,28 @@ public interface IPlatformService
     Task<bool> AuthenticateWithBiometricAsync(string reason);
 
     /// <summary>
+    /// Stores a password securely for biometric unlock.
+    /// The password is encrypted using platform-specific secure storage.
+    /// </summary>
+    /// <param name="fileId">Unique identifier for the file (typically file path hash).</param>
+    /// <param name="password">The password to store.</param>
+    void StorePasswordForBiometric(string fileId, string password);
+
+    /// <summary>
+    /// Retrieves a stored password for biometric unlock.
+    /// Should only be called after successful biometric authentication.
+    /// </summary>
+    /// <param name="fileId">Unique identifier for the file.</param>
+    /// <returns>The stored password, or null if not found.</returns>
+    string? GetPasswordForBiometric(string fileId);
+
+    /// <summary>
+    /// Clears a stored password for biometric unlock.
+    /// </summary>
+    /// <param name="fileId">Unique identifier for the file.</param>
+    void ClearPasswordForBiometric(string fileId);
+
+    /// <summary>
     /// Gets whether the platform supports automatic updates.
     /// </summary>
     bool SupportsAutoUpdate { get; }

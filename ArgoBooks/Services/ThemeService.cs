@@ -181,7 +181,7 @@ public class ThemeService : IThemeService
         {
             settings.Ui.Theme = CurrentThemeName;
             settings.Ui.AccentColor = CurrentAccentColor;
-            _globalSettingsService.SaveSettings(settings);
+            _globalSettingsService?.SaveSettings(settings);
         }
     }
 

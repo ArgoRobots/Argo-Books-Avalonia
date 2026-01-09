@@ -27,7 +27,7 @@ public partial class CategoriesTableColumnWidths : TableColumnWidthsBase
 
     public CategoriesTableColumnWidths()
     {
-        ColumnOrder = new[] { "Name", "Parent", "Description", "Type", "ProductCount", "Actions" };
+        ColumnOrder = ["Name", "Parent", "Description", "Type", "ProductCount", "Actions"];
 
         RegisterColumn("Name", new ColumnDef { StarValue = 1.5, MinWidth = 150, PreferredWidth = 200 }, w => NameColumnWidth = w);
         RegisterColumn("Parent", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 140 }, w => ParentColumnWidth = w);

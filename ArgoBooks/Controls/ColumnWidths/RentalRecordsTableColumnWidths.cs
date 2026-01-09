@@ -42,7 +42,8 @@ public partial class RentalRecordsTableColumnWidths : TableColumnWidthsBase
 
     public RentalRecordsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Id", "Accountant", "Item", "Customer", "Quantity", "StartDate", "DueDate", "Status", "Total", "Deposit", "Actions" };
+        ColumnOrder = ["Id", "Accountant", "Item", "Customer", "Quantity", "StartDate", "DueDate", "Status", "Total", "Deposit", "Actions"
+        ];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.6, MinWidth = 80, PreferredWidth = 100 }, w => IdColumnWidth = w);
         RegisterColumn("Accountant", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 120 }, w => AccountantColumnWidth = w);

@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Services;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,7 +9,6 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class UserPanelViewModel : ViewModelBase
 {
-    private readonly INavigationService? _navigationService;
     private readonly HeaderViewModel? _headerViewModel;
 
     [ObservableProperty]
@@ -69,9 +67,8 @@ public partial class UserPanelViewModel : ViewModelBase
     /// <summary>
     /// Constructor with dependencies.
     /// </summary>
-    public UserPanelViewModel(INavigationService? navigationService, HeaderViewModel headerViewModel)
+    public UserPanelViewModel(HeaderViewModel headerViewModel)
     {
-        _navigationService = navigationService;
         _headerViewModel = headerViewModel;
 
         // Subscribe to header property changes to update our bindings

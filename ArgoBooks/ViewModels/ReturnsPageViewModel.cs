@@ -138,10 +138,7 @@ public partial class ReturnsPageViewModel : ViewModelBase
         LoadReturns();
 
         // Subscribe to undo/redo state changes to refresh UI
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to filter modal events
         if (App.ReturnsModalsViewModel != null)

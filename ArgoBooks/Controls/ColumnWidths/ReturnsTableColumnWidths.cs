@@ -36,7 +36,8 @@ public partial class ReturnsTableColumnWidths : TableColumnWidthsBase
 
     public ReturnsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Id", "Product", "SupplierCustomer", "Date", "Reason", "Processed", "Refund", "Status", "Actions" };
+        ColumnOrder = ["Id", "Product", "SupplierCustomer", "Date", "Reason", "Processed", "Refund", "Status", "Actions"
+        ];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => IdColumnWidth = w);
         RegisterColumn("Product", new ColumnDef { StarValue = 1.2, MinWidth = 100, PreferredWidth = 150 }, w => ProductColumnWidth = w);

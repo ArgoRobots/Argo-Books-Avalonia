@@ -125,10 +125,7 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         LoadOrders();
 
         // Subscribe to undo/redo state changes to refresh UI
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to modal events to refresh when orders are saved
         if (App.PurchaseOrdersModalsViewModel != null)
@@ -482,27 +479,27 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == item.Id);
+        var order = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == item.Id);
         if (order == null) return;
 
         var oldStatus = order.Status;
         order.Status = PurchaseOrderStatus.Approved;
         order.UpdatedAt = DateTime.UtcNow;
-        companyData.MarkAsModified();
+        companyData?.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new Services.DelegateAction(
+        App.UndoRedoManager.RecordAction(new Services.DelegateAction(
             $"Approve order '{item.PoNumber}'",
             () =>
             {
                 order.Status = oldStatus;
-                companyData.MarkAsModified();
+                companyData?.MarkAsModified();
                 LoadOrders();
             },
             () =>
             {
                 order.Status = PurchaseOrderStatus.Approved;
-                companyData.MarkAsModified();
+                companyData?.MarkAsModified();
                 LoadOrders();
             }));
 

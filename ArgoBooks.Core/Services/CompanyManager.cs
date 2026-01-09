@@ -63,6 +63,16 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Gets the current password for the open company file.
+    /// Used for storing password securely for biometric unlock.
+    /// </summary>
+    /// <returns>The current password, or null if no company is open or it's not encrypted.</returns>
+    public string? GetCurrentPassword()
+    {
+        return _currentPassword;
+    }
+
+    /// <summary>
     /// Gets the current company settings.
     /// </summary>
     public CompanySettings? CurrentCompanySettings => _companyData?.Settings;

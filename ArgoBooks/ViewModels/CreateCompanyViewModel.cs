@@ -39,18 +39,18 @@ public partial class CreateCompanyViewModel : ViewModelBase
     [ObservableProperty]
     private string? _industry;
 
-    public string[] BusinessTypes { get; } = new[]
-    {
+    public string[] BusinessTypes { get; } =
+    [
         "Sole Proprietorship",
         "Partnership",
         "Corporation",
         "LLC",
         "Non-Profit",
         "Other"
-    };
+    ];
 
-    public string[] Industries { get; } = new[]
-    {
+    public string[] Industries { get; } =
+    [
         "Retail",
         "Services",
         "Manufacturing",
@@ -61,7 +61,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         "Transportation",
         "Real Estate",
         "Other"
-    };
+    ];
 
     #endregion
 

@@ -95,11 +95,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     /// </summary>
     public ObservableCollection<string> AvailableCountries { get; } = [];
 
-    /// <summary>
-    /// Available status options for filter.
-    /// </summary>
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Active", "Inactive"];
-
     #endregion
 
     #region Modal State
@@ -215,12 +210,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         LoadSuppliers();
 
         // Subscribe to undo/redo state changes to refresh UI
-        // This is necessary because a new ViewModel instance is created on each navigation,
-        // but undo/redo actions capture the old ViewModel instance
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to shared modal events to refresh data
         if (App.SupplierModalsViewModel != null)
@@ -538,7 +528,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 ZipCode = ModalZipCode.Trim(),
                 Country = ModalCountry.Trim()
             },
-            Website = string.IsNullOrWhiteSpace(ModalWebsite) ? null : ModalWebsite.Trim(),
+            Website = (string.IsNullOrWhiteSpace(ModalWebsite) ? null : ModalWebsite.Trim()) ?? "",
             PaymentTerms = ModalPaymentTerms.Trim(),
             Notes = ModalNotes.Trim(),
             CreatedAt = DateTime.UtcNow,
@@ -550,7 +540,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var supplierToUndo = newSupplier;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add supplier '{newSupplier.Name}'",
             () =>
             {
@@ -637,7 +627,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
             ZipCode = ModalZipCode.Trim(),
             Country = ModalCountry.Trim()
         };
-        var newWebsite = string.IsNullOrWhiteSpace(ModalWebsite) ? null : ModalWebsite.Trim();
+        var newWebsite = (string.IsNullOrWhiteSpace(ModalWebsite) ? null : ModalWebsite.Trim()) ?? "";
         var newPaymentTerms = ModalPaymentTerms.Trim();
         var newNotes = ModalNotes.Trim();
 
@@ -656,7 +646,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit supplier '{newName}'",
             () =>
             {
@@ -746,7 +736,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete supplier '{deletedSupplier.Name}'",
                 () =>
                 {

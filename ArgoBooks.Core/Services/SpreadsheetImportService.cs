@@ -24,7 +24,7 @@ public class ImportOptions
     /// Specific reference types to auto-create (if AutoCreateMissingReferences is false).
     /// Keys: "Products", "Categories", "Customers", "Suppliers", "Locations", "Departments", etc.
     /// </summary>
-    public HashSet<string> AutoCreateTypes { get; set; } = new();
+    public HashSet<string> AutoCreateTypes { get; set; } = [];
 }
 
 /// <summary>
@@ -139,7 +139,7 @@ public class SpreadsheetImportService
             if (string.IsNullOrEmpty(entityType)) continue;
 
             if (!ids.ContainsKey(entityType))
-                ids[entityType] = new HashSet<string>();
+                ids[entityType] = [];
 
             foreach (var row in rows)
             {
@@ -271,7 +271,7 @@ public class SpreadsheetImportService
             "Recurring Invoices" => data.RecurringInvoices.Select(r => r.Id).ToHashSet(),
             "Stock Adjustments" => data.StockAdjustments.Select(s => s.Id).ToHashSet(),
             "Purchase Orders" => data.PurchaseOrders.Select(p => p.Id).ToHashSet(),
-            _ => new HashSet<string>()
+            _ => []
         };
     }
 
@@ -282,8 +282,8 @@ public class SpreadsheetImportService
     {
         var existingCategories = data.Categories.Select(c => c.Id).ToHashSet();
         var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
-        var importedCategories = importedIds.GetValueOrDefault("Categories") ?? new HashSet<string>();
-        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? new HashSet<string>();
+        var importedCategories = importedIds.GetValueOrDefault("Categories") ?? [];
+        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? [];
 
         foreach (var row in rows)
         {
@@ -312,7 +312,7 @@ public class SpreadsheetImportService
         ImportValidationResult result)
     {
         var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
-        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
 
         foreach (var row in rows)
         {
@@ -334,7 +334,7 @@ public class SpreadsheetImportService
     {
         var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
         var existingProducts = data.Products.Select(p => p.Name).ToHashSet();
-        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? new HashSet<string>();
+        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? [];
 
         foreach (var row in rows)
         {
@@ -366,8 +366,8 @@ public class SpreadsheetImportService
     {
         var existingProducts = data.Products.Select(p => p.Id).ToHashSet();
         var existingLocations = data.Locations.Select(l => l.Id).ToHashSet();
-        var importedProducts = importedIds.GetValueOrDefault("Products") ?? new HashSet<string>();
-        var importedLocations = importedIds.GetValueOrDefault("Locations") ?? new HashSet<string>();
+        var importedProducts = importedIds.GetValueOrDefault("Products") ?? [];
+        var importedLocations = importedIds.GetValueOrDefault("Locations") ?? [];
 
         foreach (var row in rows)
         {
@@ -397,8 +397,8 @@ public class SpreadsheetImportService
     {
         var existingInvoices = data.Invoices.Select(i => i.Id).ToHashSet();
         var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
-        var importedInvoices = importedIds.GetValueOrDefault("Invoices") ?? new HashSet<string>();
-        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
+        var importedInvoices = importedIds.GetValueOrDefault("Invoices") ?? [];
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
 
         foreach (var row in rows)
         {
@@ -428,7 +428,7 @@ public class SpreadsheetImportService
     {
         var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
         var existingProducts = data.Products.Select(p => p.Name).ToHashSet();
-        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
 
         foreach (var row in rows)
         {
@@ -460,8 +460,8 @@ public class SpreadsheetImportService
     {
         var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
         var existingRentalItems = data.RentalInventory.Select(r => r.Id).ToHashSet();
-        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
-        var importedRentalItems = importedIds.GetValueOrDefault("RentalInventory") ?? new HashSet<string>();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
+        var importedRentalItems = importedIds.GetValueOrDefault("RentalInventory") ?? [];
 
         foreach (var row in rows)
         {
@@ -490,7 +490,7 @@ public class SpreadsheetImportService
         ImportValidationResult result)
     {
         var existingCategories = data.Categories.Select(c => c.Id).ToHashSet();
-        var importedCategories = importedIds.GetValueOrDefault("Categories") ?? new HashSet<string>();
+        var importedCategories = importedIds.GetValueOrDefault("Categories") ?? [];
 
         // Also collect IDs from this sheet for self-reference validation
         var sheetIds = new HashSet<string>();
@@ -521,7 +521,7 @@ public class SpreadsheetImportService
         ImportValidationResult result)
     {
         var existingDepartments = data.Departments.Select(d => d.Id).ToHashSet();
-        var importedDepartments = importedIds.GetValueOrDefault("Departments") ?? new HashSet<string>();
+        var importedDepartments = importedIds.GetValueOrDefault("Departments") ?? [];
 
         foreach (var row in rows)
         {
@@ -542,7 +542,7 @@ public class SpreadsheetImportService
         ImportValidationResult result)
     {
         var existingCustomers = data.Customers.Select(c => c.Id).ToHashSet();
-        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? new HashSet<string>();
+        var importedCustomers = importedIds.GetValueOrDefault("Customers") ?? [];
 
         foreach (var row in rows)
         {
@@ -563,7 +563,7 @@ public class SpreadsheetImportService
         ImportValidationResult result)
     {
         var existingInventory = data.Inventory.Select(i => i.Id).ToHashSet();
-        var importedInventory = importedIds.GetValueOrDefault("Inventory") ?? new HashSet<string>();
+        var importedInventory = importedIds.GetValueOrDefault("Inventory") ?? [];
 
         foreach (var row in rows)
         {
@@ -584,7 +584,7 @@ public class SpreadsheetImportService
         ImportValidationResult result)
     {
         var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
-        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? new HashSet<string>();
+        var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? [];
 
         foreach (var row in rows)
         {
@@ -1134,7 +1134,7 @@ public class SpreadsheetImportService
             supplier.Name = GetString(row, headers, "Name");
             supplier.Email = GetString(row, headers, "Email");
             supplier.Phone = GetString(row, headers, "Phone");
-            supplier.Website = GetNullableString(row, headers, "Website");
+            supplier.Website = GetNullableString(row, headers, "Website") ?? "";
             supplier.Address = new Address
             {
                 Street = GetString(row, headers, "Street"),

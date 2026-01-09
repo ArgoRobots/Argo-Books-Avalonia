@@ -36,7 +36,7 @@ public partial class LostDamagedTableColumnWidths : TableColumnWidthsBase
 
     public LostDamagedTableColumnWidths()
     {
-        ColumnOrder = new[] { "Id", "Type", "Product", "Date", "Reason", "Staff", "Loss", "Status", "Actions" };
+        ColumnOrder = ["Id", "Type", "Product", "Date", "Reason", "Staff", "Loss", "Status", "Actions"];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.7, MinWidth = 70, PreferredWidth = 90 }, w => IdColumnWidth = w);
         RegisterColumn("Type", new ColumnDef { StarValue = 0.6, MinWidth = 60, PreferredWidth = 70 }, w => TypeColumnWidth = w);

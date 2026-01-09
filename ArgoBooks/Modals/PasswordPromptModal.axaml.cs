@@ -23,6 +23,30 @@ public partial class PasswordPromptModal : UserControl
         {
             _eventsSubscribed = true;
             vm.FocusPasswordRequested += OnFocusPasswordRequested;
+            vm.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PasswordPromptModalViewModel.ShowWindowsHelloSuccess))
+        {
+            if (DataContext is PasswordPromptModalViewModel { ShowWindowsHelloSuccess: true })
+            {
+                // Trigger the success animation
+                Dispatcher.UIThread.Post(() =>
+                {
+                    SuccessAnimationControl?.PlayAnimation();
+                }, DispatcherPriority.Background);
+            }
+            else
+            {
+                // Reset the animation
+                Dispatcher.UIThread.Post(() =>
+                {
+                    SuccessAnimationControl?.ResetAnimation();
+                }, DispatcherPriority.Background);
+            }
         }
     }
 

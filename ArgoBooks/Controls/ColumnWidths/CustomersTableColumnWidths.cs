@@ -27,7 +27,7 @@ public partial class CustomersTableColumnWidths : TableColumnWidthsBase
 
     public CustomersTableColumnWidths()
     {
-        ColumnOrder = new[] { "Customer", "Email", "Phone", "Address", "LastRental", "Actions" };
+        ColumnOrder = ["Customer", "Email", "Phone", "Address", "LastRental", "Actions"];
 
         RegisterColumn("Customer", new ColumnDef { StarValue = 1.2, MinWidth = 120, PreferredWidth = 180 }, w => CustomerColumnWidth = w);
         RegisterColumn("Email", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 150 }, w => EmailColumnWidth = w);

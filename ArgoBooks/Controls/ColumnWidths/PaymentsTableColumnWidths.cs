@@ -33,7 +33,7 @@ public partial class PaymentsTableColumnWidths : TableColumnWidthsBase
 
     public PaymentsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Id", "Invoice", "Customer", "Date", "Method", "Amount", "Status", "Actions" };
+        ColumnOrder = ["Id", "Invoice", "Customer", "Date", "Method", "Amount", "Status", "Actions"];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => IdColumnWidth = w);
         RegisterColumn("Invoice", new ColumnDef { StarValue = 0.8, MinWidth = 80, PreferredWidth = 100 }, w => InvoiceColumnWidth = w);

@@ -157,10 +157,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         LoadItems();
 
         // Subscribe to undo/redo state changes to refresh UI
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to modal events to refresh when items are saved
         if (App.StockLevelsModalsViewModel != null)

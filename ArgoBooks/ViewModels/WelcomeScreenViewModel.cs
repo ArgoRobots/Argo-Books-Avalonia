@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,8 +11,6 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class WelcomeScreenViewModel : ViewModelBase
 {
-    private readonly INavigationService? _navigationService;
-
     /// <summary>
     /// Recent companies for quick access.
     /// </summary>
@@ -53,17 +50,6 @@ public partial class WelcomeScreenViewModel : ViewModelBase
             LastOpened = DateTime.Now.AddDays(-7)
         });
         HasRecentCompanies = RecentCompanies.Count > 0;
-    }
-
-    /// <summary>
-    /// Constructor with dependencies.
-    /// </summary>
-    public WelcomeScreenViewModel(INavigationService? navigationService)
-    {
-        _navigationService = navigationService;
-        // Real data will be populated by LoadRecentCompaniesAsync
-        // Start with no recent companies
-        HasRecentCompanies = false;
     }
 
     #region Commands

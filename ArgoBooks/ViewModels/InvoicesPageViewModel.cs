@@ -234,10 +234,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         LoadCustomerOptions();
 
         // Subscribe to undo/redo state changes to refresh UI
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to invoice modal events to refresh data
         if (App.InvoiceModalsViewModel != null)

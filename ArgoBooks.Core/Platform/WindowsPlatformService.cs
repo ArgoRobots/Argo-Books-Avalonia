@@ -1,4 +1,6 @@
 using System.Runtime.Versioning;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Win32;
 #if WINDOWS
 using Windows.Security.Credentials.UI;
@@ -122,6 +124,76 @@ public class WindowsPlatformService : BasePlatformService
         }
 
         return normalized;
+    }
+
+    /// <inheritdoc />
+    [SupportedOSPlatform("windows")]
+    public override void StorePasswordForBiometric(string fileId, string password)
+    {
+#if WINDOWS
+        try
+        {
+            var data = Encoding.UTF8.GetBytes(password);
+            var protectedData = ProtectedData.Protect(data, null, DataProtectionScope.CurrentUser);
+            var base64 = Convert.ToBase64String(protectedData);
+
+            // Store in app data directory
+            var storagePath = GetBiometricStoragePath();
+            EnsureDirectoryExists(storagePath);
+
+            var filePath = Path.Combine(storagePath, $"{fileId}.bio");
+            File.WriteAllText(filePath, base64);
+        }
+        catch
+        {
+            // Silently fail - user will need to enter password manually
+        }
+#endif
+    }
+
+    /// <inheritdoc />
+    [SupportedOSPlatform("windows")]
+    public override string? GetPasswordForBiometric(string fileId)
+    {
+#if WINDOWS
+        try
+        {
+            var filePath = Path.Combine(GetBiometricStoragePath(), $"{fileId}.bio");
+            if (!File.Exists(filePath))
+                return null;
+
+            var base64 = File.ReadAllText(filePath);
+            var protectedData = Convert.FromBase64String(base64);
+            var data = ProtectedData.Unprotect(protectedData, null, DataProtectionScope.CurrentUser);
+            return Encoding.UTF8.GetString(data);
+        }
+        catch
+        {
+            return null;
+        }
+#else
+        return null;
+#endif
+    }
+
+    /// <inheritdoc />
+    public override void ClearPasswordForBiometric(string fileId)
+    {
+        try
+        {
+            var filePath = Path.Combine(GetBiometricStoragePath(), $"{fileId}.bio");
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+        }
+        catch
+        {
+            // Silently fail
+        }
+    }
+
+    private string GetBiometricStoragePath()
+    {
+        return CombinePaths(GetAppDataPath(), "Biometric");
     }
 
     /// <inheritdoc />

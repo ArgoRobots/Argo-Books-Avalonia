@@ -118,7 +118,7 @@ public partial class PaginationFooter : UserControl
     public PaginationFooter()
     {
         InitializeComponent();
-        PageSizeOptions = new ObservableCollection<int> { 10, 25, 50, 100 };
-        PageNumbers = new ObservableCollection<int>();
+        PageSizeOptions = [10, 25, 50, 100];
+        PageNumbers = [];
     }
 }
