@@ -755,10 +755,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                     foreach (var kvp in productSupplierMappings)
                     {
                         var product = companyData.Products.FirstOrDefault(p => p.Id == kvp.Key);
-                        if (product != null)
-                        {
-                            product.SupplierId = kvp.Value;
-                        }
+                        product?.SupplierId = kvp.Value;
                     }
                     companyData.MarkAsModified();
                     LoadSuppliers();
@@ -769,10 +766,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                     foreach (var kvp in productSupplierMappings)
                     {
                         var product = companyData.Products.FirstOrDefault(p => p.Id == kvp.Key);
-                        if (product != null)
-                        {
-                            product.SupplierId = null;
-                        }
+                        product?.SupplierId = null;
                     }
                     companyData.Suppliers.Remove(deletedSupplier);
                     companyData.MarkAsModified();

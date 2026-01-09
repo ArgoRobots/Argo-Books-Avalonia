@@ -211,9 +211,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Sales == null) return;
 
-        var sale = companyData.Sales.FirstOrDefault(s => s.Id == item.Id);
+        var sale = companyData?.Sales?.FirstOrDefault(s => s.Id == item.Id);
         if (sale == null) return;
 
         // Find and remove associated receipt

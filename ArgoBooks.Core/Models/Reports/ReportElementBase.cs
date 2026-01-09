@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text.Json.Serialization;
 using ArgoBooks.Core.Enums;
 
 namespace ArgoBooks.Core.Models.Reports;
@@ -8,18 +7,11 @@ namespace ArgoBooks.Core.Models.Reports;
 /// <summary>
 /// Event args for property changing event, including old and new values.
 /// </summary>
-public class ElementPropertyChangingEventArgs : EventArgs
+public class ElementPropertyChangingEventArgs(string propertyName, object? oldValue, object? newValue) : EventArgs
 {
-    public string PropertyName { get; }
-    public object? OldValue { get; }
-    public object? NewValue { get; }
-
-    public ElementPropertyChangingEventArgs(string propertyName, object? oldValue, object? newValue)
-    {
-        PropertyName = propertyName;
-        OldValue = oldValue;
-        NewValue = newValue;
-    }
+    public string PropertyName { get; } = propertyName;
+    public object? OldValue { get; } = oldValue;
+    public object? NewValue { get; } = newValue;
 }
 
 /// <summary>

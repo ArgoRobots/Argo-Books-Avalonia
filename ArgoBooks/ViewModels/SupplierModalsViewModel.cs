@@ -288,9 +288,8 @@ public partial class SupplierModalsViewModel : ObservableObject
         if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var supplier = companyData.Suppliers.FirstOrDefault(s => s.Id == item.Id);
+        var supplier = companyData?.Suppliers.FirstOrDefault(s => s.Id == item.Id);
         if (supplier == null) return;
 
         var deletedSupplier = supplier;

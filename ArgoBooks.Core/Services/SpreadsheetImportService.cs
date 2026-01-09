@@ -335,10 +335,6 @@ public class SpreadsheetImportService
         var existingSuppliers = data.Suppliers.Select(s => s.Id).ToHashSet();
         var existingProducts = data.Products.Select(p => p.Name).ToHashSet();
         var importedSuppliers = importedIds.GetValueOrDefault("Suppliers") ?? new HashSet<string>();
-        var importedProducts = importedIds.GetValueOrDefault("Products") ?? new HashSet<string>();
-
-        // Also get product names from imported products sheet
-        var importedProductNames = new HashSet<string>();
 
         foreach (var row in rows)
         {
@@ -635,7 +631,7 @@ public class SpreadsheetImportService
         {
             case "Categories":
             case "Categories (parent)":
-                if (!data.Categories.Any(c => c.Id == id))
+                if (data.Categories.All(c => c.Id != id))
                 {
                     data.Categories.Add(new Category
                     {
@@ -649,7 +645,7 @@ public class SpreadsheetImportService
                 break;
 
             case "Suppliers":
-                if (!data.Suppliers.Any(s => s.Id == id))
+                if (data.Suppliers.All(s => s.Id != id))
                 {
                     data.Suppliers.Add(new Supplier
                     {
@@ -660,7 +656,7 @@ public class SpreadsheetImportService
                 break;
 
             case "Customers":
-                if (!data.Customers.Any(c => c.Id == id))
+                if (data.Customers.All(c => c.Id != id))
                 {
                     data.Customers.Add(new Customer
                     {
@@ -672,7 +668,7 @@ public class SpreadsheetImportService
                 break;
 
             case "Products":
-                if (!data.Products.Any(p => p.Id == id))
+                if (data.Products.All(p => p.Id != id))
                 {
                     data.Products.Add(new Product
                     {
@@ -685,7 +681,7 @@ public class SpreadsheetImportService
                 break;
 
             case "Products (by name)":
-                if (!data.Products.Any(p => p.Name == id))
+                if (data.Products.All(p => p.Name != id))
                 {
                     var newId = $"PRD-IMP-{data.Products.Count + 1:D3}";
                     data.Products.Add(new Product
@@ -699,7 +695,7 @@ public class SpreadsheetImportService
                 break;
 
             case "Locations":
-                if (!data.Locations.Any(l => l.Id == id))
+                if (data.Locations.All(l => l.Id != id))
                 {
                     data.Locations.Add(new Location
                     {
@@ -710,7 +706,7 @@ public class SpreadsheetImportService
                 break;
 
             case "Departments":
-                if (!data.Departments.Any(d => d.Id == id))
+                if (data.Departments.All(d => d.Id != id))
                 {
                     data.Departments.Add(new Department
                     {
@@ -721,7 +717,7 @@ public class SpreadsheetImportService
                 break;
 
             case "Rental Items":
-                if (!data.RentalInventory.Any(r => r.Id == id))
+                if (data.RentalInventory.All(r => r.Id != id))
                 {
                     data.RentalInventory.Add(new RentalItem
                     {
@@ -1061,8 +1057,6 @@ public class SpreadsheetImportService
             var itemType = itemTypeRaw.Trim().ToLowerInvariant() switch
             {
                 "service" => "Service",
-                "product" => "Product",
-                "" => "Product",
                 _ => "Product"
             };
 
@@ -1264,8 +1258,6 @@ public class SpreadsheetImportService
             category.ItemType = itemTypeStr.Trim().ToLowerInvariant() switch
             {
                 "service" => "Service",
-                "product" => "Product",
-                "" => "Product",
                 _ => "Product"
             };
             category.Icon = GetString(row, headers, "Icon");

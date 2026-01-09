@@ -818,60 +818,42 @@ public partial class SettingsModalViewModel : ViewModelBase
 /// <summary>
 /// Represents an accent color option.
 /// </summary>
-public class AccentColorItem
+public class AccentColorItem(string name, string colorHex)
 {
-    public string Name { get; }
-    public string ColorHex { get; }
-
-    public AccentColorItem(string name, string colorHex)
-    {
-        Name = name;
-        ColorHex = colorHex;
-    }
+    public string Name { get; } = name;
+    public string ColorHex { get; } = colorHex;
 }
 
 /// <summary>
 /// Event args for password change operations.
 /// </summary>
-public class PasswordChangeEventArgs : EventArgs
+public class PasswordChangeEventArgs(string? newPassword, string? currentPassword = null) : EventArgs
 {
     /// <summary>
     /// The new password (null to remove password).
     /// </summary>
-    public string? NewPassword { get; }
+    public string? NewPassword { get; } = newPassword;
 
     /// <summary>
     /// The current password (for verification when changing/removing).
     /// </summary>
-    public string? CurrentPassword { get; }
-
-    public PasswordChangeEventArgs(string? newPassword, string? currentPassword = null)
-    {
-        NewPassword = newPassword;
-        CurrentPassword = currentPassword;
-    }
+    public string? CurrentPassword { get; } = currentPassword;
 }
 
 /// <summary>
 /// Event args for auto-lock settings change.
 /// </summary>
-public class AutoLockSettingsEventArgs : EventArgs
+public class AutoLockSettingsEventArgs(string timeoutString) : EventArgs
 {
     /// <summary>
     /// The selected auto-lock timeout string (e.g., "5 minutes", "Never").
     /// </summary>
-    public string TimeoutString { get; }
+    public string TimeoutString { get; } = timeoutString;
 
     /// <summary>
     /// The timeout in minutes (0 for "Never").
     /// </summary>
-    public int TimeoutMinutes { get; }
-
-    public AutoLockSettingsEventArgs(string timeoutString)
-    {
-        TimeoutString = timeoutString;
-        TimeoutMinutes = ParseTimeoutMinutes(timeoutString);
-    }
+    public int TimeoutMinutes { get; } = ParseTimeoutMinutes(timeoutString);
 
     private static int ParseTimeoutMinutes(string? timeoutString)
     {
@@ -892,15 +874,10 @@ public class AutoLockSettingsEventArgs : EventArgs
 /// <summary>
 /// Event args for Windows Hello setting changes.
 /// </summary>
-public class WindowsHelloEventArgs : EventArgs
+public class WindowsHelloEventArgs(bool enabled) : EventArgs
 {
     /// <summary>
     /// Whether Windows Hello is enabled.
     /// </summary>
-    public bool Enabled { get; }
-
-    public WindowsHelloEventArgs(bool enabled)
-    {
-        Enabled = enabled;
-    }
+    public bool Enabled { get; } = enabled;
 }

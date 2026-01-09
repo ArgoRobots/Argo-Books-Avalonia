@@ -217,9 +217,8 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Purchases == null) return;
 
-        var expense = companyData.Purchases.FirstOrDefault(p => p.Id == item.Id);
+        var expense = companyData?.Purchases?.FirstOrDefault(p => p.Id == item.Id);
         if (expense == null) return;
 
         // Find and remove associated receipt

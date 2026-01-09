@@ -599,33 +599,21 @@ public class CompanyManager : IDisposable
 /// <summary>
 /// Event args for company opened event.
 /// </summary>
-public class CompanyOpenedEventArgs : EventArgs
+public class CompanyOpenedEventArgs(string companyName, string filePath, bool isEncrypted) : EventArgs
 {
-    public string CompanyName { get; }
-    public string FilePath { get; }
-    public bool IsEncrypted { get; }
-
-    public CompanyOpenedEventArgs(string companyName, string filePath, bool isEncrypted)
-    {
-        CompanyName = companyName;
-        FilePath = filePath;
-        IsEncrypted = isEncrypted;
-    }
+    public string CompanyName { get; } = companyName;
+    public string FilePath { get; } = filePath;
+    public bool IsEncrypted { get; } = isEncrypted;
 }
 
 /// <summary>
 /// Event args for password required event.
 /// </summary>
-public class PasswordRequiredEventArgs : EventArgs
+public class PasswordRequiredEventArgs(string filePath) : EventArgs
 {
-    public string FilePath { get; }
+    public string FilePath { get; } = filePath;
     public string? Password { get; set; }
     public bool IsCancelled { get; set; }
-
-    public PasswordRequiredEventArgs(string filePath)
-    {
-        FilePath = filePath;
-    }
 }
 
 /// <summary>

@@ -38,7 +38,7 @@ public partial class Badge : UserControl
         AvaloniaProperty.Register<Badge, string?>(nameof(Text));
 
     public static readonly StyledProperty<BadgeVariant> VariantProperty =
-        AvaloniaProperty.Register<Badge, BadgeVariant>(nameof(Variant), BadgeVariant.Primary);
+        AvaloniaProperty.Register<Badge, BadgeVariant>(nameof(Variant));
 
     public static readonly StyledProperty<BadgeSize> SizeProperty =
         AvaloniaProperty.Register<Badge, BadgeSize>(nameof(Size), BadgeSize.Medium);

@@ -66,21 +66,15 @@ public class ValidationResult
 /// <summary>
 /// Represents a single validation error.
 /// </summary>
-public class ValidationError
+public class ValidationError(string propertyName, string message)
 {
     /// <summary>
     /// Name of the property that failed validation.
     /// </summary>
-    public string PropertyName { get; }
+    public string PropertyName { get; } = propertyName;
 
     /// <summary>
     /// Error message.
     /// </summary>
-    public string Message { get; }
-
-    public ValidationError(string propertyName, string message)
-    {
-        PropertyName = propertyName;
-        Message = message;
-    }
+    public string Message { get; } = message;
 }

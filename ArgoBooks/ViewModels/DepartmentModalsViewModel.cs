@@ -175,9 +175,8 @@ public partial class DepartmentModalsViewModel : ObservableObject
         if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var department = companyData.Departments.FirstOrDefault(d => d.Id == item.Id);
+        var department = companyData?.Departments.FirstOrDefault(d => d.Id == item.Id);
         if (department == null) return;
 
         var deletedDept = department;

@@ -10,7 +10,7 @@ public class NavigationService : INavigationService
     private NavigationEntry? _currentEntry;
 
     private readonly Dictionary<string, Func<object?, object>> _pageFactories = new();
-    private readonly List<NavigationGuardCallback> _navigationGuards = new();
+    private readonly List<NavigationGuardCallback> _navigationGuards = [];
     private Action<object>? _navigationCallback;
 
     /// <inheritdoc />
@@ -227,14 +227,8 @@ public class NavigationService : INavigationService
 /// <summary>
 /// Represents a navigation history entry.
 /// </summary>
-internal class NavigationEntry
+internal class NavigationEntry(string pageName, object? parameter = null)
 {
-    public string PageName { get; }
-    public object? Parameter { get; }
-
-    public NavigationEntry(string pageName, object? parameter = null)
-    {
-        PageName = pageName;
-        Parameter = parameter;
-    }
+    public string PageName { get; } = pageName;
+    public object? Parameter { get; } = parameter;
 }

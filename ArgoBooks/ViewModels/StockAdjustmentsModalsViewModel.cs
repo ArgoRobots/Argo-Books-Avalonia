@@ -178,9 +178,8 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         }
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var inventoryItem = companyData.Inventory?.FirstOrDefault(i => i.Id == SelectedInventoryItem.Id);
+        var inventoryItem = companyData?.Inventory?.FirstOrDefault(i => i.Id == SelectedInventoryItem.Id);
         if (inventoryItem == null) return;
 
         // Store old values for undo
@@ -344,9 +343,8 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
         if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.StockAdjustments == null) return;
 
-        var adjustment = companyData.StockAdjustments.FirstOrDefault(a => a.Id == item.Id);
+        var adjustment = companyData?.StockAdjustments?.FirstOrDefault(a => a.Id == item.Id);
         if (adjustment == null) return;
 
         // Find the inventory item and reverse the adjustment
@@ -493,20 +491,17 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
 /// <summary>
 /// Event args for filter applied events.
 /// </summary>
-public class AdjustmentsFilterAppliedEventArgs : EventArgs
+public class AdjustmentsFilterAppliedEventArgs(
+    DateTimeOffset? startDate,
+    DateTimeOffset? endDate,
+    string product,
+    string type)
+    : EventArgs
 {
-    public DateTimeOffset? StartDate { get; }
-    public DateTimeOffset? EndDate { get; }
-    public string Product { get; }
-    public string Type { get; }
-
-    public AdjustmentsFilterAppliedEventArgs(DateTimeOffset? startDate, DateTimeOffset? endDate, string product, string type)
-    {
-        StartDate = startDate;
-        EndDate = endDate;
-        Product = product;
-        Type = type;
-    }
+    public DateTimeOffset? StartDate { get; } = startDate;
+    public DateTimeOffset? EndDate { get; } = endDate;
+    public string Product { get; } = product;
+    public string Type { get; } = type;
 }
 
 /// <summary>

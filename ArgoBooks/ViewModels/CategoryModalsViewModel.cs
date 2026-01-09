@@ -279,9 +279,8 @@ public partial class CategoryModalsViewModel : ObservableObject
         if (item == null) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var category = companyData.Categories.FirstOrDefault(c => c.Id == item.Id);
+        var category = companyData?.Categories.FirstOrDefault(c => c.Id == item.Id);
         if (category == null) return;
 
         var children = companyData.Categories.Where(c => c.ParentId == category.Id).ToList();
@@ -348,14 +347,18 @@ public partial class CategoryModalsViewModel : ObservableObject
             {
                 companyData.Categories.Add(deletedCategory);
                 if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData.Categories.Add(child); }
-                else { foreach (var kvp in childOriginalParents) { var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key); if (child != null) child.ParentId = kvp.Value; } }
+                else { foreach (var kvp in childOriginalParents) { var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                    child?.ParentId = kvp.Value;
+                } }
                 companyData.MarkAsModified();
                 CategoryDeleted?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
                 if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData.Categories.Remove(child); }
-                else { foreach (var kvp in childOriginalParents) { var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key); if (child != null) child.ParentId = null; } }
+                else { foreach (var kvp in childOriginalParents) { var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                    child?.ParentId = null;
+                } }
                 companyData.Categories.Remove(deletedCategory);
                 companyData.MarkAsModified();
                 CategoryDeleted?.Invoke(this, EventArgs.Empty);
@@ -398,9 +401,8 @@ public partial class CategoryModalsViewModel : ObservableObject
         }
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var category = companyData.Categories.FirstOrDefault(c => c.Id == _movingCategory.Id);
+        var category = companyData?.Categories.FirstOrDefault(c => c.Id == _movingCategory.Id);
         if (category == null) return;
 
         var oldParentId = category.ParentId;

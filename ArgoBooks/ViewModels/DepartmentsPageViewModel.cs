@@ -611,10 +611,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
                     foreach (var kvp in originalDeptIds)
                     {
                         var emp = companyData.Employees.FirstOrDefault(e => e.Id == kvp.Key);
-                        if (emp != null)
-                        {
-                            emp.DepartmentId = kvp.Value;
-                        }
+                        emp?.DepartmentId = kvp.Value;
                     }
                     companyData.MarkAsModified();
                     LoadDepartments();
@@ -625,10 +622,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
                     foreach (var kvp in originalDeptIds)
                     {
                         var emp = companyData.Employees.FirstOrDefault(e => e.Id == kvp.Key);
-                        if (emp != null)
-                        {
-                            emp.DepartmentId = null;
-                        }
+                        emp?.DepartmentId = null;
                     }
                     companyData.Departments.Remove(deletedDepartment);
                     companyData.MarkAsModified();
@@ -725,32 +719,19 @@ public partial class DepartmentDisplayItem : ObservableObject
 /// <summary>
 /// Represents an icon option for dropdown.
 /// </summary>
-public class DepartmentIconOption
+public class DepartmentIconOption(string icon, string name)
 {
-    public string Icon { get; }
-    public string Name { get; }
+    public string Icon { get; } = icon;
+    public string Name { get; } = name;
     public string DisplayName => $"{Icon} {Name}";
-
-    public DepartmentIconOption(string icon, string name)
-    {
-        Icon = icon;
-        Name = name;
-    }
 }
 
 /// <summary>
 /// Represents a color option for dropdown.
 /// </summary>
-public class DepartmentColorOption
+public class DepartmentColorOption(string value, string name, string hexColor)
 {
-    public string Value { get; }
-    public string Name { get; }
-    public string HexColor { get; }
-
-    public DepartmentColorOption(string value, string name, string hexColor)
-    {
-        Value = value;
-        Name = name;
-        HexColor = hexColor;
-    }
+    public string Value { get; } = value;
+    public string Name { get; } = name;
+    public string HexColor { get; } = hexColor;
 }

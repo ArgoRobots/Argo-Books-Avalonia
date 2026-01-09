@@ -40,8 +40,6 @@ public interface IUndoRedoButtonGroupViewModel
 /// </summary>
 public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButtonGroupViewModel
 {
-    private IUndoRedoManager? _undoRedoManager;
-
     [ObservableProperty]
     private bool _canUndo;
 
@@ -99,13 +97,13 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     /// </summary>
     public void SetUndoRedoManager(IUndoRedoManager manager)
     {
-        if (_undoRedoManager != null)
+        if (Manager != null)
         {
-            _undoRedoManager.StateChanged -= OnManagerStateChanged;
+            Manager.StateChanged -= OnManagerStateChanged;
         }
 
-        _undoRedoManager = manager;
-        _undoRedoManager.StateChanged += OnManagerStateChanged;
+        Manager = manager;
+        Manager.StateChanged += OnManagerStateChanged;
         UpdateState();
     }
 
@@ -116,7 +114,7 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
 
     private void UpdateState()
     {
-        if (_undoRedoManager == null)
+        if (Manager == null)
         {
             CanUndo = false;
             CanRedo = false;
@@ -125,15 +123,15 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
             return;
         }
 
-        CanUndo = _undoRedoManager.CanUndo;
-        CanRedo = _undoRedoManager.CanRedo;
+        CanUndo = Manager.CanUndo;
+        CanRedo = Manager.CanRedo;
 
-        UndoTooltip = _undoRedoManager.UndoDescription != null
-            ? $"Undo {_undoRedoManager.UndoDescription}"
+        UndoTooltip = Manager.UndoDescription != null
+            ? $"Undo {Manager.UndoDescription}"
             : "Undo";
 
-        RedoTooltip = _undoRedoManager.RedoDescription != null
-            ? $"Redo {_undoRedoManager.RedoDescription}"
+        RedoTooltip = Manager.RedoDescription != null
+            ? $"Redo {Manager.RedoDescription}"
             : "Redo";
     }
 
@@ -145,10 +143,10 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
         UndoHistory.Clear();
         RedoHistory.Clear();
 
-        if (_undoRedoManager == null) return;
+        if (Manager == null) return;
 
         int i = 0;
-        foreach (var description in _undoRedoManager.GetUndoHistory())
+        foreach (var description in Manager.GetUndoHistory())
         {
             UndoHistory.Add(new UndoRedoHistoryItem
             {
@@ -158,7 +156,7 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
         }
 
         i = 0;
-        foreach (var description in _undoRedoManager.GetRedoHistory())
+        foreach (var description in Manager.GetRedoHistory())
         {
             RedoHistory.Add(new UndoRedoHistoryItem
             {
@@ -174,9 +172,9 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     [RelayCommand]
     private void Undo()
     {
-        if (_undoRedoManager?.CanUndo == true)
+        if (Manager?.CanUndo == true)
         {
-            _undoRedoManager.Undo();
+            Manager.Undo();
             ActionPerformed?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -187,9 +185,9 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     [RelayCommand]
     private void Redo()
     {
-        if (_undoRedoManager?.CanRedo == true)
+        if (Manager?.CanRedo == true)
         {
-            _undoRedoManager.Redo();
+            Manager.Redo();
             ActionPerformed?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -200,12 +198,12 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     [RelayCommand]
     private void UndoTo(int index)
     {
-        if (_undoRedoManager == null) return;
+        if (Manager == null) return;
 
         // Undo (index + 1) times to reach the selected state
         for (int i = 0; i <= index; i++)
         {
-            _undoRedoManager.Undo();
+            Manager.Undo();
         }
 
         ActionPerformed?.Invoke(this, EventArgs.Empty);
@@ -217,12 +215,12 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     [RelayCommand]
     private void RedoTo(int index)
     {
-        if (_undoRedoManager == null) return;
+        if (Manager == null) return;
 
         // Redo (index + 1) times to reach the selected state
         for (int i = 0; i <= index; i++)
         {
-            _undoRedoManager.Redo();
+            Manager.Redo();
         }
 
         ActionPerformed?.Invoke(this, EventArgs.Empty);
@@ -251,7 +249,7 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     /// <summary>
     /// Gets the undo/redo manager.
     /// </summary>
-    public IUndoRedoManager? Manager => _undoRedoManager;
+    public IUndoRedoManager? Manager { get; private set; }
 
     // Explicit interface implementation for ICommand properties
     ICommand IUndoRedoButtonGroupViewModel.UndoCommand => UndoCommand;

@@ -85,11 +85,14 @@ public static class ReportTemplateFactory
             PageOrientation = PageOrientation.Landscape,
             ShowHeader = true,
             ShowFooter = true,
-            ShowPageNumbers = true
+            ShowPageNumbers = true,
+            Filters =
+            {
+                TransactionType = TransactionType.Revenue,
+                DatePresetName = DatePresetNames.ThisMonth
+            }
         };
 
-        config.Filters.TransactionType = TransactionType.Revenue;
-        config.Filters.DatePresetName = DatePresetNames.ThisMonth;
         config.Filters.SelectedChartTypes.AddRange(
         [
             ChartDataType.TotalRevenue,
@@ -114,11 +117,14 @@ public static class ReportTemplateFactory
             PageOrientation = PageOrientation.Landscape,
             ShowHeader = true,
             ShowFooter = true,
-            ShowPageNumbers = true
+            ShowPageNumbers = true,
+            Filters =
+            {
+                TransactionType = TransactionType.Both,
+                DatePresetName = DatePresetNames.ThisQuarter
+            }
         };
 
-        config.Filters.TransactionType = TransactionType.Both;
-        config.Filters.DatePresetName = DatePresetNames.ThisQuarter;
         config.Filters.SelectedChartTypes.AddRange(
         [
             ChartDataType.TotalRevenue,
@@ -143,11 +149,14 @@ public static class ReportTemplateFactory
             PageOrientation = PageOrientation.Portrait,
             ShowHeader = true,
             ShowFooter = true,
-            ShowPageNumbers = true
+            ShowPageNumbers = true,
+            Filters =
+            {
+                TransactionType = TransactionType.Revenue,
+                DatePresetName = DatePresetNames.Last30Days
+            }
         };
 
-        config.Filters.TransactionType = TransactionType.Revenue;
-        config.Filters.DatePresetName = DatePresetNames.Last30Days;
         config.Filters.SelectedChartTypes.AddRange(
         [
             ChartDataType.GrowthRates,
@@ -172,13 +181,16 @@ public static class ReportTemplateFactory
             PageOrientation = PageOrientation.Portrait,
             ShowHeader = true,
             ShowFooter = true,
-            ShowPageNumbers = true
+            ShowPageNumbers = true,
+            Filters =
+            {
+                TransactionType = TransactionType.Revenue,
+                IncludeReturns = true,
+                IncludeLosses = false,
+                DatePresetName = DatePresetNames.YearToDate
+            }
         };
 
-        config.Filters.TransactionType = TransactionType.Revenue;
-        config.Filters.IncludeReturns = true;
-        config.Filters.IncludeLosses = false;
-        config.Filters.DatePresetName = DatePresetNames.YearToDate;
         config.Filters.SelectedChartTypes.AddRange(
         [
             ChartDataType.ReturnsOverTime,
@@ -204,13 +216,16 @@ public static class ReportTemplateFactory
             PageOrientation = PageOrientation.Portrait,
             ShowHeader = true,
             ShowFooter = true,
-            ShowPageNumbers = true
+            ShowPageNumbers = true,
+            Filters =
+            {
+                TransactionType = TransactionType.Revenue,
+                IncludeReturns = false,
+                IncludeLosses = true,
+                DatePresetName = DatePresetNames.YearToDate
+            }
         };
 
-        config.Filters.TransactionType = TransactionType.Revenue;
-        config.Filters.IncludeReturns = false;
-        config.Filters.IncludeLosses = true;
-        config.Filters.DatePresetName = DatePresetNames.YearToDate;
         config.Filters.SelectedChartTypes.AddRange(
         [
             ChartDataType.LossesOverTime,
@@ -236,11 +251,14 @@ public static class ReportTemplateFactory
             PageOrientation = PageOrientation.Landscape,
             ShowHeader = true,
             ShowFooter = true,
-            ShowPageNumbers = true
+            ShowPageNumbers = true,
+            Filters =
+            {
+                TransactionType = TransactionType.Revenue,
+                DatePresetName = DatePresetNames.Last30Days
+            }
         };
 
-        config.Filters.TransactionType = TransactionType.Revenue;
-        config.Filters.DatePresetName = DatePresetNames.Last30Days;
         config.Filters.SelectedChartTypes.AddRange(
         [
             ChartDataType.WorldMap,

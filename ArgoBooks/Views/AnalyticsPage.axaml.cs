@@ -401,11 +401,8 @@ public partial class AnalyticsPage : UserControl
         var source = e.Source as Control;
         var chart = source?.FindAncestorOfType<CartesianChart>() ?? source as CartesianChart;
 
-        if (chart == null)
-            return; // Not over a chart, let normal scrolling happen
-
         // Find the ScrollViewer and manually scroll it
-        var scrollViewer = chart.FindAncestorOfType<ScrollViewer>();
+        var scrollViewer = chart?.FindAncestorOfType<ScrollViewer>();
         if (scrollViewer != null)
         {
             // Use ScrollViewer's built-in line scroll methods for natural scroll feel

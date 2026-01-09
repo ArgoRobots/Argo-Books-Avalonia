@@ -37,7 +37,7 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     #region Styled Properties
 
     public static readonly StyledProperty<string?> SelectedCategoryIdProperty =
-        AvaloniaProperty.Register<CategoryInput, string?>(nameof(SelectedCategoryId), null, defaultBindingMode: BindingMode.TwoWay);
+        AvaloniaProperty.Register<CategoryInput, string?>(nameof(SelectedCategoryId), defaultBindingMode: BindingMode.TwoWay);
 
     /// <summary>
     /// Gets or sets the selected category ID.
@@ -49,7 +49,7 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     }
 
     public static readonly StyledProperty<string?> SelectedCategoryNameProperty =
-        AvaloniaProperty.Register<CategoryInput, string?>(nameof(SelectedCategoryName), null, defaultBindingMode: BindingMode.TwoWay);
+        AvaloniaProperty.Register<CategoryInput, string?>(nameof(SelectedCategoryName), defaultBindingMode: BindingMode.TwoWay);
 
     /// <summary>
     /// Gets or sets the selected category name.

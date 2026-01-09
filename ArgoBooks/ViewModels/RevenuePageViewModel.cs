@@ -629,9 +629,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     {
         // Always load from company file to ensure consistency
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return null;
 
-        var sale = companyData.Sales.FirstOrDefault(s => s.Id == saleId);
+        var sale = companyData?.Sales.FirstOrDefault(s => s.Id == saleId);
         if (sale == null || string.IsNullOrEmpty(sale.ReceiptId)) return null;
 
         var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);

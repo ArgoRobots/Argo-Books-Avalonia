@@ -186,14 +186,8 @@ public partial class LoginModalViewModel : ViewModelBase
 /// <summary>
 /// Event arguments for login events.
 /// </summary>
-public class LoginEventArgs : EventArgs
+public class LoginEventArgs(string accountId, bool rememberMe) : EventArgs
 {
-    public string AccountId { get; }
-    public bool RememberMe { get; }
-
-    public LoginEventArgs(string accountId, bool rememberMe)
-    {
-        AccountId = accountId;
-        RememberMe = rememberMe;
-    }
+    public string AccountId { get; } = accountId;
+    public bool RememberMe { get; } = rememberMe;
 }

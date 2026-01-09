@@ -257,20 +257,17 @@ public partial class App : Application
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
-    private static ConfirmationDialogViewModel? _confirmationDialogViewModel;
-    private static UnsavedChangesDialogViewModel? _unsavedChangesDialogViewModel;
-    private static ChangeTrackingService? _changeTrackingService;
     private static IdleDetectionService? _idleDetectionService;
 
     /// <summary>
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
     /// </summary>
-    public static ConfirmationDialogViewModel? ConfirmationDialog => _confirmationDialogViewModel;
+    public static ConfirmationDialogViewModel? ConfirmationDialog { get; private set; }
 
     /// <summary>
     /// Gets the unsaved changes dialog ViewModel for showing save prompts with change lists.
     /// </summary>
-    public static UnsavedChangesDialogViewModel? UnsavedChangesDialog => _unsavedChangesDialogViewModel;
+    public static UnsavedChangesDialogViewModel? UnsavedChangesDialog { get; private set; }
 
     /// <summary>
     /// Checks if the reports page has unsaved changes.
@@ -288,7 +285,7 @@ public partial class App : Application
     /// <summary>
     /// Gets the change tracking service for aggregating changes from all sources.
     /// </summary>
-    public static ChangeTrackingService? ChangeTrackingService => _changeTrackingService;
+    public static ChangeTrackingService? ChangeTrackingService { get; private set; }
 
     public override void Initialize()
     {
@@ -315,9 +312,9 @@ public partial class App : Application
             NavigationService = new NavigationService();
 
             _mainWindowViewModel = new MainWindowViewModel();
-            _confirmationDialogViewModel = new ConfirmationDialogViewModel();
-            _unsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
-            _changeTrackingService = new ChangeTrackingService();
+            ConfirmationDialog = new ConfirmationDialogViewModel();
+            UnsavedChangesDialog = new UnsavedChangesDialogViewModel();
+            ChangeTrackingService = new ChangeTrackingService();
             _idleDetectionService = new IdleDetectionService();
 
             // Create app shell with navigation service
@@ -402,10 +399,10 @@ public partial class App : Application
             _mainWindowViewModel.PasswordPromptModalViewModel = _appShellViewModel.PasswordPromptModalViewModel;
 
             // Share ConfirmationDialogViewModel with MainWindow for confirmation dialogs
-            _mainWindowViewModel.ConfirmationDialogViewModel = _confirmationDialogViewModel;
+            _mainWindowViewModel.ConfirmationDialogViewModel = ConfirmationDialog;
 
             // Share UnsavedChangesDialogViewModel with MainWindow for unsaved changes dialogs
-            _mainWindowViewModel.UnsavedChangesDialogViewModel = _unsavedChangesDialogViewModel;
+            _mainWindowViewModel.UnsavedChangesDialogViewModel = UnsavedChangesDialog;
 
             // Final reset of unsaved changes before window is shown - ensures clean startup state
             _mainWindowViewModel.HasUnsavedChanges = false;
@@ -607,7 +604,7 @@ public partial class App : Application
             UndoRedoManager.Clear();
 
             // Clear tracked changes when company is closed
-            _changeTrackingService?.ClearAllChanges();
+            ChangeTrackingService?.ClearAllChanges();
 
             // Navigate back to Welcome screen when company is closed
             NavigationService?.NavigateTo("Welcome");
@@ -625,7 +622,7 @@ public partial class App : Application
             UndoRedoManager.MarkSaved();
 
             // Clear tracked changes after saving
-            _changeTrackingService?.ClearAllChanges();
+            ChangeTrackingService?.ClearAllChanges();
         };
 
         CompanyManager.CompanyDataChanged += (_, _) =>
@@ -825,7 +822,7 @@ public partial class App : Application
 
             var filePath = file.Path.LocalPath;
 
-            _mainWindowViewModel.ShowLoading("Creating company...");
+            _mainWindowViewModel?.ShowLoading("Creating company...");
             try
             {
                 var companyInfo = new CompanyInfo
@@ -846,7 +843,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                _mainWindowViewModel.HideLoading();
+                _mainWindowViewModel?.HideLoading();
                 _appShellViewModel.AddNotification("Error", $"Failed to create company: {ex.Message}", NotificationType.Error);
             }
         };
@@ -893,7 +890,7 @@ public partial class App : Application
         // Create new company - show create company wizard
         _welcomeScreenViewModel.CreateNewCompanyRequested += (_, _) =>
         {
-            _appShellViewModel.CreateCompanyViewModel.OpenCommand.Execute(null);
+            _appShellViewModel?.CreateCompanyViewModel.OpenCommand.Execute(null);
         };
 
         // Open company - show file picker
@@ -1037,7 +1034,7 @@ public partial class App : Application
                     }
 
                     // Update UI
-                    _mainWindowViewModel.OpenCompany(args.CompanyName);
+                    _mainWindowViewModel?.OpenCompany(args.CompanyName);
                     var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
                     _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
                     _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
@@ -1364,7 +1361,7 @@ public partial class App : Application
             if (file == null) return;
 
             var filePath = file.Path.LocalPath;
-            _mainWindowViewModel.ShowLoading("Exporting data...");
+            _mainWindowViewModel?.ShowLoading("Exporting data...");
 
             try
             {
@@ -1400,7 +1397,7 @@ public partial class App : Application
                         break;
                 }
 
-                _mainWindowViewModel.HideLoading();
+                _mainWindowViewModel?.HideLoading();
 
                 // Open the containing folder
                 try
@@ -1429,7 +1426,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                _mainWindowViewModel.HideLoading();
+                _mainWindowViewModel?.HideLoading();
                 _appShellViewModel.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
             }
         };
@@ -1480,7 +1477,7 @@ public partial class App : Application
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;
 
-            _mainWindowViewModel.ShowLoading("Validating import file...");
+            _mainWindowViewModel?.ShowLoading("Validating import file...");
 
             try
             {
@@ -1489,7 +1486,7 @@ public partial class App : Application
                 // First validate the import file
                 var validationResult = await importService.ValidateImportAsync(filePath, companyData);
 
-                _mainWindowViewModel.HideLoading();
+                _mainWindowViewModel?.HideLoading();
 
                 // Check for critical errors - show in modal
                 if (validationResult.Errors.Count > 0)
@@ -1539,11 +1536,11 @@ public partial class App : Application
                 // Create snapshot of current data for undo
                 var snapshot = CreateCompanyDataSnapshot(companyData);
 
-                _mainWindowViewModel.ShowLoading("Importing data...");
+                _mainWindowViewModel?.ShowLoading("Importing data...");
 
                 await importService.ImportFromExcelAsync(filePath, companyData, importOptions);
 
-                _mainWindowViewModel.HideLoading();
+                _mainWindowViewModel?.HideLoading();
 
                 // Create snapshot of imported data for redo
                 var importedSnapshot = CreateCompanyDataSnapshot(companyData);
@@ -1576,7 +1573,7 @@ public partial class App : Application
             }
             catch (Exception ex)
             {
-                _mainWindowViewModel.HideLoading();
+                _mainWindowViewModel?.HideLoading();
                 var errorDialog = ConfirmationDialog;
                 if (errorDialog != null)
                 {
@@ -1714,13 +1711,13 @@ public partial class App : Application
                     // Auto-save before locking
                     try
                     {
-                        _mainWindowViewModel.ShowLoading("Auto-saving before lock...");
+                        _mainWindowViewModel?.ShowLoading("Auto-saving before lock...");
                         await CompanyManager.SaveCompanyAsync();
-                        _mainWindowViewModel.HideLoading();
+                        _mainWindowViewModel?.HideLoading();
                     }
                     catch
                     {
-                        _mainWindowViewModel.HideLoading();
+                        _mainWindowViewModel?.HideLoading();
                         // Continue to close even if save fails - user can reopen
                     }
                 }
@@ -1755,11 +1752,9 @@ public partial class App : Application
                     60 => "1 hour",
                     _ => $"{security.AutoLockMinutes} minutes"
                 };
-                if (_appShellViewModel.SettingsModalViewModel != null)
-                {
-                    // Use SetAutoLockWithoutNotify to avoid triggering MarkAsChanged during load
-                    _appShellViewModel.SettingsModalViewModel.SetAutoLockWithoutNotify(timeoutString);
-                }
+                
+                // Use SetAutoLockWithoutNotify to avoid triggering MarkAsChanged during load
+                _appShellViewModel.SettingsModalViewModel.SetAutoLockWithoutNotify(timeoutString);
             }
         };
 
@@ -1948,7 +1943,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            _appShellViewModel.AddNotification("Error", $"Failed to save file: {ex.Message}", NotificationType.Error);
+            _appShellViewModel?.AddNotification("Error", $"Failed to save file: {ex.Message}", NotificationType.Error);
         }
     }
 
@@ -2035,13 +2030,13 @@ public partial class App : Application
     /// <returns>The user's choice.</returns>
     private static async Task<UnsavedChangesResult> ShowUnsavedChangesDialogAsync()
     {
-        if (_unsavedChangesDialogViewModel == null)
+        if (UnsavedChangesDialog == null)
             return UnsavedChangesResult.Cancel;
 
         // Get changes from the change tracking service if available
-        var categories = _changeTrackingService?.GetAllChangeCategories();
+        var categories = ChangeTrackingService?.GetAllChangeCategories();
 
-        return await _unsavedChangesDialogViewModel.ShowAsync(categories);
+        return await UnsavedChangesDialog.ShowAsync(categories);
     }
 
     /// <summary>
@@ -2089,16 +2084,16 @@ public partial class App : Application
             {
                 if (args.IsExporting)
                 {
-                    _mainWindowViewModel.ShowLoading("Exporting to Google Sheets...");
+                    _mainWindowViewModel?.ShowLoading("Exporting to Google Sheets...");
                 }
                 else if (args.IsSuccess)
                 {
-                    _mainWindowViewModel.HideLoading();
+                    _mainWindowViewModel?.HideLoading();
                     // No notification - the browser opens automatically
                 }
                 else if (!string.IsNullOrEmpty(args.ErrorMessage))
                 {
-                    _mainWindowViewModel.HideLoading();
+                    _mainWindowViewModel?.HideLoading();
                     appShellViewModel.AddNotification("Export Failed", args.ErrorMessage, NotificationType.Error);
                 }
             };
@@ -2144,11 +2139,13 @@ public partial class App : Application
         // Inventory Section
         navigationService.RegisterPage("Products", param =>
         {
-            var viewModel = new ProductsPageViewModel();
-            // Set plan status from app shell
-            viewModel.HasStandard = _appShellViewModel.SidebarViewModel.HasStandard;
+            var viewModel = new ProductsPageViewModel
+            {
+                // Set plan status from app shell
+                HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false
+            };
             // Wire up upgrade request to open upgrade modal
-            viewModel.UpgradeRequested += (_, _) => _appShellViewModel.UpgradeModalViewModel.OpenCommand.Execute(null);
+            viewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
             if (param is Dictionary<string, object?> dict)
             {
                 // Check if we should select a specific tab (0 = Expenses, 1 = Revenue)
@@ -2212,9 +2209,11 @@ public partial class App : Application
         navigationService.RegisterPage("LostDamaged", _ => new LostDamagedPage { DataContext = new LostDamagedPageViewModel() });
         navigationService.RegisterPage("Receipts", _ =>
         {
-            var viewModel = new ReceiptsPageViewModel();
-            // Set plan status from app shell
-            viewModel.HasPremium = _appShellViewModel.SidebarViewModel.HasPremium;
+            var viewModel = new ReceiptsPageViewModel
+            {
+                // Set plan status from app shell
+                HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false
+            };
             return new ReceiptsPage { DataContext = viewModel };
         });
 
@@ -2266,14 +2265,8 @@ public partial class App : Application
 /// <summary>
 /// Event arguments for plan status changes.
 /// </summary>
-public class PlanStatusChangedEventArgs : EventArgs
+public class PlanStatusChangedEventArgs(bool hasStandard, bool hasPremium) : EventArgs
 {
-    public bool HasStandard { get; }
-    public bool HasPremium { get; }
-
-    public PlanStatusChangedEventArgs(bool hasStandard, bool hasPremium)
-    {
-        HasStandard = hasStandard;
-        HasPremium = hasPremium;
-    }
+    public bool HasStandard { get; } = hasStandard;
+    public bool HasPremium { get; } = hasPremium;
 }

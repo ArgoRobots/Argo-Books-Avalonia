@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using ArgoBooks.Core.Enums;
 
 namespace ArgoBooks.Core.Models.Reports;
@@ -99,11 +98,8 @@ public class ReportConfiguration
     /// </summary>
     public void AddElement(ReportElementBase element)
     {
-        if (element != null)
-        {
-            element.ZOrder = Elements.Count != 0 ? Elements.Max(e => e.ZOrder) + 1 : 0;
-            Elements.Add(element);
-        }
+        element.ZOrder = Elements.Count != 0 ? Elements.Max(e => e.ZOrder) + 1 : 0;
+        Elements.Add(element);
     }
 
     /// <summary>

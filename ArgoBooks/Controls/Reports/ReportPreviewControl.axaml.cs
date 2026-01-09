@@ -318,10 +318,7 @@ public partial class ReportPreviewControl : UserControl
         _currentBitmap?.Dispose();
         _currentBitmap = bitmap;
 
-        if (_previewImage != null)
-        {
-            _previewImage.Source = bitmap;
-        }
+        _previewImage?.Source = bitmap;
     }
 
     private void ClearPreview()
@@ -329,10 +326,7 @@ public partial class ReportPreviewControl : UserControl
         _currentBitmap?.Dispose();
         _currentBitmap = null;
 
-        if (_previewImage != null)
-        {
-            _previewImage.Source = null;
-        }
+        _previewImage?.Source = null;
     }
 
     #endregion
@@ -561,10 +555,7 @@ public partial class ReportPreviewControl : UserControl
 
     private void UpdatePageDisplay()
     {
-        if (_pageNumberInput != null)
-        {
-            _pageNumberInput.Value = CurrentPage;
-        }
+        _pageNumberInput?.Value = CurrentPage;
 
         // In the future, this would render a different page
         // For now, we only support single-page reports
@@ -572,15 +563,9 @@ public partial class ReportPreviewControl : UserControl
 
     private void UpdatePageInfo()
     {
-        if (_totalPagesText != null)
-        {
-            _totalPagesText.Text = $"of {TotalPages}";
-        }
+        _totalPagesText?.Text = $"of {TotalPages}";
 
-        if (_pageNumberInput != null)
-        {
-            _pageNumberInput.Maximum = TotalPages;
-        }
+        _pageNumberInput?.Maximum = TotalPages;
     }
 
     #endregion
@@ -589,10 +574,7 @@ public partial class ReportPreviewControl : UserControl
 
     private void UpdateLoadingState()
     {
-        if (_loadingOverlay != null)
-        {
-            _loadingOverlay.IsVisible = IsLoading;
-        }
+        _loadingOverlay?.IsVisible = IsLoading;
 
         if (_errorOverlay != null && IsLoading)
         {
@@ -602,15 +584,9 @@ public partial class ReportPreviewControl : UserControl
 
     private void UpdateErrorState()
     {
-        if (_errorOverlay != null)
-        {
-            _errorOverlay.IsVisible = HasError && !IsLoading;
-        }
+        _errorOverlay?.IsVisible = HasError && !IsLoading;
 
-        if (_errorText != null)
-        {
-            _errorText.Text = ErrorMessage ?? "Failed to generate preview";
-        }
+        _errorText?.Text = ErrorMessage ?? "Failed to generate preview";
     }
 
     #endregion

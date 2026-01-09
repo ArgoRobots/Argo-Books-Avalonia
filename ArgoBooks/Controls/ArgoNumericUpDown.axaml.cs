@@ -17,7 +17,7 @@ public partial class ArgoNumericUpDown : UserControl
     #region Styled Properties
 
     public static readonly StyledProperty<double> ValueProperty =
-        AvaloniaProperty.Register<ArgoNumericUpDown, double>(nameof(Value), 0,
+        AvaloniaProperty.Register<ArgoNumericUpDown, double>(nameof(Value),
             defaultBindingMode: Avalonia.Data.BindingMode.TwoWay,
             coerce: CoerceValue);
 

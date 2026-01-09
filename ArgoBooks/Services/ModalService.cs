@@ -182,10 +182,7 @@ public class ModalService : IModalService
     {
         Dispatcher.UIThread.Post(() =>
         {
-            if (_overlay != null)
-            {
-                _overlay.IsOpen = false;
-            }
+            _overlay?.IsOpen = false;
 
             _resultTcs?.TrySetResult(result);
             _valueResultTcs?.TrySetResult(_resultValue);

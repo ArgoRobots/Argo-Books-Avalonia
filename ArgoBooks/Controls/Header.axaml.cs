@@ -21,7 +21,7 @@ public partial class Header : UserControl
         AvaloniaProperty.Register<Header, string?>(nameof(PageSubtitle));
 
     public static readonly StyledProperty<bool> ShowPageTitleProperty =
-        AvaloniaProperty.Register<Header, bool>(nameof(ShowPageTitle), false);
+        AvaloniaProperty.Register<Header, bool>(nameof(ShowPageTitle));
 
     public static readonly StyledProperty<string?> SearchQueryProperty =
         AvaloniaProperty.Register<Header, string?>(nameof(SearchQuery));
@@ -66,10 +66,10 @@ public partial class Header : UserControl
         AvaloniaProperty.Register<Header, string?>(nameof(UserInitials));
 
     public static readonly StyledProperty<bool> ShowUserNameProperty =
-        AvaloniaProperty.Register<Header, bool>(nameof(ShowUserName), false);
+        AvaloniaProperty.Register<Header, bool>(nameof(ShowUserName));
 
     public static readonly StyledProperty<bool> ShowUserInitialsProperty =
-        AvaloniaProperty.Register<Header, bool>(nameof(ShowUserInitials), false);
+        AvaloniaProperty.Register<Header, bool>(nameof(ShowUserInitials));
 
     public static readonly StyledProperty<bool> HasUserAvatarProperty =
         AvaloniaProperty.Register<Header, bool>(nameof(HasUserAvatar));

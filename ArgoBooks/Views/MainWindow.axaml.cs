@@ -13,9 +13,6 @@ namespace ArgoBooks.Views;
 /// </summary>
 public partial class MainWindow : Window
 {
-    private readonly ModalService? _modalService;
-    private readonly MessageBoxService? _messageBoxService;
-
     public MainWindow()
     {
         InitializeComponent();
@@ -42,11 +39,11 @@ public partial class MainWindow : Window
         if (modalOverlay != null)
         {
             // Get or create modal service
-            _modalService = new ModalService();
-            _modalService.SetOverlay(modalOverlay);
+            ModalService = new ModalService();
+            ModalService.SetOverlay(modalOverlay);
 
-            _messageBoxService = new MessageBoxService();
-            _messageBoxService.SetOverlay(modalOverlay);
+            MessageBoxService = new MessageBoxService();
+            MessageBoxService.SetOverlay(modalOverlay);
         }
 
         // Subscribe to window events for state persistence
@@ -58,12 +55,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// Gets the modal service for this window.
     /// </summary>
-    public ModalService? ModalService => _modalService;
+    public ModalService? ModalService { get; }
 
     /// <summary>
     /// Gets the message box service for this window.
     /// </summary>
-    public MessageBoxService? MessageBoxService => _messageBoxService;
+    public MessageBoxService? MessageBoxService { get; }
 
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {

@@ -613,34 +613,34 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 /// <summary>
 /// Represents a country with its dial code.
 /// </summary>
-public class CountryDialCode
+public class CountryDialCode(string code, string name, string dialCode, string phoneFormat, string? flagFileName = null)
 {
     private IImage? _flagImage;
 
     /// <summary>
     /// ISO country code (e.g., US, GB).
     /// </summary>
-    public string Code { get; }
+    public string Code { get; } = code;
 
     /// <summary>
     /// Country name for display.
     /// </summary>
-    public string Name { get; }
+    public string Name { get; } = name;
 
     /// <summary>
     /// Phone dial code (e.g., +1, +44).
     /// </summary>
-    public string DialCode { get; }
+    public string DialCode { get; } = dialCode;
 
     /// <summary>
     /// Phone number format pattern using X for digits (e.g., "(XXX) XXX-XXXX").
     /// </summary>
-    public string PhoneFormat { get; }
+    public string PhoneFormat { get; } = phoneFormat;
 
     /// <summary>
     /// Flag file name (matches the PNG file in Assets/CountryFlags).
     /// </summary>
-    public string FlagFileName { get; }
+    public string FlagFileName { get; } = flagFileName ?? name;
 
     /// <summary>
     /// Gets whether this is a priority/common country.
@@ -685,15 +685,6 @@ public class CountryDialCode
     /// Display format for the dropdown.
     /// </summary>
     public string DisplayName => $"{DialCode} {Name}";
-
-    public CountryDialCode(string code, string name, string dialCode, string phoneFormat, string? flagFileName = null)
-    {
-        Code = code;
-        Name = name;
-        DialCode = dialCode;
-        PhoneFormat = phoneFormat;
-        FlagFileName = flagFileName ?? name;
-    }
 
     /// <summary>
     /// Formats a phone number according to this country's format pattern.

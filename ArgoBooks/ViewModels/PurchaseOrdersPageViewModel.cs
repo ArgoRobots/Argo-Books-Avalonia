@@ -481,9 +481,8 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         if (item == null) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var order = companyData.PurchaseOrders?.FirstOrDefault(o => o.Id == item.Id);
+        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == item.Id);
         if (order == null) return;
 
         var oldStatus = order.Status;

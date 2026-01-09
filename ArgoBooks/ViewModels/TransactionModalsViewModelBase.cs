@@ -415,11 +415,11 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             {
                 var lineItem = new TLineItem
                 {
-                    SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId)
+                    SelectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId),
+                    Description = li.Description,
+                    Quantity = li.Quantity,
+                    UnitPrice = li.UnitPrice
                 };
-                lineItem.Description = li.Description;
-                lineItem.Quantity = li.Quantity;
-                lineItem.UnitPrice = li.UnitPrice;
                 lineItem.PropertyChanged += (_, _) => UpdateTotals();
                 LineItems.Add(lineItem);
             }

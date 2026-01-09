@@ -16,13 +16,12 @@ public interface IReportUndoableAction
 /// <summary>
 /// Manages undo/redo operations for the report layout designer.
 /// </summary>
-public class ReportUndoRedoManager : INotifyPropertyChanged, IUndoRedoManager
+public class ReportUndoRedoManager(int maxStackSize = 100) : INotifyPropertyChanged, IUndoRedoManager
 {
     private readonly Stack<IReportUndoableAction> _undoStack = new();
     private readonly Stack<IReportUndoableAction> _redoStack = new();
-    private readonly int _maxStackSize;
     private bool _isUndoingOrRedoing;
-    private int _savePointDepth = 0; // Tracks the undo stack depth at save time
+    private int _savePointDepth ; // Tracks the undo stack depth at save time
 
     /// <summary>
     /// Fired when a property changes.
@@ -33,11 +32,6 @@ public class ReportUndoRedoManager : INotifyPropertyChanged, IUndoRedoManager
     /// Fired when the undo/redo state changes.
     /// </summary>
     public event EventHandler? StateChanged;
-
-    public ReportUndoRedoManager(int maxStackSize = 100)
-    {
-        _maxStackSize = maxStackSize;
-    }
 
     /// <summary>
     /// Gets whether undo is available.
@@ -92,7 +86,7 @@ public class ReportUndoRedoManager : INotifyPropertyChanged, IUndoRedoManager
         _redoStack.Clear();
 
         // Enforce max stack size
-        while (_undoStack.Count > _maxStackSize)
+        while (_undoStack.Count > maxStackSize)
         {
             var temp = new Stack<IReportUndoableAction>();
             while (_undoStack.Count > 1)
@@ -187,139 +181,90 @@ public class ReportUndoRedoManager : INotifyPropertyChanged, IUndoRedoManager
 /// <summary>
 /// Action for adding an element.
 /// </summary>
-public class AddElementAction : IReportUndoableAction
+public class AddElementAction(ReportConfiguration config, ReportElementBase element) : IReportUndoableAction
 {
-    private readonly ReportConfiguration _config;
-    private readonly ReportElementBase _element;
-
-    public string Description => $"Add {_element.DisplayName}";
-
-    public AddElementAction(ReportConfiguration config, ReportElementBase element)
-    {
-        _config = config;
-        _element = element;
-    }
+    public string Description => $"Add {element.DisplayName}";
 
     public void Undo()
     {
-        _config.RemoveElement(_element.Id);
+        config.RemoveElement(element.Id);
     }
 
     public void Redo()
     {
-        _config.AddElement(_element);
+        config.AddElement(element);
     }
 }
 
 /// <summary>
 /// Action for removing an element.
 /// </summary>
-public class RemoveElementAction : IReportUndoableAction
+public class RemoveElementAction(ReportConfiguration config, ReportElementBase element) : IReportUndoableAction
 {
-    private readonly ReportConfiguration _config;
-    private readonly ReportElementBase _element;
-    private readonly int _originalZOrder;
+    private readonly ReportElementBase _element = element.Clone();
+    private readonly int _originalZOrder = element.ZOrder;
 
     public string Description => $"Remove {_element.DisplayName}";
-
-    public RemoveElementAction(ReportConfiguration config, ReportElementBase element)
-    {
-        _config = config;
-        _element = element.Clone();
-        _originalZOrder = element.ZOrder;
-    }
 
     public void Undo()
     {
         _element.ZOrder = _originalZOrder;
-        _config.AddElement(_element);
+        config.AddElement(_element);
     }
 
     public void Redo()
     {
-        _config.RemoveElement(_element.Id);
+        config.RemoveElement(_element.Id);
     }
 }
 
 /// <summary>
 /// Action for moving/resizing an element.
 /// </summary>
-public class MoveResizeElementAction : IReportUndoableAction
+public class MoveResizeElementAction(
+    ReportConfiguration config,
+    string elementId,
+    (double X, double Y, double Width, double Height) oldBounds,
+    (double X, double Y, double Width, double Height) newBounds,
+    bool isResize = false)
+    : IReportUndoableAction
 {
-    private readonly ReportConfiguration _config;
-    private readonly string _elementId;
-    private readonly (double X, double Y, double Width, double Height) _oldBounds;
-    private readonly (double X, double Y, double Width, double Height) _newBounds;
-    private readonly bool _isResize;
-
-    public string Description => _isResize ? "Resize element" : "Move element";
-
-    public MoveResizeElementAction(
-        ReportConfiguration config,
-        string elementId,
-        (double X, double Y, double Width, double Height) oldBounds,
-        (double X, double Y, double Width, double Height) newBounds,
-        bool isResize = false)
-    {
-        _config = config;
-        _elementId = elementId;
-        _oldBounds = oldBounds;
-        _newBounds = newBounds;
-        _isResize = isResize;
-    }
+    public string Description => isResize ? "Resize element" : "Move element";
 
     public void Undo()
     {
-        var element = _config.GetElementById(_elementId);
-        if (element != null)
-        {
-            element.Bounds = _oldBounds;
-        }
+        var element = config.GetElementById(elementId);
+        element?.Bounds = oldBounds;
     }
 
     public void Redo()
     {
-        var element = _config.GetElementById(_elementId);
-        if (element != null)
-        {
-            element.Bounds = _newBounds;
-        }
+        var element = config.GetElementById(elementId);
+        element?.Bounds = newBounds;
     }
 }
 
 /// <summary>
 /// Action for changing element Z-order.
 /// </summary>
-public class ZOrderChangeAction : IReportUndoableAction
+public class ZOrderChangeAction(
+    ReportConfiguration config,
+    Dictionary<string, int> oldZOrders,
+    Dictionary<string, int> newZOrders,
+    string description)
+    : IReportUndoableAction
 {
-    private readonly ReportConfiguration _config;
-    private readonly Dictionary<string, int> _oldZOrders;
-    private readonly Dictionary<string, int> _newZOrders;
-    private readonly string _description;
+    private readonly Dictionary<string, int> _oldZOrders = new(oldZOrders);
+    private readonly Dictionary<string, int> _newZOrders = new(newZOrders);
 
-    public string Description => _description;
-
-    public ZOrderChangeAction(
-        ReportConfiguration config,
-        Dictionary<string, int> oldZOrders,
-        Dictionary<string, int> newZOrders,
-        string description)
-    {
-        _config = config;
-        _oldZOrders = new Dictionary<string, int>(oldZOrders);
-        _newZOrders = new Dictionary<string, int>(newZOrders);
-        _description = description;
-    }
+    public string Description { get; } = description;
 
     public void Undo()
     {
         foreach (var kvp in _oldZOrders)
         {
-            var element = _config.GetElementById(kvp.Key);
-            if (element != null)
-            {
-                element.ZOrder = kvp.Value;
-            }
+            var element = config.GetElementById(kvp.Key);
+            element?.ZOrder = kvp.Value;
         }
     }
 
@@ -327,11 +272,8 @@ public class ZOrderChangeAction : IReportUndoableAction
     {
         foreach (var kvp in _newZOrders)
         {
-            var element = _config.GetElementById(kvp.Key);
-            if (element != null)
-            {
-                element.ZOrder = kvp.Value;
-            }
+            var element = config.GetElementById(kvp.Key);
+            element?.ZOrder = kvp.Value;
         }
     }
 }
@@ -339,88 +281,58 @@ public class ZOrderChangeAction : IReportUndoableAction
 /// <summary>
 /// Action for changing a property value in report configuration.
 /// </summary>
-public class ReportPropertyChangeAction<T> : IReportUndoableAction
+public class ReportPropertyChangeAction<T>(
+    string propertyName,
+    T oldValue,
+    T newValue,
+    Action<T> setter,
+    Action? onChanged = null)
+    : IReportUndoableAction
 {
-    private readonly Action<T> _setter;
-    private readonly T _oldValue;
-    private readonly T _newValue;
-    private readonly string _propertyName;
-    private readonly Action? _onChanged;
-
-    public string Description => $"Change {_propertyName}";
-
-    public ReportPropertyChangeAction(
-        string propertyName,
-        T oldValue,
-        T newValue,
-        Action<T> setter,
-        Action? onChanged = null)
-    {
-        _propertyName = propertyName;
-        _oldValue = oldValue;
-        _newValue = newValue;
-        _setter = setter;
-        _onChanged = onChanged;
-    }
+    public string Description => $"Change {propertyName}";
 
     public void Undo()
     {
-        _setter(_oldValue);
-        _onChanged?.Invoke();
+        setter(oldValue);
+        onChanged?.Invoke();
     }
 
     public void Redo()
     {
-        _setter(_newValue);
-        _onChanged?.Invoke();
+        setter(newValue);
+        onChanged?.Invoke();
     }
 }
 
 /// <summary>
 /// Action for changing an element property value.
 /// </summary>
-public class ElementPropertyChangeAction : IReportUndoableAction
+public class ElementPropertyChangeAction(
+    ReportConfiguration config,
+    string elementId,
+    string elementDisplayName,
+    string propertyName,
+    object? oldValue,
+    object? newValue)
+    : IReportUndoableAction
 {
-    private readonly ReportConfiguration _config;
-    private readonly string _elementId;
-    private readonly string _propertyName;
-    private readonly object? _oldValue;
-    private readonly object? _newValue;
-    private readonly string _elementDisplayName;
-
-    public string Description => $"Change {_elementDisplayName} {FormatPropertyName(_propertyName)}";
-
-    public ElementPropertyChangeAction(
-        ReportConfiguration config,
-        string elementId,
-        string elementDisplayName,
-        string propertyName,
-        object? oldValue,
-        object? newValue)
-    {
-        _config = config;
-        _elementId = elementId;
-        _elementDisplayName = elementDisplayName;
-        _propertyName = propertyName;
-        _oldValue = oldValue;
-        _newValue = newValue;
-    }
+    public string Description => $"Change {elementDisplayName} {FormatPropertyName(propertyName)}";
 
     public void Undo()
     {
-        var element = _config.GetElementById(_elementId);
+        var element = config.GetElementById(elementId);
         if (element != null)
         {
-            SetPropertyValue(element, _propertyName, _oldValue);
+            SetPropertyValue(element, propertyName, oldValue);
         }
     }
 
     public void Redo()
     {
-        var element = _config.GetElementById(_elementId);
+        var element = config.GetElementById(elementId);
         if (element != null)
         {
-            SetPropertyValue(element, _propertyName, _newValue);
+            SetPropertyValue(element, propertyName, newValue);
         }
     }
 
@@ -476,36 +388,24 @@ public class ElementPropertyChangeAction : IReportUndoableAction
 /// <summary>
 /// Action for batch operations (alignment, distribution, sizing).
 /// </summary>
-public class BatchMoveResizeAction : IReportUndoableAction
+public class BatchMoveResizeAction(
+    ReportConfiguration config,
+    Dictionary<string, (double X, double Y, double Width, double Height)> oldBounds,
+    Dictionary<string, (double X, double Y, double Width, double Height)> newBounds,
+    string description)
+    : IReportUndoableAction
 {
-    private readonly ReportConfiguration _config;
-    private readonly Dictionary<string, (double X, double Y, double Width, double Height)> _oldBounds;
-    private readonly Dictionary<string, (double X, double Y, double Width, double Height)> _newBounds;
-    private readonly string _description;
+    private readonly Dictionary<string, (double X, double Y, double Width, double Height)> _oldBounds = new(oldBounds);
+    private readonly Dictionary<string, (double X, double Y, double Width, double Height)> _newBounds = new(newBounds);
 
-    public string Description => _description;
-
-    public BatchMoveResizeAction(
-        ReportConfiguration config,
-        Dictionary<string, (double X, double Y, double Width, double Height)> oldBounds,
-        Dictionary<string, (double X, double Y, double Width, double Height)> newBounds,
-        string description)
-    {
-        _config = config;
-        _oldBounds = new Dictionary<string, (double, double, double, double)>(oldBounds);
-        _newBounds = new Dictionary<string, (double, double, double, double)>(newBounds);
-        _description = description;
-    }
+    public string Description { get; } = description;
 
     public void Undo()
     {
         foreach (var kvp in _oldBounds)
         {
-            var element = _config.GetElementById(kvp.Key);
-            if (element != null)
-            {
-                element.Bounds = kvp.Value;
-            }
+            var element = config.GetElementById(kvp.Key);
+            element?.Bounds = kvp.Value;
         }
     }
 
@@ -513,11 +413,8 @@ public class BatchMoveResizeAction : IReportUndoableAction
     {
         foreach (var kvp in _newBounds)
         {
-            var element = _config.GetElementById(kvp.Key);
-            if (element != null)
-            {
-                element.Bounds = kvp.Value;
-            }
+            var element = config.GetElementById(kvp.Key);
+            element?.Bounds = kvp.Value;
         }
     }
 }

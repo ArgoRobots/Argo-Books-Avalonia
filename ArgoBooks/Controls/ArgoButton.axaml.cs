@@ -46,7 +46,7 @@ public partial class ArgoButton : UserControl
     /// Defines the Variant property.
     /// </summary>
     public static readonly StyledProperty<ButtonVariant> VariantProperty =
-        AvaloniaProperty.Register<ArgoButton, ButtonVariant>(nameof(Variant), ButtonVariant.Primary);
+        AvaloniaProperty.Register<ArgoButton, ButtonVariant>(nameof(Variant));
 
     /// <summary>
     /// Defines the Size property.
