@@ -61,7 +61,7 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     }
 
     public static readonly StyledProperty<ObservableCollection<CategoryItem>> CategoriesProperty =
-        AvaloniaProperty.Register<CategoryInput, ObservableCollection<CategoryItem>>(nameof(Categories), new ObservableCollection<CategoryItem>());
+        AvaloniaProperty.Register<CategoryInput, ObservableCollection<CategoryItem>>(nameof(Categories), []);
 
     /// <summary>
     /// Gets or sets the available categories.
@@ -196,7 +196,7 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Gets the filtered categories based on search.
     /// </summary>
-    public ObservableCollection<CategoryItem> FilteredCategories { get; } = new();
+    public ObservableCollection<CategoryItem> FilteredCategories { get; } = [];
 
     #endregion
 

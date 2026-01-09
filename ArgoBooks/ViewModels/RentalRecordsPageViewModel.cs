@@ -167,10 +167,8 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
 
         LoadRecords();
 
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        // Subscribe to undo/redo state changes to refresh UI
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         if (App.RentalRecordsModalsViewModel != null)
         {

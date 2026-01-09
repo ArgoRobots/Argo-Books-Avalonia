@@ -184,7 +184,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var categoryToUndo = newCategory;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add category '{newCategory.Name}'",
             () => { companyData.Categories.Remove(categoryToUndo); companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
             () => { companyData.Categories.Add(categoryToUndo); companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
@@ -261,7 +261,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         categoryToEdit.Icon = newIcon;
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit category '{newName}'",
             () => { categoryToEdit.Name = oldName; categoryToEdit.Description = oldDescription; categoryToEdit.ItemType = oldItemType; categoryToEdit.Icon = oldIcon; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
             () => { categoryToEdit.Name = newName; categoryToEdit.Description = newDescription; categoryToEdit.ItemType = newItemType; categoryToEdit.Icon = newIcon; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
@@ -283,8 +283,8 @@ public partial class CategoryModalsViewModel : ObservableObject
         var category = companyData?.Categories.FirstOrDefault(c => c.Id == item.Id);
         if (category == null) return;
 
-        var children = companyData.Categories.Where(c => c.ParentId == category.Id).ToList();
-        var hasChildren = children.Count > 0;
+        var children = companyData?.Categories.Where(c => c.ParentId == category.Id).ToList();
+        var hasChildren = children?.Count > 0;
 
         var dialog = App.ConfirmationDialog;
         if (dialog == null) return;
@@ -296,7 +296,7 @@ public partial class CategoryModalsViewModel : ObservableObject
             var subResult = await dialog.ShowAsync(new ConfirmationDialogOptions
             {
                 Title = "Delete Category",
-                Message = $"This category has {children.Count} subcategories.\n\nDo you want to delete them as well, or move them to the top level?",
+                Message = $"This category has {children?.Count} subcategories.\n\nDo you want to delete them as well, or move them to the top level?",
                 PrimaryButtonText = "Delete All",
                 SecondaryButtonText = "Move to Top Level",
                 CancelButtonText = "Cancel",
@@ -323,44 +323,44 @@ public partial class CategoryModalsViewModel : ObservableObject
                 return;
         }
 
-        var childOriginalParents = children.ToDictionary(c => c.Id, c => c.ParentId);
+        var childOriginalParents = children?.ToDictionary(c => c.Id, c => c.ParentId);
         var deletedChildren = new List<Category>();
         var shouldDeleteSubcategories = deleteSubcategories;
 
         if (shouldDeleteSubcategories)
         {
-            deletedChildren.AddRange(children);
-            foreach (var child in children) companyData.Categories.Remove(child);
+            deletedChildren.AddRange(children ?? []);
+            foreach (var child in children ?? []) companyData?.Categories.Remove(child);
         }
         else
         {
-            foreach (var child in children) child.ParentId = null;
+            foreach (var child in children ?? []) child.ParentId = null;
         }
-
+        
         var deletedCategory = category;
-        companyData.Categories.Remove(category);
-        companyData.MarkAsModified();
+        companyData?.Categories.Remove(category);
+        companyData?.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Delete category '{deletedCategory.Name}'",
             () =>
             {
-                companyData.Categories.Add(deletedCategory);
-                if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData.Categories.Add(child); }
-                else { foreach (var kvp in childOriginalParents) { var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                companyData?.Categories.Add(deletedCategory);
+                if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData?.Categories.Add(child); }
+                else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.Categories.FirstOrDefault(c => c.Id == kvp.Key);
                     child?.ParentId = kvp.Value;
                 } }
-                companyData.MarkAsModified();
+                companyData?.MarkAsModified();
                 CategoryDeleted?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData.Categories.Remove(child); }
-                else { foreach (var kvp in childOriginalParents) { var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
+                if (shouldDeleteSubcategories) { foreach (var child in deletedChildren) companyData?.Categories.Remove(child); }
+                else { foreach (var kvp in childOriginalParents ?? []) { var child = companyData?.Categories.FirstOrDefault(c => c.Id == kvp.Key);
                     child?.ParentId = null;
                 } }
-                companyData.Categories.Remove(deletedCategory);
-                companyData.MarkAsModified();
+                companyData?.Categories.Remove(deletedCategory);
+                companyData?.MarkAsModified();
                 CategoryDeleted?.Invoke(this, EventArgs.Empty);
             }));
 
@@ -415,13 +415,12 @@ public partial class CategoryModalsViewModel : ObservableObject
         }
 
         category.ParentId = newParentId;
-        companyData.MarkAsModified();
+        companyData?.MarkAsModified();
 
-        var categoryToMove = category;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Move category '{category.Name}'",
-            () => { categoryToMove.ParentId = oldParentId; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
-            () => { categoryToMove.ParentId = newParentId; companyData.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
+            () => { category.ParentId = oldParentId; companyData?.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); },
+            () => { category.ParentId = newParentId; companyData?.MarkAsModified(); CategorySaved?.Invoke(this, EventArgs.Empty); }));
 
         CategorySaved?.Invoke(this, EventArgs.Empty);
         CloseMoveModal();

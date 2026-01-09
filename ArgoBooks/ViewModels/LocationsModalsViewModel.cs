@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -170,7 +171,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
         {
             Id = newId,
             Name = ModalName.Trim(),
-            Address = new Core.Models.Common.Address
+            Address = new Address
             {
                 Street = ModalStreetAddress.Trim(),
                 City = ModalCity.Trim(),

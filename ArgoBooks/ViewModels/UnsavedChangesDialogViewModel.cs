@@ -76,7 +76,7 @@ public partial class ChangeCategory : ObservableObject
     /// <summary>
     /// Gets the collection of changes in this category.
     /// </summary>
-    public ObservableCollection<ChangeItem> Changes { get; } = new();
+    public ObservableCollection<ChangeItem> Changes { get; } = [];
 
     /// <summary>
     /// Gets the count of changes in this category.
@@ -123,7 +123,7 @@ public partial class UnsavedChangesDialogViewModel : ViewModelBase
     /// <summary>
     /// Gets the collection of change categories.
     /// </summary>
-    public ObservableCollection<ChangeCategory> Categories { get; } = new();
+    public ObservableCollection<ChangeCategory> Categories { get; } = [];
 
     /// <summary>
     /// Gets whether there are any changes to display.

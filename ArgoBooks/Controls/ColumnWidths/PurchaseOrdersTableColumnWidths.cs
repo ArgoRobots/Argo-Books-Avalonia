@@ -38,7 +38,7 @@ public partial class PurchaseOrdersTableColumnWidths : TableColumnWidthsBase
 
     public PurchaseOrdersTableColumnWidths()
     {
-        ColumnOrder = new[] { "PONumber", "Date", "Supplier", "Items", "Total", "Status", "Expected", "Actions" };
+        ColumnOrder = ["PONumber", "Date", "Supplier", "Items", "Total", "Status", "Expected", "Actions"];
 
         // PO Number column
         RegisterColumn("PONumber", new ColumnDef

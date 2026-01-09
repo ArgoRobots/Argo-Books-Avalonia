@@ -243,12 +243,12 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Gets the filtered items based on search text.
     /// </summary>
-    public ObservableCollection<object> FilteredItems { get; } = new();
+    public ObservableCollection<object> FilteredItems { get; } = [];
 
     /// <summary>
     /// Gets the filtered priority items based on search text.
     /// </summary>
-    public ObservableCollection<object> FilteredPriorityItems { get; } = new();
+    public ObservableCollection<object> FilteredPriorityItems { get; } = [];
 
     /// <summary>
     /// Gets whether there are filtered priority items to display.

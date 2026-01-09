@@ -1,6 +1,7 @@
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -211,7 +212,7 @@ public partial class CustomerModalsViewModel : ObservableObject
             CompanyName = string.IsNullOrWhiteSpace(ModalCompanyName) ? null : ModalCompanyName.Trim(),
             Email = ModalEmail.Trim(),
             Phone = ModalPhone.Trim(),
-            Address = new Core.Models.Common.Address
+            Address = new Address
             {
                 Street = ModalStreetAddress.Trim(),
                 City = ModalCity.Trim(),
@@ -229,7 +230,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var customerToUndo = newCustomer;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add customer '{newCustomer.Name}'",
             () =>
             {
@@ -310,7 +311,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         var oldCompanyName = _editingCustomer.CompanyName;
         var oldEmail = _editingCustomer.Email;
         var oldPhone = _editingCustomer.Phone;
-        var oldAddress = new Core.Models.Common.Address
+        var oldAddress = new Address
         {
             Street = _editingCustomer.Address.Street,
             City = _editingCustomer.Address.City,
@@ -325,7 +326,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         var newCompanyName = string.IsNullOrWhiteSpace(ModalCompanyName) ? null : ModalCompanyName.Trim();
         var newEmail = ModalEmail.Trim();
         var newPhone = ModalPhone.Trim();
-        var newAddress = new Core.Models.Common.Address
+        var newAddress = new Address
         {
             Street = ModalStreetAddress.Trim(),
             City = ModalCity.Trim(),
@@ -374,7 +375,7 @@ public partial class CustomerModalsViewModel : ObservableObject
 
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit customer '{newName}'",
             () =>
             {
@@ -441,7 +442,7 @@ public partial class CustomerModalsViewModel : ObservableObject
             companyData.Customers.Remove(customer);
             companyData.MarkAsModified();
 
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete customer '{deletedCustomer.Name}'",
                 () =>
                 {
@@ -525,7 +526,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         var historyItems = new List<CustomerHistoryItem>();
 
         // Add invoices
-        var invoices = companyData.Invoices?.Where(i => i.CustomerId == customerId) ?? [];
+        var invoices = companyData.Invoices.Where(i => i.CustomerId == customerId);
         foreach (var invoice in invoices)
         {
             historyItems.Add(new CustomerHistoryItem
@@ -539,7 +540,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         }
 
         // Add payments
-        var payments = companyData.Payments?.Where(p => p.CustomerId == customerId) ?? [];
+        var payments = companyData.Payments.Where(p => p.CustomerId == customerId);
         foreach (var payment in payments)
         {
             historyItems.Add(new CustomerHistoryItem
@@ -553,7 +554,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         }
 
         // Add rentals
-        var rentals = companyData.Rentals?.Where(r => r.CustomerId == customerId) ?? [];
+        var rentals = companyData.Rentals.Where(r => r.CustomerId == customerId);
         foreach (var rental in rentals)
         {
             var item = companyData.RentalInventory?.FirstOrDefault(p => p.Id == rental.RentalItemId);
@@ -568,10 +569,10 @@ public partial class CustomerModalsViewModel : ObservableObject
         }
 
         // Add returns
-        var returns = companyData.Returns?.Where(r => r.CustomerId == customerId) ?? [];
+        var returns = companyData.Returns.Where(r => r.CustomerId == customerId);
         foreach (var returnItem in returns)
         {
-            var firstItem = returnItem.Items?.FirstOrDefault();
+            var firstItem = returnItem.Items.FirstOrDefault();
             var product = firstItem != null ? companyData.Products?.FirstOrDefault(p => p.Id == firstItem.ProductId) : null;
             historyItems.Add(new CustomerHistoryItem
             {

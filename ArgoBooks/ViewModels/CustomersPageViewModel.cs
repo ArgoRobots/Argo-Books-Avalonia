@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
@@ -179,10 +180,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         LoadCustomers();
 
         // Subscribe to undo/redo state changes to refresh UI
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to customer modal events to refresh data
         if (App.CustomerModalsViewModel != null)
@@ -465,7 +463,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
             Name = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}".Trim(),
             Email = ModalEmail.Trim(),
             Phone = ModalPhone.Trim(),
-            Address = new Core.Models.Common.Address
+            Address = new Address
             {
                 Street = ModalStreetAddress.Trim(),
                 City = ModalCity.Trim(),

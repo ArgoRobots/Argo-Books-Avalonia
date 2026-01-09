@@ -44,7 +44,8 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
 
     public StockAdjustmentsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Date", "Reference", "Product", "Location", "Type", "Quantity", "Previous", "New", "Reason", "Actions" };
+        ColumnOrder = ["Date", "Reference", "Product", "Location", "Type", "Quantity", "Previous", "New", "Reason", "Actions"
+        ];
 
         // Date column
         RegisterColumn("Date", new ColumnDef

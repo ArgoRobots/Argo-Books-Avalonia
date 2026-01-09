@@ -202,7 +202,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == item.Id);
+        var order = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == item.Id);
         if (order == null) return;
 
         // Populate fields
@@ -215,7 +215,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         Notes = order.Notes;
 
         // Populate line items
-        var products = companyData.Products ?? [];
+        var products = companyData?.Products ?? [];
         foreach (var lineItem in order.LineItems)
         {
             var product = products.FirstOrDefault(p => p.Id == lineItem.ProductId);
@@ -381,18 +381,17 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        var orderToUndo = order;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Create order '{poNumber}'",
             () =>
             {
-                companyData.PurchaseOrders?.Remove(orderToUndo);
+                companyData.PurchaseOrders.Remove(order);
                 companyData.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData.PurchaseOrders?.Add(orderToUndo);
+                companyData.PurchaseOrders.Add(order);
                 companyData.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -532,10 +531,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         ViewLineItems.Clear();
         var companyData = App.CompanyManager?.CompanyData;
 
-        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == orderId);
+        var order = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == orderId);
         if (order == null) return;
 
-        var products = companyData.Products ?? [];
+        var products = companyData?.Products ?? [];
         foreach (var li in order.LineItems)
         {
             var product = products.FirstOrDefault(p => p.Id == li.ProductId);
@@ -605,7 +604,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == ReceivingOrder.Id);
+        var order = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == ReceivingOrder.Id);
         if (order == null) return;
 
         // Store old values for undo
@@ -620,7 +619,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 order.LineItems[i].QuantityReceived += qty;
 
                 // Update inventory
-                var inventoryItem = companyData.Inventory?.FirstOrDefault(inv =>
+                var inventoryItem = companyData?.Inventory?.FirstOrDefault(inv =>
                     inv.ProductId == order.LineItems[i].ProductId);
                 if (inventoryItem != null)
                 {
@@ -642,7 +641,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
 
         order.UpdatedAt = DateTime.UtcNow;
-        companyData.MarkAsModified();
+        companyData?.MarkAsModified();
 
         // Record undo action
         var receivedOrder = order;
@@ -651,7 +650,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var receivedQuantities = ReceiveLineItems.Select(li =>
             int.TryParse(li.ReceivingQuantity, out var q) ? q : 0).ToList();
 
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Receive items for '{order.PoNumber}'",
             () =>
             {
@@ -662,7 +661,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                     receivedOrder.LineItems[i].QuantityReceived = oldLineItemReceived[i];
 
                     // Revert inventory
-                    var inventoryItem = companyData.Inventory?.FirstOrDefault(inv =>
+                    var inventoryItem = companyData?.Inventory?.FirstOrDefault(inv =>
                         inv.ProductId == receivedOrder.LineItems[i].ProductId);
                     if (inventoryItem != null && diff > 0)
                     {
@@ -671,7 +670,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                     }
                 }
                 receivedOrder.Status = oldStatus;
-                companyData.MarkAsModified();
+                companyData?.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
@@ -682,7 +681,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                     var diff = receivedQuantities[i];
                     receivedOrder.LineItems[i].QuantityReceived = newLineItemReceived[i];
 
-                    var inventoryItem = companyData.Inventory?.FirstOrDefault(inv =>
+                    var inventoryItem = companyData?.Inventory?.FirstOrDefault(inv =>
                         inv.ProductId == receivedOrder.LineItems[i].ProductId);
                     if (inventoryItem != null && diff > 0)
                     {
@@ -691,7 +690,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                     }
                 }
                 receivedOrder.Status = newStatus;
-                companyData.MarkAsModified();
+                companyData?.MarkAsModified();
                 OrderSaved?.Invoke(this, EventArgs.Empty);
             }));
 
@@ -704,10 +703,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         ReceiveLineItems.Clear();
         var companyData = App.CompanyManager?.CompanyData;
 
-        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == orderId);
+        var order = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == orderId);
         if (order == null) return;
 
-        var products = companyData.Products ?? [];
+        var products = companyData?.Products ?? [];
         foreach (var li in order.LineItems)
         {
             var product = products.FirstOrDefault(p => p.Id == li.ProductId);
@@ -732,8 +731,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// </summary>
     public async void OpenDeleteConfirm(PurchaseOrderDisplayItem item)
     {
-        if (item == null) return;
-
         var dialog = App.ConfirmationDialog;
         if (dialog == null) return;
 
@@ -753,24 +750,23 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == item.Id);
         if (order == null) return;
 
-        var deletedOrder = order;
-        companyData.PurchaseOrders.Remove(order);
-        companyData.MarkAsModified();
+        companyData?.PurchaseOrders?.Remove(order);
+        companyData?.MarkAsModified();
 
         // Record undo action
         var orderPoNumber = item.PoNumber;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Delete order '{orderPoNumber}'",
             () =>
             {
-                companyData.PurchaseOrders.Add(deletedOrder);
-                companyData.MarkAsModified();
+                companyData?.PurchaseOrders?.Add(order);
+                companyData?.MarkAsModified();
                 OrderDeleted?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData.PurchaseOrders.Remove(deletedOrder);
-                companyData.MarkAsModified();
+                companyData?.PurchaseOrders?.Remove(order);
+                companyData?.MarkAsModified();
                 OrderDeleted?.Invoke(this, EventArgs.Empty);
             }));
 

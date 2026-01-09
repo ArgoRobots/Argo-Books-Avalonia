@@ -299,7 +299,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var itemToUndo = newItem;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add rental item '{newItem.Name}'",
             () =>
             {
@@ -424,7 +424,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit rental item '{newName}'",
             () =>
             {
@@ -497,7 +497,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
             companyData.RentalInventory.Remove(rentalItem);
             companyData.MarkAsModified();
 
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete rental item '{deletedItem.Name}'",
                 () =>
                 {
@@ -644,7 +644,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
         var rentalToUndo = newRental;
         var itemToUpdate = _rentingItem;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Rent out '{_rentingItem.Name}' to customer",
             () =>
             {

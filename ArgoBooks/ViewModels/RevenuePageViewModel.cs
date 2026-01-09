@@ -189,10 +189,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         LoadDropdownOptions();
 
         // Subscribe to undo/redo state changes to refresh UI
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to revenue modal events to refresh data
         if (App.RevenueModalsViewModel != null)
@@ -615,7 +612,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             return;
 
         // Try to get the receipt path - check if file exists, otherwise load from stored data
-        var receiptPath = GetReceiptImagePath(item.Id, item.ReceiptFilePath);
+        var receiptPath = GetReceiptImagePath(item.Id);
         if (string.IsNullOrEmpty(receiptPath))
             return;
 
@@ -625,7 +622,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         IsReceiptFullscreen = false;
     }
 
-    private string? GetReceiptImagePath(string saleId, string? originalPath)
+    private string? GetReceiptImagePath(string saleId)
     {
         // Always load from company file to ensure consistency
         var companyData = App.CompanyManager?.CompanyData;
@@ -633,7 +630,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var sale = companyData?.Sales.FirstOrDefault(s => s.Id == saleId);
         if (sale == null || string.IsNullOrEmpty(sale.ReceiptId)) return null;
 
-        var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
+        var receipt = companyData?.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
         if (receipt == null || string.IsNullOrEmpty(receipt.FileData)) return null;
 
         try

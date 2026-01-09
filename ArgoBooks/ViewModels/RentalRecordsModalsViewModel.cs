@@ -358,7 +358,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
         var recordToUndo = newRecord;
         var itemToUpdate = item;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Create rental '{newId}'",
             () =>
             {
@@ -500,7 +500,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit rental '{recordToEdit.Id}'",
             () =>
             {
@@ -613,7 +613,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
             var itemToUpdate = item;
             var wasActive = rentalRecord.Status == RentalStatus.Active || rentalRecord.Status == RentalStatus.Overdue;
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete rental '{deletedRecord.Id}'",
                 () =>
                 {
@@ -737,7 +737,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
         var itemToUpdate = item;
         var returnQty = _returningRecord.Quantity;
         var newNotes = _returningRecord.Notes;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Return rental '{recordToReturn.Id}'",
             () =>
             {

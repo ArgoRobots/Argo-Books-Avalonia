@@ -27,7 +27,7 @@ public partial class SuppliersTableColumnWidths : TableColumnWidthsBase
 
     public SuppliersTableColumnWidths()
     {
-        ColumnOrder = new[] { "Supplier", "Contact", "Country", "Products", "Status", "Actions" };
+        ColumnOrder = ["Supplier", "Contact", "Country", "Products", "Status", "Actions"];
 
         RegisterColumn("Supplier", new ColumnDef { StarValue = 1.5, MinWidth = 150, PreferredWidth = 200 }, w => SupplierColumnWidth = w);
         RegisterColumn("Contact", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 150 }, w => ContactColumnWidth = w);

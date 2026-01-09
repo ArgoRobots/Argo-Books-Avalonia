@@ -175,7 +175,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var inventoryItem = companyData?.Inventory?.FirstOrDefault(i => i.Id == SelectedItemId);
+        var inventoryItem = companyData?.Inventory.FirstOrDefault(i => i.Id == SelectedItemId);
         if (inventoryItem == null) return;
 
         // Store old values for undo
@@ -197,50 +197,51 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         inventoryItem.LastUpdated = DateTime.UtcNow;
 
         // Create stock adjustment record
-        companyData.IdCounters.StockAdjustment++;
-        var adjustmentRecord = new StockAdjustment
+        if (companyData != null)
         {
-            Id = $"ADJ-{companyData.IdCounters.StockAdjustment:D5}",
-            InventoryItemId = inventoryItem.Id,
-            AdjustmentType = AdjustmentType switch
+            companyData.IdCounters.StockAdjustment++;
+            var adjustmentRecord = new StockAdjustment
             {
-                "Add" => Core.Enums.AdjustmentType.Add,
-                "Remove" => Core.Enums.AdjustmentType.Remove,
-                "Set" => Core.Enums.AdjustmentType.Set,
-                _ => Core.Enums.AdjustmentType.Add
-            },
-            Quantity = quantity,
-            PreviousStock = oldInStock,
-            NewStock = newStock,
-            Reason = AdjustmentReason,
-            Timestamp = DateTime.UtcNow
-        };
+                Id = $"ADJ-{companyData.IdCounters.StockAdjustment:D5}",
+                InventoryItemId = inventoryItem.Id,
+                AdjustmentType = AdjustmentType switch
+                {
+                    "Add" => Core.Enums.AdjustmentType.Add,
+                    "Remove" => Core.Enums.AdjustmentType.Remove,
+                    "Set" => Core.Enums.AdjustmentType.Set,
+                    _ => Core.Enums.AdjustmentType.Add
+                },
+                Quantity = quantity,
+                PreviousStock = oldInStock,
+                NewStock = newStock,
+                Reason = AdjustmentReason,
+                Timestamp = DateTime.UtcNow
+            };
 
-        companyData.StockAdjustments.Add(adjustmentRecord);
-        companyData.MarkAsModified();
+            companyData.StockAdjustments.Add(adjustmentRecord);
+            companyData.MarkAsModified();
 
-        // Record undo action
-        var itemToUndo = inventoryItem;
-        var adjustmentToUndo = adjustmentRecord;
-        var productName = SelectedItemProductName;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
-            $"Adjust stock for '{productName}'",
-            () =>
-            {
-                itemToUndo.InStock = oldInStock;
-                itemToUndo.Status = oldStatus;
-                companyData.StockAdjustments?.Remove(adjustmentToUndo);
-                companyData.MarkAsModified();
-                ItemSaved?.Invoke(this, EventArgs.Empty);
-            },
-            () =>
-            {
-                itemToUndo.InStock = newStock;
-                itemToUndo.Status = itemToUndo.CalculateStatus();
-                companyData.StockAdjustments?.Add(adjustmentToUndo);
-                companyData.MarkAsModified();
-                ItemSaved?.Invoke(this, EventArgs.Empty);
-            }));
+            // Record undo action
+            var productName = SelectedItemProductName;
+            App.UndoRedoManager.RecordAction(new DelegateAction(
+                $"Adjust stock for '{productName}'",
+                () =>
+                {
+                    inventoryItem.InStock = oldInStock;
+                    inventoryItem.Status = oldStatus;
+                    companyData.StockAdjustments.Remove(adjustmentRecord);
+                    companyData.MarkAsModified();
+                    ItemSaved?.Invoke(this, EventArgs.Empty);
+                },
+                () =>
+                {
+                    inventoryItem.InStock = newStock;
+                    inventoryItem.Status = inventoryItem.CalculateStatus();
+                    companyData.StockAdjustments.Add(adjustmentRecord);
+                    companyData.MarkAsModified();
+                    ItemSaved?.Invoke(this, EventArgs.Empty);
+                }));
+        }
 
         // Notify and close
         ItemSaved?.Invoke(this, EventArgs.Empty);
@@ -299,13 +300,13 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         if (companyData == null) return;
 
         AvailableProducts.Clear();
-        foreach (var product in companyData.Products?.Where(p => p.Type == CategoryType.Purchase) ?? [])
+        foreach (var product in companyData.Products.Where(p => p.Type == CategoryType.Purchase))
         {
             AvailableProducts.Add(product);
         }
 
         AvailableLocations.Clear();
-        foreach (var location in companyData.Locations ?? [])
+        foreach (var location in companyData.Locations)
         {
             AvailableLocations.Add(location);
         }
@@ -367,7 +368,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         if (companyData == null) return;
 
         // Check if item already exists for this product/location
-        var existingItem = companyData.Inventory?.FirstOrDefault(i =>
+        var existingItem = companyData.Inventory.FirstOrDefault(i =>
             i.ProductId == SelectedProduct.Id && i.LocationId == SelectedLocation.Id);
 
         if (existingItem != null)
@@ -399,23 +400,21 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         };
         newItem.Status = newItem.CalculateStatus();
 
-        companyData.Inventory?.Add(newItem);
+        companyData.Inventory.Add(newItem);
         companyData.MarkAsModified();
 
         // Record undo action
-        var itemToUndo = newItem;
-        var productName = SelectedProduct.Name;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
-            $"Add inventory item for '{productName}'",
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            $"Add inventory item for '{SelectedProduct.Name}'",
             () =>
             {
-                companyData.Inventory?.Remove(itemToUndo);
+                companyData.Inventory.Remove(newItem);
                 companyData.MarkAsModified();
                 ItemSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData.Inventory?.Add(itemToUndo);
+                companyData.Inventory.Add(newItem);
                 companyData.MarkAsModified();
                 ItemSaved?.Invoke(this, EventArgs.Empty);
             }));

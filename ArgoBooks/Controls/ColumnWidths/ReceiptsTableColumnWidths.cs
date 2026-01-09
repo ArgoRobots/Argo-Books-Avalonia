@@ -27,7 +27,7 @@ public partial class ReceiptsTableColumnWidths : TableColumnWidthsBase
 
     public ReceiptsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Id", "Vendor", "Date", "Type", "Amount", "Actions" };
+        ColumnOrder = ["Id", "Vendor", "Date", "Type", "Amount", "Actions"];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 120 }, w => IdColumnWidth = w);
         RegisterColumn("Vendor", new ColumnDef { StarValue = 1.5, MinWidth = 140, PreferredWidth = 180 }, w => VendorColumnWidth = w);

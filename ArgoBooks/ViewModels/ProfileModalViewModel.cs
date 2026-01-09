@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Services;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,7 +9,6 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class ProfileModalViewModel : ViewModelBase
 {
-    private readonly INavigationService? _navigationService;
     private readonly HeaderViewModel? _headerViewModel;
 
     [ObservableProperty]
@@ -61,9 +59,8 @@ public partial class ProfileModalViewModel : ViewModelBase
     /// <summary>
     /// Constructor with dependencies.
     /// </summary>
-    public ProfileModalViewModel(INavigationService? navigationService, HeaderViewModel? headerViewModel)
+    public ProfileModalViewModel(HeaderViewModel? headerViewModel)
     {
-        _navigationService = navigationService;
         _headerViewModel = headerViewModel;
 
         // Sync with header view model

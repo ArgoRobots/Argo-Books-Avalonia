@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using CommunityToolkit.Mvvm.Input;
 
@@ -212,17 +213,17 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var sale = companyData?.Sales?.FirstOrDefault(s => s.Id == item.Id);
+        var sale = companyData?.Sales.FirstOrDefault(s => s.Id == item.Id);
         if (sale == null) return;
 
         // Find and remove associated receipt
         Core.Models.Tracking.Receipt? deletedReceipt = null;
         if (!string.IsNullOrEmpty(sale.ReceiptId))
         {
-            deletedReceipt = companyData.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
+            deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
             if (deletedReceipt != null)
             {
-                companyData.Receipts.Remove(deletedReceipt);
+                companyData?.Receipts.Remove(deletedReceipt);
             }
         }
 
@@ -232,21 +233,21 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             $"Delete sale {sale.Id}",
             () =>
             {
-                companyData.Sales.Add(deletedSale);
+                companyData?.Sales?.Add(deletedSale);
                 if (capturedReceipt != null)
-                    companyData.Receipts.Add(capturedReceipt);
+                    companyData?.Receipts.Add(capturedReceipt);
                 RaiseTransactionDeleted();
             },
             () =>
             {
-                companyData.Sales.Remove(deletedSale);
+                companyData?.Sales.Remove(deletedSale);
                 if (capturedReceipt != null)
-                    companyData.Receipts.Remove(capturedReceipt);
+                    companyData?.Receipts.Remove(capturedReceipt);
                 RaiseTransactionDeleted();
             });
 
-        companyData.Sales.Remove(sale);
-        App.UndoRedoManager?.RecordAction(action);
+        companyData?.Sales.Remove(sale);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
         RaiseTransactionDeleted();
@@ -479,7 +480,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             });
 
         companyData.Sales.Add(sale);
-        App.UndoRedoManager?.RecordAction(action);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
     }
@@ -590,7 +591,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             }
         }
 
-        return new Core.Models.Tracking.Receipt
+        return new Receipt
         {
             Id = receiptId,
             TransactionId = transactionId,

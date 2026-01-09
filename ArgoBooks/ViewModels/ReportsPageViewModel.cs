@@ -4,6 +4,7 @@ using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
@@ -276,21 +277,15 @@ public partial class ReportsPageViewModel : ViewModelBase
     [RelayCommand]
     private void ToggleChart(ChartOption chart)
     {
-        if (chart != null)
-        {
-            chart.IsSelected = !chart.IsSelected;
-            OnPropertyChanged(nameof(HasSelectedCharts));
-        }
+        chart.IsSelected = !chart.IsSelected;
+        OnPropertyChanged(nameof(HasSelectedCharts));
     }
 
     [RelayCommand]
     private void ToggleSelectAllInCategory(ChartCategoryGroup category)
     {
-        if (category != null)
-        {
-            category.ToggleSelectAll();
-            OnPropertyChanged(nameof(HasSelectedCharts));
-        }
+        category.ToggleSelectAll();
+        OnPropertyChanged(nameof(HasSelectedCharts));
     }
 
     [RelayCommand]
@@ -978,11 +973,13 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             var filters = new[]
             {
-                new Avalonia.Platform.Storage.FilePickerFileType("Image files") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif" } },
-                new Avalonia.Platform.Storage.FilePickerFileType("All files") { Patterns = new[] { "*.*" } }
+                new Avalonia.Platform.Storage.FilePickerFileType("Image files") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif"
+                    ]
+                },
+                new Avalonia.Platform.Storage.FilePickerFileType("All files") { Patterns = ["*.*"] }
             };
 
-            var result = await topLevel.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            var result = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Select Image",
                 AllowMultiple = false,
@@ -1319,13 +1316,19 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             var filters = SelectedExportFormat switch
             {
-                ExportFormat.PDF => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns = new[] { "*.pdf" } } },
-                ExportFormat.PNG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PNG Image") { Patterns = new[] { "*.png" } } },
-                ExportFormat.JPEG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("JPEG Image") { Patterns = new[] { "*.jpg", "*.jpeg" } } },
-                _ => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns = new[] { "*.pdf" } } }
+                ExportFormat.PDF => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns =
+                    ["*.pdf"]
+                } },
+                ExportFormat.PNG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PNG Image") { Patterns =
+                    ["*.png"]
+                } },
+                ExportFormat.JPEG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("JPEG Image") { Patterns =
+                    ["*.jpg", "*.jpeg"]
+                } },
+                _ => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns = ["*.pdf"] } }
             };
 
-            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Save Report As",
                 SuggestedFileName = $"{defaultName}{extension}",
@@ -1739,7 +1742,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         UndoRedoViewModel.ActionPerformed += (_, _) => OnPropertyChanged(nameof(Configuration));
 
         // Load element panel state from settings
-        var uiSettings = App.SettingsService?.GlobalSettings?.Ui;
+        var uiSettings = App.SettingsService?.GlobalSettings.Ui;
         if (uiSettings != null)
         {
             _isElementPanelExpanded = !uiSettings.ReportsElementPanelCollapsed;
@@ -2216,14 +2219,12 @@ public partial class ChartOption(
 /// </summary>
 public partial class ChartCategoryGroup : ObservableObject
 {
-    private readonly Action _onSelectionChanged;
-
     public ChartCategoryGroup(string name, string accentColor, ObservableCollection<ChartOption> charts, Action onSelectionChanged)
     {
         Name = name;
         AccentColor = accentColor;
         Charts = charts;
-        _onSelectionChanged = onSelectionChanged;
+        var onSelectionChanged1 = onSelectionChanged;
 
         // Subscribe to each chart's selection changes
         foreach (var chart in Charts)
@@ -2234,7 +2235,7 @@ public partial class ChartCategoryGroup : ObservableObject
                 {
                     OnPropertyChanged(nameof(IsAllSelected));
                     OnPropertyChanged(nameof(IsSomeSelected));
-                    _onSelectionChanged?.Invoke();
+                    onSelectionChanged1.Invoke();
                 }
             };
         }

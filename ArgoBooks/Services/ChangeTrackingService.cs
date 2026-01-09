@@ -39,8 +39,8 @@ public interface IChangeTracker
 /// </summary>
 public class ChangeTrackingService
 {
-    private readonly List<IChangeTracker> _trackers = new();
-    private readonly List<ChangeItem> _globalChanges = new();
+    private readonly List<IChangeTracker> _trackers = [];
+    private readonly List<ChangeItem> _globalChanges = [];
     private string _globalCategoryName = "General";
     private string _globalCategoryIcon = "Cog";
 
@@ -213,7 +213,7 @@ public class ChangeTrackingService
 /// </summary>
 public class SimpleChangeTracker : IChangeTracker
 {
-    private readonly List<ChangeItem> _changes = new();
+    private readonly List<ChangeItem> _changes = [];
 
     public string CategoryName { get; set; } = "Changes";
     public string CategoryIcon { get; set; } = "Folder";

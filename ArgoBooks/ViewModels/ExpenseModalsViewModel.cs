@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -225,10 +226,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         Core.Models.Tracking.Receipt? deletedReceipt = null;
         if (!string.IsNullOrEmpty(expense.ReceiptId))
         {
-            deletedReceipt = companyData.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
+            deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
             if (deletedReceipt != null)
             {
-                companyData.Receipts.Remove(deletedReceipt);
+                companyData?.Receipts.Remove(deletedReceipt);
             }
         }
 
@@ -238,21 +239,21 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             $"Delete expense {expense.Id}",
             () =>
             {
-                companyData.Purchases.Add(deletedExpense);
+                companyData?.Purchases?.Add(deletedExpense);
                 if (capturedReceipt != null)
-                    companyData.Receipts.Add(capturedReceipt);
+                    companyData?.Receipts.Add(capturedReceipt);
                 RaiseTransactionDeleted();
             },
             () =>
             {
-                companyData.Purchases.Remove(deletedExpense);
+                companyData?.Purchases?.Remove(deletedExpense);
                 if (capturedReceipt != null)
-                    companyData.Receipts.Remove(capturedReceipt);
+                    companyData?.Receipts.Remove(capturedReceipt);
                 RaiseTransactionDeleted();
             });
 
-        companyData.Purchases.Remove(expense);
-        App.UndoRedoManager?.RecordAction(action);
+        companyData?.Purchases?.Remove(expense);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
         RaiseTransactionDeleted();
@@ -579,7 +580,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
                 RaiseTransactionSaved();
             });
 
-        App.UndoRedoManager?.RecordAction(action);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
     }
@@ -606,7 +607,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             }
         }
 
-        return new Core.Models.Tracking.Receipt
+        return new Receipt
         {
             Id = receiptId,
             TransactionId = transactionId,

@@ -298,12 +298,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         LoadCategories();
 
         // Subscribe to undo/redo state changes to refresh UI
-        // This is necessary because a new ViewModel instance is created on each navigation,
-        // but undo/redo actions capture the old ViewModel instance
-        if (App.UndoRedoManager != null)
-        {
-            App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
-        }
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
 
         // Subscribe to shared modal events to refresh data
         if (App.CategoryModalsViewModel != null)
@@ -557,18 +552,17 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        var categoryToUndo = newCategory;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add category '{newCategory.Name}'",
             () =>
             {
-                companyData.Categories.Remove(categoryToUndo);
+                companyData.Categories.Remove(newCategory);
                 companyData.MarkAsModified();
                 LoadCategories();
             },
             () =>
             {
-                companyData.Categories.Add(categoryToUndo);
+                companyData.Categories.Add(newCategory);
                 companyData.MarkAsModified();
                 LoadCategories();
             }));
@@ -637,7 +631,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit category '{newName}'",
             () =>
             {
@@ -731,7 +725,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete category '{deletedCategory.Name}'",
                 () =>
                 {
@@ -865,65 +859,26 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
         // Update parent
         category.ParentId = newParentId;
-        companyData.MarkAsModified();
+        companyData?.MarkAsModified();
 
         // Record undo action
-        var categoryToMove = category;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Move category '{category.Name}'",
             () =>
             {
-                categoryToMove.ParentId = oldParentId;
-                companyData.MarkAsModified();
+                category.ParentId = oldParentId;
+                companyData?.MarkAsModified();
                 LoadCategories();
             },
             () =>
             {
-                categoryToMove.ParentId = newParentId;
-                companyData.MarkAsModified();
+                category.ParentId = newParentId;
+                companyData?.MarkAsModified();
                 LoadCategories();
             }));
 
         LoadCategories();
         CloseMoveModal();
-    }
-
-    /// <summary>
-    /// Updates the available target categories for moving.
-    /// </summary>
-    private void UpdateMoveTargetCategories()
-    {
-        MoveTargetCategories.Clear();
-
-        // Add "None" option to make it a top-level category
-        MoveTargetCategories.Add(new CategoryDisplayItem { Id = string.Empty, Name = "None (Make Top-Level)" });
-
-        var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
-
-        // Only include top-level categories (that are not the current category's parent)
-        var topLevelCategories = _allCategories
-            .Where(c => c.Type == targetType && string.IsNullOrEmpty(c.ParentId))
-            .OrderBy(c => c.Name);
-
-        foreach (var cat in topLevelCategories)
-        {
-            // Don't include the category itself as a target
-            if (_movingCategory != null && cat.Id == _movingCategory.Id)
-                continue;
-
-            MoveTargetCategories.Add(new CategoryDisplayItem
-            {
-                Id = cat.Id,
-                Name = cat.Name,
-                Icon = cat.Icon
-            });
-        }
-
-        // Pre-select current parent if it exists
-        if (_movingCategory?.ParentId != null)
-        {
-            MoveTargetCategory = MoveTargetCategories.FirstOrDefault(c => c.Id == _movingCategory.ParentId);
-        }
     }
 
     #endregion

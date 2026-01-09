@@ -27,7 +27,7 @@ public partial class LocationsTableColumnWidths : TableColumnWidthsBase
 
     public LocationsTableColumnWidths()
     {
-        ColumnOrder = new[] { "Location", "Type", "Address", "Manager", "Status", "Actions" };
+        ColumnOrder = ["Location", "Type", "Address", "Manager", "Status", "Actions"];
 
         RegisterColumn("Location", new ColumnDef { StarValue = 1.4, MinWidth = 150, PreferredWidth = 200 }, w => LocationColumnWidth = w);
         RegisterColumn("Type", new ColumnDef { StarValue = 0.8, MinWidth = 100, PreferredWidth = 120 }, w => TypeColumnWidth = w);

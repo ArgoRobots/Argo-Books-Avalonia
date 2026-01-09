@@ -29,7 +29,7 @@ public class Supplier : BaseEntity
     /// Supplier website URL.
     /// </summary>
     [JsonPropertyName("website")]
-    public string? Website { get; set; } = string.Empty;
+    public string Website { get; set; } = string.Empty;
 
     /// <summary>
     /// Payment terms (e.g., Net 30).

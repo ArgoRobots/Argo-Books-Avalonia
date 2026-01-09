@@ -18,12 +18,12 @@ public class ImportValidationResult
     /// <summary>
     /// Critical errors that prevent import.
     /// </summary>
-    public List<string> Errors { get; } = new();
+    public List<string> Errors { get; } = [];
 
     /// <summary>
     /// Warnings that don't prevent import but should be noted.
     /// </summary>
-    public List<string> Warnings { get; } = new();
+    public List<string> Warnings { get; } = [];
 
     /// <summary>
     /// Missing references grouped by type.
@@ -43,7 +43,7 @@ public class ImportValidationResult
         if (string.IsNullOrEmpty(referenceId)) return;
 
         if (!MissingReferences.ContainsKey(referenceType))
-            MissingReferences[referenceType] = new HashSet<string>();
+            MissingReferences[referenceType] = [];
 
         MissingReferences[referenceType].Add(referenceId);
     }

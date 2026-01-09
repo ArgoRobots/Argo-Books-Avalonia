@@ -37,7 +37,7 @@ public partial class AccountItem : ObservableObject
 /// </summary>
 public partial class SwitchAccountModalViewModel : ViewModelBase
 {
-    private readonly List<AccountItem> _allAccounts = new();
+    private readonly List<AccountItem> _allAccounts = [];
 
     [ObservableProperty]
     private bool _isOpen;
@@ -51,7 +51,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
     /// <summary>
     /// Filtered accounts to display (excludes current account).
     /// </summary>
-    public ObservableCollection<AccountItem> Accounts { get; } = new();
+    public ObservableCollection<AccountItem> Accounts { get; } = [];
 
     /// <summary>
     /// Default constructor for design-time.

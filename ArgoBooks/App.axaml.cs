@@ -318,7 +318,7 @@ public partial class App : Application
             _idleDetectionService = new IdleDetectionService();
 
             // Create app shell with navigation service
-            _appShellViewModel = new AppShellViewModel(NavigationService, SettingsService);
+            _appShellViewModel = new AppShellViewModel(NavigationService);
 
             // Ensure no unsaved changes indicator on startup
             _mainWindowViewModel.HasUnsavedChanges = false;
@@ -921,13 +921,13 @@ public partial class App : Application
             {
                 Title = "Select Company Logo",
                 AllowMultiple = false,
-                FileTypeFilter = new[]
-                {
+                FileTypeFilter =
+                [
                     new FilePickerFileType("Images")
                     {
-                        Patterns = new[] { "*.png", "*.jpg", "*.jpeg" }
+                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
                     }
-                }
+                ]
             });
 
             if (files.Count > 0)
@@ -1125,13 +1125,13 @@ public partial class App : Application
             {
                 Title = "Select Company Logo",
                 AllowMultiple = false,
-                FileTypeFilter = new[]
-                {
+                FileTypeFilter =
+                [
                     new FilePickerFileType("Images")
                     {
-                        Patterns = new[] { "*.png", "*.jpg", "*.jpeg" }
+                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
                     }
-                }
+                ]
             });
 
             if (files.Count > 0)
@@ -1439,13 +1439,13 @@ public partial class App : Application
                 Title = "Export Data",
                 SuggestedFileName = $"{CompanyManager.CurrentCompanyName ?? "Export"}-{DateTime.Now:yyyy-MM-dd}.{extension}",
                 DefaultExtension = extension,
-                FileTypeChoices = new[]
-                {
+                FileTypeChoices =
+                [
                     new FilePickerFileType(filterName)
                     {
-                        Patterns = new[] { $"*.{extension}" }
+                        Patterns = [$"*.{extension}"]
                     }
-                }
+                ]
             });
 
             if (file == null) return;
@@ -1553,13 +1553,13 @@ public partial class App : Application
             {
                 Title = "Import Excel File",
                 AllowMultiple = false,
-                FileTypeFilter = new[]
-                {
+                FileTypeFilter =
+                [
                     new FilePickerFileType("Excel Workbook")
                     {
-                        Patterns = new[] { "*.xlsx" }
+                        Patterns = ["*.xlsx"]
                     }
-                }
+                ]
             });
 
             if (file.Count == 0) return;
@@ -1872,17 +1872,17 @@ public partial class App : Application
         {
             Title = "Open Company",
             AllowMultiple = false,
-            FileTypeFilter = new[]
-            {
+            FileTypeFilter =
+            [
                 new FilePickerFileType("Argo Books Files")
                 {
-                    Patterns = new[] { "*.argo" }
+                    Patterns = ["*.argo"]
                 },
                 new FilePickerFileType("All Files")
                 {
-                    Patterns = new[] { "*.*" }
+                    Patterns = ["*.*"]
                 }
-            }
+            ]
         });
 
         if (files.Count > 0)
@@ -2047,13 +2047,13 @@ public partial class App : Application
             Title = "Save Company",
             SuggestedFileName = $"{suggestedFileName}.argo",
             DefaultExtension = "argo",
-            FileTypeChoices = new[]
-            {
+            FileTypeChoices =
+            [
                 new FilePickerFileType("Argo Books Files")
                 {
-                    Patterns = new[] { "*.argo" }
+                    Patterns = ["*.argo"]
                 }
-            }
+            ]
         });
     }
 
@@ -2157,7 +2157,7 @@ public partial class App : Application
         // The page factory receives optional parameters and returns a view or viewmodel
 
         // Welcome Screen (shown when no company is open)
-        _welcomeScreenViewModel = new WelcomeScreenViewModel(navigationService);
+        _welcomeScreenViewModel = new WelcomeScreenViewModel();
         navigationService.RegisterPage("Welcome", _ => new WelcomeScreen { DataContext = _welcomeScreenViewModel });
 
         // Main Section

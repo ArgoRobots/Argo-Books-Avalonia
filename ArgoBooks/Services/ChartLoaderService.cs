@@ -8,6 +8,7 @@ using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
+using LiveChartsCore.Drawing;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
@@ -75,7 +76,7 @@ public class ChartLoaderService
         {
             Text = text,
             TextSize = 16,
-            Padding = new LiveChartsCore.Drawing.Padding(15, 12),
+            Padding = new Padding(15, 12),
             Paint = new SolidColorPaint(textColor) { FontFamily = "Segoe UI", SKFontStyle = new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
         };
     }
@@ -2206,7 +2207,7 @@ public class ChartLoaderService
                 .Zip(CurrentExportData.Values, (label, value) => new object[] { label, value })
                 .ToList(),
             TotalRow = CurrentExportData.TotalValue.HasValue
-                ? new object[] { "Total", CurrentExportData.TotalValue.Value }
+                ? ["Total", CurrentExportData.TotalValue.Value]
                 : null
         };
     }

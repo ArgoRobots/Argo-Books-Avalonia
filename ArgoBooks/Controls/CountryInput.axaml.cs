@@ -154,7 +154,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Gets the filtered countries based on search.
     /// </summary>
-    public ObservableCollection<CountryDialCode> FilteredCountries { get; } = new();
+    public ObservableCollection<CountryDialCode> FilteredCountries { get; } = [];
 
     #endregion
 

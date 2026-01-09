@@ -1,4 +1,5 @@
 using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace ArgoBooks.Core.Services;
 
@@ -65,7 +66,7 @@ public class IdleDetectionService : IDisposable
         _isEnabled = false;
 
         // Check every 30 seconds
-        _idleTimer = new System.Timers.Timer(30000);
+        _idleTimer = new Timer(30000);
         _idleTimer.Elapsed += OnIdleTimerElapsed;
         _idleTimer.AutoReset = true;
     }

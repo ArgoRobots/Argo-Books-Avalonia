@@ -54,7 +54,8 @@ public partial class RevenueTableColumnWidths : TableColumnWidthsBase
 
     public RevenueTableColumnWidths()
     {
-        ColumnOrder = new[] { "Id", "Accountant", "Customer", "Product", "Date", "Quantity", "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions" };
+        ColumnOrder = ["Id", "Accountant", "Customer", "Product", "Date", "Quantity", "UnitPrice", "Amount", "Tax", "Shipping", "Discount", "Total", "Receipt", "Status", "Actions"
+        ];
 
         RegisterColumn("Id", new ColumnDef { StarValue = 0.8, MinWidth = 60, PreferredWidth = 80 }, w => IdColumnWidth = w);
         RegisterColumn("Accountant", new ColumnDef { StarValue = 1.0, MinWidth = 100, PreferredWidth = 120 }, w => AccountantColumnWidth = w);

@@ -16,10 +16,11 @@ public partial class ProductsTableColumnWidths : ObservableObject, ITableColumnW
     private readonly Dictionary<string, ColumnDef> _columns = new();
 
     // Column order for Expenses tab
-    private readonly string[] _expensesColumnOrder = { "Name", "Type", "Description", "Category", "Supplier", "Country", "Reorder", "Overstock", "Actions" };
+    private readonly string[] _expensesColumnOrder = ["Name", "Type", "Description", "Category", "Supplier", "Country", "Reorder", "Overstock", "Actions"
+    ];
 
     // Column order for Revenue tab
-    private readonly string[] _revenueColumnOrder = { "Name", "Type", "Description", "Category", "Actions" };
+    private readonly string[] _revenueColumnOrder = ["Name", "Type", "Description", "Category", "Actions"];
 
     public class ColumnDef
     {

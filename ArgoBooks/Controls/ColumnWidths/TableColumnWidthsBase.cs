@@ -39,7 +39,7 @@ public abstract partial class TableColumnWidthsBase : ObservableObject, ITableCo
     /// <summary>
     /// Ordered list of column names for consistent iteration.
     /// </summary>
-    protected string[] ColumnOrder { get; set; } = Array.Empty<string>();
+    protected string[] ColumnOrder { get; set; } = [];
 
     /// <summary>
     /// Maps column names to their width setter actions.
