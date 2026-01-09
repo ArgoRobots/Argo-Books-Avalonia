@@ -130,6 +130,7 @@ public class WindowsPlatformService : BasePlatformService
     [SupportedOSPlatform("windows")]
     public override void StorePasswordForBiometric(string fileId, string password)
     {
+#if WINDOWS
         try
         {
             var data = Encoding.UTF8.GetBytes(password);
@@ -147,12 +148,14 @@ public class WindowsPlatformService : BasePlatformService
         {
             // Silently fail - user will need to enter password manually
         }
+#endif
     }
 
     /// <inheritdoc />
     [SupportedOSPlatform("windows")]
     public override string? GetPasswordForBiometric(string fileId)
     {
+#if WINDOWS
         try
         {
             var filePath = Path.Combine(GetBiometricStoragePath(), $"{fileId}.bio");
@@ -168,6 +171,9 @@ public class WindowsPlatformService : BasePlatformService
         {
             return null;
         }
+#else
+        return null;
+#endif
     }
 
     /// <inheritdoc />
