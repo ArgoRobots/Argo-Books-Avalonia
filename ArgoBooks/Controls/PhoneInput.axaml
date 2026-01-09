@@ -58,7 +58,8 @@
         </Border>
 
         <!-- Country Dropdown Popup -->
-        <Popup x:Name="CountryDropdownPopup"
+        <Popup Grid.Column="0"
+               x:Name="CountryDropdownPopup"
                IsOpen="{Binding IsCountryDropdownOpen, Mode=TwoWay}"
                PlacementTarget="{Binding #CountryDropdownBorder}"
                Placement="Bottom"
