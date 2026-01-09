@@ -455,14 +455,8 @@ public partial class LocationsModalsViewModel : ViewModelBase
 /// <summary>
 /// Event args for filter applied events.
 /// </summary>
-public class LocationsFilterAppliedEventArgs : EventArgs
+public class LocationsFilterAppliedEventArgs(string type, string status) : EventArgs
 {
-    public string Type { get; }
-    public string Status { get; }
-
-    public LocationsFilterAppliedEventArgs(string type, string status)
-    {
-        Type = type;
-        Status = status;
-    }
+    public string Type { get; } = type;
+    public string Status { get; } = status;
 }

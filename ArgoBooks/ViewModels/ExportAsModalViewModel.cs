@@ -230,26 +230,17 @@ public partial class ExportAsModalViewModel : ViewModelBase
 /// <summary>
 /// Event arguments for export requests.
 /// </summary>
-public class ExportEventArgs : EventArgs
+public class ExportEventArgs(string format, List<string> selectedDataItems, DateTime? startDate, DateTime? endDate)
+    : EventArgs
 {
-    public string Format { get; }
+    public string Format { get; } = format;
     public bool IncludeAttachments { get; }
-    public List<string> SelectedDataItems { get; }
-    public DateTime? StartDate { get; }
-    public DateTime? EndDate { get; }
+    public List<string> SelectedDataItems { get; } = selectedDataItems;
+    public DateTime? StartDate { get; } = startDate;
+    public DateTime? EndDate { get; } = endDate;
 
-    public ExportEventArgs(string format, bool includeAttachments)
+    public ExportEventArgs(string format, bool includeAttachments) : this(format, new List<string>(), null, null)
     {
-        Format = format;
         IncludeAttachments = includeAttachments;
-        SelectedDataItems = new List<string>();
-    }
-
-    public ExportEventArgs(string format, List<string> selectedDataItems, DateTime? startDate, DateTime? endDate)
-    {
-        Format = format;
-        SelectedDataItems = selectedDataItems;
-        StartDate = startDate;
-        EndDate = endDate;
     }
 }

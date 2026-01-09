@@ -9,30 +9,21 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Service for generating table data for reports.
 /// </summary>
-public class ReportTableDataService
+public class ReportTableDataService(CompanyData? companyData, ReportFilters filters)
 {
-    private readonly CompanyData? _companyData;
-    private readonly ReportFilters _filters;
-
-    public ReportTableDataService(CompanyData? companyData, ReportFilters filters)
-    {
-        _companyData = companyData;
-        _filters = filters;
-    }
-
     /// <summary>
     /// Gets the date range based on filters.
     /// </summary>
     private (DateTime Start, DateTime End) GetDateRange()
     {
-        if (!string.IsNullOrEmpty(_filters.DatePresetName) &&
-            _filters.DatePresetName != DatePresetNames.Custom)
+        if (!string.IsNullOrEmpty(filters.DatePresetName) &&
+            filters.DatePresetName != DatePresetNames.Custom)
         {
-            return DatePresetNames.GetDateRange(_filters.DatePresetName);
+            return DatePresetNames.GetDateRange(filters.DatePresetName);
         }
 
-        var start = _filters.StartDate ?? DateTime.MinValue;
-        var end = _filters.EndDate ?? DateTime.MaxValue;
+        var start = filters.StartDate ?? DateTime.MinValue;
+        var end = filters.EndDate ?? DateTime.MaxValue;
         return (start, end);
     }
 
@@ -43,12 +34,12 @@ public class ReportTableDataService
     /// </summary>
     public List<TransactionTableRow> GetSalesTableData(TableReportElement tableConfig)
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var query = _companyData.Sales
+        var query = companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate);
 
         // Apply data selection
@@ -80,10 +71,10 @@ public class ReportTableDataService
 
     private TransactionTableRow CreateSalesRow(Sale sale)
     {
-        var customer = _companyData?.GetCustomer(sale.CustomerId ?? "");
-        var accountant = _companyData?.GetAccountant(sale.AccountantId ?? "");
+        var customer = companyData?.GetCustomer(sale.CustomerId ?? "");
+        var accountant = companyData?.GetAccountant(sale.AccountantId ?? "");
         var primaryItem = sale.LineItems?.FirstOrDefault();
-        var product = primaryItem != null ? _companyData?.GetProduct(primaryItem.ProductId ?? "") : null;
+        var product = primaryItem != null ? companyData?.GetProduct(primaryItem.ProductId ?? "") : null;
 
         return new TransactionTableRow
         {
@@ -113,12 +104,12 @@ public class ReportTableDataService
     /// </summary>
     public List<TransactionTableRow> GetPurchasesTableData(TableReportElement tableConfig)
     {
-        if (_companyData?.Purchases == null)
+        if (companyData?.Purchases == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var query = _companyData.Purchases
+        var query = companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate);
 
         // Apply data selection
@@ -150,8 +141,8 @@ public class ReportTableDataService
 
     private TransactionTableRow CreatePurchaseRow(Purchase purchase)
     {
-        var supplier = _companyData?.GetSupplier(purchase.SupplierId ?? "");
-        var accountant = _companyData?.GetAccountant(purchase.AccountantId ?? "");
+        var supplier = companyData?.GetSupplier(purchase.SupplierId ?? "");
+        var accountant = companyData?.GetAccountant(purchase.AccountantId ?? "");
 
         return new TransactionTableRow
         {
@@ -188,11 +179,11 @@ public class ReportTableDataService
             MaxRows = 0
         };
 
-        var sales = _filters.TransactionType is TransactionType.Revenue or TransactionType.Both
+        var sales = filters.TransactionType is TransactionType.Revenue or TransactionType.Both
             ? GetSalesTableData(noMaxConfig)
             : [];
 
-        var purchases = _filters.TransactionType is TransactionType.Expenses or TransactionType.Both
+        var purchases = filters.TransactionType is TransactionType.Expenses or TransactionType.Both
             ? GetPurchasesTableData(noMaxConfig)
             : [];
 
@@ -226,12 +217,12 @@ public class ReportTableDataService
     /// </summary>
     public List<ReturnTableRow> GetReturnsTableData(TableReportElement tableConfig)
     {
-        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+        if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var query = _companyData.Returns
+        var query = companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate);
 
         // Apply sort order
@@ -257,8 +248,8 @@ public class ReportTableDataService
     {
         // Get first item's product info (returns can have multiple items)
         var firstItem = returnRecord.Items?.FirstOrDefault();
-        var product = firstItem != null ? _companyData?.GetProduct(firstItem.ProductId) : null;
-        var category = product != null ? _companyData?.GetCategory(product.CategoryId ?? "") : null;
+        var product = firstItem != null ? companyData?.GetProduct(firstItem.ProductId) : null;
+        var category = product != null ? companyData?.GetCategory(product.CategoryId ?? "") : null;
 
         return new ReturnTableRow
         {
@@ -285,12 +276,12 @@ public class ReportTableDataService
     /// </summary>
     public List<LossTableRow> GetLossesTableData(TableReportElement tableConfig)
     {
-        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+        if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var query = _companyData.LostDamaged
+        var query = companyData.LostDamaged
             .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate);
 
         // Apply sort order
@@ -314,8 +305,8 @@ public class ReportTableDataService
 
     private LossTableRow CreateLossRow(LostDamaged lossRecord)
     {
-        var product = _companyData?.GetProduct(lossRecord.ProductId);
-        var category = product != null ? _companyData?.GetCategory(product.CategoryId ?? "") : null;
+        var product = companyData?.GetProduct(lossRecord.ProductId);
+        var category = product != null ? companyData?.GetCategory(product.CategoryId ?? "") : null;
 
         return new LossTableRow
         {
@@ -350,10 +341,10 @@ public class ReportTableDataService
         };
 
         // Calculate revenue statistics
-        if (_companyData?.Sales != null &&
-            _filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
+        if (companyData?.Sales != null &&
+            filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
         {
-            var sales = _companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate).ToList();
+            var sales = companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate).ToList();
             stats.TotalRevenue = sales.Sum(s => s.Total);
             stats.RevenueTransactionCount = sales.Count;
             stats.AverageRevenueTransaction = sales.Count > 0 ? stats.TotalRevenue / sales.Count : 0;
@@ -362,10 +353,10 @@ public class ReportTableDataService
         }
 
         // Calculate expense statistics
-        if (_companyData?.Purchases != null &&
-            _filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
+        if (companyData?.Purchases != null &&
+            filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
         {
-            var purchases = _companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate).ToList();
+            var purchases = companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate).ToList();
             stats.TotalExpenses = purchases.Sum(p => p.Total);
             stats.ExpenseTransactionCount = purchases.Count;
             stats.AverageExpenseTransaction = purchases.Count > 0 ? stats.TotalExpenses / purchases.Count : 0;
@@ -378,9 +369,9 @@ public class ReportTableDataService
         stats.ProfitMargin = stats.TotalRevenue > 0 ? (stats.NetProfit / stats.TotalRevenue) * 100 : 0;
 
         // Calculate returns statistics
-        if (_companyData?.Returns != null && _filters.IncludeReturns)
+        if (companyData?.Returns != null && filters.IncludeReturns)
         {
-            var returns = _companyData.Returns.Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate).ToList();
+            var returns = companyData.Returns.Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate).ToList();
             stats.TotalReturns = returns.Count;
             stats.TotalReturnAmount = returns.Sum(r => r.RefundAmount);
             stats.ReturnRate = stats.RevenueTransactionCount > 0
@@ -389,28 +380,28 @@ public class ReportTableDataService
         }
 
         // Calculate losses statistics
-        if (_companyData?.LostDamaged != null && _filters.IncludeLosses)
+        if (companyData?.LostDamaged != null && filters.IncludeLosses)
         {
-            var losses = _companyData.LostDamaged.Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate).ToList();
+            var losses = companyData.LostDamaged.Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate).ToList();
             stats.TotalLosses = losses.Count;
             stats.TotalLossAmount = losses.Sum(l => l.ValueLost);
         }
 
         // Calculate shipping statistics
-        if (_companyData != null)
+        if (companyData != null)
         {
             var shippingCosts = new List<decimal>();
 
-            if (_companyData.Sales != null)
+            if (companyData.Sales != null)
             {
-                shippingCosts.AddRange(_companyData.Sales
+                shippingCosts.AddRange(companyData.Sales
                     .Where(s => s.Date >= startDate && s.Date <= endDate)
                     .Select(s => s.ShippingCost));
             }
 
-            if (_companyData.Purchases != null)
+            if (companyData.Purchases != null)
             {
-                shippingCosts.AddRange(_companyData.Purchases
+                shippingCosts.AddRange(companyData.Purchases
                     .Where(p => p.Date >= startDate && p.Date <= endDate)
                     .Select(p => p.ShippingCost));
             }
@@ -427,18 +418,18 @@ public class ReportTableDataService
 
     private decimal CalculateGrowthRate(DateTime startDate, DateTime endDate)
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return 0;
 
         var periodLength = (endDate - startDate).Days;
         var previousStartDate = startDate.AddDays(-periodLength);
         var previousEndDate = startDate.AddDays(-1);
 
-        var currentRevenue = _companyData.Sales
+        var currentRevenue = companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .Sum(s => s.Total);
 
-        var previousRevenue = _companyData.Sales
+        var previousRevenue = companyData.Sales
             .Where(s => s.Date >= previousStartDate && s.Date <= previousEndDate)
             .Sum(s => s.Total);
 
@@ -457,19 +448,19 @@ public class ReportTableDataService
     /// </summary>
     public List<ProductAnalysisRow> GetTopProductsByRevenue(int count = 10)
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var productSales = _companyData.Sales
+        var productSales = companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .SelectMany(s => s.LineItems ?? [])
             .GroupBy(i => i.ProductId)
             .Select(g =>
             {
-                var product = _companyData.GetProduct(g.Key ?? "");
-                var category = product != null ? _companyData.GetCategory(product.CategoryId ?? "") : null;
+                var product = companyData.GetProduct(g.Key ?? "");
+                var category = product != null ? companyData.GetCategory(product.CategoryId ?? "") : null;
 
                 return new ProductAnalysisRow
                 {
@@ -494,17 +485,17 @@ public class ReportTableDataService
     /// </summary>
     public List<CustomerAnalysisRow> GetTopCustomersByRevenue(int count = 10)
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var customerSales = _companyData.Sales
+        var customerSales = companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.CustomerId)
             .Select(g =>
             {
-                var customer = _companyData.GetCustomer(g.Key ?? "");
+                var customer = companyData.GetCustomer(g.Key ?? "");
 
                 return new CustomerAnalysisRow
                 {
@@ -530,17 +521,17 @@ public class ReportTableDataService
     /// </summary>
     public List<SupplierAnalysisRow> GetTopSuppliersByVolume(int count = 10)
     {
-        if (_companyData?.Purchases == null)
+        if (companyData?.Purchases == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var supplierPurchases = _companyData.Purchases
+        var supplierPurchases = companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.SupplierId)
             .Select(g =>
             {
-                var supplier = _companyData.GetSupplier(g.Key ?? "");
+                var supplier = companyData.GetSupplier(g.Key ?? "");
 
                 return new SupplierAnalysisRow
                 {
@@ -566,16 +557,16 @@ public class ReportTableDataService
     /// </summary>
     public List<AccountantAnalysisRow> GetTopAccountantsByVolume(int count = 10)
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
         var accountantData = new Dictionary<string, (decimal Sales, decimal Purchases, int Count)>();
 
-        if (_companyData.Sales != null)
+        if (companyData.Sales != null)
         {
-            foreach (var sale in _companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
+            foreach (var sale in companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
             {
                 var accountantId = sale.AccountantId ?? "";
                 if (!accountantData.ContainsKey(accountantId))
@@ -586,9 +577,9 @@ public class ReportTableDataService
             }
         }
 
-        if (_companyData.Purchases != null)
+        if (companyData.Purchases != null)
         {
-            foreach (var purchase in _companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
+            foreach (var purchase in companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
             {
                 var accountantId = purchase.AccountantId ?? "";
                 if (!accountantData.ContainsKey(accountantId))
@@ -602,7 +593,7 @@ public class ReportTableDataService
         return accountantData
             .Select(kvp =>
             {
-                var accountant = _companyData.GetAccountant(kvp.Key);
+                var accountant = companyData.GetAccountant(kvp.Key);
                 return new AccountantAnalysisRow
                 {
                     AccountantId = kvp.Key,

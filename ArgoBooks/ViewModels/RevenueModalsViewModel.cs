@@ -4,7 +4,6 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
@@ -212,9 +211,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Sales == null) return;
 
-        var sale = companyData.Sales.FirstOrDefault(s => s.Id == item.Id);
+        var sale = companyData?.Sales?.FirstOrDefault(s => s.Id == item.Id);
         if (sale == null) return;
 
         // Find and remove associated receipt

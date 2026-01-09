@@ -154,10 +154,7 @@ public partial class ElementPropertyPanel : UserControl
         HasSingleSelection = count == 1;
         HasMultiSelection = count > 1;
 
-        if (_selectionCountText != null)
-        {
-            _selectionCountText.Text = $"{count} elements selected";
-        }
+        _selectionCountText?.Text = $"{count} elements selected";
     }
 
     private void UpdateFromSelection()
@@ -175,12 +172,12 @@ public partial class ElementPropertyPanel : UserControl
             var element = SelectedElement;
 
             // Update common properties
-            if (_positionX != null) _positionX.Value = (decimal)element.X;
-            if (_positionY != null) _positionY.Value = (decimal)element.Y;
-            if (_elementWidth != null) _elementWidth.Value = (decimal)element.Width;
-            if (_elementHeight != null) _elementHeight.Value = (decimal)element.Height;
+            _positionX?.Value = (decimal)element.X;
+            _positionY?.Value = (decimal)element.Y;
+            _elementWidth?.Value = (decimal)element.Width;
+            _elementHeight?.Value = (decimal)element.Height;
             // IsLocked is not a base property - skip for now
-            if (_isVisibleCheckbox != null) _isVisibleCheckbox.IsChecked = element.IsVisible;
+            _isVisibleCheckbox?.IsChecked = element.IsVisible;
 
             // Update type header
             UpdateElementTypeHeader(element);
@@ -200,13 +197,13 @@ public partial class ElementPropertyPanel : UserControl
 
         try
         {
-            if (_positionX != null) _positionX.Value = 0;
-            if (_positionY != null) _positionY.Value = 0;
-            if (_elementWidth != null) _elementWidth.Value = 100;
-            if (_elementHeight != null) _elementHeight.Value = 100;
-            if (_isLockedCheckbox != null) _isLockedCheckbox.IsChecked = false;
-            if (_isVisibleCheckbox != null) _isVisibleCheckbox.IsChecked = true;
-            if (_elementSpecificProperties != null) _elementSpecificProperties.Content = null;
+            _positionX?.Value = 0;
+            _positionY?.Value = 0;
+            _elementWidth?.Value = 100;
+            _elementHeight?.Value = 100;
+            _isLockedCheckbox?.IsChecked = false;
+            _isVisibleCheckbox?.IsChecked = true;
+            _elementSpecificProperties?.Content = null;
         }
         finally
         {
@@ -235,9 +232,7 @@ public partial class ElementPropertyPanel : UserControl
 
     private void UpdateElementSpecificProperties(ReportElementBase element)
     {
-        if (_elementSpecificProperties == null) return;
-
-        _elementSpecificProperties.Content = element switch
+        _elementSpecificProperties?.Content = element switch
         {
             ChartReportElement chart => CreateChartProperties(chart),
             TableReportElement table => CreateTableProperties(table),
@@ -893,20 +888,17 @@ public partial class ElementPropertyPanel : UserControl
 /// <summary>
 /// Event args for property changes.
 /// </summary>
-public class PropertyChangedEventArgs : EventArgs
+public class PropertyChangedEventArgs(
+    ReportElementBase element,
+    string propertyName,
+    object? oldValue,
+    object? newValue)
+    : EventArgs
 {
-    public ReportElementBase Element { get; }
-    public string PropertyName { get; }
-    public object? OldValue { get; }
-    public object? NewValue { get; }
-
-    public PropertyChangedEventArgs(ReportElementBase element, string propertyName, object? oldValue, object? newValue)
-    {
-        Element = element;
-        PropertyName = propertyName;
-        OldValue = oldValue;
-        NewValue = newValue;
-    }
+    public ReportElementBase Element { get; } = element;
+    public string PropertyName { get; } = propertyName;
+    public object? OldValue { get; } = oldValue;
+    public object? NewValue { get; } = newValue;
 }
 
 /// <summary>
@@ -923,14 +915,9 @@ public enum ZOrderChange
 /// <summary>
 /// Event args for z-order changes.
 /// </summary>
-public class ZOrderChangeEventArgs : EventArgs
+public class ZOrderChangeEventArgs(ZOrderChange change) : EventArgs
 {
-    public ZOrderChange Change { get; }
-
-    public ZOrderChangeEventArgs(ZOrderChange change)
-    {
-        Change = change;
-    }
+    public ZOrderChange Change { get; } = change;
 }
 
 #endregion

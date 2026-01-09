@@ -74,7 +74,6 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     [RelayCommand]
     private void CreateNewCompany()
     {
-        // TODO: Show create company wizard
         CreateNewCompanyRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -84,7 +83,6 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     [RelayCommand]
     private void OpenCompany()
     {
-        // TODO: Show file picker
         OpenCompanyRequested?.Invoke(this, EventArgs.Empty);
     }
 

@@ -18,9 +18,6 @@ public class ThemeService : IThemeService
     /// </summary>
     public static ThemeService Instance => _instance ??= new ThemeService();
 
-    private ThemeMode _currentTheme = ThemeMode.Dark;
-    private string _currentAccentColor = "Blue";
-
     // Accent color definitions: (Primary, Hover, Light, Dark, Secondary/Gradient, IconBg)
     private static readonly Dictionary<string, AccentColorSet> AccentColors = new()
     {
@@ -91,14 +88,14 @@ public class ThemeService : IThemeService
     );
 
     /// <inheritdoc />
-    public ThemeMode CurrentTheme => _currentTheme;
+    public ThemeMode CurrentTheme { get; private set; } = ThemeMode.Dark;
 
     /// <inheritdoc />
     public bool IsDarkTheme
     {
         get
         {
-            if (_currentTheme == ThemeMode.System)
+            if (CurrentTheme == ThemeMode.System)
             {
                 // Check the actual theme variant from Avalonia
                 var app = Application.Current;
@@ -109,7 +106,7 @@ public class ThemeService : IThemeService
                 }
                 return false;
             }
-            return _currentTheme == ThemeMode.Dark;
+            return CurrentTheme == ThemeMode.Dark;
         }
     }
 
@@ -119,10 +116,10 @@ public class ThemeService : IThemeService
     /// <inheritdoc />
     public void SetTheme(ThemeMode theme)
     {
-        if (_currentTheme == theme)
+        if (CurrentTheme == theme)
             return;
 
-        _currentTheme = theme;
+        CurrentTheme = theme;
         ApplyTheme();
         SaveToSettings();
         ThemeChanged?.Invoke(this, theme);
@@ -158,20 +155,17 @@ public class ThemeService : IThemeService
     /// </summary>
     public void LoadFromSettings()
     {
-        if (_globalSettingsService == null)
-            return;
-
-        var settings = _globalSettingsService.GetSettings();
+        var settings = _globalSettingsService?.GetSettings();
         if (settings?.Ui != null)
         {
-            _currentTheme = settings.Ui.Theme switch
+            CurrentTheme = settings.Ui.Theme switch
             {
                 "Light" => ThemeMode.Light,
                 "Dark" => ThemeMode.Dark,
                 "System" => ThemeMode.System,
                 _ => ThemeMode.Dark
             };
-            _currentAccentColor = AccentColors.ContainsKey(settings.Ui.AccentColor)
+            CurrentAccentColor = AccentColors.ContainsKey(settings.Ui.AccentColor)
                 ? settings.Ui.AccentColor
                 : "Blue";
         }
@@ -182,14 +176,11 @@ public class ThemeService : IThemeService
     /// </summary>
     private void SaveToSettings()
     {
-        if (_globalSettingsService == null)
-            return;
-
-        var settings = _globalSettingsService.GetSettings();
+        var settings = _globalSettingsService?.GetSettings();
         if (settings != null)
         {
             settings.Ui.Theme = CurrentThemeName;
-            settings.Ui.AccentColor = _currentAccentColor;
+            settings.Ui.AccentColor = CurrentAccentColor;
             _globalSettingsService.SaveSettings(settings);
         }
     }
@@ -197,7 +188,7 @@ public class ThemeService : IThemeService
     /// <summary>
     /// Gets the current theme name.
     /// </summary>
-    public string CurrentThemeName => _currentTheme switch
+    public string CurrentThemeName => CurrentTheme switch
     {
         ThemeMode.Light => "Light",
         ThemeMode.Dark => "Dark",
@@ -208,7 +199,7 @@ public class ThemeService : IThemeService
     /// <summary>
     /// Gets or sets the current accent color name.
     /// </summary>
-    public string CurrentAccentColor => _currentAccentColor;
+    public string CurrentAccentColor { get; private set; } = "Blue";
 
     /// <summary>
     /// Sets the accent color by name.
@@ -219,7 +210,7 @@ public class ThemeService : IThemeService
         if (!AccentColors.ContainsKey(colorName))
             return;
 
-        _currentAccentColor = colorName;
+        CurrentAccentColor = colorName;
         ApplyAccentColor();
         SaveToSettings();
     }
@@ -227,7 +218,7 @@ public class ThemeService : IThemeService
     private void ApplyAccentColor()
     {
         var app = Application.Current;
-        if (app == null || !AccentColors.TryGetValue(_currentAccentColor, out var colors))
+        if (app == null || !AccentColors.TryGetValue(CurrentAccentColor, out var colors))
             return;
 
         // Update primary colors
@@ -293,7 +284,7 @@ public class ThemeService : IThemeService
         if (app == null)
             return;
 
-        app.RequestedThemeVariant = _currentTheme switch
+        app.RequestedThemeVariant = CurrentTheme switch
         {
             ThemeMode.Light => ThemeVariant.Light,
             ThemeMode.Dark => ThemeVariant.Dark,
@@ -308,9 +299,9 @@ public class ThemeService : IThemeService
     private void OnSystemThemeChanged(object? sender, EventArgs e)
     {
         // Only notify if we're following system theme
-        if (_currentTheme == ThemeMode.System)
+        if (CurrentTheme == ThemeMode.System)
         {
-            ThemeChanged?.Invoke(this, _currentTheme);
+            ThemeChanged?.Invoke(this, CurrentTheme);
         }
     }
 }

@@ -257,20 +257,17 @@ public partial class App : Application
     private static MainWindowViewModel? _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
-    private static ConfirmationDialogViewModel? _confirmationDialogViewModel;
-    private static UnsavedChangesDialogViewModel? _unsavedChangesDialogViewModel;
-    private static ChangeTrackingService? _changeTrackingService;
     private static IdleDetectionService? _idleDetectionService;
 
     /// <summary>
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
     /// </summary>
-    public static ConfirmationDialogViewModel? ConfirmationDialog => _confirmationDialogViewModel;
+    public static ConfirmationDialogViewModel? ConfirmationDialog { get; private set; }
 
     /// <summary>
     /// Gets the unsaved changes dialog ViewModel for showing save prompts with change lists.
     /// </summary>
-    public static UnsavedChangesDialogViewModel? UnsavedChangesDialog => _unsavedChangesDialogViewModel;
+    public static UnsavedChangesDialogViewModel? UnsavedChangesDialog { get; private set; }
 
     /// <summary>
     /// Checks if the reports page has unsaved changes.
@@ -288,7 +285,7 @@ public partial class App : Application
     /// <summary>
     /// Gets the change tracking service for aggregating changes from all sources.
     /// </summary>
-    public static ChangeTrackingService? ChangeTrackingService => _changeTrackingService;
+    public static ChangeTrackingService? ChangeTrackingService { get; private set; }
 
     public override void Initialize()
     {
@@ -315,9 +312,9 @@ public partial class App : Application
             NavigationService = new NavigationService();
 
             _mainWindowViewModel = new MainWindowViewModel();
-            _confirmationDialogViewModel = new ConfirmationDialogViewModel();
-            _unsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
-            _changeTrackingService = new ChangeTrackingService();
+            ConfirmationDialog = new ConfirmationDialogViewModel();
+            UnsavedChangesDialog = new UnsavedChangesDialogViewModel();
+            ChangeTrackingService = new ChangeTrackingService();
             _idleDetectionService = new IdleDetectionService();
 
             // Create app shell with navigation service
@@ -348,7 +345,7 @@ public partial class App : Application
             WireModalChangeEvents();
 
             // Sync HasUnsavedChanges with undo/redo state (both MainWindow and Header)
-            UndoRedoManager!.StateChanged += (_, _) =>
+            UndoRedoManager.StateChanged += (_, _) =>
             {
                 var hasChanges = !UndoRedoManager.IsAtSavedState;
                 _mainWindowViewModel.HasUnsavedChanges = hasChanges;
@@ -387,7 +384,7 @@ public partial class App : Application
                     }
                     catch (Exception ex)
                     {
-                        _appShellViewModel?.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
+                        _appShellViewModel.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
                     }
                 }
             };
@@ -402,10 +399,10 @@ public partial class App : Application
             _mainWindowViewModel.PasswordPromptModalViewModel = _appShellViewModel.PasswordPromptModalViewModel;
 
             // Share ConfirmationDialogViewModel with MainWindow for confirmation dialogs
-            _mainWindowViewModel.ConfirmationDialogViewModel = _confirmationDialogViewModel;
+            _mainWindowViewModel.ConfirmationDialogViewModel = ConfirmationDialog;
 
             // Share UnsavedChangesDialogViewModel with MainWindow for unsaved changes dialogs
-            _mainWindowViewModel.UnsavedChangesDialogViewModel = _unsavedChangesDialogViewModel;
+            _mainWindowViewModel.UnsavedChangesDialogViewModel = UnsavedChangesDialog;
 
             // Final reset of unsaved changes before window is shown - ensures clean startup state
             _mainWindowViewModel.HasUnsavedChanges = false;
@@ -583,7 +580,7 @@ public partial class App : Application
             _mainWindowViewModel.HideLoading();
 
             // Clear undo/redo history for fresh start with new company
-            UndoRedoManager?.Clear();
+            UndoRedoManager.Clear();
 
             // Reset unsaved changes state - opening a company starts with no unsaved changes
             _mainWindowViewModel.HasUnsavedChanges = false;
@@ -597,17 +594,17 @@ public partial class App : Application
         {
             _mainWindowViewModel.CloseCompany();
             _appShellViewModel.SetCompanyInfo(null);
-            _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("", null);
+            _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany("");
             _appShellViewModel.FileMenuPanelViewModel.SetCurrentCompany(null);
             _mainWindowViewModel.HideLoading();
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
             // Clear undo/redo history when company is closed
-            UndoRedoManager?.Clear();
+            UndoRedoManager.Clear();
 
             // Clear tracked changes when company is closed
-            _changeTrackingService?.ClearAllChanges();
+            ChangeTrackingService?.ClearAllChanges();
 
             // Navigate back to Welcome screen when company is closed
             NavigationService?.NavigateTo("Welcome");
@@ -622,10 +619,10 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
 
             // Mark undo/redo state as saved so IsAtSavedState returns true
-            UndoRedoManager?.MarkSaved();
+            UndoRedoManager.MarkSaved();
 
             // Clear tracked changes after saving
-            _changeTrackingService?.ClearAllChanges();
+            ChangeTrackingService?.ClearAllChanges();
         };
 
         CompanyManager.CompanyDataChanged += (_, _) =>
@@ -637,10 +634,8 @@ public partial class App : Application
         // Use async callback for password requests (allows proper awaiting)
         CompanyManager.PasswordRequestCallback = async (filePath) =>
         {
-            if (_appShellViewModel?.PasswordPromptModalViewModel == null) return null;
-
             // Hide the loading modal before showing password prompt
-            _mainWindowViewModel?.HideLoading();
+            _mainWindowViewModel.HideLoading();
 
             // Get company name from footer if possible
             var footer = await CompanyManager.GetFileInfoAsync(filePath);
@@ -651,7 +646,7 @@ public partial class App : Application
             // Show loading again after user enters password (if they didn't cancel)
             if (!string.IsNullOrEmpty(password))
             {
-                _mainWindowViewModel?.ShowLoading("Opening company...");
+                _mainWindowViewModel.ShowLoading("Opening company...");
             }
 
             return password;
@@ -750,7 +745,7 @@ public partial class App : Application
                 }
                 catch (Exception ex)
                 {
-                    _appShellViewModel?.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
+                    _appShellViewModel.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
                 }
             }
         };
@@ -770,7 +765,7 @@ public partial class App : Application
             if (CompanyManager?.IsCompanyOpen == true)
             {
                 // Use UndoRedoManager's saved state which correctly handles undo back to original
-                if (UndoRedoManager?.IsAtSavedState == false)
+                if (UndoRedoManager.IsAtSavedState == false)
                 {
                     var result = await ShowUnsavedChangesDialogAsync();
                     switch (result)
@@ -849,7 +844,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Error", $"Failed to create company: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", $"Failed to create company: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -959,7 +954,7 @@ public partial class App : Application
         // Edit current company
         companySwitcher.EditCompanyRequested += (_, _) =>
         {
-            if (CompanyManager?.IsCompanyOpen != true || _appShellViewModel == null) return;
+            if (CompanyManager?.IsCompanyOpen != true) return;
 
             var settings = CompanyManager.CurrentCompanySettings;
             var logoPath = CompanyManager.CurrentCompanyLogoPath;
@@ -1035,24 +1030,24 @@ public partial class App : Application
                             CompanyManager.UpdateFilePath(newPath);
                         }
 
-                        _appShellViewModel?.HeaderViewModel.ShowSavedFeedback();
+                        _appShellViewModel.HeaderViewModel.ShowSavedFeedback();
                     }
 
                     // Update UI
                     _mainWindowViewModel?.OpenCompany(args.CompanyName);
                     var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
-                    _appShellViewModel?.SetCompanyInfo(args.CompanyName, logo);
-                    _appShellViewModel?.CompanySwitcherPanelViewModel.SetCurrentCompany(
+                    _appShellViewModel.SetCompanyInfo(args.CompanyName, logo);
+                    _appShellViewModel.CompanySwitcherPanelViewModel.SetCurrentCompany(
                         args.CompanyName,
                         CompanyManager.CurrentFilePath,
                         logo);
                 }
 
-                _appShellViewModel?.AddNotification("Updated", "Company information updated.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Updated", "Company information updated.", NotificationType.Success);
             }
             catch (Exception ex)
             {
-                _appShellViewModel?.AddNotification("Error", $"Failed to update company: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", $"Failed to update company: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1122,12 +1117,12 @@ public partial class App : Application
                 // Mark as having changes so SavedFeedback shows "Saved" not "No changes found"
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
-                _appShellViewModel?.AddNotification("Success", "Password has been set.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Success", "Password has been set.", NotificationType.Success);
             }
             catch (Exception ex)
             {
                 settings.HasPassword = false;
-                _appShellViewModel?.AddNotification("Error", $"Failed to set password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", $"Failed to set password: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1149,12 +1144,12 @@ public partial class App : Application
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
                 settings.OnPasswordChanged();
-                _appShellViewModel?.AddNotification("Success", "Password has been changed.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Success", "Password has been changed.", NotificationType.Success);
             }
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                _appShellViewModel?.AddNotification("Error", $"Failed to change password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", $"Failed to change password: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1176,12 +1171,12 @@ public partial class App : Application
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(null);
                 settings.OnPasswordRemoved();
-                _appShellViewModel?.AddNotification("Success", "Password has been removed.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Success", "Password has been removed.", NotificationType.Success);
             }
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                _appShellViewModel?.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
             }
         };
 
@@ -1322,20 +1317,20 @@ public partial class App : Application
             if (args.Format == "backup")
             {
                 // Backup export - not implemented yet
-                _appShellViewModel?.AddNotification("Info", "Backup export will be available in a future update.", NotificationType.Info);
+                _appShellViewModel.AddNotification("Info", "Backup export will be available in a future update.");
                 return;
             }
 
             // Spreadsheet export
             if (args.SelectedDataItems.Count == 0)
             {
-                _appShellViewModel?.AddNotification("Warning", "Please select at least one data type to export.", NotificationType.Warning);
+                _appShellViewModel.AddNotification("Warning", "Please select at least one data type to export.", NotificationType.Warning);
                 return;
             }
 
             if (CompanyManager?.CompanyData == null)
             {
-                _appShellViewModel?.AddNotification("Error", "No company is currently open.", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", "No company is currently open.", NotificationType.Error);
                 return;
             }
 
@@ -1432,7 +1427,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
-                _appShellViewModel?.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
             }
         };
     }
@@ -1452,14 +1447,14 @@ public partial class App : Application
         {
             if (CompanyManager?.CompanyData == null)
             {
-                _appShellViewModel?.AddNotification("Error", "No company is currently open.", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error", "No company is currently open.", NotificationType.Error);
                 return;
             }
 
             // Only Excel import is supported for now
             if (format.ToUpperInvariant() != "EXCEL")
             {
-                _appShellViewModel?.AddNotification("Info", $"{format} import will be available in a future update.", NotificationType.Info);
+                _appShellViewModel.AddNotification("Info", $"{format} import will be available in a future update.");
                 return;
             }
 
@@ -1477,7 +1472,7 @@ public partial class App : Application
                 }
             });
 
-            if (file == null || file.Count == 0) return;
+            if (file.Count == 0) return;
 
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;
@@ -1551,7 +1546,7 @@ public partial class App : Application
                 var importedSnapshot = CreateCompanyDataSnapshot(companyData);
 
                 // Record undo action
-                UndoRedoManager?.RecordAction(new DelegateAction(
+                UndoRedoManager.RecordAction(new DelegateAction(
                     "Import spreadsheet data",
                     () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
                     () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
@@ -1574,7 +1569,7 @@ public partial class App : Application
                 }
                 successMessage += "\n\nPlease save to persist changes.";
 
-                _appShellViewModel?.AddNotification("Import Complete", successMessage, NotificationType.Success);
+                _appShellViewModel.AddNotification("Import Complete", successMessage, NotificationType.Success);
             }
             catch (Exception ex)
             {
@@ -1708,7 +1703,7 @@ public partial class App : Application
             // Must run on UI thread
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                if (CompanyManager?.IsCompanyOpen != true) return;
+                if (CompanyManager.IsCompanyOpen != true) return;
 
                 // Check for unsaved changes
                 if (CompanyManager.HasUnsavedChanges)
@@ -1728,17 +1723,16 @@ public partial class App : Application
                 }
 
                 // Close the company - this will trigger navigation back to welcome screen
-                var filePath = CompanyManager.CurrentFilePath;
                 await CompanyManager.CloseCompanyAsync();
 
                 // Show notification
-                _appShellViewModel?.AddNotification(
+                _appShellViewModel.AddNotification(
                     "Session Locked",
                     "Your session was locked due to inactivity. Please reopen your company file.",
                     NotificationType.Warning);
 
                 // Re-enable idle detection for next session
-                _idleDetectionService?.ResetIdleTimer();
+                _idleDetectionService.ResetIdleTimer();
             });
         };
 
@@ -1746,7 +1740,7 @@ public partial class App : Application
         CompanyManager.CompanyOpened += (_, _) =>
         {
             var companySettings = CompanyManager.CurrentCompanySettings;
-            if (companySettings != null && _idleDetectionService != null)
+            if (companySettings != null)
             {
                 var security = companySettings.Security;
                 _idleDetectionService.Configure(security.AutoLockEnabled, security.AutoLockMinutes);
@@ -1758,26 +1752,24 @@ public partial class App : Application
                     60 => "1 hour",
                     _ => $"{security.AutoLockMinutes} minutes"
                 };
-                if (_appShellViewModel?.SettingsModalViewModel != null)
-                {
-                    // Use SetAutoLockWithoutNotify to avoid triggering MarkAsChanged during load
-                    _appShellViewModel.SettingsModalViewModel.SetAutoLockWithoutNotify(timeoutString);
-                }
+                
+                // Use SetAutoLockWithoutNotify to avoid triggering MarkAsChanged during load
+                _appShellViewModel.SettingsModalViewModel.SetAutoLockWithoutNotify(timeoutString);
             }
         };
 
         // Disable idle detection when company closes
         CompanyManager.CompanyClosed += (_, _) =>
         {
-            _idleDetectionService?.Configure(false, 0);
+            _idleDetectionService.Configure(false, 0);
         };
 
         // Record activity on main window pointer/key events
         if (desktop.MainWindow != null)
         {
-            desktop.MainWindow.PointerMoved += (_, _) => _idleDetectionService?.RecordActivity();
-            desktop.MainWindow.KeyDown += (_, _) => _idleDetectionService?.RecordActivity();
-            desktop.MainWindow.PointerPressed += (_, _) => _idleDetectionService?.RecordActivity();
+            desktop.MainWindow.PointerMoved += (_, _) => _idleDetectionService.RecordActivity();
+            desktop.MainWindow.KeyDown += (_, _) => _idleDetectionService.RecordActivity();
+            desktop.MainWindow.PointerPressed += (_, _) => _idleDetectionService.RecordActivity();
         }
     }
 
@@ -1829,7 +1821,7 @@ public partial class App : Application
             if (success)
             {
                 // Close the password modal if it was open
-                passwordModal?.Close();
+                passwordModal.Close();
                 await LoadRecentCompaniesAsync();
                 return true;
             }
@@ -1845,30 +1837,25 @@ public partial class App : Application
             // Wrong password - show error and retry
             _mainWindowViewModel.HideLoading();
 
-            if (passwordModal != null)
+            passwordModal.ShowError("Invalid password. Please try again.");
+
+            // Wait for the user to retry
+            var newPassword = await passwordModal.WaitForPasswordAsync();
+
+            if (string.IsNullOrEmpty(newPassword))
             {
-                passwordModal.ShowError("Invalid password. Please try again.");
-
-                // Wait for the user to retry
-                var newPassword = await passwordModal.WaitForPasswordAsync();
-
-                if (string.IsNullOrEmpty(newPassword))
-                {
-                    // User cancelled
-                    passwordModal.Close();
-                    return false;
-                }
-
-                // Retry with the new password
-                return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
+                // User cancelled
+                passwordModal.Close();
+                return false;
             }
 
-            return false;
+            // Retry with the new password
+            return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (FileNotFoundException)
         {
             _mainWindowViewModel.HideLoading();
-            passwordModal?.Close();
+            passwordModal.Close();
             _appShellViewModel.AddNotification("File Not Found", "The company file no longer exists.", NotificationType.Error);
             SettingsService?.RemoveRecentCompany(filePath);
             await LoadRecentCompaniesAsync();
@@ -1877,7 +1864,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             _mainWindowViewModel.HideLoading();
-            passwordModal?.Close();
+            passwordModal.Close();
             _appShellViewModel.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
             return false;
         }
@@ -1900,7 +1887,7 @@ public partial class App : Application
             var success = await CompanyManager.OpenCompanyAsync(filePath, password);
             if (success)
             {
-                passwordModal?.Close();
+                passwordModal.Close();
                 await LoadRecentCompaniesAsync();
                 return true;
             }
@@ -1915,30 +1902,25 @@ public partial class App : Application
             // Wrong password again - show error and retry
             _mainWindowViewModel.HideLoading();
 
-            if (passwordModal != null)
+            passwordModal.ShowError("Invalid password. Please try again.");
+
+            // Wait for the user to retry
+            var newPassword = await passwordModal.WaitForPasswordAsync();
+
+            if (string.IsNullOrEmpty(newPassword))
             {
-                passwordModal.ShowError("Invalid password. Please try again.");
-
-                // Wait for the user to retry
-                var newPassword = await passwordModal.WaitForPasswordAsync();
-
-                if (string.IsNullOrEmpty(newPassword))
-                {
-                    // User cancelled
-                    passwordModal.Close();
-                    return false;
-                }
-
-                // Retry recursively
-                return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
+                // User cancelled
+                passwordModal.Close();
+                return false;
             }
 
-            return false;
+            // Retry recursively
+            return await OpenCompanyWithPasswordRetryAsync(filePath, newPassword);
         }
         catch (Exception ex)
         {
             _mainWindowViewModel.HideLoading();
-            passwordModal?.Close();
+            passwordModal.Close();
             _appShellViewModel.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
             return false;
         }
@@ -2048,13 +2030,13 @@ public partial class App : Application
     /// <returns>The user's choice.</returns>
     private static async Task<UnsavedChangesResult> ShowUnsavedChangesDialogAsync()
     {
-        if (_unsavedChangesDialogViewModel == null)
+        if (UnsavedChangesDialog == null)
             return UnsavedChangesResult.Cancel;
 
         // Get changes from the change tracking service if available
-        var categories = _changeTrackingService?.GetAllChangeCategories();
+        var categories = ChangeTrackingService?.GetAllChangeCategories();
 
-        return await _unsavedChangesDialogViewModel.ShowAsync(categories);
+        return await UnsavedChangesDialog.ShowAsync(categories);
     }
 
     /// <summary>
@@ -2157,9 +2139,11 @@ public partial class App : Application
         // Inventory Section
         navigationService.RegisterPage("Products", param =>
         {
-            var viewModel = new ProductsPageViewModel();
-            // Set plan status from app shell
-            viewModel.HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false;
+            var viewModel = new ProductsPageViewModel
+            {
+                // Set plan status from app shell
+                HasStandard = _appShellViewModel?.SidebarViewModel.HasStandard ?? false
+            };
             // Wire up upgrade request to open upgrade modal
             viewModel.UpgradeRequested += (_, _) => _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
             if (param is Dictionary<string, object?> dict)
@@ -2225,24 +2209,14 @@ public partial class App : Application
         navigationService.RegisterPage("LostDamaged", _ => new LostDamagedPage { DataContext = new LostDamagedPageViewModel() });
         navigationService.RegisterPage("Receipts", _ =>
         {
-            var viewModel = new ReceiptsPageViewModel();
-            // Set plan status from app shell
-            viewModel.HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false;
+            var viewModel = new ReceiptsPageViewModel
+            {
+                // Set plan status from app shell
+                HasPremium = _appShellViewModel?.SidebarViewModel.HasPremium ?? false
+            };
             return new ReceiptsPage { DataContext = viewModel };
         });
 
-        // Settings and Help
-        navigationService.RegisterPage("Settings", _ => CreatePlaceholderPage("Settings", "Configure application settings"));
-        navigationService.RegisterPage("Help", _ => CreatePlaceholderPage("Help", "Get help and documentation"));
-
-        // Search (with parameter support)
-        navigationService.RegisterPage("Search", param =>
-        {
-            var query = param is Dictionary<string, object?> dict && dict.TryGetValue("query", out var q)
-                ? q?.ToString() ?? ""
-                : "";
-            return CreatePlaceholderPage("Search Results", $"Searching for: {query}");
-        });
     }
 
     /// <summary>
@@ -2291,14 +2265,8 @@ public partial class App : Application
 /// <summary>
 /// Event arguments for plan status changes.
 /// </summary>
-public class PlanStatusChangedEventArgs : EventArgs
+public class PlanStatusChangedEventArgs(bool hasStandard, bool hasPremium) : EventArgs
 {
-    public bool HasStandard { get; }
-    public bool HasPremium { get; }
-
-    public PlanStatusChangedEventArgs(bool hasStandard, bool hasPremium)
-    {
-        HasStandard = hasStandard;
-        HasPremium = hasPremium;
-    }
+    public bool HasStandard { get; } = hasStandard;
+    public bool HasPremium { get; } = hasPremium;
 }

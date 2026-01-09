@@ -144,7 +144,6 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     private void NewCompany()
     {
         Close();
-        // TODO: Show create company wizard
         CreateNewCompanyRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -155,7 +154,6 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     private void OpenCompany()
     {
         Close();
-        // TODO: Show file picker
         OpenCompanyRequested?.Invoke(this, EventArgs.Empty);
     }
 

@@ -5,7 +5,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public static class DotEnv
 {
-    private static readonly Dictionary<string, string> _envVars = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, string> EnvVars = new(StringComparer.OrdinalIgnoreCase);
     private static bool _isLoaded;
 
     /// <summary>
@@ -40,7 +40,7 @@ public static class DotEnv
         }
 
         // First check our loaded values
-        if (_envVars.TryGetValue(key, out var value))
+        if (EnvVars.TryGetValue(key, out var value))
         {
             return value;
         }
@@ -127,7 +127,7 @@ public static class DotEnv
                     }
                 }
 
-                _envVars[key] = value;
+                EnvVars[key] = value;
 
                 // Also set as system environment variable for the current process
                 Environment.SetEnvironmentVariable(key, value);
@@ -144,7 +144,7 @@ public static class DotEnv
     /// </summary>
     public static void Reload()
     {
-        _envVars.Clear();
+        EnvVars.Clear();
         _isLoaded = false;
         Load();
     }

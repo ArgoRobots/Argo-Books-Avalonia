@@ -429,9 +429,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.Invoices == null) return;
 
-        var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == item.Id);
+        var invoice = companyData?.Invoices?.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
         // Create undo action

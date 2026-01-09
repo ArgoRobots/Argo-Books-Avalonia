@@ -174,9 +174,8 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         }
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var inventoryItem = companyData.Inventory?.FirstOrDefault(i => i.Id == SelectedItemId);
+        var inventoryItem = companyData?.Inventory?.FirstOrDefault(i => i.Id == SelectedItemId);
         if (inventoryItem == null) return;
 
         // Store old values for undo
@@ -533,16 +532,9 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
 /// <summary>
 /// Event args for filter applied events.
 /// </summary>
-public class FilterAppliedEventArgs : EventArgs
+public class FilterAppliedEventArgs(string category, string location, string status) : EventArgs
 {
-    public string Category { get; }
-    public string Location { get; }
-    public string Status { get; }
-
-    public FilterAppliedEventArgs(string category, string location, string status)
-    {
-        Category = category;
-        Location = location;
-        Status = status;
-    }
+    public string Category { get; } = category;
+    public string Location { get; } = location;
+    public string Status { get; } = status;
 }

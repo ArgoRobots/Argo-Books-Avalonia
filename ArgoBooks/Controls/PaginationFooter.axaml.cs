@@ -26,13 +26,13 @@ public partial class PaginationFooter : UserControl
         AvaloniaProperty.Register<PaginationFooter, ObservableCollection<int>>(nameof(PageNumbers));
 
     public static readonly StyledProperty<bool> CanGoToPreviousPageProperty =
-        AvaloniaProperty.Register<PaginationFooter, bool>(nameof(CanGoToPreviousPage), false);
+        AvaloniaProperty.Register<PaginationFooter, bool>(nameof(CanGoToPreviousPage));
 
     public static readonly StyledProperty<bool> CanGoToNextPageProperty =
-        AvaloniaProperty.Register<PaginationFooter, bool>(nameof(CanGoToNextPage), false);
+        AvaloniaProperty.Register<PaginationFooter, bool>(nameof(CanGoToNextPage));
 
     public static readonly StyledProperty<bool> ShowPaginationControlsProperty =
-        AvaloniaProperty.Register<PaginationFooter, bool>(nameof(ShowPaginationControls), false);
+        AvaloniaProperty.Register<PaginationFooter, bool>(nameof(ShowPaginationControls));
 
     public static readonly StyledProperty<ICommand?> GoToPreviousPageCommandProperty =
         AvaloniaProperty.Register<PaginationFooter, ICommand?>(nameof(GoToPreviousPageCommand));

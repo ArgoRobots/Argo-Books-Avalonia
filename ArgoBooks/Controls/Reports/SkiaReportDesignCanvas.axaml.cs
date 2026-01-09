@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -9,7 +6,6 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
@@ -219,10 +215,7 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         // Wire up pointer wheel for zoom-to-cursor
         // Use AddHandler with handledEventsToo to intercept events that ScrollViewer handles
-        if (_scrollViewer != null)
-        {
-            _scrollViewer.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Bubble, handledEventsToo: true);
-        }
+        _scrollViewer?.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Bubble, handledEventsToo: true);
 
         // Wire up keyboard events
         KeyDown += OnKeyDown;
@@ -954,10 +947,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         }
 
         // Mark as manually positioned
-        if (Configuration != null)
-        {
-            Configuration.HasManualChartLayout = true;
-        }
+        Configuration?.HasManualChartLayout = true;
 
         InvalidateCanvas();
     }
@@ -1105,10 +1095,7 @@ public partial class SkiaReportDesignCanvas : UserControl
         element.Height = Math.Max(newHeight, minSize);
 
         // Mark as manually positioned
-        if (Configuration != null)
-        {
-            Configuration.HasManualChartLayout = true;
-        }
+        Configuration?.HasManualChartLayout = true;
 
         InvalidateCanvas();
     }
@@ -1190,10 +1177,7 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void EndSelectionRectangle()
     {
-        if (_selectionRectangle != null)
-        {
-            _selectionRectangle.IsVisible = false;
-        }
+        _selectionRectangle?.IsVisible = false;
 
         NotifySelectionChanged();
     }
@@ -1334,10 +1318,7 @@ public partial class SkiaReportDesignCanvas : UserControl
             }
         }
 
-        if (Configuration != null)
-        {
-            Configuration.HasManualChartLayout = true;
-        }
+        Configuration?.HasManualChartLayout = true;
 
         InvalidateCanvas();
     }
@@ -1512,44 +1493,29 @@ public partial class SkiaReportDesignCanvas : UserControl
 /// <summary>
 /// Event args for selection changes.
 /// </summary>
-public class SelectionChangedEventArgs : EventArgs
+public class SelectionChangedEventArgs(
+    ReportElementBase? selectedElement,
+    IReadOnlyList<ReportElementBase> selectedElements)
+    : EventArgs
 {
-    public ReportElementBase? SelectedElement { get; }
-    public IReadOnlyList<ReportElementBase> SelectedElements { get; }
-
-    public SelectionChangedEventArgs(ReportElementBase? selectedElement, IReadOnlyList<ReportElementBase> selectedElements)
-    {
-        SelectedElement = selectedElement;
-        SelectedElements = selectedElements;
-    }
+    public ReportElementBase? SelectedElement { get; } = selectedElement;
+    public IReadOnlyList<ReportElementBase> SelectedElements { get; } = selectedElements;
 }
 
 /// <summary>
 /// Event args for when an element is added.
 /// </summary>
-public class ElementAddedEventArgs : EventArgs
+public class ElementAddedEventArgs(ReportElementBase element) : EventArgs
 {
-    public ReportElementBase Element { get; }
-
-    public ElementAddedEventArgs(ReportElementBase element)
-    {
-        Element = element;
-    }
+    public ReportElementBase Element { get; } = element;
 }
 
 /// <summary>
 /// Event args for when a context menu is requested.
 /// </summary>
-public class ContextMenuRequestedEventArgs : EventArgs
+public class ContextMenuRequestedEventArgs(double x, double y, ReportElementBase element) : EventArgs
 {
-    public double X { get; }
-    public double Y { get; }
-    public ReportElementBase Element { get; }
-
-    public ContextMenuRequestedEventArgs(double x, double y, ReportElementBase element)
-    {
-        X = x;
-        Y = y;
-        Element = element;
-    }
+    public double X { get; } = x;
+    public double Y { get; } = y;
+    public ReportElementBase Element { get; } = element;
 }

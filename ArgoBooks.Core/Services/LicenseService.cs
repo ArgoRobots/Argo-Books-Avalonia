@@ -1,7 +1,6 @@
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Platform;
 
@@ -97,7 +96,7 @@ public class LicenseService
         try
         {
             var settings = _settingsService.GetSettings();
-            if (settings?.License?.LicenseData == null ||
+            if (settings?.License.LicenseData == null ||
                 settings.License.Salt == null ||
                 settings.License.Iv == null)
             {

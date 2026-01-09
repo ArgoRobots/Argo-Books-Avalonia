@@ -153,10 +153,7 @@ public partial class ReportsPage : UserControl
         _designCanvas?.ZoomToFit();
 
         // Show canvas after zoom is applied
-        if (_designCanvas != null)
-        {
-            _designCanvas.Opacity = 1;
-        }
+        _designCanvas?.Opacity = 1;
     }
 
     private async void InitializeAsteriskAsync()
@@ -549,10 +546,7 @@ public partial class ReportsPage : UserControl
     /// </summary>
     private void ApplyPreviewZoom()
     {
-        if (_previewZoomTransformControl != null)
-        {
-            _previewZoomTransformControl.LayoutTransform = new ScaleTransform(_previewZoomLevel, _previewZoomLevel);
-        }
+        _previewZoomTransformControl?.LayoutTransform = new ScaleTransform(_previewZoomLevel, _previewZoomLevel);
     }
 
     // Right-click pan for design canvas

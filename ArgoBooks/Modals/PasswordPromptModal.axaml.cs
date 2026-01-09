@@ -31,10 +31,7 @@ public partial class PasswordPromptModal : UserControl
         Dispatcher.UIThread.Post(() =>
         {
             PasswordTextBox?.Focus();
-            if (PasswordTextBox != null)
-            {
-                PasswordTextBox.SelectAll();
-            }
+            PasswordTextBox?.SelectAll();
         }, DispatcherPriority.Background);
     }
 

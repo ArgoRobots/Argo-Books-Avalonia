@@ -297,12 +297,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// <summary>
     /// Command executed when "Add new" is clicked.
     /// </summary>
-    public ICommand? AddNewCommand
-    {
-        get => _addNewCommand;
-        set => _addNewCommand = value;
-    }
-    private ICommand? _addNewCommand;
+    public ICommand? AddNewCommand { get; set; }
 
     #endregion
 

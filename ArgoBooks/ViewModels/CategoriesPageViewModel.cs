@@ -434,8 +434,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
                     ["Description"] = x => x.Description,
                     ["Type"] = x => x.ItemType,
                     ["ProductCount"] = x => x.ProductCount
-                },
-                null);
+                });
         }
 
         // Calculate pagination
@@ -753,10 +752,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
                         foreach (var kvp in childOriginalParents)
                         {
                             var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
-                            if (child != null)
-                            {
-                                child.ParentId = kvp.Value;
-                            }
+                            child?.ParentId = kvp.Value;
                         }
                     }
                     companyData.MarkAsModified();
@@ -777,10 +773,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
                         foreach (var kvp in childOriginalParents)
                         {
                             var child = companyData.Categories.FirstOrDefault(c => c.Id == kvp.Key);
-                            if (child != null)
-                            {
-                                child.ParentId = null;
-                            }
+                            child?.ParentId = null;
                         }
                     }
                     companyData.Categories.Remove(deletedCategory);
@@ -854,10 +847,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         }
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
 
-        var category = companyData.Categories.FirstOrDefault(c => c.Id == _movingCategory.Id);
+        var category = companyData?.Categories.FirstOrDefault(c => c.Id == _movingCategory.Id);
         if (category == null)
             return;
 
@@ -1036,15 +1027,9 @@ public partial class CategoryDisplayItem : ObservableObject
 /// <summary>
 /// Represents an icon option for dropdown.
 /// </summary>
-public class IconOption
+public class IconOption(string icon, string name)
 {
-    public string Icon { get; }
-    public string Name { get; }
+    public string Icon { get; } = icon;
+    public string Name { get; } = name;
     public string DisplayName => $"{Icon} {Name}";
-
-    public IconOption(string icon, string name)
-    {
-        Icon = icon;
-        Name = name;
-    }
 }

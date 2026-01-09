@@ -201,9 +201,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         ClearAddModalFields();
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var order = companyData.PurchaseOrders?.FirstOrDefault(o => o.Id == item.Id);
+        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == item.Id);
         if (order == null) return;
 
         // Populate fields
@@ -532,9 +531,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     {
         ViewLineItems.Clear();
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var order = companyData.PurchaseOrders?.FirstOrDefault(o => o.Id == orderId);
+        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == orderId);
         if (order == null) return;
 
         var products = companyData.Products ?? [];
@@ -606,9 +604,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var order = companyData.PurchaseOrders?.FirstOrDefault(o => o.Id == ReceivingOrder.Id);
+        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == ReceivingOrder.Id);
         if (order == null) return;
 
         // Store old values for undo
@@ -706,9 +703,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     {
         ReceiveLineItems.Clear();
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
 
-        var order = companyData.PurchaseOrders?.FirstOrDefault(o => o.Id == orderId);
+        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == orderId);
         if (order == null) return;
 
         var products = companyData.Products ?? [];
@@ -753,9 +749,8 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         if (result != ConfirmationResult.Primary) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData?.PurchaseOrders == null) return;
 
-        var order = companyData.PurchaseOrders.FirstOrDefault(o => o.Id == item.Id);
+        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == item.Id);
         if (order == null) return;
 
         var deletedOrder = order;

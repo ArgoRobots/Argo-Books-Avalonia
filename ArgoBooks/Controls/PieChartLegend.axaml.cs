@@ -63,7 +63,7 @@ public partial class PieChartLegend : UserControl
         AvaloniaProperty.Register<PieChartLegend, bool>(nameof(ShowPercentage), true);
 
     public static readonly StyledProperty<bool> ShowValueProperty =
-        AvaloniaProperty.Register<PieChartLegend, bool>(nameof(ShowValue), false);
+        AvaloniaProperty.Register<PieChartLegend, bool>(nameof(ShowValue));
 
     #endregion
 

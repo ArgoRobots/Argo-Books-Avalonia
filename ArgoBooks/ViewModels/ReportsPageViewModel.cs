@@ -1176,7 +1176,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             // Render at 2x resolution for sharper zoom, but display at original size
             const int resolutionMultiplier = 2;
-            using var renderer = new ReportRenderer(Configuration, companyData, 1f);
+            using var renderer = new ReportRenderer(Configuration, companyData);
             using var skBitmap = renderer.CreatePreview(width * resolutionMultiplier, height * resolutionMultiplier);
             PreviewImage = ConvertToBitmap(skBitmap);
 
@@ -2189,26 +2189,23 @@ public partial class ReportsPageViewModel : ViewModelBase
 /// <summary>
 /// Represents a chart option for selection with category and icon information.
 /// </summary>
-public partial class ChartOption : ObservableObject
+public partial class ChartOption(
+    ChartDataType chartType,
+    string name,
+    string description,
+    string category,
+    string iconData,
+    string iconForeground,
+    string iconBackground)
+    : ObservableObject
 {
-    public ChartOption(ChartDataType chartType, string name, string description, string category, string iconData, string iconForeground, string iconBackground)
-    {
-        ChartType = chartType;
-        Name = name;
-        Description = description;
-        Category = category;
-        IconData = iconData;
-        IconForeground = iconForeground;
-        IconBackground = iconBackground;
-    }
-
-    public ChartDataType ChartType { get; }
-    public string Name { get; }
-    public string Description { get; }
-    public string Category { get; }
-    public string IconData { get; }
-    public string IconForeground { get; }
-    public string IconBackground { get; }
+    public ChartDataType ChartType { get; } = chartType;
+    public string Name { get; } = name;
+    public string Description { get; } = description;
+    public string Category { get; } = category;
+    public string IconData { get; } = iconData;
+    public string IconForeground { get; } = iconForeground;
+    public string IconBackground { get; } = iconBackground;
 
     [ObservableProperty]
     private bool _isSelected;
@@ -2275,14 +2272,9 @@ public partial class ChartCategoryGroup : ObservableObject
 /// <summary>
 /// Represents a date preset option for selection.
 /// </summary>
-public partial class DatePresetOption : ObservableObject
+public partial class DatePresetOption(string name) : ObservableObject
 {
-    public DatePresetOption(string name)
-    {
-        Name = name;
-    }
-
-    public string Name { get; }
+    public string Name { get; } = name;
 
     [ObservableProperty]
     private bool _isSelected;
@@ -2301,24 +2293,21 @@ public class ExportFormatOption(string name, ExportFormat format, string descrip
 /// <summary>
 /// Represents a report template option for the Step 1 template grid.
 /// </summary>
-public partial class ReportTemplateOption : ObservableObject
+public partial class ReportTemplateOption(
+    string templateName,
+    string displayName,
+    string description,
+    string iconData,
+    string iconForeground,
+    string iconBackground)
+    : ObservableObject
 {
-    public ReportTemplateOption(string templateName, string displayName, string description, string iconData, string iconForeground, string iconBackground)
-    {
-        TemplateName = templateName;
-        DisplayName = displayName;
-        Description = description;
-        IconData = iconData;
-        IconForeground = iconForeground;
-        IconBackground = iconBackground;
-    }
-
-    public string TemplateName { get; }
-    public string DisplayName { get; }
-    public string Description { get; }
-    public string IconData { get; }
-    public string IconForeground { get; }
-    public string IconBackground { get; }
+    public string TemplateName { get; } = templateName;
+    public string DisplayName { get; } = displayName;
+    public string Description { get; } = description;
+    public string IconData { get; } = iconData;
+    public string IconForeground { get; } = iconForeground;
+    public string IconBackground { get; } = iconBackground;
 
     [ObservableProperty]
     private bool _isSelected;
@@ -2327,14 +2316,9 @@ public partial class ReportTemplateOption : ObservableObject
 /// <summary>
 /// Represents a custom template option for the Step 1 template grid.
 /// </summary>
-public partial class CustomTemplateOption : ObservableObject
+public partial class CustomTemplateOption(string name) : ObservableObject
 {
-    public CustomTemplateOption(string name)
-    {
-        Name = name;
-    }
-
-    public string Name { get; }
+    public string Name { get; } = name;
 
     [ObservableProperty]
     private bool _isSelected;

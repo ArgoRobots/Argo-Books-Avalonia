@@ -180,15 +180,10 @@ public partial class ElementToolbox : UserControl
 /// <summary>
 /// Event args for add element requests.
 /// </summary>
-public class AddElementRequestedEventArgs : EventArgs
+public class AddElementRequestedEventArgs(ReportElementBase element) : EventArgs
 {
     /// <summary>
     /// The element to be added.
     /// </summary>
-    public ReportElementBase Element { get; }
-
-    public AddElementRequestedEventArgs(ReportElementBase element)
-    {
-        Element = element;
-    }
+    public ReportElementBase Element { get; } = element;
 }

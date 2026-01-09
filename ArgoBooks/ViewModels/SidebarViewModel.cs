@@ -262,12 +262,9 @@ public partial class SidebarViewModel : ViewModelBase
     /// </summary>
     partial void OnHasPremiumChanged(bool value)
     {
-        if (_insightsItem != null)
-            _insightsItem.IsVisible = value;
-        if (_invoicesItem != null)
-            _invoicesItem.IsVisible = value;
-        if (_paymentsItem != null)
-            _paymentsItem.IsVisible = value;
+        _insightsItem?.IsVisible = value;
+        _invoicesItem?.IsVisible = value;
+        _paymentsItem?.IsVisible = value;
     }
 
     /// <summary>
@@ -276,10 +273,8 @@ public partial class SidebarViewModel : ViewModelBase
     partial void OnHasEnterpriseChanged(bool value)
     {
         ShowTeam = value;
-        if (_locationsItem != null)
-            _locationsItem.IsVisible = value;
-        if (_transfersItem != null)
-            _transfersItem.IsVisible = value;
+        _locationsItem?.IsVisible = value;
+        _transfersItem?.IsVisible = value;
     }
 
     /// <summary>

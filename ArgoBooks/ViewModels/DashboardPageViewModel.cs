@@ -1,11 +1,7 @@
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
-using ArgoBooks.Core.Models.Entities;
-using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Reports;
-using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -455,8 +451,6 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #region Profits Overview Chart
 
-    private readonly ChartLoaderService _chartLoaderService = new();
-
     [ObservableProperty]
     private ObservableCollection<ISeries> _profitsChartSeries = [];
 
@@ -764,8 +758,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private void LoadProfitsChart(CompanyData data)
     {
         // Update theme colors and chart style
-        _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
-        _chartLoaderService.SelectedChartStyle = SelectedChartType switch
+        ChartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
+        ChartLoaderService.SelectedChartStyle = SelectedChartType switch
         {
             "Line" => ChartStyle.Line,
             "Column" => ChartStyle.Column,
@@ -776,11 +770,11 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         };
 
         // Load profits chart data for the selected date range
-        var (series, labels, dates, totalProfit) = _chartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
+        var (series, labels, dates, totalProfit) = ChartLoaderService.LoadProfitsOverviewChart(data, StartDate, EndDate);
 
         ProfitsChartSeries = series;
-        ProfitsChartXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        ProfitsChartYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        ProfitsChartXAxes = ChartLoaderService.CreateDateXAxes(dates);
+        ProfitsChartYAxes = ChartLoaderService.CreateCurrencyYAxes();
         ProfitsChartTitle = $"Total profits: {FormatCurrency(totalProfit)}";
         HasProfitsChartData = series.Count > 0 && labels.Length > 0;
     }
@@ -788,12 +782,12 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     private void LoadSalesVsExpensesChart(CompanyData data)
     {
         // Update theme colors based on current theme
-        _chartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
+        ChartLoaderService.UpdateThemeColors(ThemeService.Instance.IsDarkTheme);
 
-        var (series, _, dates) = _chartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
+        var (series, _, dates) = ChartLoaderService.LoadSalesVsExpensesChart(data, StartDate, EndDate);
         SalesVsExpensesSeries = series;
-        SalesVsExpensesXAxes = _chartLoaderService.CreateDateXAxes(dates);
-        SalesVsExpensesYAxes = _chartLoaderService.CreateCurrencyYAxes();
+        SalesVsExpensesXAxes = ChartLoaderService.CreateDateXAxes(dates);
+        SalesVsExpensesYAxes = ChartLoaderService.CreateCurrencyYAxes();
         HasSalesVsExpensesData = series.Count > 0 && dates.Length > 0;
     }
 
@@ -830,7 +824,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// </summary>
     private async Task ExportToGoogleSheetsAsync()
     {
-        var exportData = _chartLoaderService.GetGoogleSheetsExportData(SelectedChartId);
+        var exportData = ChartLoaderService.GetGoogleSheetsExportData(SelectedChartId);
         if (exportData.Count == 0)
         {
             GoogleSheetsExportStatusChanged?.Invoke(this, new GoogleSheetsExportEventArgs
@@ -861,7 +855,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         try
         {
             var companyName = App.CompanyManager?.CurrentCompanyName ?? "Argo Books";
-            var chartExportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
+            var chartExportData = ChartLoaderService.GetExportDataForChart(SelectedChartId);
             // Use the UI title (SelectedChartId) for Google Sheets, not the internal stored title
             var chartTitle = !string.IsNullOrEmpty(SelectedChartId) ? SelectedChartId : (chartExportData?.ChartTitle ?? "Chart");
 
@@ -873,7 +867,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
             }
             else
             {
-                chartType = _chartLoaderService.SelectedChartStyle == ChartStyle.Line
+                chartType = ChartLoaderService.SelectedChartStyle == ChartStyle.Line
                     ? GoogleSheetsService.ChartType.Line
                     : GoogleSheetsService.ChartType.Column;
             }
@@ -933,7 +927,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <inheritdoc />
     protected override void OnExportToExcel()
     {
-        var exportData = _chartLoaderService.GetExportDataForChart(SelectedChartId);
+        var exportData = ChartLoaderService.GetExportDataForChart(SelectedChartId);
         if (exportData == null || exportData.Labels.Length == 0)
         {
             // No data to export
@@ -963,7 +957,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     /// <summary>
     /// Gets the chart loader service for external use (e.g., report generation).
     /// </summary>
-    public ChartLoaderService ChartLoaderService => _chartLoaderService;
+    public ChartLoaderService ChartLoaderService { get; } = new();
 
     #endregion
 
@@ -1249,17 +1243,12 @@ public class ExcelExportEventArgs : EventArgs
 /// <summary>
 /// Navigation parameter for navigating to a specific transaction.
 /// </summary>
-public class TransactionNavigationParameter
+public class TransactionNavigationParameter(string transactionId)
 {
     /// <summary>
     /// Gets the transaction ID to highlight.
     /// </summary>
-    public string TransactionId { get; }
-
-    public TransactionNavigationParameter(string transactionId)
-    {
-        TransactionId = transactionId;
-    }
+    public string TransactionId { get; } = transactionId;
 }
 
 #endregion

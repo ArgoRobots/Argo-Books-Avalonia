@@ -374,7 +374,7 @@ public class GoogleSheetsService
                         {
                             Bold = true
                         },
-                        BackgroundColor = new Google.Apis.Sheets.v4.Data.Color
+                        BackgroundColor = new Color
                         {
                             Red = 0.678f,
                             Green = 0.847f,

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
 
@@ -7,27 +6,17 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Service for handling .argo company file operations.
 /// </summary>
-public class FileService : IFileService
+public class FileService(
+    CompressionService compressionService,
+    FooterService footerService,
+    IEncryptionService? encryptionService = null)
+    : IFileService
 {
-    private readonly CompressionService _compressionService;
-    private readonly FooterService _footerService;
-    private readonly IEncryptionService? _encryptionService;
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
-
-    public FileService(
-        CompressionService compressionService,
-        FooterService footerService,
-        IEncryptionService? encryptionService = null)
-    {
-        _compressionService = compressionService;
-        _footerService = footerService;
-        _encryptionService = encryptionService;
-    }
 
     /// <inheritdoc />
     public async Task CreateCompanyAsync(
@@ -99,11 +88,11 @@ public class FileService : IFileService
         CancellationToken cancellationToken = default)
     {
         // Read footer first
-        var footer = await _footerService.ReadFooterAsync(filePath, cancellationToken)
+        var footer = await footerService.ReadFooterAsync(filePath, cancellationToken)
             ?? throw new InvalidDataException("Invalid file format or corrupted file.");
 
         // Check version compatibility
-        if (!_footerService.IsVersionCompatible(footer))
+        if (!footerService.IsVersionCompatible(footer))
             throw new NotSupportedException($"File version {footer.Version} is not supported.");
 
         // Verify password if encrypted
@@ -112,29 +101,29 @@ public class FileService : IFileService
             if (string.IsNullOrEmpty(password))
                 throw new UnauthorizedAccessException("Password is required for this file.");
 
-            if (_encryptionService == null)
+            if (encryptionService == null)
                 throw new InvalidOperationException("Encryption service not available.");
 
-            if (!_encryptionService.ValidatePassword(password, footer.PasswordHash!, footer.Salt!))
+            if (!encryptionService.ValidatePassword(password, footer.PasswordHash!, footer.Salt!))
                 throw new UnauthorizedAccessException("Invalid password.");
         }
 
         // Read content (excluding footer)
-        await using var contentStream = await _footerService.ReadContentAsync(filePath, cancellationToken);
+        await using var contentStream = await footerService.ReadContentAsync(filePath, cancellationToken);
 
         // Decrypt if needed
         Stream dataStream = contentStream;
-        if (footer.IsEncrypted && _encryptionService != null)
+        if (footer.IsEncrypted && encryptionService != null)
         {
-            dataStream = await _encryptionService.DecryptAsync(contentStream, password!, footer.Salt!, footer.Iv!);
+            dataStream = await encryptionService.DecryptAsync(contentStream, password!, footer.Salt!, footer.Iv!);
         }
 
         // Decompress GZip
-        await using var decompressedStream = await _compressionService.DecompressGZipAsync(dataStream, cancellationToken);
+        await using var decompressedStream = await compressionService.DecompressGZipAsync(dataStream, cancellationToken);
 
         // Extract TAR to temp directory
         var tempDirectory = CreateTempDirectory();
-        await _compressionService.ExtractTarArchiveAsync(decompressedStream, tempDirectory, cancellationToken);
+        await compressionService.ExtractTarArchiveAsync(decompressedStream, tempDirectory, cancellationToken);
 
         return tempDirectory;
     }
@@ -147,11 +136,11 @@ public class FileService : IFileService
         CancellationToken cancellationToken = default)
     {
         // Create TAR archive - use includeBaseDirectory: false to avoid nesting under temp dir GUID
-        await using var tarStream = await _compressionService.CreateTarArchiveAsync(
+        await using var tarStream = await compressionService.CreateTarArchiveAsync(
             tempDirectory, includeBaseDirectory: false, cancellationToken);
 
         // Compress with GZip
-        await using var compressedStream = await _compressionService.CompressGZipAsync(
+        await using var compressedStream = await compressionService.CompressGZipAsync(
             tarStream, cancellationToken: cancellationToken);
 
         // Encrypt if password provided
@@ -160,12 +149,12 @@ public class FileService : IFileService
         string? iv = null;
         string? passwordHash = null;
 
-        if (!string.IsNullOrEmpty(password) && _encryptionService != null)
+        if (!string.IsNullOrEmpty(password) && encryptionService != null)
         {
-            salt = _encryptionService.GenerateSalt();
-            iv = _encryptionService.GenerateIv();
-            passwordHash = _encryptionService.HashPassword(password, salt);
-            contentStream = await _encryptionService.EncryptAsync(compressedStream, password, salt, iv);
+            salt = encryptionService.GenerateSalt();
+            iv = encryptionService.GenerateIv();
+            passwordHash = encryptionService.HashPassword(password, salt);
+            contentStream = await encryptionService.EncryptAsync(compressedStream, password, salt, iv);
         }
 
         // Create footer
@@ -184,7 +173,7 @@ public class FileService : IFileService
         // Check if file exists to preserve created date
         if (File.Exists(filePath))
         {
-            var existingFooter = await _footerService.ReadFooterAsync(filePath, cancellationToken);
+            var existingFooter = await footerService.ReadFooterAsync(filePath, cancellationToken);
             if (existingFooter != null)
                 footer.CreatedAt = existingFooter.CreatedAt;
         }
@@ -198,7 +187,7 @@ public class FileService : IFileService
         await contentStream.CopyToAsync(fileStream, cancellationToken);
 
         // Write footer
-        await _footerService.WriteFooterAsync(fileStream, footer, cancellationToken);
+        await footerService.WriteFooterAsync(fileStream, footer, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -222,7 +211,7 @@ public class FileService : IFileService
     /// <inheritdoc />
     public async Task<bool> IsFileEncryptedAsync(string filePath)
     {
-        var footer = await _footerService.ReadFooterAsync(filePath);
+        var footer = await footerService.ReadFooterAsync(filePath);
         return footer?.IsEncrypted ?? false;
     }
 

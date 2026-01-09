@@ -643,9 +643,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     {
         // Always load from company file to ensure consistency
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return null;
 
-        var expense = companyData.Purchases.FirstOrDefault(p => p.Id == expenseId);
+        var expense = companyData?.Purchases.FirstOrDefault(p => p.Id == expenseId);
         if (expense == null || string.IsNullOrEmpty(expense.ReceiptId)) return null;
 
         var receipt = companyData.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);

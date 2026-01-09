@@ -11,15 +11,8 @@ namespace ArgoBooks.Core.Validation;
 /// <summary>
 /// Validates data models before saving.
 /// </summary>
-public partial class DataValidator
+public partial class DataValidator(CompanyData companyData)
 {
-    private readonly CompanyData _companyData;
-
-    public DataValidator(CompanyData companyData)
-    {
-        _companyData = companyData;
-    }
-
     #region Entity Validation
 
     /// <summary>
@@ -36,7 +29,7 @@ public partial class DataValidator
             result.AddError(nameof(customer.Email), "Invalid email address format.");
 
         // Check for duplicate name (excluding self)
-        if (_companyData.Customers.Any(c => c.Id != customer.Id &&
+        if (companyData.Customers.Any(c => c.Id != customer.Id &&
             c.Name.Equals(customer.Name, StringComparison.OrdinalIgnoreCase)))
             result.AddError(nameof(customer.Name), "A customer with this name already exists.");
 
@@ -64,18 +57,18 @@ public partial class DataValidator
 
         // Check for duplicate SKU (excluding self)
         if (!string.IsNullOrWhiteSpace(product.Sku) &&
-            _companyData.Products.Any(p => p.Id != product.Id &&
+            companyData.Products.Any(p => p.Id != product.Id &&
             p.Sku.Equals(product.Sku, StringComparison.OrdinalIgnoreCase)))
             result.AddError(nameof(product.Sku), "A product with this SKU already exists.");
 
         // Validate supplier exists
         if (!string.IsNullOrWhiteSpace(product.SupplierId) &&
-            _companyData.GetSupplier(product.SupplierId) == null)
+            companyData.GetSupplier(product.SupplierId) == null)
             result.AddError(nameof(product.SupplierId), "Supplier not found.");
 
         // Validate category exists
         if (!string.IsNullOrWhiteSpace(product.CategoryId) &&
-            _companyData.GetCategory(product.CategoryId) == null)
+            companyData.GetCategory(product.CategoryId) == null)
             result.AddError(nameof(product.CategoryId), "Category not found.");
 
         return result;
@@ -95,7 +88,7 @@ public partial class DataValidator
             result.AddError(nameof(supplier.Email), "Invalid email address format.");
 
         // Check for duplicate name (excluding self)
-        if (_companyData.Suppliers.Any(s => s.Id != supplier.Id &&
+        if (companyData.Suppliers.Any(s => s.Id != supplier.Id &&
             s.Name.Equals(supplier.Name, StringComparison.OrdinalIgnoreCase)))
             result.AddError(nameof(supplier.Name), "A supplier with this name already exists.");
 
@@ -123,7 +116,7 @@ public partial class DataValidator
 
         // Validate department exists
         if (!string.IsNullOrWhiteSpace(employee.DepartmentId) &&
-            _companyData.GetDepartment(employee.DepartmentId) == null)
+            companyData.GetDepartment(employee.DepartmentId) == null)
             result.AddError(nameof(employee.DepartmentId), "Department not found.");
 
         return result;
@@ -143,7 +136,7 @@ public partial class DataValidator
             result.AddError(nameof(department.Budget), "Budget cannot be negative.");
 
         // Check for duplicate name (excluding self)
-        if (_companyData.Departments.Any(d => d.Id != department.Id &&
+        if (companyData.Departments.Any(d => d.Id != department.Id &&
             d.Name.Equals(department.Name, StringComparison.OrdinalIgnoreCase)))
             result.AddError(nameof(department.Name), "A department with this name already exists.");
 
@@ -164,7 +157,7 @@ public partial class DataValidator
             result.AddError(nameof(category.DefaultTaxRate), "Tax rate must be between 0 and 1.");
 
         // Check for duplicate name within same type (excluding self)
-        if (_companyData.Categories.Any(c => c.Id != category.Id &&
+        if (companyData.Categories.Any(c => c.Id != category.Id &&
             c.Type == category.Type &&
             c.Name.Equals(category.Name, StringComparison.OrdinalIgnoreCase)))
             result.AddError(nameof(category.Name), "A category with this name already exists.");
@@ -172,7 +165,7 @@ public partial class DataValidator
         // Validate parent category exists and is same type
         if (!string.IsNullOrWhiteSpace(category.ParentId))
         {
-            var parent = _companyData.GetCategory(category.ParentId);
+            var parent = companyData.GetCategory(category.ParentId);
             if (parent == null)
                 result.AddError(nameof(category.ParentId), "Parent category not found.");
             else if (parent.Type != category.Type)
@@ -198,7 +191,7 @@ public partial class DataValidator
             result.AddError(nameof(location.Capacity), "Capacity cannot be negative.");
 
         // Check for duplicate name (excluding self)
-        if (_companyData.Locations.Any(l => l.Id != location.Id &&
+        if (companyData.Locations.Any(l => l.Id != location.Id &&
             l.Name.Equals(location.Name, StringComparison.OrdinalIgnoreCase)))
             result.AddError(nameof(location.Name), "A location with this name already exists.");
 
@@ -218,7 +211,7 @@ public partial class DataValidator
 
         if (string.IsNullOrWhiteSpace(invoice.CustomerId))
             result.AddError(nameof(invoice.CustomerId), "Customer is required.");
-        else if (_companyData.GetCustomer(invoice.CustomerId) == null)
+        else if (companyData.GetCustomer(invoice.CustomerId) == null)
             result.AddError(nameof(invoice.CustomerId), "Customer not found.");
 
         if (invoice.DueDate < invoice.IssueDate)
@@ -258,7 +251,7 @@ public partial class DataValidator
 
         // Validate customer exists if specified
         if (!string.IsNullOrWhiteSpace(sale.CustomerId) &&
-            _companyData.GetCustomer(sale.CustomerId) == null)
+            companyData.GetCustomer(sale.CustomerId) == null)
             result.AddError(nameof(sale.CustomerId), "Customer not found.");
 
         return result;
@@ -279,7 +272,7 @@ public partial class DataValidator
 
         // Validate supplier exists if specified
         if (!string.IsNullOrWhiteSpace(purchase.SupplierId) &&
-            _companyData.GetSupplier(purchase.SupplierId) == null)
+            companyData.GetSupplier(purchase.SupplierId) == null)
             result.AddError(nameof(purchase.SupplierId), "Supplier not found.");
 
         return result;
@@ -320,12 +313,12 @@ public partial class DataValidator
 
         if (string.IsNullOrWhiteSpace(item.ProductId))
             result.AddError(nameof(item.ProductId), "Product is required.");
-        else if (_companyData.GetProduct(item.ProductId) == null)
+        else if (companyData.GetProduct(item.ProductId) == null)
             result.AddError(nameof(item.ProductId), "Product not found.");
 
         if (string.IsNullOrWhiteSpace(item.LocationId))
             result.AddError(nameof(item.LocationId), "Location is required.");
-        else if (_companyData.GetLocation(item.LocationId) == null)
+        else if (companyData.GetLocation(item.LocationId) == null)
             result.AddError(nameof(item.LocationId), "Location not found.");
 
         if (item.InStock < 0)
@@ -355,12 +348,12 @@ public partial class DataValidator
 
         if (string.IsNullOrWhiteSpace(transfer.SourceLocationId))
             result.AddError(nameof(transfer.SourceLocationId), "Source location is required.");
-        else if (_companyData.GetLocation(transfer.SourceLocationId) == null)
+        else if (companyData.GetLocation(transfer.SourceLocationId) == null)
             result.AddError(nameof(transfer.SourceLocationId), "Source location not found.");
 
         if (string.IsNullOrWhiteSpace(transfer.DestinationLocationId))
             result.AddError(nameof(transfer.DestinationLocationId), "Destination location is required.");
-        else if (_companyData.GetLocation(transfer.DestinationLocationId) == null)
+        else if (companyData.GetLocation(transfer.DestinationLocationId) == null)
             result.AddError(nameof(transfer.DestinationLocationId), "Destination location not found.");
 
         if (transfer.SourceLocationId == transfer.DestinationLocationId)
@@ -416,7 +409,7 @@ public partial class DataValidator
 
         if (string.IsNullOrWhiteSpace(rental.CustomerId))
             result.AddError(nameof(rental.CustomerId), "Customer is required.");
-        else if (_companyData.GetCustomer(rental.CustomerId) == null)
+        else if (companyData.GetCustomer(rental.CustomerId) == null)
             result.AddError(nameof(rental.CustomerId), "Customer not found.");
 
         if (rental.Quantity <= 0)

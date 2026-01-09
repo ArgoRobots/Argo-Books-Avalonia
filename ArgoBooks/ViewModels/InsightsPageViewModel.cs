@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Reports;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;

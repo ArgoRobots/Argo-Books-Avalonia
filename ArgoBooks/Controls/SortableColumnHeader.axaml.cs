@@ -40,7 +40,7 @@ public partial class SortableColumnHeader : UserControl
     /// The current sort direction from the ViewModel.
     /// </summary>
     public static readonly StyledProperty<SortDirection> SortDirectionProperty =
-        AvaloniaProperty.Register<SortableColumnHeader, SortDirection>(nameof(SortDirection), SortDirection.None);
+        AvaloniaProperty.Register<SortableColumnHeader, SortDirection>(nameof(SortDirection));
 
     #endregion
 

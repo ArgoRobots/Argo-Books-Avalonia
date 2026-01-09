@@ -52,7 +52,7 @@ public partial class StatCard : UserControl
         AvaloniaProperty.Register<StatCard, Geometry?>(nameof(Icon));
 
     public static readonly StyledProperty<StatCardColor> IconColorProperty =
-        AvaloniaProperty.Register<StatCard, StatCardColor>(nameof(IconColor), StatCardColor.Primary);
+        AvaloniaProperty.Register<StatCard, StatCardColor>(nameof(IconColor));
 
     public static readonly StyledProperty<double?> ChangeValueProperty =
         AvaloniaProperty.Register<StatCard, double?>(nameof(ChangeValue));

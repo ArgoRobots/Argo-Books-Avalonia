@@ -8,30 +8,21 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Service for generating chart data for reports.
 /// </summary>
-public class ReportChartDataService
+public class ReportChartDataService(CompanyData? companyData, ReportFilters filters)
 {
-    private readonly CompanyData? _companyData;
-    private readonly ReportFilters _filters;
-
-    public ReportChartDataService(CompanyData? companyData, ReportFilters filters)
-    {
-        _companyData = companyData;
-        _filters = filters;
-    }
-
     /// <summary>
     /// Gets the date range based on filters.
     /// </summary>
     private (DateTime Start, DateTime End) GetDateRange()
     {
-        if (!string.IsNullOrEmpty(_filters.DatePresetName) &&
-            _filters.DatePresetName != DatePresetNames.Custom)
+        if (!string.IsNullOrEmpty(filters.DatePresetName) &&
+            filters.DatePresetName != DatePresetNames.Custom)
         {
-            return DatePresetNames.GetDateRange(_filters.DatePresetName);
+            return DatePresetNames.GetDateRange(filters.DatePresetName);
         }
 
-        var start = _filters.StartDate ?? DateTime.MinValue;
-        var end = _filters.EndDate ?? DateTime.MaxValue;
+        var start = filters.StartDate ?? DateTime.MinValue;
+        var end = filters.EndDate ?? DateTime.MaxValue;
         return (start, end);
     }
 
@@ -42,12 +33,12 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetRevenueOverTime()
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Sales
+        return companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.Date.Date)
             .OrderBy(g => g.Key)
@@ -65,19 +56,19 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetRevenueDistribution()
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var sales = _companyData.Sales
+        var sales = companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate);
 
         return sales
             .GroupBy(s => s.CategoryId ?? "Unknown")
             .Select(g =>
             {
-                var categoryName = _companyData.GetCategory(g.Key)?.Name ?? "Other";
+                var categoryName = companyData.GetCategory(g.Key)?.Name ?? "Other";
                 return new ChartDataPoint
                 {
                     Label = categoryName,
@@ -94,12 +85,12 @@ public class ReportChartDataService
     /// </summary>
     public decimal GetTotalRevenue()
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return 0;
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Sales
+        return companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .Sum(s => s.Total);
     }
@@ -113,12 +104,12 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetExpensesOverTime()
     {
-        if (_companyData?.Purchases == null)
+        if (companyData?.Purchases == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Purchases
+        return companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.Date.Date)
             .OrderBy(g => g.Key)
@@ -136,17 +127,17 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetExpenseDistribution()
     {
-        if (_companyData?.Purchases == null)
+        if (companyData?.Purchases == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Purchases
+        return companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.CategoryId ?? "Unknown")
             .Select(g =>
             {
-                var categoryName = _companyData.GetCategory(g.Key)?.Name ?? "Other";
+                var categoryName = companyData.GetCategory(g.Key)?.Name ?? "Other";
                 return new ChartDataPoint
                 {
                     Label = categoryName,
@@ -163,12 +154,12 @@ public class ReportChartDataService
     /// </summary>
     public decimal GetTotalExpenses()
     {
-        if (_companyData?.Purchases == null)
+        if (companyData?.Purchases == null)
             return 0;
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Purchases
+        return companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .Sum(p => p.Total);
     }
@@ -182,20 +173,20 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetProfitOverTime()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        var revenueByDate = _companyData.Sales?
+        var revenueByDate = companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.Date.Date)
-            .ToDictionary(g => g.Key, g => g.Sum(s => s.Total)) ?? [];
+            .ToDictionary(g => g.Key, g => g.Sum(s => s.Total));
 
-        var expensesByDate = _companyData.Purchases?
+        var expensesByDate = companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.Date.Date)
-            .ToDictionary(g => g.Key, g => g.Sum(p => p.Total)) ?? [];
+            .ToDictionary(g => g.Key, g => g.Sum(p => p.Total));
 
         var allDates = revenueByDate.Keys.Union(expensesByDate.Keys).OrderBy(d => d);
 
@@ -212,7 +203,7 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartSeriesData> GetSalesVsExpenses()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
@@ -224,8 +215,8 @@ public class ReportChartDataService
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            var hasSales = _companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
-            var hasPurchases = _companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            var hasSales = companyData.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
+            var hasPurchases = companyData.Purchases.Any(p => p.Date >= monthStart && p.Date <= monthEnd);
             return hasSales || hasPurchases;
         }).ToList();
 
@@ -240,9 +231,9 @@ public class ReportChartDataService
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(_companyData.Sales?
+                Value = (double)companyData.Sales
                     .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                    .Sum(s => s.Total) ?? 0),
+                    .Sum(s => s.Total),
                 Date = month
             };
         }).ToList();
@@ -255,9 +246,9 @@ public class ReportChartDataService
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = (double)(_companyData.Purchases?
+                Value = (double)companyData.Purchases
                     .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                    .Sum(p => p.Total) ?? 0),
+                    .Sum(p => p.Total),
                 Date = month
             };
         }).ToList();
@@ -274,21 +265,21 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartSeriesData> GetSalesVsExpensesDaily()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
         // Get all dates with data
-        var salesByDate = _companyData.Sales?
+        var salesByDate = companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s => s.Date.Date)
-            .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.Total)) ?? [];
+            .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.Total));
 
-        var purchasesByDate = _companyData.Purchases?
+        var purchasesByDate = companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p => p.Date.Date)
-            .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.Total)) ?? [];
+            .ToDictionary(g => g.Key, g => (double)g.Sum(p => p.Total));
 
         // Combine all dates
         var allDates = salesByDate.Keys.Union(purchasesByDate.Keys).OrderBy(d => d).ToList();
@@ -322,7 +313,7 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetGrowthRates()
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
@@ -334,7 +325,7 @@ public class ReportChartDataService
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return _companyData.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
+            return companyData.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
         }).ToList();
 
         if (monthsWithData.Count < 2)
@@ -352,11 +343,11 @@ public class ReportChartDataService
             var previousMonthStart = new DateTime(previousMonth.Year, previousMonth.Month, 1);
             var previousMonthEnd = previousMonthStart.AddMonths(1).AddDays(-1);
 
-            var currentRevenue = _companyData.Sales
+            var currentRevenue = companyData.Sales
                 .Where(s => s.Date >= currentMonthStart && s.Date <= currentMonthEnd)
                 .Sum(s => s.Total);
 
-            var previousRevenue = _companyData.Sales
+            var previousRevenue = companyData.Sales
                 .Where(s => s.Date >= previousMonthStart && s.Date <= previousMonthEnd)
                 .Sum(s => s.Total);
 
@@ -390,7 +381,7 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetAverageTransactionValue()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
@@ -403,10 +394,10 @@ public class ReportChartDataService
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
 
-            var hasRevenue = _filters.TransactionType is TransactionType.Revenue or TransactionType.Both &&
-                (_companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false);
-            var hasExpenses = _filters.TransactionType is TransactionType.Expenses or TransactionType.Both &&
-                (_companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false);
+            var hasRevenue = filters.TransactionType is TransactionType.Revenue or TransactionType.Both &&
+                companyData.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
+            var hasExpenses = filters.TransactionType is TransactionType.Expenses or TransactionType.Both &&
+                companyData.Purchases.Any(p => p.Date >= monthStart && p.Date <= monthEnd);
 
             return hasRevenue || hasExpenses;
         }).ToList();
@@ -418,18 +409,18 @@ public class ReportChartDataService
 
             var transactions = new List<decimal>();
 
-            if (_filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
+            if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
             {
-                transactions.AddRange(_companyData.Sales?
+                transactions.AddRange(companyData.Sales
                     .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                    .Select(s => s.Total) ?? []);
+                    .Select(s => s.Total));
             }
 
-            if (_filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
+            if (filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
             {
-                transactions.AddRange(_companyData.Purchases?
+                transactions.AddRange(companyData.Purchases
                     .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                    .Select(p => p.Total) ?? []);
+                    .Select(p => p.Total));
             }
 
             return new ChartDataPoint
@@ -446,7 +437,7 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetTransactionCount()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
@@ -459,10 +450,10 @@ public class ReportChartDataService
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
 
-            var hasRevenue = _filters.TransactionType is TransactionType.Revenue or TransactionType.Both &&
-                (_companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false);
-            var hasExpenses = _filters.TransactionType is TransactionType.Expenses or TransactionType.Both &&
-                (_companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false);
+            var hasRevenue = filters.TransactionType is TransactionType.Revenue or TransactionType.Both &&
+                companyData.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
+            var hasExpenses = filters.TransactionType is TransactionType.Expenses or TransactionType.Both &&
+                companyData.Purchases.Any(p => p.Date >= monthStart && p.Date <= monthEnd);
 
             return hasRevenue || hasExpenses;
         }).ToList();
@@ -474,14 +465,14 @@ public class ReportChartDataService
 
             int count = 0;
 
-            if (_filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
+            if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
             {
-                count += _companyData.Sales?.Count(s => s.Date >= monthStart && s.Date <= monthEnd) ?? 0;
+                count += companyData.Sales.Count(s => s.Date >= monthStart && s.Date <= monthEnd);
             }
 
-            if (_filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
+            if (filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
             {
-                count += _companyData.Purchases?.Count(p => p.Date >= monthStart && p.Date <= monthEnd) ?? 0;
+                count += companyData.Purchases.Count(p => p.Date >= monthStart && p.Date <= monthEnd);
             }
 
             return new ChartDataPoint
@@ -498,16 +489,16 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetAverageTransactionValueDaily()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
         var transactionsByDate = new Dictionary<DateTime, List<decimal>>();
 
-        if (_filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
+        if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
         {
-            foreach (var sale in _companyData.Sales?.Where(s => s.Date >= startDate && s.Date <= endDate) ?? [])
+            foreach (var sale in companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
             {
                 var date = sale.Date.Date;
                 if (!transactionsByDate.ContainsKey(date))
@@ -516,9 +507,9 @@ public class ReportChartDataService
             }
         }
 
-        if (_filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
+        if (filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
         {
-            foreach (var purchase in _companyData.Purchases?.Where(p => p.Date >= startDate && p.Date <= endDate) ?? [])
+            foreach (var purchase in companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
             {
                 var date = purchase.Date.Date;
                 if (!transactionsByDate.ContainsKey(date))
@@ -543,25 +534,25 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetTransactionCountDaily()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
         var countsByDate = new Dictionary<DateTime, int>();
 
-        if (_filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
+        if (filters.TransactionType is TransactionType.Revenue or TransactionType.Both)
         {
-            foreach (var sale in _companyData.Sales?.Where(s => s.Date >= startDate && s.Date <= endDate) ?? [])
+            foreach (var sale in companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
             {
                 var date = sale.Date.Date;
                 countsByDate[date] = countsByDate.GetValueOrDefault(date, 0) + 1;
             }
         }
 
-        if (_filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
+        if (filters.TransactionType is TransactionType.Expenses or TransactionType.Both)
         {
-            foreach (var purchase in _companyData.Purchases?.Where(p => p.Date >= startDate && p.Date <= endDate) ?? [])
+            foreach (var purchase in companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
             {
                 var date = purchase.Date.Date;
                 countsByDate[date] = countsByDate.GetValueOrDefault(date, 0) + 1;
@@ -597,17 +588,17 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetSalesByCustomerCountry()
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Sales
+        return companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s =>
             {
-                var customer = _companyData.GetCustomer(s.CustomerId ?? "");
-                return customer?.Address?.Country ?? "Unknown";
+                var customer = companyData.GetCustomer(s.CustomerId ?? "");
+                return customer?.Address.Country ?? "Unknown";
             })
             .Select(g => new ChartDataPoint
             {
@@ -626,17 +617,17 @@ public class ReportChartDataService
     /// </summary>
     public Dictionary<string, double> GetWorldMapData()
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Sales
+        return companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
             .GroupBy(s =>
             {
-                var customer = _companyData.GetCustomer(s.CustomerId ?? "");
-                return customer?.Address?.Country;
+                var customer = companyData.GetCustomer(s.CustomerId ?? "");
+                return customer?.Address.Country;
             })
             .Where(g => g.Key != null)
             .ToDictionary(g => g.Key!, g => (double)g.Sum(s => s.Total));
@@ -647,17 +638,17 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetPurchasesByCountryOfDestination()
     {
-        if (_companyData?.Purchases == null)
+        if (companyData?.Purchases == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Purchases
+        return companyData.Purchases
             .Where(p => p.Date >= startDate && p.Date <= endDate)
             .GroupBy(p =>
             {
-                var supplier = _companyData.GetSupplier(p.SupplierId ?? "");
-                return supplier?.Address?.Country ?? "Unknown";
+                var supplier = companyData.GetSupplier(p.SupplierId ?? "");
+                return supplier?.Address.Country ?? "Unknown";
             })
             .Select(g => new ChartDataPoint
             {
@@ -674,14 +665,14 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetSalesByCompanyOfOrigin()
     {
-        if (_companyData?.Sales == null)
+        if (companyData?.Sales == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Sales
+        return companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .GroupBy(s => _companyData.GetCustomer(s.CustomerId ?? "")?.Name ?? "Unknown")
+            .GroupBy(s => companyData.GetCustomer(s.CustomerId ?? "")?.Name ?? "Unknown")
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
@@ -697,7 +688,7 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetAverageShippingCosts()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
@@ -710,8 +701,8 @@ public class ReportChartDataService
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
 
-            var hasSales = _companyData.Sales?.Any(s => s.Date >= monthStart && s.Date <= monthEnd) ?? false;
-            var hasPurchases = _companyData.Purchases?.Any(p => p.Date >= monthStart && p.Date <= monthEnd) ?? false;
+            var hasSales = companyData.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
+            var hasPurchases = companyData.Purchases.Any(p => p.Date >= monthStart && p.Date <= monthEnd);
 
             return hasSales || hasPurchases;
         }).ToList();
@@ -723,19 +714,13 @@ public class ReportChartDataService
 
             var shippingCosts = new List<decimal>();
 
-            if (_companyData.Sales != null)
-            {
-                shippingCosts.AddRange(_companyData.Sales
-                    .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
-                    .Select(s => s.ShippingCost));
-            }
+            shippingCosts.AddRange(companyData.Sales
+                .Where(s => s.Date >= monthStart && s.Date <= monthEnd)
+                .Select(s => s.ShippingCost));
 
-            if (_companyData.Purchases != null)
-            {
-                shippingCosts.AddRange(_companyData.Purchases
-                    .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
-                    .Select(p => p.ShippingCost));
-            }
+            shippingCosts.AddRange(companyData.Purchases
+                .Where(p => p.Date >= monthStart && p.Date <= monthEnd)
+                .Select(p => p.ShippingCost));
 
             return new ChartDataPoint
             {
@@ -751,33 +736,27 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetAverageShippingCostsDaily()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
         var shippingByDate = new Dictionary<DateTime, List<decimal>>();
 
-        if (_companyData.Sales != null)
+        foreach (var sale in companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
         {
-            foreach (var sale in _companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
-            {
-                var date = sale.Date.Date;
-                if (!shippingByDate.ContainsKey(date))
-                    shippingByDate[date] = [];
-                shippingByDate[date].Add(sale.ShippingCost);
-            }
+            var date = sale.Date.Date;
+            if (!shippingByDate.ContainsKey(date))
+                shippingByDate[date] = [];
+            shippingByDate[date].Add(sale.ShippingCost);
         }
 
-        if (_companyData.Purchases != null)
+        foreach (var purchase in companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
         {
-            foreach (var purchase in _companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
-            {
-                var date = purchase.Date.Date;
-                if (!shippingByDate.ContainsKey(date))
-                    shippingByDate[date] = [];
-                shippingByDate[date].Add(purchase.ShippingCost);
-            }
+            var date = purchase.Date.Date;
+            if (!shippingByDate.ContainsKey(date))
+                shippingByDate[date] = [];
+            shippingByDate[date].Add(purchase.ShippingCost);
         }
 
         return shippingByDate
@@ -800,7 +779,7 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetTransactionsByAccountant()
     {
-        if (_companyData == null)
+        if (companyData == null)
             return [];
 
         var (startDate, endDate) = GetDateRange();
@@ -808,25 +787,19 @@ public class ReportChartDataService
         var accountantData = new Dictionary<string, int>();
 
         // Sales by accountant
-        if (_companyData.Sales != null)
+        foreach (var sale in companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
         {
-            foreach (var sale in _companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
-            {
-                var accountantName = _companyData.GetAccountant(sale.AccountantId ?? "")?.Name ?? "Unknown";
-                accountantData.TryAdd(accountantName, 0);
-                accountantData[accountantName] += 1;
-            }
+            var accountantName = companyData.GetAccountant(sale.AccountantId ?? "")?.Name ?? "Unknown";
+            accountantData.TryAdd(accountantName, 0);
+            accountantData[accountantName] += 1;
         }
 
         // Purchases by accountant
-        if (_companyData.Purchases != null)
+        foreach (var purchase in companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
         {
-            foreach (var purchase in _companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
-            {
-                var accountantName = _companyData.GetAccountant(purchase.AccountantId ?? "")?.Name ?? "Unknown";
-                accountantData.TryAdd(accountantName, 0);
-                accountantData[accountantName] += 1;
-            }
+            var accountantName = companyData.GetAccountant(purchase.AccountantId ?? "")?.Name ?? "Unknown";
+            accountantData.TryAdd(accountantName, 0);
+            accountantData[accountantName] += 1;
         }
 
         return accountantData
@@ -844,12 +817,12 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetReturnsOverTime()
     {
-        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+        if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Returns
+        return companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
             .GroupBy(r => r.ReturnDate.Date)
             .OrderBy(g => g.Key)
@@ -867,15 +840,15 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetReturnReasons()
     {
-        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+        if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
         // Returns have Items, each with a Reason - group by all item reasons
-        return _companyData.Returns
+        return companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
-            .SelectMany(r => r.Items ?? [])
+            .SelectMany(r => r.Items)
             .GroupBy(item => string.IsNullOrEmpty(item.Reason) ? "Unknown" : item.Reason)
             .Select(g => new ChartDataPoint
             {
@@ -891,12 +864,12 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetReturnFinancialImpact()
     {
-        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+        if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Returns
+        return companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
             .GroupBy(r => new DateTime(r.ReturnDate.Year, r.ReturnDate.Month, 1))
             .OrderBy(g => g.Key)
@@ -914,12 +887,12 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetReturnFinancialImpactDaily()
     {
-        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+        if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.Returns
+        return companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
             .GroupBy(r => r.ReturnDate.Date)
             .OrderBy(g => g.Key)
@@ -937,19 +910,19 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetReturnsByCategory()
     {
-        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+        if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
         // Returns have Items with ProductId - group by category of each returned item
-        return _companyData.Returns
+        return companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
-            .SelectMany(r => r.Items ?? [])
+            .SelectMany(r => r.Items)
             .GroupBy(item =>
             {
-                var product = _companyData.GetProduct(item.ProductId ?? "");
-                var category = product != null ? _companyData.GetCategory(product.CategoryId ?? "") : null;
+                var product = companyData.GetProduct(item.ProductId);
+                var category = product != null ? companyData.GetCategory(product.CategoryId ?? "") : null;
                 return category?.Name ?? "Unknown";
             })
             .Select(g => new ChartDataPoint
@@ -967,16 +940,16 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetReturnsByProduct()
     {
-        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+        if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
         // Returns have Items with ProductId - group by product name of each returned item
-        return _companyData.Returns
+        return companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate)
-            .SelectMany(r => r.Items ?? [])
-            .GroupBy(item => _companyData.GetProduct(item.ProductId ?? "")?.Name ?? "Unknown")
+            .SelectMany(r => r.Items)
+            .GroupBy(item => companyData.GetProduct(item.ProductId)?.Name ?? "Unknown")
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
@@ -993,7 +966,7 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartSeriesData> GetPurchaseVsSaleReturns()
     {
-        if (_companyData?.Returns == null || !_filters.IncludeReturns)
+        if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
 
         var (startDate, endDate) = GetDateRange();
@@ -1005,7 +978,7 @@ public class ReportChartDataService
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return _companyData.Returns.Any(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd);
+            return companyData.Returns.Any(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd);
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1020,7 +993,7 @@ public class ReportChartDataService
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = _companyData.Returns
+                Value = companyData.Returns
                     .Count(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd),
                 Date = month
             };
@@ -1050,12 +1023,12 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetLossesOverTime()
     {
-        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+        if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.LostDamaged
+        return companyData.LostDamaged
             .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
             .GroupBy(l => l.DateDiscovered.Date)
             .OrderBy(g => g.Key)
@@ -1073,12 +1046,12 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetLossReasons()
     {
-        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+        if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.LostDamaged
+        return companyData.LostDamaged
             .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
             .GroupBy(l => l.Reason.ToString())
             .Select(g => new ChartDataPoint
@@ -1095,12 +1068,12 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetLossFinancialImpact()
     {
-        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+        if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.LostDamaged
+        return companyData.LostDamaged
             .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
             .GroupBy(l => new DateTime(l.DateDiscovered.Year, l.DateDiscovered.Month, 1))
             .OrderBy(g => g.Key)
@@ -1118,12 +1091,12 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetLossFinancialImpactDaily()
     {
-        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+        if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.LostDamaged
+        return companyData.LostDamaged
             .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
             .GroupBy(l => l.DateDiscovered.Date)
             .OrderBy(g => g.Key)
@@ -1141,17 +1114,17 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetLossesByCategory()
     {
-        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+        if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.LostDamaged
+        return companyData.LostDamaged
             .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
             .GroupBy(l =>
             {
-                var product = _companyData.GetProduct(l.ProductId ?? "");
-                var category = product != null ? _companyData.GetCategory(product.CategoryId ?? "") : null;
+                var product = companyData.GetProduct(l.ProductId);
+                var category = product != null ? companyData.GetCategory(product.CategoryId ?? "") : null;
                 return category?.Name ?? "Unknown";
             })
             .Select(g => new ChartDataPoint
@@ -1169,14 +1142,14 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartDataPoint> GetLossesByProduct()
     {
-        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+        if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
 
         var (startDate, endDate) = GetDateRange();
 
-        return _companyData.LostDamaged
+        return companyData.LostDamaged
             .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate)
-            .GroupBy(l => _companyData.GetProduct(l.ProductId ?? "")?.Name ?? "Unknown")
+            .GroupBy(l => companyData.GetProduct(l.ProductId)?.Name ?? "Unknown")
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key,
@@ -1193,7 +1166,7 @@ public class ReportChartDataService
     /// </summary>
     public List<ChartSeriesData> GetPurchaseVsSaleLosses()
     {
-        if (_companyData?.LostDamaged == null || !_filters.IncludeLosses)
+        if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
 
         var (startDate, endDate) = GetDateRange();
@@ -1205,7 +1178,7 @@ public class ReportChartDataService
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return _companyData.LostDamaged.Any(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd);
+            return companyData.LostDamaged.Any(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd);
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1220,7 +1193,7 @@ public class ReportChartDataService
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = _companyData.LostDamaged
+                Value = companyData.LostDamaged
                     .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd &&
                            l.Reason == LostDamagedReason.Damaged),
                 Date = month
@@ -1235,7 +1208,7 @@ public class ReportChartDataService
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
-                Value = _companyData.LostDamaged
+                Value = companyData.LostDamaged
                     .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd &&
                            l.Reason == LostDamagedReason.Lost),
                 Date = month

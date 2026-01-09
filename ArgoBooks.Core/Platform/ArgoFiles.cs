@@ -58,21 +58,21 @@ public static class ArgoFiles
             string userClassesRoot = @"Software\Classes";
 
             // Create file extension association
-            using (RegistryKey? extensionKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{extension}"))
+            using (RegistryKey extensionKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{extension}"))
             {
-                extensionKey?.SetValue("", className);
+                extensionKey.SetValue("", className);
             }
 
             // Create file type information
-            using (RegistryKey? classKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{className}"))
+            using (RegistryKey classKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{className}"))
             {
-                classKey?.SetValue("", fileTypeDescription);
+                classKey.SetValue("", fileTypeDescription);
             }
 
             // Associate icon with file type
-            using (RegistryKey? defaultIconKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{className}\DefaultIcon"))
+            using (RegistryKey defaultIconKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{className}\DefaultIcon"))
             {
-                defaultIconKey?.SetValue("", $"{tempIconPath},{iconIndex}");
+                defaultIconKey.SetValue("", $"{tempIconPath},{iconIndex}");
             }
 
             // Get the current executable path
@@ -80,8 +80,8 @@ public static class ArgoFiles
             if (!string.IsNullOrEmpty(executablePath))
             {
                 // Set up command to open files with this application
-                using RegistryKey? commandKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{className}\shell\open\command");
-                commandKey?.SetValue("", $"\"{executablePath}\" \"%1\"");
+                using RegistryKey commandKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{className}\shell\open\command");
+                commandKey.SetValue("", $"\"{executablePath}\" \"%1\"");
             }
 
             // Notify Windows to refresh icon cache and file associations

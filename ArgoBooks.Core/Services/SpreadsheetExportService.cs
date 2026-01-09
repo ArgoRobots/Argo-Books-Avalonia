@@ -167,7 +167,7 @@ public class SpreadsheetExportService
                 }
                 else
                 {
-                    cell.Value = value?.ToString() ?? "";
+                    cell.Value = value.ToString() ?? "";
                 }
             }
         }
@@ -288,14 +288,14 @@ public class SpreadsheetExportService
             c.Id,
             c.Name,
             c.CompanyName ?? "",
-            c.Email ?? "",
-            c.Phone ?? "",
-            c.Address?.Street ?? "",
-            c.Address?.City ?? "",
-            c.Address?.State ?? "",
-            c.Address?.ZipCode ?? "",
-            c.Address?.Country ?? "",
-            c.Notes ?? "",
+            c.Email,
+            c.Phone,
+            c.Address.Street,
+            c.Address.City,
+            c.Address.State,
+            c.Address.ZipCode,
+            c.Address.Country,
+            c.Notes,
             c.Status.ToString(),
             c.TotalPurchases
         }).ToList();
@@ -354,9 +354,9 @@ public class SpreadsheetExportService
                 CategoryType.Purchase => "Expenses",
                 _ => p.Type.ToString()
             },
-            p.ItemType ?? "Product",
+            p.ItemType,
             p.Sku,
-            p.Description ?? "",
+            p.Description,
             p.CategoryId ?? "",
             p.SupplierId ?? ""
         }).ToList();
@@ -406,15 +406,15 @@ public class SpreadsheetExportService
         {
             s.Id,
             s.Name,
-            s.Email ?? "",
-            s.Phone ?? "",
-            s.Website ?? "",
-            s.Address?.Street ?? "",
-            s.Address?.City ?? "",
-            s.Address?.State ?? "",
-            s.Address?.ZipCode ?? "",
-            s.Address?.Country ?? "",
-            s.Notes ?? ""
+            s.Email,
+            s.Phone,
+            s.Website,
+            s.Address.Street,
+            s.Address.City,
+            s.Address.State,
+            s.Address.ZipCode,
+            s.Address.Country,
+            s.Notes
         }).ToList();
         return (headers, rows);
     }
@@ -491,8 +491,8 @@ public class SpreadsheetExportService
             },
             c.ParentId ?? "",
             c.Description ?? "",
-            c.ItemType ?? "",
-            c.Icon ?? "📦"
+            c.ItemType,
+            c.Icon
         }).ToList();
         return (headers, rows);
     }
@@ -515,18 +515,18 @@ public class SpreadsheetExportService
         var rows = data.Employees.Select(e => new object[]
         {
             e.Id,
-            e.FirstName ?? "",
-            e.LastName ?? "",
-            e.Email ?? "",
-            e.Phone ?? "",
+            e.FirstName,
+            e.LastName,
+            e.Email,
+            e.Phone,
             e.DateOfBirth ?? DateTime.MinValue,
             e.DepartmentId ?? "",
-            e.Position ?? "",
+            e.Position,
             e.HireDate,
-            e.EmploymentType ?? "",
-            e.SalaryType ?? "",
+            e.EmploymentType,
+            e.SalaryType,
             e.SalaryAmount,
-            e.PayFrequency ?? "",
+            e.PayFrequency,
             e.Status.ToString()
         }).ToList();
         return (headers, rows);
@@ -539,13 +539,13 @@ public class SpreadsheetExportService
         {
             l.Id,
             l.Name,
-            l.ContactPerson ?? "",
-            l.Phone ?? "",
-            l.Address?.Street ?? "",
-            l.Address?.City ?? "",
-            l.Address?.State ?? "",
-            l.Address?.ZipCode ?? "",
-            l.Address?.Country ?? "",
+            l.ContactPerson,
+            l.Phone,
+            l.Address.Street,
+            l.Address.City,
+            l.Address.State,
+            l.Address.ZipCode,
+            l.Address.Country,
             l.Capacity,
             l.CurrentUtilization
         }).ToList();
@@ -609,18 +609,6 @@ public class SpreadsheetExportService
         if (endDate.HasValue && date.Date > endDate.Value.Date)
             return false;
         return true;
-    }
-
-    private static string FormatAddress(Models.Common.Address? address)
-    {
-        if (address == null) return "";
-        var parts = new List<string>();
-        if (!string.IsNullOrEmpty(address.Street)) parts.Add(address.Street);
-        if (!string.IsNullOrEmpty(address.City)) parts.Add(address.City);
-        if (!string.IsNullOrEmpty(address.State)) parts.Add(address.State);
-        if (!string.IsNullOrEmpty(address.ZipCode)) parts.Add(address.ZipCode);
-        if (!string.IsNullOrEmpty(address.Country)) parts.Add(address.Country);
-        return string.Join(", ", parts);
     }
 
     private static string FormatValue(object? value)

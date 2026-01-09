@@ -128,10 +128,10 @@ public partial class MessageBox : UserControl
         AvaloniaProperty.Register<MessageBox, string?>(nameof(Message));
 
     public static readonly StyledProperty<MessageBoxType> MessageTypeProperty =
-        AvaloniaProperty.Register<MessageBox, MessageBoxType>(nameof(MessageType), MessageBoxType.Info);
+        AvaloniaProperty.Register<MessageBox, MessageBoxType>(nameof(MessageType));
 
     public static readonly StyledProperty<MessageBoxButtons> ButtonsProperty =
-        AvaloniaProperty.Register<MessageBox, MessageBoxButtons>(nameof(Buttons), MessageBoxButtons.Ok);
+        AvaloniaProperty.Register<MessageBox, MessageBoxButtons>(nameof(Buttons));
 
     public static readonly StyledProperty<bool> ShowIconProperty =
         AvaloniaProperty.Register<MessageBox, bool>(nameof(ShowIcon), true);

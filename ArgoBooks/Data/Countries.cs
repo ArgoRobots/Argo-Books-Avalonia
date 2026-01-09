@@ -263,41 +263,32 @@ public static class Countries
 /// <summary>
 /// Represents country information including dial code and phone format.
 /// </summary>
-public class CountryInfo
+public class CountryInfo(string code, string name, string dialCode, string phoneFormat, string? flagFileName = null)
 {
     /// <summary>
     /// ISO country code (e.g., US, GB).
     /// </summary>
-    public string Code { get; }
+    public string Code { get; } = code;
 
     /// <summary>
     /// Country name for display.
     /// </summary>
-    public string Name { get; }
+    public string Name { get; } = name;
 
     /// <summary>
     /// Phone dial code (e.g., +1, +44).
     /// </summary>
-    public string DialCode { get; }
+    public string DialCode { get; } = dialCode;
 
     /// <summary>
     /// Phone number format pattern using X for digits.
     /// </summary>
-    public string PhoneFormat { get; }
+    public string PhoneFormat { get; } = phoneFormat;
 
     /// <summary>
     /// Flag file name (defaults to Name if not specified).
     /// </summary>
-    public string FlagFileName { get; }
-
-    public CountryInfo(string code, string name, string dialCode, string phoneFormat, string? flagFileName = null)
-    {
-        Code = code;
-        Name = name;
-        DialCode = dialCode;
-        PhoneFormat = phoneFormat;
-        FlagFileName = flagFileName ?? name;
-    }
+    public string FlagFileName { get; } = flagFileName ?? name;
 
     public override string ToString() => Name;
 }
