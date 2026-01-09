@@ -1,0 +1,175 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:modals="using:ArgoBooks.Modals"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+             x:Class="ArgoBooks.Modals.ReportModals"
+             x:DataType="vm:ReportModalsViewModel">
+
+    <Design.DataContext>
+        <vm:ReportModalsViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- ======================= PAGE SETTINGS MODAL ======================= -->
+        <Panel IsVisible="{Binding IsPageSettingsOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <modals:ReportPageSettingsModal DataContext="{Binding ReportsPageViewModel}"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center" />
+        </Panel>
+
+        <!-- ======================= SAVE TEMPLATE MODAL ======================= -->
+        <Panel IsVisible="{Binding IsSaveTemplateOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <modals:ReportSaveTemplateModal DataContext="{Binding ReportsPageViewModel}"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center" />
+        </Panel>
+
+        <!-- ======================= DELETE TEMPLATE MODAL ======================= -->
+        <Panel IsVisible="{Binding IsDeleteTemplateOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="400"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            CornerRadius="12,12,0,0"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Delete Template"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding ReportsPageViewModel.CloseDeleteTemplateCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="16" Height="16" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <StackPanel Grid.Row="1" Spacing="16" Margin="24">
+                        <TextBlock TextWrapping="Wrap"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}">
+                            <Run Text="Are you sure you want to delete the template" />
+                            <Run Text="{Binding ReportsPageViewModel.TemplateToDelete}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Run Text="? This action cannot be undone." />
+                        </TextBlock>
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            CornerRadius="0,0,12,12"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    Spacing="12">
+                            <Button Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding ReportsPageViewModel.CloseDeleteTemplateCommand}" />
+                            <Button Classes="danger-button"
+                                    Content="Delete"
+                                    Command="{Binding ReportsPageViewModel.ConfirmDeleteTemplateCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- ======================= RENAME TEMPLATE MODAL ======================= -->
+        <Panel IsVisible="{Binding IsRenameTemplateOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="400"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            CornerRadius="12,12,0,0"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Rename Template"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding ReportsPageViewModel.CloseRenameTemplateCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="16" Height="16" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <StackPanel Grid.Row="1" Spacing="16" Margin="24">
+                        <TextBlock Text="Enter a new name for the template:"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBox Text="{Binding ReportsPageViewModel.RenameTemplateNewName}"
+                                 Watermark="Template name..."
+                                 Padding="12,10"
+                                 x:Name="RenameTemplateTextBox"
+                                 KeyDown="OnRenameTemplateKeyDown" />
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            CornerRadius="0,0,12,12"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    Spacing="12">
+                            <Button Classes="secondary-button"
+                                    Content="Cancel"
+                                    Command="{Binding ReportsPageViewModel.CloseRenameTemplateCommand}" />
+                            <Button Classes="primary-button"
+                                    Content="Rename"
+                                    Command="{Binding ReportsPageViewModel.ConfirmRenameTemplateCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+    </Panel>
+</UserControl>

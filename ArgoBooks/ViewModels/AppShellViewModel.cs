@@ -201,6 +201,11 @@ public partial class AppShellViewModel : ViewModelBase
     public ReturnsModalsViewModel ReturnsModalsViewModel { get; }
 
     /// <summary>
+    /// Gets the report modals view model.
+    /// </summary>
+    public ReportModalsViewModel ReportModalsViewModel { get; }
+
+    /// <summary>
     /// Gets the unsaved changes dialog view model.
     /// </summary>
     public UnsavedChangesDialogViewModel UnsavedChangesDialogViewModel { get; }
@@ -350,6 +355,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create returns modals
         ReturnsModalsViewModel = new ReturnsModalsViewModel();
+
+        // Create report modals
+        ReportModalsViewModel = new ReportModalsViewModel();
 
         // Create unsaved changes dialog
         UnsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
@@ -555,10 +563,13 @@ public partial class AppShellViewModel : ViewModelBase
             _reportsPageViewModel = reportsVm;
             // Wire up the unsaved changes confirmation for Previous button
             _reportsPageViewModel.ConfirmDiscardChangesAsync = ConfirmDiscardReportChangesAsync;
+            // Set the ReportsPageViewModel on the ReportModalsViewModel for modal access
+            ReportModalsViewModel.ReportsPageViewModel = reportsVm;
         }
         else if (e.PageName != "Reports")
         {
             _reportsPageViewModel = null;
+            ReportModalsViewModel.ReportsPageViewModel = null;
         }
     }
 
