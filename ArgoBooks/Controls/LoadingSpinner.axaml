@@ -15,7 +15,7 @@
             VerticalAlignment="Center"
             IsVisible="{Binding IsSpinning, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}">
         <Border.RenderTransform>
-            <RotateTransform x:Name="SpinnerRotation" />
+            <RotateTransform />
         </Border.RenderTransform>
         <Border.Styles>
             <Style Selector="Border#SpinnerContainer">
