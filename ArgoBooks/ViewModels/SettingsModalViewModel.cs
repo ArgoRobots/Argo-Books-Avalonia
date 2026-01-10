@@ -659,7 +659,8 @@ public partial class SettingsModalViewModel : ViewModelBase
                 Title = title,
                 Message = message,
                 PrimaryButtonText = "OK",
-                ShowSecondaryButton = false
+                SecondaryButtonText = null,
+                CancelButtonText = null
             });
         }
     }
