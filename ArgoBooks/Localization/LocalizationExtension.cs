@@ -48,6 +48,27 @@ public class LocExtension : MarkupExtension
     }
 
     /// <summary>
+    /// Constructor for XAML escaped single quotes (e.g., 'You''re' becomes two parts).
+    /// </summary>
+    /// <param name="part1">First part of the string.</param>
+    /// <param name="part2">Second part of the string.</param>
+    public LocExtension(string part1, string part2)
+    {
+        _key = $"{part1}'{part2}";
+    }
+
+    /// <summary>
+    /// Constructor for XAML escaped single quotes with two escapes (e.g., 'It''s a ''test''').
+    /// </summary>
+    /// <param name="part1">First part of the string.</param>
+    /// <param name="part2">Second part of the string.</param>
+    /// <param name="part3">Third part of the string.</param>
+    public LocExtension(string part1, string part2, string part3)
+    {
+        _key = $"{part1}'{part2}'{part3}";
+    }
+
+    /// <summary>
     /// Provides the translated value.
     /// </summary>
     public override object ProvideValue(IServiceProvider serviceProvider)
