@@ -21,7 +21,7 @@ public partial class TranslationGenerator
     private readonly HttpClient _httpClient = new();
 
     // Regex patterns for extracting translatable strings
-    [GeneratedRegex(@"\{Loc\s+([^}]+)\}")]
+    [GeneratedRegex(@"\{loc:Loc\s+([^}]+)\}")]
     private static partial Regex LocExtensionRegex();
 
     [GeneratedRegex(@"\.Translate\(\s*\)")]
