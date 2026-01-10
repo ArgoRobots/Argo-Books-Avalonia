@@ -14,8 +14,7 @@ using ArgoBooks.Localization;
 
 Console.WriteLine("=== Argo Books Translation Generator ===\n");
 
-// Parse command line arguments
-var args = Environment.GetCommandLineArgs().Skip(1).ToArray();
+// Parse command line arguments (args is provided by top-level statements)
 var collectOnly = args.Contains("--collect");
 var translateAll = args.Contains("--translate");
 var specificLanguages = new List<string>();
