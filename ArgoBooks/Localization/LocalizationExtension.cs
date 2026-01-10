@@ -174,7 +174,8 @@ public class LocalizationSource : INotifyPropertyChanged
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
         // Notify all bindings that translations have changed
-        // Using Indexer property to force re-evaluation of all Loc bindings
+        // Using null/empty property name to signal all properties changed (including all indexer keys)
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
     }
 
@@ -183,6 +184,7 @@ public class LocalizationSource : INotifyPropertyChanged
     /// </summary>
     public void Refresh()
     {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
     }
 }
