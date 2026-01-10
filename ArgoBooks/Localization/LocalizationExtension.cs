@@ -76,8 +76,12 @@ public class LocExtension : MarkupExtension
         if (string.IsNullOrEmpty(_key))
             return string.Empty;
 
+        // Escape single quotes in the key by doubling them, then wrap in single quotes
+        // This ensures keys with spaces or special characters are properly parsed
+        var escapedKey = _key.Replace("'", "''");
+
         // Create a binding to the localization source using ReflectionBindingExtension
-        var binding = new ReflectionBindingExtension($"[{_key}]")
+        var binding = new ReflectionBindingExtension($"['{escapedKey}']")
         {
             Source = LocalizationSource.Instance,
             Mode = BindingMode.OneWay
