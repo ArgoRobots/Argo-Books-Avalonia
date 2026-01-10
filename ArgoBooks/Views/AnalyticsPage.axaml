@@ -584,7 +584,7 @@
                                                 <Binding Path="!HasDestinationMapData" />
                                             </MultiBinding>
                                         </Border.IsVisible>
-                                        <TextBlock Text="No destination data available"
+                                        <TextBlock Text="{loc:Loc 'No destination data available'}"
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"
                                                    FontSize="14"

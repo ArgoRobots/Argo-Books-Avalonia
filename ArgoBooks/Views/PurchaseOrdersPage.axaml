@@ -576,7 +576,7 @@
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        HorizontalAlignment="Center" />
-                                            <TextBlock Text="Purchase orders will appear here when you create orders for your suppliers."
+                                            <TextBlock Text="{loc:Loc 'Purchase orders will appear here when you create orders for your suppliers.'}"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                        HorizontalAlignment="Center"
@@ -623,7 +623,7 @@
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center"
                                            Margin="8,0" />
-                                <TextBlock Text="Rows per page:"
+                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />
