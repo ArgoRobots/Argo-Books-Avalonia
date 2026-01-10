@@ -2,6 +2,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using ArgoBooks.Services;
 
 namespace ArgoBooks.Controls;
 
@@ -50,6 +51,11 @@ public partial class SidebarItem : UserControl
             nameof(EffectiveTooltipText),
             o => o.EffectiveTooltipText);
 
+    public static readonly DirectProperty<SidebarItem, string?> TranslatedTextProperty =
+        AvaloniaProperty.RegisterDirect<SidebarItem, string?>(
+            nameof(TranslatedText),
+            o => o.TranslatedText);
+
     #endregion
 
     #region Properties
@@ -62,6 +68,11 @@ public partial class SidebarItem : UserControl
         get => GetValue(TextProperty);
         set => SetValue(TextProperty, value);
     }
+
+    /// <summary>
+    /// Gets the translated text for display.
+    /// </summary>
+    public string? TranslatedText => string.IsNullOrEmpty(Text) ? Text : LanguageService.Instance.Translate(Text);
 
     /// <summary>
     /// Gets or sets the item icon geometry.
@@ -156,23 +167,38 @@ public partial class SidebarItem : UserControl
     /// <summary>
     /// Gets the effective tooltip text (only shown when sidebar is collapsed).
     /// </summary>
-    public string? EffectiveTooltipText => IsCollapsed ? TooltipText : null;
+    public string? EffectiveTooltipText => IsCollapsed ? TranslatedText : null;
 
     #endregion
 
     public SidebarItem()
     {
         InitializeComponent();
+
+        // Subscribe to language changes
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        // Refresh translated text and tooltip when language changes
+        RaisePropertyChanged(TranslatedTextProperty, null, TranslatedText);
+        RaisePropertyChanged(EffectiveTooltipTextProperty, null, EffectiveTooltipText);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
 
-        // Auto-set tooltip when text changes
-        if (change.Property == TextProperty && string.IsNullOrEmpty(TooltipText))
+        // Update TranslatedText when Text changes
+        if (change.Property == TextProperty)
         {
-            TooltipText = Text;
+            RaisePropertyChanged(TranslatedTextProperty, null, TranslatedText);
+            // Also update tooltip to use translated text
+            if (string.IsNullOrEmpty(TooltipText))
+            {
+                TooltipText = Text;
+            }
         }
 
         // Auto-set command parameter to page name if not set
@@ -199,5 +225,12 @@ public partial class SidebarItem : UserControl
         {
             RaisePropertyChanged(EffectiveTooltipTextProperty, null, EffectiveTooltipText);
         }
+    }
+
+    protected override void OnUnloaded(Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        base.OnUnloaded(e);
+        // Unsubscribe from language changes to prevent memory leaks
+        LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
     }
 }

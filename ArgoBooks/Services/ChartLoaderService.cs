@@ -72,9 +72,10 @@ public class ChartLoaderService
     {
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
         var textColor = isDarkTheme ? SKColor.Parse("#F9FAFB") : SKColor.Parse("#1F2937");
+        var translatedText = LanguageService.Instance.Translate(text);
         return new LabelVisual
         {
-            Text = text,
+            Text = translatedText,
             TextSize = 16,
             Padding = new Padding(15, 12),
             Paint = new SolidColorPaint(textColor) { FontFamily = "Segoe UI", SKFontStyle = new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
