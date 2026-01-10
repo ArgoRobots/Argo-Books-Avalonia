@@ -64,7 +64,7 @@
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center" />
                         </Border>
-                        <TextBlock Text="Template &amp; Settings"
+                        <TextBlock Text="{loc:Loc 'Template &amp; Settings'}"
                                    FontWeight="Medium"
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -110,12 +110,12 @@
                                        VerticalAlignment="Center" />
                         </Border>
                         <Panel>
-                            <TextBlock Text="Layout Designer"
+                            <TextBlock Text="{loc:Loc 'Layout Designer'}"
                                        FontWeight="Medium"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        IsVisible="{Binding IsStep2Active}" />
-                            <TextBlock Text="Layout Designer"
+                            <TextBlock Text="{loc:Loc 'Layout Designer'}"
                                        FontWeight="Medium"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
@@ -157,12 +157,12 @@
                                        VerticalAlignment="Center" />
                         </Border>
                         <Panel>
-                            <TextBlock Text="Preview &amp; Export"
+                            <TextBlock Text="{loc:Loc 'Preview &amp; Export'}"
                                        FontWeight="Medium"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        IsVisible="{Binding IsStep3Active}" />
-                            <TextBlock Text="Preview &amp; Export"
+                            <TextBlock Text="{loc:Loc 'Preview &amp; Export'}"
                                        FontWeight="Medium"
                                        VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
@@ -198,13 +198,13 @@
                                             CommandParameter="0">
                                         <StackPanel>
                                             <Panel>
-                                                <TextBlock Text="Templates"
+                                                <TextBlock Text="{loc:Loc 'Templates'}"
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Padding="4,12,4,10"
                                                            Foreground="{DynamicResource PrimaryBrush}"
                                                            IsVisible="{Binding IsTemplatesTabSelected}" />
-                                                <TextBlock Text="Templates"
+                                                <TextBlock Text="{loc:Loc 'Templates'}"
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Padding="4,12,4,10"
@@ -224,13 +224,13 @@
                                             CommandParameter="1">
                                         <StackPanel>
                                             <Panel>
-                                                <TextBlock Text="Custom"
+                                                <TextBlock Text="{loc:Loc 'Custom'}"
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Padding="4,12,4,10"
                                                            Foreground="{DynamicResource PrimaryBrush}"
                                                            IsVisible="{Binding IsChartsTabSelected}" />
-                                                <TextBlock Text="Custom"
+                                                <TextBlock Text="{loc:Loc 'Custom'}"
                                                            FontSize="14"
                                                            FontWeight="Medium"
                                                            Padding="4,12,4,10"
@@ -326,7 +326,7 @@
 
                                     <!-- Custom Templates Section -->
                                     <StackPanel Spacing="12" IsVisible="{Binding CustomTemplateNames.Count}">
-                                        <TextBlock Text="Custom Templates"
+                                        <TextBlock Text="{loc:Loc 'Custom Templates'}"
                                                    FontSize="14"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
@@ -388,7 +388,7 @@
                                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                                             <Button Grid.Column="1"
                                                                     Classes="icon-button"
-                                                                    ToolTip.Tip="Rename template"
+                                                                    ToolTip.Tip="{loc:Loc 'Rename template'}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).OpenRenameTemplateCommand}"
                                                                     CommandParameter="{Binding Name}">
                                                                 <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
@@ -396,7 +396,7 @@
                                                             </Button>
                                                             <Button Grid.Column="2"
                                                                     Classes="icon-button danger"
-                                                                    ToolTip.Tip="Delete template"
+                                                                    ToolTip.Tip="{loc:Loc 'Delete template'}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).OpenDeleteTemplateCommand}"
                                                                     CommandParameter="{Binding Name}">
                                                                 <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -412,7 +412,7 @@
 
                                 <!-- Custom Charts Tab Content -->
                                 <StackPanel Spacing="16" IsVisible="{Binding IsChartsTabSelected}">
-                                    <TextBlock Text="Select charts to include in your report"
+                                    <TextBlock Text="{loc:Loc 'Select charts to include in your report'}"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
 
@@ -435,7 +435,7 @@
                                                                    VerticalAlignment="Center"
                                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                                                         <CheckBox Grid.Column="1"
-                                                                  Content="Select All"
+                                                                  Content="{loc:Loc 'Select All'}"
                                                                   FontSize="12"
                                                                   IsChecked="{Binding IsAllSelected, Mode=OneWay}"
                                                                   Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).ToggleSelectAllInCategoryCommand}"
@@ -541,25 +541,25 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Spacing="20" Margin="24">
-                                <TextBlock Text="Report Settings"
+                                <TextBlock Text="{loc:Loc 'Report Settings'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
 
                             <!-- Report Name -->
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Report Name"
+                                <TextBlock Text="{loc:Loc 'Report Name'}"
                                            FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ReportName}"
-                                         Watermark="Enter report name..."
+                                         Watermark="{loc:Loc 'Enter report name...'}"
                                          Padding="12,10" />
                             </StackPanel>
 
                             <!-- Date Range -->
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Date Range"
+                                <TextBlock Text="{loc:Loc 'Date Range'}"
                                            FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -589,18 +589,18 @@
                                         Margin="0,8,0,0"
                                         IsVisible="{Binding IsCustomDateRange}">
                                     <StackPanel Spacing="12">
-                                        <TextBlock Text="Custom Date Range"
+                                        <TextBlock Text="{loc:Loc 'Custom Date Range'}"
                                                    FontSize="13"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                                         <Grid ColumnDefinitions="*,Auto,*" RowDefinitions="Auto,Auto">
                                             <TextBlock Grid.Row="0" Grid.Column="0"
-                                                       Text="Start Date"
+                                                       Text="{loc:Loc 'Start Date'}"
                                                        FontSize="11"
                                                        Margin="0,0,0,4"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Grid.Row="0" Grid.Column="2"
-                                                       Text="End Date"
+                                                       Text="{loc:Loc 'End Date'}"
                                                        FontSize="11"
                                                        Margin="0,0,0,4"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -608,7 +608,7 @@
                                                         SelectedDate="{Binding CustomStartDate}"
                                                         HorizontalAlignment="Stretch" />
                                             <TextBlock Grid.Row="1" Grid.Column="1"
-                                                       Text="to"
+                                                       Text="{loc:Loc 'to'}"
                                                        Margin="12,0"
                                                        VerticalAlignment="Center"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -639,7 +639,7 @@
                     <Grid RowDefinitions="Auto,*">
                         <!-- Header with Toggle -->
                         <Grid Grid.Row="0" Margin="8,8,8,0">
-                            <TextBlock Text="Elements"
+                            <TextBlock Text="{loc:Loc 'Elements'}"
                                        FontSize="14"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -649,7 +649,7 @@
                                     HorizontalAlignment="Right"
                                     Width="24" Height="24"
                                     Click="OnToggleElementPanelClick"
-                                    ToolTip.Tip="Toggle Panel">
+                                    ToolTip.Tip="{loc:Loc 'Toggle Panel'}">
                                 <controls:ToggleArrow IconSize="12"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       IsCollapsed="{Binding !IsElementPanelExpanded}" />
@@ -662,52 +662,52 @@
                                     Spacing="8"
                                     Margin="8,8,8,12"
                                     IsVisible="{Binding IsElementPanelExpanded}">
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="Add Chart">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="{loc:Loc 'Add Chart'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
                                               Width="18" Height="18"
                                               Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="Chart" VerticalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'Chart'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Label" ToolTip.Tip="Add Label">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Label" ToolTip.Tip="{loc:Loc 'Add Label'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M5 4v3h5.5v12h3V7H19V4z"
                                               Width="18" Height="18"
                                               Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="Label" VerticalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'Label'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="DateRange" ToolTip.Tip="Add Date Range">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="DateRange" ToolTip.Tip="{loc:Loc 'Add Date Range'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
                                               Width="18" Height="18"
                                               Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="Date Range" VerticalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'Date Range'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Summary" ToolTip.Tip="Add Summary">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Summary" ToolTip.Tip="{loc:Loc 'Add Summary'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                               Width="18" Height="18"
                                               Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="Summary" VerticalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'Summary'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Table" ToolTip.Tip="Add Table">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Table" ToolTip.Tip="{loc:Loc 'Add Table'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z"
                                               Width="18" Height="18"
                                               Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="Table" VerticalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'Table'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
-                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Image" ToolTip.Tip="Add Image">
+                            <Button Classes="toolbox-button" Command="{Binding AddElementCommand}" CommandParameter="Image" ToolTip.Tip="{loc:Loc 'Add Image'}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
                                               Width="18" Height="18"
                                               Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="Image" VerticalAlignment="Center" />
+                                    <TextBlock Text="{loc:Loc 'Image'}" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -719,32 +719,32 @@
                                     Margin="0,10,0,0"
                                     HorizontalAlignment="Left"
                                     IsVisible="{Binding !IsElementPanelExpanded}">
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="Add Chart">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Chart" ToolTip.Tip="{loc:Loc 'Add Chart'}">
                                 <PathIcon Data="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Label" ToolTip.Tip="Add Label">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Label" ToolTip.Tip="{loc:Loc 'Add Label'}">
                                 <PathIcon Data="M5 4v3h5.5v12h3V7H19V4z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="DateRange" ToolTip.Tip="Add Date Range">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="DateRange" ToolTip.Tip="{loc:Loc 'Add Date Range'}">
                                 <PathIcon Data="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Summary" ToolTip.Tip="Add Summary">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Summary" ToolTip.Tip="{loc:Loc 'Add Summary'}">
                                 <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Table" ToolTip.Tip="Add Table">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Table" ToolTip.Tip="{loc:Loc 'Add Table'}">
                                 <PathIcon Data="M3 3v18h18V3H3zm8 16H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                             </Button>
-                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Image" ToolTip.Tip="Add Image">
+                            <Button Classes="icon-button" Margin="4,6,0,6" Width="32" Height="32" Command="{Binding AddElementCommand}" CommandParameter="Image" ToolTip.Tip="{loc:Loc 'Add Image'}">
                                 <PathIcon Data="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"
                                           Width="18" Height="18"
                                           Foreground="{DynamicResource PrimaryBrush}" />
@@ -773,7 +773,7 @@
                                 <!-- Save Template Button with Asterisk Container (right after undo/redo) -->
                                 <!-- Uses Grid for overlay positioning so asterisk doesn't shift other buttons -->
                                 <Grid x:Name="SaveButtonContainer" VerticalAlignment="Center">
-                                    <Button Classes="toolbar-button" Command="{Binding OpenSaveTemplateCommand}" ToolTip.Tip="Save as Template">
+                                    <Button Classes="toolbar-button" Command="{Binding OpenSaveTemplateCommand}" ToolTip.Tip="{loc:Loc 'Save as Template'}">
                                         <PathIcon Data="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"
                                                   Width="16" Height="16" />
                                     </Button>
@@ -783,15 +783,15 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Horizontal Alignment -->
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Left" ToolTip.Tip="Align Left" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Left" ToolTip.Tip="{loc:Loc 'Align Left'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M13 8v3h10v2H13v3l-4-4 4-4zM3 4h2v16H3V4z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="CenterH" ToolTip.Tip="Align Center Horizontally" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="CenterH" ToolTip.Tip="{loc:Loc 'Align Center Horizontally'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M5 8v3H1v2h4v3l4-4-4-4zm14 0v3h4v2h-4v3l-4-4 4-4zM11 4h2v16h-2V4z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Right" ToolTip.Tip="Align Right" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Right" ToolTip.Tip="{loc:Loc 'Align Right'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M11 8v3H1v2h10v3l4-4-4-4zM19 4h2v16h-2V4z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -799,15 +799,15 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Vertical Alignment -->
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Top" ToolTip.Tip="Align Top" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Top" ToolTip.Tip="{loc:Loc 'Align Top'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M8 11h3v10h2V11h3l-4-4-4 4zM4 3v2h16V3H4z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="CenterV" ToolTip.Tip="Align Center Vertically" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="CenterV" ToolTip.Tip="{loc:Loc 'Align Center Vertically'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M8 19h3v4h2v-4h3l-4-4-4 4zm8-14h-3V1h-2v4H8l4 4 4-4zM4 11v2h16v-2H4z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Bottom" ToolTip.Tip="Align Bottom" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding AlignElementsCommand}" CommandParameter="Bottom" ToolTip.Tip="{loc:Loc 'Align Bottom'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -815,11 +815,11 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Distribution -->
-                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Horizontal" ToolTip.Tip="Distribute Horizontally" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Horizontal" ToolTip.Tip="{loc:Loc 'Distribute Horizontally'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M4 5v14h2V5H4zm14 0v14h2V5h-2zM9 5h2v14H9V5zm4 0h2v14h-2V5z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Vertical" ToolTip.Tip="Distribute Vertically" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding DistributeElementsCommand}" CommandParameter="Vertical" ToolTip.Tip="{loc:Loc 'Distribute Vertically'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M5 18h14v2H5v-2zm0-4h14v2H5v-2zm0-4h14v2H5v-2zm0-4h14v2H5V6zm0-4h14v2H5V2z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -827,15 +827,15 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Same Size -->
-                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Width" ToolTip.Tip="Same Width" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Width" ToolTip.Tip="{loc:Loc 'Same Width'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M4 4v16h2V4H4zm14 0v16h2V4h-2zM7 11l2-2v1.5h6V9l2 2-2 2v-1.5H9V13l-2-2z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Height" ToolTip.Tip="Same Height" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Height" ToolTip.Tip="{loc:Loc 'Same Height'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M4 4h16v2H4V4zm0 14h16v2H4v-2zm7-11l-2 2h1.5v6H9l2 2 2-2h-1.5V9H13l-2-2z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Both" ToolTip.Tip="Same Size" IsEnabled="{Binding HasMultipleSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding MatchSizeCommand}" CommandParameter="Both" ToolTip.Tip="{loc:Loc 'Same Size'}" IsEnabled="{Binding HasMultipleSelectedElements}">
                                     <PathIcon Data="M19 12h-2v3h-3v2h5v-5zM7 9h3V7H5v5h2V9zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16.01H3V4.99h18v14.02z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -843,11 +843,11 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Z-Order -->
-                                <Button Classes="toolbar-button" Command="{Binding BringToFrontCommand}" ToolTip.Tip="Bring to Front" IsEnabled="{Binding HasSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding BringToFrontCommand}" ToolTip.Tip="{loc:Loc 'Bring to Front'}" IsEnabled="{Binding HasSelectedElements}">
                                     <PathIcon Data="M3 5h2V3c-1.1 0-2 .9-2 2zm0 8h2v-2H3v2zm4 8h2v-2H7v2zM3 9h2V7H3v2zm10-6h-2v2h2V3zm6 0v2h2c0-1.1-.9-2-2-2zM5 21v-2H3c0 1.1.9 2 2 2zm-2-4h2v-2H3v2zM9 3H7v2h2V3zm2 18h2v-2h-2v2zm8-8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2zm0-12h2V7h-2v2zm0 8h2v-2h-2v2zm-4 4h2v-2h-2v2zm0-16h2V3h-2v2z"
                                               Width="16" Height="16" />
                                 </Button>
-                                <Button Classes="toolbar-button" Command="{Binding SendToBackCommand}" ToolTip.Tip="Send to Back" IsEnabled="{Binding HasSelectedElements}">
+                                <Button Classes="toolbar-button" Command="{Binding SendToBackCommand}" ToolTip.Tip="{loc:Loc 'Send to Back'}" IsEnabled="{Binding HasSelectedElements}">
                                     <PathIcon Data="M9 7H7v2h2V7zm0 4H7v2h2v-2zm0-8c-1.11 0-2 .9-2 2h2V3zm4 12h-2v2h2v-2zm6-12v2h2c0-1.1-.9-2-2-2zm-6 0h-2v2h2V3zM9 17v-2H7c0 1.1.89 2 2 2zm10-4h2v-2h-2v2zm0-4h2V7h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2zM5 7H3v12c0 1.1.89 2 2 2h12v-2H5V7zm10-2h2V3h-2v2zm0 12h2v-2h-2v2z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -855,7 +855,7 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Delete -->
-                                <Button Classes="toolbar-button danger" Command="{Binding DeleteSelectedElementsCommand}" ToolTip.Tip="Delete (Del)" IsEnabled="{Binding HasSelectedElements}">
+                                <Button Classes="toolbar-button danger" Command="{Binding DeleteSelectedElementsCommand}" ToolTip.Tip="{loc:Loc 'Delete (Del)'}" IsEnabled="{Binding HasSelectedElements}">
                                     <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -863,7 +863,7 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Grid Toggle -->
-                                <ToggleButton Classes="toolbar-toggle" IsChecked="{Binding ShowGrid}" ToolTip.Tip="Toggle Grid (Ctrl+G)">
+                                <ToggleButton Classes="toolbar-toggle" IsChecked="{Binding ShowGrid}" ToolTip.Tip="{loc:Loc 'Toggle Grid (Ctrl+G)'}">
                                     <PathIcon Data="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z"
                                               Width="16" Height="16" />
                                 </ToggleButton>
@@ -871,7 +871,7 @@
                                 <Border Width="1" Height="24" Background="{DynamicResource BorderBrush}" Margin="4,0" />
 
                                 <!-- Page Settings Button -->
-                                <Button Classes="toolbar-button" Command="{Binding OpenPageSettingsCommand}" ToolTip.Tip="Page Settings">
+                                <Button Classes="toolbar-button" Command="{Binding OpenPageSettingsCommand}" ToolTip.Tip="{loc:Loc 'Page Settings'}">
                                     <PathIcon Data="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
                                               Width="16" Height="16" />
                                 </Button>
@@ -913,7 +913,7 @@
                                 <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                           Width="16" Height="16"
                                           Foreground="White" />
-                                <TextBlock Text="Saved"
+                                <TextBlock Text="{loc:Loc 'Saved'}"
                                            Foreground="White"
                                            FontWeight="Medium"
                                            VerticalAlignment="Center" />
@@ -936,7 +936,7 @@
                                     <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
                                 </Transitions>
                             </Border.Transitions>
-                            <TextBlock Text="No changes to save"
+                            <TextBlock Text="{loc:Loc 'No changes to save'}"
                                        Foreground="White"
                                        FontWeight="Medium"
                                        VerticalAlignment="Center" />
@@ -963,33 +963,33 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Spacing="16" Width="212" Margin="0,0,16,0">
-                            <TextBlock Text="Properties"
+                            <TextBlock Text="{loc:Loc 'Properties'}"
                                        FontSize="14"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
 
                             <!-- Position & Size -->
                             <StackPanel Spacing="8" IsVisible="{Binding SelectedElement, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                <TextBlock Text="Position &amp; Size"
+                                <TextBlock Text="{loc:Loc 'Position &amp; Size'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
 
                                 <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,8,Auto">
                                     <StackPanel Grid.Column="0" Grid.Row="0" Spacing="4">
-                                        <TextBlock Text="X" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'X'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ArgoNumericUpDown Value="{Binding SelectedElement.X}" Minimum="0" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Grid.Row="0" Spacing="4">
-                                        <TextBlock Text="Y" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Y'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ArgoNumericUpDown Value="{Binding SelectedElement.Y}" Minimum="0" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="0" Grid.Row="2" Spacing="4">
-                                        <TextBlock Text="Width" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Width'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ArgoNumericUpDown Value="{Binding SelectedElement.Width}" Minimum="20" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Grid.Row="2" Spacing="4">
-                                        <TextBlock Text="Height" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Height'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ArgoNumericUpDown Value="{Binding SelectedElement.Height}" Minimum="20" />
                                     </StackPanel>
                                 </Grid>
@@ -997,87 +997,87 @@
 
                             <!-- Chart Properties -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsChartSelected}">
-                                <TextBlock Text="Chart Properties"
+                                <TextBlock Text="{loc:Loc 'Chart Properties'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown
-                                    Label="Chart Type"
-                                    Placeholder="Search chart types..."
+                                    Label="{loc:Loc 'Chart Type'}"
+                                    Placeholder="{loc:Loc 'Search chart types...'}"
                                     ItemsSource="{Binding ChartTypeOptions}"
                                     SelectedItem="{Binding SelectedChartDataTypeOption}" />
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Chart Style" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Chart Style'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding ChartStyleOptions}"
                                               SelectedItem="{Binding SelectedChartStyleOption}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <CheckBox Content="Show Title" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
-                                <CheckBox Content="Show Legend" IsChecked="{Binding SelectedChartElement.ShowLegend}" />
+                                <CheckBox Content="{loc:Loc 'Show Title'}" IsChecked="{Binding SelectedChartElement.ShowTitle}" />
+                                <CheckBox Content="{loc:Loc 'Show Legend'}" IsChecked="{Binding SelectedChartElement.ShowLegend}" />
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
                                               SelectedItem="{Binding SelectedChartElement.FontFamily}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="Title Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Title Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.TitleFontSize}" Minimum="6" Maximum="36" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
-                                        <TextBlock Text="Legend Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Legend Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.LegendFontSize}" Minimum="6" Maximum="24" />
                                     </StackPanel>
                                 </Grid>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Border Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Border Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedChartElement.BorderColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Border Thickness" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Border Thickness'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedChartElement.BorderThickness}" Minimum="0" Maximum="10" />
                                 </StackPanel>
                             </StackPanel>
 
                             <!-- Label Properties -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsLabelSelected}">
-                                <TextBlock Text="Label Properties"
+                                <TextBlock Text="{loc:Loc 'Label Properties'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Text" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <TextBox Text="{Binding SelectedLabelElement.Text}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
                                               SelectedItem="{Binding SelectedLabelElement.FontFamily}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Font Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedLabelElement.FontSize}" Minimum="6" Maximum="72" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Text Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedLabelElement.TextColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="16">
-                                    <CheckBox Content="Bold" IsChecked="{Binding SelectedLabelElement.IsBold}" />
-                                    <CheckBox Content="Italic" IsChecked="{Binding SelectedLabelElement.IsItalic}" />
-                                    <CheckBox Content="Underline" IsChecked="{Binding SelectedLabelElement.IsUnderline}" />
+                                    <CheckBox Content="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedLabelElement.IsBold}" />
+                                    <CheckBox Content="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedLabelElement.IsItalic}" />
+                                    <CheckBox Content="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedLabelElement.IsUnderline}" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="H Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'H Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding HorizontalAlignments}"
                                                   SelectedItem="{Binding SelectedLabelElement.HorizontalAlignment}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
-                                        <TextBlock Text="V Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'V Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding VerticalAlignments}"
                                                   SelectedItem="{Binding SelectedLabelElement.VerticalAlignment}"
                                                   HorizontalAlignment="Stretch" />
@@ -1087,15 +1087,15 @@
 
                             <!-- Image Properties -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsImageSelected}">
-                                <TextBlock Text="Image Properties"
+                                <TextBlock Text="{loc:Loc 'Image Properties'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Image Path" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Image Path'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBox Grid.Column="0" Text="{Binding SelectedImageElement.ImagePath}" Watermark="Path to image..." />
-                                        <Button Grid.Column="1" Margin="4,0,0,0" Padding="8,6" Command="{Binding BrowseImagePathCommand}" ToolTip.Tip="Browse...">
+                                        <TextBox Grid.Column="0" Text="{Binding SelectedImageElement.ImagePath}" Watermark="{loc:Loc 'Path to image...'}" />
+                                        <Button Grid.Column="1" Margin="4,0,0,0" Padding="8,6" Command="{Binding BrowseImagePathCommand}" ToolTip.Tip="{loc:Loc 'Browse...'}">
                                             <PathIcon Data="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"
                                                       Width="14" Height="14"
                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -1103,13 +1103,13 @@
                                     </Grid>
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Scale Mode" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Scale Mode'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding ImageScaleModes}"
                                               SelectedItem="{Binding SelectedImageElement.ScaleMode}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Opacity (%)" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Opacity (%)'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
                                         <Slider Grid.Column="0"
                                                 Value="{Binding SelectedImageElement.Opacity}"
@@ -1124,63 +1124,63 @@
                                     </Grid>
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Corner Radius (%)" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Corner Radius (%)'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedImageElement.CornerRadiusPercent}" Minimum="0" Maximum="50" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Background Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Background Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedImageElement.BackgroundColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Border Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Border Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedImageElement.BorderColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Border Thickness" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Border Thickness'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedImageElement.BorderThickness}" Minimum="0" Maximum="20" />
                                 </StackPanel>
                             </StackPanel>
 
                             <!-- Date Range Properties -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsDateRangeSelected}">
-                                <TextBlock Text="Date Range Properties"
+                                <TextBlock Text="{loc:Loc 'Date Range Properties'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Date Format" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Date Format'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding DateFormats}"
                                               SelectedItem="{Binding SelectedDateRangeElement.DateFormat}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
                                               SelectedItem="{Binding SelectedDateRangeElement.FontFamily}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Font Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedDateRangeElement.FontSize}" Minimum="6" Maximum="72" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Text Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Text Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedDateRangeElement.TextColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="16">
-                                    <CheckBox Content="Bold" IsChecked="{Binding SelectedDateRangeElement.IsBold}" />
-                                    <CheckBox Content="Italic" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
-                                    <CheckBox Content="Underline" IsChecked="{Binding SelectedDateRangeElement.IsUnderline}" />
+                                    <CheckBox Content="{loc:Loc 'Bold'}" IsChecked="{Binding SelectedDateRangeElement.IsBold}" />
+                                    <CheckBox Content="{loc:Loc 'Italic'}" IsChecked="{Binding SelectedDateRangeElement.IsItalic}" />
+                                    <CheckBox Content="{loc:Loc 'Underline'}" IsChecked="{Binding SelectedDateRangeElement.IsUnderline}" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="H Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'H Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding HorizontalAlignments}"
                                                   SelectedItem="{Binding SelectedDateRangeElement.HorizontalAlignment}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
-                                        <TextBlock Text="V Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'V Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding VerticalAlignments}"
                                                   SelectedItem="{Binding SelectedDateRangeElement.VerticalAlignment}"
                                                   HorizontalAlignment="Stretch" />
@@ -1190,59 +1190,59 @@
 
                             <!-- Summary Properties -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsSummarySelected}">
-                                <TextBlock Text="Summary Properties"
+                                <TextBlock Text="{loc:Loc 'Summary Properties'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Transaction Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Transaction Type'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding TransactionTypes}"
                                               SelectedItem="{Binding SelectedSummaryElement.TransactionType}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                                <CheckBox Content="Show Total Sales" IsChecked="{Binding SelectedSummaryElement.ShowTotalSales}" />
-                                <CheckBox Content="Show Total Transactions" IsChecked="{Binding SelectedSummaryElement.ShowTotalTransactions}" />
-                                <CheckBox Content="Show Average Value" IsChecked="{Binding SelectedSummaryElement.ShowAverageValue}" />
-                                <CheckBox Content="Show Growth Rate" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate}" />
-                                <CheckBox Content="Include Returns" IsChecked="{Binding SelectedSummaryElement.IncludeReturns}" />
-                                <CheckBox Content="Include Losses" IsChecked="{Binding SelectedSummaryElement.IncludeLosses}" />
+                                <CheckBox Content="{loc:Loc 'Show Total Sales'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalSales}" />
+                                <CheckBox Content="{loc:Loc 'Show Total Transactions'}" IsChecked="{Binding SelectedSummaryElement.ShowTotalTransactions}" />
+                                <CheckBox Content="{loc:Loc 'Show Average Value'}" IsChecked="{Binding SelectedSummaryElement.ShowAverageValue}" />
+                                <CheckBox Content="{loc:Loc 'Show Growth Rate'}" IsChecked="{Binding SelectedSummaryElement.ShowGrowthRate}" />
+                                <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedSummaryElement.IncludeReturns}" />
+                                <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedSummaryElement.IncludeLosses}" />
 
-                                <TextBlock Text="Formatting"
+                                <TextBlock Text="{loc:Loc 'Formatting'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            Margin="0,8,0,0" />
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Font Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Font Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <ComboBox ItemsSource="{Binding FontFamilies}"
                                               SelectedItem="{Binding SelectedSummaryElement.FontFamily}"
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Font Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Font Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedSummaryElement.FontSize}" Minimum="6" Maximum="24" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Background Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Background Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedSummaryElement.BackgroundColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Border Color" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Border Color'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ColorPickerInput ColorValue="{Binding SelectedSummaryElement.BorderColor, Mode=TwoWay}" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Border Thickness" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Border Thickness'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <controls:ArgoNumericUpDown Value="{Binding SelectedSummaryElement.BorderThickness}" Minimum="0" Maximum="10" />
                                 </StackPanel>
                                 <Grid ColumnDefinitions="*,8,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="H Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'H Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding HorizontalAlignments}"
                                                   SelectedItem="{Binding SelectedSummaryElement.HorizontalAlignment}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
-                                        <TextBlock Text="V Align" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'V Align'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding VerticalAlignments}"
                                                   SelectedItem="{Binding SelectedSummaryElement.VerticalAlignment}"
                                                   HorizontalAlignment="Stretch" />
@@ -1252,7 +1252,7 @@
 
                             <!-- Table Properties -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsTableSelected}">
-                                <TextBlock Text="Table Properties"
+                                <TextBlock Text="{loc:Loc 'Table Properties'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -1261,19 +1261,19 @@
                                 <StackPanel Spacing="0">
                                     <Grid ColumnDefinitions="*,*,*">
                                         <Button Grid.Column="0"
-                                                Content="General"
+                                                Content="{loc:Loc 'General'}"
                                                 Classes="property-tab-button"
                                                 Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}"
                                                 Command="{Binding SetTablePropertiesTabCommand}"
                                                 CommandParameter="0" />
                                         <Button Grid.Column="1"
-                                                Content="Style"
+                                                Content="{loc:Loc 'Style'}"
                                                 Classes="property-tab-button"
                                                 Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}"
                                                 Command="{Binding SetTablePropertiesTabCommand}"
                                                 CommandParameter="1" />
                                         <Button Grid.Column="2"
-                                                Content="Columns"
+                                                Content="{loc:Loc 'Columns'}"
                                                 Classes="property-tab-button"
                                                 Classes.selected="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}"
                                                 Command="{Binding SetTablePropertiesTabCommand}"
@@ -1285,116 +1285,116 @@
                                 <!-- General Tab -->
                                 <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=0}">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Transaction Type" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Transaction Type'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding TransactionTypes}"
                                                   SelectedItem="{Binding SelectedTableElement.TransactionType}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
-                                    <CheckBox Content="Include Returns" IsChecked="{Binding SelectedTableElement.IncludeReturns}" />
-                                    <CheckBox Content="Include Losses" IsChecked="{Binding SelectedTableElement.IncludeLosses}" />
+                                    <CheckBox Content="{loc:Loc 'Include Returns'}" IsChecked="{Binding SelectedTableElement.IncludeReturns}" />
+                                    <CheckBox Content="{loc:Loc 'Include Losses'}" IsChecked="{Binding SelectedTableElement.IncludeLosses}" />
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Sort Order" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Sort Order'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <ComboBox ItemsSource="{Binding TableSortOrders}"
                                                   SelectedItem="{Binding SelectedTableElement.SortOrder}"
                                                   HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Max Rows" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Max Rows'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.MaxRows}" Minimum="1" Maximum="50" />
                                     </StackPanel>
                                 </StackPanel>
 
                                 <!-- Style Tab -->
                                 <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=1}">
-                                    <TextBlock Text="Display Options"
+                                    <TextBlock Text="{loc:Loc 'Display Options'}"
                                                FontSize="11"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <CheckBox Content="Show Headers" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
-                                    <CheckBox Content="Show Grid Lines" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
-                                    <CheckBox Content="Show Totals Row" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
-                                    <CheckBox Content="Alternate Row Colors" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
-                                    <CheckBox Content="Auto Size Columns" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
+                                    <CheckBox Content="{loc:Loc 'Show Headers'}" IsChecked="{Binding SelectedTableElement.ShowHeaders}" />
+                                    <CheckBox Content="{loc:Loc 'Show Grid Lines'}" IsChecked="{Binding SelectedTableElement.ShowGridLines}" />
+                                    <CheckBox Content="{loc:Loc 'Show Totals Row'}" IsChecked="{Binding SelectedTableElement.ShowTotalsRow}" />
+                                    <CheckBox Content="{loc:Loc 'Alternate Row Colors'}" IsChecked="{Binding SelectedTableElement.AlternateRowColors}" />
+                                    <CheckBox Content="{loc:Loc 'Auto Size Columns'}" IsChecked="{Binding SelectedTableElement.AutoSizeColumns}" />
 
-                                    <TextBlock Text="Font"
+                                    <TextBlock Text="{loc:Loc 'Font'}"
                                                FontSize="11"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                Margin="0,8,0,0" />
                                     <Grid ColumnDefinitions="*,8,*">
                                         <StackPanel Grid.Column="0" Spacing="4">
-                                            <TextBlock Text="Size" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Size'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.FontSize}" Minimum="6" Maximum="24" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Spacing="4">
-                                            <TextBlock Text="Family" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Family'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <ComboBox ItemsSource="{Binding FontFamilies}"
                                                       SelectedItem="{Binding SelectedTableElement.FontFamily}"
                                                       HorizontalAlignment="Stretch" />
                                         </StackPanel>
                                     </Grid>
 
-                                    <TextBlock Text="Row Heights"
+                                    <TextBlock Text="{loc:Loc 'Row Heights'}"
                                                FontSize="11"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                Margin="0,8,0,0" />
                                     <Grid ColumnDefinitions="*,8,*">
                                         <StackPanel Grid.Column="0" Spacing="4">
-                                            <TextBlock Text="Header" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Header'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.HeaderRowHeight}" Minimum="16" Maximum="50" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Spacing="4">
-                                            <TextBlock Text="Data" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Data'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.DataRowHeight}" Minimum="16" Maximum="50" />
                                         </StackPanel>
                                     </Grid>
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Cell Padding" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Cell Padding'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ArgoNumericUpDown Value="{Binding SelectedTableElement.CellPadding}" Minimum="0" Maximum="20" />
                                     </StackPanel>
 
-                                    <TextBlock Text="Colors"
+                                    <TextBlock Text="{loc:Loc 'Colors'}"
                                                FontSize="11"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                Margin="0,8,0,0" />
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Header BG" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Header BG'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderBackgroundColor, Mode=TwoWay}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Header Text" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Header Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.HeaderTextColor, Mode=TwoWay}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Row Text" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Row Text'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.DataRowTextColor, Mode=TwoWay}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Grid Lines" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Grid Lines'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.GridLineColor, Mode=TwoWay}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Base Row" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Base Row'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.BaseRowColor, Mode=TwoWay}" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="Alt Row" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Alt Row'}" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <controls:ColorPickerInput ColorValue="{Binding SelectedTableElement.AlternateRowColor, Mode=TwoWay}" />
                                     </StackPanel>
                                 </StackPanel>
 
                                 <!-- Columns Tab -->
                                 <StackPanel Spacing="8" IsVisible="{Binding TablePropertiesTabIndex, Converter={StaticResource EqualConverter}, ConverterParameter=2}">
-                                    <CheckBox Content="Date" IsChecked="{Binding SelectedTableElement.ShowDateColumn}" />
-                                    <CheckBox Content="Transaction ID" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn}" />
-                                    <CheckBox Content="Company" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
-                                    <CheckBox Content="Product" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
-                                    <CheckBox Content="Quantity" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
-                                    <CheckBox Content="Unit Price" IsChecked="{Binding SelectedTableElement.ShowUnitPriceColumn}" />
-                                    <CheckBox Content="Total" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
-                                    <CheckBox Content="Status" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Date'}" IsChecked="{Binding SelectedTableElement.ShowDateColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Transaction ID'}" IsChecked="{Binding SelectedTableElement.ShowTransactionIdColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Company'}" IsChecked="{Binding SelectedTableElement.ShowCompanyColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Product'}" IsChecked="{Binding SelectedTableElement.ShowProductColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Quantity'}" IsChecked="{Binding SelectedTableElement.ShowQuantityColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Unit Price'}" IsChecked="{Binding SelectedTableElement.ShowUnitPriceColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Total'}" IsChecked="{Binding SelectedTableElement.ShowTotalColumn}" />
+                                    <CheckBox Content="{loc:Loc 'Status'}" IsChecked="{Binding SelectedTableElement.ShowStatusColumn}" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -1408,11 +1408,11 @@
                                           Width="32" Height="32"
                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                           HorizontalAlignment="Center" />
-                                <TextBlock Text="No element selected"
+                                <TextBlock Text="{loc:Loc 'No element selected'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="Click an element on the canvas to edit its properties"
+                                <TextBlock Text="{loc:Loc 'Click an element on the canvas to edit its properties'}"
                                            FontSize="11"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            TextWrapping="Wrap"
@@ -1458,14 +1458,14 @@
                         CornerRadius="12"
                         Padding="0,24,24,24">
                     <StackPanel Spacing="20">
-                        <TextBlock Text="Export Settings"
+                        <TextBlock Text="{loc:Loc 'Export Settings'}"
                                    FontSize="18"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
 
                         <!-- Format Selection -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Format"
+                            <TextBlock Text="{loc:Loc 'Format'}"
                                        FontSize="14"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -1476,10 +1476,10 @@
                                              Command="{Binding SelectExportFormatCommand}"
                                              CommandParameter="{x:Static enums:ExportFormat.PDF}">
                                     <StackPanel>
-                                        <TextBlock Text="PDF Document"
+                                        <TextBlock Text="{loc:Loc 'PDF Document'}"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Text="For printing &amp; sharing"
+                                        <TextBlock Text="{loc:Loc 'For printing &amp; sharing'}"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                                     </StackPanel>
@@ -1489,10 +1489,10 @@
                                              Command="{Binding SelectExportFormatCommand}"
                                              CommandParameter="{x:Static enums:ExportFormat.PNG}">
                                     <StackPanel>
-                                        <TextBlock Text="PNG Image"
+                                        <TextBlock Text="{loc:Loc 'PNG Image'}"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Text="High quality, lossless"
+                                        <TextBlock Text="{loc:Loc 'High quality, lossless'}"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                                     </StackPanel>
@@ -1502,10 +1502,10 @@
                                              Command="{Binding SelectExportFormatCommand}"
                                              CommandParameter="{x:Static enums:ExportFormat.JPEG}">
                                     <StackPanel>
-                                        <TextBlock Text="JPEG Image"
+                                        <TextBlock Text="{loc:Loc 'JPEG Image'}"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        <TextBlock Text="Smaller file size"
+                                        <TextBlock Text="{loc:Loc 'Smaller file size'}"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                                     </StackPanel>
@@ -1517,7 +1517,7 @@
                         <StackPanel Spacing="8">
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Grid.Column="0"
-                                           Text="Quality"
+                                           Text="{loc:Loc 'Quality'}"
                                            FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -1535,17 +1535,17 @@
 
                         <!-- File Path -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="File Path"
+                            <TextBlock Text="{loc:Loc 'File Path'}"
                                        FontSize="14"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBox Grid.Column="0"
                                          Text="{Binding ExportFilePath}"
-                                         Watermark="Select file path..."
+                                         Watermark="{loc:Loc 'Select file path...'}"
                                          Padding="12,10" />
                                 <Button Grid.Column="1"
-                                        Content="Browse"
+                                        Content="{loc:Loc 'Browse'}"
                                         Margin="8,0,0,0"
                                         Command="{Binding BrowseExportPathCommand}" />
                             </Grid>
@@ -1553,9 +1553,9 @@
 
                         <!-- Options -->
                         <StackPanel Spacing="8">
-                            <CheckBox Content="Open after export"
+                            <CheckBox Content="{loc:Loc 'Open after export'}"
                                       IsChecked="{Binding OpenAfterExport}" />
-                            <CheckBox Content="Include metadata"
+                            <CheckBox Content="{loc:Loc 'Include metadata'}"
                                       IsChecked="{Binding IncludeMetadata}" />
                         </StackPanel>
 
@@ -1586,7 +1586,7 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <PathIcon Data="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"
                                   Width="16" Height="16" />
-                        <TextBlock Text="Previous" />
+                        <TextBlock Text="{loc:Loc 'Previous'}" />
                     </StackPanel>
                 </Button>
 
@@ -1596,7 +1596,7 @@
                             Spacing="8"
                             HorizontalAlignment="Center"
                             IsVisible="{Binding IsStep2}">
-                    <Button Classes="toolbar-button" Click="OnZoomOutClick" ToolTip.Tip="Zoom Out (Ctrl+-)">
+                    <Button Classes="toolbar-button" Click="OnZoomOutClick" ToolTip.Tip="{loc:Loc 'Zoom Out (Ctrl+-)'}">
                         <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"
                                   Width="16" Height="16" />
                     </Button>
@@ -1605,7 +1605,7 @@
                             Maximum="2.0"
                             Width="150"
                             VerticalAlignment="Center" />
-                    <Button Classes="toolbar-button" Click="OnZoomInClick" ToolTip.Tip="Zoom In (Ctrl++)">
+                    <Button Classes="toolbar-button" Click="OnZoomInClick" ToolTip.Tip="{loc:Loc 'Zoom In (Ctrl++)'}">
                         <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z"
                                   Width="16" Height="16" />
                     </Button>
@@ -1615,7 +1615,7 @@
                                Width="50"
                                TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                    <Button Classes="toolbar-button" Click="OnZoomFitClick" ToolTip.Tip="Fit to Window">
+                    <Button Classes="toolbar-button" Click="OnZoomFitClick" ToolTip.Tip="{loc:Loc 'Fit to Window'}">
                         <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
                                   Width="16" Height="16" />
                     </Button>
@@ -1627,7 +1627,7 @@
                             Spacing="8"
                             HorizontalAlignment="Center"
                             IsVisible="{Binding IsStep3}">
-                    <Button Classes="toolbar-button" Click="OnPreviewZoomOutClick" ToolTip.Tip="Zoom Out (Ctrl+-)">
+                    <Button Classes="toolbar-button" Click="OnPreviewZoomOutClick" ToolTip.Tip="{loc:Loc 'Zoom Out (Ctrl+-)'}">
                         <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"
                                   Width="16" Height="16" />
                     </Button>
@@ -1636,7 +1636,7 @@
                             Maximum="2.0"
                             Width="150"
                             VerticalAlignment="Center" />
-                    <Button Classes="toolbar-button" Click="OnPreviewZoomInClick" ToolTip.Tip="Zoom In (Ctrl++)">
+                    <Button Classes="toolbar-button" Click="OnPreviewZoomInClick" ToolTip.Tip="{loc:Loc 'Zoom In (Ctrl++)'}">
                         <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z"
                                   Width="16" Height="16" />
                     </Button>
@@ -1646,7 +1646,7 @@
                                Width="50"
                                TextAlignment="Center"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                    <Button Classes="toolbar-button" Click="OnPreviewZoomFitClick" ToolTip.Tip="Fit to Window">
+                    <Button Classes="toolbar-button" Click="OnPreviewZoomFitClick" ToolTip.Tip="{loc:Loc 'Fit to Window'}">
                         <PathIcon Data="M3 5v4h2V5h4V3H5c-1.1 0-2 .9-2 2zm2 10H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm14 4h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zm0-16h-4v2h4v4h2V5c0-1.1-.9-2-2-2z"
                                   Width="16" Height="16" />
                     </Button>
@@ -1659,7 +1659,7 @@
                         Command="{Binding GoToNextStepCommand}"
                         IsVisible="{Binding CanGoNext}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock Text="Next" />
+                        <TextBlock Text="{loc:Loc 'Next'}" />
                         <PathIcon Data="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
                                   Width="16" Height="16"
                                   Foreground="White" />
@@ -1676,7 +1676,7 @@
                         <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                   Width="16" Height="16"
                                   Foreground="White" />
-                        <TextBlock Text="Create Report" />
+                        <TextBlock Text="{loc:Loc 'Create Report'}" />
                     </StackPanel>
                 </Button>
             </Grid>

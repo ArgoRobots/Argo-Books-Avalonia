@@ -284,7 +284,7 @@
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="Delete"
+                                                                        ToolTip.Tip="{loc:Loc Delete}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -312,12 +312,12 @@
                                               Width="28" Height="28"
                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <TextBlock Text="No categories found"
+                                <TextBlock Text="{loc:Loc 'No categories found'}"
                                            FontSize="16"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="Create your first category to organize your products and services."
+                                <TextBlock Text="{loc:Loc 'Create your first category to organize your products and services.'}"
                                            FontSize="14"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Center"
@@ -332,7 +332,7 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
-                                        <TextBlock Text="Add Category" />
+                                        <TextBlock Text="{loc:Loc 'Add Category'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -362,7 +362,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                VerticalAlignment="Center"
                                                Margin="8,0" />
-                                    <TextBlock Text="Rows per page:"
+                                    <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                VerticalAlignment="Center" />
@@ -433,11 +433,11 @@
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowNameColumn}" Content="Category Name" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowParentColumn}" Content="Parent Category" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="Description" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="Type" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="Products/Services" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowNameColumn}" Content="{loc:Loc 'Category Name'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowParentColumn}" Content="{loc:Loc 'Parent Category'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc Description}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="{loc:Loc 'Products/Services'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

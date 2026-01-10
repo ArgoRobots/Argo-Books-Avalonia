@@ -28,8 +28,8 @@
                 <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                             Margin="0"
                             Classes="page-tabs">
-                    <TabItem Header="Expense Returns" />
-                    <TabItem Header="Customer Returns" />
+                    <TabItem Header="{loc:Loc 'Expense Returns'}" />
+                    <TabItem Header="{loc:Loc 'Customer Returns'}" />
                 </TabControl>
             </Border>
 
@@ -40,19 +40,19 @@
                 <Grid RowDefinitions="Auto,*" Margin="24">
                     <!-- Statistics Cards Row -->
                     <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-                    <controls:StatCard Label="Total Returns"
+                    <controls:StatCard Label="{loc:Loc 'Total Returns'}"
                                        Value="{Binding TotalReturns}"
                                        Icon="M19 7v4H5.83l3.58-3.59L8 6l-6 6 6 6 1.41-1.41L5.83 13H21V7h-2z"
                                        IconColor="Primary" />
-                    <controls:StatCard Label="Expense Returns"
+                    <controls:StatCard Label="{loc:Loc 'Expense Returns'}"
                                        Value="{Binding ExpenseReturns}"
                                        Icon="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z"
                                        IconColor="Danger" />
-                    <controls:StatCard Label="Customer Returns"
+                    <controls:StatCard Label="{loc:Loc 'Customer Returns'}"
                                        Value="{Binding CustomerReturns}"
                                        Icon="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"
                                        IconColor="Success" />
-                    <controls:StatCard Label="Total Refunded"
+                    <controls:StatCard Label="{loc:Loc 'Total Refunded'}"
                                        Value="{Binding TotalRefunded}"
                                        Icon="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"
                                        IconColor="Info" />
@@ -101,7 +101,7 @@
                                                       Margin="12,0,8,0" />
                                             <TextBox Grid.Column="1"
                                                      Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                     Watermark="Search returns..."
+                                                     Watermark="{loc:Loc 'Search returns...'}"
                                                      Classes="search-input" />
                                         </Grid>
                                     </Border>
@@ -112,7 +112,7 @@
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                       Width="16" Height="16" />
-                                            <TextBlock Text="Filter" />
+                                            <TextBlock Text="{loc:Loc 'Filter'}" />
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
@@ -136,7 +136,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <!-- ID Column Header -->
                                         <Panel Width="{Binding ColumnWidths.IdColumnWidth}">
-                                            <TextBlock Text="ID" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="{loc:Loc 'ID'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Id" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -144,7 +144,7 @@
 
                                         <!-- Product Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ProductColumnWidth}">
-                                            <TextBlock Text="Product" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="{loc:Loc 'Product'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Product" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -166,7 +166,7 @@
 
                                         <!-- Date Column Header -->
                                         <Panel Width="{Binding ColumnWidths.DateColumnWidth}">
-                                            <TextBlock Text="Date" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="{loc:Loc 'Date'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Date" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -174,7 +174,7 @@
 
                                         <!-- Reason Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ReasonColumnWidth}">
-                                            <TextBlock Text="Reason" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="{loc:Loc 'Reason'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Reason" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -182,7 +182,7 @@
 
                                         <!-- Processed Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ProcessedColumnWidth}">
-                                            <TextBlock Text="Processed" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="{loc:Loc 'Processed'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Processed" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -190,7 +190,7 @@
 
                                         <!-- Refund Column Header -->
                                         <Panel Width="{Binding ColumnWidths.RefundColumnWidth}">
-                                            <TextBlock Text="Refund" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="{loc:Loc 'Refund'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Refund" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -198,7 +198,7 @@
 
                                         <!-- Status Column Header -->
                                         <Panel Width="{Binding ColumnWidths.StatusColumnWidth}">
-                                            <TextBlock Text="Status" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
+                                            <TextBlock Text="{loc:Loc 'Status'}" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" />
                                             <Border Width="1" Background="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Stretch" />
                                             <controls:ColumnResizeGripper ColumnName="Status" ColumnWidths="{Binding ColumnWidths}"
                                                                            HorizontalAlignment="Right" VerticalAlignment="Stretch" />
@@ -206,7 +206,7 @@
 
                                         <!-- Actions Column Header -->
                                         <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                            <TextBlock Text="Actions" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" HorizontalAlignment="Left" />
+                                            <TextBlock Text="{loc:Loc 'Actions'}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" Margin="8,12" HorizontalAlignment="Left" />
                                         </Panel>
                                     </StackPanel>
                                 </Border>
@@ -336,14 +336,14 @@
                                                                             HorizontalAlignment="Center"
                                                                             VerticalAlignment="Center">
                                                                     <Button Classes="icon-button-small"
-                                                                            ToolTip.Tip="View Details"
+                                                                            ToolTip.Tip="{loc:Loc 'View Details'}"
                                                                             Command="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).ViewReturnDetailsCommand}"
                                                                             CommandParameter="{Binding}">
                                                                         <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
                                                                                   Width="14" Height="14" />
                                                                     </Button>
                                                                     <Button Classes="icon-button-small danger"
-                                                                            ToolTip.Tip="Undo Return"
+                                                                            ToolTip.Tip="{loc:Loc 'Undo Return'}"
                                                                             Command="{Binding $parent[ItemsControl].((vm:ReturnsPageViewModel)DataContext).UndoReturnCommand}"
                                                                             CommandParameter="{Binding}">
                                                                         <PathIcon Data="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
@@ -371,12 +371,12 @@
                                                       Width="28" Height="28"
                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </Border>
-                                        <TextBlock Text="No returns found"
+                                        <TextBlock Text="{loc:Loc 'No returns found'}"
                                                    FontSize="16"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                    HorizontalAlignment="Center" />
-                                        <TextBlock Text="Returns will appear here when items are returned to suppliers or by customers."
+                                        <TextBlock Text="{loc:Loc 'Returns will appear here when items are returned to suppliers or by customers.'}"
                                                    FontSize="14"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
@@ -412,7 +412,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                VerticalAlignment="Center"
                                                Margin="8,0" />
-                                    <TextBlock Text="Per page:"
+                                    <TextBlock Text="{loc:Loc 'Per page:'}"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                VerticalAlignment="Center" />
@@ -500,7 +500,7 @@
                                               Foreground="#3B82F6" />
                                 </Border>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Return Details"
+                                    <TextBlock Text="{loc:Loc 'Return Details'}"
                                                FontSize="18"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -523,7 +523,7 @@
                         <StackPanel Spacing="20">
                             <!-- Product -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Product"
+                                <TextBlock Text="{loc:Loc 'Product'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -536,7 +536,7 @@
                             <!-- Date and Refund -->
                             <Grid ColumnDefinitions="*,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Return Date"
+                                    <TextBlock Text="{loc:Loc 'Return Date'}"
                                                FontSize="12"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -545,7 +545,7 @@
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Spacing="6">
-                                    <TextBlock Text="Refund Amount"
+                                    <TextBlock Text="{loc:Loc 'Refund Amount'}"
                                                FontSize="12"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -558,7 +558,7 @@
 
                             <!-- Reason -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Reason"
+                                <TextBlock Text="{loc:Loc 'Reason'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -574,7 +574,7 @@
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Notes"
+                                <TextBlock Text="{loc:Loc 'Notes'}"
                                            FontSize="12"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -596,7 +596,7 @@
                             Padding="24,16"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0">
-                        <Button Content="Close"
+                        <Button Content="{loc:Loc 'Close'}"
                                 Classes="secondary-button"
                                 HorizontalAlignment="Right"
                                 Command="{Binding CloseViewDetailsModalCommand}" />
@@ -629,7 +629,7 @@
                                               Width="20" Height="20"
                                               Foreground="#D97706" />
                                 </Border>
-                                <TextBlock Text="Undo Return"
+                                <TextBlock Text="{loc:Loc 'Undo Return'}"
                                            FontSize="18"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}"
@@ -648,7 +648,7 @@
                     <StackPanel Grid.Row="1" Spacing="16" Margin="24">
                         <!-- Item Description -->
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Return to undo:"
+                            <TextBlock Text="{loc:Loc 'Return to undo:'}"
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -663,11 +663,11 @@
                             <TextBlock FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextPrimaryBrush}">
-                                <Run Text="Reason for undo" />
-                                <Run Text="(optional)" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <Run Text="{loc:Loc 'Reason for undo'}" />
+                                <Run Text="{loc:Loc '(optional)'}" Foreground="{DynamicResource TextTertiaryBrush}" />
                             </TextBlock>
                             <TextBox Text="{Binding UndoReturnReason, Mode=TwoWay}"
-                                     Watermark="Enter reason for undoing this return..."
+                                     Watermark="{loc:Loc 'Enter reason for undoing this return...'}"
                                      AcceptsReturn="True"
                                      TextWrapping="Wrap"
                                      MinHeight="80"
@@ -682,12 +682,12 @@
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="*,Auto,Auto">
                             <Button Grid.Column="1"
-                                    Content="Cancel"
+                                    Content="{loc:Loc 'Cancel'}"
                                     Classes="secondary-button"
                                     Margin="0,0,12,0"
                                     Command="{Binding CloseUndoReturnModalCommand}" />
                             <Button Grid.Column="2"
-                                    Content="Undo Return"
+                                    Content="{loc:Loc 'Undo Return'}"
                                     Classes="danger-button"
                                     Command="{Binding ConfirmUndoReturnCommand}" />
                         </Grid>

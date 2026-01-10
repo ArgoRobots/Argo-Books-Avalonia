@@ -48,7 +48,7 @@
                                 CornerRadius="4"
                                 Padding="8,4"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="Esc"
+                            <TextBlock Text="{loc:Loc Esc}"
                                        FontSize="11"
                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                         </Border>

@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.CustomerModals"
              x:DataType="vm:CustomerModalsViewModel">
@@ -35,7 +36,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="Add Customer"
+                                       Text="{loc:Loc 'Add Customer'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -55,11 +56,11 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="First Name" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'First Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalFirstName, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="Enter first name" />
+                                             Watermark="{loc:Loc 'Enter first name'}" />
                                     <TextBlock Text="{Binding ModalFirstNameError}"
                                                FontSize="12"
                                                Foreground="#dc2626"
@@ -67,11 +68,11 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Last Name" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Last Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalLastName, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="Enter last name" />
+                                             Watermark="{loc:Loc 'Enter last name'}" />
                                     <TextBlock Text="{Binding ModalLastNameError}"
                                                FontSize="12"
                                                Foreground="#dc2626"
@@ -81,61 +82,61 @@
 
                             <!-- Company Name -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Company" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name" />
+                                <TextBlock Text="{loc:Loc 'Company'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter company name'}" />
                             </StackPanel>
 
                             <!-- Email and Phone Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Email" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="Enter email address" />
+                                    <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter email address'}" />
                                     <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626"
                                                IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Phone'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- Address Section -->
-                            <TextBlock Text="Address" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
+                            <TextBlock Text="{loc:Loc 'Address'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
 
                             <!-- Street Address -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Street Address" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="Enter street address" />
+                                <TextBlock Text="{loc:Loc 'Street Address'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter street address'}" />
                             </StackPanel>
 
                             <!-- City and State Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="City" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="Enter city" />
+                                    <TextBlock Text="{loc:Loc 'City'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter city'}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="State/Province" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="Enter state" />
+                                    <TextBlock Text="{loc:Loc 'State/Province'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter state'}" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- Postal Code and Country Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Postal Code" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="Enter postal code" />
+                                    <TextBlock Text="{loc:Loc 'Postal Code'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter postal code'}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Country" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Country'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:CountryInput SelectedCountryName="{Binding ModalCountry, Mode=TwoWay}" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes"
+                                <TextBlock Text="{loc:Loc 'Notes'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter notes'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                         </StackPanel>
@@ -144,8 +145,8 @@
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddModalCommand}" />
-                            <Button Classes="primary-button" Content="Add Customer" Command="{Binding SaveNewCustomerCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseAddModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Add Customer'}" Command="{Binding SaveNewCustomerCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -168,7 +169,7 @@
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Edit Customer" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Edit Customer'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseEditModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
                             </Button>
@@ -182,17 +183,17 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="First Name" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'First Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <TextBox Text="{Binding ModalFirstName, Mode=TwoWay}" Classes="form-input" Watermark="Enter first name" />
+                                    <TextBox Text="{Binding ModalFirstName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter first name'}" />
                                     <TextBlock Text="{Binding ModalFirstNameError}" FontSize="12" Foreground="#dc2626"
                                                IsVisible="{Binding ModalFirstNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Last Name" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Last Name'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <TextBox Text="{Binding ModalLastName, Mode=TwoWay}" Classes="form-input" Watermark="Enter last name" />
+                                    <TextBox Text="{Binding ModalLastName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter last name'}" />
                                     <TextBlock Text="{Binding ModalLastNameError}" FontSize="12" Foreground="#dc2626"
                                                IsVisible="{Binding ModalLastNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
@@ -200,61 +201,61 @@
 
                             <!-- Company Name -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Company" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="Enter company name" />
+                                <TextBlock Text="{loc:Loc 'Company'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalCompanyName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter company name'}" />
                             </StackPanel>
 
                             <!-- Email and Phone Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Email" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="Enter email address" />
+                                    <TextBlock Text="{loc:Loc 'Email'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalEmail, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter email address'}" />
                                     <TextBlock Text="{Binding ModalEmailError}" FontSize="12" Foreground="#dc2626"
                                                IsVisible="{Binding ModalEmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Phone" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Phone'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:PhoneInput FullPhoneNumber="{Binding ModalPhone, Mode=TwoWay}" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- Address Section -->
-                            <TextBlock Text="Address" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
+                            <TextBlock Text="{loc:Loc 'Address'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,0" />
 
                             <!-- Street Address -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Street Address" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="Enter street address" />
+                                <TextBlock Text="{loc:Loc 'Street Address'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalStreetAddress, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter street address'}" />
                             </StackPanel>
 
                             <!-- City and State Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="City" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="Enter city" />
+                                    <TextBlock Text="{loc:Loc 'City'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalCity, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter city'}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="State/Province" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="Enter state" />
+                                    <TextBlock Text="{loc:Loc 'State/Province'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalStateProvince, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter state'}" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- Postal Code and Country Row -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Postal Code" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="Enter postal code" />
+                                    <TextBlock Text="{loc:Loc 'Postal Code'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding ModalZipCode, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter postal code'}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Country" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Country'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:CountryInput SelectedCountryName="{Binding ModalCountry, Mode=TwoWay}" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="Enter notes"
+                                <TextBlock Text="{loc:Loc 'Notes'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalNotes, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter notes'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                         </StackPanel>
@@ -263,8 +264,8 @@
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseEditModalCommand}" />
-                            <Button Classes="primary-button" Content="Save Changes" Command="{Binding SaveEditedCustomerCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseEditModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Save Changes'}" Command="{Binding SaveEditedCustomerCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -286,7 +287,7 @@
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Filter Customers" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Filter Customers'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseFilterModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
                             </Button>
@@ -298,36 +299,36 @@
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Payment Status -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Payment Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Payment Status'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding PaymentStatusOptions}" SelectedItem="{Binding FilterPaymentStatus}" Classes="form-combobox" />
                             </StackPanel>
 
                             <!-- Customer Status -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Customer Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Customer Status'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding CustomerStatusOptions}" SelectedItem="{Binding FilterCustomerStatus}" Classes="form-combobox" />
                             </StackPanel>
 
                             <!-- Outstanding Amount Range -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Outstanding Amount" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Outstanding Amount'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <Grid ColumnDefinitions="*,Auto,*">
-                                    <TextBox Grid.Column="0" Text="{Binding FilterOutstandingMin, Mode=TwoWay}" Classes="form-input" Watermark="Min" />
-                                    <TextBlock Grid.Column="1" Text="to" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
-                                    <TextBox Grid.Column="2" Text="{Binding FilterOutstandingMax, Mode=TwoWay}" Classes="form-input" Watermark="Max" />
+                                    <TextBox Grid.Column="0" Text="{Binding FilterOutstandingMin, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Min'}" />
+                                    <TextBlock Grid.Column="1" Text="{loc:Loc 'to'}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
+                                    <TextBox Grid.Column="2" Text="{Binding FilterOutstandingMax, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Max'}" />
                                 </Grid>
                             </StackPanel>
 
                             <!-- Last Rental Date Range -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Last Rental Date" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Last Rental Date'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="8">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="From" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'From'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <DatePicker SelectedDate="{Binding FilterLastRentalFrom}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="To" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'To'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <DatePicker SelectedDate="{Binding FilterLastRentalTo}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                 </StackPanel>
@@ -338,10 +339,10 @@
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Button Grid.Column="0" Classes="secondary-button" Content="Clear Filters" Command="{Binding ClearFiltersCommand}" />
+                            <Button Grid.Column="0" Classes="secondary-button" Content="{loc:Loc 'Clear Filters'}" Command="{Binding ClearFiltersCommand}" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseFilterModalCommand}" />
-                                <Button Classes="primary-button" Content="Apply" Command="{Binding ApplyFiltersCommand}" />
+                                <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseFilterModalCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc 'Apply'}" Command="{Binding ApplyFiltersCommand}" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -366,13 +367,13 @@
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto,Auto">
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Customer History" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Customer History'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <TextBlock Text="{Binding HistoryCustomerName}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
                             <Button Grid.Column="1" Classes="secondary-button" Margin="0,0,12,0" Command="{Binding OpenHistoryFilterModalCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" Width="16" Height="16" />
-                                    <TextBlock Text="Filter" />
+                                    <TextBlock Text="{loc:Loc 'Filter'}" />
                                 </StackPanel>
                             </Button>
                             <Button Grid.Column="2" Classes="icon-button" Command="{Binding CloseHistoryModalCommand}">
@@ -386,11 +387,11 @@
                         <!-- Table Header -->
                         <Border Grid.Row="0" Background="{DynamicResource SurfaceAltBrush}" Padding="24,12">
                             <Grid ColumnDefinitions="0.8*,0.6*,1.5*,0.6*,0.6*">
-                                <TextBlock Grid.Column="0" Text="Date" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Grid.Column="1" Text="Type" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Grid.Column="2" Text="Description" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Grid.Column="3" Text="Amount" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Grid.Column="4" Text="Status" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Date'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Type'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Grid.Column="2" Text="{loc:Loc 'Description'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Grid.Column="3" Text="{loc:Loc 'Amount'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Grid.Column="4" Text="{loc:Loc 'Status'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" />
                             </Grid>
                         </Border>
 
@@ -424,8 +425,8 @@
                                 <!-- Empty State -->
                                 <Border Padding="40" IsVisible="{Binding CustomerHistory.Count, Converter={x:Static local:IntConverters.IsZero}}">
                                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                                        <TextBlock Text="No transaction history" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
-                                        <TextBlock Text="This customer has no recorded transactions." FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" />
+                                        <TextBlock Text="{loc:Loc 'No transaction history'}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
+                                        <TextBlock Text="{loc:Loc 'This customer has no recorded transactions.'}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
                             </Panel>
@@ -435,7 +436,7 @@
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Classes="secondary-button" Content="Close" Command="{Binding CloseHistoryModalCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc 'Close'}" Command="{Binding CloseHistoryModalCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -457,7 +458,7 @@
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Filter History" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Filter History'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseHistoryFilterModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
                             </Button>
@@ -468,26 +469,26 @@
                     <StackPanel Grid.Row="1" Margin="24" Spacing="20">
                         <!-- Transaction Type -->
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Transaction Type" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Transaction Type'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <ComboBox ItemsSource="{Binding HistoryTypeOptions}" SelectedItem="{Binding HistoryFilterType}" Classes="form-combobox" />
                         </StackPanel>
 
                         <!-- Status -->
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Status'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <ComboBox ItemsSource="{Binding HistoryStatusOptions}" SelectedItem="{Binding HistoryFilterStatus}" Classes="form-combobox" />
                         </StackPanel>
 
                         <!-- Date Range -->
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Date Range" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Date Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <StackPanel Spacing="8">
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="From" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'From'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <DatePicker SelectedDate="{Binding HistoryFilterDateFrom}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                                 </StackPanel>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="To" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'To'}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                     <DatePicker SelectedDate="{Binding HistoryFilterDateTo}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                                 </StackPanel>
                             </StackPanel>
@@ -495,11 +496,11 @@
 
                         <!-- Amount Range -->
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Amount Range" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Amount Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Grid ColumnDefinitions="*,Auto,*">
-                                <TextBox Grid.Column="0" Text="{Binding HistoryFilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="Min" />
-                                <TextBlock Grid.Column="1" Text="to" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
-                                <TextBox Grid.Column="2" Text="{Binding HistoryFilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="Max" />
+                                <TextBox Grid.Column="0" Text="{Binding HistoryFilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Min'}" />
+                                <TextBlock Grid.Column="1" Text="{loc:Loc 'to'}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
+                                <TextBox Grid.Column="2" Text="{Binding HistoryFilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Max'}" />
                             </Grid>
                         </StackPanel>
                     </StackPanel>
@@ -507,10 +508,10 @@
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Button Grid.Column="0" Classes="secondary-button" Content="Clear Filters" Command="{Binding ClearHistoryFiltersCommand}" />
+                            <Button Grid.Column="0" Classes="secondary-button" Content="{loc:Loc 'Clear Filters'}" Command="{Binding ClearHistoryFiltersCommand}" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseHistoryFilterModalCommand}" />
-                                <Button Classes="primary-button" Content="Apply" Command="{Binding ApplyHistoryFiltersCommand}" />
+                                <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseHistoryFilterModalCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc 'Apply'}" Command="{Binding ApplyHistoryFiltersCommand}" />
                             </StackPanel>
                         </Grid>
                     </Border>
