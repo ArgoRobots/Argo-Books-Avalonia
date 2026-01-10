@@ -455,6 +455,9 @@ public partial class App : Application
                 ThemeService.Instance.Initialize();
             }
 
+            // Initialize exchange rate service for currency conversion
+            await InitializeExchangeRateServiceAsync();
+
             // Load and apply saved license status
             if (LicenseService != null && _appShellViewModel != null)
             {
@@ -472,6 +475,27 @@ public partial class App : Application
         {
             // Log error but don't crash the app
             System.Diagnostics.Debug.WriteLine($"Error during async initialization: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Initializes the exchange rate service for currency conversion.
+    /// </summary>
+    private static async Task InitializeExchangeRateServiceAsync()
+    {
+        try
+        {
+            var exchangeService = new ExchangeRateService();
+            await exchangeService.InitializeAsync();
+
+            if (!exchangeService.HasApiKey)
+            {
+                System.Diagnostics.Debug.WriteLine("Exchange rate service initialized without API key - currency conversion will use cached rates only");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to initialize exchange rate service: {ex.Message}");
         }
     }
 

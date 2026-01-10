@@ -202,6 +202,13 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
         // Subscribe to date format changes to refresh date display
         DateFormatService.DateFormatChanged += (_, _) => FilterRevenue();
+
+        // Subscribe to currency changes to refresh currency display
+        CurrencyService.CurrencyChanged += (_, _) =>
+        {
+            UpdateStatistics();
+            FilterRevenue();
+        };
     }
 
     private void InitializeColumnVisibility()
@@ -324,11 +331,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        // Total monthly revenue
-        var monthlyTotal = _allRevenue
+        // Total monthly revenue (in USD, then convert to display currency)
+        var monthlyTotalUSD = _allRevenue
             .Where(s => s.Date >= startOfMonth)
-            .Sum(s => s.Total);
-        TotalMonthlyRevenue = $"${monthlyTotal:N2}";
+            .Sum(s => s.EffectiveTotalUSD);
+        TotalMonthlyRevenue = CurrencyService.FormatFromUSD(monthlyTotalUSD, now);
 
         // Sales count
         SalesCount = _allRevenue.Count;
@@ -436,6 +443,12 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
                 CategoryName = category?.Name ?? "-",
                 Date = sale.Date,
                 Total = sale.Total,
+                TotalUSD = sale.EffectiveTotalUSD,
+                AmountUSD = sale.Amount > 0 ? sale.EffectiveTotalUSD * (sale.Amount / sale.Total) : 0,
+                TaxAmountUSD = sale.TaxAmountUSD > 0 ? sale.TaxAmountUSD : sale.TaxAmount,
+                ShippingCostUSD = sale.EffectiveShippingCostUSD,
+                DiscountUSD = sale.DiscountUSD > 0 ? sale.DiscountUSD : sale.Discount,
+                UnitPriceUSD = sale.EffectiveUnitPriceUSD,
                 StatusDisplay = statusDisplay,
                 Notes = sale.Notes,
                 CustomerId = sale.CustomerId,
@@ -693,6 +706,24 @@ public partial class RevenueDisplayItem : ObservableObject
     private decimal _total;
 
     [ObservableProperty]
+    private decimal _totalUSD;
+
+    [ObservableProperty]
+    private decimal _amountUSD;
+
+    [ObservableProperty]
+    private decimal _taxAmountUSD;
+
+    [ObservableProperty]
+    private decimal _shippingCostUSD;
+
+    [ObservableProperty]
+    private decimal _discountUSD;
+
+    [ObservableProperty]
+    private decimal _unitPriceUSD;
+
+    [ObservableProperty]
     private string _statusDisplay = string.Empty;
 
     [ObservableProperty]
@@ -729,13 +760,13 @@ public partial class RevenueDisplayItem : ObservableObject
     private PaymentMethod _paymentMethod;
 
     public string DateFormatted => DateFormatService.Format(Date);
-    public string TotalFormatted => $"${Total:N2}";
-    public string AmountFormatted => $"${Amount:N2}";
-    public string TaxAmountFormatted => $"${TaxAmount:N2}";
+    public string TotalFormatted => CurrencyService.FormatFromUSD(TotalUSD, Date);
+    public string AmountFormatted => CurrencyService.FormatFromUSD(AmountUSD, Date);
+    public string TaxAmountFormatted => CurrencyService.FormatFromUSD(TaxAmountUSD, Date);
     public string TaxRateFormatted => $"{TaxRate:N1}%";
-    public string ShippingCostFormatted => $"${ShippingCost:N2}";
-    public string DiscountFormatted => $"-${Discount:N2}";
-    public string UnitPriceFormatted => $"${UnitPrice:N2}";
+    public string ShippingCostFormatted => CurrencyService.FormatFromUSD(ShippingCostUSD, Date);
+    public string DiscountFormatted => $"-{CurrencyService.FormatFromUSD(DiscountUSD, Date)}";
+    public string UnitPriceFormatted => CurrencyService.FormatFromUSD(UnitPriceUSD, Date);
 
     public string CustomerInitials
     {

@@ -127,4 +127,65 @@ public abstract class Transaction
     /// </summary>
     [JsonPropertyName("updatedAt")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    #region Currency Support
+
+    /// <summary>
+    /// The ISO currency code in which this transaction was originally entered (e.g., "USD", "EUR", "CAD").
+    /// Defaults to "USD" for backward compatibility with existing data.
+    /// </summary>
+    [JsonPropertyName("originalCurrency")]
+    public string OriginalCurrency { get; set; } = "USD";
+
+    /// <summary>
+    /// The total amount converted to USD at the time of entry.
+    /// Used as the base for all currency conversions.
+    /// If null/0, falls back to Total (assumed to be USD for legacy data).
+    /// </summary>
+    [JsonPropertyName("totalUSD")]
+    public decimal TotalUSD { get; set; }
+
+    /// <summary>
+    /// The unit price converted to USD at the time of entry.
+    /// </summary>
+    [JsonPropertyName("unitPriceUSD")]
+    public decimal UnitPriceUSD { get; set; }
+
+    /// <summary>
+    /// The shipping cost converted to USD at the time of entry.
+    /// </summary>
+    [JsonPropertyName("shippingCostUSD")]
+    public decimal ShippingCostUSD { get; set; }
+
+    /// <summary>
+    /// The tax amount converted to USD at the time of entry.
+    /// </summary>
+    [JsonPropertyName("taxAmountUSD")]
+    public decimal TaxAmountUSD { get; set; }
+
+    /// <summary>
+    /// The discount amount converted to USD at the time of entry.
+    /// </summary>
+    [JsonPropertyName("discountUSD")]
+    public decimal DiscountUSD { get; set; }
+
+    /// <summary>
+    /// Gets the effective total in USD, falling back to Total for legacy data.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveTotalUSD => TotalUSD > 0 ? TotalUSD : Total;
+
+    /// <summary>
+    /// Gets the effective unit price in USD, falling back to UnitPrice for legacy data.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveUnitPriceUSD => UnitPriceUSD > 0 ? UnitPriceUSD : UnitPrice;
+
+    /// <summary>
+    /// Gets the effective shipping cost in USD, falling back to ShippingCost for legacy data.
+    /// </summary>
+    [JsonIgnore]
+    public decimal EffectiveShippingCostUSD => ShippingCostUSD > 0 ? ShippingCostUSD : ShippingCost;
+
+    #endregion
 }

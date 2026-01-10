@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -14,6 +15,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string _originalTheme;
     private string _originalAccentColor;
     private string _originalDateFormat = "MM/DD/YYYY";
+    private string _originalCurrency = "USD - US Dollar ($)";
     private int _originalMaxPieSlices = 6;
 
     [ObservableProperty]
@@ -390,6 +392,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedTheme != _originalTheme ||
         SelectedAccentColor != _originalAccentColor ||
         SelectedDateFormat != _originalDateFormat ||
+        SelectedCurrency != _originalCurrency ||
         MaxPieSlices != _originalMaxPieSlices;
 
     /// <summary>
@@ -425,11 +428,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedTheme = ThemeService.Instance.CurrentThemeName;
         SelectedAccentColor = ThemeService.Instance.CurrentAccentColor;
 
-        // Load date format from company settings
+        // Load date format and currency from company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;
         if (settings != null)
         {
             SelectedDateFormat = settings.Localization.DateFormat;
+            // Convert currency code to display string
+            SelectedCurrency = CurrencyService.GetDisplayString(settings.Localization.Currency);
         }
 
         // Load max pie slices from global settings
@@ -443,6 +448,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
         _originalDateFormat = SelectedDateFormat;
+        _originalCurrency = SelectedCurrency;
         _originalMaxPieSlices = MaxPieSlices;
         SelectedTabIndex = tabIndex;
         IsOpen = true;
@@ -472,7 +478,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 {
                     case ConfirmationResult.Primary:
                         // Save and close
-                        SaveCommand.Execute(null);
+                        await SaveAsync();
                         return;
                     case ConfirmationResult.Secondary:
                         // Don't save, revert and close
@@ -510,6 +516,10 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             SelectedDateFormat = _originalDateFormat;
         }
+        if (SelectedCurrency != _originalCurrency)
+        {
+            SelectedCurrency = _originalCurrency;
+        }
         if (MaxPieSlices != _originalMaxPieSlices)
         {
             MaxPieSlices = _originalMaxPieSlices;
@@ -525,23 +535,30 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// Saves the settings and closes the modal.
     /// </summary>
     [RelayCommand]
-    private void Save()
+    private async Task SaveAsync()
     {
-        // Check if date format changed before updating original values
+        // Check what changed before updating original values
         var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
+        var currencyChanged = SelectedCurrency != _originalCurrency;
         var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
+
+        // Extract the new currency code before updating originals
+        var newCurrencyCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
 
         // Update original values to current (so close doesn't revert)
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
         _originalDateFormat = SelectedDateFormat;
+        _originalCurrency = SelectedCurrency;
         _originalMaxPieSlices = MaxPieSlices;
 
-        // Save date format to company settings
+        // Save date format and currency to company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;
         if (settings != null)
         {
             settings.Localization.DateFormat = SelectedDateFormat;
+            // Extract currency code from display string (e.g., "USD - US Dollar ($)" -> "USD")
+            settings.Localization.Currency = newCurrencyCode;
             settings.ChangesMade = true;
         }
 
@@ -559,6 +576,14 @@ public partial class SettingsModalViewModel : ViewModelBase
             DateFormatService.NotifyDateFormatChanged();
         }
 
+        // Notify that currency changed so views can refresh
+        // Also preload exchange rates for the new currency
+        if (currencyChanged)
+        {
+            await PreloadExchangeRatesForCurrencyAsync(newCurrencyCode);
+            CurrencyService.NotifyCurrencyChanged();
+        }
+
         // Notify that chart settings changed so charts can reload
         if (maxPieSlicesChanged)
         {
@@ -572,6 +597,72 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
 
         IsOpen = false;
+    }
+
+    /// <summary>
+    /// Preloads exchange rates for the selected currency.
+    /// Shows error message box if API call fails.
+    /// </summary>
+    private async Task PreloadExchangeRatesForCurrencyAsync(string currencyCode)
+    {
+        // Skip if USD (no conversion needed)
+        if (string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var exchangeService = ExchangeRateService.Instance;
+        if (exchangeService == null)
+        {
+            await ShowExchangeRateErrorAsync(
+                "Exchange Rates Unavailable",
+                "Exchange rate service is not available. Currency values will not be converted.");
+            return;
+        }
+
+        if (!exchangeService.HasApiKey)
+        {
+            // Check if we have cached rates
+            if (exchangeService.CachedRatesCount == 0)
+            {
+                await ShowExchangeRateErrorAsync(
+                    "Exchange Rates Unavailable",
+                    "No exchange rate API key configured and no cached rates available. Currency values will be displayed in USD.");
+            }
+            return;
+        }
+
+        try
+        {
+            // Preload rates for today and the past 30 days (covers most common scenarios)
+            var today = DateTime.UtcNow.Date;
+            var dates = Enumerable.Range(0, 30).Select(i => today.AddDays(-i)).ToList();
+
+            await exchangeService.PreloadRatesAsync(dates);
+        }
+        catch (Exception ex)
+        {
+            await ShowExchangeRateErrorAsync(
+                "Exchange Rate Error",
+                $"Failed to fetch exchange rates: {ex.Message}. Cached rates will be used if available.");
+        }
+    }
+
+    /// <summary>
+    /// Shows an exchange rate error message box.
+    /// </summary>
+    private static async Task ShowExchangeRateErrorAsync(string title, string message)
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = title,
+                Message = message,
+                PrimaryButtonText = "OK",
+                SecondaryButtonText = null,
+                CancelButtonText = null
+            });
+        }
     }
 
     /// <summary>

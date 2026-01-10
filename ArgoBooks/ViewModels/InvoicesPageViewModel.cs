@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -244,6 +245,13 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             App.InvoiceModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.InvoiceModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+
+        // Subscribe to currency changes to refresh currency display
+        CurrencyService.CurrencyChanged += (_, _) =>
+        {
+            UpdateStatistics();
+            FilterInvoices();
+        };
     }
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
@@ -333,23 +341,23 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
         var endOfWeek = now.AddDays(7);
 
-        // Total outstanding (unpaid invoices)
-        var outstanding = _allInvoices
+        // Total outstanding (unpaid invoices) - calculate in USD, convert for display
+        var outstandingUSD = _allInvoices
             .Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
-            .Sum(i => i.Balance);
-        TotalOutstanding = $"${outstanding:N2}";
+            .Sum(i => i.EffectiveBalanceUSD);
+        TotalOutstanding = CurrencyService.FormatFromUSD(outstandingUSD, now);
 
         // Paid this month
-        var paidThisMonth = _allInvoices
+        var paidThisMonthUSD = _allInvoices
             .Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonth)
-            .Sum(i => i.Total);
-        PaidThisMonth = $"${paidThisMonth:N2}";
+            .Sum(i => i.EffectiveTotalUSD);
+        PaidThisMonth = CurrencyService.FormatFromUSD(paidThisMonthUSD, now);
 
         // Overdue amount
-        var overdue = _allInvoices
+        var overdueUSD = _allInvoices
             .Where(i => i.IsOverdue || i.Status == InvoiceStatus.Overdue)
-            .Sum(i => i.Balance);
-        OverdueAmount = $"${overdue:N2}";
+            .Sum(i => i.EffectiveBalanceUSD);
+        OverdueAmount = CurrencyService.FormatFromUSD(overdueUSD, now);
 
         // Due this week
         DueThisWeekCount = _allInvoices
@@ -463,8 +471,10 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 Subtotal = invoice.Subtotal,
                 TaxAmount = invoice.TaxAmount,
                 Total = invoice.Total,
+                TotalUSD = invoice.EffectiveTotalUSD,
                 AmountPaid = invoice.AmountPaid,
                 Balance = invoice.Balance,
+                BalanceUSD = invoice.EffectiveBalanceUSD,
                 Status = invoice.Status,
                 StatusDisplay = statusDisplay,
                 Notes = invoice.Notes,
@@ -643,10 +653,16 @@ public partial class InvoiceDisplayItem : ObservableObject
     private decimal _total;
 
     [ObservableProperty]
+    private decimal _totalUSD;
+
+    [ObservableProperty]
     private decimal _amountPaid;
 
     [ObservableProperty]
     private decimal _balance;
+
+    [ObservableProperty]
+    private decimal _balanceUSD;
 
     [ObservableProperty]
     private InvoiceStatus _status;
@@ -662,8 +678,8 @@ public partial class InvoiceDisplayItem : ObservableObject
 
     public string IssueDateFormatted => IssueDate.ToString("MMM d, yyyy");
     public string DueDateFormatted => DueDate.ToString("MMM d, yyyy");
-    public string TotalFormatted => $"${Total:N2}";
-    public string BalanceFormatted => $"${Balance:N2}";
+    public string TotalFormatted => CurrencyService.FormatFromUSD(TotalUSD, IssueDate);
+    public string BalanceFormatted => CurrencyService.FormatFromUSD(BalanceUSD, IssueDate);
 
     /// <summary>
     /// Whether this invoice is a draft.

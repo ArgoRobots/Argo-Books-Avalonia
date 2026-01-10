@@ -207,6 +207,13 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
         // Subscribe to date format changes to refresh date display
         DateFormatService.DateFormatChanged += (_, _) => FilterExpenses();
+
+        // Subscribe to currency changes to refresh currency display
+        CurrencyService.CurrencyChanged += (_, _) =>
+        {
+            UpdateStatistics();
+            FilterExpenses();
+        };
     }
 
     private void InitializeColumnVisibility()
@@ -332,11 +339,11 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        // Total monthly expenses
-        var monthlyTotal = _allExpenses
+        // Total monthly expenses (in USD, then convert to display currency)
+        var monthlyTotalUSD = _allExpenses
             .Where(p => p.Date >= startOfMonth)
-            .Sum(p => p.Total);
-        TotalMonthlyExpenses = $"${monthlyTotal:N2}";
+            .Sum(p => p.EffectiveTotalUSD);
+        TotalMonthlyExpenses = CurrencyService.FormatFromUSD(monthlyTotalUSD, now);
 
         // Transaction count
         TransactionCount = _allExpenses.Count;
@@ -450,6 +457,12 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 SupplierName = supplier?.Name ?? "-",
                 Date = purchase.Date,
                 Total = purchase.Total,
+                TotalUSD = purchase.EffectiveTotalUSD,
+                AmountUSD = purchase.Amount > 0 && purchase.Total > 0 ? purchase.EffectiveTotalUSD * (purchase.Amount / purchase.Total) : 0,
+                TaxAmountUSD = purchase.TaxAmountUSD > 0 ? purchase.TaxAmountUSD : purchase.TaxAmount,
+                ShippingCostUSD = purchase.EffectiveShippingCostUSD,
+                DiscountUSD = purchase.DiscountUSD > 0 ? purchase.DiscountUSD : purchase.Discount,
+                UnitPriceUSD = purchase.EffectiveUnitPriceUSD,
                 HasReceipt = hasReceipt,
                 ReceiptFilePath = receiptFilePath,
                 StatusDisplay = statusDisplay,
@@ -707,6 +720,24 @@ public partial class ExpenseDisplayItem : ObservableObject
     private decimal _total;
 
     [ObservableProperty]
+    private decimal _totalUSD;
+
+    [ObservableProperty]
+    private decimal _amountUSD;
+
+    [ObservableProperty]
+    private decimal _taxAmountUSD;
+
+    [ObservableProperty]
+    private decimal _shippingCostUSD;
+
+    [ObservableProperty]
+    private decimal _discountUSD;
+
+    [ObservableProperty]
+    private decimal _unitPriceUSD;
+
+    [ObservableProperty]
     private bool _hasReceipt;
 
     [ObservableProperty]
@@ -749,13 +780,13 @@ public partial class ExpenseDisplayItem : ObservableObject
     private PaymentMethod _paymentMethod;
 
     public string DateFormatted => DateFormatService.Format(Date);
-    public string TotalFormatted => $"${Total:N2}";
-    public string AmountFormatted => $"${Amount:N2}";
-    public string TaxAmountFormatted => $"${TaxAmount:N2}";
+    public string TotalFormatted => CurrencyService.FormatFromUSD(TotalUSD, Date);
+    public string AmountFormatted => CurrencyService.FormatFromUSD(AmountUSD, Date);
+    public string TaxAmountFormatted => CurrencyService.FormatFromUSD(TaxAmountUSD, Date);
     public string TaxRateFormatted => $"{TaxRate:N1}%";
-    public string ShippingCostFormatted => $"${ShippingCost:N2}";
-    public string DiscountFormatted => $"-${Discount:N2}";
-    public string UnitPriceFormatted => $"${UnitPrice:N2}";
+    public string ShippingCostFormatted => CurrencyService.FormatFromUSD(ShippingCostUSD, Date);
+    public string DiscountFormatted => $"-{CurrencyService.FormatFromUSD(DiscountUSD, Date)}";
+    public string UnitPriceFormatted => CurrencyService.FormatFromUSD(UnitPriceUSD, Date);
     public string ReceiptIcon => HasReceipt ? "✓" : "✗";
 
     public bool IsReturned => StatusDisplay == "Returned";

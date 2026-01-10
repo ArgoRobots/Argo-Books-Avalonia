@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -231,6 +232,13 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
             App.PaymentModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.PaymentModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+
+        // Subscribe to currency changes to refresh currency display
+        CurrencyService.CurrencyChanged += (_, _) =>
+        {
+            UpdateStatistics();
+            FilterPayments();
+        };
     }
 
     /// <summary>
@@ -342,11 +350,11 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        // Received this month (completed payments only)
-        var monthlyReceived = _allPayments
+        // Received this month (completed payments only) - calculate in USD, convert for display
+        var monthlyReceivedUSD = _allPayments
             .Where(p => p.Date >= startOfMonth && GetPaymentStatus(p) == "Completed")
-            .Sum(p => p.Amount);
-        ReceivedThisMonth = $"${monthlyReceived:N2}";
+            .Sum(p => p.EffectiveAmountUSD);
+        ReceivedThisMonth = CurrencyService.FormatFromUSD(monthlyReceivedUSD, now);
 
         // Total transactions
         TotalTransactions = _allPayments.Count;
@@ -490,6 +498,7 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
                     _ => payment.PaymentMethod.ToString()
                 },
                 Amount = payment.Amount,
+                AmountUSD = payment.EffectiveAmountUSD,
                 Status = status,
                 ReferenceNumber = payment.ReferenceNumber,
                 Notes = payment.Notes
@@ -630,6 +639,9 @@ public partial class PaymentDisplayItem : ObservableObject
     private decimal _amount;
 
     [ObservableProperty]
+    private decimal _amountUSD;
+
+    [ObservableProperty]
     private string _status = "Completed";
 
     [ObservableProperty]
@@ -646,7 +658,9 @@ public partial class PaymentDisplayItem : ObservableObject
     /// <summary>
     /// Gets the formatted amount.
     /// </summary>
-    public string AmountFormatted => Amount < 0 ? $"-${Math.Abs(Amount):N2}" : $"${Amount:N2}";
+    public string AmountFormatted => AmountUSD < 0
+        ? $"-{CurrencyService.FormatFromUSD(Math.Abs(AmountUSD), Date)}"
+        : CurrencyService.FormatFromUSD(AmountUSD, Date);
 
     /// <summary>
     /// Gets whether the amount is negative (refund).
