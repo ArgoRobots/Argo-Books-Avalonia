@@ -55,11 +55,10 @@ public class LocExtension : MarkupExtension
         if (string.IsNullOrEmpty(_key))
             return string.Empty;
 
-        // Create a binding to the localization source
-        var binding = new Binding
+        // Create a binding to the localization source using ReflectionBindingExtension
+        var binding = new ReflectionBindingExtension($"[{_key}]")
         {
             Source = LocalizationSource.Instance,
-            Path = $"[{_key}]",
             Mode = BindingMode.OneWay
         };
 
@@ -132,7 +131,6 @@ public class LocalizationSource : INotifyPropertyChanged
         // Notify all bindings that translations have changed
         // Using Indexer property to force re-evaluation of all Loc bindings
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(Binding.IndexerName));
     }
 
     /// <summary>
@@ -141,7 +139,6 @@ public class LocalizationSource : INotifyPropertyChanged
     public void Refresh()
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(Binding.IndexerName));
     }
 }
 
