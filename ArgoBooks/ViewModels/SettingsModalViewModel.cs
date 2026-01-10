@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -14,9 +15,22 @@ public partial class SettingsModalViewModel : ViewModelBase
     // Store original values for reverting on cancel
     private string _originalTheme;
     private string _originalAccentColor;
+    private string _originalLanguage = "English";
     private string _originalDateFormat = "MM/DD/YYYY";
     private string _originalCurrency = "USD - US Dollar ($)";
     private int _originalMaxPieSlices = 6;
+
+    // Flag to prevent firing LanguageChanged when loading from settings
+    private bool _isLoadingLanguage;
+
+    // Flag to indicate if language download is in progress
+    [ObservableProperty]
+    private bool _isDownloadingLanguage;
+
+    /// <summary>
+    /// Event raised when language changes.
+    /// </summary>
+    public event EventHandler<LanguageSettingsChangedEventArgs>? LanguageSettingsChanged;
 
     [ObservableProperty]
     private bool _isOpen;
@@ -28,6 +42,30 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _selectedLanguage = "English";
+
+    /// <summary>
+    /// Called when language selection changes.
+    /// </summary>
+    partial void OnSelectedLanguageChanged(string value)
+    {
+        // Don't fire event when loading from company settings
+        if (_isLoadingLanguage || string.IsNullOrEmpty(value)) return;
+
+        // Fire event to notify language change is requested
+        // The actual language service update happens on save
+        LanguageSettingsChanged?.Invoke(this, new LanguageSettingsChangedEventArgs(value, false));
+    }
+
+    /// <summary>
+    /// Sets the language value without triggering the change event.
+    /// Used when syncing UI with company settings on load.
+    /// </summary>
+    public void SetLanguageWithoutNotify(string value)
+    {
+        _isLoadingLanguage = true;
+        SelectedLanguage = value;
+        _isLoadingLanguage = false;
+    }
 
     [ObservableProperty]
     private string _selectedCurrency = "USD - US Dollar ($)";
@@ -391,6 +429,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     public bool HasUnsavedChanges =>
         SelectedTheme != _originalTheme ||
         SelectedAccentColor != _originalAccentColor ||
+        SelectedLanguage != _originalLanguage ||
         SelectedDateFormat != _originalDateFormat ||
         SelectedCurrency != _originalCurrency ||
         MaxPieSlices != _originalMaxPieSlices;
@@ -428,13 +467,20 @@ public partial class SettingsModalViewModel : ViewModelBase
         SelectedTheme = ThemeService.Instance.CurrentThemeName;
         SelectedAccentColor = ThemeService.Instance.CurrentAccentColor;
 
-        // Load date format and currency from company settings
+        // Load language, date format and currency from company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;
         if (settings != null)
         {
+            // Load language without triggering change event
+            SetLanguageWithoutNotify(settings.Localization.Language);
             SelectedDateFormat = settings.Localization.DateFormat;
             // Convert currency code to display string
             SelectedCurrency = CurrencyService.GetDisplayString(settings.Localization.Currency);
+        }
+        else
+        {
+            // Default language
+            SetLanguageWithoutNotify(LanguageService.Instance.CurrentLanguage);
         }
 
         // Load max pie slices from global settings
@@ -447,6 +493,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Store original values for potential revert
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
+        _originalLanguage = SelectedLanguage;
         _originalDateFormat = SelectedDateFormat;
         _originalCurrency = SelectedCurrency;
         _originalMaxPieSlices = MaxPieSlices;
@@ -512,6 +559,10 @@ public partial class SettingsModalViewModel : ViewModelBase
             SelectedAccentColor = _originalAccentColor;
             ApplyAccentColor(_originalAccentColor);
         }
+        if (SelectedLanguage != _originalLanguage)
+        {
+            SetLanguageWithoutNotify(_originalLanguage);
+        }
         if (SelectedDateFormat != _originalDateFormat)
         {
             SelectedDateFormat = _originalDateFormat;
@@ -538,6 +589,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     private async Task SaveAsync()
     {
         // Check what changed before updating original values
+        var languageChanged = SelectedLanguage != _originalLanguage;
         var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
         var currencyChanged = SelectedCurrency != _originalCurrency;
         var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
@@ -548,14 +600,16 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Update original values to current (so close doesn't revert)
         _originalTheme = SelectedTheme;
         _originalAccentColor = SelectedAccentColor;
+        _originalLanguage = SelectedLanguage;
         _originalDateFormat = SelectedDateFormat;
         _originalCurrency = SelectedCurrency;
         _originalMaxPieSlices = MaxPieSlices;
 
-        // Save date format and currency to company settings
+        // Save language, date format and currency to company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;
         if (settings != null)
         {
+            settings.Localization.Language = SelectedLanguage;
             settings.Localization.DateFormat = SelectedDateFormat;
             // Extract currency code from display string (e.g., "USD - US Dollar ($)" -> "USD")
             settings.Localization.Currency = newCurrencyCode;
@@ -588,6 +642,25 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (maxPieSlicesChanged)
         {
             ChartSettingsService.NotifyMaxPieSlicesChanged();
+        }
+
+        // Apply language change via LanguageService
+        if (languageChanged)
+        {
+            IsDownloadingLanguage = true;
+            try
+            {
+                var success = await LanguageService.Instance.SetLanguageAsync(SelectedLanguage);
+                if (success)
+                {
+                    // Notify that language was saved successfully
+                    LanguageSettingsChanged?.Invoke(this, new LanguageSettingsChangedEventArgs(SelectedLanguage, true));
+                }
+            }
+            finally
+            {
+                IsDownloadingLanguage = false;
+            }
         }
 
         // Save the company file if there are unsaved changes (e.g., security settings)
@@ -982,4 +1055,20 @@ public class WindowsHelloEventArgs(bool enabled) : EventArgs
     /// Whether Windows Hello is enabled.
     /// </summary>
     public bool Enabled { get; } = enabled;
+}
+
+/// <summary>
+/// Event args for language settings changes.
+/// </summary>
+public class LanguageSettingsChangedEventArgs(string language, bool applied) : EventArgs
+{
+    /// <summary>
+    /// The selected language name (e.g., "French", "German").
+    /// </summary>
+    public string Language { get; } = language;
+
+    /// <summary>
+    /// Whether the language change has been applied (translations downloaded and active).
+    /// </summary>
+    public bool Applied { get; } = applied;
 }
