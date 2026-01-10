@@ -478,7 +478,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 {
                     case ConfirmationResult.Primary:
                         // Save and close
-                        await SaveAsyncCommand.ExecuteAsync(null);
+                        await SaveAsync();
                         return;
                     case ConfirmationResult.Secondary:
                         // Don't save, revert and close
