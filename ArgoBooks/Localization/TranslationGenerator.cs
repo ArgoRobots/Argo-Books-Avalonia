@@ -190,7 +190,7 @@ public partial class TranslationGenerator
     /// Translates all collected strings to the specified languages.
     /// </summary>
     /// <param name="englishStrings">Dictionary of key -> English text.</param>
-    /// <param name="targetLanguages">List of target language names (e.g., "French", "German").</param>
+    /// <param name="targetLanguages">List of target languages (names like "French" or ISO codes like "fr").</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Dictionary of ISO code -> (key -> translated text).</returns>
     public async Task<Dictionary<string, Dictionary<string, string>>> TranslateAllAsync(
@@ -209,7 +209,20 @@ public partial class TranslationGenerator
             cancellationToken.ThrowIfCancellationRequested();
 
             currentLanguage++;
-            var isoCode = Languages.GetIsoCode(language);
+
+            // Accept either language name ("French") or ISO code ("fr")
+            string isoCode;
+            string displayName;
+            if (Languages.IsValidIsoCode(language))
+            {
+                isoCode = language;
+                displayName = Languages.GetLanguageName(language) ?? language;
+            }
+            else
+            {
+                isoCode = Languages.GetIsoCode(language);
+                displayName = language;
+            }
 
             if (isoCode == "en")
             {
@@ -218,7 +231,7 @@ public partial class TranslationGenerator
                 continue;
             }
 
-            ReportProgress($"Translating to {language}...", currentLanguage, totalLanguages);
+            ReportProgress($"Translating to {displayName} ({isoCode})...", currentLanguage, totalLanguages);
 
             var translations = await TranslateToLanguageAsync(englishStrings, isoCode, cancellationToken);
             results[isoCode] = translations;
@@ -303,39 +316,35 @@ public partial class TranslationGenerator
         string targetIsoCode,
         CancellationToken cancellationToken)
     {
-        try
+        var route = $"/translate?api-version=3.0&from=en&to={targetIsoCode}";
+        var uri = new Uri(AzureEndpoint + route);
+
+        // Build request body
+        var requestBody = texts.Select(t => new { Text = t }).ToArray();
+        var requestJson = JsonSerializer.Serialize(requestBody);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, uri);
+        request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+        request.Headers.Add("Ocp-Apim-Subscription-Key", _azureKey);
+        request.Headers.Add("Ocp-Apim-Subscription-Region", _azureRegion);
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
         {
-            var route = $"/translate?api-version=3.0&from=en&to={targetIsoCode}";
-            var uri = new Uri(AzureEndpoint + route);
-
-            // Build request body
-            var requestBody = texts.Select(t => new { Text = t }).ToArray();
-            var requestJson = JsonSerializer.Serialize(requestBody);
-
-            using var request = new HttpRequestMessage(HttpMethod.Post, uri);
-            request.Content = new StringContent(requestJson, Encoding.UTF8, "application/json");
-            request.Headers.Add("Ocp-Apim-Subscription-Key", _azureKey);
-            request.Headers.Add("Ocp-Apim-Subscription-Region", _azureRegion);
-
-            var response = await _httpClient.SendAsync(request, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
-            var responseData = JsonSerializer.Deserialize<List<TranslationResponse>>(responseJson);
-
-            if (responseData == null)
-                return texts; // Return originals on failure
-
-            return responseData
-                .Select(r => r.translations?.FirstOrDefault()?.text ?? "")
-                .ToList();
+            var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"Azure Translator API error ({response.StatusCode}): {errorBody}");
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Translation API error: {ex.Message}");
-            // Return original texts on error
-            return texts;
-        }
+
+        var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+        var responseData = JsonSerializer.Deserialize<List<TranslationResponse>>(responseJson);
+
+        if (responseData == null)
+            throw new InvalidOperationException("Azure Translator API returned null response");
+
+        return responseData
+            .Select(r => r.translations?.FirstOrDefault()?.text ?? "")
+            .ToList();
     }
 
     /// <summary>
