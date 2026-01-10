@@ -113,7 +113,7 @@ public partial class LanguageService
     {
         try
         {
-            // Load non-English translation cache
+            // Load non-English translation cache from translations.json
             if (File.Exists(_translationsFilePath))
             {
                 var content = File.ReadAllText(_translationsFilePath);
@@ -126,6 +126,9 @@ public partial class LanguageService
                     }
                 }
             }
+
+            // Also load individual language JSON files (e.g., fr.json, de.json) for easier testing
+            LoadIndividualLanguageFiles();
 
             // Load English translations
             if (File.Exists(_englishFilePath))
@@ -146,6 +149,63 @@ public partial class LanguageService
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"LanguageService: Error loading cached translations: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Loads individual language JSON files from the cache directory.
+    /// This allows placing files like fr.json, de.json directly in the Languages folder.
+    /// </summary>
+    private void LoadIndividualLanguageFiles()
+    {
+        try
+        {
+            var jsonFiles = Directory.GetFiles(_cacheDirectory, "*.json");
+            foreach (var file in jsonFiles)
+            {
+                var fileName = Path.GetFileNameWithoutExtension(file);
+
+                // Skip translations.json and en.json (handled separately)
+                if (fileName == "translations" || fileName == "en")
+                    continue;
+
+                // Check if it's a valid ISO code
+                if (!Languages.IsValidIsoCode(fileName))
+                    continue;
+
+                try
+                {
+                    var content = File.ReadAllText(file);
+                    if (!string.IsNullOrWhiteSpace(content))
+                    {
+                        var translations = JsonSerializer.Deserialize<Dictionary<string, string>>(content);
+                        if (translations != null && translations.Count > 0)
+                        {
+                            // Merge with existing translations (file takes priority)
+                            if (!_translationCache.TryGetValue(fileName, out var existing))
+                            {
+                                existing = new Dictionary<string, string>();
+                                _translationCache[fileName] = existing;
+                            }
+
+                            foreach (var kvp in translations)
+                            {
+                                existing[kvp.Key] = kvp.Value;
+                            }
+
+                            System.Diagnostics.Debug.WriteLine($"LanguageService: Loaded {translations.Count} translations from {fileName}.json");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"LanguageService: Error loading {file}: {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"LanguageService: Error scanning language files: {ex.Message}");
         }
     }
 
