@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="500"
              x:Class="ArgoBooks.Panels.QuickActionsPanel"
              x:DataType="vm:QuickActionsViewModel">
@@ -34,7 +35,7 @@
                         <TextBox x:Name="SearchInput"
                                  Grid.Column="1"
                                  Classes="search-input"
-                                 Watermark="Type to search..."
+                                 Watermark="{loc:Loc 'Type to search...'}"
                                  Text="{Binding SearchQuery, Mode=TwoWay}"
                                  BorderThickness="0"
                                  Background="Transparent"
@@ -47,7 +48,7 @@
                                 CornerRadius="4"
                                 Padding="8,4"
                                 VerticalAlignment="Center">
-                            <TextBlock Text="Esc"
+                            <TextBlock Text="{loc:Loc Esc}"
                                        FontSize="11"
                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                         </Border>
@@ -62,7 +63,7 @@
                     <StackPanel Spacing="0">
                         <!-- Quick Actions Section -->
                         <StackPanel IsVisible="{Binding HasQuickActions}">
-                            <TextBlock Text="Quick Actions"
+                            <TextBlock Text="{loc:Loc 'Quick Actions'}"
                                        FontSize="11"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
@@ -101,7 +102,7 @@
 
                         <!-- Navigation Section -->
                         <StackPanel IsVisible="{Binding HasNavigationItems}">
-                            <TextBlock Text="Go To"
+                            <TextBlock Text="{loc:Loc 'Go To'}"
                                        FontSize="11"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
@@ -140,7 +141,7 @@
 
                         <!-- Tools Section -->
                         <StackPanel IsVisible="{Binding HasToolsItems}">
-                            <TextBlock Text="Tools &amp; Settings"
+                            <TextBlock Text="{loc:Loc 'Tools &amp; Settings'}"
                                        FontSize="11"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
@@ -181,7 +182,7 @@
                         <StackPanel IsVisible="{Binding !HasResults}"
                                     HorizontalAlignment="Center"
                                     Margin="0,40">
-                            <TextBlock Text="No results found"
+                            <TextBlock Text="{loc:Loc 'No results found'}"
                                        FontSize="14"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        HorizontalAlignment="Center" />

@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.DepartmentsPage"
              x:DataType="vm:DepartmentsPageViewModel">
@@ -22,19 +23,19 @@
     <Grid RowDefinitions="Auto,*" Margin="24">
         <!-- Statistics Cards Row -->
         <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-            <controls:StatCard Label="Total Departments"
+            <controls:StatCard Label="{loc:Loc 'Total Departments'}"
                                Value="{Binding TotalDepartments}"
                                Icon="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"
                                IconColor="Primary" />
-            <controls:StatCard Label="Active Departments"
+            <controls:StatCard Label="{loc:Loc 'Active Departments'}"
                                Value="{Binding ActiveDepartments}"
                                Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
                                IconColor="Success" />
-            <controls:StatCard Label="Total Employees"
+            <controls:StatCard Label="{loc:Loc 'Total Employees'}"
                                Value="{Binding TotalEmployees}"
                                Icon="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
                                IconColor="Warning" />
-            <controls:StatCard Label="New This Month"
+            <controls:StatCard Label="{loc:Loc 'New This Month'}"
                                Value="{Binding NewThisMonth}"
                                Icon="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                IconColor="Info" />
@@ -56,7 +57,7 @@
                     <Grid ColumnDefinitions="*,Auto">
                         <!-- Title -->
                         <TextBlock Grid.Column="0"
-                                   Text="Departments"
+                                   Text="{loc:Loc 'Departments'}"
                                    FontSize="18"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -78,7 +79,7 @@
                                               Margin="12,0,8,0" />
                                     <TextBox Grid.Column="1"
                                              Text="{Binding SearchQuery, Mode=TwoWay}"
-                                             Watermark="Search departments..."
+                                             Watermark="{loc:Loc 'Search departments...'}"
                                              Classes="search-input" />
                                 </Grid>
                             </Border>
@@ -90,7 +91,7 @@
                                     <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                               Width="16" Height="16"
                                               Foreground="White" />
-                                    <TextBlock Text="Add Department" />
+                                    <TextBlock Text="{loc:Loc 'Add Department'}" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -113,7 +114,7 @@
                             <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                 <!-- Department -->
                                 <Panel Width="{Binding ColumnWidths.DepartmentColumnWidth}" IsVisible="{Binding ShowDepartmentColumn}">
-                                    <controls:SortableColumnHeader Text="Department" ColumnName="Name"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Department'}" ColumnName="Name"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -123,7 +124,7 @@
                                 </Panel>
                                 <!-- Description -->
                                 <Panel Width="{Binding ColumnWidths.DescriptionColumnWidth}" IsVisible="{Binding ShowDescriptionColumn}">
-                                    <controls:SortableColumnHeader Text="Description" ColumnName="Description"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Description'}" ColumnName="Description"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -133,7 +134,7 @@
                                 </Panel>
                                 <!-- Employees -->
                                 <Panel Width="{Binding ColumnWidths.EmployeesColumnWidth}" IsVisible="{Binding ShowEmployeesColumn}">
-                                    <controls:SortableColumnHeader Text="Employees" ColumnName="EmployeeCount"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Employees'}" ColumnName="EmployeeCount"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -143,7 +144,7 @@
                                 </Panel>
                                 <!-- Actions (Fixed) -->
                                 <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                    <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                    <TextBlock Text="{loc:Loc 'Actions'}" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                HorizontalAlignment="Left"
@@ -224,14 +225,14 @@
                                                                     Spacing="4"
                                                                     Margin="8,0">
                                                             <Button Classes="icon-button"
-                                                                    ToolTip.Tip="Edit"
+                                                                    ToolTip.Tip="{loc:Loc 'Edit'}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).OpenEditModalCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
                                                                           Width="16" Height="16" />
                                                             </Button>
                                                             <Button Classes="icon-button danger"
-                                                                    ToolTip.Tip="Delete"
+                                                                    ToolTip.Tip="{loc:Loc 'Delete'}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:DepartmentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -259,12 +260,12 @@
                                                       Width="28" Height="28"
                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </Border>
-                                        <TextBlock Text="No departments found"
+                                        <TextBlock Text="{loc:Loc 'No departments found'}"
                                                    FontSize="16"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    HorizontalAlignment="Center" />
-                                        <TextBlock Text="Add your first department to organize your company structure."
+                                        <TextBlock Text="{loc:Loc 'Add your first department to organize your company structure.'}"
                                                    FontSize="14"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
@@ -279,7 +280,7 @@
                                                 <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                           Width="16" Height="16"
                                                           Foreground="White" />
-                                                <TextBlock Text="Add Department" />
+                                                <TextBlock Text="{loc:Loc 'Add Department'}" />
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
@@ -311,7 +312,7 @@
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        VerticalAlignment="Center"
                                        Margin="8,0" />
-                            <TextBlock Text="Rows per page:"
+                            <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        VerticalAlignment="Center" />
@@ -379,9 +380,9 @@
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowDepartmentColumn}" Content="Department" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="Description" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowEmployeesColumn}" Content="Employees" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDepartmentColumn}" Content="{loc:Loc 'Department'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc 'Description'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowEmployeesColumn}" Content="{loc:Loc 'Employees'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

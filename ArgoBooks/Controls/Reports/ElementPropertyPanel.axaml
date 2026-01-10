@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="600"
              x:Class="ArgoBooks.Controls.Reports.ElementPropertyPanel"
              x:Name="PropertyPanel"
@@ -72,7 +73,7 @@
 
             <!-- No Selection Message -->
             <TextBlock x:Name="NoSelectionMessage"
-                       Text="No element selected"
+                       Text="{loc:Loc 'No element selected'}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        Foreground="#9E9E9E"
@@ -83,7 +84,7 @@
             <!-- Multi-Selection Message -->
             <StackPanel x:Name="MultiSelectionPanel"
                         IsVisible="{Binding HasMultiSelection, ElementName=PropertyPanel}">
-                <TextBlock Text="Multiple Elements Selected"
+                <TextBlock Text="{loc:Loc 'Multiple Elements Selected'}"
                            Classes="section-header"
                            HorizontalAlignment="Center"/>
                 <TextBlock x:Name="SelectionCountText"
@@ -113,12 +114,12 @@
                 </Border>
 
                 <!-- Common Properties Section -->
-                <TextBlock Text="Position &amp; Size" Classes="section-header"/>
+                <TextBlock Text="{loc:Loc 'Position &amp; Size'}" Classes="section-header"/>
 
                 <Grid ColumnDefinitions="*,8,*" RowDefinitions="Auto,8,Auto">
                     <!-- X Position -->
                     <StackPanel Grid.Row="0" Grid.Column="0">
-                        <TextBlock Text="X" Classes="property-label"/>
+                        <TextBlock Text="{loc:Loc X}" Classes="property-label"/>
                         <NumericUpDown x:Name="PositionX"
                                        Classes="property-input"
                                        Minimum="0"
@@ -128,7 +129,7 @@
 
                     <!-- Y Position -->
                     <StackPanel Grid.Row="0" Grid.Column="2">
-                        <TextBlock Text="Y" Classes="property-label"/>
+                        <TextBlock Text="{loc:Loc Y}" Classes="property-label"/>
                         <NumericUpDown x:Name="PositionY"
                                        Classes="property-input"
                                        Minimum="0"
@@ -138,7 +139,7 @@
 
                     <!-- Width -->
                     <StackPanel Grid.Row="2" Grid.Column="0">
-                        <TextBlock Text="Width" Classes="property-label"/>
+                        <TextBlock Text="{loc:Loc Width}" Classes="property-label"/>
                         <NumericUpDown x:Name="ElementWidth"
                                        Classes="property-input"
                                        Minimum="20"
@@ -148,7 +149,7 @@
 
                     <!-- Height -->
                     <StackPanel Grid.Row="2" Grid.Column="2">
-                        <TextBlock Text="Height" Classes="property-label"/>
+                        <TextBlock Text="{loc:Loc Height}" Classes="property-label"/>
                         <NumericUpDown x:Name="ElementHeight"
                                        Classes="property-input"
                                        Minimum="20"
@@ -160,15 +161,15 @@
                 <Border Classes="property-separator"/>
 
                 <!-- Lock/Visibility Properties -->
-                <TextBlock Text="Display" Classes="section-header"/>
+                <TextBlock Text="{loc:Loc Display}" Classes="section-header"/>
 
                 <StackPanel Spacing="8">
                     <CheckBox x:Name="IsLockedCheckbox"
-                              Content="Lock element"
+                              Content="{loc:Loc 'Lock element'}"
                               Classes="property-checkbox"
                               IsCheckedChanged="OnIsLockedChanged"/>
                     <CheckBox x:Name="IsVisibleCheckbox"
-                              Content="Visible"
+                              Content="{loc:Loc Visible}"
                               Classes="property-checkbox"
                               IsCheckedChanged="OnIsVisibleChanged"/>
                 </StackPanel>
@@ -176,32 +177,32 @@
                 <Border Classes="property-separator"/>
 
                 <!-- Z-Order Section -->
-                <TextBlock Text="Layer Order" Classes="section-header"/>
+                <TextBlock Text="{loc:Loc 'Layer Order'}" Classes="section-header"/>
 
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Button x:Name="BringToFrontButton"
-                            ToolTip.Tip="Bring to Front"
+                            ToolTip.Tip="{loc:Loc 'Bring to Front'}"
                             Click="OnBringToFrontClick"
                             Padding="8,6">
                         <PathIcon Width="16" Height="16"
                                   Data="M2,2H11V11H2V2M9,4H4V9H9V4M22,13V22H13V13H22M20,15H15V20H20V15M16,8V11H13V8H16M8,16H11V13H8V16Z"/>
                     </Button>
                     <Button x:Name="SendToBackButton"
-                            ToolTip.Tip="Send to Back"
+                            ToolTip.Tip="{loc:Loc 'Send to Back'}"
                             Click="OnSendToBackClick"
                             Padding="8,6">
                         <PathIcon Width="16" Height="16"
                                   Data="M2,2H16V16H2V2M14,14V4H4V14H14M22,8V22H8V20H20V8H22Z"/>
                     </Button>
                     <Button x:Name="BringForwardButton"
-                            ToolTip.Tip="Bring Forward"
+                            ToolTip.Tip="{loc:Loc 'Bring Forward'}"
                             Click="OnBringForwardClick"
                             Padding="8,6">
                         <PathIcon Width="16" Height="16"
                                   Data="M6,6H18V18H6V6M8,8V16H16V8H8Z"/>
                     </Button>
                     <Button x:Name="SendBackwardButton"
-                            ToolTip.Tip="Send Backward"
+                            ToolTip.Tip="{loc:Loc 'Send Backward'}"
                             Click="OnSendBackwardClick"
                             Padding="8,6">
                         <PathIcon Width="16" Height="16"

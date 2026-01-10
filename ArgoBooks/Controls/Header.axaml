@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="60"
              x:Class="ArgoBooks.Controls.Header"
              x:DataType="vm:HeaderViewModel">
@@ -41,7 +42,7 @@
                     <TextBox x:Name="SearchInput"
                              Grid.Column="1"
                              Text="{Binding SearchQuery, Mode=TwoWay}"
-                             Watermark="Search or jump to..."
+                             Watermark="{loc:Loc 'Search or jump to...'}"
                              Classes="header-search"
                              GotFocus="SearchInput_GotFocus"
                              KeyDown="SearchInput_KeyDown"
@@ -69,7 +70,7 @@
                 <!-- File Menu Button -->
                 <Button Classes="header-icon"
                         Command="{Binding OpenFileMenuCommand}"
-                        ToolTip.Tip="File">
+                        ToolTip.Tip="{loc:Loc File}">
                     <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
                               Width="18" Height="18" />
                 </Button>
@@ -83,7 +84,7 @@
                     <!-- Save Button -->
                     <Button Classes="header-icon"
                             Command="{Binding SaveCommand}"
-                            ToolTip.Tip="Save">
+                            ToolTip.Tip="{loc:Loc Save}">
                         <PathIcon Data="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"
                                   Width="18" Height="18" />
                     </Button>
@@ -94,7 +95,7 @@
                     <Border Width="105" VerticalAlignment="Center" Margin="4,0,0,0">
                         <Panel>
                             <!-- "No changes found" indicator (temporary, shows when save clicked with no changes) -->
-                            <TextBlock Text="No changes found"
+                            <TextBlock Text="{loc:Loc 'No changes found'}"
                                        FontSize="12"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        VerticalAlignment="Center"
@@ -108,7 +109,7 @@
                             </TextBlock>
 
                             <!-- "Saved" indicator (temporary, shows when save clicked with changes) -->
-                            <TextBlock Text="Saved"
+                            <TextBlock Text="{loc:Loc Saved}"
                                        FontSize="12"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource SuccessBrush}"
@@ -135,7 +136,7 @@
                 <!-- Upgrade Button (blue circle with up arrow) - hidden when user has Premium -->
                 <Button Classes="header-icon"
                         Command="{Binding OpenUpgradeCommand}"
-                        ToolTip.Tip="Upgrades"
+                        ToolTip.Tip="{loc:Loc Upgrades}"
                         IsVisible="{Binding ShowUpgrade}">
                     <Panel Width="24" Height="24">
                         <Ellipse Fill="{DynamicResource PrimaryBrush}" Width="24" Height="24" />
@@ -150,7 +151,7 @@
                 <!-- Notifications -->
                 <Button Classes="header-icon"
                         Command="{Binding OpenNotificationsCommand}"
-                        ToolTip.Tip="Notifications">
+                        ToolTip.Tip="{loc:Loc Notifications}">
                     <Panel>
                         <PathIcon Data="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"
                                   Width="20" Height="20" />
@@ -176,7 +177,7 @@
                 <!-- Help -->
                 <Button Classes="header-icon"
                         Command="{Binding OpenHelpCommand}"
-                        ToolTip.Tip="Help">
+                        ToolTip.Tip="{loc:Loc Help}">
                     <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
                               Width="20" Height="20" />
                 </Button>

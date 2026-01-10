@@ -34,7 +34,10 @@ public class CompanyInfo
 
 public class LocalizationSettings
 {
-    public string Language { get; set; } = "en-US";
+    /// <summary>
+    /// The display language name (e.g., "English", "French", "German").
+    /// </summary>
+    public string Language { get; set; } = "English";
     public string Currency { get; set; } = "USD";
     public string DateFormat { get; set; } = "MM/DD/YYYY";
 }

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="50"
              x:Class="ArgoBooks.Controls.PaginationFooter"
              x:DataType="controls:PaginationFooter"
@@ -33,7 +34,7 @@
                            Foreground="{DynamicResource TextTertiaryBrush}"
                            VerticalAlignment="Center"
                            Margin="8,0" />
-                <TextBlock Text="Rows per page:"
+                <TextBlock Text="{loc:Loc 'Rows per page:'}"
                            FontSize="13"
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            VerticalAlignment="Center" />

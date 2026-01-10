@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:modals="using:ArgoBooks.Modals"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReportModals"
              x:DataType="vm:ReportModalsViewModel">
@@ -57,7 +58,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="Delete Template"
+                                       Text="{loc:Loc 'Delete Template'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -75,9 +76,9 @@
                         <TextBlock TextWrapping="Wrap"
                                    FontSize="14"
                                    Foreground="{DynamicResource TextSecondaryBrush}">
-                            <Run Text="Are you sure you want to delete the template" />
+                            <Run Text="{loc:Loc 'Are you sure you want to delete the template'}" />
                             <Run Text="{Binding ReportsPageViewModel.TemplateToDelete}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <Run Text="? This action cannot be undone." />
+                            <Run Text="{loc:Loc '? This action cannot be undone.'}" />
                         </TextBlock>
                     </StackPanel>
 
@@ -92,10 +93,10 @@
                                     HorizontalAlignment="Right"
                                     Spacing="12">
                             <Button Classes="secondary-button"
-                                    Content="Cancel"
+                                    Content="{loc:Loc 'Cancel'}"
                                     Command="{Binding ReportsPageViewModel.CloseDeleteTemplateCommand}" />
                             <Button Classes="danger-button"
-                                    Content="Delete"
+                                    Content="{loc:Loc 'Delete'}"
                                     Command="{Binding ReportsPageViewModel.ConfirmDeleteTemplateCommand}" />
                         </StackPanel>
                     </Border>
@@ -125,7 +126,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="Rename Template"
+                                       Text="{loc:Loc 'Rename Template'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -140,11 +141,11 @@
 
                     <!-- Content -->
                     <StackPanel Grid.Row="1" Spacing="16" Margin="24">
-                        <TextBlock Text="Enter a new name for the template:"
+                        <TextBlock Text="{loc:Loc 'Enter a new name for the template:'}"
                                    FontSize="14"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                         <TextBox Text="{Binding ReportsPageViewModel.RenameTemplateNewName}"
-                                 Watermark="Template name..."
+                                 Watermark="{loc:Loc 'Template name...'}"
                                  Padding="12,10"
                                  x:Name="RenameTemplateTextBox"
                                  KeyDown="OnRenameTemplateKeyDown" />
@@ -161,10 +162,10 @@
                                     HorizontalAlignment="Right"
                                     Spacing="12">
                             <Button Classes="secondary-button"
-                                    Content="Cancel"
+                                    Content="{loc:Loc 'Cancel'}"
                                     Command="{Binding ReportsPageViewModel.CloseRenameTemplateCommand}" />
                             <Button Classes="primary-button"
-                                    Content="Rename"
+                                    Content="{loc:Loc 'Rename'}"
                                     Command="{Binding ReportsPageViewModel.ConfirmRenameTemplateCommand}" />
                         </StackPanel>
                     </Border>

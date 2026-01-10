@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="60"
              x:Class="ArgoBooks.Controls.PhoneInput"
              x:DataType="controls:PhoneInput"
@@ -79,7 +80,7 @@
                 <Grid RowDefinitions="Auto,*">
                     <!-- No Results Message -->
                     <TextBlock Grid.Row="0"
-                               Text="No countries found"
+                               Text="{loc:Loc 'No countries found'}"
                                FontSize="13"
                                Foreground="{DynamicResource TextTertiaryBrush}"
                                Padding="12,16"

@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.CategoriesPage"
              x:DataType="vm:CategoriesPageViewModel">
@@ -27,8 +28,8 @@
             <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                         Margin="0"
                         Classes="page-tabs">
-                <TabItem Header="Expenses" />
-                <TabItem Header="Revenue" />
+                <TabItem Header="{loc:Loc Expenses}" />
+                <TabItem Header="{loc:Loc Revenue}" />
             </TabControl>
         </Border>
 
@@ -73,7 +74,7 @@
                                                   Margin="12,0,8,0" />
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="Search categories..."
+                                                 Watermark="{loc:Loc 'Search categories...'}"
                                                  Classes="search-input" />
                                     </Grid>
                                 </Border>
@@ -85,7 +86,7 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
-                                        <TextBlock Text="Add Category" />
+                                        <TextBlock Text="{loc:Loc 'Add Category'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -108,7 +109,7 @@
                                 <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                     <!-- Category Name -->
                                     <Panel Width="{Binding ColumnWidths.NameColumnWidth}" IsVisible="{Binding ShowNameColumn}">
-                                        <controls:SortableColumnHeader Text="Category Name" ColumnName="Name"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Category Name'}" ColumnName="Name"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -118,7 +119,7 @@
                                     </Panel>
                                     <!-- Parent Category -->
                                     <Panel Width="{Binding ColumnWidths.ParentColumnWidth}" IsVisible="{Binding ShowParentColumn}">
-                                        <controls:SortableColumnHeader Text="Parent Category" ColumnName="Parent"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Parent Category'}" ColumnName="Parent"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -128,7 +129,7 @@
                                     </Panel>
                                     <!-- Description -->
                                     <Panel Width="{Binding ColumnWidths.DescriptionColumnWidth}" IsVisible="{Binding ShowDescriptionColumn}">
-                                        <controls:SortableColumnHeader Text="Description" ColumnName="Description"
+                                        <controls:SortableColumnHeader Text="{loc:Loc Description}" ColumnName="Description"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -138,7 +139,7 @@
                                     </Panel>
                                     <!-- Type -->
                                     <Panel Width="{Binding ColumnWidths.TypeColumnWidth}" IsVisible="{Binding ShowTypeColumn}">
-                                        <controls:SortableColumnHeader Text="Type" ColumnName="Type"
+                                        <controls:SortableColumnHeader Text="{loc:Loc Type}" ColumnName="Type"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -148,7 +149,7 @@
                                     </Panel>
                                     <!-- Products/Services -->
                                     <Panel Width="{Binding ColumnWidths.ProductCountColumnWidth}" IsVisible="{Binding ShowProductCountColumn}">
-                                        <controls:SortableColumnHeader Text="Products/Services" ColumnName="ProductCount"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Products/Services'}" ColumnName="ProductCount"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -158,7 +159,7 @@
                                     </Panel>
                                     <!-- Actions (Fixed) -->
                                     <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Loc Actions}" FontSize="12" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                    HorizontalAlignment="Left"
@@ -260,7 +261,7 @@
                                                                         Margin="8,0">
                                                                 <!-- Add Sub-category (only for parent categories) -->
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="Add Sub-category"
+                                                                        ToolTip.Tip="{loc:Loc 'Add Sub-category'}"
                                                                         IsVisible="{Binding !IsChild}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenAddSubCategoryModalCommand}"
                                                                         CommandParameter="{Binding}">
@@ -269,21 +270,21 @@
                                                                 </Button>
                                                                 <!-- Move to different parent/make sub-category -->
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="Move to different category"
+                                                                        ToolTip.Tip="{loc:Loc 'Move to different category'}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenMoveModalCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="Edit"
+                                                                        ToolTip.Tip="{loc:Loc Edit}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenEditModalCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="Delete"
+                                                                        ToolTip.Tip="{loc:Loc Delete}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -311,12 +312,12 @@
                                               Width="28" Height="28"
                                               Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </Border>
-                                <TextBlock Text="No categories found"
+                                <TextBlock Text="{loc:Loc 'No categories found'}"
                                            FontSize="16"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="Create your first category to organize your products and services."
+                                <TextBlock Text="{loc:Loc 'Create your first category to organize your products and services.'}"
                                            FontSize="14"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Center"
@@ -331,7 +332,7 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
-                                        <TextBlock Text="Add Category" />
+                                        <TextBlock Text="{loc:Loc 'Add Category'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -361,7 +362,7 @@
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                VerticalAlignment="Center"
                                                Margin="8,0" />
-                                    <TextBlock Text="Rows per page:"
+                                    <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                VerticalAlignment="Center" />
@@ -432,11 +433,11 @@
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowNameColumn}" Content="Category Name" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowParentColumn}" Content="Parent Category" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="Description" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="Type" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="Products/Services" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowNameColumn}" Content="{loc:Loc 'Category Name'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowParentColumn}" Content="{loc:Loc 'Parent Category'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc Description}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowProductCountColumn}" Content="{loc:Loc 'Products/Services'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

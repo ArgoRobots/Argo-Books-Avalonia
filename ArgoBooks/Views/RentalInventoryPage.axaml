@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.RentalInventoryPage"
              x:DataType="vm:RentalInventoryPageViewModel">
@@ -23,19 +24,19 @@
         <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-                <controls:StatCard Label="Total Items"
+                <controls:StatCard Label="{loc:Loc 'Total Items'}"
                                    Value="{Binding TotalItems}"
                                    Icon="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.37v6.71l6-3.38z"
                                    IconColor="Primary" />
-                <controls:StatCard Label="Available"
+                <controls:StatCard Label="{loc:Loc 'Available'}"
                                    Value="{Binding AvailableItems}"
                                    Icon="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                    IconColor="Success" />
-                <controls:StatCard Label="Rented Out"
+                <controls:StatCard Label="{loc:Loc 'Rented Out'}"
                                    Value="{Binding RentedOutItems}"
                                    Icon="M12.5 2C8.36 2 5 5.36 5 9.5c0 1.71.57 3.29 1.54 4.56L2.71 17.9l1.41 1.41 3.83-3.83C9.21 16.43 10.79 17 12.5 17c4.14 0 7.5-3.36 7.5-7.5S16.64 2 12.5 2zm0 13c-3.03 0-5.5-2.47-5.5-5.5S9.47 4 12.5 4 18 6.47 18 9.5 15.53 15 12.5 15z"
                                    IconColor="Info" />
-                <controls:StatCard Label="In Maintenance"
+                <controls:StatCard Label="{loc:Loc 'In Maintenance'}"
                                    Value="{Binding MaintenanceItems}"
                                    Icon="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"
                                    IconColor="Warning" />
@@ -57,7 +58,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <!-- Title -->
                             <TextBlock Grid.Column="0"
-                                       Text="Rental Items"
+                                       Text="{loc:Loc 'Rental Items'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -79,7 +80,7 @@
                                                   Margin="12,0,8,0" />
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="Search rental items..."
+                                                 Watermark="{loc:Loc 'Search rental items...'}"
                                                  Classes="search-input" />
                                     </Grid>
                                 </Border>
@@ -90,7 +91,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                   Width="16" Height="16" />
-                                        <TextBlock Text="Filter" />
+                                        <TextBlock Text="{loc:Loc 'Filter'}" />
                                     </StackPanel>
                                 </Button>
 
@@ -101,7 +102,7 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
-                                        <TextBlock Text="Add Item" />
+                                        <TextBlock Text="{loc:Loc 'Add Item'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -124,7 +125,7 @@
                                 <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                     <!-- Item -->
                                     <Panel Width="{Binding ColumnWidths.ItemColumnWidth}" IsVisible="{Binding ShowItemColumn}">
-                                        <controls:SortableColumnHeader Text="Item" ColumnName="Item"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Item'}" ColumnName="Item"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -134,7 +135,7 @@
                                     </Panel>
                                     <!-- Supplier -->
                                     <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
-                                        <controls:SortableColumnHeader Text="Supplier" ColumnName="Supplier"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Supplier'}" ColumnName="Supplier"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -144,7 +145,7 @@
                                     </Panel>
                                     <!-- Status -->
                                     <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
-                                        <controls:SortableColumnHeader Text="Status" ColumnName="Status"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Status'}" ColumnName="Status"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -154,7 +155,7 @@
                                     </Panel>
                                     <!-- Total Qty -->
                                     <Panel Width="{Binding ColumnWidths.TotalQtyColumnWidth}" IsVisible="{Binding ShowTotalQtyColumn}">
-                                        <controls:SortableColumnHeader Text="Total" ColumnName="TotalQty"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Total'}" ColumnName="TotalQty"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -164,7 +165,7 @@
                                     </Panel>
                                     <!-- Available -->
                                     <Panel Width="{Binding ColumnWidths.AvailableColumnWidth}" IsVisible="{Binding ShowAvailableColumn}">
-                                        <controls:SortableColumnHeader Text="Avail." ColumnName="Available"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Avail.'}" ColumnName="Available"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -174,7 +175,7 @@
                                     </Panel>
                                     <!-- Rented -->
                                     <Panel Width="{Binding ColumnWidths.RentedColumnWidth}" IsVisible="{Binding ShowRentedColumn}">
-                                        <controls:SortableColumnHeader Text="Rented" ColumnName="Rented"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Rented'}" ColumnName="Rented"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -184,7 +185,7 @@
                                     </Panel>
                                     <!-- Daily Rate -->
                                     <Panel Width="{Binding ColumnWidths.DailyRateColumnWidth}" IsVisible="{Binding ShowDailyRateColumn}">
-                                        <controls:SortableColumnHeader Text="Daily" ColumnName="DailyRate"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Daily'}" ColumnName="DailyRate"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -194,7 +195,7 @@
                                     </Panel>
                                     <!-- Weekly Rate -->
                                     <Panel Width="{Binding ColumnWidths.WeeklyRateColumnWidth}" IsVisible="{Binding ShowWeeklyRateColumn}">
-                                        <controls:SortableColumnHeader Text="Weekly" ColumnName="WeeklyRate"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Weekly'}" ColumnName="WeeklyRate"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -204,7 +205,7 @@
                                     </Panel>
                                     <!-- Deposit -->
                                     <Panel Width="{Binding ColumnWidths.DepositColumnWidth}" IsVisible="{Binding ShowDepositColumn}">
-                                        <controls:SortableColumnHeader Text="Deposit" ColumnName="Deposit"
+                                        <controls:SortableColumnHeader Text="{loc:Loc 'Deposit'}" ColumnName="Deposit"
                                                                         Command="{Binding SortByCommand}"
                                                                         SortColumn="{Binding SortColumn}"
                                                                         SortDirection="{Binding SortDirection}" />
@@ -214,7 +215,7 @@
                                     </Panel>
                                     <!-- Actions (Fixed) -->
                                     <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Loc 'Actions'}" FontSize="12" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                    HorizontalAlignment="Left"
@@ -363,7 +364,7 @@
                                                                         Spacing="4"
                                                                         Margin="8,0">
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="Rent Out"
+                                                                        ToolTip.Tip="{loc:Loc 'Rent Out'}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).OpenRentOutModalCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         IsEnabled="{Binding IsAvailable}">
@@ -371,14 +372,14 @@
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="Edit"
+                                                                        ToolTip.Tip="{loc:Loc 'Edit'}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).OpenEditModalCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="Delete"
+                                                                        ToolTip.Tip="{loc:Loc 'Delete'}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:RentalInventoryPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -406,12 +407,12 @@
                                                       Width="28" Height="28"
                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </Border>
-                                        <TextBlock Text="No rental items found"
+                                        <TextBlock Text="{loc:Loc 'No rental items found'}"
                                                    FontSize="16"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    HorizontalAlignment="Center" />
-                                        <TextBlock Text="Add your first rental item to start managing your rental inventory."
+                                        <TextBlock Text="{loc:Loc 'Add your first rental item to start managing your rental inventory.'}"
                                                    FontSize="14"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
@@ -426,7 +427,7 @@
                                                 <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                           Width="16" Height="16"
                                                           Foreground="White" />
-                                                <TextBlock Text="Add Item" />
+                                                <TextBlock Text="{loc:Loc 'Add Item'}" />
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
@@ -458,7 +459,7 @@
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center"
                                            Margin="8,0" />
-                                <TextBlock Text="Rows per page:"
+                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />
@@ -527,15 +528,15 @@
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowItemColumn}" Content="Item" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="Supplier" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowTotalQtyColumn}" Content="Total Qty" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowAvailableColumn}" Content="Available" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowRentedColumn}" Content="Rented" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowDailyRateColumn}" Content="Daily Rate" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowWeeklyRateColumn}" Content="Weekly Rate" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowDepositColumn}" Content="Deposit" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowItemColumn}" Content="{loc:Loc 'Item'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="{loc:Loc 'Supplier'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc 'Status'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowTotalQtyColumn}" Content="{loc:Loc 'Total Qty'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAvailableColumn}" Content="{loc:Loc 'Available'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowRentedColumn}" Content="{loc:Loc 'Rented'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDailyRateColumn}" Content="{loc:Loc 'Daily Rate'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowWeeklyRateColumn}" Content="{loc:Loc 'Weekly Rate'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDepositColumn}" Content="{loc:Loc 'Deposit'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

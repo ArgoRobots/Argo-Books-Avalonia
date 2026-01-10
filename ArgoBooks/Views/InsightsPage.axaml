@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:modals="using:ArgoBooks.Modals"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.InsightsPage"
              x:DataType="vm:InsightsPageViewModel">
@@ -20,19 +21,19 @@
         <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-                <controls:StatCard Label="AI Insights"
+                <controls:StatCard Label="{loc:Loc 'AI Insights'}"
                                    Value="{Binding TotalInsights}"
                                    Icon="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-2.3l-.85-.6C7.8 12.16 7 10.63 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"
                                    IconColor="Info" />
-                <controls:StatCard Label="Trends Detected"
+                <controls:StatCard Label="{loc:Loc 'Trends Detected'}"
                                    Value="{Binding TrendsDetected}"
                                    Icon="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
                                    IconColor="Success" />
-                <controls:StatCard Label="Anomalies"
+                <controls:StatCard Label="{loc:Loc Anomalies}"
                                    Value="{Binding AnomaliesDetected}"
                                    Icon="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
                                    IconColor="Warning" />
-                <controls:StatCard Label="Opportunities"
+                <controls:StatCard Label="{loc:Loc Opportunities}"
                                    Value="{Binding Opportunities}"
                                    Icon="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
                                    IconColor="Primary" />
@@ -57,11 +58,11 @@
                                       Foreground="{DynamicResource PrimaryBrush}" />
                         </Border>
                         <StackPanel>
-                            <TextBlock Text="AI Business Insights"
+                            <TextBlock Text="{loc:Loc 'AI Business Insights'}"
                                        FontSize="20"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Intelligent analysis of your business data"
+                            <TextBlock Text="{loc:Loc 'Intelligent analysis of your business data'}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                         </StackPanel>
@@ -69,7 +70,7 @@
 
                     <!-- Last Updated -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <TextBlock Text="Last updated:"
+                        <TextBlock Text="{loc:Loc 'Last updated:'}"
                                    FontSize="13"
                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                    VerticalAlignment="Center" />
@@ -89,7 +90,7 @@
                                         <RotateTransform />
                                     </PathIcon.RenderTransform>
                                 </PathIcon>
-                                <TextBlock Text="Refresh" />
+                                <TextBlock Text="{loc:Loc Refresh}" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -117,11 +118,11 @@
                                       Foreground="#3B82F6" />
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Forecasted Growth"
+                            <TextBlock Text="{loc:Loc 'Forecasted Growth'}"
                                        FontSize="16"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Predictions based on historical data and market trends"
+                            <TextBlock Text="{loc:Loc 'Predictions based on historical data and market trends'}"
                                        FontSize="12"
                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                         </StackPanel>
@@ -131,30 +132,30 @@
 
                     <!-- Forecast Cards Row -->
                     <controls:StatCardsRow>
-                        <controls:StatCard Label="Next Month Revenue"
+                        <controls:StatCard Label="{loc:Loc 'Next Month Revenue'}"
                                            Value="{Binding ForecastedRevenue}"
                                            ChangeValue="{Binding RevenueGrowthValue}"
                                            ChangeText="{Binding RevenueGrowth}"
-                                           ChangeLabel="from current period"
+                                           ChangeLabel="{loc:Loc 'from current period'}"
                                            UseAltBackground="True" />
-                        <controls:StatCard Label="Next Month Expenses"
+                        <controls:StatCard Label="{loc:Loc 'Next Month Expenses'}"
                                            Value="{Binding ForecastedExpenses}"
                                            ChangeValue="{Binding ExpenseGrowthValue}"
                                            ChangeText="{Binding ExpenseGrowth}"
-                                           ChangeLabel="from current period"
+                                           ChangeLabel="{loc:Loc 'from current period'}"
                                            UseAltBackground="True" />
-                        <controls:StatCard Label="Projected Profit"
+                        <controls:StatCard Label="{loc:Loc 'Projected Profit'}"
                                            Value="{Binding ForecastedProfit}"
                                            ChangeValue="{Binding ProfitGrowthValue}"
                                            ChangeText="{Binding ProfitGrowth}"
-                                           ChangeLabel="from current period"
+                                           ChangeLabel="{loc:Loc 'from current period'}"
                                            ValueColor="Success"
                                            UseAltBackground="True" />
-                        <controls:StatCard Label="Expected New Customers"
+                        <controls:StatCard Label="{loc:Loc 'Expected New Customers'}"
                                            Value="{Binding ForecastedCustomers}"
                                            ChangeValue="{Binding CustomerGrowthValue}"
                                            ChangeText="{Binding CustomerGrowth}"
-                                           ChangeLabel="from current period"
+                                           ChangeLabel="{loc:Loc 'from current period'}"
                                            UseAltBackground="True" />
                     </controls:StatCardsRow>
 
@@ -167,7 +168,7 @@
                                 <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
                                           Width="16" Height="16"
                                           Foreground="#22C55E" />
-                                <TextBlock Text="Prediction Confidence:"
+                                <TextBlock Text="{loc:Loc 'Prediction Confidence:'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />
@@ -178,7 +179,7 @@
                                            VerticalAlignment="Center" />
                             </StackPanel>
                             <TextBlock Grid.Column="2"
-                                       Text="Based on 12 months of historical data"
+                                       Text="{loc:Loc 'Based on 12 months of historical data'}"
                                        FontSize="12"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        VerticalAlignment="Center" />
@@ -211,7 +212,7 @@
                                                   Foreground="#22C55E" />
                                     </Border>
                                     <TextBlock Grid.Column="1"
-                                               Text="Revenue Trends"
+                                               Text="{loc:Loc 'Revenue Trends'}"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
@@ -280,7 +281,7 @@
                                                   Foreground="#8B5CF6" />
                                     </Border>
                                     <TextBlock Grid.Column="1"
-                                               Text="Forecasting"
+                                               Text="{loc:Loc Forecasting}"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
@@ -352,7 +353,7 @@
                                                   Foreground="#F59E0B" />
                                     </Border>
                                     <TextBlock Grid.Column="1"
-                                               Text="Anomaly Detection"
+                                               Text="{loc:Loc 'Anomaly Detection'}"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
@@ -421,7 +422,7 @@
                                                   Foreground="#3B82F6" />
                                     </Border>
                                     <TextBlock Grid.Column="1"
-                                               Text="Recommendations"
+                                               Text="{loc:Loc Recommendations}"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"

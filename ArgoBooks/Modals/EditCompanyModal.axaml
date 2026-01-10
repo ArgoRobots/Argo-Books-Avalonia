@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.EditCompanyModal"
              x:DataType="vm:EditCompanyModalViewModel"
@@ -38,11 +39,11 @@
                         Padding="24,16">
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="2">
-                            <TextBlock Text="Edit Company"
+                            <TextBlock Text="{loc:Loc 'Edit Company'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Update your company information"
+                            <TextBlock Text="{loc:Loc 'Update your company information'}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                         </StackPanel>
@@ -65,43 +66,43 @@
                             <TextBlock FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}">
-                                <Run Text="Company Name" />
+                                <Run Text="{loc:Loc 'Company Name'}" />
                                 <Run Text="*" Foreground="#dc2626" />
                             </TextBlock>
                             <TextBox Classes="form-input"
                                      Text="{Binding CompanyName, Mode=TwoWay}"
-                                     Watermark="Enter company name" />
+                                     Watermark="{loc:Loc 'Enter company name'}" />
                         </StackPanel>
 
                         <!-- Business Type -->
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Business Type"
+                            <TextBlock Text="{loc:Loc 'Business Type'}"
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                             <ComboBox ItemsSource="{Binding BusinessTypes}"
                                       SelectedItem="{Binding BusinessType}"
                                       Classes="form-combobox"
-                                      PlaceholderText="Select business type"
+                                      PlaceholderText="{loc:Loc 'Select business type'}"
                                       HorizontalAlignment="Stretch" />
                         </StackPanel>
 
                         <!-- Industry -->
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Industry"
+                            <TextBlock Text="{loc:Loc Industry}"
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                             <ComboBox ItemsSource="{Binding Industries}"
                                       SelectedItem="{Binding Industry}"
                                       Classes="form-combobox"
-                                      PlaceholderText="Select industry"
+                                      PlaceholderText="{loc:Loc 'Select industry'}"
                                       HorizontalAlignment="Stretch" />
                         </StackPanel>
 
                         <!-- Logo Section -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Company Logo"
+                            <TextBlock Text="{loc:Loc 'Company Logo'}"
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -134,15 +135,15 @@
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <PathIcon Data="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"
                                                       Width="16" Height="16" />
-                                            <TextBlock Text="Upload Logo" />
+                                            <TextBlock Text="{loc:Loc 'Upload Logo'}" />
                                         </StackPanel>
                                     </Button>
                                     <Button Classes="text-button"
                                             Command="{Binding RemoveLogoCommand}"
                                             IsVisible="{Binding HasLogo}">
-                                        <TextBlock Text="Remove" Foreground="{DynamicResource DangerBrush}" />
+                                        <TextBlock Text="{loc:Loc Remove}" Foreground="{DynamicResource DangerBrush}" />
                                     </Button>
-                                    <TextBlock Text="PNG, JPG up to 5MB"
+                                    <TextBlock Text="{loc:Loc 'PNG, JPG up to 5MB'}"
                                                FontSize="11"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </StackPanel>
@@ -161,13 +162,13 @@
                                 Classes="secondary-button"
                                 Command="{Binding CloseCommand}"
                                 Margin="0,0,8,0">
-                            <TextBlock Text="Cancel" />
+                            <TextBlock Text="{loc:Loc Cancel}" />
                         </Button>
                         <Button Grid.Column="2"
                                 Classes="primary-button"
                                 Command="{Binding SaveCommand}"
                                 IsEnabled="{Binding CanSave}">
-                            <TextBlock Text="Save Changes" />
+                            <TextBlock Text="{loc:Loc 'Save Changes'}" />
                         </Button>
                     </Grid>
                 </Border>

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
@@ -24,7 +25,7 @@
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Filter Receipts"
+                            <TextBlock Text="{loc:Loc 'Filter Receipts'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -42,7 +43,7 @@
                         <StackPanel Spacing="16">
                             <!-- Receipt Type -->
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Receipt Type"
+                                <TextBlock Text="{loc:Loc 'Receipt Type'}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -53,7 +54,7 @@
 
                             <!-- From Date -->
                             <StackPanel Spacing="8">
-                                <TextBlock Text="From Date"
+                                <TextBlock Text="{loc:Loc 'From Date'}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -64,7 +65,7 @@
 
                             <!-- To Date -->
                             <StackPanel Spacing="8">
-                                <TextBlock Text="To Date"
+                                <TextBlock Text="{loc:Loc 'To Date'}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -76,26 +77,26 @@
                             <!-- Amount Range -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="Min Amount"
+                                    <TextBlock Text="{loc:Loc 'Min Amount'}"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding FilterAmountMin}"
-                                             Watermark="$0.00" />
+                                             Watermark="{loc:Loc '$0.00'}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="8">
-                                    <TextBlock Text="Max Amount"
+                                    <TextBlock Text="{loc:Loc 'Max Amount'}"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding FilterAmountMax}"
-                                             Watermark="$0.00" />
+                                             Watermark="{loc:Loc '$0.00'}" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- Source Filter -->
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Source"
+                                <TextBlock Text="{loc:Loc Source}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -106,7 +107,7 @@
 
                             <!-- File Type Filter -->
                             <StackPanel Spacing="8">
-                                <TextBlock Text="File Type"
+                                <TextBlock Text="{loc:Loc 'File Type'}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -124,17 +125,17 @@
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="*,Auto,Auto">
                             <Button Grid.Column="0"
-                                    Content="Clear Filters"
+                                    Content="{loc:Loc 'Clear Filters'}"
                                     Classes="secondary-button"
                                     HorizontalAlignment="Left"
                                     Command="{Binding ClearFiltersCommand}" />
                             <Button Grid.Column="1"
-                                    Content="Cancel"
+                                    Content="{loc:Loc Cancel}"
                                     Classes="secondary-button"
                                     Margin="0,0,12,0"
                                     Command="{Binding CloseFilterModalCommand}" />
                             <Button Grid.Column="2"
-                                    Content="Apply Filters"
+                                    Content="{loc:Loc 'Apply Filters'}"
                                     Classes="primary-button"
                                     Command="{Binding ApplyFiltersCommand}" />
                         </Grid>

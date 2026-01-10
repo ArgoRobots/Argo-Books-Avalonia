@@ -8,6 +8,7 @@ using Avalonia.Platform.Storage;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using ArgoBooks.Views;
@@ -455,6 +456,9 @@ public partial class App : Application
                 ThemeService.Instance.Initialize();
             }
 
+            // Initialize language service for localization
+            LanguageService.Instance.Initialize();
+
             // Initialize exchange rate service for currency conversion
             await InitializeExchangeRateServiceAsync();
 
@@ -599,7 +603,7 @@ public partial class App : Application
         if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null)
             return;
 
-        CompanyManager.CompanyOpened += (_, args) =>
+        CompanyManager.CompanyOpened += async (_, args) =>
         {
             _mainWindowViewModel.OpenCompany(args.CompanyName);
             var logo = LoadBitmapFromPath(CompanyManager.CurrentCompanyLogoPath);
@@ -615,11 +619,22 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
+            // Load and apply language setting from company settings
+            var companySettings = CompanyManager.CompanyData?.Settings;
+            if (companySettings != null)
+            {
+                var language = companySettings.Localization.Language;
+                if (!string.IsNullOrEmpty(language))
+                {
+                    await LanguageService.Instance.SetLanguageAsync(language);
+                }
+            }
+
             // Navigate to Dashboard when company is opened
             NavigationService?.NavigateTo("Dashboard");
         };
 
-        CompanyManager.CompanyClosed += (_, _) =>
+        CompanyManager.CompanyClosed += async (_, _) =>
         {
             _mainWindowViewModel.CloseCompany();
             _appShellViewModel.SetCompanyInfo(null);
@@ -634,6 +649,9 @@ public partial class App : Application
 
             // Clear tracked changes when company is closed
             ChangeTrackingService?.ClearAllChanges();
+
+            // Reset language to English when company is closed
+            await LanguageService.Instance.SetLanguageAsync("English");
 
             // Navigate back to Welcome screen when company is closed
             NavigationService?.NavigateTo("Welcome");

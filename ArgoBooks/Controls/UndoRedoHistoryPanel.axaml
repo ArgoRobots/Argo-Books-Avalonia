@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="320" d:DesignHeight="350"
              x:Class="ArgoBooks.Controls.UndoRedoHistoryPanel"
              x:DataType="vm:UndoRedoHistoryPanelViewModel">
@@ -78,7 +79,7 @@
 
                 <!-- Empty State -->
                 <TextBlock Grid.Row="0"
-                           Text="No history"
+                           Text="{loc:Loc 'No history'}"
                            FontSize="13"
                            Foreground="{DynamicResource TextTertiaryBrush}"
                            HorizontalAlignment="Center"

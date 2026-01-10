@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.InvoiceModals"
              x:DataType="vm:InvoiceModalsViewModel">
@@ -55,18 +56,18 @@
                             <!-- Customer Selection -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Customer" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
                                                             SelectedItem="{Binding SelectedCustomer}"
                                                             DisplayMemberPath="Name"
-                                                            Placeholder="Search for a customer..."
+                                                            Placeholder="{loc:Loc 'Search for a customer...'}"
                                                             IsRequired="True"
                                                             HasError="{Binding HasCustomerError}"
-                                                            ErrorMessage="Please select a customer"
+                                                            ErrorMessage="{loc:Loc 'Please select a customer'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="No customers found."
-                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyMessage="{loc:Loc 'No customers found.'}"
+                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
                             </StackPanel>
 
@@ -75,7 +76,7 @@
                                 <!-- Issue Date -->
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Issue Date" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Issue Date'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <DatePicker SelectedDate="{Binding ModalIssueDate}"
                                                 Classes="form-datepicker"
@@ -85,7 +86,7 @@
                                 <!-- Due Date -->
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Due Date" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="#dc2626" />
                                     </TextBlock>
                                     <DatePicker SelectedDate="{Binding ModalDueDate}"
                                                 Classes="form-datepicker"
@@ -97,7 +98,7 @@
                             <StackPanel Spacing="12">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0"
-                                               Text="Line Items"
+                                               Text="{loc:Loc 'Line Items'}"
                                                FontSize="14"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -107,7 +108,7 @@
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                       Width="14" Height="14" />
-                                            <TextBlock Text="Add Item" />
+                                            <TextBlock Text="{loc:Loc 'Add Item'}" />
                                         </StackPanel>
                                     </Button>
                                 </Grid>
@@ -118,18 +119,18 @@
                                         Padding="12,8"
                                         IsVisible="{Binding LineItems.Count, Converter={x:Static local:IntConverters.IsPositive}}">
                                     <Grid ColumnDefinitions="2*,80,90,70,Auto">
-                                        <TextBlock Grid.Column="0" Text="Product" FontSize="12" FontWeight="Medium"
+                                        <TextBlock Grid.Column="0" Text="{loc:Loc Product}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    Margin="0,0,8,0" />
-                                        <TextBlock Grid.Column="1" Text="Qty" FontSize="12" FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,0,8,0" />
-                                        <TextBlock Grid.Column="2" Text="Price" FontSize="12" FontWeight="Medium"
+                                        <TextBlock Grid.Column="1" Text="{loc:Loc Qty}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
                                                    Margin="0,0,8,0" />
-                                        <TextBlock Grid.Column="3" Text="Amount" FontSize="12" FontWeight="Medium"
+                                        <TextBlock Grid.Column="2" Text="{loc:Loc Price}" FontSize="12" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="3" Text="{loc:Loc Amount}" FontSize="12" FontWeight="Medium"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Right" />
                                         <TextBlock Grid.Column="4" Width="32" />
@@ -149,13 +150,13 @@
                                                                  ItemsSource="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).ProductOptions}"
                                                                  SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
                                                                  DisplayMemberPath="Name"
-                                                                 Placeholder="Search for a product..."
+                                                                 Placeholder="{loc:Loc 'Search for a product...'}"
                                                                  ShowAddNew="False"
-                                                                 EmptyMessage="No products found."
-                                                                 EmptyCreateLinkText="Create one"
+                                                                 EmptyMessage="{loc:Loc 'No products found.'}"
+                                                                 EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                                  EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).NavigateToCreateProductCommand}"
                                                                  HasError="{Binding HasProductError}" />
-                                                        <TextBlock Text="Please select a product"
+                                                        <TextBlock Text="{loc:Loc 'Please select a product'}"
                                                                    FontSize="12"
                                                                    Foreground="#dc2626"
                                                                    Margin="0,2,0,0"
@@ -192,7 +193,7 @@
                                                             VerticalAlignment="Top"
                                                             Command="{Binding $parent[ItemsControl].((vm:InvoiceModalsViewModel)DataContext).RemoveLineItemCommand}"
                                                             CommandParameter="{Binding}"
-                                                            ToolTip.Tip="Remove item">
+                                                            ToolTip.Tip="{loc:Loc 'Remove item'}">
                                                         <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
                                                                   Width="14" Height="14" />
                                                     </Button>
@@ -210,7 +211,7 @@
                                     Padding="16">
                                 <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
                                     <TextBlock Grid.Row="0" Grid.Column="0"
-                                               Text="Subtotal"
+                                               Text="{loc:Loc Subtotal}"
                                                FontSize="14"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBlock Grid.Row="0" Grid.Column="1"
@@ -219,7 +220,7 @@
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
 
                                     <TextBlock Grid.Row="1" Grid.Column="0"
-                                               Text="Tax"
+                                               Text="{loc:Loc Tax}"
                                                FontSize="14"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                Margin="0,8,0,0" />
@@ -251,7 +252,7 @@
                                             Margin="0,12" />
 
                                     <TextBlock Grid.Row="3" Grid.Column="0"
-                                               Text="Total"
+                                               Text="{loc:Loc Total}"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -265,7 +266,7 @@
 
                             <!-- Status (only for Edit) -->
                             <StackPanel Spacing="6" IsVisible="{Binding IsEditMode}">
-                                <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding StatusOptions}"
                                           SelectedItem="{Binding ModalStatus}"
                                           Classes="form-combobox"
@@ -274,14 +275,14 @@
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
                                          Classes="form-input"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         Watermark="Additional notes for this invoice..." />
+                                         Watermark="{loc:Loc 'Additional notes for this invoice...'}" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
@@ -300,20 +301,20 @@
                                        IsVisible="{Binding HasValidationMessage}" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
                                 <Button Classes="secondary-button"
-                                        Content="Cancel"
+                                        Content="{loc:Loc Cancel}"
                                         Command="{Binding CloseCreateEditModalCommand}" />
                                 <Button Classes="secondary-button"
-                                        Content="Save as Draft"
+                                        Content="{loc:Loc 'Save as Draft'}"
                                         Command="{Binding SaveAsDraftCommand}"
                                         IsVisible="{Binding !IsEditMode}" />
                                 <!-- Preview button for new invoices -->
                                 <Button Classes="primary-button"
-                                        Content="Preview"
+                                        Content="{loc:Loc Preview}"
                                         Command="{Binding OpenPreviewModalCommand}"
                                         IsVisible="{Binding !IsEditMode}" />
                                 <!-- Save Changes button for editing -->
                                 <Button Classes="primary-button"
-                                        Content="Save Changes"
+                                        Content="{loc:Loc 'Save Changes'}"
                                         Command="{Binding SaveInvoiceCommand}"
                                         IsVisible="{Binding IsEditMode}" />
                             </StackPanel>
@@ -343,7 +344,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="Filter Invoices"
+                                       Text="{loc:Loc 'Filter Invoices'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -364,7 +365,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <!-- Status Filter -->
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding StatusFilterOptions}"
                                               SelectedItem="{Binding FilterStatus}"
                                               Classes="form-combobox"
@@ -373,23 +374,23 @@
 
                                 <!-- Customer Filter -->
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Customer" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc Customer}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
                                                                 SelectedItem="{Binding FilterSelectedCustomer}"
                                                                 DisplayMemberPath="Name"
-                                                                Placeholder="All customers"
+                                                                Placeholder="{loc:Loc 'All customers'}"
                                                                 ShowAddNew="False" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- Issue Date Range -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Issue Date" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Issue Date'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <Grid ColumnDefinitions="*,Auto,*">
                                     <DatePicker Grid.Column="0"
                                                 SelectedDate="{Binding FilterIssueDateFrom}"
                                                 Classes="form-datepicker" />
-                                    <TextBlock Grid.Column="1" Text="to" FontSize="13"
+                                    <TextBlock Grid.Column="1" Text="{loc:Loc to}" FontSize="13"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                VerticalAlignment="Center" Margin="12,0" />
                                     <DatePicker Grid.Column="2"
@@ -400,12 +401,12 @@
 
                             <!-- Due Date Range -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Due Date" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Due Date'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <Grid ColumnDefinitions="*,Auto,*">
                                     <DatePicker Grid.Column="0"
                                                 SelectedDate="{Binding FilterDueDateFrom}"
                                                 Classes="form-datepicker" />
-                                    <TextBlock Grid.Column="1" Text="to" FontSize="13"
+                                    <TextBlock Grid.Column="1" Text="{loc:Loc to}" FontSize="13"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                VerticalAlignment="Center" Margin="12,0" />
                                     <DatePicker Grid.Column="2"
@@ -416,19 +417,19 @@
 
                             <!-- Amount Range -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Amount Range" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Amount Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <Grid ColumnDefinitions="*,Auto,*">
                                     <TextBox Grid.Column="0"
                                              Text="{Binding FilterAmountMin, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="Min" />
-                                    <TextBlock Grid.Column="1" Text="to" FontSize="13"
+                                             Watermark="{loc:Loc Min}" />
+                                    <TextBlock Grid.Column="1" Text="{loc:Loc to}" FontSize="13"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                VerticalAlignment="Center" Margin="12,0" />
                                     <TextBox Grid.Column="2"
                                              Text="{Binding FilterAmountMax, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="Max" />
+                                             Watermark="{loc:Loc Max}" />
                                 </Grid>
                             </StackPanel>
                         </StackPanel>
@@ -442,16 +443,16 @@
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <Button Grid.Column="0"
                                     Classes="secondary-button"
-                                    Content="Clear Filters"
+                                    Content="{loc:Loc 'Clear Filters'}"
                                     Command="{Binding ClearFiltersCommand}" />
                             <Button Grid.Column="2"
                                     Classes="secondary-button"
-                                    Content="Cancel"
+                                    Content="{loc:Loc Cancel}"
                                     Margin="0,0,12,0"
                                     Command="{Binding CloseFilterModalCommand}" />
                             <Button Grid.Column="3"
                                     Classes="primary-button"
-                                    Content="Apply Filters"
+                                    Content="{loc:Loc 'Apply Filters'}"
                                     Command="{Binding ApplyFiltersCommand}" />
                         </Grid>
                     </Border>
@@ -484,7 +485,7 @@
                                            FontSize="18"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Invoice History"
+                                <TextBlock Text="{loc:Loc 'Invoice History'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
@@ -541,7 +542,7 @@
                                 <PathIcon Data="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
                                           Width="32" Height="32"
                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="No history yet"
+                                <TextBlock Text="{loc:Loc 'No history yet'}"
                                            FontSize="14"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
@@ -569,8 +570,8 @@
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Invoice Preview" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Review your invoice before sending" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Invoice Preview'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Review your invoice before sending'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding ClosePreviewModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
@@ -586,17 +587,17 @@
                                 <Grid ColumnDefinitions="*,*">
                                     <StackPanel Grid.Column="0" Spacing="12">
                                         <StackPanel Spacing="4">
-                                            <TextBlock Text="Bill To" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Bill To'}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Text="{Binding PreviewCustomerName}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                                         </StackPanel>
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Spacing="12" HorizontalAlignment="Right">
                                         <StackPanel Spacing="4">
-                                            <TextBlock Text="Issue Date" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Issue Date'}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Text="{Binding PreviewIssueDate}" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" />
                                         </StackPanel>
                                         <StackPanel Spacing="4">
-                                            <TextBlock Text="Due Date" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Due Date'}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <TextBlock Text="{Binding PreviewDueDate}" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" />
                                         </StackPanel>
                                     </StackPanel>
@@ -605,15 +606,15 @@
 
                             <!-- Line Items Table -->
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Line Items" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Line Items'}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
 
                                 <!-- Table Header -->
                                 <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="6" Padding="12,8">
                                     <Grid ColumnDefinitions="2*,80,100,100">
-                                        <TextBlock Grid.Column="0" Text="Description" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Grid.Column="1" Text="Qty" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" />
-                                        <TextBlock Grid.Column="2" Text="Price" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" />
-                                        <TextBlock Grid.Column="3" Text="Amount" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="0" Text="{loc:Loc Description}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Grid.Column="1" Text="{loc:Loc Qty}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{loc:Loc Price}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" />
+                                        <TextBlock Grid.Column="3" Text="{loc:Loc Amount}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Right" />
                                     </Grid>
                                 </Border>
 
@@ -637,7 +638,7 @@
                             <!-- Totals -->
                             <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16">
                                 <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto">
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Subtotal" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:Loc Subtotal}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SubtotalFormatted}" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" />
 
                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding TaxRate, StringFormat='Tax (\{0:0.##\}%)'}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0" />
@@ -645,14 +646,14 @@
 
                                     <Border Grid.Row="2" Grid.ColumnSpan="2" Height="1" Background="{DynamicResource BorderBrush}" Margin="0,12" />
 
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Total" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:Loc Total}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TotalFormatted}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" />
                                 </Grid>
                             </Border>
 
                             <!-- Notes (if any) -->
                             <StackPanel Spacing="4" IsVisible="{Binding ModalNotes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                <TextBlock Text="Notes" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Text="{loc:Loc Notes}" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource TextTertiaryBrush}" />
                                 <TextBlock Text="{Binding ModalNotes}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                             </StackPanel>
                         </StackPanel>
@@ -662,13 +663,13 @@
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="An email will be sent to the customer"
+                                       Text="{loc:Loc 'An email will be sent to the customer'}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        VerticalAlignment="Center" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button" Content="Back to Edit" Command="{Binding ClosePreviewModalCommand}" />
-                                <Button Classes="primary-button" Content="Create &amp; Send" Command="{Binding CreateAndSendInvoiceCommand}" />
+                                <Button Classes="secondary-button" Content="{loc:Loc 'Back to Edit'}" Command="{Binding ClosePreviewModalCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc 'Create &amp; Send'}" Command="{Binding CreateAndSendInvoiceCommand}" />
                             </StackPanel>
                         </Grid>
                     </Border>

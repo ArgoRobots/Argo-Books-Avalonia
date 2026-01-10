@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="50"
              x:Class="ArgoBooks.Controls.UndoRedoButtonGroup"
              x:CompileBindings="False">
@@ -127,7 +128,7 @@
                             BorderThickness="0,1,0,0"
                             Background="{DynamicResource SurfaceAltBrush}">
                         <TextBlock x:Name="UndoCountLabel"
-                                   Text="Hover to select actions"
+                                   Text="{loc:Loc 'Hover to select actions'}"
                                    FontSize="11"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    HorizontalAlignment="Center" />
@@ -187,7 +188,7 @@
                             BorderThickness="0,1,0,0"
                             Background="{DynamicResource SurfaceAltBrush}">
                         <TextBlock x:Name="RedoCountLabel"
-                                   Text="Hover to select actions"
+                                   Text="{loc:Loc 'Hover to select actions'}"
                                    FontSize="11"
                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                    HorizontalAlignment="Center" />

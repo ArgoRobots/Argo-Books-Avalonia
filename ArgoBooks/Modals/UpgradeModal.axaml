@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.UpgradeModal"
              x:DataType="vm:UpgradeModalViewModel">
@@ -53,7 +54,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="Upgrade Your Plan"
+                                       Text="{loc:Loc 'Upgrade Your Plan'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -89,16 +90,16 @@
                                                           Foreground="White" />
                                             </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Standard"
+                                                <TextBlock Text="{loc:Loc Standard}"
                                                            FontSize="16"
                                                            FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="$20 CAD"
+                                                    <TextBlock Text="{loc:Loc '$20 CAD'}"
                                                                FontSize="20"
                                                                FontWeight="Bold"
                                                                Foreground="{DynamicResource PrimaryBrush}" />
-                                                    <TextBlock Text=" one-time"
+                                                    <TextBlock Text="{loc:Loc ' one-time'}"
                                                                FontSize="13"
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                VerticalAlignment="Bottom"
@@ -113,7 +114,7 @@
                                                 Padding="8,4"
                                                 VerticalAlignment="Top"
                                                 IsVisible="{Binding ShowStandardActive}">
-                                            <TextBlock Text="Active"
+                                            <TextBlock Text="{loc:Loc Active}"
                                                        FontSize="11"
                                                        FontWeight="SemiBold"
                                                        Foreground="White" />
@@ -125,7 +126,7 @@
                                                 Padding="8,4"
                                                 VerticalAlignment="Top"
                                                 IsVisible="{Binding ShowStandardIncluded}">
-                                            <TextBlock Text="Included"
+                                            <TextBlock Text="{loc:Loc Included}"
                                                        FontSize="11"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -141,7 +142,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Unlimited Products" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Unlimited Products'}" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">
@@ -151,7 +152,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Biometric Login Security" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Biometric Login Security'}" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">
@@ -161,7 +162,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Priority Support" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Priority Support'}" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item" BorderThickness="0">
@@ -171,7 +172,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Lifetime Updates" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Lifetime Updates'}" />
                                             </Grid>
                                         </Border>
                                     </StackPanel>
@@ -182,7 +183,7 @@
                                             HorizontalAlignment="Stretch"
                                             HorizontalContentAlignment="Center"
                                             Command="{Binding SelectStandardCommand}"
-                                            Content="Select Standard"
+                                            Content="{loc:Loc 'Select Standard'}"
                                             IsVisible="{Binding ShowSelectStandard}" />
                                 </Grid>
                             </Border>
@@ -207,16 +208,16 @@
                                                           Foreground="White" />
                                             </Border>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="Premium"
+                                                <TextBlock Text="{loc:Loc Premium}"
                                                            FontSize="16"
                                                            FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="$5 CAD"
+                                                    <TextBlock Text="{loc:Loc '$5 CAD'}"
                                                                FontSize="20"
                                                                FontWeight="Bold"
                                                                Foreground="{DynamicResource PrimaryBrush}" />
-                                                    <TextBlock Text="/month"
+                                                    <TextBlock Text="{loc:Loc '/month'}"
                                                                FontSize="13"
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                VerticalAlignment="Bottom"
@@ -231,7 +232,7 @@
                                                 Padding="8,4"
                                                 VerticalAlignment="Top"
                                                 IsVisible="{Binding ShowPremiumActive}">
-                                            <TextBlock Text="Active"
+                                            <TextBlock Text="{loc:Loc Active}"
                                                        FontSize="11"
                                                        FontWeight="SemiBold"
                                                        Foreground="White" />
@@ -247,7 +248,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Everything in Standard" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Everything in Standard'}" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">
@@ -257,7 +258,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Invoices &amp; payments" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Invoices &amp; payments'}" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">
@@ -267,7 +268,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="AI Receipt Scanning" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'AI Receipt Scanning'}" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item">
@@ -277,7 +278,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="Predictive Sales Analysis" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Predictive Sales Analysis'}" />
                                             </Grid>
                                         </Border>
                                         <Border Classes="feature-item" BorderThickness="0">
@@ -287,7 +288,7 @@
                                                           Width="14" Height="14"
                                                           Foreground="#22C55E"
                                                           Margin="0,0,10,0" />
-                                                <TextBlock Grid.Column="1" Text="AI Business Insights" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'AI Business Insights'}" />
                                             </Grid>
                                         </Border>
                                     </StackPanel>
@@ -298,13 +299,13 @@
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Center"
                                                 Command="{Binding SelectPremiumCommand}"
-                                                Content="Select Premium"
+                                                Content="{loc:Loc 'Select Premium'}"
                                                 IsVisible="{Binding ShowSelectPremium}" />
                                         <Button Classes="secondary-button"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Center"
                                                 Command="{Binding CancelSubscriptionCommand}"
-                                                Content="Cancel Subscription"
+                                                Content="{loc:Loc 'Cancel Subscription'}"
                                                 IsVisible="{Binding ShowCancelPremium}" />
                                     </StackPanel>
                                 </Grid>
@@ -324,7 +325,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
                                           Width="16" Height="16" />
-                                <TextBlock Text="Enter a Key" />
+                                <TextBlock Text="{loc:Loc 'Enter a Key'}" />
                             </StackPanel>
                         </Button>
                     </Border>
@@ -357,7 +358,7 @@
                                 BorderThickness="0,0,0,1">
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Grid.Column="0"
-                                           Text="Enter License Key"
+                                           Text="{loc:Loc 'Enter License Key'}"
                                            FontSize="18"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -372,13 +373,13 @@
 
                         <!-- Body -->
                         <StackPanel Grid.Row="1" Margin="24" Spacing="16">
-                            <TextBlock Text="Enter your license key to activate your premium features."
+                            <TextBlock Text="{loc:Loc 'Enter your license key to activate your premium features.'}"
                                        FontSize="14"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        TextWrapping="Wrap" />
 
                             <StackPanel Spacing="6">
-                                <TextBlock Text="License Key"
+                                <TextBlock Text="{loc:Loc 'License Key'}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -405,7 +406,7 @@
                                         HorizontalAlignment="Right"
                                         Spacing="12">
                                 <Button Classes="secondary-button"
-                                        Content="Cancel"
+                                        Content="{loc:Loc Cancel}"
                                         Command="{Binding CloseEnterKeyCommand}" />
                                 <Button Classes="primary-button"
                                         Command="{Binding VerifyKeyCommand}"
@@ -414,8 +415,8 @@
                                         <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                                   Width="16" Height="16"
                                                   IsVisible="{Binding !IsVerifying}" />
-                                        <TextBlock Text="Verify Key" IsVisible="{Binding !IsVerifying}" />
-                                        <TextBlock Text="Verifying..." IsVisible="{Binding IsVerifying}" />
+                                        <TextBlock Text="{loc:Loc 'Verify Key'}" IsVisible="{Binding !IsVerifying}" />
+                                        <TextBlock Text="{loc:Loc 'Verifying...'}" IsVisible="{Binding IsVerifying}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -477,7 +478,7 @@
                             <StackPanel.RenderTransform>
                                 <TranslateTransform Y="20" />
                             </StackPanel.RenderTransform>
-                            <TextBlock Text="License Activated!"
+                            <TextBlock Text="{loc:Loc 'License Activated!'}"
                                        FontSize="20"
                                        FontWeight="SemiBold"
                                        Foreground="#22C55E"
@@ -500,7 +501,7 @@
                                 <TranslateTransform Y="20" />
                             </Panel.RenderTransform>
                             <Button Classes="primary-button"
-                                    Content="Continue"
+                                    Content="{loc:Loc Continue}"
                                     Command="{Binding ContinueAfterSuccessCommand}"
                                     HorizontalAlignment="Center"
                                     Padding="32,12" />

@@ -6,6 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:modals="using:ArgoBooks.Modals"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.AnalyticsPage"
              x:DataType="vm:AnalyticsPageViewModel">
@@ -31,7 +32,7 @@
                     <Grid ColumnDefinitions="*,Auto,Auto">
                         <!-- Page Title -->
                         <TextBlock Grid.Column="0"
-                                   Text="Analytics"
+                                   Text="{loc:Loc Analytics}"
                                    FontSize="20"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -53,13 +54,13 @@
                     <!-- Analytics Tabs -->
                     <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                                 Classes="page-tabs">
-                        <TabItem Header="Dashboard" />
-                        <TabItem Header="Geographic" />
-                        <TabItem Header="Operational" />
-                        <TabItem Header="Performance" />
-                        <TabItem Header="Customers" />
-                        <TabItem Header="Returns" />
-                        <TabItem Header="Losses" />
+                        <TabItem Header="{loc:Loc Dashboard}" />
+                        <TabItem Header="{loc:Loc Geographic}" />
+                        <TabItem Header="{loc:Loc Operational}" />
+                        <TabItem Header="{loc:Loc Performance}" />
+                        <TabItem Header="{loc:Loc Customers}" />
+                        <TabItem Header="{loc:Loc Returns}" />
+                        <TabItem Header="{loc:Loc Losses}" />
                     </TabControl>
                 </Grid>
             </Grid>
@@ -76,28 +77,28 @@
                             IsVisible="{Binding IsDashboardTabSelected}">
                     <!-- Statistics Cards Row -->
                     <controls:StatCardsRow>
-                        <controls:StatCard Label="Total Purchases"
+                        <controls:StatCard Label="{loc:Loc 'Total Purchases'}"
                                            Value="{Binding TotalPurchases}"
                                            Icon="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z"
                                            IconColor="Danger"
                                            ChangeValue="{Binding PurchasesChangeValue}"
                                            ChangeText="{Binding PurchasesChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Total Sales"
+                        <controls:StatCard Label="{loc:Loc 'Total Sales'}"
                                            Value="{Binding TotalSales}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Success"
                                            ChangeValue="{Binding SalesChangeValue}"
                                            ChangeText="{Binding SalesChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Net Profit"
+                        <controls:StatCard Label="{loc:Loc 'Net Profit'}"
                                            Value="{Binding NetProfit}"
                                            Icon="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"
                                            IconColor="Primary"
                                            ChangeValue="{Binding ProfitChangeValue}"
                                            ChangeText="{Binding ProfitChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Profit Margin"
+                        <controls:StatCard Label="{loc:Loc 'Profit Margin'}"
                                            Value="{Binding ProfitMargin}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                            IconColor="Info"
@@ -128,7 +129,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasProfitTrendsData}">
-                                    <TextBlock Text="No profit data available"
+                                    <TextBlock Text="{loc:Loc 'No profit data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -157,7 +158,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasSalesVsExpensesData}">
-                                    <TextBlock Text="No comparison data available"
+                                    <TextBlock Text="{loc:Loc 'No comparison data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -189,7 +190,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasRevenueTrendsData}">
-                                    <TextBlock Text="No revenue data available"
+                                    <TextBlock Text="{loc:Loc 'No revenue data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -210,7 +211,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasRevenueDistributionData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Revenue Distribution"
+                                               Text="{loc:Loc 'Revenue Distribution'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -234,7 +235,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasRevenueDistributionData}">
-                                    <TextBlock Text="No distribution data available"
+                                    <TextBlock Text="{loc:Loc 'No distribution data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -266,7 +267,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasExpensesTrendsData}">
-                                    <TextBlock Text="No expense data available"
+                                    <TextBlock Text="{loc:Loc 'No expense data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -287,7 +288,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasExpensesDistributionData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Expense Distribution"
+                                               Text="{loc:Loc 'Expense Distribution'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -311,7 +312,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasExpensesDistributionData}">
-                                    <TextBlock Text="No distribution data available"
+                                    <TextBlock Text="{loc:Loc 'No distribution data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -339,7 +340,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasCountriesOfOriginData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Countries of Origin"
+                                               Text="{loc:Loc 'Countries of Origin'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -363,7 +364,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasCountriesOfOriginData}">
-                                    <TextBlock Text="No country data available"
+                                    <TextBlock Text="{loc:Loc 'No country data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -384,7 +385,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasCompaniesOfOriginData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Companies of Origin"
+                                               Text="{loc:Loc 'Companies of Origin'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -408,7 +409,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasCompaniesOfOriginData}">
-                                    <TextBlock Text="No company data available"
+                                    <TextBlock Text="{loc:Loc 'No company data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -432,7 +433,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasCountriesOfDestinationData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Countries of Destination"
+                                               Text="{loc:Loc 'Countries of Destination'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -456,7 +457,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasCountriesOfDestinationData}">
-                                    <TextBlock Text="No destination data available"
+                                    <TextBlock Text="{loc:Loc 'No destination data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -477,7 +478,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasCompaniesOfDestinationData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Companies of Destination"
+                                               Text="{loc:Loc 'Companies of Destination'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -501,7 +502,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasCompaniesOfDestinationData}">
-                                    <TextBlock Text="No company data available"
+                                    <TextBlock Text="{loc:Loc 'No company data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -524,7 +525,7 @@
                                     BorderThickness="0,0,0,1">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0"
-                                               Text="World Map Overview"
+                                               Text="{loc:Loc 'World Map Overview'}"
                                                FontSize="16"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
@@ -535,11 +536,11 @@
                                             CornerRadius="6"
                                             Padding="4">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <RadioButton Content="Origin"
+                                            <RadioButton Content="{loc:Loc Origin}"
                                                          GroupName="MapMode"
                                                          IsChecked="{Binding IsMapModeOrigin}"
                                                          Classes="segmented-button" />
-                                            <RadioButton Content="Destination"
+                                            <RadioButton Content="{loc:Loc Destination}"
                                                          GroupName="MapMode"
                                                          IsChecked="{Binding IsMapModeDestination}"
                                                          Classes="segmented-button" />
@@ -568,7 +569,7 @@
                                                 <Binding Path="!HasOriginMapData" />
                                             </MultiBinding>
                                         </Border.IsVisible>
-                                        <TextBlock Text="No origin data available"
+                                        <TextBlock Text="{loc:Loc 'No origin data available'}"
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"
                                                    FontSize="14"
@@ -583,7 +584,7 @@
                                                 <Binding Path="!HasDestinationMapData" />
                                             </MultiBinding>
                                         </Border.IsVisible>
-                                        <TextBlock Text="No destination data available"
+                                        <TextBlock Text="{loc:Loc 'No destination data available'}"
                                                    HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"
                                                    FontSize="14"
@@ -600,25 +601,25 @@
                             IsVisible="{Binding IsOperationalTabSelected}">
                     <!-- Statistics Cards Row -->
                     <controls:StatCardsRow>
-                        <controls:StatCard Label="Active Accountants"
+                        <controls:StatCard Label="{loc:Loc 'Active Accountants'}"
                                            Value="{Binding ActiveAccountants}"
                                            Icon="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                                            IconColor="Primary" />
-                        <controls:StatCard Label="Transactions Processed"
+                        <controls:StatCard Label="{loc:Loc 'Transactions Processed'}"
                                            Value="{Binding TransactionsProcessed}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"
                                            IconColor="Success"
                                            ChangeValue="{Binding TransactionsChangeValue}"
                                            ChangeText="{Binding TransactionsChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Avg Processing Time"
+                        <controls:StatCard Label="{loc:Loc 'Avg Processing Time'}"
                                            Value="{Binding AvgProcessingTime}"
                                            Icon="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
                                            IconColor="Warning"
                                            ChangeValue="{Binding ProcessingTimeChangeValue}"
                                            ChangeText="{Binding ProcessingTimeChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Accuracy Rate"
+                        <controls:StatCard Label="{loc:Loc 'Accuracy Rate'}"
                                            Value="{Binding AccuracyRate}"
                                            Icon="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                            IconColor="Info"
@@ -641,7 +642,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasAccountantsTransactionsData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Transactions by Accountant"
+                                               Text="{loc:Loc 'Transactions by Accountant'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -665,7 +666,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasAccountantsTransactionsData}">
-                                    <TextBlock Text="No accountant data available"
+                                    <TextBlock Text="{loc:Loc 'No accountant data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -694,7 +695,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasTotalTransactionsData}">
-                                    <TextBlock Text="No transaction data available"
+                                    <TextBlock Text="{loc:Loc 'No transaction data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -710,28 +711,28 @@
                             IsVisible="{Binding IsPerformanceTabSelected}">
                     <!-- Statistics Cards Row -->
                     <controls:StatCardsRow>
-                        <controls:StatCard Label="Revenue Growth"
+                        <controls:StatCard Label="{loc:Loc 'Revenue Growth'}"
                                            Value="{Binding RevenueGrowth}"
                                            Icon="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
                                            IconColor="Success"
                                            ChangeValue="{Binding RevenueGrowthChangeValue}"
                                            ChangeText="{Binding RevenueGrowthChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Total Transactions"
+                        <controls:StatCard Label="{loc:Loc 'Total Transactions'}"
                                            Value="{Binding TotalTransactions}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"
                                            IconColor="Primary"
                                            ChangeValue="{Binding TotalTransactionsChangeValue}"
                                            ChangeText="{Binding TotalTransactionsChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Avg Transaction Value"
+                        <controls:StatCard Label="{loc:Loc 'Avg Transaction Value'}"
                                            Value="{Binding AvgTransactionValue}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Info"
                                            ChangeValue="{Binding AvgTransactionChangeValue}"
                                            ChangeText="{Binding AvgTransactionChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Avg Shipping Cost"
+                        <controls:StatCard Label="{loc:Loc 'Avg Shipping Cost'}"
                                            Value="{Binding AvgShippingCost}"
                                            Icon="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
                                            IconColor="Warning"
@@ -762,7 +763,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasAvgTransactionValueData}">
-                                    <TextBlock Text="No transaction data available"
+                                    <TextBlock Text="{loc:Loc 'No transaction data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -791,7 +792,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasTotalTransactionsData}">
-                                    <TextBlock Text="No transaction data available"
+                                    <TextBlock Text="{loc:Loc 'No transaction data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -823,7 +824,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasAvgShippingCostsData}">
-                                    <TextBlock Text="No shipping data available"
+                                    <TextBlock Text="{loc:Loc 'No shipping data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -852,7 +853,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasGrowthRatesData}">
-                                    <TextBlock Text="No growth data available"
+                                    <TextBlock Text="{loc:Loc 'No growth data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -868,28 +869,28 @@
                             IsVisible="{Binding IsCustomersTabSelected}">
                     <!-- Statistics Cards Row -->
                     <controls:StatCardsRow>
-                        <controls:StatCard Label="Total Customers"
+                        <controls:StatCard Label="{loc:Loc 'Total Customers'}"
                                            Value="{Binding TotalCustomers}"
                                            Icon="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
                                            IconColor="Primary"
                                            ChangeValue="{Binding CustomersChangeValue}"
                                            ChangeText="{Binding CustomersChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="New Customers"
+                        <controls:StatCard Label="{loc:Loc 'New Customers'}"
                                            Value="{Binding NewCustomers}"
                                            Icon="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                                            IconColor="Success"
                                            ChangeValue="{Binding NewCustomersChangeValue}"
                                            ChangeText="{Binding NewCustomersChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Retention Rate"
+                        <controls:StatCard Label="{loc:Loc 'Retention Rate'}"
                                            Value="{Binding RetentionRate}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
                                            IconColor="Info"
                                            ChangeValue="{Binding RetentionChangeValue}"
                                            ChangeText="{Binding RetentionChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Avg Customer Value"
+                        <controls:StatCard Label="{loc:Loc 'Avg Customer Value'}"
                                            Value="{Binding AvgCustomerValue}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Warning"
@@ -912,7 +913,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasCompaniesOfOriginData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Top Customers by Revenue"
+                                               Text="{loc:Loc 'Top Customers by Revenue'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -936,7 +937,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasCompaniesOfOriginData}">
-                                    <TextBlock Text="No customer data available"
+                                    <TextBlock Text="{loc:Loc 'No customer data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -957,7 +958,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasCustomerPaymentStatusData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Customer Payment Status"
+                                               Text="{loc:Loc 'Customer Payment Status'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -981,7 +982,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasCustomerPaymentStatusData}">
-                                    <TextBlock Text="No payment data available"
+                                    <TextBlock Text="{loc:Loc 'No payment data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1013,7 +1014,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasGrowthRatesData}">
-                                    <TextBlock Text="No growth data available"
+                                    <TextBlock Text="{loc:Loc 'No growth data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1042,7 +1043,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasAvgTransactionValueData}">
-                                    <TextBlock Text="No value data available"
+                                    <TextBlock Text="{loc:Loc 'No value data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1066,7 +1067,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasActiveInactiveCustomersData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Active vs Inactive Customers"
+                                               Text="{loc:Loc 'Active vs Inactive Customers'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -1090,7 +1091,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasActiveInactiveCustomersData}">
-                                    <TextBlock Text="No customer activity data"
+                                    <TextBlock Text="{loc:Loc 'No customer activity data'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1119,7 +1120,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasTotalTransactionsData}">
-                                    <TextBlock Text="No rental data available"
+                                    <TextBlock Text="{loc:Loc 'No rental data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1135,28 +1136,28 @@
                             IsVisible="{Binding IsReturnsTabSelected}">
                     <!-- Statistics Cards Row -->
                     <controls:StatCardsRow>
-                        <controls:StatCard Label="Total Returns"
+                        <controls:StatCard Label="{loc:Loc 'Total Returns'}"
                                            Value="{Binding TotalReturns}"
                                            Icon="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
                                            IconColor="Warning"
                                            ChangeValue="{Binding ReturnsChangeValue}"
                                            ChangeText="{Binding ReturnsChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Return Rate"
+                        <controls:StatCard Label="{loc:Loc 'Return Rate'}"
                                            Value="{Binding ReturnRate}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                            IconColor="Info"
                                            ChangeValue="{Binding ReturnRateChangeValue}"
                                            ChangeText="{Binding ReturnRateChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Financial Impact"
+                        <controls:StatCard Label="{loc:Loc 'Financial Impact'}"
                                            Value="{Binding ReturnsFinancialImpact}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Danger"
                                            ChangeValue="{Binding ReturnsImpactChangeValue}"
                                            ChangeText="{Binding ReturnsImpactChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Avg Resolution Time"
+                        <controls:StatCard Label="{loc:Loc 'Avg Resolution Time'}"
                                            Value="{Binding AvgResolutionTime}"
                                            Icon="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
                                            IconColor="Success"
@@ -1187,7 +1188,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasReturnsOverTimeData}">
-                                    <TextBlock Text="No returns data available"
+                                    <TextBlock Text="{loc:Loc 'No returns data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1208,7 +1209,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasReturnReasonsData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Return Reasons"
+                                               Text="{loc:Loc 'Return Reasons'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -1232,7 +1233,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasReturnReasonsData}">
-                                    <TextBlock Text="No return reasons data"
+                                    <TextBlock Text="{loc:Loc 'No return reasons data'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1264,7 +1265,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasReturnFinancialImpactData}">
-                                    <TextBlock Text="No financial impact data"
+                                    <TextBlock Text="{loc:Loc 'No financial impact data'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1285,7 +1286,7 @@
                                 <!-- Pie Chart with custom legend - reusing Return Reasons -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasReturnReasonsData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Returns by Category"
+                                               Text="{loc:Loc 'Returns by Category'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -1309,7 +1310,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasReturnReasonsData}">
-                                    <TextBlock Text="No category data available"
+                                    <TextBlock Text="{loc:Loc 'No category data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1333,7 +1334,7 @@
                                 <!-- Pie Chart with custom legend - reusing Expense Distribution -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasExpensesDistributionData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Returns by Product"
+                                               Text="{loc:Loc 'Returns by Product'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -1357,7 +1358,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasExpensesDistributionData}">
-                                    <TextBlock Text="No product data available"
+                                    <TextBlock Text="{loc:Loc 'No product data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1386,7 +1387,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasSalesVsExpensesData}">
-                                    <TextBlock Text="No comparison data available"
+                                    <TextBlock Text="{loc:Loc 'No comparison data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1402,28 +1403,28 @@
                             IsVisible="{Binding IsLossesTabSelected}">
                     <!-- Statistics Cards Row -->
                     <controls:StatCardsRow>
-                        <controls:StatCard Label="Total Losses"
+                        <controls:StatCard Label="{loc:Loc 'Total Losses'}"
                                            Value="{Binding TotalLosses}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
                                            IconColor="Danger"
                                            ChangeValue="{Binding LossesChangeValue}"
                                            ChangeText="{Binding LossesChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Loss Rate"
+                        <controls:StatCard Label="{loc:Loc 'Loss Rate'}"
                                            Value="{Binding LossRate}"
                                            Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
                                            IconColor="Info"
                                            ChangeValue="{Binding LossRateChangeValue}"
                                            ChangeText="{Binding LossRateChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Financial Impact"
+                        <controls:StatCard Label="{loc:Loc 'Financial Impact'}"
                                            Value="{Binding LossesFinancialImpact}"
                                            Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                            IconColor="Warning"
                                            ChangeValue="{Binding LossesImpactChangeValue}"
                                            ChangeText="{Binding LossesImpactChangeText}"
                                            ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                        <controls:StatCard Label="Insurance Claims"
+                        <controls:StatCard Label="{loc:Loc 'Insurance Claims'}"
                                            Value="{Binding InsuranceClaims}"
                                            Icon="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"
                                            IconColor="Success"
@@ -1454,7 +1455,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasLossesOverTimeData}">
-                                    <TextBlock Text="No losses data available"
+                                    <TextBlock Text="{loc:Loc 'No losses data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1475,7 +1476,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasLossReasonsData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Loss Reasons"
+                                               Text="{loc:Loc 'Loss Reasons'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -1499,7 +1500,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasLossReasonsData}">
-                                    <TextBlock Text="No loss reasons data"
+                                    <TextBlock Text="{loc:Loc 'No loss reasons data'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1531,7 +1532,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasLossFinancialImpactData}">
-                                    <TextBlock Text="No financial impact data"
+                                    <TextBlock Text="{loc:Loc 'No financial impact data'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1552,7 +1553,7 @@
                                 <!-- Pie Chart with custom legend - reusing Expense Distribution -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasExpensesDistributionData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Losses by Category"
+                                               Text="{loc:Loc 'Losses by Category'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -1576,7 +1577,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasExpensesDistributionData}">
-                                    <TextBlock Text="No category data available"
+                                    <TextBlock Text="{loc:Loc 'No category data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1600,7 +1601,7 @@
                                 <!-- Pie Chart with custom legend -->
                                 <Grid RowDefinitions="Auto,*" IsVisible="{Binding HasLossesByProductData}">
                                     <TextBlock Grid.Row="0"
-                                               Text="Losses by Product"
+                                               Text="{loc:Loc 'Losses by Product'}"
                                                HorizontalAlignment="Center"
                                                FontSize="16"
                                                FontWeight="SemiBold"
@@ -1624,7 +1625,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasLossesByProductData}">
-                                    <TextBlock Text="No product data available"
+                                    <TextBlock Text="{loc:Loc 'No product data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1653,7 +1654,7 @@
                                 <Border Background="{DynamicResource SurfaceAltBrush}"
                                         CornerRadius="8"
                                         IsVisible="{Binding !HasSalesVsExpensesData}">
-                                    <TextBlock Text="No comparison data available"
+                                    <TextBlock Text="{loc:Loc 'No comparison data available'}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center"
                                                FontSize="14"
@@ -1692,7 +1693,7 @@
                             <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
                                       Width="24" Height="24"
                                       Foreground="{DynamicResource PrimaryBrush}" />
-                            <TextBlock Text="Customer Activity"
+                            <TextBlock Text="{loc:Loc 'Customer Activity'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center"
@@ -1710,35 +1711,33 @@
                 <!-- Body -->
                 <Border Grid.Row="1" Padding="24,20">
                     <StackPanel Spacing="16">
-                        <TextBlock Text="How is customer activity determined?"
+                        <TextBlock Text="{loc:Loc 'How is customer activity determined?'}"
                                    FontSize="15"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
 
-                        <TextBlock TextWrapping="Wrap"
+                        <TextBlock Text="{loc:Loc 'A customer is considered active if they have made at least one purchase within the selected date range.'}"
+                                   TextWrapping="Wrap"
                                    FontSize="14"
                                    LineHeight="22"
-                                   Foreground="{DynamicResource TextSecondaryBrush}">
-                            <Run Text="A customer is considered active if they have made at least one purchase within the selected date range." />
-                        </TextBlock>
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                        <TextBlock TextWrapping="Wrap"
+                        <TextBlock Text="{loc:Loc 'Customers with no purchases in this period are marked as inactive.'}"
+                                   TextWrapping="Wrap"
                                    FontSize="14"
                                    LineHeight="22"
-                                   Foreground="{DynamicResource TextSecondaryBrush}">
-                            <Run Text="Customers with no purchases in this period are marked as inactive." />
-                        </TextBlock>
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
 
                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                 CornerRadius="8"
                                 Padding="16"
                                 Margin="0,8,0,0">
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Tip"
+                                <TextBlock Text="{loc:Loc Tip}"
                                            FontSize="13"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource PrimaryBrush}" />
-                                <TextBlock Text="Change the date range at the top of the page to see customer activity over different time periods. For example, select 'All Time' to see lifetime activity."
+                                <TextBlock Text="{loc:Loc 'Change the date range at the top of the page to see customer activity over different time periods. For example, select ''All Time'' to see lifetime activity.'}"
                                            TextWrapping="Wrap"
                                            FontSize="13"
                                            LineHeight="20"
@@ -1754,7 +1753,7 @@
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,1,0,0">
                     <Button Classes="primary-button"
-                            Content="Got it"
+                            Content="{loc:Loc 'Got it'}"
                             HorizontalAlignment="Right"
                             Command="{Binding CloseCustomerActivityInfoCommand}" />
                 </Border>

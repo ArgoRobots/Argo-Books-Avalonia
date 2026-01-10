@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.StockAdjustmentsPage"
              x:DataType="vm:StockAdjustmentsPageViewModel">
@@ -28,10 +29,10 @@
                 <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                             Margin="0"
                             Classes="page-tabs">
-                    <TabItem Header="All" />
-                    <TabItem Header="Added" />
-                    <TabItem Header="Removed" />
-                    <TabItem Header="Set" />
+                    <TabItem Header="{loc:Loc All}" />
+                    <TabItem Header="{loc:Loc Added}" />
+                    <TabItem Header="{loc:Loc Removed}" />
+                    <TabItem Header="{loc:Loc Set}" />
                 </TabControl>
             </Border>
 
@@ -39,19 +40,19 @@
             <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-                <controls:StatCard Label="Total Adjustments"
+                <controls:StatCard Label="{loc:Loc 'Total Adjustments'}"
                                    Value="{Binding TotalAdjustments}"
                                    Icon="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
                                    IconColor="Primary" />
-                <controls:StatCard Label="Items Added"
+                <controls:StatCard Label="{loc:Loc 'Items Added'}"
                                    Value="{Binding TotalAdded}"
                                    Icon="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                    IconColor="Success" />
-                <controls:StatCard Label="Items Removed"
+                <controls:StatCard Label="{loc:Loc 'Items Removed'}"
                                    Value="{Binding TotalRemoved}"
                                    Icon="M19 13H5v-2h14v2z"
                                    IconColor="Danger" />
-                <controls:StatCard Label="Net Change"
+                <controls:StatCard Label="{loc:Loc 'Net Change'}"
                                    Value="{Binding NetChange}"
                                    Icon="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"
                                    IconColor="Warning" />
@@ -73,7 +74,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <!-- Title -->
                             <TextBlock Grid.Column="0"
-                                       Text="Stock Adjustments"
+                                       Text="{loc:Loc 'Stock Adjustments'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -95,7 +96,7 @@
                                                   Margin="12,0,8,0" />
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="Search adjustments..."
+                                                 Watermark="{loc:Loc 'Search adjustments...'}"
                                                  Classes="search-input" />
                                     </Grid>
                                 </Border>
@@ -106,7 +107,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                   Width="16" Height="16" />
-                                        <TextBlock Text="Filter" />
+                                        <TextBlock Text="{loc:Loc Filter}" />
                                     </StackPanel>
                                 </Button>
 
@@ -117,7 +118,7 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
-                                        <TextBlock Text="New Adjustment" />
+                                        <TextBlock Text="{loc:Loc 'New Adjustment'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -142,7 +143,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Date">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Date" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Date}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -178,7 +179,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Reference">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Reference" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Reference}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -214,7 +215,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Product">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Product" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Product}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -250,7 +251,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Location">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Location" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Location}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -286,7 +287,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Type">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Type" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Type}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -322,7 +323,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Quantity">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Qty" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Qty}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -358,7 +359,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Previous">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Before" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Before}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -394,7 +395,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="New">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="After" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc After}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -430,7 +431,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Reason">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Reason" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Reason}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -463,7 +464,7 @@
 
                                     <!-- Actions Column Header -->
                                     <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="Actions"
+                                        <TextBlock Text="{loc:Loc Actions}"
                                                    FontSize="12"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -607,14 +608,14 @@
                                                                         Spacing="4"
                                                                         Margin="8,0">
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="View Details"
+                                                                        ToolTip.Tip="{loc:Loc 'View Details'}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).ViewAdjustmentCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="Delete"
+                                                                        ToolTip.Tip="{loc:Loc Delete}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:StockAdjustmentsPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -642,12 +643,12 @@
                                                           Width="28" Height="28"
                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
                                             </Border>
-                                            <TextBlock Text="No adjustments found"
+                                            <TextBlock Text="{loc:Loc 'No adjustments found'}"
                                                        FontSize="16"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        HorizontalAlignment="Center" />
-                                            <TextBlock Text="Stock adjustments will appear here when you add, remove, or set inventory quantities."
+                                            <TextBlock Text="{loc:Loc 'Stock adjustments will appear here when you add, remove, or set inventory quantities.'}"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                        HorizontalAlignment="Center"
@@ -662,7 +663,7 @@
                                                     <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                               Width="16" Height="16"
                                                               Foreground="White" />
-                                                    <TextBlock Text="New Adjustment" />
+                                                    <TextBlock Text="{loc:Loc 'New Adjustment'}" />
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -694,7 +695,7 @@
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center"
                                            Margin="8,0" />
-                                <TextBlock Text="Rows per page:"
+                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />

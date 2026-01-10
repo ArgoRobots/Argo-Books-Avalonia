@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="400"
              x:Class="ArgoBooks.Modals.ProfileModal"
              x:DataType="vm:ProfileModalViewModel">
@@ -53,7 +54,7 @@
                         BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
-                                   Text="My Profile"
+                                   Text="{loc:Loc 'My Profile'}"
                                    FontSize="16"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -105,11 +106,11 @@
                                     <PathIcon Data="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
                                               Width="20" Height="20"
                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="Click to upload a new photo"
+                                    <TextBlock Text="{loc:Loc 'Click to upload a new photo'}"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                HorizontalAlignment="Center" />
-                                    <TextBlock Text="JPG, PNG up to 5MB"
+                                    <TextBlock Text="{loc:Loc 'JPG, PNG up to 5MB'}"
                                                FontSize="11"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                HorizontalAlignment="Center" />
@@ -129,10 +130,10 @@
                                 HorizontalAlignment="Right"
                                 Spacing="12">
                         <Button Classes="secondary-button"
-                                Content="Cancel"
+                                Content="{loc:Loc Cancel}"
                                 Command="{Binding CloseCommand}" />
                         <Button Classes="primary-button"
-                                Content="Save Changes"
+                                Content="{loc:Loc 'Save Changes'}"
                                 Command="{Binding SaveCommand}" />
                     </StackPanel>
                 </Border>

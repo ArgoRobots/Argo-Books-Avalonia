@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.StockLevelsPage"
              x:DataType="vm:StockLevelsPageViewModel">
@@ -34,10 +35,10 @@
             <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                         Margin="0"
                         Classes="page-tabs">
-                <TabItem Header="All Items" />
-                <TabItem Header="Low Stock" />
-                <TabItem Header="Out of Stock" />
-                <TabItem Header="Overstock" />
+                <TabItem Header="{loc:Loc 'All Items'}" />
+                <TabItem Header="{loc:Loc 'Low Stock'}" />
+                <TabItem Header="{loc:Loc 'Out of Stock'}" />
+                <TabItem Header="{loc:Loc Overstock}" />
             </TabControl>
         </Border>
 
@@ -45,23 +46,23 @@
         <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-                <controls:StatCard Label="Total Units"
+                <controls:StatCard Label="{loc:Loc 'Total Units'}"
                                    Value="{Binding TotalItems}"
                                    Icon="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.37v6.71l6-3.38z"
                                    IconColor="Primary" />
-                <controls:StatCard Label="In Stock"
+                <controls:StatCard Label="{loc:Loc 'In Stock'}"
                                    Value="{Binding InStockCount}"
                                    Icon="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                    IconColor="Success" />
-                <controls:StatCard Label="Low Stock"
+                <controls:StatCard Label="{loc:Loc 'Low Stock'}"
                                    Value="{Binding LowStockCount}"
                                    Icon="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
                                    IconColor="Warning" />
-                <controls:StatCard Label="Out of Stock"
+                <controls:StatCard Label="{loc:Loc 'Out of Stock'}"
                                    Value="{Binding OutOfStockCount}"
                                    Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
                                    IconColor="Danger" />
-                <controls:StatCard Label="Overstock"
+                <controls:StatCard Label="{loc:Loc Overstock}"
                                    Value="{Binding OverstockCount}"
                                    Icon="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"
                                    IconColor="Info" />
@@ -83,7 +84,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <!-- Title -->
                             <TextBlock Grid.Column="0"
-                                       Text="Inventory"
+                                       Text="{loc:Loc Inventory}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -105,7 +106,7 @@
                                                   Margin="12,0,8,0" />
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="Search inventory..."
+                                                 Watermark="{loc:Loc 'Search inventory...'}"
                                                  Classes="search-input" />
                                     </Grid>
                                 </Border>
@@ -116,7 +117,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                   Width="16" Height="16" />
-                                        <TextBlock Text="Filter" />
+                                        <TextBlock Text="{loc:Loc Filter}" />
                                     </StackPanel>
                                 </Button>
 
@@ -126,7 +127,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
                                                   Width="16" Height="16" />
-                                        <TextBlock Text="Adjust Stock" />
+                                        <TextBlock Text="{loc:Loc 'Adjust Stock'}" />
                                     </StackPanel>
                                 </Button>
 
@@ -136,7 +137,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16" />
-                                        <TextBlock Text="Add Item" />
+                                        <TextBlock Text="{loc:Loc 'Add Item'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -161,7 +162,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Product">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Product" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Product}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -197,7 +198,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Sku">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="SKU" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc SKU}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -233,7 +234,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Category">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Category" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Category}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -269,7 +270,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Location">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Location" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Location}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -305,7 +306,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="InStock">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="In Stock" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc 'In Stock'}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -341,7 +342,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Reserved">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Reserved" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Reserved}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -377,7 +378,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Available">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Available" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Available}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -413,7 +414,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="ReorderPoint">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Reorder Point" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -449,7 +450,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Status">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Status}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -482,7 +483,7 @@
 
                                     <!-- Actions Column Header -->
                                     <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="Actions"
+                                        <TextBlock Text="{loc:Loc Actions}"
                                                    FontSize="12"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -620,7 +621,7 @@
                                                                         Spacing="4"
                                                                         Margin="8,0">
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="Adjust Stock"
+                                                                        ToolTip.Tip="{loc:Loc 'Adjust Stock'}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:StockLevelsPageViewModel)DataContext).OpenAdjustStockModalCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
@@ -648,12 +649,12 @@
                                                           Width="28" Height="28"
                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
                                             </Border>
-                                            <TextBlock Text="No inventory items found"
+                                            <TextBlock Text="{loc:Loc 'No inventory items found'}"
                                                        FontSize="16"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        HorizontalAlignment="Center" />
-                                            <TextBlock Text="Add products with inventory tracking to see stock levels here."
+                                            <TextBlock Text="{loc:Loc 'Add products with inventory tracking to see stock levels here.'}"
                                                        FontSize="14"
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                        HorizontalAlignment="Center"
@@ -689,7 +690,7 @@
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center"
                                            Margin="8,0" />
-                                <TextBlock Text="Rows per page:"
+                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="280"
              x:Class="ArgoBooks.Modals.ReportSaveTemplateModal"
              x:DataType="vm:ReportsPageViewModel">
@@ -22,7 +23,7 @@
                     BorderThickness="0,0,0,1">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0"
-                               Text="Save Template"
+                               Text="{loc:Loc 'Save Template'}"
                                FontSize="18"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -37,18 +38,18 @@
 
             <!-- Content -->
             <StackPanel Grid.Row="1" Spacing="16" Margin="24">
-                <TextBlock Text="Save your current report layout as a reusable template."
+                <TextBlock Text="{loc:Loc 'Save your current report layout as a reusable template.'}"
                            FontSize="14"
                            Foreground="{DynamicResource TextSecondaryBrush}"
                            TextWrapping="Wrap" />
 
                 <StackPanel Spacing="8">
-                    <TextBlock Text="Template Name"
+                    <TextBlock Text="{loc:Loc 'Template Name'}"
                                FontSize="14"
                                FontWeight="Medium"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                     <TextBox Text="{Binding SaveTemplateName}"
-                             Watermark="Enter template name..."
+                             Watermark="{loc:Loc 'Enter template name...'}"
                              Padding="12,10" />
                 </StackPanel>
 
@@ -71,10 +72,10 @@
                             HorizontalAlignment="Right"
                             Spacing="12">
                     <Button Classes="secondary-button"
-                            Content="Cancel"
+                            Content="{loc:Loc Cancel}"
                             Command="{Binding CloseSaveTemplateCommand}" />
                     <Button Classes="primary-button"
-                            Content="Save Template"
+                            Content="{loc:Loc 'Save Template'}"
                             Command="{Binding SaveTemplateCommand}" />
                 </StackPanel>
             </Border>

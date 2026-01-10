@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.WelcomeScreen"
              x:DataType="vm:WelcomeScreenViewModel"
@@ -41,12 +42,12 @@
                     </Border>
 
                     <!-- Welcome Text -->
-                    <TextBlock Text="Welcome to Argo Books"
+                    <TextBlock Text="{loc:Loc 'Welcome to Argo Books'}"
                                FontSize="32"
                                FontWeight="Bold"
                                Foreground="{DynamicResource TextPrimaryBrush}"
                                HorizontalAlignment="Center" />
-                    <TextBlock Text="Simple, powerful bookkeeping for your business"
+                    <TextBlock Text="{loc:Loc 'Simple, powerful bookkeeping for your business'}"
                                FontSize="16"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                HorizontalAlignment="Center"
@@ -70,12 +71,12 @@
                                               Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Create New Company"
+                                    <TextBlock Text="{loc:Loc 'Create New Company'}"
                                                FontSize="18"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                HorizontalAlignment="Center" />
-                                    <TextBlock Text="Start fresh with a new company file"
+                                    <TextBlock Text="{loc:Loc 'Start fresh with a new company file'}"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                HorizontalAlignment="Center"
@@ -99,12 +100,12 @@
                                               Foreground="#22C55E" />
                                 </Border>
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Open Company"
+                                    <TextBlock Text="{loc:Loc 'Open Company'}"
                                                FontSize="18"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                HorizontalAlignment="Center" />
-                                    <TextBlock Text="Open an existing company file"
+                                    <TextBlock Text="{loc:Loc 'Open an existing company file'}"
                                                FontSize="13"
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                HorizontalAlignment="Center"
@@ -124,13 +125,13 @@
                         <Grid ColumnDefinitions="*,Auto"
                               Margin="0,0,0,16">
                             <TextBlock Grid.Column="0"
-                                       Text="Recent Companies"
+                                       Text="{loc:Loc 'Recent Companies'}"
                                        FontSize="16"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1"
                                     Classes="text-link"
-                                    Content="Clear All"
+                                    Content="{loc:Loc 'Clear All'}"
                                     Command="{Binding ClearRecentCommand}" />
                         </Grid>
 
@@ -180,7 +181,7 @@
                                                     Classes="icon-button-small"
                                                     Command="{Binding $parent[ItemsControl].((vm:WelcomeScreenViewModel)DataContext).RemoveFromRecentCommand}"
                                                     CommandParameter="{Binding}"
-                                                    ToolTip.Tip="Remove from recent">
+                                                    ToolTip.Tip="{loc:Loc 'Remove from recent'}">
                                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
                                                           Width="14" Height="14" />
                                             </Button>
@@ -213,11 +214,11 @@
                             <StackPanel Grid.Column="1"
                                         VerticalAlignment="Center"
                                         Spacing="2">
-                                <TextBlock Text="Explore Sample Company"
+                                <TextBlock Text="{loc:Loc 'Explore Sample Company'}"
                                            FontSize="15"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="See how Argo Books works with pre-populated data"
+                                <TextBlock Text="{loc:Loc 'See how Argo Books works with pre-populated data'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
@@ -241,7 +242,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"
                                       Width="16" Height="16" />
-                            <TextBlock Text="Help &amp; Support" />
+                            <TextBlock Text="{loc:Loc 'Help &amp; Support'}" />
                         </StackPanel>
                     </Button>
                     <Button Classes="footer-link"
@@ -249,7 +250,7 @@
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <PathIcon Data="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
                                       Width="16" Height="16" />
-                            <TextBlock Text="What's New" />
+                            <TextBlock Text="{loc:Loc 'What''s New'}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>

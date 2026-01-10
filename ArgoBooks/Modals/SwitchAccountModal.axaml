@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.SwitchAccountModal"
              x:DataType="vm:SwitchAccountModalViewModel">
@@ -54,11 +55,11 @@
                         BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Switch Account"
+                            <TextBlock Text="{loc:Loc 'Switch Account'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Select an account to sign in"
+                            <TextBlock Text="{loc:Loc 'Select an account to sign in'}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                         </StackPanel>
@@ -90,7 +91,7 @@
                                       VerticalAlignment="Center" />
                             <TextBox Grid.Column="1"
                                      Text="{Binding SearchQuery, Mode=TwoWay}"
-                                     Watermark="Search accounts..."
+                                     Watermark="{loc:Loc 'Search accounts...'}"
                                      Classes="search-input"
                                      VerticalAlignment="Center" />
                         </Grid>
@@ -166,11 +167,11 @@
                                               Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="Create New Account"
+                                    <TextBlock Text="{loc:Loc 'Create New Account'}"
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Set up a new company or organization"
+                                    <TextBlock Text="{loc:Loc 'Set up a new company or organization'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </StackPanel>

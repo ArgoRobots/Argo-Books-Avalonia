@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:converters="using:ArgoBooks.Converters"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.CategoryModals"
              x:DataType="vm:CategoryModalsViewModel">
@@ -36,24 +37,24 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Category Name" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
-                                <TextBox Text="{Binding ModalCategoryName, Mode=TwoWay}" Classes="form-input" Watermark="Enter category name" />
+                                <TextBox Text="{Binding ModalCategoryName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter category name'}" />
                                 <TextBlock Text="{Binding ModalCategoryNameError}" FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding ModalCategoryNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Description" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="Enter description"
+                                <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Item Type" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Item Type'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Icon" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding AvailableIcons}" SelectedItem="{Binding ModalSelectedIconOption}" Classes="form-combobox">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate DataType="vm:IconOption">
@@ -67,8 +68,8 @@
                     </ScrollViewer>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddModalCommand}" />
-                            <Button Classes="primary-button" Content="Add Category" Command="{Binding SaveNewCategoryCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseAddModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Add Category'}" Command="{Binding SaveNewCategoryCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -86,7 +87,7 @@
                 <Grid RowDefinitions="Auto,*,Auto">
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Edit Category" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Edit Category'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseEditModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
                             </Button>
@@ -96,24 +97,24 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Category Name" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Category Name'}" /><Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
-                                <TextBox Text="{Binding ModalCategoryName, Mode=TwoWay}" Classes="form-input" Watermark="Enter category name" />
+                                <TextBox Text="{Binding ModalCategoryName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter category name'}" />
                                 <TextBlock Text="{Binding ModalCategoryNameError}" FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding ModalCategoryNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Description" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="Enter description"
+                                <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Item Type" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Item Type'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Icon" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding AvailableIcons}" SelectedItem="{Binding ModalSelectedIconOption}" Classes="form-combobox">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate DataType="vm:IconOption">
@@ -127,8 +128,8 @@
                     </ScrollViewer>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseEditModalCommand}" />
-                            <Button Classes="primary-button" Content="Save Changes" Command="{Binding SaveEditedCategoryCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseEditModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Save Changes'}" Command="{Binding SaveEditedCategoryCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -147,7 +148,7 @@
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Move Category" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Move Category'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <TextBlock Text="{Binding MovingCategoryName}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
                             </StackPanel>
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseMoveModalCommand}">
@@ -157,7 +158,7 @@
                     </Border>
                     <StackPanel Grid.Row="1" Margin="24" Spacing="16">
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Move to" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Move to'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <ComboBox ItemsSource="{Binding MoveTargetCategories}" SelectedItem="{Binding MoveTargetCategory}" Classes="form-combobox">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate DataType="vm:CategoryDisplayItem">
@@ -174,8 +175,8 @@
                     </StackPanel>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseMoveModalCommand}" />
-                            <Button Classes="primary-button" Content="Move" Command="{Binding ConfirmMoveCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseMoveModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc Move}" Command="{Binding ConfirmMoveCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>

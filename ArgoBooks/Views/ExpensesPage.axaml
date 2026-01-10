@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.ExpensesPage"
              x:DataType="vm:ExpensesPageViewModel">
@@ -24,19 +25,19 @@
         <Grid RowDefinitions="Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-                <controls:StatCard Label="Monthly Expenses"
+                <controls:StatCard Label="{loc:Loc 'Monthly Expenses'}"
                                    Value="{Binding TotalMonthlyExpenses}"
                                    Icon="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"
                                    IconColor="Danger" />
-                <controls:StatCard Label="Transactions"
+                <controls:StatCard Label="{loc:Loc 'Transactions'}"
                                    Value="{Binding TransactionCount}"
                                    Icon="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
                                    IconColor="Primary" />
-                <controls:StatCard Label="Receipts on File"
+                <controls:StatCard Label="{loc:Loc 'Receipts on File'}"
                                    Value="{Binding ReceiptsOnFile}"
                                    Icon="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
                                    IconColor="Success" />
-                <controls:StatCard Label="Returns"
+                <controls:StatCard Label="{loc:Loc 'Returns'}"
                                    Value="{Binding ReturnsCount}"
                                    Icon="M12.5 6.9c1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-.53.12-1.03.3-1.48.54l1.47 1.47c.41-.17.91-.27 1.51-.27zM5.33 4.06L4.06 5.33 7.5 8.77c0 2.08 1.56 3.22 3.91 3.91l3.51 3.51c-.34.49-1.05.91-2.42.91-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c.96-.18 1.83-.55 2.46-1.12l2.22 2.22 1.27-1.27L5.33 4.06z"
                                    IconColor="Warning" />
@@ -58,7 +59,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <!-- Title -->
                             <TextBlock Grid.Column="0"
-                                       Text="Expenses"
+                                       Text="{loc:Loc 'Expenses'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -80,7 +81,7 @@
                                                   Margin="12,0,8,0" />
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="Search expenses..."
+                                                 Watermark="{loc:Loc 'Search expenses...'}"
                                                  Classes="search-input" />
                                     </Grid>
                                 </Border>
@@ -91,7 +92,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                   Width="16" Height="16" />
-                                        <TextBlock Text="Filter" />
+                                        <TextBlock Text="{loc:Loc 'Filter'}" />
                                     </StackPanel>
                                 </Button>
 
@@ -102,7 +103,7 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
-                                        <TextBlock Text="Add Expense" />
+                                        <TextBlock Text="{loc:Loc 'Add Expense'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -125,7 +126,7 @@
                                 <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
                                 <!-- ID -->
                                 <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
-                                    <controls:SortableColumnHeader Text="ID" ColumnName="Id"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'ID'}" ColumnName="Id"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -135,7 +136,7 @@
                                 </Panel>
                                 <!-- Accountant -->
                                 <Panel Width="{Binding ColumnWidths.AccountantColumnWidth}" IsVisible="{Binding ShowAccountantColumn}">
-                                    <controls:SortableColumnHeader Text="Accountant" ColumnName="Accountant"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Accountant'}" ColumnName="Accountant"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -145,7 +146,7 @@
                                 </Panel>
                                 <!-- Product -->
                                 <Panel Width="{Binding ColumnWidths.ProductColumnWidth}" IsVisible="{Binding ShowProductColumn}">
-                                    <controls:SortableColumnHeader Text="Product" ColumnName="Product"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Product'}" ColumnName="Product"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -155,7 +156,7 @@
                                 </Panel>
                                 <!-- Supplier -->
                                 <Panel Width="{Binding ColumnWidths.SupplierColumnWidth}" IsVisible="{Binding ShowSupplierColumn}">
-                                    <controls:SortableColumnHeader Text="Supplier" ColumnName="Supplier"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Supplier'}" ColumnName="Supplier"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -165,7 +166,7 @@
                                 </Panel>
                                 <!-- Date -->
                                 <Panel Width="{Binding ColumnWidths.DateColumnWidth}" IsVisible="{Binding ShowDateColumn}">
-                                    <controls:SortableColumnHeader Text="Date" ColumnName="Date"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Date'}" ColumnName="Date"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -175,7 +176,7 @@
                                 </Panel>
                                 <!-- Qty -->
                                 <Panel Width="{Binding ColumnWidths.QuantityColumnWidth}" IsVisible="{Binding ShowQuantityColumn}">
-                                    <controls:SortableColumnHeader Text="Qty" ColumnName="Quantity"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Qty'}" ColumnName="Quantity"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -185,7 +186,7 @@
                                 </Panel>
                                 <!-- Unit Price -->
                                 <Panel Width="{Binding ColumnWidths.UnitPriceColumnWidth}" IsVisible="{Binding ShowUnitPriceColumn}">
-                                    <controls:SortableColumnHeader Text="Unit Price" ColumnName="UnitPrice"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Unit Price'}" ColumnName="UnitPrice"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -195,7 +196,7 @@
                                 </Panel>
                                 <!-- Amount -->
                                 <Panel Width="{Binding ColumnWidths.AmountColumnWidth}" IsVisible="{Binding ShowAmountColumn}">
-                                    <controls:SortableColumnHeader Text="Amount" ColumnName="Amount"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Amount'}" ColumnName="Amount"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -205,7 +206,7 @@
                                 </Panel>
                                 <!-- Tax -->
                                 <Panel Width="{Binding ColumnWidths.TaxColumnWidth}" IsVisible="{Binding ShowTaxColumn}">
-                                    <controls:SortableColumnHeader Text="Tax" ColumnName="Tax"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Tax'}" ColumnName="Tax"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -215,7 +216,7 @@
                                 </Panel>
                                 <!-- Shipping -->
                                 <Panel Width="{Binding ColumnWidths.ShippingColumnWidth}" IsVisible="{Binding ShowShippingColumn}">
-                                    <controls:SortableColumnHeader Text="Shipping" ColumnName="Shipping"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Shipping'}" ColumnName="Shipping"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -225,7 +226,7 @@
                                 </Panel>
                                 <!-- Discount -->
                                 <Panel Width="{Binding ColumnWidths.DiscountColumnWidth}" IsVisible="{Binding ShowDiscountColumn}">
-                                    <TextBlock Text="Discount" FontSize="12" FontWeight="SemiBold"
+                                    <TextBlock Text="{loc:Loc 'Discount'}" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                Margin="8,12,8,12" />
@@ -235,7 +236,7 @@
                                 </Panel>
                                 <!-- Total -->
                                 <Panel Width="{Binding ColumnWidths.TotalColumnWidth}" IsVisible="{Binding ShowTotalColumn}">
-                                    <controls:SortableColumnHeader Text="Total" ColumnName="Total"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Total'}" ColumnName="Total"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -245,7 +246,7 @@
                                 </Panel>
                                 <!-- Receipt -->
                                 <Panel Width="{Binding ColumnWidths.ReceiptColumnWidth}" IsVisible="{Binding ShowReceiptColumn}">
-                                    <TextBlock Text="Receipt" FontSize="12" FontWeight="SemiBold"
+                                    <TextBlock Text="{loc:Loc 'Receipt'}" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                HorizontalAlignment="Center"
                                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
@@ -256,7 +257,7 @@
                                 </Panel>
                                 <!-- Status -->
                                 <Panel Width="{Binding ColumnWidths.StatusColumnWidth}" IsVisible="{Binding ShowStatusColumn}">
-                                    <controls:SortableColumnHeader Text="Status" ColumnName="Status"
+                                    <controls:SortableColumnHeader Text="{loc:Loc 'Status'}" ColumnName="Status"
                                                                     Command="{Binding SortByCommand}"
                                                                     SortColumn="{Binding SortColumn}"
                                                                     SortDirection="{Binding SortDirection}" />
@@ -266,7 +267,7 @@
                                 </Panel>
                                 <!-- Actions -->
                                 <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                    <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                    <TextBlock Text="{loc:Loc 'Actions'}" FontSize="12" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                HorizontalAlignment="Left" VerticalAlignment="Center"
                                                Margin="8,12,8,12" />
@@ -479,7 +480,7 @@
                                                                 Spacing="4">
                                                         <!-- View Receipt Button -->
                                                         <Button Classes="icon-button"
-                                                                ToolTip.Tip="View Receipt"
+                                                                ToolTip.Tip="{loc:Loc 'View Receipt'}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ViewReceiptCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 IsVisible="{Binding HasReceipt}">
@@ -487,7 +488,7 @@
                                                                       Width="16" Height="16" />
                                                         </Button>
                                                         <Button Classes="icon-button"
-                                                                ToolTip.Tip="Edit"
+                                                                ToolTip.Tip="{loc:Loc 'Edit'}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).OpenEditModalCommand}"
                                                                 CommandParameter="{Binding}">
                                                             <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
@@ -495,7 +496,7 @@
                                                         </Button>
                                                         <!-- Mark as Lost/Damaged (shown when not already marked) -->
                                                         <Button Classes="icon-button warning"
-                                                                ToolTip.Tip="Mark as Lost/Damaged"
+                                                                ToolTip.Tip="{loc:Loc 'Mark as Lost/Damaged'}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).MarkAsLostDamagedCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 IsVisible="{Binding CanMarkAsLostDamaged}">
@@ -504,7 +505,7 @@
                                                         </Button>
                                                         <!-- Undo Lost/Damaged (shown when already marked as lost/damaged) -->
                                                         <Button Classes="icon-button warning"
-                                                                ToolTip.Tip="Undo Lost/Damaged"
+                                                                ToolTip.Tip="{loc:Loc 'Undo Lost/Damaged'}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).UndoLostDamagedCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 IsVisible="{Binding IsLostDamaged}">
@@ -513,7 +514,7 @@
                                                         </Button>
                                                         <!-- Mark as Returned (shown when not already marked) -->
                                                         <Button Classes="icon-button"
-                                                                ToolTip.Tip="Mark as Returned"
+                                                                ToolTip.Tip="{loc:Loc 'Mark as Returned'}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).MarkAsReturnedCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 IsVisible="{Binding CanMarkAsReturned}">
@@ -522,7 +523,7 @@
                                                         </Button>
                                                         <!-- Undo Return (shown when already returned) -->
                                                         <Button Classes="icon-button"
-                                                                ToolTip.Tip="Undo Return"
+                                                                ToolTip.Tip="{loc:Loc 'Undo Return'}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).UndoReturnCommand}"
                                                                 CommandParameter="{Binding}"
                                                                 IsVisible="{Binding IsReturned}">
@@ -530,7 +531,7 @@
                                                                       Width="16" Height="16" />
                                                         </Button>
                                                         <Button Classes="icon-button danger"
-                                                                ToolTip.Tip="Delete"
+                                                                ToolTip.Tip="{loc:Loc 'Delete'}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                 CommandParameter="{Binding}">
                                                             <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -557,12 +558,12 @@
                                                       Width="28" Height="28"
                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </Border>
-                                        <TextBlock Text="No expenses found"
+                                        <TextBlock Text="{loc:Loc 'No expenses found'}"
                                                    FontSize="16"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    HorizontalAlignment="Center" />
-                                        <TextBlock Text="Add your first expense to start tracking your spending."
+                                        <TextBlock Text="{loc:Loc 'Add your first expense to start tracking your spending.'}"
                                                    FontSize="14"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
@@ -577,7 +578,7 @@
                                                 <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                           Width="16" Height="16"
                                                           Foreground="White" />
-                                                <TextBlock Text="Add Expense" />
+                                                <TextBlock Text="{loc:Loc 'Add Expense'}" />
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
@@ -609,7 +610,7 @@
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center"
                                            Margin="8,0" />
-                                <TextBlock Text="Rows per page:"
+                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />
@@ -721,7 +722,7 @@
                             <PathIcon Data="M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z"
                                       Width="48" Height="48"
                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                            <TextBlock Text="Receipt preview not available"
+                            <TextBlock Text="{loc:Loc 'Receipt preview not available'}"
                                        FontSize="14"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                        HorizontalAlignment="Center" />
@@ -737,13 +738,13 @@
                     <Grid ColumnDefinitions="Auto,*,Auto">
                         <Button Grid.Column="0"
                                 Classes="icon-button"
-                                ToolTip.Tip="Toggle Fullscreen"
+                                ToolTip.Tip="{loc:Loc 'Toggle Fullscreen'}"
                                 Command="{Binding ToggleReceiptFullscreenCommand}">
                             <PathIcon Data="{Binding IsReceiptFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
                                       Width="16" Height="16" />
                         </Button>
                         <Button Grid.Column="2"
-                                Content="Close"
+                                Content="{loc:Loc 'Close'}"
                                 Classes="secondary-button"
                                 Command="{Binding CloseReceiptPreviewCommand}" />
                     </Grid>
@@ -759,20 +760,20 @@
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="ID" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowAccountantColumn}" Content="Accountant" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowProductColumn}" Content="Product" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="Supplier" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowDateColumn}" Content="Date" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="Quantity" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowUnitPriceColumn}" Content="Unit Price" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="Amount" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowTaxColumn}" Content="Tax" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowShippingColumn}" Content="Shipping" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowDiscountColumn}" Content="Discount" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="Total" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowReceiptColumn}" Content="Receipt" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'ID'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAccountantColumn}" Content="{loc:Loc 'Accountant'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowProductColumn}" Content="{loc:Loc 'Product'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowSupplierColumn}" Content="{loc:Loc 'Supplier'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDateColumn}" Content="{loc:Loc 'Date'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowQuantityColumn}" Content="{loc:Loc 'Quantity'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowUnitPriceColumn}" Content="{loc:Loc 'Unit Price'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="{loc:Loc 'Amount'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowTaxColumn}" Content="{loc:Loc 'Tax'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowShippingColumn}" Content="{loc:Loc 'Shipping'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDiscountColumn}" Content="{loc:Loc 'Discount'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowTotalColumn}" Content="{loc:Loc 'Total'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowReceiptColumn}" Content="{loc:Loc 'Receipt'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc 'Status'}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

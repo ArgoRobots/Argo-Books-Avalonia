@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Views.PlaceholderPage"
              x:DataType="vm:PlaceholderPageViewModel">
@@ -46,7 +47,7 @@
                     Padding="16,8"
                     HorizontalAlignment="Center"
                     Margin="0,16,0,0">
-                <TextBlock Text="Coming Soon"
+                <TextBlock Text="{loc:Loc 'Coming Soon'}"
                            FontSize="12"
                            FontWeight="Medium"
                            Foreground="{DynamicResource TextTertiaryBrush}" />
