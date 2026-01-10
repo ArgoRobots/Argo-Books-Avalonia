@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text;
 using Avalonia;
 using Avalonia.Data;
 using Avalonia.Markup.Xaml;
@@ -76,18 +77,35 @@ public class LocExtension : MarkupExtension
         if (string.IsNullOrEmpty(_key))
             return string.Empty;
 
-        // Escape single quotes in the key by doubling them, then wrap in single quotes
-        // This ensures keys with spaces or special characters are properly parsed
-        var escapedKey = _key.Replace("'", "''");
+        // Encode the key as hex to avoid binding path parsing issues with spaces/special chars
+        var encodedKey = EncodeKeyAsHex(_key);
 
         // Create a binding to the localization source using ReflectionBindingExtension
-        var binding = new ReflectionBindingExtension($"['{escapedKey}']")
+        var binding = new ReflectionBindingExtension($"[{encodedKey}]")
         {
             Source = LocalizationSource.Instance,
             Mode = BindingMode.OneWay
         };
 
         return binding.ProvideValue(serviceProvider);
+    }
+
+    /// <summary>
+    /// Encodes a key as hexadecimal to avoid binding path parsing issues.
+    /// </summary>
+    internal static string EncodeKeyAsHex(string key)
+    {
+        var bytes = Encoding.UTF8.GetBytes(key);
+        return Convert.ToHexString(bytes);
+    }
+
+    /// <summary>
+    /// Decodes a hex-encoded key back to the original string.
+    /// </summary>
+    internal static string DecodeKeyFromHex(string hexKey)
+    {
+        var bytes = Convert.FromHexString(hexKey);
+        return Encoding.UTF8.GetString(bytes);
     }
 }
 
@@ -133,17 +151,19 @@ public class LocalizationSource : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Gets the translated string for a key.
+    /// Gets the translated string for a hex-encoded key.
     /// </summary>
-    /// <param name="key">The translation key or English text.</param>
+    /// <param name="hexKey">The hex-encoded translation key.</param>
     /// <returns>The translated string.</returns>
-    public string this[string key]
+    public string this[string hexKey]
     {
         get
         {
-            if (string.IsNullOrEmpty(key))
+            if (string.IsNullOrEmpty(hexKey))
                 return string.Empty;
 
+            // Decode the hex key back to the original translation key
+            var key = LocExtension.DecodeKeyFromHex(hexKey);
             return LanguageService.Instance.Translate(key);
         }
     }
