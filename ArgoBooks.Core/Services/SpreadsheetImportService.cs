@@ -1003,6 +1003,11 @@ public class SpreadsheetImportService
             invoice.Balance = GetDecimal(row, headers, "Balance");
             invoice.Status = ParseEnum(GetString(row, headers, "Status"), InvoiceStatus.Draft);
 
+            // Set USD values (assume imported data is in USD)
+            invoice.OriginalCurrency = "USD";
+            invoice.TotalUSD = invoice.Total;
+            invoice.BalanceUSD = invoice.Balance;
+
             if (existing == null)
                 data.Invoices.Add(invoice);
         }
@@ -1030,6 +1035,11 @@ public class SpreadsheetImportService
             purchase.Total = GetDecimal(row, headers, "Total");
             purchase.ReferenceNumber = GetString(row, headers, "Reference");
             purchase.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
+
+            // Set USD values (assume imported data is in USD)
+            purchase.OriginalCurrency = "USD";
+            purchase.TotalUSD = purchase.Total;
+            purchase.TaxAmountUSD = purchase.TaxAmount;
 
             if (existing == null)
                 data.Purchases.Add(purchase);
@@ -1117,6 +1127,10 @@ public class SpreadsheetImportService
             payment.ReferenceNumber = GetNullableString(row, headers, "Reference");
             payment.Notes = GetString(row, headers, "Notes");
 
+            // Set USD values (assume imported data is in USD)
+            payment.OriginalCurrency = "USD";
+            payment.AmountUSD = payment.Amount;
+
             if (existing == null)
                 data.Payments.Add(payment);
         }
@@ -1172,6 +1186,11 @@ public class SpreadsheetImportService
             sale.Total = GetDecimal(row, headers, "Total");
             sale.ReferenceNumber = GetString(row, headers, "Reference");
             sale.PaymentStatus = GetString(row, headers, "Payment Status");
+
+            // Set USD values (assume imported data is in USD)
+            sale.OriginalCurrency = "USD";
+            sale.TotalUSD = sale.Total;
+            sale.TaxAmountUSD = sale.TaxAmount;
 
             if (string.IsNullOrEmpty(sale.PaymentStatus))
                 sale.PaymentStatus = "Paid";

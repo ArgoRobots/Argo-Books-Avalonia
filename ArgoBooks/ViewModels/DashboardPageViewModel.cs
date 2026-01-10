@@ -624,49 +624,49 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Calculate comparison period based on selected date range
         var (prevStartDate, prevEndDate) = GetComparisonPeriod();
 
-        // Calculate current period revenue
-        var currentRevenue = data.Sales
+        // Calculate current period revenue (using USD for consistent calculations)
+        var currentRevenueUSD = data.Sales
             .Where(s => s.Date >= StartDate && s.Date <= EndDate)
-            .Sum(s => s.Total);
+            .Sum(s => s.EffectiveTotalUSD);
 
         // Calculate previous period revenue for comparison
-        var prevRevenue = data.Sales
+        var prevRevenueUSD = data.Sales
             .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
-            .Sum(s => s.Total);
+            .Sum(s => s.EffectiveTotalUSD);
 
-        TotalRevenue = FormatCurrency(currentRevenue);
-        RevenueChangeValue = CalculatePercentageChange(prevRevenue, currentRevenue);
+        TotalRevenue = FormatCurrencyFromUSD(currentRevenueUSD, DateTime.Now);
+        RevenueChangeValue = CalculatePercentageChange(prevRevenueUSD, currentRevenueUSD);
         RevenueChangeText = FormatPercentageChange(RevenueChangeValue);
 
-        // Calculate current period expenses
-        var currentExpenses = data.Purchases
+        // Calculate current period expenses (using USD for consistent calculations)
+        var currentExpensesUSD = data.Purchases
             .Where(p => p.Date >= StartDate && p.Date <= EndDate)
-            .Sum(p => p.Total);
+            .Sum(p => p.EffectiveTotalUSD);
 
         // Calculate previous period expenses for comparison
-        var prevExpenses = data.Purchases
+        var prevExpensesUSD = data.Purchases
             .Where(p => p.Date >= prevStartDate && p.Date <= prevEndDate)
-            .Sum(p => p.Total);
+            .Sum(p => p.EffectiveTotalUSD);
 
-        TotalExpenses = FormatCurrency(currentExpenses);
-        ExpenseChangeValue = CalculatePercentageChange(prevExpenses, currentExpenses);
+        TotalExpenses = FormatCurrencyFromUSD(currentExpensesUSD, DateTime.Now);
+        ExpenseChangeValue = CalculatePercentageChange(prevExpensesUSD, currentExpensesUSD);
         ExpenseChangeText = FormatPercentageChange(ExpenseChangeValue);
 
         // Calculate net profit
-        var netProfitValue = currentRevenue - currentExpenses;
-        var prevProfit = prevRevenue - prevExpenses;
-        NetProfit = FormatCurrency(Math.Abs(netProfitValue));
-        ProfitChangeValue = CalculatePercentageChange(prevProfit, netProfitValue);
+        var netProfitUSD = currentRevenueUSD - currentExpensesUSD;
+        var prevProfitUSD = prevRevenueUSD - prevExpensesUSD;
+        NetProfit = FormatCurrencyFromUSD(Math.Abs(netProfitUSD), DateTime.Now);
+        ProfitChangeValue = CalculatePercentageChange(prevProfitUSD, netProfitUSD);
         ProfitChangeText = FormatPercentageChange(ProfitChangeValue);
 
-        // Calculate outstanding invoices
+        // Calculate outstanding invoices (using USD)
         var outstandingInvoices = data.Invoices
             .Where(i => i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Cancelled)
             .ToList();
 
         OutstandingInvoiceCount = outstandingInvoices.Count;
-        var outstandingAmount = outstandingInvoices.Sum(i => i.Balance);
-        OutstandingInvoices = FormatCurrency(outstandingAmount);
+        var outstandingAmountUSD = outstandingInvoices.Sum(i => i.EffectiveBalanceUSD);
+        OutstandingInvoices = FormatCurrencyFromUSD(outstandingAmountUSD, DateTime.Now);
 
         // Calculate active rentals
         var activeRentals = data.Rentals
@@ -690,8 +690,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 Id = s.Id,
                 Type = "Sale",
                 Description = string.IsNullOrEmpty(s.Description) ? "Sale Transaction" : s.Description,
-                Amount = FormatCurrency(s.Total),
-                AmountValue = s.Total,
+                Amount = FormatCurrencyFromUSD(s.EffectiveTotalUSD, s.Date),
+                AmountValue = CurrencyService.GetDisplayAmount(s.EffectiveTotalUSD, s.Date),
                 Date = s.Date,
                 DateFormatted = FormatDate(s.Date),
                 Status = string.Empty,
@@ -711,8 +711,8 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                 Id = p.Id,
                 Type = "Expense",
                 Description = string.IsNullOrEmpty(p.Description) ? "Purchase Transaction" : p.Description,
-                Amount = FormatCurrency(p.Total),
-                AmountValue = p.Total,
+                Amount = FormatCurrencyFromUSD(p.EffectiveTotalUSD, p.Date),
+                AmountValue = CurrencyService.GetDisplayAmount(p.EffectiveTotalUSD, p.Date),
                 Date = p.Date,
                 DateFormatted = FormatDate(p.Date),
                 Status = string.Empty,
@@ -781,7 +781,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ProfitsChartSeries = series;
         ProfitsChartXAxes = ChartLoaderService.CreateDateXAxes(dates);
         ProfitsChartYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
-        ProfitsChartTitle = $"Total profits: {FormatCurrency(totalProfit)}";
+        ProfitsChartTitle = $"Total profits: {FormatCurrencyFromUSD(totalProfit, DateTime.Now)}";
         HasProfitsChartData = series.Count > 0 && labels.Length > 0;
     }
 
