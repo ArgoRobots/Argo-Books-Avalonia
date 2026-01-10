@@ -41,14 +41,17 @@ for (int i = 0; i < args.Length; i++)
 var azureKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATOR_KEY");
 var azureRegion = Environment.GetEnvironmentVariable("AZURE_TRANSLATOR_REGION") ?? "eastus";
 
-if (!collectOnly && string.IsNullOrEmpty(azureKey))
+// If translation was requested but no API key, exit with error
+var translationRequested = translateAll || specificLanguages.Count > 0;
+if (translationRequested && string.IsNullOrEmpty(azureKey))
 {
-    Console.WriteLine("WARNING: AZURE_TRANSLATOR_KEY environment variable not set.");
-    Console.WriteLine("Set it to translate, or use --collect to just collect strings.\n");
-    Console.WriteLine("Example:");
-    Console.WriteLine("  export AZURE_TRANSLATOR_KEY=your-api-key");
-    Console.WriteLine("  export AZURE_TRANSLATOR_REGION=eastus  # optional, defaults to eastus\n");
-    collectOnly = true;
+    Console.WriteLine("ERROR: AZURE_TRANSLATOR_KEY environment variable not set.\n");
+    Console.WriteLine("Set the environment variable and try again:");
+    Console.WriteLine("  PowerShell:  $env:AZURE_TRANSLATOR_KEY = \"your-api-key\"");
+    Console.WriteLine("  Cmd:         set AZURE_TRANSLATOR_KEY=your-api-key");
+    Console.WriteLine("  Bash:        export AZURE_TRANSLATOR_KEY=your-api-key\n");
+    Console.WriteLine("Or use --collect to just collect strings without translating.");
+    return 1;
 }
 
 Console.WriteLine($"Source directory: {sourceDir}");
