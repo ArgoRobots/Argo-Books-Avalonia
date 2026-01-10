@@ -126,14 +126,6 @@ try
 
     Console.WriteLine($"\nDone! Translations saved to: {outputDir}");
     Console.WriteLine($"Generated {translations.Count} language files.");
-
-    // Show file sizes
-    Console.WriteLine("\nGenerated files:");
-    foreach (var file in Directory.GetFiles(outputDir, "*.json"))
-    {
-        var info = new FileInfo(file);
-        Console.WriteLine($"  {Path.GetFileName(file)}: {info.Length / 1024.0:F1} KB");
-    }
 }
 catch (Exception ex)
 {
