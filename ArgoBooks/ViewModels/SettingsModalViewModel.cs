@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -477,7 +478,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 {
                     case ConfirmationResult.Primary:
                         // Save and close
-                        SaveCommand.Execute(null);
+                        await SaveAsyncCommand.ExecuteAsync(null);
                         return;
                     case ConfirmationResult.Secondary:
                         // Don't save, revert and close
@@ -534,12 +535,15 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// Saves the settings and closes the modal.
     /// </summary>
     [RelayCommand]
-    private void Save()
+    private async Task SaveAsync()
     {
         // Check what changed before updating original values
         var dateFormatChanged = SelectedDateFormat != _originalDateFormat;
         var currencyChanged = SelectedCurrency != _originalCurrency;
         var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
+
+        // Extract the new currency code before updating originals
+        var newCurrencyCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
 
         // Update original values to current (so close doesn't revert)
         _originalTheme = SelectedTheme;
@@ -554,7 +558,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             settings.Localization.DateFormat = SelectedDateFormat;
             // Extract currency code from display string (e.g., "USD - US Dollar ($)" -> "USD")
-            settings.Localization.Currency = CurrencyService.ParseCurrencyCode(SelectedCurrency);
+            settings.Localization.Currency = newCurrencyCode;
             settings.ChangesMade = true;
         }
 
@@ -573,8 +577,10 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
 
         // Notify that currency changed so views can refresh
+        // Also preload exchange rates for the new currency
         if (currencyChanged)
         {
+            await PreloadExchangeRatesForCurrencyAsync(newCurrencyCode);
             CurrencyService.NotifyCurrencyChanged();
         }
 
@@ -591,6 +597,56 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
 
         IsOpen = false;
+    }
+
+    /// <summary>
+    /// Preloads exchange rates for the selected currency.
+    /// Shows error notification if API call fails.
+    /// </summary>
+    private async Task PreloadExchangeRatesForCurrencyAsync(string currencyCode)
+    {
+        // Skip if USD (no conversion needed)
+        if (string.Equals(currencyCode, "USD", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var exchangeService = ExchangeRateService.Instance;
+        if (exchangeService == null)
+        {
+            App.AddNotification(
+                "Exchange Rates Unavailable",
+                "Exchange rate service is not available. Currency values will not be converted.",
+                NotificationType.Warning);
+            return;
+        }
+
+        if (!exchangeService.HasApiKey)
+        {
+            // Check if we have cached rates
+            if (exchangeService.CachedRatesCount == 0)
+            {
+                App.AddNotification(
+                    "Exchange Rates Unavailable",
+                    "No exchange rate API key configured and no cached rates available. Currency values will be displayed in USD.",
+                    NotificationType.Warning);
+            }
+            return;
+        }
+
+        try
+        {
+            // Preload rates for today and the past 30 days (covers most common scenarios)
+            var today = DateTime.UtcNow.Date;
+            var dates = Enumerable.Range(0, 30).Select(i => today.AddDays(-i)).ToList();
+
+            await exchangeService.PreloadRatesAsync(dates);
+        }
+        catch (Exception ex)
+        {
+            App.AddNotification(
+                "Exchange Rate Error",
+                $"Failed to fetch exchange rates: {ex.Message}. Cached rates will be used if available.",
+                NotificationType.Warning);
+        }
     }
 
     /// <summary>
