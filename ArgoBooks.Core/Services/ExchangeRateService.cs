@@ -39,7 +39,7 @@ public class ExchangeRateService : IExchangeRateService
     /// </summary>
     public ExchangeRateService(string? apiKey, IPlatformService platformService, HttpClient httpClient)
     {
-        _apiKey = apiKey ?? Environment.GetEnvironmentVariable("OPENEXCHANGERATES_API_KEY");
+        _apiKey = apiKey ?? DotEnv.Get("OPENEXCHANGERATES_API_KEY");
         _platformService = platformService;
         _httpClient = httpClient;
         _httpClient.Timeout = TimeSpan.FromSeconds(10);

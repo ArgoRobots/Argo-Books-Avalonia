@@ -601,7 +601,7 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     /// <summary>
     /// Preloads exchange rates for the selected currency.
-    /// Shows error notification if API call fails.
+    /// Shows error message box if API call fails.
     /// </summary>
     private async Task PreloadExchangeRatesForCurrencyAsync(string currencyCode)
     {
@@ -612,10 +612,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         var exchangeService = ExchangeRateService.Instance;
         if (exchangeService == null)
         {
-            App.AddNotification(
+            await ShowExchangeRateErrorAsync(
                 "Exchange Rates Unavailable",
-                "Exchange rate service is not available. Currency values will not be converted.",
-                NotificationType.Warning);
+                "Exchange rate service is not available. Currency values will not be converted.");
             return;
         }
 
@@ -624,10 +623,9 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Check if we have cached rates
             if (exchangeService.CachedRatesCount == 0)
             {
-                App.AddNotification(
+                await ShowExchangeRateErrorAsync(
                     "Exchange Rates Unavailable",
-                    "No exchange rate API key configured and no cached rates available. Currency values will be displayed in USD.",
-                    NotificationType.Warning);
+                    "No exchange rate API key configured and no cached rates available. Currency values will be displayed in USD.");
             }
             return;
         }
@@ -642,10 +640,27 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.AddNotification(
+            await ShowExchangeRateErrorAsync(
                 "Exchange Rate Error",
-                $"Failed to fetch exchange rates: {ex.Message}. Cached rates will be used if available.",
-                NotificationType.Warning);
+                $"Failed to fetch exchange rates: {ex.Message}. Cached rates will be used if available.");
+        }
+    }
+
+    /// <summary>
+    /// Shows an exchange rate error message box.
+    /// </summary>
+    private static async Task ShowExchangeRateErrorAsync(string title, string message)
+    {
+        var dialog = App.ConfirmationDialog;
+        if (dialog != null)
+        {
+            await dialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = title,
+                Message = message,
+                PrimaryButtonText = "OK",
+                ShowSecondaryButton = false
+            });
         }
     }
 
