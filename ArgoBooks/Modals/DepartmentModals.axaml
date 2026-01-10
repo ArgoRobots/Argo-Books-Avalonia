@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              x:Class="ArgoBooks.Modals.DepartmentModals"
              x:DataType="vm:DepartmentModalsViewModel">
     <Panel>
@@ -12,7 +13,7 @@
                 <Grid RowDefinitions="Auto,*,Auto">
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Add Department" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Add Department'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseAddModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
                             </Button>
@@ -21,20 +22,20 @@
                     <StackPanel Grid.Row="1" Margin="24" Spacing="16">
                         <StackPanel Spacing="6">
                             <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                <Run Text="Department Name" /><Run Text="*" Foreground="#dc2626" />
+                                <Run Text="{loc:Loc 'Department Name'}" /><Run Text="*" Foreground="#dc2626" />
                             </TextBlock>
-                            <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="Enter department name" />
+                            <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter department name'}" />
                             <TextBlock Text="{Binding ModalDepartmentNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalDepartmentNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Description" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="Enter description" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
+                            <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                         </StackPanel>
                     </StackPanel>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddModalCommand}" />
-                            <Button Classes="primary-button" Content="Add Department" Command="{Binding SaveNewDepartmentCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseAddModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Add Department'}" Command="{Binding SaveNewDepartmentCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -49,7 +50,7 @@
                 <Grid RowDefinitions="Auto,*,Auto">
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Edit Department" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Edit Department'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseEditModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
                             </Button>
@@ -58,20 +59,20 @@
                     <StackPanel Grid.Row="1" Margin="24" Spacing="16">
                         <StackPanel Spacing="6">
                             <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                <Run Text="Department Name" /><Run Text="*" Foreground="#dc2626" />
+                                <Run Text="{loc:Loc 'Department Name'}" /><Run Text="*" Foreground="#dc2626" />
                             </TextBlock>
-                            <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="Enter department name" />
+                            <TextBox Text="{Binding ModalDepartmentName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter department name'}" />
                             <TextBlock Text="{Binding ModalDepartmentNameError}" FontSize="12" Foreground="#dc2626" IsVisible="{Binding ModalDepartmentNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Description" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="Enter description" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
+                            <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                         </StackPanel>
                     </StackPanel>
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseEditModalCommand}" />
-                            <Button Classes="primary-button" Content="Save Changes" Command="{Binding SaveEditedDepartmentCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseEditModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Save Changes'}" Command="{Binding SaveEditedDepartmentCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>

@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.SettingsModal"
              x:DataType="vm:SettingsModalViewModel">
@@ -56,7 +57,7 @@
                         BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
-                                   Text="Settings"
+                                   Text="{loc:Loc Settings}"
                                    FontSize="18"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -74,36 +75,36 @@
                             SelectedIndex="{Binding SelectedTabIndex}"
                             Margin="0">
                     <!-- General Tab -->
-                    <TabItem Header="General">
+                    <TabItem Header="{loc:Loc General}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="20">
                                 <!-- Language -->
                                 <StackPanel Spacing="6">
-                                    <TextBlock Text="Language"
+                                    <TextBlock Text="{loc:Loc Language}"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:SearchableDropdown ItemsSource="{Binding Languages}"
                                                                   SelectedItem="{Binding SelectedLanguage}"
                                                                   PriorityItems="{Binding PriorityLanguages}"
-                                                                  Placeholder="Search languages..." />
+                                                                  Placeholder="{loc:Loc 'Search languages...'}" />
                                 </StackPanel>
 
                                 <!-- Currency -->
                                 <StackPanel Spacing="6">
-                                    <TextBlock Text="Currency"
+                                    <TextBlock Text="{loc:Loc Currency}"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <controls:SearchableDropdown ItemsSource="{Binding Currencies}"
                                                                   SelectedItem="{Binding SelectedCurrency}"
                                                                   PriorityItems="{Binding PriorityCurrencies}"
-                                                                  Placeholder="Search currencies..." />
+                                                                  Placeholder="{loc:Loc 'Search currencies...'}" />
                                 </StackPanel>
 
                                 <!-- Date Format -->
                                 <StackPanel Spacing="6">
-                                    <TextBlock Text="Date Format"
+                                    <TextBlock Text="{loc:Loc 'Date Format'}"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -114,7 +115,7 @@
 
                                 <!-- Chart Settings -->
                                 <StackPanel Spacing="6" Margin="0,8,0,0">
-                                    <TextBlock Text="Max Pie Chart Slices"
+                                    <TextBlock Text="{loc:Loc 'Max Pie Chart Slices'}"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -123,7 +124,7 @@
                                                   SelectedItem="{Binding MaxPieSlices}"
                                                   Classes="form-combobox"
                                                   Width="100" />
-                                        <TextBlock Text="Additional items will be grouped into 'Other'"
+                                        <TextBlock Text="{loc:Loc 'Additional items will be grouped into ''Other'''}"
                                                    FontSize="12"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    VerticalAlignment="Center" />
@@ -137,11 +138,11 @@
                                         Margin="0,8,0,0">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="4">
-                                            <TextBlock Text="Anonymous Data Collection"
+                                            <TextBlock Text="{loc:Loc 'Anonymous Data Collection'}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Help improve Argo Books by sharing anonymous usage data"
+                                            <TextBlock Text="{loc:Loc 'Help improve Argo Books by sharing anonymous usage data'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                        TextWrapping="Wrap" />
@@ -156,10 +157,10 @@
                     </TabItem>
 
                     <!-- Notifications Tab -->
-                    <TabItem Header="Notifications">
+                    <TabItem Header="{loc:Loc Notifications}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="4">
-                                <TextBlock Text="Configure notification preferences"
+                                <TextBlock Text="{loc:Loc 'Configure notification preferences'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            Margin="0,0,0,16" />
@@ -170,11 +171,11 @@
                                         Padding="16">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="Low Stock Alert"
+                                            <TextBlock Text="{loc:Loc 'Low Stock Alert'}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Get notified when inventory is running low"
+                                            <TextBlock Text="{loc:Loc 'Get notified when inventory is running low'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
@@ -190,11 +191,11 @@
                                         Padding="16">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="Invoice Overdue"
+                                            <TextBlock Text="{loc:Loc 'Invoice Overdue'}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Alert when invoices become overdue"
+                                            <TextBlock Text="{loc:Loc 'Alert when invoices become overdue'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
@@ -210,11 +211,11 @@
                                         Padding="16">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="Payment Received"
+                                            <TextBlock Text="{loc:Loc 'Payment Received'}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Notify when payments are received"
+                                            <TextBlock Text="{loc:Loc 'Notify when payments are received'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
@@ -230,11 +231,11 @@
                                         Padding="16">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="Large Transaction Alert"
+                                            <TextBlock Text="{loc:Loc 'Large Transaction Alert'}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Alert for transactions above threshold"
+                                            <TextBlock Text="{loc:Loc 'Alert for transactions above threshold'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
@@ -248,12 +249,12 @@
                     </TabItem>
 
                     <!-- Appearance Tab -->
-                    <TabItem Header="Appearance">
+                    <TabItem Header="{loc:Loc Appearance}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="24" HorizontalAlignment="Center">
                                 <!-- Theme -->
                                 <StackPanel Spacing="12">
-                                    <TextBlock Text="Theme"
+                                    <TextBlock Text="{loc:Loc Theme}"
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -288,7 +289,7 @@
                                                     </StackPanel>
                                                 </Border>
                                                 <TextBlock Grid.Row="1"
-                                                           Text="Light"
+                                                           Text="{loc:Loc Light}"
                                                            FontSize="12"
                                                            HorizontalAlignment="Center"
                                                            Margin="0,8,0,0"
@@ -326,7 +327,7 @@
                                                     </StackPanel>
                                                 </Border>
                                                 <TextBlock Grid.Row="1"
-                                                           Text="Dark"
+                                                           Text="{loc:Loc Dark}"
                                                            FontSize="12"
                                                            HorizontalAlignment="Center"
                                                            Margin="0,8,0,0"
@@ -363,7 +364,7 @@
                                                     </Grid>
                                                 </Border>
                                                 <TextBlock Grid.Row="1"
-                                                           Text="System"
+                                                           Text="{loc:Loc System}"
                                                            FontSize="12"
                                                            HorizontalAlignment="Center"
                                                            Margin="0,8,0,0"
@@ -375,7 +376,7 @@
 
                                 <!-- Accent Color -->
                                 <StackPanel Spacing="12">
-                                    <TextBlock Text="Accent Color"
+                                    <TextBlock Text="{loc:Loc 'Accent Color'}"
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -501,7 +502,7 @@
                     </TabItem>
 
                     <!-- Security Tab -->
-                    <TabItem Header="Security">
+                    <TabItem Header="{loc:Loc Security}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
                                 <!-- Password - No password set -->
@@ -511,17 +512,17 @@
                                         IsVisible="{Binding !HasPassword}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="Password"
+                                            <TextBlock Text="{loc:Loc Password}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Add a password to protect your company file"
+                                            <TextBlock Text="{loc:Loc 'Add a password to protect your company file'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
                                         <Button Grid.Column="1"
                                                 Classes="primary-button"
-                                                Content="Add Password"
+                                                Content="{loc:Loc 'Add Password'}"
                                                 Command="{Binding OpenAddPasswordCommand}"
                                                 VerticalAlignment="Center" />
                                     </Grid>
@@ -534,21 +535,21 @@
                                         IsVisible="{Binding HasPassword}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="Password"
+                                            <TextBlock Text="{loc:Loc Password}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Your company file is password protected"
+                                            <TextBlock Text="{loc:Loc 'Your company file is password protected'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                                             <Button Classes="secondary-button"
-                                                    Content="Change"
+                                                    Content="{loc:Loc Change}"
                                                     Command="{Binding OpenChangePasswordCommand}"
                                                     VerticalAlignment="Center" />
                                             <Button Classes="danger-button"
-                                                    Content="Remove"
+                                                    Content="{loc:Loc Remove}"
                                                     Command="{Binding OpenRemovePasswordCommand}"
                                                     VerticalAlignment="Center" />
                                         </StackPanel>
@@ -561,22 +562,22 @@
                                         Padding="16">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="Windows Hello"
+                                            <TextBlock Text="{loc:Loc 'Windows Hello'}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <!-- Show description when enabled (has both Standard and password) -->
-                                            <TextBlock Text="Use fingerprint or face recognition to unlock"
+                                            <TextBlock Text="{loc:Loc 'Use fingerprint or face recognition to unlock'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                                        IsVisible="{Binding CanEnableWindowsHello}" />
                                             <!-- Show "requires password" message when has Standard but no password -->
-                                            <TextBlock Text="Requires a password to be set first"
+                                            <TextBlock Text="{loc:Loc 'Requires a password to be set first'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        IsVisible="{Binding NeedsPasswordForWindowsHello}" />
                                             <!-- Show "requires Standard" message when doesn't have Standard plan -->
-                                            <TextBlock Text="Requires Standard plan or higher"
+                                            <TextBlock Text="{loc:Loc 'Requires Standard plan or higher'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
                                                        IsVisible="{Binding !HasStandard}" />
@@ -589,7 +590,7 @@
                                         <!-- Upgrade button when user doesn't have standard -->
                                         <Button Grid.Column="1"
                                                 Classes="primary-button"
-                                                Content="Upgrade Now"
+                                                Content="{loc:Loc 'Upgrade Now'}"
                                                 Command="{Binding UpgradeNowCommand}"
                                                 IsVisible="{Binding !HasStandard}"
                                                 VerticalAlignment="Center"
@@ -603,11 +604,11 @@
                                         Padding="16">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
-                                            <TextBlock Text="File Encryption"
+                                            <TextBlock Text="{loc:Loc 'File Encryption'}"
                                                        FontSize="14"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="Encrypt company files with AES-256"
+                                            <TextBlock Text="{loc:Loc 'Encrypt company files with AES-256'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </StackPanel>
@@ -619,14 +620,14 @@
 
                                 <!-- Auto-Lock -->
                                 <StackPanel Spacing="6">
-                                    <TextBlock Text="Auto-Lock"
+                                    <TextBlock Text="{loc:Loc Auto-Lock}"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <ComboBox ItemsSource="{Binding AutoLockOptions}"
                                               SelectedItem="{Binding SelectedAutoLock}"
                                               Classes="form-combobox" />
-                                    <TextBlock Text="Automatically lock the application after inactivity"
+                                    <TextBlock Text="{loc:Loc 'Automatically lock the application after inactivity'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </StackPanel>
@@ -644,10 +645,10 @@
                                 HorizontalAlignment="Right"
                                 Spacing="12">
                         <Button Classes="secondary-button"
-                                Content="Cancel"
+                                Content="{loc:Loc Cancel}"
                                 Command="{Binding CloseCommand}" />
                         <Button Classes="primary-button"
-                                Content="Save Changes"
+                                Content="{loc:Loc 'Save Changes'}"
                                 Command="{Binding SaveCommand}" />
                     </StackPanel>
                 </Border>
@@ -667,13 +668,13 @@
                     BoxShadow="0 8 32 0 #40000000">
                 <StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                        <TextBlock Text="Add Password" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="{loc:Loc 'Add Password'}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                     </Border>
                     <StackPanel Margin="20" Spacing="16">
-                        <TextBlock Text="Create a password to protect your company file. You'll need this password to open the file."
+                        <TextBlock Text="{loc:Loc 'Create a password to protect your company file. You''ll need this password to open the file.'}"
                                    FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                         <StackPanel Spacing="6">
-                            <TextBlock Text="New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'New Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Border Background="{DynamicResource SurfaceBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
@@ -692,7 +693,7 @@
                             </Border>
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Confirm Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Confirm Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Border Background="{DynamicResource SurfaceBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
@@ -715,8 +716,8 @@
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding ClosePasswordModalCommand}" />
-                            <Button Classes="primary-button" Content="Add Password" Command="{Binding ConfirmAddPasswordCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding ClosePasswordModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Add Password'}" Command="{Binding ConfirmAddPasswordCommand}" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -736,11 +737,11 @@
                     BoxShadow="0 8 32 0 #40000000">
                 <StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                        <TextBlock Text="Change Password" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="{loc:Loc 'Change Password'}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                     </Border>
                     <StackPanel Margin="20" Spacing="16">
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Current Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Current Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Border Background="{DynamicResource SurfaceBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
@@ -760,7 +761,7 @@
                             </Border>
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'New Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Border Background="{DynamicResource SurfaceBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
@@ -779,7 +780,7 @@
                             </Border>
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Confirm New Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Confirm New Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Border Background="{DynamicResource SurfaceBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
@@ -802,8 +803,8 @@
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding ClosePasswordModalCommand}" />
-                            <Button Classes="primary-button" Content="Change Password" Command="{Binding ConfirmChangePasswordCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding ClosePasswordModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Change Password'}" Command="{Binding ConfirmChangePasswordCommand}" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -823,13 +824,13 @@
                     BoxShadow="0 8 32 0 #40000000">
                 <StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
-                        <TextBlock Text="Remove Password" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="{loc:Loc 'Remove Password'}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                     </Border>
                     <StackPanel Margin="20" Spacing="16">
-                        <TextBlock Text="Are you sure you want to remove password protection? Your company file will no longer be protected."
+                        <TextBlock Text="{loc:Loc 'Are you sure you want to remove password protection? Your company file will no longer be protected.'}"
                                    FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Current Password" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Current Password'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <Border Background="{DynamicResource SurfaceBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
                                     BorderThickness="1"
@@ -853,8 +854,8 @@
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding ClosePasswordModalCommand}" />
-                            <Button Classes="danger-button" Content="Remove Password" Command="{Binding ConfirmRemovePasswordCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding ClosePasswordModalCommand}" />
+                            <Button Classes="danger-button" Content="{loc:Loc 'Remove Password'}" Command="{Binding ConfirmRemovePasswordCommand}" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

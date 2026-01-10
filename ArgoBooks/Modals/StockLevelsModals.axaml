@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.StockLevelsModals"
              x:DataType="vm:StockLevelsModalsViewModel">
@@ -22,7 +23,7 @@
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Adjust Stock"
+                                <TextBlock Text="{loc:Loc 'Adjust Stock'}"
                                            FontSize="18" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <TextBlock Text="{Binding SelectedItemProductName}"
@@ -41,7 +42,7 @@
                             <!-- Adjustment Type -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Adjustment Type" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Adjustment Type'}" /><Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
                                 <ComboBox ItemsSource="{Binding AdjustmentTypes}"
                                           SelectedItem="{Binding AdjustmentType}"
@@ -52,7 +53,7 @@
                             <!-- Current Stock (Read-only) -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Current Stock" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Current Stock'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding CurrentStock}"
                                              IsReadOnly="True"
                                              Classes="form-input"
@@ -62,17 +63,17 @@
                                 <!-- Adjustment Quantity -->
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Quantity" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Quantity}" /><Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
                                     <TextBox Text="{Binding AdjustmentQuantity, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="Enter quantity" />
+                                             Watermark="{loc:Loc 'Enter quantity'}" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- New Stock Level (Calculated, Read-only) -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="New Stock Level" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'New Stock Level'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding CalculatedNewStock}"
                                          IsReadOnly="True"
                                          Classes="form-input"
@@ -81,14 +82,14 @@
 
                             <!-- Reason/Notes -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Reason/Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Reason/Notes'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding AdjustmentReason, Mode=TwoWay}"
                                          Classes="form-input"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"
                                          MaxHeight="120"
-                                         Watermark="Enter reason for adjustment..." />
+                                         Watermark="{loc:Loc 'Enter reason for adjustment...'}" />
                             </StackPanel>
 
                             <!-- Error Message -->
@@ -102,8 +103,8 @@
                     <!-- Modal Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAdjustStockModalCommand}" />
-                            <Button Classes="primary-button" Content="Apply Adjustment" Command="{Binding SaveAdjustmentCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseAdjustStockModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Apply Adjustment'}" Command="{Binding SaveAdjustmentCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -122,7 +123,7 @@
                     <!-- Modal Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Add Inventory Item"
+                            <TextBlock Text="{loc:Loc 'Add Inventory Item'}"
                                        FontSize="18" FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseAddItemModalCommand}">
@@ -137,15 +138,15 @@
                             <!-- Product Selection -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Product" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Product}" /><Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableProducts}"
                                                             SelectedItem="{Binding SelectedProduct}"
                                                             DisplayMemberPath="Name"
-                                                            Placeholder="Search products..."
+                                                            Placeholder="{loc:Loc 'Search products...'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="No products available."
-                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyMessage="{loc:Loc 'No products available.'}"
+                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateProductCommand}" />
                                 <TextBlock Text="{Binding AddItemProductError}" FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding AddItemProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -154,25 +155,25 @@
                             <!-- SKU and Location -->
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="SKU" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc SKU}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding AddItemSku, Mode=TwoWay}"
                                              Classes="form-input"
-                                             Watermark="Auto-generated if empty" />
+                                             Watermark="{loc:Loc 'Auto-generated if empty'}" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <controls:SearchableDropdown
-                                        Label="Location"
+                                        Label="{loc:Loc Location}"
                                         IsRequired="True"
                                         ItemsSource="{Binding AvailableLocations}"
                                         SelectedItem="{Binding SelectedLocation}"
                                         DisplayMemberPath="Name"
-                                        Placeholder="Select a location..."
+                                        Placeholder="{loc:Loc 'Select a location...'}"
                                         HasError="{Binding HasLocationError}"
-                                        ErrorMessage="Please select a location"
+                                        ErrorMessage="{loc:Loc 'Please select a location'}"
                                         ShowAddNew="False"
-                                        EmptyMessage="No locations found."
-                                        EmptyCreateLinkText="Create one"
+                                        EmptyMessage="{loc:Loc 'No locations found.'}"
+                                        EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                         EmptyCreateCommand="{Binding NavigateToCreateLocationCommand}" />
                                 </StackPanel>
                             </Grid>
@@ -181,7 +182,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Initial Quantity" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Initial Quantity'}" /><Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
                                     <TextBox Text="{Binding AddItemQuantity, Mode=TwoWay}"
                                              Classes="form-input"
@@ -189,7 +190,7 @@
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Reorder Point" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding AddItemReorderPoint, Mode=TwoWay}"
                                              Classes="form-input"
                                              Watermark="10" />
@@ -198,7 +199,7 @@
 
                             <!-- Overstock Threshold -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Overstock Threshold" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Overstock Threshold'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding AddItemOverstockThreshold, Mode=TwoWay}"
                                          Classes="form-input"
                                          Watermark="100" />
@@ -215,8 +216,8 @@
                     <!-- Modal Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddItemModalCommand}" />
-                            <Button Classes="primary-button" Content="Add Item" Command="{Binding SaveNewItemCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseAddItemModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Add Item'}" Command="{Binding SaveNewItemCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -238,7 +239,7 @@
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Filter Stock Levels"
+                            <TextBlock Text="{loc:Loc 'Filter Stock Levels'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -255,7 +256,7 @@
                     <StackPanel Spacing="16" Margin="24">
                         <!-- Category -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Category"
+                            <TextBlock Text="{loc:Loc Category}"
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -267,7 +268,7 @@
 
                         <!-- Location -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Location"
+                            <TextBlock Text="{loc:Loc Location}"
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -279,7 +280,7 @@
 
                         <!-- Stock Status -->
                         <StackPanel Spacing="8">
-                            <TextBlock Text="Stock Status"
+                            <TextBlock Text="{loc:Loc 'Stock Status'}"
                                        FontSize="13"
                                        FontWeight="Medium"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -296,17 +297,17 @@
                             BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <Button Grid.Column="0"
-                                    Content="Clear Filters"
+                                    Content="{loc:Loc 'Clear Filters'}"
                                     Classes="secondary-button"
                                     HorizontalAlignment="Left"
                                     Command="{Binding ClearFiltersCommand}" />
                             <Button Grid.Column="2"
-                                    Content="Cancel"
+                                    Content="{loc:Loc Cancel}"
                                     Classes="secondary-button"
                                     Margin="0,0,12,0"
                                     Command="{Binding CloseFilterModalCommand}" />
                             <Button Grid.Column="3"
-                                    Content="Apply Filters"
+                                    Content="{loc:Loc 'Apply Filters'}"
                                     Classes="primary-button"
                                     Command="{Binding ApplyFiltersCommand}" />
                         </Grid>

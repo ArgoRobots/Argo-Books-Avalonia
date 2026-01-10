@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.InvoicesPage"
              x:DataType="vm:InvoicesPageViewModel">
@@ -27,9 +28,9 @@
             <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                         Margin="0"
                         Classes="page-tabs">
-                <TabItem Header="All Invoices" />
-                <TabItem Header="Drafts" />
-                <TabItem Header="Recurring Invoices" />
+                <TabItem Header="{loc:Loc 'All Invoices'}" />
+                <TabItem Header="{loc:Loc Drafts}" />
+                <TabItem Header="{loc:Loc 'Recurring Invoices'}" />
             </TabControl>
         </Border>
 
@@ -74,7 +75,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <!-- Title -->
                             <TextBlock Grid.Column="0"
-                                       Text="Invoices"
+                                       Text="{loc:Loc Invoices}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -96,7 +97,7 @@
                                                   Margin="12,0,8,0" />
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="Search invoices..."
+                                                 Watermark="{loc:Loc 'Search invoices...'}"
                                                  Classes="search-input" />
                                     </Grid>
                                 </Border>
@@ -107,7 +108,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                   Width="16" Height="16" />
-                                        <TextBlock Text="Filter" />
+                                        <TextBlock Text="{loc:Loc Filter}" />
                                     </StackPanel>
                                 </Button>
 
@@ -118,7 +119,7 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
-                                        <TextBlock Text="Create Invoice" />
+                                        <TextBlock Text="{loc:Loc 'Create Invoice'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -211,7 +212,7 @@
                                     </Panel>
                                     <!-- Actions (Fixed) -->
                                     <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="Actions" FontSize="12" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Loc Actions}" FontSize="12" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                    TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
                                                    HorizontalAlignment="Left"
@@ -342,7 +343,7 @@
                                                                         Spacing="4"
                                                                         Margin="8,0">
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="Continue"
+                                                                        ToolTip.Tip="{loc:Loc Continue}"
                                                                         IsVisible="{Binding IsDraft}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ContinueDraftInvoiceCommand}"
                                                                         CommandParameter="{Binding}">
@@ -350,7 +351,7 @@
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="Edit"
+                                                                        ToolTip.Tip="{loc:Loc Edit}"
                                                                         IsVisible="{Binding CanEdit}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenEditModalCommand}"
                                                                         CommandParameter="{Binding}">
@@ -358,14 +359,14 @@
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="View History"
+                                                                        ToolTip.Tip="{loc:Loc 'View History'}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenHistoryModalCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
                                                                               Width="16" Height="16" />
                                                                 </Button>
                                                                 <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="Delete"
+                                                                        ToolTip.Tip="{loc:Loc Delete}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -413,7 +414,7 @@
                                                     <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                               Width="16" Height="16"
                                                               Foreground="White" />
-                                                    <TextBlock Text="Create Invoice" />
+                                                    <TextBlock Text="{loc:Loc 'Create Invoice'}" />
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>
@@ -445,7 +446,7 @@
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center"
                                            Margin="8,0" />
-                                <TextBlock Text="Rows per page:"
+                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />
@@ -515,13 +516,13 @@
                                     CloseCommand="{Binding CloseColumnMenuCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="Invoice #" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowAccountantColumn}" Content="Accountant" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="Customer" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowIssueDateColumn}" Content="Issue Date" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowDueDateColumn}" Content="Due Date" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="Amount" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="Status" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowIdColumn}" Content="{loc:Loc 'Invoice #'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAccountantColumn}" Content="{loc:Loc Accountant}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowCustomerColumn}" Content="{loc:Loc Customer}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowIssueDateColumn}" Content="{loc:Loc 'Issue Date'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowDueDateColumn}" Content="{loc:Loc 'Due Date'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowAmountColumn}" Content="{loc:Loc Amount}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
             </StackPanel>
         </controls:ColumnVisibilityMenu.ColumnsContent>
     </controls:ColumnVisibilityMenu>

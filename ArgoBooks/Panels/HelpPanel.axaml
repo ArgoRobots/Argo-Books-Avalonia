@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="350"
              x:Class="ArgoBooks.Panels.HelpPanel"
              x:DataType="vm:HelpPanelViewModel">
@@ -45,7 +46,7 @@
                 <Border Padding="20,16"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1">
-                    <TextBlock Text="Help &amp; Resources"
+                    <TextBlock Text="{loc:Loc 'Help &amp; Resources'}"
                                FontSize="14"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -63,7 +64,7 @@
                                       Width="20" Height="20"
                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                       Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="What's New" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc 'What''s New'}" VerticalAlignment="Center" />
                         </Grid>
                     </Button>
 
@@ -77,7 +78,7 @@
                                       Width="20" Height="20"
                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                       Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="Documentation" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc Documentation}" VerticalAlignment="Center" />
                         </Grid>
                     </Button>
 
@@ -91,7 +92,7 @@
                                       Width="20" Height="20"
                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                       Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="Argo Community" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc 'Argo Community'}" VerticalAlignment="Center" />
                         </Grid>
                     </Button>
 
@@ -105,7 +106,7 @@
                                       Width="20" Height="20"
                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                       Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="Support" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc Support}" VerticalAlignment="Center" />
                         </Grid>
                     </Button>
 
@@ -124,7 +125,7 @@
                                       Width="20" Height="20"
                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                       Margin="0,0,12,0" />
-                            <TextBlock Grid.Column="1" Text="Check for Updates" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc 'Check for Updates'}" VerticalAlignment="Center" />
                             <Border Grid.Column="2"
                                     Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="4"

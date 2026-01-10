@@ -6,6 +6,7 @@
         xmlns:controls="using:ArgoBooks.Controls"
         xmlns:modals="using:ArgoBooks.Modals"
         xmlns:views="using:ArgoBooks.Views"
+        xmlns:loc="using:ArgoBooks.Localization"
         mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
         x:Class="ArgoBooks.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -52,7 +53,7 @@
                         <Image Source="/Assets/argo-logo.ico"
                                Width="20" Height="20"
                                VerticalAlignment="Center" />
-                        <TextBlock Text="Argo Books"
+                        <TextBlock Text="{loc:Loc 'Argo Books'}"
                                    FontSize="{StaticResource FontSizeSm}"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="80"
              x:Class="ArgoBooks.Controls.DateRangeSelector"
              x:CompileBindings="False">
@@ -32,7 +33,7 @@
                     BorderThickness="0"
                     Command="{Binding OpenCustomDateRangeModalCommand}"
                     Cursor="Hand">
-                <TextBlock Text="change"
+                <TextBlock Text="{loc:Loc change}"
                            FontSize="12"
                            Foreground="{DynamicResource PrimaryBrush}"
                            TextDecorations="Underline" />

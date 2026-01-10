@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.ProductModals"
              x:DataType="vm:ProductModalsViewModel">
@@ -32,7 +33,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="Add Product"
+                                       Text="{loc:Loc 'Add Product'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -49,29 +50,29 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Product Name" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Product Name'}" /><Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
-                                <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="Enter product name" />
+                                <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter product name'}" />
                                 <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding ModalProductNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Description" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="Enter description"
+                                <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Item Type" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Item Type'}" /><Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" PlaceholderText="Select type" />
+                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" PlaceholderText="{loc:Loc 'Select type'}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Category" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Category}" /><Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
                                     <controls:CategoryInput Categories="{Binding CategoryItems}"
                                                             SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
@@ -82,35 +83,35 @@
                             </Grid>
 
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Supplier}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
                                                             SelectedItem="{Binding ModalSupplier}"
                                                             DisplayMemberPath="Name"
-                                                            Placeholder="Search suppliers..."
+                                                            Placeholder="{loc:Loc 'Search suppliers...'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="No suppliers available."
-                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyMessage="{loc:Loc 'No suppliers available.'}"
+                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                             </StackPanel>
 
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Country of Origin" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Country of Origin'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:CountryInput SelectedCountryName="{Binding ModalCountryOfOrigin, Mode=TwoWay}" />
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Reorder Point" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" />
-                                        <TextBlock Grid.Column="1" Text="units" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                        <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Overstock Threshold" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Overstock Threshold'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" />
-                                        <TextBlock Grid.Column="1" Text="units" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                        <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
                             </Grid>
@@ -119,8 +120,8 @@
 
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddModalCommand}" />
-                            <Button Classes="primary-button" Content="Add Product" Command="{Binding SaveNewProductCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseAddModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Add Product'}" Command="{Binding SaveNewProductCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -146,7 +147,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="Edit Product"
+                                       Text="{loc:Loc 'Edit Product'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -163,29 +164,29 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Product Name" /><Run Text="*" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Product Name'}" /><Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
-                                <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="Enter product name" />
+                                <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter product name'}" />
                                 <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="#dc2626"
                                            IsVisible="{Binding ModalProductNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Description" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="Enter description"
+                                <TextBlock Text="{loc:Loc Description}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBox Text="{Binding ModalDescription, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc 'Enter description'}"
                                          AcceptsReturn="True" TextWrapping="Wrap" MinHeight="80" MaxHeight="120" />
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Item Type" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Item Type'}" /><Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
-                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" PlaceholderText="Select type" />
+                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" PlaceholderText="{loc:Loc 'Select type'}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="Category" /><Run Text="*" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Category}" /><Run Text="*" Foreground="#dc2626" />
                                     </TextBlock>
                                     <controls:CategoryInput Categories="{Binding CategoryItems}"
                                                             SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
@@ -196,35 +197,35 @@
                             </Grid>
 
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Supplier}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableSuppliers}"
                                                             SelectedItem="{Binding ModalSupplier}"
                                                             DisplayMemberPath="Name"
-                                                            Placeholder="Search suppliers..."
+                                                            Placeholder="{loc:Loc 'Search suppliers...'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="No suppliers available."
-                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyMessage="{loc:Loc 'No suppliers available.'}"
+                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenSuppliersWithAddModalCommand}" />
                             </StackPanel>
 
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Country of Origin" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Country of Origin'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:CountryInput SelectedCountryName="{Binding ModalCountryOfOrigin, Mode=TwoWay}" />
                             </StackPanel>
 
                             <Grid ColumnDefinitions="*,16,*" IsVisible="{Binding IsProductSelected}">
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock Text="Reorder Point" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Reorder Point'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBox Grid.Column="0" Text="{Binding ModalReorderPoint, Mode=TwoWay}" Classes="form-input" Watermark="0" />
-                                        <TextBlock Grid.Column="1" Text="units" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                        <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
-                                    <TextBlock Text="Overstock Threshold" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Overstock Threshold'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBox Grid.Column="0" Text="{Binding ModalOverstockThreshold, Mode=TwoWay}" Classes="form-input" Watermark="0" />
-                                        <TextBlock Grid.Column="1" Text="units" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                        <TextBlock Grid.Column="1" Text="{loc:Loc units}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                                     </Grid>
                                 </StackPanel>
                             </Grid>
@@ -233,8 +234,8 @@
 
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseEditModalCommand}" />
-                            <Button Classes="primary-button" Content="Save Changes" Command="{Binding SaveEditedProductCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseEditModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Save Changes'}" Command="{Binding SaveEditedProductCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -255,7 +256,7 @@
                 <Grid RowDefinitions="Auto,*,Auto">
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Filter Products" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Filter Products'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseFilterModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
                                           Width="20" Height="20" />
@@ -265,12 +266,12 @@
 
                     <StackPanel Grid.Row="1" Margin="24" Spacing="20">
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Item Type" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <TextBlock Text="{loc:Loc 'Item Type'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                             <ComboBox ItemsSource="{Binding ItemTypeOptions}" SelectedItem="{Binding FilterItemType}" Classes="form-combobox" />
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Category" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <ComboBox ItemsSource="{Binding AvailableCategories}" SelectedItem="{Binding FilterCategory}" Classes="form-combobox" PlaceholderText="All Categories">
+                            <TextBlock Text="{loc:Loc Category}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding AvailableCategories}" SelectedItem="{Binding FilterCategory}" Classes="form-combobox" PlaceholderText="{loc:Loc 'All Categories'}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate DataType="vm:CategoryOption">
                                         <TextBlock Text="{Binding Name}" />
@@ -279,8 +280,8 @@
                             </ComboBox>
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Supplier" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding FilterSupplier}" Classes="form-combobox" PlaceholderText="All Suppliers">
+                            <TextBlock Text="{loc:Loc Supplier}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding AvailableSuppliers}" SelectedItem="{Binding FilterSupplier}" Classes="form-combobox" PlaceholderText="{loc:Loc 'All Suppliers'}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate DataType="vm:SupplierOption">
                                         <TextBlock Text="{Binding Name}" />
@@ -289,17 +290,17 @@
                             </ComboBox>
                         </StackPanel>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Country of Origin" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                            <ComboBox ItemsSource="{Binding AvailableCountries}" SelectedItem="{Binding FilterCountry}" Classes="form-combobox" PlaceholderText="All Countries" />
+                            <TextBlock Text="{loc:Loc 'Country of Origin'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <ComboBox ItemsSource="{Binding AvailableCountries}" SelectedItem="{Binding FilterCountry}" Classes="form-combobox" PlaceholderText="{loc:Loc 'All Countries'}" />
                         </StackPanel>
                     </StackPanel>
 
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Button Grid.Column="0" Classes="secondary-button" Content="Clear Filters" Command="{Binding ClearFiltersCommand}" />
+                            <Button Grid.Column="0" Classes="secondary-button" Content="{loc:Loc 'Clear Filters'}" Command="{Binding ClearFiltersCommand}" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseFilterModalCommand}" />
-                                <Button Classes="primary-button" Content="Apply" Command="{Binding ApplyFiltersCommand}" />
+                                <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseFilterModalCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc Apply}" Command="{Binding ApplyFiltersCommand}" />
                             </StackPanel>
                         </Grid>
                     </Border>

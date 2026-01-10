@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="280" d:DesignHeight="400"
              x:Class="ArgoBooks.Panels.CompanySwitcherPanel"
              x:DataType="vm:CompanySwitcherPanelViewModel">
@@ -46,7 +47,7 @@
                 <Border Padding="16,16,16,12"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1">
-                    <TextBlock Text="Switch Company"
+                    <TextBlock Text="{loc:Loc 'Switch Company'}"
                                FontSize="14"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -96,7 +97,7 @@
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}"
                                            TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="Current"
+                                <TextBlock Text="{loc:Loc Current}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                             </StackPanel>
@@ -105,7 +106,7 @@
                             <Button Grid.Column="2"
                                     Classes="edit-button-inline"
                                     Command="{Binding EditCompanyCommand}"
-                                    ToolTip.Tip="Edit Company"
+                                    ToolTip.Tip="{loc:Loc 'Edit Company'}"
                                     VerticalAlignment="Center"
                                     Margin="8,0,8,0">
                                 <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
@@ -129,7 +130,7 @@
                 <!-- Recent Companies Section -->
                 <StackPanel IsVisible="{Binding HasFilteredRecentCompanies}">
                     <Border Padding="16,16,16,8">
-                        <TextBlock Text="Recent"
+                        <TextBlock Text="{loc:Loc Recent}"
                                    FontSize="12"
                                    FontWeight="Medium"
                                    Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -198,11 +199,11 @@
                                           Foreground="White" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="Create New Company"
+                                <TextBlock Text="{loc:Loc 'Create New Company'}"
                                            FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Start fresh with a new company file"
+                                <TextBlock Text="{loc:Loc 'Start fresh with a new company file'}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                             </StackPanel>
@@ -223,11 +224,11 @@
                                           Foreground="{DynamicResource TextSecondaryBrush}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                <TextBlock Text="Open Company..."
+                                <TextBlock Text="{loc:Loc 'Open Company...'}"
                                            FontSize="14"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Browse for a company file"
+                                <TextBlock Text="{loc:Loc 'Browse for a company file'}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                             </StackPanel>

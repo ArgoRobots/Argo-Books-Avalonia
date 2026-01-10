@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.PaymentModals"
              x:DataType="vm:PaymentModalsViewModel">
@@ -34,7 +35,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
-                                       Text="Record Payment"
+                                       Text="{loc:Loc 'Record Payment'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -52,14 +53,14 @@
                         <StackPanel Margin="24" Spacing="16">
                             <!-- Invoice (Optional) -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Invoice (Optional)" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Invoice (Optional)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding InvoiceOptions}"
                                                             SelectedItem="{Binding SelectedInvoice}"
                                                             DisplayMemberPath="Display"
-                                                            Placeholder="Search for an invoice..."
+                                                            Placeholder="{loc:Loc 'Search for an invoice...'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="No invoices found."
-                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyMessage="{loc:Loc 'No invoices found.'}"
+                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateInvoiceCommand}" />
                                 <TextBlock Text="{Binding ModalInvoiceError}"
                                            FontSize="12"
@@ -70,7 +71,7 @@
                             <!-- Amount -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Amount" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Amount}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalAmount, Mode=TwoWay}"
                                          Classes="form-input"
@@ -84,7 +85,7 @@
                             <!-- Date -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Date" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" />
                             </StackPanel>
@@ -92,7 +93,7 @@
                             <!-- Payment Method -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Payment Method" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Payment Method'}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <ComboBox ItemsSource="{Binding ModalPaymentMethodOptions}"
                                           SelectedItem="{Binding ModalPaymentMethod}"
@@ -101,18 +102,18 @@
 
                             <!-- Reference Number -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Reference Number" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Reference Number'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalReferenceNumber, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="Check number, transaction ID, etc." />
+                                         Watermark="{loc:Loc 'Check number, transaction ID, etc.'}" />
                             </StackPanel>
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="Enter notes"
+                                         Watermark="{loc:Loc 'Enter notes'}"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"
@@ -124,8 +125,8 @@
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseAddModalCommand}" />
-                            <Button Classes="primary-button" Content="Record Payment" Command="{Binding SaveNewPaymentCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseAddModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Record Payment'}" Command="{Binding SaveNewPaymentCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -148,7 +149,7 @@
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Edit Payment" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Edit Payment'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseEditModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
                             </Button>
@@ -160,21 +161,21 @@
                         <StackPanel Margin="24" Spacing="16">
                             <!-- Invoice (Optional) -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Invoice (Optional)" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Invoice (Optional)'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding InvoiceOptions}"
                                                             SelectedItem="{Binding SelectedInvoice}"
                                                             DisplayMemberPath="Display"
-                                                            Placeholder="Search for an invoice..."
+                                                            Placeholder="{loc:Loc 'Search for an invoice...'}"
                                                             ShowAddNew="False"
-                                                            EmptyMessage="No invoices found."
-                                                            EmptyCreateLinkText="Create one"
+                                                            EmptyMessage="{loc:Loc 'No invoices found.'}"
+                                                            EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateInvoiceCommand}" />
                             </StackPanel>
 
                             <!-- Amount -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Amount" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Amount}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <TextBox Text="{Binding ModalAmount, Mode=TwoWay}"
                                          Classes="form-input"
@@ -188,7 +189,7 @@
                             <!-- Date -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Date" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Date}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <DatePicker SelectedDate="{Binding ModalDate}" Classes="form-datepicker" />
                             </StackPanel>
@@ -196,7 +197,7 @@
                             <!-- Payment Method -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Payment Method" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Payment Method'}" /><Run Text=" *" Foreground="#dc2626" />
                                 </TextBlock>
                                 <ComboBox ItemsSource="{Binding ModalPaymentMethodOptions}"
                                           SelectedItem="{Binding ModalPaymentMethod}"
@@ -205,18 +206,18 @@
 
                             <!-- Reference Number -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Reference Number" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Reference Number'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalReferenceNumber, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="Check number, transaction ID, etc." />
+                                         Watermark="{loc:Loc 'Check number, transaction ID, etc.'}" />
                             </StackPanel>
 
                             <!-- Notes -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Notes" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Notes}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <TextBox Text="{Binding ModalNotes, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="Enter notes"
+                                         Watermark="{loc:Loc 'Enter notes'}"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          MinHeight="80"
@@ -228,8 +229,8 @@
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-                            <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseEditModalCommand}" />
-                            <Button Classes="primary-button" Content="Save Changes" Command="{Binding SaveEditedPaymentCommand}" />
+                            <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseEditModalCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Save Changes'}" Command="{Binding SaveEditedPaymentCommand}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -251,7 +252,7 @@
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Filter Payments" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <TextBlock Grid.Column="0" Text="{loc:Loc 'Filter Payments'}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseFilterModalCommand}">
                                 <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" Width="20" Height="20" />
                             </Button>
@@ -263,14 +264,14 @@
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Date Range -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Date Range" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Date Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <StackPanel Spacing="8">
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="From" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc From}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <DatePicker SelectedDate="{Binding FilterDateFrom}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                     <StackPanel Spacing="4">
-                                        <TextBlock Text="To" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{loc:Loc To}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <DatePicker SelectedDate="{Binding FilterDateTo}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                                     </StackPanel>
                                 </StackPanel>
@@ -278,17 +279,17 @@
 
                             <!-- Customer -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Customer" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Customer}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <controls:SearchableDropdown ItemsSource="{Binding CustomerOptions}"
                                                             SelectedItem="{Binding SelectedCustomerFilter}"
                                                             DisplayMemberPath="Name"
-                                                            Placeholder="All customers"
+                                                            Placeholder="{loc:Loc 'All customers'}"
                                                             ShowAddNew="False" />
                             </StackPanel>
 
                             <!-- Payment Method -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Payment Method" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Payment Method'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding FilterPaymentMethodOptions}"
                                           SelectedItem="{Binding FilterPaymentMethod}"
                                           Classes="form-combobox" />
@@ -296,7 +297,7 @@
 
                             <!-- Status -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Status" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding StatusOptions}"
                                           SelectedItem="{Binding FilterStatus}"
                                           Classes="form-combobox" />
@@ -304,11 +305,11 @@
 
                             <!-- Amount Range -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Amount Range" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Amount Range'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <Grid ColumnDefinitions="*,Auto,*">
-                                    <TextBox Grid.Column="0" Text="{Binding FilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="Min" />
-                                    <TextBlock Grid.Column="1" Text="to" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
-                                    <TextBox Grid.Column="2" Text="{Binding FilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="Max" />
+                                    <TextBox Grid.Column="0" Text="{Binding FilterAmountMin, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc Min}" />
+                                    <TextBlock Grid.Column="1" Text="{loc:Loc to}" FontSize="13" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" Margin="12,0" />
+                                    <TextBox Grid.Column="2" Text="{Binding FilterAmountMax, Mode=TwoWay}" Classes="form-input" Watermark="{loc:Loc Max}" />
                                 </Grid>
                             </StackPanel>
                         </StackPanel>
@@ -317,10 +318,10 @@
                     <!-- Footer -->
                     <Border Grid.Row="2" Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                         <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Button Grid.Column="0" Classes="secondary-button" Content="Clear Filters" Command="{Binding ClearFiltersCommand}" />
+                            <Button Grid.Column="0" Classes="secondary-button" Content="{loc:Loc 'Clear Filters'}" Command="{Binding ClearFiltersCommand}" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                <Button Classes="secondary-button" Content="Cancel" Command="{Binding CloseFilterModalCommand}" />
-                                <Button Classes="primary-button" Content="Apply Filter" Command="{Binding ApplyFiltersCommand}" />
+                                <Button Classes="secondary-button" Content="{loc:Loc Cancel}" Command="{Binding CloseFilterModalCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc 'Apply Filter'}" Command="{Binding ApplyFiltersCommand}" />
                             </StackPanel>
                         </Grid>
                     </Border>

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.CreateCompanyWizard"
              x:DataType="vm:CreateCompanyViewModel">
@@ -53,7 +54,7 @@
                         BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Create New Company"
+                            <TextBlock Text="{loc:Loc 'Create New Company'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -114,11 +115,11 @@
                         <!-- Step 1: Company Info -->
                         <StackPanel IsVisible="{Binding IsStep1}" Spacing="20">
                             <StackPanel Spacing="4">
-                                <TextBlock Text="Company Information"
+                                <TextBlock Text="{loc:Loc 'Company Information'}"
                                            FontSize="16"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Enter your company's basic information"
+                                <TextBlock Text="{loc:Loc 'Enter your company''s basic information'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                             </StackPanel>
@@ -128,54 +129,54 @@
                                 <TextBlock FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="Company Name" />
+                                    <Run Text="{loc:Loc 'Company Name'}" />
                                     <Run Text="*" Foreground="#dc2626" />
                                 </TextBlock>
                                 <TextBox Text="{Binding CompanyName, Mode=TwoWay}"
                                          Classes="form-input"
-                                         Watermark="Enter company name" />
+                                         Watermark="{loc:Loc 'Enter company name'}" />
                             </StackPanel>
 
                             <!-- Business Type -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Business Type"
+                                <TextBlock Text="{loc:Loc 'Business Type'}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding BusinessTypes}"
                                           SelectedItem="{Binding BusinessType}"
                                           Classes="form-combobox"
-                                          PlaceholderText="Select business type" />
+                                          PlaceholderText="{loc:Loc 'Select business type'}" />
                             </StackPanel>
 
                             <!-- Industry -->
                             <StackPanel Spacing="6">
-                                <TextBlock Text="Industry"
+                                <TextBlock Text="{loc:Loc Industry}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                 <ComboBox ItemsSource="{Binding Industries}"
                                           SelectedItem="{Binding Industry}"
                                           Classes="form-combobox"
-                                          PlaceholderText="Select industry" />
+                                          PlaceholderText="{loc:Loc 'Select industry'}" />
                             </StackPanel>
                         </StackPanel>
 
                         <!-- Step 2: Security & Logo -->
                         <StackPanel IsVisible="{Binding IsStep2}" Spacing="20">
                             <StackPanel Spacing="4">
-                                <TextBlock Text="Security &amp; Branding"
+                                <TextBlock Text="{loc:Loc 'Security &amp; Branding'}"
                                            FontSize="16"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
-                                <TextBlock Text="Protect your data and add your company logo"
+                                <TextBlock Text="{loc:Loc 'Protect your data and add your company logo'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextTertiaryBrush}" />
                             </StackPanel>
 
                             <!-- Logo Upload -->
                             <StackPanel Spacing="12">
-                                <TextBlock Text="Company Logo"
+                                <TextBlock Text="{loc:Loc 'Company Logo'}"
                                            FontSize="13"
                                            FontWeight="Medium"
                                            Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -208,15 +209,15 @@
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <PathIcon Data="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"
                                                           Width="16" Height="16" />
-                                                <TextBlock Text="Upload Logo" />
+                                                <TextBlock Text="{loc:Loc 'Upload Logo'}" />
                                             </StackPanel>
                                         </Button>
                                         <Button Classes="text-button"
                                                 Command="{Binding RemoveLogoCommand}"
                                                 IsVisible="{Binding HasLogo}">
-                                            <TextBlock Text="Remove" Foreground="{DynamicResource DangerBrush}" />
+                                            <TextBlock Text="{loc:Loc Remove}" Foreground="{DynamicResource DangerBrush}" />
                                         </Button>
-                                        <TextBlock Text="PNG, JPG up to 5MB"
+                                        <TextBlock Text="{loc:Loc 'PNG, JPG up to 5MB'}"
                                                    FontSize="11"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
                                     </StackPanel>
@@ -229,30 +230,30 @@
                                     Padding="16">
                                 <StackPanel Spacing="16">
                                     <CheckBox IsChecked="{Binding EnablePassword}"
-                                              Content="Password protect this company file" />
+                                              Content="{loc:Loc 'Password protect this company file'}" />
 
                                     <StackPanel IsVisible="{Binding EnablePassword}" Spacing="16">
                                         <StackPanel Spacing="6">
-                                            <TextBlock Text="Password"
+                                            <TextBlock Text="{loc:Loc Password}"
                                                        FontSize="13"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <TextBox Text="{Binding Password, Mode=TwoWay}"
                                                      Classes="form-input"
                                                      PasswordChar="*"
-                                                     Watermark="Enter password" />
+                                                     Watermark="{loc:Loc 'Enter password'}" />
                                         </StackPanel>
 
                                         <StackPanel Spacing="6">
-                                            <TextBlock Text="Confirm Password"
+                                            <TextBlock Text="{loc:Loc 'Confirm Password'}"
                                                        FontSize="13"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <TextBox Text="{Binding ConfirmPassword, Mode=TwoWay}"
                                                      Classes="form-input"
                                                      PasswordChar="*"
-                                                     Watermark="Confirm password" />
-                                            <TextBlock Text="Passwords do not match"
+                                                     Watermark="{loc:Loc 'Confirm password'}" />
+                                            <TextBlock Text="{loc:Loc 'Passwords do not match'}"
                                                        FontSize="12"
                                                        Foreground="{DynamicResource DangerBrush}"
                                                        IsVisible="{Binding ShowPasswordError}" />
@@ -278,7 +279,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
                                           Width="16" Height="16" />
-                                <TextBlock Text="Back" />
+                                <TextBlock Text="{loc:Loc Back}" />
                             </StackPanel>
                         </Button>
 
@@ -287,7 +288,7 @@
                                 Classes="secondary-button"
                                 Command="{Binding CloseCommand}"
                                 IsVisible="{Binding !CanGoBack}"
-                                Content="Cancel" />
+                                Content="{loc:Loc Cancel}" />
 
                         <!-- Next / Create Button -->
                         <Button Grid.Column="2"
@@ -296,7 +297,7 @@
                                 IsVisible="{Binding CanGoNext}"
                                 IsEnabled="{Binding IsStep1Valid}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Next" />
+                                <TextBlock Text="{loc:Loc Next}" />
                                 <PathIcon Data="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"
                                           Width="16" Height="16" />
                             </StackPanel>
@@ -310,7 +311,7 @@
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
                                           Width="16" Height="16" />
-                                <TextBlock Text="Create Company" />
+                                <TextBlock Text="{loc:Loc 'Create Company'}" />
                             </StackPanel>
                         </Button>
                     </Grid>

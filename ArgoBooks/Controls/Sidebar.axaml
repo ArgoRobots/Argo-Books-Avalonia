@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="250" d:DesignHeight="800"
              x:Class="ArgoBooks.Controls.Sidebar"
              x:DataType="vm:SidebarViewModel"
@@ -147,7 +148,7 @@
                     <!-- Toggle button below logo when collapsed -->
                     <Button Classes="sidebar-toggle"
                             Command="{Binding ToggleCollapseCommand}"
-                            ToolTip.Tip="Expand sidebar"
+                            ToolTip.Tip="{loc:Loc 'Expand sidebar'}"
                             Width="28" Height="28"
                             HorizontalAlignment="Center">
                         <controls:ToggleArrow IconSize="18"
@@ -163,41 +164,41 @@
                       HorizontalScrollBarVisibility="Disabled">
             <StackPanel Spacing="0" Margin="0,15,0,20">
                 <!-- Main Section -->
-                <controls:SidebarSection Title="MAIN"
+                <controls:SidebarSection Title="{loc:Loc MAIN}"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          Items="{Binding MainItems}" />
 
                 <!-- Transactions Section -->
-                <controls:SidebarSection Title="TRANSACTIONS"
+                <controls:SidebarSection Title="{loc:Loc TRANSACTIONS}"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          Items="{Binding TransactionItems}"
                                          IsVisible="{Binding ShowTransactions}" />
 
                 <!-- Rentals Section -->
-                <controls:SidebarSection Title="RENTALS"
+                <controls:SidebarSection Title="{loc:Loc RENTALS}"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          Items="{Binding RentalItems}"
                                          IsVisible="{Binding ShowRentals}" />
 
                 <!-- Management Section -->
-                <controls:SidebarSection Title="MANAGEMENT"
+                <controls:SidebarSection Title="{loc:Loc MANAGEMENT}"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          Items="{Binding ManagementItems}" />
 
                 <!-- Inventory Section -->
-                <controls:SidebarSection Title="INVENTORY"
+                <controls:SidebarSection Title="{loc:Loc INVENTORY}"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          Items="{Binding InventoryItems}"
                                          IsVisible="{Binding ShowInventory}" />
 
                 <!-- Team Section -->
-                <controls:SidebarSection Title="TEAM"
+                <controls:SidebarSection Title="{loc:Loc TEAM}"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          Items="{Binding TeamItems}"
                                          IsVisible="{Binding ShowTeam}" />
 
                 <!-- Tracking Section -->
-                <controls:SidebarSection Title="TRACKING"
+                <controls:SidebarSection Title="{loc:Loc TRACKING}"
                                          IsCollapsed="{Binding IsCollapsed}"
                                          Items="{Binding TrackingItems}" />
             </StackPanel>

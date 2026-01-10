@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.PurchaseOrdersPage"
              x:DataType="vm:PurchaseOrdersPageViewModel">
@@ -28,11 +29,11 @@
                 <TabControl SelectedIndex="{Binding SelectedTabIndex}"
                             Margin="0"
                             Classes="page-tabs">
-                    <TabItem Header="All" />
-                    <TabItem Header="Pending" />
-                    <TabItem Header="Approved" />
-                    <TabItem Header="On Order" />
-                    <TabItem Header="Received" />
+                    <TabItem Header="{loc:Loc All}" />
+                    <TabItem Header="{loc:Loc Pending}" />
+                    <TabItem Header="{loc:Loc Approved}" />
+                    <TabItem Header="{loc:Loc 'On Order'}" />
+                    <TabItem Header="{loc:Loc Received}" />
                 </TabControl>
             </Border>
 
@@ -40,19 +41,19 @@
             <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
-                <controls:StatCard Label="Total Orders"
+                <controls:StatCard Label="{loc:Loc 'Total Orders'}"
                                    Value="{Binding TotalOrders}"
                                    Icon="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
                                    IconColor="Primary" />
-                <controls:StatCard Label="Pending Approval"
+                <controls:StatCard Label="{loc:Loc 'Pending Approval'}"
                                    Value="{Binding PendingOrders}"
                                    Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
                                    IconColor="Warning" />
-                <controls:StatCard Label="On Order"
+                <controls:StatCard Label="{loc:Loc 'On Order'}"
                                    Value="{Binding OnOrderCount}"
                                    Icon="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
                                    IconColor="Info" />
-                <controls:StatCard Label="Total Value"
+                <controls:StatCard Label="{loc:Loc 'Total Value'}"
                                    Value="{Binding TotalValue}"
                                    Icon="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"
                                    IconColor="Success" />
@@ -74,7 +75,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <!-- Title -->
                             <TextBlock Grid.Column="0"
-                                       Text="Purchase Orders"
+                                       Text="{loc:Loc 'Purchase Orders'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -96,7 +97,7 @@
                                                   Margin="12,0,8,0" />
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="Search orders..."
+                                                 Watermark="{loc:Loc 'Search orders...'}"
                                                  Classes="search-input" />
                                     </Grid>
                                 </Border>
@@ -107,7 +108,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                   Width="16" Height="16" />
-                                        <TextBlock Text="Filter" />
+                                        <TextBlock Text="{loc:Loc Filter}" />
                                     </StackPanel>
                                 </Button>
 
@@ -118,7 +119,7 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
-                                        <TextBlock Text="New Order" />
+                                        <TextBlock Text="{loc:Loc 'New Order'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -143,7 +144,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="PONumber">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="PO #" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc 'PO #'}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -179,7 +180,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Date">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Date" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Date}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -215,7 +216,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Supplier">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Supplier" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Supplier}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -251,7 +252,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Items">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Items" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Items}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -287,7 +288,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Total">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Total" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Total}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -323,7 +324,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Status">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Status" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Status}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -359,7 +360,7 @@
                                         <Button Classes="column-header" Margin="8,12"
                                                 Command="{Binding SortByCommand}" CommandParameter="Expected">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                                <TextBlock Text="Expected" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc Expected}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                                 <Panel Width="12" Height="12">
                                                     <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -392,7 +393,7 @@
 
                                     <!-- Actions Column Header -->
                                     <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                        <TextBlock Text="Actions"
+                                        <TextBlock Text="{loc:Loc Actions}"
                                                    FontSize="12"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -507,7 +508,7 @@
                                                                         Margin="8,0">
                                                                 <!-- View -->
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="View Details"
+                                                                        ToolTip.Tip="{loc:Loc 'View Details'}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ViewOrderCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
@@ -515,7 +516,7 @@
                                                                 </Button>
                                                                 <!-- Edit -->
                                                                 <Button Classes="icon-button"
-                                                                        ToolTip.Tip="Edit Order"
+                                                                        ToolTip.Tip="{loc:Loc 'Edit Order'}"
                                                                         IsVisible="{Binding CanEdit}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).EditOrderCommand}"
                                                                         CommandParameter="{Binding}">
@@ -524,7 +525,7 @@
                                                                 </Button>
                                                                 <!-- Approve -->
                                                                 <Button Classes="icon-button success"
-                                                                        ToolTip.Tip="Approve Order"
+                                                                        ToolTip.Tip="{loc:Loc 'Approve Order'}"
                                                                         IsVisible="{Binding CanApprove}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ApproveOrderCommand}"
                                                                         CommandParameter="{Binding}">
@@ -533,7 +534,7 @@
                                                                 </Button>
                                                                 <!-- Receive -->
                                                                 <Button Classes="icon-button info"
-                                                                        ToolTip.Tip="Receive Order"
+                                                                        ToolTip.Tip="{loc:Loc 'Receive Order'}"
                                                                         IsVisible="{Binding CanReceive}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).ReceiveOrderCommand}"
                                                                         CommandParameter="{Binding}">
@@ -542,7 +543,7 @@
                                                                 </Button>
                                                                 <!-- Delete -->
                                                                 <Button Classes="icon-button danger"
-                                                                        ToolTip.Tip="Delete"
+                                                                        ToolTip.Tip="{loc:Loc Delete}"
                                                                         Command="{Binding $parent[ItemsControl].((vm:PurchaseOrdersPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                         CommandParameter="{Binding}">
                                                                     <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -570,7 +571,7 @@
                                                           Width="28" Height="28"
                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
                                             </Border>
-                                            <TextBlock Text="No purchase orders found"
+                                            <TextBlock Text="{loc:Loc 'No purchase orders found'}"
                                                        FontSize="16"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}"
@@ -590,7 +591,7 @@
                                                     <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                               Width="16" Height="16"
                                                               Foreground="White" />
-                                                    <TextBlock Text="New Order" />
+                                                    <TextBlock Text="{loc:Loc 'New Order'}" />
                                                 </StackPanel>
                                             </Button>
                                         </StackPanel>

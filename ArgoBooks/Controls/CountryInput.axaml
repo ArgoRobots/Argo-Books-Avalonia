@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="40"
              x:Class="ArgoBooks.Controls.CountryInput"
              x:DataType="controls:CountryInput"
@@ -40,7 +41,7 @@
                 <TextBox x:Name="CountrySearchBox"
                          Grid.Column="1"
                          Text="{Binding #Root.SearchText, Mode=TwoWay}"
-                         Watermark="Select country"
+                         Watermark="{loc:Loc 'Select country'}"
                          Background="Transparent"
                          BorderThickness="0"
                          Padding="12,10"
@@ -85,7 +86,7 @@
                 <Grid RowDefinitions="Auto,*">
                     <!-- No Results Message -->
                     <TextBlock Grid.Row="0"
-                               Text="No countries found"
+                               Text="{loc:Loc 'No countries found'}"
                                FontSize="13"
                                Foreground="{DynamicResource TextTertiaryBrush}"
                                Padding="12,16"

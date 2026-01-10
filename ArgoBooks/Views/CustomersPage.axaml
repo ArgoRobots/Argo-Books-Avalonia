@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.CustomersPage"
              x:DataType="vm:CustomersPageViewModel">
@@ -53,7 +54,7 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <!-- Title -->
                             <TextBlock Grid.Column="0"
-                                       Text="Customers"
+                                       Text="{loc:Loc Customers}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
@@ -75,7 +76,7 @@
                                                   Margin="12,0,8,0" />
                                         <TextBox Grid.Column="1"
                                                  Text="{Binding SearchQuery, Mode=TwoWay}"
-                                                 Watermark="Search customers..."
+                                                 Watermark="{loc:Loc 'Search customers...'}"
                                                  Classes="search-input" />
                                     </Grid>
                                 </Border>
@@ -86,7 +87,7 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                   Width="16" Height="16" />
-                                        <TextBlock Text="Filter" />
+                                        <TextBlock Text="{loc:Loc Filter}" />
                                     </StackPanel>
                                 </Button>
 
@@ -97,7 +98,7 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"
                                                   Foreground="White" />
-                                        <TextBlock Text="Add Customer" />
+                                        <TextBlock Text="{loc:Loc 'Add Customer'}" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -122,7 +123,7 @@
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Name">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Customer" FontSize="12" FontWeight="SemiBold"
+                                            <TextBlock Text="{loc:Loc Customer}" FontSize="12" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -158,7 +159,7 @@
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Email">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Email" FontSize="12" FontWeight="SemiBold"
+                                            <TextBlock Text="{loc:Loc Email}" FontSize="12" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -194,7 +195,7 @@
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Phone">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Phone" FontSize="12" FontWeight="SemiBold"
+                                            <TextBlock Text="{loc:Loc Phone}" FontSize="12" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -230,7 +231,7 @@
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="Address">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Address" FontSize="12" FontWeight="SemiBold"
+                                            <TextBlock Text="{loc:Loc Address}" FontSize="12" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -266,7 +267,7 @@
                                     <Button Classes="column-header" Margin="8,12"
                                             Command="{Binding SortByCommand}" CommandParameter="LastRental">
                                         <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="Last Rental" FontSize="12" FontWeight="SemiBold"
+                                            <TextBlock Text="{loc:Loc 'Last Rental'}" FontSize="12" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <Panel Width="12" Height="12">
                                                 <PathIcon Data="M7 14l5-5 5 5z" Width="12" Height="12"
@@ -299,7 +300,7 @@
 
                                 <!-- Actions - not sortable -->
                                 <Panel Width="{Binding ColumnWidths.ActionsColumnWidth}">
-                                    <TextBlock Text="Actions"
+                                    <TextBlock Text="{loc:Loc Actions}"
                                                FontSize="12"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}"
@@ -400,21 +401,21 @@
                                                                     Spacing="4"
                                                                     Margin="8,0">
                                                             <Button Classes="icon-button"
-                                                                    ToolTip.Tip="View History"
+                                                                    ToolTip.Tip="{loc:Loc 'View History'}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).OpenHistoryModalCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <PathIcon Data="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                                                           Width="16" Height="16" />
                                                             </Button>
                                                             <Button Classes="icon-button"
-                                                                    ToolTip.Tip="Edit"
+                                                                    ToolTip.Tip="{loc:Loc Edit}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).OpenEditModalCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <PathIcon Data="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
                                                                           Width="16" Height="16" />
                                                             </Button>
                                                             <Button Classes="icon-button danger"
-                                                                    ToolTip.Tip="Delete"
+                                                                    ToolTip.Tip="{loc:Loc Delete}"
                                                                     Command="{Binding $parent[ItemsControl].((vm:CustomersPageViewModel)DataContext).OpenDeleteConfirmCommand}"
                                                                     CommandParameter="{Binding}">
                                                                 <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
@@ -442,12 +443,12 @@
                                                       Width="28" Height="28"
                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
                                         </Border>
-                                        <TextBlock Text="No customers found"
+                                        <TextBlock Text="{loc:Loc 'No customers found'}"
                                                    FontSize="16"
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextSecondaryBrush}"
                                                    HorizontalAlignment="Center" />
-                                        <TextBlock Text="Add your first customer to start managing your customer relationships."
+                                        <TextBlock Text="{loc:Loc 'Add your first customer to start managing your customer relationships.'}"
                                                    FontSize="14"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center"
@@ -462,7 +463,7 @@
                                                 <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                           Width="16" Height="16"
                                                           Foreground="White" />
-                                                <TextBlock Text="Add Customer" />
+                                                <TextBlock Text="{loc:Loc 'Add Customer'}" />
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
@@ -494,7 +495,7 @@
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center"
                                            Margin="8,0" />
-                                <TextBlock Text="Rows per page:"
+                                <TextBlock Text="{loc:Loc 'Rows per page:'}"
                                            FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />

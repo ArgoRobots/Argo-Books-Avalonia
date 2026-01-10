@@ -6,6 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:modals="using:ArgoBooks.Modals"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.DashboardPage"
              x:DataType="vm:DashboardPageViewModel">
@@ -80,11 +81,11 @@
             <!-- Page Header -->
             <Grid ColumnDefinitions="*,Auto,Auto">
                 <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="Dashboard"
+                    <TextBlock Text="{loc:Loc Dashboard}"
                                FontSize="24"
                                FontWeight="Bold"
                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <TextBlock Text="Welcome back! Here's an overview of your business."
+                    <TextBlock Text="{loc:Loc 'Welcome back! Here''s an overview of your business.'}"
                                FontSize="14"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
@@ -98,26 +99,26 @@
 
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow>
-                <controls:StatCard Label="Total Expenses"
+                <controls:StatCard Label="{loc:Loc 'Total Expenses'}"
                                    Value="{Binding TotalExpenses}"
                                    Icon="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-9-1c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-6v11c0 1.1-.9 2-2 2H4v-2h17V7h2z"
                                    IconColor="Danger"
                                    ChangeValue="{Binding ExpenseChangeValue}"
                                    ChangeText="{Binding ExpenseChangeText}"
                                    ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                <controls:StatCard Label="Total Revenue"
+                <controls:StatCard Label="{loc:Loc 'Total Revenue'}"
                                    Value="{Binding TotalRevenue}"
                                    Icon="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                    IconColor="Success"
                                    ChangeValue="{Binding RevenueChangeValue}"
                                    ChangeText="{Binding RevenueChangeText}"
                                    ChangeLabel="{Binding ComparisonPeriodLabel}" />
-                <controls:StatCard Label="Outstanding Invoices"
+                <controls:StatCard Label="{loc:Loc 'Outstanding Invoices'}"
                                    Value="{Binding OutstandingInvoices}"
                                    Icon="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
                                    IconColor="Warning"
                                    SecondaryText="{Binding OutstandingInvoiceCount, StringFormat='{}{0} invoices pending'}" />
-                <controls:StatCard Label="Active Rentals"
+                <controls:StatCard Label="{loc:Loc 'Active Rentals'}"
                                    Value="{Binding ActiveRentals}"
                                    Icon="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
                                    IconColor="Info"
@@ -127,7 +128,7 @@
             <!-- Quick Actions Section -->
             <Border Classes="card" Padding="20">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="Quick Actions"
+                    <TextBlock Text="{loc:Loc 'Quick Actions'}"
                                FontSize="16"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -150,12 +151,12 @@
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="18" Height="18"
                                                   Foreground="{DynamicResource DangerBrush}" />
-                                        <TextBlock Text="New Expense"
+                                        <TextBlock Text="{loc:Loc 'New Expense'}"
                                                    FontSize="14"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
-                                    <TextBlock Text="Record a purchase"
+                                    <TextBlock Text="{loc:Loc 'Record a purchase'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
@@ -179,12 +180,12 @@
                                         <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
                                                   Width="18" Height="18"
                                                   Foreground="{DynamicResource SuccessBrush}" />
-                                        <TextBlock Text="Record Sale"
+                                        <TextBlock Text="{loc:Loc 'Record Sale'}"
                                                    FontSize="14"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
-                                    <TextBlock Text="Add revenue entry"
+                                    <TextBlock Text="{loc:Loc 'Add revenue entry'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
@@ -208,12 +209,12 @@
                                         <PathIcon Data="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
                                                   Width="18" Height="18"
                                                   Foreground="{DynamicResource WarningBrush}" />
-                                        <TextBlock Text="Create Invoice"
+                                        <TextBlock Text="{loc:Loc 'Create Invoice'}"
                                                    FontSize="14"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
-                                    <TextBlock Text="Bill a customer"
+                                    <TextBlock Text="{loc:Loc 'Bill a customer'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
@@ -237,12 +238,12 @@
                                         <PathIcon Data="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
                                                   Width="18" Height="18"
                                                   Foreground="{DynamicResource InfoBrush}" />
-                                        <TextBlock Text="New Rental"
+                                        <TextBlock Text="{loc:Loc 'New Rental'}"
                                                    FontSize="14"
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                                     </StackPanel>
-                                    <TextBlock Text="Start a rental"
+                                    <TextBlock Text="{loc:Loc 'Start a rental'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </StackPanel>
@@ -275,7 +276,7 @@
                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                 CornerRadius="8"
                                 IsVisible="{Binding !HasProfitsChartData}">
-                            <TextBlock Text="No profit data"
+                            <TextBlock Text="{loc:Loc 'No profit data'}"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        FontSize="14"
@@ -302,7 +303,7 @@
                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                 CornerRadius="8"
                                 IsVisible="{Binding !HasSalesVsExpensesData}">
-                            <TextBlock Text="No expense/revenue data available"
+                            <TextBlock Text="{loc:Loc 'No expense/revenue data available'}"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        FontSize="14"
@@ -324,7 +325,7 @@
                                 Padding="20,16"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
-                            <TextBlock Text="Recent Transactions"
+                            <TextBlock Text="{loc:Loc 'Recent Transactions'}"
                                        FontSize="16"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -477,11 +478,11 @@
                                 <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
                                           Width="48" Height="48"
                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="No recent transactions"
+                                <TextBlock Text="{loc:Loc 'No recent transactions'}"
                                            FontSize="14"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="Record a sale or expense to see it here"
+                                <TextBlock Text="{loc:Loc 'Record a sale or expense to see it here'}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Center" />
@@ -502,14 +503,14 @@
                                 BorderThickness="0,0,0,1">
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Grid.Column="0"
-                                           Text="Active Rentals"
+                                           Text="{loc:Loc 'Active Rentals'}"
                                            FontSize="16"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <Button Grid.Column="1"
                                         Classes="ghost-button"
                                         Command="{Binding NavigateToRentalsCommand}">
-                                    <TextBlock Text="View All" FontSize="13" />
+                                    <TextBlock Text="{loc:Loc 'View All'}" FontSize="13" />
                                 </Button>
                             </Grid>
                         </Border>
@@ -621,11 +622,11 @@
                                 <PathIcon Data="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"
                                           Width="48" Height="48"
                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                <TextBlock Text="No active rentals"
+                                <TextBlock Text="{loc:Loc 'No active rentals'}"
                                            FontSize="14"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            HorizontalAlignment="Center" />
-                                <TextBlock Text="Start a new rental to see it here"
+                                <TextBlock Text="{loc:Loc 'Start a new rental to see it here'}"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            HorizontalAlignment="Center" />

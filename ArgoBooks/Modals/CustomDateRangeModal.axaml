@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="250"
              x:Class="ArgoBooks.Modals.CustomDateRangeModal"
              x:CompileBindings="False"
@@ -52,7 +53,7 @@
                         BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
-                                   Text="Select Date Range"
+                                   Text="{loc:Loc 'Select Date Range'}"
                                    FontSize="16"
                                    FontWeight="SemiBold"
                                    VerticalAlignment="Center"
@@ -63,7 +64,7 @@
                                 MinWidth="28"
                                 MinHeight="28"
                                 Command="{Binding CancelCustomDateRangeCommand}"
-                                ToolTip.Tip="Close">
+                                ToolTip.Tip="{loc:Loc Close}">
                             <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
                                       Width="16" Height="16"
                                       Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -75,7 +76,7 @@
                 <StackPanel Grid.Row="1" Spacing="12" Margin="20,16">
                     <!-- Start Date -->
                     <StackPanel Spacing="4">
-                        <TextBlock Text="Start Date"
+                        <TextBlock Text="{loc:Loc 'Start Date'}"
                                    FontSize="12"
                                    Foreground="{DynamicResource TextTertiaryBrush}" />
                         <DatePicker SelectedDate="{Binding ModalStartDateOffset}"
@@ -85,7 +86,7 @@
 
                     <!-- End Date -->
                     <StackPanel Spacing="4">
-                        <TextBlock Text="End Date"
+                        <TextBlock Text="{loc:Loc 'End Date'}"
                                    FontSize="12"
                                    Foreground="{DynamicResource TextTertiaryBrush}" />
                         <DatePicker SelectedDate="{Binding ModalEndDateOffset}"
@@ -103,10 +104,10 @@
                                 HorizontalAlignment="Right"
                                 Spacing="10">
                         <Button Classes="secondary-button"
-                                Content="Cancel"
+                                Content="{loc:Loc Cancel}"
                                 Command="{Binding CancelCustomDateRangeCommand}" />
                         <Button Classes="primary-button"
-                                Content="Apply"
+                                Content="{loc:Loc Apply}"
                                 Command="{Binding ApplyCustomDateRangeCommand}" />
                     </StackPanel>
                 </Border>

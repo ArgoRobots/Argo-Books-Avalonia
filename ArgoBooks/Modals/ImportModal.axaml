@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.ImportModal"
              x:DataType="vm:ImportModalViewModel">
@@ -53,11 +54,11 @@
                         BorderThickness="0,0,0,1">
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Import Data"
+                            <TextBlock Text="{loc:Loc 'Import Data'}"
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="Import data from external files into Argo Books"
+                            <TextBlock Text="{loc:Loc 'Import data from external files into Argo Books'}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                         </StackPanel>
@@ -76,7 +77,7 @@
                               HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="24,20" Spacing="12">
                         <!-- Spreadsheets -->
-                        <TextBlock Text="Spreadsheets"
+                        <TextBlock Text="{loc:Loc Spreadsheets}"
                                    FontSize="12"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextTertiaryBrush}"
@@ -97,11 +98,11 @@
                                               Foreground="{DynamicResource SuccessBrush}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="Excel (XLSX)"
+                                    <TextBlock Text="{loc:Loc 'Excel (XLSX)'}"
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Import data from Microsoft Excel workbooks"
+                                    <TextBlock Text="{loc:Loc 'Import data from Microsoft Excel workbooks'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </StackPanel>
@@ -114,7 +115,7 @@
                         </Button>
 
                         <!-- Other Software -->
-                        <TextBlock Text="Other Software"
+                        <TextBlock Text="{loc:Loc 'Other Software'}"
                                    FontSize="12"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextTertiaryBrush}"
@@ -135,11 +136,11 @@
                                               Foreground="{DynamicResource PrimaryBrush}" />
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock Text="QuickBooks (IIF)"
+                                    <TextBlock Text="{loc:Loc 'QuickBooks (IIF)'}"
                                                FontSize="14"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Import lists and transactions from QuickBooks"
+                                    <TextBlock Text="{loc:Loc 'Import lists and transactions from QuickBooks'}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </StackPanel>
@@ -162,7 +163,7 @@
                                 HorizontalAlignment="Right"
                                 Spacing="12">
                         <Button Classes="secondary-button"
-                                Content="Cancel"
+                                Content="{loc:Loc Cancel}"
                                 Command="{Binding CloseCommand}" />
                     </StackPanel>
                 </Border>

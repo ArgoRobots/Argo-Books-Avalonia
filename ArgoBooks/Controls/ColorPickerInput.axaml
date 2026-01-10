@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:colorPicker="clr-namespace:ColorPicker;assembly=ColorPicker.AvaloniaUI"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
              x:Class="ArgoBooks.Controls.ColorPickerInput"
              x:Name="Root">
@@ -92,11 +93,11 @@
 
                     <!-- Action Buttons Row -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                        <Button Content="Cancel"
+                        <Button Content="{loc:Loc Cancel}"
                                 Classes="secondary"
                                 MinWidth="70"
                                 Command="{Binding #Root.CancelColorCommand}" />
-                        <Button Content="Apply"
+                        <Button Content="{loc:Loc Apply}"
                                 Classes="primary"
                                 MinWidth="70"
                                 Command="{Binding #Root.ApplyColorCommand}" />

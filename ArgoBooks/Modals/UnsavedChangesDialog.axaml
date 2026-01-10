@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:converters="using:ArgoBooks.Converters"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="550" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.UnsavedChangesDialog"
              x:DataType="vm:UnsavedChangesDialogViewModel"
@@ -238,11 +239,11 @@
                                     Spacing="8"
                                     IsVisible="{Binding HasChanges}">
                             <Button Classes="ghost-button"
-                                    Content="Expand All"
+                                    Content="{loc:Loc 'Expand All'}"
                                     Command="{Binding ExpandAllCommand}"
                                     FontSize="12" />
                             <Button Classes="ghost-button"
-                                    Content="Collapse All"
+                                    Content="{loc:Loc 'Collapse All'}"
                                     Command="{Binding CollapseAllCommand}"
                                     FontSize="12" />
                         </StackPanel>

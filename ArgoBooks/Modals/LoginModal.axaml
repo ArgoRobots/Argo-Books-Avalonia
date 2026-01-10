@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="500"
              x:Class="ArgoBooks.Modals.LoginModal"
              x:DataType="vm:LoginModalViewModel">
@@ -79,7 +80,7 @@
 
                 <!-- Password Field -->
                 <StackPanel Spacing="8" Margin="0,0,0,20">
-                    <TextBlock Text="Password"
+                    <TextBlock Text="{loc:Loc Password}"
                                FontSize="13"
                                FontWeight="Medium"
                                Foreground="{DynamicResource TextPrimaryBrush}" />
@@ -92,7 +93,7 @@
                             <TextBox Grid.Column="0"
                                      Text="{Binding Password, Mode=TwoWay}"
                                      PasswordChar="•"
-                                     Watermark="Enter your password"
+                                     Watermark="{loc:Loc 'Enter your password'}"
                                      Classes="password-input"
                                      x:Name="PasswordBox" />
                             <Button Grid.Column="1"
@@ -112,7 +113,7 @@
                 <!-- Remember Me -->
                 <CheckBox IsChecked="{Binding RememberMe}"
                           Margin="0,0,0,24">
-                    <TextBlock Text="Remember me on this device"
+                    <TextBlock Text="{loc:Loc 'Remember me on this device'}"
                                FontSize="13"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                 </CheckBox>
@@ -131,7 +132,7 @@
                         </StackPanel>
                     </Button>
                     <Button Classes="secondary-button"
-                            Content="Cancel"
+                            Content="{loc:Loc Cancel}"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             Command="{Binding CancelCommand}" />
@@ -139,7 +140,7 @@
 
                 <!-- Forgot Password Link -->
                 <Button Classes="link-button"
-                        Content="Forgot password?"
+                        Content="{loc:Loc 'Forgot password?'}"
                         HorizontalAlignment="Center"
                         Margin="0,16,0,0"
                         Command="{Binding ForgotPasswordCommand}" />

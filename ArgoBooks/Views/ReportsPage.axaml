@@ -7,6 +7,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:reports="using:ArgoBooks.Controls.Reports"
              xmlns:converters="using:ArgoBooks.Converters"
+             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
              x:Class="ArgoBooks.Views.ReportsPage"
              x:DataType="vm:ReportsPageViewModel">
