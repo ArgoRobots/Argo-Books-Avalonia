@@ -459,3 +459,8 @@ $RECYCLE.BIN/
 .env
 .env.local
 .env.*.local
+
+##
+## Translation tool output
+##
+**/translations/
