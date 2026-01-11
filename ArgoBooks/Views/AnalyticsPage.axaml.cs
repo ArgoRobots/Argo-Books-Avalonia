@@ -5,6 +5,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using LiveChartsCore.SkiaSharpView.Avalonia;
@@ -276,6 +277,18 @@ public partial class AnalyticsPage : UserControl
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to save chart: {ex.Message}");
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Save Failed".Translate(),
+                    Message = "Failed to save the chart image: {0}".TranslateFormat(ex.Message),
+                    PrimaryButtonText = "OK".Translate(),
+                    SecondaryButtonText = null,
+                    CancelButtonText = null
+                });
+            }
         }
     }
 
@@ -365,6 +378,18 @@ public partial class AnalyticsPage : UserControl
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to export chart to Excel: {ex.Message}");
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Export Failed".Translate(),
+                    Message = "Failed to export the chart to Excel: {0}".TranslateFormat(ex.Message),
+                    PrimaryButtonText = "OK".Translate(),
+                    SecondaryButtonText = null,
+                    CancelButtonText = null
+                });
+            }
         }
     }
 

@@ -1078,6 +1078,21 @@ public partial class ReportsPageViewModel : ViewModelBase
             await Task.Delay(2000);
             ShowSaveConfirmation = false;
         }
+        else
+        {
+            var dialog = App.ConfirmationDialog;
+            if (dialog != null)
+            {
+                await dialog.ShowAsync(new ConfirmationDialogOptions
+                {
+                    Title = "Save Failed".Translate(),
+                    Message = "Failed to save the template. Please check that you have write permissions to the templates folder.".Translate(),
+                    PrimaryButtonText = "OK".Translate(),
+                    SecondaryButtonText = null,
+                    CancelButtonText = null
+                });
+            }
+        }
         return success;
     }
 
@@ -2008,8 +2023,24 @@ public partial class ReportsPageViewModel : ViewModelBase
             {
                 var config = await _templateStorage.LoadTemplateAsync(templateName);
                 // Update configuration and page settings on UI thread
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
                 {
+                    if (config == null)
+                    {
+                        // Show error message if template couldn't be loaded
+                        var dialog = App.ConfirmationDialog;
+                        if (dialog != null)
+                        {
+                            await dialog.ShowAsync(new ConfirmationDialogOptions
+                            {
+                                Title = "Load Failed".Translate(),
+                                Message = "Failed to load the template '{0}'. The file may be corrupted or missing.".TranslateFormat(templateName),
+                                PrimaryButtonText = "OK".Translate(),
+                                SecondaryButtonText = null,
+                                CancelButtonText = null
+                            });
+                        }
+                    }
                     Configuration = config ?? new ReportConfiguration();
                     ApplyConfigurationToPageSettings();
                     // Fire event to refresh canvas after template loads

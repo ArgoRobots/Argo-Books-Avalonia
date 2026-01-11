@@ -270,7 +270,8 @@ public class GoogleSheetsService
     /// Opens a Google Sheets URL in the default browser.
     /// </summary>
     /// <param name="url">The URL to open.</param>
-    public static void OpenInBrowser(string url)
+    /// <returns>True if the browser was opened successfully, false otherwise.</returns>
+    public static bool OpenInBrowser(string url)
     {
         try
         {
@@ -279,10 +280,11 @@ public class GoogleSheetsService
                 FileName = url,
                 UseShellExecute = true
             });
+            return true;
         }
         catch
         {
-            // Ignore errors opening browser
+            return false;
         }
     }
 
