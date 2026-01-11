@@ -85,7 +85,7 @@
                                FontSize="24"
                                FontWeight="Bold"
                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <TextBlock Text="{loc:Loc 'Welcome back! Here''s an overview of your business.'}"
+                    <TextBlock Text="{loc:Loc 'Welcome back! Here is an overview of your business.'}"
                                FontSize="14"
                                Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
@@ -508,7 +508,7 @@
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <Button Grid.Column="1"
-                                        Classes="ghost-button"
+                                        Classes="ghost"
                                         Command="{Binding NavigateToRentalsCommand}">
                                     <TextBlock Text="{loc:Loc 'View All'}" FontSize="13" />
                                 </Button>

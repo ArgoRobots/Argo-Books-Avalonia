@@ -4,10 +4,17 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:converters="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="300"
              x:Class="ArgoBooks.Controls.SearchableDropdown"
              x:DataType="controls:SearchableDropdown"
              Focusable="True">
+
+    <UserControl.Resources>
+        <converters:HighlightBrushMultiConverter x:Key="HighlightBrushMultiConverter" />
+        <converters:HighlightBorderBrushMultiConverter x:Key="HighlightBorderBrushMultiConverter" />
+        <converters:HighlightBorderThicknessMultiConverter x:Key="HighlightBorderThicknessMultiConverter" />
+    </UserControl.Resources>
 
     <StackPanel Spacing="4">
         <!-- Label -->
@@ -162,11 +169,24 @@
                                                 Tag="{Binding}"
                                                 Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
                                                 CommandParameter="{Binding}">
-                                            <Button.Styles>
-                                                <Style Selector="Button.selected /template/ ContentPresenter">
-                                                    <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
-                                                </Style>
-                                            </Button.Styles>
+                                            <Button.Background>
+                                                <MultiBinding Converter="{StaticResource HighlightBrushMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.Background>
+                                            <Button.BorderBrush>
+                                                <MultiBinding Converter="{StaticResource HighlightBorderBrushMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.BorderBrush>
+                                            <Button.BorderThickness>
+                                                <MultiBinding Converter="{StaticResource HighlightBorderThicknessMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.BorderThickness>
                                             <TextBlock Text="{Binding}" />
                                         </Button>
                                     </DataTemplate>
@@ -190,11 +210,24 @@
                                                 Tag="{Binding}"
                                                 Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
                                                 CommandParameter="{Binding}">
-                                            <Button.Styles>
-                                                <Style Selector="Button.selected /template/ ContentPresenter">
-                                                    <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
-                                                </Style>
-                                            </Button.Styles>
+                                            <Button.Background>
+                                                <MultiBinding Converter="{StaticResource HighlightBrushMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.Background>
+                                            <Button.BorderBrush>
+                                                <MultiBinding Converter="{StaticResource HighlightBorderBrushMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.BorderBrush>
+                                            <Button.BorderThickness>
+                                                <MultiBinding Converter="{StaticResource HighlightBorderThicknessMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.BorderThickness>
                                             <TextBlock Text="{Binding}" />
                                         </Button>
                                     </DataTemplate>
