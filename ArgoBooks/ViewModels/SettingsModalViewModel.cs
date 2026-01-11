@@ -627,7 +627,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             globalSettings.Ui.Chart.MaxPieSlices = MaxPieSlices;
             globalSettings.Ui.Language = SelectedLanguage;
-            _ = App.SettingsService?.SaveGlobalSettingsAsync();
+            await App.SettingsService!.SaveGlobalSettingsAsync();
         }
 
         // Notify that date format changed so views can refresh

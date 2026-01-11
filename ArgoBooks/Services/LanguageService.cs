@@ -438,7 +438,8 @@ public partial class LanguageService
             var englishKey = GetStringKey(text);
             if (_englishCache.TryGetValue(englishKey, out var englishValue))
             {
-                return englishValue;
+                // Decode HTML entities in case the translation file contains encoded characters
+                return DecodeHtmlEntities(englishValue);
             }
             return DecodeHtmlEntities(text);
         }
