@@ -4,6 +4,8 @@
 ```powershell
 $env:AZURE_TRANSLATOR_REGION = "canadacentral"
 $env:AZURE_TRANSLATOR_KEY = "your-api-key"
+
+cd ArgoBooks.TranslationTool
 ```
 
 ## Commands
