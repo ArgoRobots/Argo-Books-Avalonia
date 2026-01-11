@@ -6,6 +6,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Panels;
 
+/// <summary>
+/// Dropdown panel for file operations including open, save, and recent files.
+/// </summary>
 public partial class FileMenuPanel : UserControl
 {
     private int _focusedIndex = -1;

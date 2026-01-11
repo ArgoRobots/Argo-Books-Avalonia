@@ -6,6 +6,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Panels;
 
+/// <summary>
+/// Dropdown panel displaying user account options and settings.
+/// </summary>
 public partial class UserPanel : UserControl
 {
     private int _focusedIndex = -1;

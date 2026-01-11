@@ -4,6 +4,9 @@ using Avalonia.Input;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Modal dialogs for report template management.
+/// </summary>
 public partial class ReportModals : UserControl
 {
     public ReportModals()

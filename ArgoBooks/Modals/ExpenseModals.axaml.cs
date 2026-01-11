@@ -3,6 +3,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Modal dialogs for creating and editing expense records.
+/// </summary>
 public partial class ExpenseModals : UserControl
 {
     public ExpenseModals()

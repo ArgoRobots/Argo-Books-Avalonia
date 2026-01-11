@@ -7,6 +7,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Multi-step wizard for creating a new company file.
+/// </summary>
 public partial class CreateCompanyWizard : UserControl
 {
     private bool _eventsSubscribed;

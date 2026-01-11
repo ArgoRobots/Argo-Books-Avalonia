@@ -7,6 +7,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Dialog prompting user to save, discard, or cancel when there are unsaved changes.
+/// </summary>
 public partial class UnsavedChangesDialog : UserControl
 {
     private bool _eventsSubscribed;

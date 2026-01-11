@@ -7,6 +7,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Reusable confirmation dialog for user prompts and decisions.
+/// </summary>
 public partial class ConfirmationDialog : UserControl
 {
     private bool _eventsSubscribed;

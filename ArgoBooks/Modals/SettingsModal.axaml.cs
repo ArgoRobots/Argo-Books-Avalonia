@@ -7,6 +7,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Modal dialog for configuring application and company settings.
+/// </summary>
 public partial class SettingsModal : UserControl
 {
     private bool _eventsSubscribed;

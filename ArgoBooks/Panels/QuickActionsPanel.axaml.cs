@@ -8,6 +8,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Panels;
 
+/// <summary>
+/// Panel providing quick access to common actions like adding records.
+/// </summary>
 public partial class QuickActionsPanel : UserControl
 {
     public QuickActionsPanel()

@@ -5,6 +5,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Controls;
 
+/// <summary>
+/// Dropdown panel displaying undo/redo action history with selection support.
+/// </summary>
 public partial class UndoRedoHistoryPanel : UserControl
 {
     public UndoRedoHistoryPanel()

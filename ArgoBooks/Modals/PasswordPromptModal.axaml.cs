@@ -6,6 +6,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Modal dialog for entering password to unlock encrypted company files.
+/// </summary>
 public partial class PasswordPromptModal : UserControl
 {
     private bool _eventsSubscribed;
