@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Models.Common;
@@ -278,10 +279,10 @@ public partial class SupplierModalsViewModel : ObservableObject
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Supplier",
-            Message = $"Are you sure you want to delete this supplier?\n\n{item.Name}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Supplier".Translate(),
+            Message = "Are you sure you want to delete this supplier?\n\n{0}".TranslateFormat(item.Name),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
@@ -385,7 +386,7 @@ public partial class SupplierModalsViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(ModalSupplierName))
         {
-            ModalSupplierNameError = "Supplier name is required.";
+            ModalSupplierNameError = "Supplier name is required.".Translate();
             isValid = false;
         }
         else
@@ -397,14 +398,14 @@ public partial class SupplierModalsViewModel : ObservableObject
 
             if (existingWithSameName)
             {
-                ModalSupplierNameError = "A supplier with this name already exists.";
+                ModalSupplierNameError = "A supplier with this name already exists.".Translate();
                 isValid = false;
             }
         }
 
         if (!string.IsNullOrWhiteSpace(ModalEmail) && !ModalEmail.Contains('@'))
         {
-            ModalEmailError = "Please enter a valid email address.";
+            ModalEmailError = "Please enter a valid email address.".Translate();
             isValid = false;
         }
 

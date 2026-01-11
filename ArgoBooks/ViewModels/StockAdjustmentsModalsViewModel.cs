@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -173,7 +174,7 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
 
         if (!int.TryParse(AdjustmentQuantity, out var quantity) || quantity < 0)
         {
-            AddModalError = "Please enter a valid quantity.";
+            AddModalError = "Please enter a valid quantity.".Translate();
             return;
         }
 
@@ -333,10 +334,10 @@ public partial class StockAdjustmentsModalsViewModel : ViewModelBase
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Stock Adjustment",
-            Message = $"Are you sure you want to delete this stock adjustment?\n\nProduct: {item.ProductName}\nQuantity: {item.Quantity}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Stock Adjustment".Translate(),
+            Message = "Are you sure you want to delete this stock adjustment?\n\nProduct: {0}\nQuantity: {1}".TranslateFormat(item.ProductName, item.Quantity),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 

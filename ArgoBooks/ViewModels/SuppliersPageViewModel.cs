@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Data;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -882,7 +883,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
         if (!string.IsNullOrWhiteSpace(ModalEmail) &&
             !System.Text.RegularExpressions.Regex.IsMatch(ModalEmail.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
         {
-            ModalEmailError = "Please enter a valid email address.";
+            ModalEmailError = "Please enter a valid email address.".Translate();
             isValid = false;
         }
 
@@ -892,7 +893,7 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
             var digits = new string(ModalFullPhone.Where(char.IsDigit).ToArray());
             if (digits.Length < 7)
             {
-                ModalPhoneError = "Please enter a valid phone number.";
+                ModalPhoneError = "Please enter a valid phone number.".Translate();
                 isValid = false;
             }
         }

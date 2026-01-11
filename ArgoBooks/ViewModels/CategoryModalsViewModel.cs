@@ -1,4 +1,5 @@
 using ArgoBooks.Services;
+using ArgoBooks.Localization;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
@@ -304,11 +305,11 @@ public partial class CategoryModalsViewModel : ObservableObject
         {
             var subResult = await dialog.ShowAsync(new ConfirmationDialogOptions
             {
-                Title = "Delete Category",
-                Message = $"This category has {children?.Count} subcategories.\n\nDo you want to delete them as well, or move them to the top level?",
-                PrimaryButtonText = "Delete All",
-                SecondaryButtonText = "Move to Top Level",
-                CancelButtonText = "Cancel",
+                Title = "Delete Category".Translate(),
+                Message = "This category has {0} subcategories.\n\nDo you want to delete them as well, or move them to the top level?".TranslateFormat(children?.Count ?? 0),
+                PrimaryButtonText = "Delete All".Translate(),
+                SecondaryButtonText = "Move to Top Level".Translate(),
+                CancelButtonText = "Cancel".Translate(),
                 IsPrimaryDestructive = true
             });
 
@@ -321,10 +322,10 @@ public partial class CategoryModalsViewModel : ObservableObject
         {
             var result = await dialog.ShowAsync(new ConfirmationDialogOptions
             {
-                Title = "Delete Category",
-                Message = $"Are you sure you want to delete this category?\n\n{item.Name}",
-                PrimaryButtonText = "Delete",
-                CancelButtonText = "Cancel",
+                Title = "Delete Category".Translate(),
+                Message = "Are you sure you want to delete this category?\n\n{0}".TranslateFormat(item.Name),
+                PrimaryButtonText = "Delete".Translate(),
+                CancelButtonText = "Cancel".Translate(),
                 IsPrimaryDestructive = true
             });
 
@@ -405,7 +406,7 @@ public partial class CategoryModalsViewModel : ObservableObject
     {
         if (_movingCategory == null || MoveTargetCategory == null)
         {
-            MoveError = "Please select a target category.";
+            MoveError = "Please select a target category.".Translate();
             return;
         }
 
@@ -419,7 +420,7 @@ public partial class CategoryModalsViewModel : ObservableObject
 
         if (oldParentId == newParentId)
         {
-            MoveError = "Category is already under this parent.";
+            MoveError = "Category is already under this parent.".Translate();
             return;
         }
 
@@ -483,7 +484,7 @@ public partial class CategoryModalsViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(ModalCategoryName))
         {
-            ModalCategoryNameError = "Category name is required.";
+            ModalCategoryNameError = "Category name is required.".Translate();
             isValid = false;
         }
         else
@@ -497,7 +498,7 @@ public partial class CategoryModalsViewModel : ObservableObject
 
             if (existingWithSameName)
             {
-                ModalCategoryNameError = "A category with this name already exists.";
+                ModalCategoryNameError = "A category with this name already exists.".Translate();
                 isValid = false;
             }
         }

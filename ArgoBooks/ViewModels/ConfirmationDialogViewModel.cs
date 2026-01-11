@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -37,19 +38,19 @@ public partial class ConfirmationDialogViewModel : ViewModelBase
     private bool _isOpen;
 
     [ObservableProperty]
-    private string _title = "Confirm";
+    private string _title = "Confirm".Translate();
 
     [ObservableProperty]
     private string _message = "";
 
     [ObservableProperty]
-    private string _primaryButtonText = "OK";
+    private string _primaryButtonText = "OK".Translate();
 
     [ObservableProperty]
     private string _secondaryButtonText = "";
 
     [ObservableProperty]
-    private string _cancelButtonText = "Cancel";
+    private string _cancelButtonText = "Cancel".Translate();
 
     [ObservableProperty]
     private bool _showPrimaryButton = true;
@@ -77,9 +78,9 @@ public partial class ConfirmationDialogViewModel : ViewModelBase
     {
         Title = options.Title;
         Message = options.Message;
-        PrimaryButtonText = options.PrimaryButtonText ?? "OK";
+        PrimaryButtonText = options.PrimaryButtonText ?? "OK".Translate();
         SecondaryButtonText = options.SecondaryButtonText ?? "";
-        CancelButtonText = options.CancelButtonText ?? "Cancel";
+        CancelButtonText = options.CancelButtonText ?? "Cancel".Translate();
         ShowPrimaryButton = !string.IsNullOrEmpty(options.PrimaryButtonText);
         ShowSecondaryButton = !string.IsNullOrEmpty(options.SecondaryButtonText);
         ShowCancelButton = !string.IsNullOrEmpty(options.CancelButtonText);

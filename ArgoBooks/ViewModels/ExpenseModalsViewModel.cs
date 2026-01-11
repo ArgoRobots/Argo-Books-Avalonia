@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
@@ -208,10 +209,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Expense",
-            Message = $"Are you sure you want to delete this expense?\n\nID: {item.Id}\nDescription: {item.ProductDescription}\nAmount: {item.TotalFormatted}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Expense".Translate(),
+            Message = "Are you sure you want to delete this expense?\n\nID: {0}\nDescription: {1}\nAmount: {2}".TranslateFormat(item.Id, item.ProductDescription, item.TotalFormatted),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
@@ -314,7 +315,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         if (string.IsNullOrEmpty(SelectedItemStatusReason))
         {
             HasItemStatusReasonError = true;
-            ItemStatusReasonErrorMessage = "Please select a reason";
+            ItemStatusReasonErrorMessage = "Please select a reason".Translate();
             return;
         }
 

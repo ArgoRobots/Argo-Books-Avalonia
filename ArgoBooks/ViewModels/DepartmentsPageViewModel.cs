@@ -3,6 +3,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -658,7 +659,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
         if (string.IsNullOrWhiteSpace(ModalDepartmentName))
         {
-            ModalError = "Department name is required.";
+            ModalError = "Department name is required.".Translate();
             return false;
         }
 
@@ -669,7 +670,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
         if (existingWithSameName)
         {
-            ModalError = "A department with this name already exists.";
+            ModalError = "A department with this name already exists.".Translate();
             return false;
         }
 

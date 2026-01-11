@@ -5,6 +5,7 @@ using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -836,7 +837,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     {
         if (_movingCategory == null || MoveTargetCategory == null)
         {
-            MoveError = "Please select a target category.";
+            MoveError = "Please select a target category.".Translate().Translate();
             return;
         }
 
@@ -853,7 +854,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         // Don't move if same parent
         if (oldParentId == newParentId)
         {
-            MoveError = "Category is already under this parent.";
+            MoveError = "Category is already under this parent.".Translate().Translate();
             return;
         }
 

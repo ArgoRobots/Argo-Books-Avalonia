@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -169,7 +170,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         // Validate quantity
         if (!int.TryParse(AdjustmentQuantity, out var quantity) || quantity < 0)
         {
-            AdjustmentError = "Please enter a valid quantity.";
+            AdjustmentError = "Please enter a valid quantity.".Translate();
             return;
         }
 
@@ -348,7 +349,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         // Validate
         if (SelectedProduct == null)
         {
-            AddItemProductError = "Please select a product.";
+            AddItemProductError = "Please select a product.".Translate();
             return;
         }
 
@@ -360,7 +361,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
 
         if (!int.TryParse(AddItemQuantity, out var quantity) || quantity < 0)
         {
-            AddItemError = "Please enter a valid quantity.";
+            AddItemError = "Please enter a valid quantity.".Translate();
             return;
         }
 
@@ -373,7 +374,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
 
         if (existingItem != null)
         {
-            AddItemError = "An inventory item already exists for this product and location.";
+            AddItemError = "An inventory item already exists for this product and location.".Translate();
             return;
         }
 

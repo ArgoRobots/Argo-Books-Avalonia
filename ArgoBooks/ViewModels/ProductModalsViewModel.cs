@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
@@ -410,10 +411,10 @@ public partial class ProductModalsViewModel : ObservableObject
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Product",
-            Message = $"Are you sure you want to delete this product?\n\n{item.Name}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Product".Translate(),
+            Message = "Are you sure you want to delete this product?\n\n{0}".TranslateFormat(item.Name),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
@@ -568,7 +569,7 @@ public partial class ProductModalsViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(ModalProductName))
         {
-            ModalProductNameError = "Product name is required.";
+            ModalProductNameError = "Product name is required.".Translate();
             isValid = false;
         }
         else
@@ -580,14 +581,14 @@ public partial class ProductModalsViewModel : ObservableObject
 
             if (existingWithSameName)
             {
-                ModalProductNameError = "A product with this name already exists.";
+                ModalProductNameError = "A product with this name already exists.".Translate();
                 isValid = false;
             }
         }
 
         if (HasCategories && string.IsNullOrEmpty(ModalCategoryId))
         {
-            ModalCategoryError = "Category is required.";
+            ModalCategoryError = "Category is required.".Translate();
             isValid = false;
         }
 

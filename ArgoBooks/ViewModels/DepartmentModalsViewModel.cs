@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Core.Models.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -165,10 +166,10 @@ public partial class DepartmentModalsViewModel : ObservableObject
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Department",
-            Message = $"Are you sure you want to delete this department?\n\n{item.Name}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Department".Translate(),
+            Message = "Are you sure you want to delete this department?\n\n{0}".TranslateFormat(item.Name),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
@@ -211,7 +212,7 @@ public partial class DepartmentModalsViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(ModalDepartmentName))
         {
-            ModalDepartmentNameError = "Department name is required.";
+            ModalDepartmentNameError = "Department name is required.".Translate();
             isValid = false;
         }
         else
@@ -223,7 +224,7 @@ public partial class DepartmentModalsViewModel : ObservableObject
 
             if (existingWithSameName)
             {
-                ModalDepartmentNameError = "A department with this name already exists.";
+                ModalDepartmentNameError = "A department with this name already exists.".Translate();
                 isValid = false;
             }
         }

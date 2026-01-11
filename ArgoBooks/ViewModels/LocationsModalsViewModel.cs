@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -163,7 +164,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
         // Check for duplicate ID
         if (companyData.Locations?.Any(l => l.Id == newId) == true)
         {
-            ModalError = "A location with this code already exists.";
+            ModalError = "A location with this code already exists.".Translate();
             return;
         }
 
@@ -333,10 +334,10 @@ public partial class LocationsModalsViewModel : ViewModelBase
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Location",
-            Message = $"Are you sure you want to delete this location?\n\n{item.Name}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Location".Translate(),
+            Message = "Are you sure you want to delete this location?\n\n{0}".TranslateFormat(item.Name),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
