@@ -372,27 +372,32 @@ public static class DatePresetNames
 
     /// <summary>
     /// Gets the date range for a preset name.
+    /// Handles case-insensitive matching to support both constant values and UI display values.
     /// </summary>
     public static (DateTime Start, DateTime End) GetDateRange(string presetName)
     {
         var now = DateTime.Now;
         var today = now.Date;
 
-        return presetName switch
+        // Normalize to lowercase for case-insensitive comparison
+        var presetLower = presetName.ToLowerInvariant();
+
+        return presetLower switch
         {
-            Today => (today, today.AddDays(1).AddSeconds(-1)),
-            Yesterday => (today.AddDays(-1), today.AddSeconds(-1)),
-            Last7Days => (today.AddDays(-6), today.AddDays(1).AddSeconds(-1)),
-            Last30Days => (today.AddDays(-29), today.AddDays(1).AddSeconds(-1)),
-            ThisWeek => (today.AddDays(-(int)today.DayOfWeek), today.AddDays(7 - (int)today.DayOfWeek).AddSeconds(-1)),
-            LastWeek => (today.AddDays(-(int)today.DayOfWeek - 7), today.AddDays(-(int)today.DayOfWeek).AddSeconds(-1)),
-            ThisMonth => (new DateTime(now.Year, now.Month, 1), new DateTime(now.Year, now.Month, 1).AddMonths(1).AddSeconds(-1)),
-            LastMonth => (new DateTime(now.Year, now.Month, 1).AddMonths(-1), new DateTime(now.Year, now.Month, 1).AddSeconds(-1)),
-            ThisQuarter => GetThisQuarterRange(now),
-            LastQuarter => GetLastQuarterRange(now),
-            YearToDate => (new DateTime(now.Year, 1, 1), today.AddDays(1).AddSeconds(-1)),
-            LastYear => (new DateTime(now.Year - 1, 1, 1), new DateTime(now.Year, 1, 1).AddSeconds(-1)),
-            AllTime => (DateTime.MinValue, DateTime.MaxValue),
+            "today" => (today, today.AddDays(1).AddSeconds(-1)),
+            "yesterday" => (today.AddDays(-1), today.AddSeconds(-1)),
+            "last 7 days" => (today.AddDays(-6), today.AddDays(1).AddSeconds(-1)),
+            "last 30 days" => (today.AddDays(-29), today.AddDays(1).AddSeconds(-1)),
+            "this week" => (today.AddDays(-(int)today.DayOfWeek), today.AddDays(7 - (int)today.DayOfWeek).AddSeconds(-1)),
+            "last week" => (today.AddDays(-(int)today.DayOfWeek - 7), today.AddDays(-(int)today.DayOfWeek).AddSeconds(-1)),
+            "this month" => (new DateTime(now.Year, now.Month, 1), new DateTime(now.Year, now.Month, 1).AddMonths(1).AddSeconds(-1)),
+            "last month" => (new DateTime(now.Year, now.Month, 1).AddMonths(-1), new DateTime(now.Year, now.Month, 1).AddSeconds(-1)),
+            "this quarter" => GetThisQuarterRange(now),
+            "last quarter" => GetLastQuarterRange(now),
+            "this year" => (new DateTime(now.Year, 1, 1), new DateTime(now.Year, 12, 31, 23, 59, 59)),
+            "year to date" => (new DateTime(now.Year, 1, 1), today.AddDays(1).AddSeconds(-1)),
+            "last year" => (new DateTime(now.Year - 1, 1, 1), new DateTime(now.Year, 1, 1).AddSeconds(-1)),
+            "all time" => (DateTime.MinValue, DateTime.MaxValue),
             _ => (today.AddDays(-29), today.AddDays(1).AddSeconds(-1)) // Default to last 30 days
         };
     }
