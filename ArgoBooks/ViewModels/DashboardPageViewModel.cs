@@ -3,6 +3,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -781,7 +782,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ProfitsChartSeries = series;
         ProfitsChartXAxes = ChartLoaderService.CreateDateXAxes(dates);
         ProfitsChartYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
-        ProfitsChartTitle = $"Total profits: {FormatCurrencyFromUSD(totalProfit, DateTime.Now)}";
+        ProfitsChartTitle = $"{Loc.Tr("Total profits:")} {FormatCurrencyFromUSD(totalProfit, DateTime.Now)}";
         HasProfitsChartData = series.Count > 0 && labels.Length > 0;
     }
 

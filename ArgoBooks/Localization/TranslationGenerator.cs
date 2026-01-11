@@ -185,8 +185,8 @@ public partial class TranslationGenerator
             }
 
             // Find switch expression display strings: => "Display Text"
-            // Only in files that likely contain display names (enums, services with display logic)
-            if (filePath.Contains("Enum") || filePath.Contains("Service") || filePath.Contains("ViewModel"))
+            // Only in files that likely contain display names (enums, services, viewmodels, configurations)
+            if (filePath.Contains("Enum") || filePath.Contains("Service") || filePath.Contains("ViewModel") || filePath.Contains("Configuration"))
             {
                 var switchMatches = SwitchDisplayStringRegex().Matches(content);
                 foreach (Match match in switchMatches)
