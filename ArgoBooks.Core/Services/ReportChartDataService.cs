@@ -53,6 +53,28 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         return lower is "custom" or "custom range";
     }
 
+    /// <summary>
+    /// Gets the effective date range, constrained by actual sales data.
+    /// For unbounded ranges (like All Time), uses the actual min/max dates from sales.
+    /// </summary>
+    private (DateTime Start, DateTime End) GetEffectiveDateRange()
+    {
+        var (start, end) = GetDateRange();
+
+        if (companyData?.Sales == null || !companyData.Sales.Any())
+            return (start, end);
+
+        // If date range is very large (e.g., All Time), constrain to actual data range
+        var minDataDate = companyData.Sales.Min(s => s.Date).Date;
+        var maxDataDate = companyData.Sales.Max(s => s.Date).Date;
+
+        // Use the intersection of requested range and actual data range
+        var effectiveStart = start < minDataDate ? minDataDate : start;
+        var effectiveEnd = end > maxDataDate ? maxDataDate : end;
+
+        return (effectiveStart, effectiveEnd);
+    }
+
     #region Revenue Charts
 
     /// <summary>
@@ -385,14 +407,15 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// </summary>
     private List<ChartDataPoint> GetGrowthRatesDaily()
     {
-        var (startDate, endDate) = GetDateRange();
+        var (startDate, endDate) = GetEffectiveDateRange();
 
-        var allDays = GetDaysBetween(startDate, endDate).ToList();
-
-        // Filter to only days that have actual sales data
-        var daysWithData = allDays.Where(day =>
-            companyData!.Sales.Any(s => s.Date.Date == day.Date)
-        ).ToList();
+        // Get days directly from sales data within the range
+        var daysWithData = companyData!.Sales
+            .Where(s => s.Date >= startDate && s.Date <= endDate)
+            .Select(s => s.Date.Date)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
 
         if (daysWithData.Count < 2)
             return [];
@@ -405,11 +428,11 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             var previousDay = daysWithData[i - 1];
 
             var currentRevenue = companyData!.Sales
-                .Where(s => s.Date.Date == currentDay.Date)
+                .Where(s => s.Date.Date == currentDay)
                 .Sum(s => s.EffectiveTotalUSD);
 
             var previousRevenue = companyData.Sales
-                .Where(s => s.Date.Date == previousDay.Date)
+                .Where(s => s.Date.Date == previousDay)
                 .Sum(s => s.EffectiveTotalUSD);
 
             double growthRate = CalculateGrowthRate(currentRevenue, previousRevenue);
@@ -430,16 +453,15 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     /// </summary>
     private List<ChartDataPoint> GetGrowthRatesWeekly()
     {
-        var (startDate, endDate) = GetDateRange();
+        var (startDate, endDate) = GetEffectiveDateRange();
 
-        var allWeeks = GetWeeksBetween(startDate, endDate).ToList();
-
-        // Filter to only weeks that have actual sales data
-        var weeksWithData = allWeeks.Where(weekStart =>
-        {
-            var weekEnd = weekStart.AddDays(6);
-            return companyData!.Sales.Any(s => s.Date >= weekStart && s.Date <= weekEnd);
-        }).ToList();
+        // Get weeks directly from sales data - group by week start (Monday)
+        var weeksWithData = companyData!.Sales
+            .Where(s => s.Date >= startDate && s.Date <= endDate)
+            .Select(s => GetWeekStart(s.Date))
+            .Distinct()
+            .OrderBy(w => w)
+            .ToList();
 
         if (weeksWithData.Count < 2)
             return [];
@@ -478,21 +500,28 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
+    /// Gets the Monday of the week containing the given date.
+    /// </summary>
+    private static DateTime GetWeekStart(DateTime date)
+    {
+        var daysToMonday = ((int)date.DayOfWeek - 1 + 7) % 7;
+        return date.AddDays(-daysToMonday).Date;
+    }
+
+    /// <summary>
     /// Gets month-over-month growth rates.
     /// </summary>
     private List<ChartDataPoint> GetGrowthRatesMonthly()
     {
-        var (startDate, endDate) = GetDateRange();
+        var (startDate, endDate) = GetEffectiveDateRange();
 
-        var allMonths = GetMonthsBetween(startDate, endDate).ToList();
-
-        // Filter to only months that have actual sales data
-        var monthsWithData = allMonths.Where(month =>
-        {
-            var monthStart = new DateTime(month.Year, month.Month, 1);
-            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return companyData!.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
-        }).ToList();
+        // Get months directly from sales data
+        var monthsWithData = companyData!.Sales
+            .Where(s => s.Date >= startDate && s.Date <= endDate)
+            .Select(s => new DateTime(s.Date.Year, s.Date.Month, 1))
+            .Distinct()
+            .OrderBy(m => m)
+            .ToList();
 
         if (monthsWithData.Count < 2)
             return [];
@@ -504,9 +533,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             var currentMonth = monthsWithData[i];
             var previousMonth = monthsWithData[i - 1];
 
-            var currentMonthStart = new DateTime(currentMonth.Year, currentMonth.Month, 1);
+            var currentMonthStart = currentMonth;
             var currentMonthEnd = currentMonthStart.AddMonths(1).AddDays(-1);
-            var previousMonthStart = new DateTime(previousMonth.Year, previousMonth.Month, 1);
+            var previousMonthStart = previousMonth;
             var previousMonthEnd = previousMonthStart.AddMonths(1).AddDays(-1);
 
             var currentRevenue = companyData!.Sales
