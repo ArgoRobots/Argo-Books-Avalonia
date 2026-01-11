@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
-             xmlns:modals="using:ArgoBooks.Modals"
              xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.InsightsPage"
@@ -512,8 +511,5 @@
             </Grid>
         </Grid>
     </ScrollViewer>
-
-    <!-- Custom Date Range Modal -->
-    <modals:CustomDateRangeModal />
     </Panel>
 </UserControl>

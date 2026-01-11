@@ -74,212 +74,40 @@ public partial class InsightsPageViewModel : ViewModelBase
     #region Date Range
 
     /// <summary>
-    /// Available date range options.
+    /// Available date range options for insights (future-focused).
     /// </summary>
-    public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
+    public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.FutureDateRangeOptions);
 
     [ObservableProperty]
-    private string _selectedDateRange = "All Time";
+    private string _selectedDateRange = "Next Month";
 
     [ObservableProperty]
-    private DateTime _startDate = new(2000, 1, 1);
+    private DateTime _startDate;
 
     [ObservableProperty]
-    private DateTime _endDate = DateTime.Now;
-
-    // Temporary date values for the modal (before applying)
-    [ObservableProperty]
-    private DateTime _modalStartDate = new(2000, 1, 1);
-
-    [ObservableProperty]
-    private DateTime _modalEndDate = DateTime.Now;
-
-    /// <summary>
-    /// Gets or sets whether the custom date range modal is open.
-    /// </summary>
-    [ObservableProperty]
-    private bool _isCustomDateRangeModalOpen;
-
-    /// <summary>
-    /// Gets or sets whether a custom date range has been applied.
-    /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(AppliedDateRangeText))]
-    private bool _hasAppliedCustomRange;
-
-    /// <summary>
-    /// Gets the formatted text showing the applied custom date range.
-    /// </summary>
-    public string AppliedDateRangeText => HasAppliedCustomRange
-        ? $"{StartDate:MMM d, yyyy} - {EndDate:MMM d, yyyy}"
-        : string.Empty;
-
-    /// <summary>
-    /// Gets or sets the modal start date as DateTimeOffset for DatePicker binding.
-    /// </summary>
-    public DateTimeOffset? ModalStartDateOffset
-    {
-        get => new DateTimeOffset(ModalStartDate);
-        set
-        {
-            if (value.HasValue)
-            {
-                ModalStartDate = value.Value.DateTime;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets or sets the modal end date as DateTimeOffset for DatePicker binding.
-    /// </summary>
-    public DateTimeOffset? ModalEndDateOffset
-    {
-        get => new DateTimeOffset(ModalEndDate);
-        set
-        {
-            if (value.HasValue)
-            {
-                ModalEndDate = value.Value.DateTime;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets whether the custom date range option is selected.
-    /// </summary>
-    public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
+    private DateTime _endDate;
 
     partial void OnSelectedDateRangeChanged(string value)
     {
-        OnPropertyChanged(nameof(IsCustomDateRange));
-
-        if (value == "Custom Range")
-        {
-            OpenCustomDateRangeModal();
-        }
-        else
-        {
-            HasAppliedCustomRange = false;
-            UpdateDateRangeFromSelection();
-            _ = RefreshInsightsAsync();
-        }
+        UpdateDateRangeFromSelection();
+        _ = RefreshInsightsAsync();
     }
 
     /// <summary>
-    /// Opens the custom date range modal.
-    /// </summary>
-    [RelayCommand]
-    private void OpenCustomDateRangeModal()
-    {
-        ModalStartDate = StartDate;
-        ModalEndDate = EndDate;
-        OnPropertyChanged(nameof(ModalStartDateOffset));
-        OnPropertyChanged(nameof(ModalEndDateOffset));
-        IsCustomDateRangeModalOpen = true;
-    }
-
-    /// <summary>
-    /// Applies the custom date range from the modal.
-    /// </summary>
-    [RelayCommand]
-    private async Task ApplyCustomDateRange()
-    {
-        if (ModalStartDate > ModalEndDate)
-        {
-            var result = await App.ConfirmationDialog!.ShowAsync(new ConfirmationDialogOptions
-            {
-                Title = "Invalid Date Range",
-                Message = "The start date is after the end date. Would you like to swap the dates?",
-                PrimaryButtonText = "Swap Dates",
-                CancelButtonText = "Cancel"
-            });
-
-            if (result == ConfirmationResult.Primary)
-            {
-                (ModalStartDate, ModalEndDate) = (ModalEndDate, ModalStartDate);
-                OnPropertyChanged(nameof(ModalStartDateOffset));
-                OnPropertyChanged(nameof(ModalEndDateOffset));
-            }
-            else
-            {
-                return;
-            }
-        }
-
-        StartDate = ModalStartDate;
-        EndDate = ModalEndDate;
-        HasAppliedCustomRange = true;
-        OnPropertyChanged(nameof(AppliedDateRangeText));
-        IsCustomDateRangeModalOpen = false;
-        await RefreshInsightsAsync();
-    }
-
-    /// <summary>
-    /// Cancels the custom date range modal.
-    /// </summary>
-    [RelayCommand]
-    private void CancelCustomDateRange()
-    {
-        IsCustomDateRangeModalOpen = false;
-
-        if (!HasAppliedCustomRange)
-        {
-            SelectedDateRange = "This Month";
-        }
-    }
-
-    /// <summary>
-    /// Updates the start and end dates based on the selected date range option.
+    /// Updates the start and end dates based on the selected future date range option.
     /// </summary>
     private void UpdateDateRangeFromSelection()
     {
-        var now = DateTime.Now;
-
-        switch (SelectedDateRange)
+        var (start, end) = DatePresetNames.GetDateRange(SelectedDateRange switch
         {
-            case "This Month":
-                StartDate = new DateTime(now.Year, now.Month, 1);
-                EndDate = now;
-                break;
+            "Next Month" => DatePresetNames.NextMonth,
+            "Next Quarter" => DatePresetNames.NextQuarter,
+            "Next Year" => DatePresetNames.NextYear,
+            _ => DatePresetNames.NextMonth
+        });
 
-            case "Last Month":
-                var lastMonth = now.AddMonths(-1);
-                StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
-                EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
-                break;
-
-            case "This Quarter":
-                var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
-                StartDate = quarterStart;
-                EndDate = now;
-                break;
-
-            case "Last Quarter":
-                var lastQuarterEnd = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1);
-                var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
-                lastQuarterStart = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
-                StartDate = lastQuarterStart;
-                EndDate = lastQuarterEnd;
-                break;
-
-            case "This Year":
-                StartDate = new DateTime(now.Year, 1, 1);
-                EndDate = now;
-                break;
-
-            case "Last Year":
-                StartDate = new DateTime(now.Year - 1, 1, 1);
-                EndDate = new DateTime(now.Year - 1, 12, 31);
-                break;
-
-            case "All Time":
-                StartDate = new DateTime(2000, 1, 1);
-                EndDate = now;
-                break;
-
-            case "Custom Range":
-                break;
-        }
+        StartDate = start;
+        EndDate = end;
     }
 
     #endregion
@@ -347,7 +175,8 @@ public partial class InsightsPageViewModel : ViewModelBase
         // Instantiate the InsightsService directly
         _insightsService = new InsightsService();
 
-        // Load insights on initialization
+        // Initialize date range and load insights
+        UpdateDateRangeFromSelection();
         _ = RefreshInsightsAsync();
     }
 
@@ -357,6 +186,9 @@ public partial class InsightsPageViewModel : ViewModelBase
     public InsightsPageViewModel(IInsightsService insightsService)
     {
         _insightsService = insightsService;
+
+        // Initialize date range and load insights
+        UpdateDateRangeFromSelection();
         _ = RefreshInsightsAsync();
     }
 
@@ -381,10 +213,8 @@ public partial class InsightsPageViewModel : ViewModelBase
 
         try
         {
-            // Create date range for analysis
-            var dateRange = HasAppliedCustomRange
-                ? AnalysisDateRange.Custom(StartDate, EndDate)
-                : AnalysisDateRange.FromPreset(SelectedDateRange);
+            // Create date range for analysis using the future date preset
+            var dateRange = AnalysisDateRange.Custom(StartDate, EndDate);
 
             // Generate insights using the service
             var insights = await _insightsService.GenerateInsightsAsync(companyData, dateRange);
