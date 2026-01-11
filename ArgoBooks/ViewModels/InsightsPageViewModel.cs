@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Core.Services;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -7,9 +9,9 @@ using CommunityToolkit.Mvvm.Input;
 namespace ArgoBooks.ViewModels;
 
 /// <summary>
-/// Represents a single insight item.
+/// Represents a single insight item for display in the UI.
 /// </summary>
-public partial class InsightItem : ObservableObject
+public partial class InsightItemViewModel : ObservableObject
 {
     [ObservableProperty]
     private string _title = string.Empty;
@@ -31,28 +33,41 @@ public partial class InsightItem : ObservableObject
 
 /// <summary>
 /// ViewModel for the Insights page displaying AI-powered business insights.
+/// Uses the InsightsService for real statistical analysis of business data.
 /// </summary>
 public partial class InsightsPageViewModel : ViewModelBase
 {
+    #region Services
+
+    private readonly IInsightsService _insightsService;
+
+    #endregion
+
     #region Statistics
 
     [ObservableProperty]
-    private string _totalInsights = "12";
+    private string _totalInsights = "0";
 
     [ObservableProperty]
-    private string _trendsDetected = "4";
+    private string _trendsDetected = "0";
 
     [ObservableProperty]
-    private string _anomaliesDetected = "2";
+    private string _anomaliesDetected = "0";
 
     [ObservableProperty]
-    private string _opportunities = "6";
+    private string _opportunities = "0";
 
     [ObservableProperty]
-    private string _lastUpdated = "Just now";
+    private string _lastUpdated = "Never";
 
     [ObservableProperty]
     private bool _isRefreshing;
+
+    [ObservableProperty]
+    private bool _hasInsufficientData;
+
+    [ObservableProperty]
+    private string _insufficientDataMessage = string.Empty;
 
     #endregion
 
@@ -64,17 +79,17 @@ public partial class InsightsPageViewModel : ViewModelBase
     public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
 
     [ObservableProperty]
-    private string _selectedDateRange = "This Month";
+    private string _selectedDateRange = "All Time";
 
     [ObservableProperty]
-    private DateTime _startDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+    private DateTime _startDate = new(2000, 1, 1);
 
     [ObservableProperty]
     private DateTime _endDate = DateTime.Now;
 
     // Temporary date values for the modal (before applying)
     [ObservableProperty]
-    private DateTime _modalStartDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+    private DateTime _modalStartDate = new(2000, 1, 1);
 
     [ObservableProperty]
     private DateTime _modalEndDate = DateTime.Now;
@@ -146,7 +161,7 @@ public partial class InsightsPageViewModel : ViewModelBase
         {
             HasAppliedCustomRange = false;
             UpdateDateRangeFromSelection();
-            RefreshForecastData();
+            _ = RefreshInsightsAsync();
         }
     }
 
@@ -196,7 +211,7 @@ public partial class InsightsPageViewModel : ViewModelBase
         HasAppliedCustomRange = true;
         OnPropertyChanged(nameof(AppliedDateRangeText));
         IsCustomDateRangeModalOpen = false;
-        RefreshForecastData();
+        await RefreshInsightsAsync();
     }
 
     /// <summary>
@@ -267,202 +282,241 @@ public partial class InsightsPageViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Refreshes the forecast data based on the selected date range.
-    /// </summary>
-    private void RefreshForecastData()
-    {
-        // In a real implementation, this would recalculate forecasts based on the date range
-        // For now, this is a placeholder for future functionality
-    }
-
     #endregion
 
     #region Forecasted Growth
 
     [ObservableProperty]
-    private string _forecastedRevenue = "$48,500";
+    private string _forecastedRevenue = "$0";
 
     [ObservableProperty]
-    private double _revenueGrowthValue = 12.3;
+    private double _revenueGrowthValue;
 
     [ObservableProperty]
-    private string _revenueGrowth = "12.3%";
+    private string _revenueGrowth = "0%";
 
     [ObservableProperty]
-    private string _forecastedExpenses = "$32,200";
+    private string _forecastedExpenses = "$0";
 
     [ObservableProperty]
-    private double _expenseGrowthValue = -5.8;  // Negative because increased expenses is bad
+    private double _expenseGrowthValue;
 
     [ObservableProperty]
-    private string _expenseGrowth = "5.8%";
+    private string _expenseGrowth = "0%";
 
     [ObservableProperty]
-    private string _forecastedProfit = "$16,300";
+    private string _forecastedProfit = "$0";
 
     [ObservableProperty]
-    private double _profitGrowthValue = 24.1;
+    private double _profitGrowthValue;
 
     [ObservableProperty]
-    private string _profitGrowth = "24.1%";
+    private string _profitGrowth = "0%";
 
     [ObservableProperty]
-    private string _forecastedCustomers = "28";
+    private string _forecastedCustomers = "0";
 
     [ObservableProperty]
-    private double _customerGrowthValue = 18.5;
+    private double _customerGrowthValue;
 
     [ObservableProperty]
-    private string _customerGrowth = "18.5%";
+    private string _customerGrowth = "0%";
 
     [ObservableProperty]
-    private string _predictionConfidence = "87% High";
+    private string _predictionConfidence = "-- --";
+
+    [ObservableProperty]
+    private string _dataMonthsNote = "Insufficient data for forecasting";
 
     #endregion
 
     #region Insight Collections
 
-    public ObservableCollection<InsightItem> RevenueTrends { get; } = [];
-    public ObservableCollection<InsightItem> Anomalies { get; } = [];
-    public ObservableCollection<InsightItem> Forecasts { get; } = [];
-    public ObservableCollection<InsightItem> Recommendations { get; } = [];
+    public ObservableCollection<InsightItemViewModel> RevenueTrends { get; } = [];
+    public ObservableCollection<InsightItemViewModel> Anomalies { get; } = [];
+    public ObservableCollection<InsightItemViewModel> Forecasts { get; } = [];
+    public ObservableCollection<InsightItemViewModel> Recommendations { get; } = [];
 
     #endregion
 
     /// <summary>
-    /// Creates a new InsightsPageViewModel with sample data.
+    /// Creates a new InsightsPageViewModel with the InsightsService.
     /// </summary>
     public InsightsPageViewModel()
     {
-        LoadSampleData();
+        // Instantiate the InsightsService directly
+        _insightsService = new InsightsService();
+
+        // Load insights on initialization
+        _ = RefreshInsightsAsync();
     }
 
     /// <summary>
-    /// Loads sample data for demonstration purposes.
+    /// Constructor for dependency injection.
     /// </summary>
-    private void LoadSampleData()
+    public InsightsPageViewModel(IInsightsService insightsService)
     {
-        // Revenue Trends
-        RevenueTrends.Add(new InsightItem
-        {
-            Title = "Revenue Growth Detected",
-            Description = "Your revenue has increased by 15% compared to last month. This trend has been consistent for the past 3 months.",
-            Recommendation = "Consider increasing inventory for your best-selling products.",
-            StatusColor = new SolidColorBrush(Color.Parse("#22C55E"))
-        });
-
-        RevenueTrends.Add(new InsightItem
-        {
-            Title = "Seasonal Pattern Identified",
-            Description = "Sales typically increase 25% during November-December based on historical data.",
-            Recommendation = "Prepare inventory and staffing for the upcoming holiday season.",
-            StatusColor = new SolidColorBrush(Color.Parse("#3B82F6"))
-        });
-
-        RevenueTrends.Add(new InsightItem
-        {
-            Title = "Weekend Sales Performance",
-            Description = "Weekend sales are 40% higher than weekday sales on average.",
-            StatusColor = new SolidColorBrush(Color.Parse("#22C55E")),
-            IsLastItem = true
-        });
-
-        // Anomalies
-        Anomalies.Add(new InsightItem
-        {
-            Title = "Unusual Expense Spike",
-            Description = "Operating expenses increased 45% this week compared to your typical weekly average.",
-            Recommendation = "Review recent expense entries for any errors or unexpected costs.",
-            StatusColor = new SolidColorBrush(Color.Parse("#F59E0B"))
-        });
-
-        Anomalies.Add(new InsightItem
-        {
-            Title = "Customer Returns Above Normal",
-            Description = "Return rate is 8% higher than usual this month. Most returns are for Product Category: Electronics.",
-            Recommendation = "Investigate product quality or description accuracy for electronics items.",
-            StatusColor = new SolidColorBrush(Color.Parse("#EF4444")),
-            IsLastItem = true
-        });
-
-        // Forecasts
-        Forecasts.Add(new InsightItem
-        {
-            Title = "Next Month Revenue Forecast",
-            Description = "Based on current trends and historical data, expected revenue for next month is $45,000 - $52,000.",
-            StatusColor = new SolidColorBrush(Color.Parse("#8B5CF6"))
-        });
-
-        Forecasts.Add(new InsightItem
-        {
-            Title = "Cash Flow Projection",
-            Description = "Projected cash flow for the next 30 days is positive. Expected surplus: $8,500.",
-            StatusColor = new SolidColorBrush(Color.Parse("#22C55E"))
-        });
-
-        Forecasts.Add(new InsightItem
-        {
-            Title = "Inventory Depletion Alert",
-            Description = "At current sales velocity, 3 products will reach reorder point within 2 weeks.",
-            Recommendation = "Review and place orders for low-stock items.",
-            StatusColor = new SolidColorBrush(Color.Parse("#F59E0B")),
-            IsLastItem = true
-        });
-
-        // Recommendations
-        Recommendations.Add(new InsightItem
-        {
-            Title = "Top Performing Product",
-            Description = "\"Premium Widget\" has the highest profit margin at 42%. Consider featuring it more prominently.",
-            Recommendation = "Add to featured products or promotional campaigns.",
-            StatusColor = new SolidColorBrush(Color.Parse("#3B82F6"))
-        });
-
-        Recommendations.Add(new InsightItem
-        {
-            Title = "Customer Retention Opportunity",
-            Description = "15 customers haven't made a purchase in over 60 days but were previously active.",
-            Recommendation = "Send re-engagement emails or special offers to inactive customers.",
-            StatusColor = new SolidColorBrush(Color.Parse("#8B5CF6"))
-        });
-
-        Recommendations.Add(new InsightItem
-        {
-            Title = "Payment Collection",
-            Description = "3 invoices totaling $2,340 are overdue by more than 30 days.",
-            Recommendation = "Send payment reminders or follow up with these customers.",
-            StatusColor = new SolidColorBrush(Color.Parse("#F59E0B"))
-        });
-
-        Recommendations.Add(new InsightItem
-        {
-            Title = "Supplier Optimization",
-            Description = "Switching to Supplier B for raw materials could save approximately $200/month based on recent price comparisons.",
-            Recommendation = "Review supplier contracts and consider renegotiation.",
-            StatusColor = new SolidColorBrush(Color.Parse("#22C55E")),
-            IsLastItem = true
-        });
+        _insightsService = insightsService;
+        _ = RefreshInsightsAsync();
     }
 
     /// <summary>
-    /// Refreshes the insights data.
+    /// Refreshes the insights data using the InsightsService.
     /// </summary>
     [RelayCommand]
     private async Task RefreshInsightsAsync()
     {
         if (IsRefreshing) return;
 
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null)
+        {
+            HasInsufficientData = true;
+            InsufficientDataMessage = "No company data loaded. Please open or create a company file.";
+            return;
+        }
+
         IsRefreshing = true;
+        HasInsufficientData = false;
+
         try
         {
-            // In a real implementation, this would call an AI service to regenerate insights
-            await Task.Delay(1500); // Simulate network delay
+            // Create date range for analysis
+            var dateRange = HasAppliedCustomRange
+                ? AnalysisDateRange.Custom(StartDate, EndDate)
+                : AnalysisDateRange.FromPreset(SelectedDateRange);
+
+            // Generate insights using the service
+            var insights = await _insightsService.GenerateInsightsAsync(companyData, dateRange);
+
+            // Check for sufficient data
+            if (!insights.HasSufficientData)
+            {
+                HasInsufficientData = true;
+                InsufficientDataMessage = insights.InsufficientDataMessage ?? "Insufficient data for analysis.";
+                ClearInsights();
+                return;
+            }
+
+            // Update summary statistics
+            TotalInsights = insights.Summary.TotalInsights.ToString();
+            TrendsDetected = insights.Summary.TrendsDetected.ToString();
+            AnomaliesDetected = insights.Summary.AnomaliesDetected.ToString();
+            Opportunities = insights.Summary.Opportunities.ToString();
+
+            // Update forecast data
+            UpdateForecastDisplay(insights.Forecast);
+
+            // Update insight collections
+            UpdateInsightCollection(RevenueTrends, insights.RevenueTrends);
+            UpdateInsightCollection(Anomalies, insights.Anomalies);
+            UpdateInsightCollection(Forecasts, insights.Forecasts);
+            UpdateInsightCollection(Recommendations, insights.Recommendations);
+
             LastUpdated = DateTime.Now.ToString("h:mm tt");
+        }
+        catch (Exception ex)
+        {
+            HasInsufficientData = true;
+            InsufficientDataMessage = $"Error generating insights: {ex.Message}";
         }
         finally
         {
             IsRefreshing = false;
         }
+    }
+
+    /// <summary>
+    /// Updates the forecast display with the generated data.
+    /// </summary>
+    private void UpdateForecastDisplay(ForecastData forecast)
+    {
+        ForecastedRevenue = forecast.ForecastedRevenue.ToString("C0");
+        RevenueGrowthValue = (double)forecast.RevenueGrowthPercent;
+        RevenueGrowth = $"{Math.Abs(forecast.RevenueGrowthPercent):F1}%";
+
+        ForecastedExpenses = forecast.ForecastedExpenses.ToString("C0");
+        ExpenseGrowthValue = -(double)forecast.ExpenseGrowthPercent; // Negative because increased expenses is bad
+        ExpenseGrowth = $"{Math.Abs(forecast.ExpenseGrowthPercent):F1}%";
+
+        ForecastedProfit = forecast.ForecastedProfit.ToString("C0");
+        ProfitGrowthValue = (double)forecast.ProfitGrowthPercent;
+        ProfitGrowth = $"{Math.Abs(forecast.ProfitGrowthPercent):F1}%";
+
+        ForecastedCustomers = forecast.ExpectedNewCustomers.ToString();
+        CustomerGrowthValue = (double)forecast.CustomerGrowthPercent;
+        CustomerGrowth = $"{Math.Abs(forecast.CustomerGrowthPercent):F1}%";
+
+        PredictionConfidence = $"{forecast.ConfidenceScore:F0}% {forecast.ConfidenceLevel}";
+        DataMonthsNote = forecast.DataMonthsUsed > 0
+            ? $"Based on {forecast.DataMonthsUsed} months of historical data"
+            : "Insufficient data for forecasting";
+    }
+
+    /// <summary>
+    /// Updates an insight collection with new items.
+    /// </summary>
+    private void UpdateInsightCollection(ObservableCollection<InsightItemViewModel> collection, List<InsightItem> items)
+    {
+        collection.Clear();
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            collection.Add(new InsightItemViewModel
+            {
+                Title = item.Title,
+                Description = item.Description,
+                Recommendation = item.Recommendation,
+                StatusColor = GetStatusColor(item.Severity),
+                IsLastItem = i == items.Count - 1
+            });
+        }
+    }
+
+    /// <summary>
+    /// Gets the color brush for an insight severity level.
+    /// </summary>
+    private static IBrush GetStatusColor(InsightSeverity severity)
+    {
+        return severity switch
+        {
+            InsightSeverity.Success => new SolidColorBrush(Color.Parse("#22C55E")),  // Green
+            InsightSeverity.Info => new SolidColorBrush(Color.Parse("#3B82F6")),     // Blue
+            InsightSeverity.Warning => new SolidColorBrush(Color.Parse("#F59E0B")),  // Orange
+            InsightSeverity.Critical => new SolidColorBrush(Color.Parse("#EF4444")), // Red
+            _ => new SolidColorBrush(Color.Parse("#8B5CF6"))                          // Purple (default)
+        };
+    }
+
+    /// <summary>
+    /// Clears all insight collections when data is insufficient.
+    /// </summary>
+    private void ClearInsights()
+    {
+        TotalInsights = "0";
+        TrendsDetected = "0";
+        AnomaliesDetected = "0";
+        Opportunities = "0";
+
+        ForecastedRevenue = "$0";
+        RevenueGrowthValue = 0;
+        RevenueGrowth = "0%";
+        ForecastedExpenses = "$0";
+        ExpenseGrowthValue = 0;
+        ExpenseGrowth = "0%";
+        ForecastedProfit = "$0";
+        ProfitGrowthValue = 0;
+        ProfitGrowth = "0%";
+        ForecastedCustomers = "0";
+        CustomerGrowthValue = 0;
+        CustomerGrowth = "0%";
+        PredictionConfidence = "-- --";
+        DataMonthsNote = "Insufficient data for forecasting";
+
+        RevenueTrends.Clear();
+        Anomalies.Clear();
+        Forecasts.Clear();
+        Recommendations.Clear();
     }
 }
