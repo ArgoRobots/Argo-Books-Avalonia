@@ -72,7 +72,12 @@ public class ChartLoaderService
     {
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
         var textColor = isDarkTheme ? SKColor.Parse("#F9FAFB") : SKColor.Parse("#1F2937");
-        var translatedText = LanguageService.Instance.Translate(text);
+
+        // Handle titles that may already be translated or contain dynamic values
+        // If the text contains a colon followed by a value (e.g., "Total profits: $7,246.51"),
+        // only translate the label part before the colon
+        var translatedText = TranslateChartTitle(text);
+
         return new LabelVisual
         {
             Text = translatedText,
@@ -80,6 +85,33 @@ public class ChartLoaderService
             Padding = new Padding(15, 12),
             Paint = new SolidColorPaint(textColor) { FontFamily = "Segoe UI", SKFontStyle = new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
         };
+    }
+
+    /// <summary>
+    /// Translates a chart title, handling titles with dynamic values.
+    /// </summary>
+    private static string TranslateChartTitle(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        // Check if the title contains a colon followed by a value (e.g., "Total profits: $7,246.51")
+        var colonIndex = text.IndexOf(':');
+        if (colonIndex > 0 && colonIndex < text.Length - 1)
+        {
+            var label = text[..colonIndex].Trim();
+            var value = text[(colonIndex + 1)..].Trim();
+
+            // Only translate the label part if the value looks like a number/currency
+            if (value.Length > 0 && (char.IsDigit(value[0]) || value[0] == '$' || value[0] == '-' || value[0] == '+'))
+            {
+                var translatedLabel = LanguageService.Instance.Translate(label);
+                return $"{translatedLabel}: {value}";
+            }
+        }
+
+        // Standard translation for simple titles
+        return LanguageService.Instance.Translate(text);
     }
 
     // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap

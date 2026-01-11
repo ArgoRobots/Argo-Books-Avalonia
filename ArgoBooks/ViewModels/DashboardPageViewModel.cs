@@ -817,7 +817,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         ProfitsChartSeries = series;
         ProfitsChartXAxes = ChartLoaderService.CreateDateXAxes(dates);
         ProfitsChartYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
-        ProfitsChartTitle = $"{Loc.Tr("Total profits:")} {FormatCurrencyFromUSD(totalProfit, DateTime.Now)}";
+        ProfitsChartTitle = $"Total profits: {FormatCurrencyFromUSD(totalProfit, DateTime.Now)}";
         HasProfitsChartData = series.Count > 0 && labels.Length > 0;
     }
 
