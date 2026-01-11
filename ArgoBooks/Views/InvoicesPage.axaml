@@ -339,7 +339,8 @@
                                                         <!-- Actions -->
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:InvoicesPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}">
                                                             <StackPanel Orientation="Horizontal"
-                                                                        HorizontalAlignment="Right"
+                                                                        HorizontalAlignment="Left"
+                                                                        VerticalAlignment="Center"
                                                                         Spacing="4"
                                                                         Margin="8,0">
                                                                 <Button Classes="icon-button"

@@ -467,7 +467,7 @@
                                                                         CornerRadius="8"
                                                                         Width="280"
                                                                         HorizontalContentAlignment="Stretch"
-                                                                        Command="{Binding $parent[ItemsControl].((vm:ReportsPageViewModel)DataContext).ToggleChartCommand}"
+                                                                        Command="{Binding $parent[ItemsControl;1].((vm:ReportsPageViewModel)DataContext).ToggleChartCommand}"
                                                                         CommandParameter="{Binding}"
                                                                         Classes.selected="{Binding IsSelected}">
                                                                     <Button.Styles>
