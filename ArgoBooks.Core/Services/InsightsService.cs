@@ -19,7 +19,7 @@ public class InsightsService : IInsightsService
 
     // Anomaly detection thresholds
     private const double ZScoreThreshold = 2.0; // Standard deviations for anomaly
-    private const double SignificantChangePercent = 15.0; // % change to flag as significant
+    private const decimal SignificantChangePercent = 15.0m; // % change to flag as significant
 
     /// <inheritdoc />
     public async Task<InsightsData> GenerateInsightsAsync(CompanyData companyData, AnalysisDateRange dateRange)
@@ -775,7 +775,7 @@ public class InsightsService : IInsightsService
             .Where(s => s.Date >= thirtyDaysAgo && s.Date <= dateRange.EndDate)
             .SelectMany(s => s.LineItems)
             .GroupBy(li => li.ProductId)
-            .Select(g => new { ProductId = g.Key, DailyVelocity = g.Sum(li => li.Quantity) / 30.0 })
+            .Select(g => new { ProductId = g.Key, DailyVelocity = g.Sum(li => li.Quantity) / 30m })
             .ToList();
 
         foreach (var item in recentSales.Where(x => x.DailyVelocity > 0))
@@ -783,7 +783,7 @@ public class InsightsService : IInsightsService
             var inventory = companyData.Inventory.FirstOrDefault(i => i.ProductId == item.ProductId);
             if (inventory != null && inventory.InStock > 0)
             {
-                var daysUntilEmpty = inventory.InStock / (decimal)item.DailyVelocity;
+                var daysUntilEmpty = inventory.InStock / item.DailyVelocity;
                 if (daysUntilEmpty <= 14) // 2 weeks or less
                 {
                     var product = companyData.GetProduct(item.ProductId ?? "");
