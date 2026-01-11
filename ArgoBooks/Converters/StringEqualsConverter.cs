@@ -135,41 +135,88 @@ public class ObjectEqualsMultiConverter : IMultiValueConverter
 
 /// <summary>
 /// Multi-value converter that returns a highlight brush if both values are equal, otherwise transparent.
-/// Used for visual highlighting of selected items in lists.
+/// Used for visual highlighting of selected items in lists. Matches the menu-item focus style.
 /// </summary>
 public class HighlightBrushMultiConverter : IMultiValueConverter
 {
     public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (values.Count < 2)
+        if (values.Count < 2 || !AreEqual(values[0], values[1]))
             return Brushes.Transparent;
 
-        var value1 = values[0];
-        var value2 = values[1];
-
-        bool isEqual = false;
-        if (value1 != null && value2 != null)
+        // Return SurfaceHoverBrush to match menu-item :focus style
+        if (Application.Current?.Resources != null &&
+            Application.Current.Resources.TryGetResource("SurfaceHoverBrush", Application.Current.ActualThemeVariant, out var resource))
         {
-            isEqual = ReferenceEquals(value1, value2) || value1.Equals(value2);
+            return resource;
         }
-        else if (value1 == null && value2 == null)
-        {
-            isEqual = true;
-        }
+        // Fallback hover color
+        return new SolidColorBrush(Color.Parse("#F3F4F6"));
+    }
 
-        if (isEqual)
-        {
-            // Return the highlight brush from application resources
-            if (Application.Current?.Resources != null &&
-                Application.Current.Resources.TryGetResource("PrimaryLightBrush", Application.Current.ActualThemeVariant, out var resource))
-            {
-                return resource;
-            }
-            // Fallback highlight color
-            return new SolidColorBrush(Color.Parse("#EBF5FF"));
-        }
+    private static bool AreEqual(object? value1, object? value2)
+    {
+        if (value1 == null && value2 == null)
+            return true;
+        if (value1 == null || value2 == null)
+            return false;
+        return ReferenceEquals(value1, value2) || value1.Equals(value2);
+    }
+}
 
-        return Brushes.Transparent;
+/// <summary>
+/// Multi-value converter that returns PrimaryBrush if both values are equal, otherwise transparent.
+/// Used for the left border highlight on selected items.
+/// </summary>
+public class HighlightBorderBrushMultiConverter : IMultiValueConverter
+{
+    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2 || !AreEqual(values[0], values[1]))
+            return Brushes.Transparent;
+
+        // Return PrimaryBrush to match menu-item :focus border style
+        if (Application.Current?.Resources != null &&
+            Application.Current.Resources.TryGetResource("PrimaryBrush", Application.Current.ActualThemeVariant, out var resource))
+        {
+            return resource;
+        }
+        // Fallback primary color
+        return new SolidColorBrush(Color.Parse("#3B82F6"));
+    }
+
+    private static bool AreEqual(object? value1, object? value2)
+    {
+        if (value1 == null && value2 == null)
+            return true;
+        if (value1 == null || value2 == null)
+            return false;
+        return ReferenceEquals(value1, value2) || value1.Equals(value2);
+    }
+}
+
+/// <summary>
+/// Multi-value converter that returns a thickness with left border if both values are equal.
+/// Used for the left border highlight on selected items.
+/// </summary>
+public class HighlightBorderThicknessMultiConverter : IMultiValueConverter
+{
+    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2 || !AreEqual(values[0], values[1]))
+            return new Thickness(0);
+
+        // Return 2px left border to match menu-item :focus style
+        return new Thickness(2, 0, 0, 0);
+    }
+
+    private static bool AreEqual(object? value1, object? value2)
+    {
+        if (value1 == null && value2 == null)
+            return true;
+        if (value1 == null || value2 == null)
+            return false;
+        return ReferenceEquals(value1, value2) || value1.Equals(value2);
     }
 }
 

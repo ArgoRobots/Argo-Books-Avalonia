@@ -12,6 +12,8 @@
 
     <UserControl.Resources>
         <converters:HighlightBrushMultiConverter x:Key="HighlightBrushMultiConverter" />
+        <converters:HighlightBorderBrushMultiConverter x:Key="HighlightBorderBrushMultiConverter" />
+        <converters:HighlightBorderThicknessMultiConverter x:Key="HighlightBorderThicknessMultiConverter" />
     </UserControl.Resources>
 
     <StackPanel Spacing="4">
@@ -173,6 +175,18 @@
                                                     <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
                                                 </MultiBinding>
                                             </Button.Background>
+                                            <Button.BorderBrush>
+                                                <MultiBinding Converter="{StaticResource HighlightBorderBrushMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.BorderBrush>
+                                            <Button.BorderThickness>
+                                                <MultiBinding Converter="{StaticResource HighlightBorderThicknessMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.BorderThickness>
                                             <TextBlock Text="{Binding}" />
                                         </Button>
                                     </DataTemplate>
@@ -202,6 +216,18 @@
                                                     <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
                                                 </MultiBinding>
                                             </Button.Background>
+                                            <Button.BorderBrush>
+                                                <MultiBinding Converter="{StaticResource HighlightBorderBrushMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.BorderBrush>
+                                            <Button.BorderThickness>
+                                                <MultiBinding Converter="{StaticResource HighlightBorderThicknessMultiConverter}">
+                                                    <Binding Path="." />
+                                                    <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
+                                                </MultiBinding>
+                                            </Button.BorderThickness>
                                             <TextBlock Text="{Binding}" />
                                         </Button>
                                     </DataTemplate>

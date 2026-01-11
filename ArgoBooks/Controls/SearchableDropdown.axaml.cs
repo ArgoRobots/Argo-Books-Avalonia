@@ -384,9 +384,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
             {
                 // Refresh filtered items when dropdown opens to ensure latest data
                 UpdateFilteredItems();
-                // Set initial highlight to first item
-                _highlightedIndex = TotalFilteredCount > 0 ? 0 : -1;
-                HighlightedItem = GetItemByIndex(_highlightedIndex);
+                // Don't highlight any item by default - wait for user to press a key
+                _highlightedIndex = -1;
+                HighlightedItem = null;
             }
             else
             {
@@ -591,9 +591,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
             IsDropdownOpen = true;
         }
 
-        // Highlight first item in combined list (priority items first)
-        _highlightedIndex = TotalFilteredCount > 0 ? 0 : -1;
-        HighlightedItem = GetItemByIndex(_highlightedIndex);
+        // Reset highlight when search text changes - user must press key to navigate
+        _highlightedIndex = -1;
+        HighlightedItem = null;
     }
 
     private void UpdateFilteredItems()
