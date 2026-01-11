@@ -27,6 +27,7 @@
         <ResourceDictionary>
             <!-- Converters -->
             <loc:TranslateConverter x:Key="TranslateConverter" />
+            <loc:UpperCaseConverter x:Key="UpperCaseConverter" />
 
             <ResourceDictionary.MergedDictionaries>
                 <!-- Global colors (shared across themes) -->

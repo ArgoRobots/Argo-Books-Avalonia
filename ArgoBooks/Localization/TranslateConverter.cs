@@ -46,3 +46,26 @@ public class TranslateConverter : IValueConverter
         throw new NotSupportedException("TranslateConverter only supports one-way conversion");
     }
 }
+
+/// <summary>
+/// Value converter that converts strings to uppercase.
+/// Use this for UI elements that should display text in all caps.
+/// </summary>
+public class UpperCaseConverter : IValueConverter
+{
+    public static readonly UpperCaseConverter Instance = new();
+
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is string text)
+        {
+            return text.ToUpperInvariant();
+        }
+        return value;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException("UpperCaseConverter only supports one-way conversion");
+    }
+}
