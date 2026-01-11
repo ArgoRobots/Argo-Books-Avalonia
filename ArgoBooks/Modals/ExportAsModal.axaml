@@ -172,9 +172,11 @@
                                                    FontWeight="Medium"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                                         <CheckBox Grid.Column="1"
-                                                  IsChecked="{Binding SelectAllData}">
+                                                  IsChecked="{Binding SelectAllData}"
+                                                  VerticalContentAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Select All'}"
                                                        FontSize="12"
+                                                       VerticalAlignment="Center"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                         </CheckBox>
                                     </Grid>
