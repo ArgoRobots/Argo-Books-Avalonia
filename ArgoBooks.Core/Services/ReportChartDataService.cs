@@ -337,6 +337,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     /// <summary>
     /// Gets growth rates over time with dynamic granularity based on the selected date range.
+    /// Falls back to finer granularity if not enough data at the preferred level.
     /// - Short ranges (up to ~1 month): day-over-day
     /// - Medium ranges (quarter): week-over-week
     /// - Long ranges (year+): month-over-month
@@ -348,13 +349,35 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
         var granularity = DetermineGrowthRateGranularity();
 
-        return granularity switch
+        // Try preferred granularity, fall back to finer if not enough data
+        List<ChartDataPoint> result;
+
+        if (granularity == GrowthRateGranularity.Monthly)
         {
-            GrowthRateGranularity.Daily => GetGrowthRatesDaily(),
-            GrowthRateGranularity.Weekly => GetGrowthRatesWeekly(),
-            GrowthRateGranularity.Monthly => GetGrowthRatesMonthly(),
-            _ => GetGrowthRatesMonthly()
-        };
+            result = GetGrowthRatesMonthly();
+            if (result.Count == 0)
+            {
+                result = GetGrowthRatesWeekly();
+            }
+            if (result.Count == 0)
+            {
+                result = GetGrowthRatesDaily();
+            }
+        }
+        else if (granularity == GrowthRateGranularity.Weekly)
+        {
+            result = GetGrowthRatesWeekly();
+            if (result.Count == 0)
+            {
+                result = GetGrowthRatesDaily();
+            }
+        }
+        else
+        {
+            result = GetGrowthRatesDaily();
+        }
+
+        return result;
     }
 
     /// <summary>
