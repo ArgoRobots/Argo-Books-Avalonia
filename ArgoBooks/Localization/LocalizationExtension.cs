@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Data;
 using Avalonia.Markup.Xaml;
 using Avalonia.Markup.Xaml.MarkupExtensions;
+using Avalonia.Threading;
 using ArgoBooks.Services;
 
 namespace ArgoBooks.Localization;
@@ -117,6 +118,7 @@ public class LocalizationSource : INotifyPropertyChanged
 {
     private static LocalizationSource? _instance;
     private static readonly object _lock = new();
+    private readonly HashSet<string> _usedKeys = new();
 
     /// <summary>
     /// Gets the singleton instance.
@@ -162,6 +164,9 @@ public class LocalizationSource : INotifyPropertyChanged
             if (string.IsNullOrEmpty(hexKey))
                 return string.Empty;
 
+            // Track used keys for targeted refresh
+            _usedKeys.Add(hexKey);
+
             // Decode the hex key back to the original translation key
             var key = LocExtension.DecodeKeyFromHex(hexKey);
             return LanguageService.Instance.Translate(key);
@@ -173,10 +178,30 @@ public class LocalizationSource : INotifyPropertyChanged
     /// </summary>
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
-        // Notify all bindings that translations have changed
-        // Using null/empty property name to signal all properties changed (including all indexer keys)
+        // Ensure we're on the UI thread for binding updates
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            NotifyAllBindings();
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(NotifyAllBindings, DispatcherPriority.Normal);
+        }
+    }
+
+    /// <summary>
+    /// Notifies all bindings that translations have changed.
+    /// </summary>
+    private void NotifyAllBindings()
+    {
+        // Notify with null first (signals all properties changed)
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
+
+        // Then notify each used key individually for more reliable updates
+        foreach (var hexKey in _usedKeys)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"Item[{hexKey}]"));
+        }
     }
 
     /// <summary>
@@ -184,8 +209,14 @@ public class LocalizationSource : INotifyPropertyChanged
     /// </summary>
     public void Refresh()
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            NotifyAllBindings();
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(NotifyAllBindings, DispatcherPriority.Normal);
+        }
     }
 }
 

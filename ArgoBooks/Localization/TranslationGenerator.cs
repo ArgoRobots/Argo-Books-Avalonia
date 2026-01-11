@@ -43,6 +43,13 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"=>\s*""([^""]+)""")]
     private static partial Regex SwitchDisplayStringRegex();
 
+    // Pattern for string array/collection items: "Item" in ["Item1", "Item2"] or new[] { "Item1" }
+    [GeneratedRegex(@"\[\s*""([^""]+)""")]
+    private static partial Regex ArrayItemStartRegex();
+
+    [GeneratedRegex(@",\s*""([^""]+)""")]
+    private static partial Regex ArrayItemContinueRegex();
+
     // Batch size for Azure API calls (max 100 texts per request, max 10000 chars)
     private const int BatchSize = 50;
     private const int MaxCharsPerBatch = 9000;
@@ -194,11 +201,46 @@ public partial class TranslationGenerator
                         AddString(strings, text);
                     }
                 }
+
+                // Find string array items: ["Item1", "Item2", "Item3"]
+                // These are commonly used for ComboBox options
+                var arrayStartMatches = ArrayItemStartRegex().Matches(content);
+                foreach (Match match in arrayStartMatches)
+                {
+                    AddDisplayString(strings, match.Groups[1].Value);
+                }
+
+                var arrayContMatches = ArrayItemContinueRegex().Matches(content);
+                foreach (Match match in arrayContMatches)
+                {
+                    AddDisplayString(strings, match.Groups[1].Value);
+                }
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error scanning {filePath}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Adds a display string if it looks like user-facing text.
+    /// </summary>
+    private static void AddDisplayString(Dictionary<string, string> strings, string text)
+    {
+        if (string.IsNullOrEmpty(text) || text.Length < 2)
+            return;
+
+        // Skip technical strings
+        if (text.Contains('/') || text.Contains('\\') || text.Contains('.') ||
+            text.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+            text.StartsWith("{") || text.Contains("{{"))
+            return;
+
+        // Only include strings that look like display text
+        if (char.IsUpper(text[0]) || text.Contains(' '))
+        {
+            AddString(strings, text);
         }
     }
 
