@@ -508,7 +508,7 @@
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <Button Grid.Column="1"
-                                        Classes="ghost-button"
+                                        Classes="ghost"
                                         Command="{Binding NavigateToRentalsCommand}">
                                     <TextBlock Text="{loc:Loc 'View All'}" FontSize="13" />
                                 </Button>
