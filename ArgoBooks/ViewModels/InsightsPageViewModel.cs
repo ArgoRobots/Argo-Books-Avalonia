@@ -5,7 +5,6 @@ using ArgoBooks.Core.Services;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ArgoBooks.ViewModels;
 
@@ -345,9 +344,8 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// </summary>
     public InsightsPageViewModel()
     {
-        // Get the InsightsService from DI
-        _insightsService = App.Services?.GetService<IInsightsService>()
-            ?? new InsightsService();
+        // Instantiate the InsightsService directly
+        _insightsService = new InsightsService();
 
         // Load insights on initialization
         _ = RefreshInsightsAsync();
