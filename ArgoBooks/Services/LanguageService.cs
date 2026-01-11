@@ -466,7 +466,8 @@ public partial class LanguageService
         {
             if (_englishCache.TryGetValue(key, out var cachedTranslation))
             {
-                return cachedTranslation;
+                // Decode HTML entities in case the translation file contains encoded characters
+                return DecodeHtmlEntities(cachedTranslation);
             }
         }
         else
@@ -475,7 +476,8 @@ public partial class LanguageService
             {
                 if (languageTranslations.TryGetValue(key, out var cachedTranslation))
                 {
-                    return cachedTranslation;
+                    // Decode HTML entities in case the translation file contains encoded characters
+                    return DecodeHtmlEntities(cachedTranslation);
                 }
             }
         }

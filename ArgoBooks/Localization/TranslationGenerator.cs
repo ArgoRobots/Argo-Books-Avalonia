@@ -59,6 +59,10 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"""([^""]+)""\s*\.TranslateFormat")]
     private static partial Regex StringTranslateFormatRegex();
 
+    // Pattern for LanguageService.Instance.Translate("text") and .Translate("text") calls
+    [GeneratedRegex(@"\.Translate\s*\(\s*""([^""]+)""")]
+    private static partial Regex TranslateWithArgRegex();
+
     // Pattern for switch expression display strings: => "Some Display Text"
     [GeneratedRegex(@"=>\s*""([^""]+)""")]
     private static partial Regex SwitchDisplayStringRegex();
@@ -193,6 +197,13 @@ public partial class TranslationGenerator
             // Find "text".TranslateFormat(...) patterns
             var translateFormatMatches = StringTranslateFormatRegex().Matches(content);
             foreach (Match match in translateFormatMatches)
+            {
+                AddString(strings, match.Groups[1].Value);
+            }
+
+            // Find .Translate("text") patterns (e.g., LanguageService.Instance.Translate("Other"))
+            var translateWithArgMatches = TranslateWithArgRegex().Matches(content);
+            foreach (Match match in translateWithArgMatches)
             {
                 AddString(strings, match.Groups[1].Value);
             }

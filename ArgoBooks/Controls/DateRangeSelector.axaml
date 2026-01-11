@@ -22,7 +22,8 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
             <ComboBox.Styles>
-                <Style Selector="ComboBox /template/ ContentPresenter#ContentPresenter">
+                <!-- Target the selection box ContentPresenter to translate the selected item -->
+                <Style Selector="ComboBox /template/ ContentPresenter">
                     <Setter Property="ContentTemplate">
                         <DataTemplate>
                             <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />

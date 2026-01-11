@@ -56,7 +56,7 @@ public class ChartLoaderService
     private static string TruncateLegendLabel(string? label)
     {
         if (string.IsNullOrEmpty(label))
-            return "Unknown";
+            return LanguageService.Instance.Translate("Unknown");
 
         return label.Length > MaxLegendLabelLength
             ? label[..(MaxLegendLabelLength - 1)] + "…"
@@ -243,7 +243,7 @@ public class ChartLoaderService
     private static string GetCountryName(string? isoCode)
     {
         if (string.IsNullOrEmpty(isoCode))
-            return "Unknown";
+            return LanguageService.Instance.Translate("Unknown");
 
         return IsoCodeToCountryName.TryGetValue(isoCode, out var name) ? name : isoCode.ToUpperInvariant();
     }
@@ -2422,15 +2422,16 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [otherValue],
-                Name = "Other",
+                Name = LanguageService.Instance.Translate("Other"),
                 Fill = new SolidColorPaint(SKColor.Parse(otherColorHex)),
                 Pushout = 0,
                 ToolTipLabelFormatter = point => $"{point.Context.Series.Name}: ${point.Coordinate.PrimaryValue:N2}"
             });
 
+            var itemsText = LanguageService.Instance.Translate("items");
             legendItems.Add(new PieLegendItem
             {
-                Label = $"Other ({otherItems.Count} items)",
+                Label = $"{LanguageService.Instance.Translate("Other")} ({otherItems.Count} {itemsText})",
                 Value = otherValue,
                 Percentage = otherPercentage,
                 ColorHex = otherColorHex
