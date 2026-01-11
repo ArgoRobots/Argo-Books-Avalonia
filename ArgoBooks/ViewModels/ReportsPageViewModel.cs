@@ -1767,6 +1767,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Notify property changes for any translated properties
         OnPropertyChanged(nameof(CurrentStepTitle));
 
+        // Force ItemsControls to re-render with new translations by notifying collection changes
+        OnPropertyChanged(nameof(ReportTemplateOptions));
+        OnPropertyChanged(nameof(DatePresets));
+
         // Refresh the preview and canvas to show translated content
         GeneratePreview();
         CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);

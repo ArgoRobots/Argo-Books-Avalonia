@@ -514,8 +514,11 @@ public partial class LanguageService
         if (string.IsNullOrWhiteSpace(text))
             return "";
 
+        // Replace & with "amp" to match server-side key generation
+        var processedText = text.ToLowerInvariant().Replace("&", "amp");
+
         // Remove non-word characters (except placeholders like {0})
-        var cleanText = NonWordCharactersRegex().Replace(text.ToLowerInvariant(), "");
+        var cleanText = NonWordCharactersRegex().Replace(processedText, "");
 
         // Limit length to avoid extremely long keys
         if (cleanText.Length > 50)

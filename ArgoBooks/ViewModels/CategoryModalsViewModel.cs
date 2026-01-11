@@ -77,6 +77,13 @@ public partial class CategoryModalsViewModel : ObservableObject
     public bool IsAddingSubCategory => _addingSubCategoryParent != null;
     public string AddingSubCategoryParentName => _addingSubCategoryParent?.Name ?? string.Empty;
 
+    /// <summary>
+    /// Gets the translated title for the Add Category modal.
+    /// </summary>
+    public string AddModalTitle => IsAddingSubCategory
+        ? LanguageService.Instance.Translate("Add Sub-Category")
+        : LanguageService.Instance.Translate("Add Category");
+
     #endregion
 
 
@@ -126,6 +133,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         ClearModalFields();
         OnPropertyChanged(nameof(IsAddingSubCategory));
         OnPropertyChanged(nameof(AddingSubCategoryParentName));
+        OnPropertyChanged(nameof(AddModalTitle));
         IsAddModalOpen = true;
     }
 
@@ -144,6 +152,7 @@ public partial class CategoryModalsViewModel : ObservableObject
         _addingSubCategoryParent = parent;
         OnPropertyChanged(nameof(IsAddingSubCategory));
         OnPropertyChanged(nameof(AddingSubCategoryParentName));
+        OnPropertyChanged(nameof(AddModalTitle));
         IsAddModalOpen = true;
     }
 

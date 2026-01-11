@@ -22,7 +22,7 @@
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="{Binding IsAddingSubCategory, Converter={x:Static converters:BoolConverters.ToString}, ConverterParameter='Add Sub-Category;Add Category'}"
+                                <TextBlock Text="{Binding AddModalTitle}"
                                            FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <TextBlock Text="{Binding AddingSubCategoryParentName, StringFormat='Under: {0}'}"
                                            FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
@@ -64,7 +64,7 @@
                                     <ComboBox ItemsSource="{Binding AvailableIcons}" SelectedItem="{Binding ModalSelectedIconOption}" Classes="form-combobox">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate DataType="vm:IconOption">
-                                                <TextBlock Text="{Binding DisplayName}" />
+                                                <TextBlock Text="{Binding DisplayName, Converter={StaticResource TranslateConverter}}" />
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
@@ -130,7 +130,7 @@
                                     <ComboBox ItemsSource="{Binding AvailableIcons}" SelectedItem="{Binding ModalSelectedIconOption}" Classes="form-combobox">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate DataType="vm:IconOption">
-                                                <TextBlock Text="{Binding DisplayName}" />
+                                                <TextBlock Text="{Binding DisplayName, Converter={StaticResource TranslateConverter}}" />
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
