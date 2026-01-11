@@ -111,6 +111,29 @@ public class EqualConverter : IValueConverter
 }
 
 /// <summary>
+/// Multi-value converter that returns true if both values are equal (object reference or Equals).
+/// Used for comparing items in lists to a highlighted/selected item.
+/// </summary>
+public class ObjectEqualsMultiConverter : IMultiValueConverter
+{
+    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2)
+            return false;
+
+        var value1 = values[0];
+        var value2 = values[1];
+
+        if (value1 == null && value2 == null)
+            return true;
+        if (value1 == null || value2 == null)
+            return false;
+
+        return ReferenceEquals(value1, value2) || value1.Equals(value2);
+    }
+}
+
+/// <summary>
 /// Converter that returns PrimaryBrush if value equals CompareValue, otherwise BorderBrush.
 /// </summary>
 public class ThemeBorderBrushConverter : IValueConverter

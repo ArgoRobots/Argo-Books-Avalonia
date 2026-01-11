@@ -29,6 +29,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     private ScrollViewer? _itemsScrollViewer;
     private int _highlightedIndex = -1;
     private bool _isSettingFromSelectedItem;
+    private object? _highlightedItem;
 
     #region Styled Properties
 
@@ -280,6 +281,45 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// </summary>
     public bool ShowEmptyCreate => !HasItems && EmptyCreateCommand != null;
 
+    /// <summary>
+    /// Gets the currently highlighted item for keyboard navigation.
+    /// </summary>
+    public object? HighlightedItem
+    {
+        get => _highlightedItem;
+        private set
+        {
+            if (_highlightedItem != value)
+            {
+                _highlightedItem = value;
+                RaisePropertyChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the total count of all filtered items (priority + regular).
+    /// </summary>
+    private int TotalFilteredCount => FilteredPriorityItems.Count + FilteredItems.Count;
+
+    /// <summary>
+    /// Gets an item by combined index (priority items first, then regular items).
+    /// </summary>
+    private object? GetItemByIndex(int index)
+    {
+        if (index < 0)
+            return null;
+
+        if (index < FilteredPriorityItems.Count)
+            return FilteredPriorityItems[index];
+
+        var regularIndex = index - FilteredPriorityItems.Count;
+        if (regularIndex < FilteredItems.Count)
+            return FilteredItems[regularIndex];
+
+        return null;
+    }
+
     #endregion
 
     #region Commands
@@ -340,10 +380,19 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         }
         else if (change.Property == IsDropdownOpenProperty)
         {
-            // Refresh filtered items when dropdown opens to ensure latest data
             if (change.NewValue is true)
             {
+                // Refresh filtered items when dropdown opens to ensure latest data
                 UpdateFilteredItems();
+                // Set initial highlight to first item
+                _highlightedIndex = TotalFilteredCount > 0 ? 0 : -1;
+                HighlightedItem = GetItemByIndex(_highlightedIndex);
+            }
+            else
+            {
+                // Reset highlight when dropdown closes
+                _highlightedIndex = -1;
+                HighlightedItem = null;
             }
         }
     }
@@ -423,14 +472,42 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
                 break;
 
             case Key.Up:
-                MoveHighlight(-1);
+                if (IsDropdownOpen)
+                {
+                    MoveHighlight(-1);
+                }
                 e.Handled = true;
                 break;
 
-            case Key.Enter:
-                if (IsDropdownOpen && _highlightedIndex >= 0 && _highlightedIndex < FilteredItems.Count)
+            case Key.Tab:
+                if (IsDropdownOpen && TotalFilteredCount > 0)
                 {
-                    SelectItem(FilteredItems[_highlightedIndex]);
+                    // Tab navigates down through items (Shift+Tab navigates up)
+                    if ((e.KeyModifiers & KeyModifiers.Shift) != 0)
+                    {
+                        MoveHighlight(-1);
+                    }
+                    else
+                    {
+                        MoveHighlight(1);
+                    }
+                    e.Handled = true;
+                }
+                else
+                {
+                    // If dropdown is closed, let Tab move focus naturally
+                    IsDropdownOpen = false;
+                }
+                break;
+
+            case Key.Enter:
+                if (IsDropdownOpen && _highlightedIndex >= 0)
+                {
+                    var itemToSelect = GetItemByIndex(_highlightedIndex);
+                    if (itemToSelect != null)
+                    {
+                        SelectItem(itemToSelect);
+                    }
                 }
                 e.Handled = true;
                 break;
@@ -439,24 +516,48 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
                 IsDropdownOpen = false;
                 e.Handled = true;
                 break;
-
-            case Key.Tab:
-                IsDropdownOpen = false;
-                break;
         }
     }
 
     private void MoveHighlight(int direction)
     {
-        if (FilteredItems.Count == 0)
+        var totalCount = TotalFilteredCount;
+        if (totalCount == 0)
             return;
 
         _highlightedIndex += direction;
 
+        // Wrap around navigation
         if (_highlightedIndex < 0)
-            _highlightedIndex = FilteredItems.Count - 1;
-        else if (_highlightedIndex >= FilteredItems.Count)
+            _highlightedIndex = totalCount - 1;
+        else if (_highlightedIndex >= totalCount)
             _highlightedIndex = 0;
+
+        HighlightedItem = GetItemByIndex(_highlightedIndex);
+        ScrollToHighlightedItem();
+    }
+
+    private void ScrollToHighlightedItem()
+    {
+        if (_itemsScrollViewer == null || HighlightedItem == null)
+            return;
+
+        // Estimate item height (approximately 40px per item based on padding)
+        const double itemHeight = 40;
+        var scrollOffset = _highlightedIndex * itemHeight;
+
+        // Ensure the highlighted item is visible
+        var viewportHeight = _itemsScrollViewer.Viewport.Height;
+        var currentOffset = _itemsScrollViewer.Offset.Y;
+
+        if (scrollOffset < currentOffset)
+        {
+            _itemsScrollViewer.Offset = new Avalonia.Vector(0, scrollOffset);
+        }
+        else if (scrollOffset + itemHeight > currentOffset + viewportHeight)
+        {
+            _itemsScrollViewer.Offset = new Avalonia.Vector(0, scrollOffset + itemHeight - viewportHeight);
+        }
     }
 
     private void ToggleDropdown()
@@ -477,6 +578,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         SearchText = GetDisplayText(item);
         IsDropdownOpen = false;
         _highlightedIndex = -1;
+        HighlightedItem = null;
     }
 
     private void OnSearchTextChanged()
@@ -489,7 +591,9 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
             IsDropdownOpen = true;
         }
 
-        _highlightedIndex = FilteredItems.Count > 0 ? 0 : -1;
+        // Highlight first item in combined list (priority items first)
+        _highlightedIndex = TotalFilteredCount > 0 ? 0 : -1;
+        HighlightedItem = GetItemByIndex(_highlightedIndex);
     }
 
     private void UpdateFilteredItems()
