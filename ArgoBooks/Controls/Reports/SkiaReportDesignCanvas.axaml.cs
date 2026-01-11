@@ -129,13 +129,19 @@ public partial class SkiaReportDesignCanvas : UserControl
     private ReportElementBase? _hoveredElement;
 
     // Interaction state
-    private enum InteractionMode { None, Selecting, Dragging, Resizing }
+    private enum InteractionMode { None, Selecting, Dragging, Resizing, Panning }
     private InteractionMode _interactionMode = InteractionMode.None;
     private Point _interactionStartPoint;
     private Point _elementStartPosition;
     private Size _elementStartSize;
     private ResizeHandle _activeResizeHandle = ResizeHandle.None;
     private Dictionary<string, (Point Position, Size Size)> _multiDragStartBounds = new();
+
+    // Panning state
+    private Point _panStartPoint;
+    private Vector _panStartOffset;
+    private ReportElementBase? _rightClickedElement;
+    private const double PanThreshold = 5; // Minimum pixels to move before panning starts
 
     // Render state
     private SKBitmap? _renderBitmap;
@@ -766,25 +772,30 @@ public partial class SkiaReportDesignCanvas : UserControl
         var point = GetCanvasPoint(e);
         var props = e.GetCurrentPoint(_canvasImage).Properties;
 
-        // Handle right-click for context menu
+        // Handle right-click - start potential panning (context menu shown on release if no drag)
         if (props.IsRightButtonPressed)
         {
             var element = GetElementAtPoint(point);
-            if (element != null)
-            {
-                // Select the element if not already selected
-                if (!_selectedElements.Contains(element))
-                {
-                    _selectedElements.Clear();
-                    _selectedElements.Add(element);
-                    NotifySelectionChanged();
-                    InvalidateCanvas();
-                }
+            _rightClickedElement = element;
 
-                // Get the position relative to the parent control for menu positioning
-                var screenPoint = e.GetPosition(this);
-                ContextMenuRequested?.Invoke(this, new ContextMenuRequestedEventArgs(screenPoint.X, screenPoint.Y, element));
+            // Select the element if clicking on one and not already selected
+            if (element != null && !_selectedElements.Contains(element))
+            {
+                _selectedElements.Clear();
+                _selectedElements.Add(element);
+                NotifySelectionChanged();
+                InvalidateCanvas();
             }
+
+            // Start tracking for potential pan - store starting position
+            _interactionMode = InteractionMode.None; // Will switch to Panning if user drags
+            _interactionStartPoint = point;
+            if (_scrollViewer != null)
+            {
+                _panStartPoint = e.GetPosition(_scrollViewer);
+                _panStartOffset = new Vector(_scrollViewer.Offset.X, _scrollViewer.Offset.Y);
+            }
+            e.Pointer.Capture(_canvasImage);
             e.Handled = true;
             return;
         }
@@ -848,6 +859,32 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (Configuration == null) return;
 
         var point = GetCanvasPoint(e);
+        var props = e.GetCurrentPoint(_canvasImage).Properties;
+
+        // Handle right-button drag for panning
+        if (props.IsRightButtonPressed && _scrollViewer != null)
+        {
+            var currentPoint = e.GetPosition(_scrollViewer);
+            var delta = _panStartPoint - currentPoint;
+            var distance = Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
+
+            // Start panning if we've moved past the threshold
+            if (_interactionMode != InteractionMode.Panning && distance > PanThreshold)
+            {
+                _interactionMode = InteractionMode.Panning;
+                Cursor = new Cursor(StandardCursorType.SizeAll);
+            }
+
+            // Update scroll position while panning
+            if (_interactionMode == InteractionMode.Panning)
+            {
+                _scrollViewer.Offset = new Vector(
+                    _panStartOffset.X + delta.X,
+                    _panStartOffset.Y + delta.Y);
+                e.Handled = true;
+                return;
+            }
+        }
 
         switch (_interactionMode)
         {
@@ -861,6 +898,10 @@ public partial class SkiaReportDesignCanvas : UserControl
 
             case InteractionMode.Selecting:
                 UpdateSelectionRectangle(point);
+                break;
+
+            case InteractionMode.Panning:
+                // Handled above
                 break;
 
             case InteractionMode.None:
@@ -882,6 +923,29 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void OnCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
+        // Handle right-click release - show context menu if we didn't pan
+        if (e.InitialPressMouseButton == MouseButton.Right)
+        {
+            e.Pointer.Capture(null);
+
+            if (_interactionMode == InteractionMode.Panning)
+            {
+                // We were panning, just reset cursor
+                Cursor = Cursor.Default;
+            }
+            else if (_rightClickedElement != null)
+            {
+                // No panning occurred, show context menu
+                var screenPoint = e.GetPosition(this);
+                ContextMenuRequested?.Invoke(this, new ContextMenuRequestedEventArgs(screenPoint.X, screenPoint.Y, _rightClickedElement));
+            }
+
+            _interactionMode = InteractionMode.None;
+            _rightClickedElement = null;
+            e.Handled = true;
+            return;
+        }
+
         switch (_interactionMode)
         {
             case InteractionMode.Dragging:
@@ -894,6 +958,10 @@ public partial class SkiaReportDesignCanvas : UserControl
 
             case InteractionMode.Selecting:
                 EndSelectionRectangle();
+                break;
+
+            case InteractionMode.Panning:
+                // Already handled above for right-click
                 break;
         }
 
