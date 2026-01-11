@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ArgoBooks.Core.DependencyInjection;
@@ -12,8 +13,8 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddArgoBooksCore(this IServiceCollection services)
     {
-        // Register services as singletons since they manage application-wide state
-        // Implementation classes will be added in Phase 2
+        // Register insights service for AI-style analytics
+        services.AddSingleton<IInsightsService, InsightsService>();
 
         return services;
     }
