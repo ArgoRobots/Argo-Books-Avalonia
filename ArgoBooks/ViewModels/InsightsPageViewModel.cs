@@ -79,17 +79,17 @@ public partial class InsightsPageViewModel : ViewModelBase
     public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
 
     [ObservableProperty]
-    private string _selectedDateRange = "This Month";
+    private string _selectedDateRange = "All Time";
 
     [ObservableProperty]
-    private DateTime _startDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+    private DateTime _startDate = new(2000, 1, 1);
 
     [ObservableProperty]
     private DateTime _endDate = DateTime.Now;
 
     // Temporary date values for the modal (before applying)
     [ObservableProperty]
-    private DateTime _modalStartDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
+    private DateTime _modalStartDate = new(2000, 1, 1);
 
     [ObservableProperty]
     private DateTime _modalEndDate = DateTime.Now;
