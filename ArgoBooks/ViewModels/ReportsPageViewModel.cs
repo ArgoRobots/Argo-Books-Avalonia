@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -1400,8 +1401,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         new(Enum.GetValues<PageOrientation>());
 
     // Element property enum collections - uses GetDisplayName() extension method for consistent naming
+    // Wrapped with Loc.Tr() for translation support
     public ObservableCollection<ChartDataTypeOption> ChartTypeOptions { get; } =
-        new(Enum.GetValues<ChartDataType>().Select(t => new ChartDataTypeOption(t, t.GetDisplayName())));
+        new(Enum.GetValues<ChartDataType>().Select(t => new ChartDataTypeOption(t, Loc.Tr(t.GetDisplayName()))));
 
     /// <summary>
     /// Gets or sets the selected chart data type option, syncing with SelectedChartElement.ChartType.

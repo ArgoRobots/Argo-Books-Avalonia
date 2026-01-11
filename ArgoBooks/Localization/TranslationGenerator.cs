@@ -39,6 +39,10 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"""([^""]+)""\s*\.TranslateFormat")]
     private static partial Regex StringTranslateFormatRegex();
 
+    // Pattern for switch expression display strings: => "Some Display Text"
+    [GeneratedRegex(@"=>\s*""([^""]+)""")]
+    private static partial Regex SwitchDisplayStringRegex();
+
     // Batch size for Azure API calls (max 100 texts per request, max 10000 chars)
     private const int BatchSize = 50;
     private const int MaxCharsPerBatch = 9000;
@@ -70,7 +74,7 @@ public partial class TranslationGenerator
 
         ReportProgress("Scanning source files...", 0, 0);
 
-        // Scan AXAML files for {Loc ...} usages
+        // Scan AXAML files for {loc:Loc ...} usages
         var axamlFiles = Directory.GetFiles(sourceDirectory, "*.axaml", SearchOption.AllDirectories);
         foreach (var file in axamlFiles)
         {
@@ -86,6 +90,18 @@ public partial class TranslationGenerator
                 continue;
 
             CollectFromCsFile(file, strings);
+        }
+
+        // Also scan ArgoBooks.Core for display strings in enums and services
+        var coreDirectory = Path.Combine(Path.GetDirectoryName(sourceDirectory) ?? sourceDirectory, "ArgoBooks.Core");
+        if (Directory.Exists(coreDirectory))
+        {
+            ReportProgress("Scanning ArgoBooks.Core...", 0, 0);
+            var coreFiles = Directory.GetFiles(coreDirectory, "*.cs", SearchOption.AllDirectories);
+            foreach (var file in coreFiles)
+            {
+                CollectFromCsFile(file, strings);
+            }
         }
 
         ReportProgress($"Found {strings.Count} translatable strings", strings.Count, strings.Count);
@@ -159,6 +175,25 @@ public partial class TranslationGenerator
             foreach (Match match in locTrMatches)
             {
                 AddString(strings, match.Groups[1].Value);
+            }
+
+            // Find switch expression display strings: => "Display Text"
+            // Only in files that likely contain display names (enums, services with display logic)
+            if (filePath.Contains("Enum") || filePath.Contains("Service") || filePath.Contains("ViewModel"))
+            {
+                var switchMatches = SwitchDisplayStringRegex().Matches(content);
+                foreach (Match match in switchMatches)
+                {
+                    var text = match.Groups[1].Value;
+                    // Only include strings that look like display text (starts with uppercase, has space or common pattern)
+                    if (!string.IsNullOrEmpty(text) && char.IsUpper(text[0]) &&
+                        (text.Contains(' ') || text.Length > 3) &&
+                        !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
+                        !text.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        AddString(strings, text);
+                    }
+                }
             }
         }
         catch (Exception ex)
