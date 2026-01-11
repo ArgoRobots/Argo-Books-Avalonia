@@ -22,8 +22,9 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
             <ComboBox.Styles>
-                <!-- Target the selection box ContentPresenter to translate the selected item -->
-                <Style Selector="ComboBox /template/ ContentPresenter">
+                <!-- Target the selection box ContentControl to translate the selected item -->
+                <!-- In Fluent theme, the selection box uses a ContentControl named "ContentPresenter" -->
+                <Style Selector="ComboBox /template/ ContentControl#ContentPresenter">
                     <Setter Property="ContentTemplate">
                         <DataTemplate>
                             <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />

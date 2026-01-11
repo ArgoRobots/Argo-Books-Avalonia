@@ -479,15 +479,25 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         else
         {
-            // Default language
-            SetLanguageWithoutNotify(LanguageService.Instance.CurrentLanguage);
+            // Load from global settings when no company is open
+            var globalSettings = App.SettingsService?.GlobalSettings;
+            if (globalSettings != null)
+            {
+                SetLanguageWithoutNotify(globalSettings.Ui.Language);
+            }
+            else
+            {
+                SetLanguageWithoutNotify(LanguageService.Instance.CurrentLanguage);
+            }
         }
 
         // Load max pie slices from global settings
-        var globalSettings = App.SettingsService?.GlobalSettings;
-        if (globalSettings != null)
         {
-            MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
+            var globalSettings = App.SettingsService?.GlobalSettings;
+            if (globalSettings != null)
+            {
+                MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
+            }
         }
 
         // Store original values for potential revert
@@ -611,11 +621,12 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.ChangesMade = true;
         }
 
-        // Save max pie slices to global settings
+        // Save max pie slices and language to global settings
         var globalSettings = App.SettingsService?.GlobalSettings;
         if (globalSettings != null)
         {
             globalSettings.Ui.Chart.MaxPieSlices = MaxPieSlices;
+            globalSettings.Ui.Language = SelectedLanguage;
             _ = App.SettingsService?.SaveGlobalSettingsAsync();
         }
 

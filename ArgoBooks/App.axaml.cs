@@ -459,6 +459,16 @@ public partial class App : Application
             // Initialize language service for localization
             LanguageService.Instance.Initialize();
 
+            // Apply global language setting
+            if (SettingsService != null)
+            {
+                var language = SettingsService.GlobalSettings.Ui.Language;
+                if (!string.IsNullOrEmpty(language) && language != "English")
+                {
+                    await LanguageService.Instance.SetLanguageAsync(language);
+                }
+            }
+
             // Initialize exchange rate service for currency conversion
             await InitializeExchangeRateServiceAsync();
 
@@ -650,8 +660,9 @@ public partial class App : Application
             // Clear tracked changes when company is closed
             ChangeTrackingService?.ClearAllChanges();
 
-            // Reset language to English when company is closed
-            await LanguageService.Instance.SetLanguageAsync("English");
+            // Reset to global language setting when company is closed
+            var globalLanguage = SettingsService?.GlobalSettings.Ui.Language ?? "English";
+            await LanguageService.Instance.SetLanguageAsync(globalLanguage);
 
             // Navigate back to Welcome screen when company is closed
             NavigationService?.NavigateTo("Welcome");
