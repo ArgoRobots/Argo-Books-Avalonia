@@ -100,6 +100,7 @@ public partial class ReportsPage : UserControl
             vm.PageSettingsRefreshRequested += OnPageSettingsRefreshRequested;
             vm.TemplateLoaded += OnTemplateLoaded;
             vm.PreviewFitToWindowRequested += OnPreviewFitToWindowRequested;
+            vm.CanvasRefreshRequested += OnCanvasRefreshRequested;
 
             // Subscribe to UndoRedoManager state changes to update asterisk visibility
             vm.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
@@ -228,6 +229,12 @@ public partial class ReportsPage : UserControl
         _designCanvas?.RefreshPageSettings();
     }
 
+    private void OnCanvasRefreshRequested(object? sender, EventArgs e)
+    {
+        // Invalidate the canvas to repaint with updated translations
+        _designCanvas?.InvalidateVisual();
+    }
+
     private void OnToolbarLayoutUpdated(object? sender, EventArgs e)
     {
         if (_toolbarScrollViewer == null || _toolbarContent == null) return;
@@ -279,7 +286,9 @@ public partial class ReportsPage : UserControl
             vm.PageSettingsRefreshRequested -= OnPageSettingsRefreshRequested;
             vm.TemplateLoaded -= OnTemplateLoaded;
             vm.PreviewFitToWindowRequested -= OnPreviewFitToWindowRequested;
+            vm.CanvasRefreshRequested -= OnCanvasRefreshRequested;
             vm.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
+            vm.Cleanup();
         }
     }
 

@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 
 namespace ArgoBooks.Controls.Reports;
 
@@ -283,7 +284,7 @@ public partial class ReportPreviewControl : UserControl
             await Task.Run(() =>
             {
                 // Generate preview bitmap using SkiaSharp with company data for chart rendering
-                using var renderer = new ReportRenderer(config!, companyData);
+                using var renderer = new ReportRenderer(config!, companyData, 1f, LanguageServiceTranslationProvider.Instance);
                 using var skBitmap = renderer.CreatePreview(width, height);
 
                 // Convert SKBitmap to Avalonia Bitmap
