@@ -51,7 +51,13 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Item Type'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" />
+                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
@@ -111,7 +117,13 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Item Type'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox" />
+                                    <ComboBox ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding ModalItemType}" Classes="form-combobox">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc Icon}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
