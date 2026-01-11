@@ -195,16 +195,15 @@
                                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                                 BorderThickness="0,0,0,1"
                                                                 Classes="data-item">
-                                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                            <Grid ColumnDefinitions="*,Auto">
                                                                 <CheckBox Grid.Column="0"
                                                                           IsChecked="{Binding IsSelected}"
-                                                                          Margin="0,0,10,0" />
+                                                                          VerticalContentAlignment="Center">
+                                                                    <TextBlock Text="{Binding Name}"
+                                                                               FontSize="13"
+                                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                </CheckBox>
                                                                 <TextBlock Grid.Column="1"
-                                                                           Text="{Binding Name}"
-                                                                           FontSize="13"
-                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                           VerticalAlignment="Center" />
-                                                                <TextBlock Grid.Column="2"
                                                                            Text="{Binding RecordCount, StringFormat='({0:N0} records)'}"
                                                                            FontSize="11"
                                                                            Foreground="{DynamicResource TextTertiaryBrush}"

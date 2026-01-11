@@ -60,7 +60,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
                     }
                     else if (oldValue != value)
                     {
-                        HasAppliedCustomRange = false;
+                        // Explicitly notify even if value unchanged (service may have set it first)
+                        ChartSettings.HasAppliedCustomRange = false;
+                        OnPropertyChanged(nameof(HasAppliedCustomRange));
+                        OnPropertyChanged(nameof(AppliedDateRangeText));
                         LoadDashboardData();
                     }
                 }

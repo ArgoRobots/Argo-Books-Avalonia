@@ -123,7 +123,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
                     }
                     else if (oldValue != value)
                     {
-                        HasAppliedCustomRange = false;
+                        // Explicitly notify even if value unchanged (service may have set it first)
+                        ChartSettingsShared.HasAppliedCustomRange = false;
+                        OnPropertyChanged(nameof(HasAppliedCustomRange));
+                        OnPropertyChanged(nameof(AppliedDateRangeText));
                         LoadAllCharts();
                     }
                 }

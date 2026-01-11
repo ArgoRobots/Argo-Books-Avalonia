@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using ArgoBooks.Core.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -30,6 +31,8 @@ public partial class ExportDataItem : ObservableObject
 /// </summary>
 public partial class ExportAsModalViewModel : ViewModelBase
 {
+    private bool _isUpdatingSelectAll;
+
     [ObservableProperty]
     private bool _isOpen;
 
@@ -93,32 +96,55 @@ public partial class ExportAsModalViewModel : ViewModelBase
     /// </summary>
     private void InitializeDataItems()
     {
+        // Unsubscribe from existing items before clearing
+        foreach (var item in DataItems)
+        {
+            item.PropertyChanged -= OnDataItemPropertyChanged;
+        }
+
         DataItems.Clear();
 
         // Entities
-        DataItems.Add(new ExportDataItem { Name = "Customers", Key = "Customers", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Suppliers", Key = "Suppliers", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Products", Key = "Products", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Categories", Key = "Categories", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Departments", Key = "Departments", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Employees", Key = "Employees", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Locations", Key = "Locations", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Customers", Key = "Customers", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Suppliers", Key = "Suppliers", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Products", Key = "Products", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Categories", Key = "Categories", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Departments", Key = "Departments", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Employees", Key = "Employees", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Locations", Key = "Locations", RecordCount = 0, IsSelected = true });
 
         // Transactions
-        DataItems.Add(new ExportDataItem { Name = "Revenue (Sales)", Key = "Sales", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Expenses (Purchases)", Key = "Purchases", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Invoices", Key = "Invoices", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Payments", Key = "Payments", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Recurring Invoices", Key = "Recurring Invoices", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Revenue (Sales)", Key = "Sales", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Expenses (Purchases)", Key = "Purchases", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Invoices", Key = "Invoices", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Payments", Key = "Payments", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Recurring Invoices", Key = "Recurring Invoices", RecordCount = 0, IsSelected = true });
 
         // Inventory
-        DataItems.Add(new ExportDataItem { Name = "Inventory", Key = "Inventory", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Stock Adjustments", Key = "Stock Adjustments", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Purchase Orders", Key = "Purchase Orders", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Inventory", Key = "Inventory", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Stock Adjustments", Key = "Stock Adjustments", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Purchase Orders", Key = "Purchase Orders", RecordCount = 0, IsSelected = true });
 
         // Rentals
-        DataItems.Add(new ExportDataItem { Name = "Rental Inventory", Key = "Rental Inventory", RecordCount = 0, IsSelected = true });
-        DataItems.Add(new ExportDataItem { Name = "Rental Records", Key = "Rental Records", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Rental Inventory", Key = "Rental Inventory", RecordCount = 0, IsSelected = true });
+        AddDataItem(new ExportDataItem { Name = "Rental Records", Key = "Rental Records", RecordCount = 0, IsSelected = true });
+
+        // Initialize SelectAllData based on initial state
+        UpdateSelectAllState();
+    }
+
+    private void AddDataItem(ExportDataItem item)
+    {
+        item.PropertyChanged += OnDataItemPropertyChanged;
+        DataItems.Add(item);
+    }
+
+    private void OnDataItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ExportDataItem.IsSelected))
+        {
+            UpdateSelectAllState();
+        }
     }
 
     /// <summary>
@@ -163,9 +189,28 @@ public partial class ExportAsModalViewModel : ViewModelBase
 
     partial void OnSelectAllDataChanged(bool value)
     {
+        if (_isUpdatingSelectAll)
+            return;
+
         foreach (var item in DataItems)
         {
             item.IsSelected = value;
+        }
+    }
+
+    private void UpdateSelectAllState()
+    {
+        if (_isUpdatingSelectAll)
+            return;
+
+        _isUpdatingSelectAll = true;
+        try
+        {
+            SelectAllData = DataItems.Count > 0 && DataItems.All(item => item.IsSelected);
+        }
+        finally
+        {
+            _isUpdatingSelectAll = false;
         }
     }
 
