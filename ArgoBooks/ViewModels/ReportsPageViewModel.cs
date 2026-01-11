@@ -1768,7 +1768,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentStepTitle));
 
         // Refresh the preview and canvas to show translated content
-        RefreshPreview();
+        GeneratePreview();
         CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
     }
 
