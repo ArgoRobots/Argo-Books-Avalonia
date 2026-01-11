@@ -83,7 +83,7 @@
                                        FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="{Binding TotalChangeCount, StringFormat='{}{0} unsaved change(s)'}"
+                            <TextBlock Text="{Binding UnsavedChangeCountText}"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
                                        IsVisible="{Binding HasChanges}"

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -106,19 +107,19 @@ public partial class UnsavedChangesDialogViewModel : ViewModelBase
     private bool _isOpen;
 
     [ObservableProperty]
-    private string _title = "Unsaved Changes";
+    private string _title = "Unsaved Changes".Translate();
 
     [ObservableProperty]
-    private string _message = "You have unsaved changes. Would you like to save them before closing?";
+    private string _message = "You have unsaved changes. Would you like to save them before closing?".Translate();
 
     [ObservableProperty]
-    private string _saveButtonText = "Save";
+    private string _saveButtonText = "Save".Translate();
 
     [ObservableProperty]
-    private string _dontSaveButtonText = "Don't Save";
+    private string _dontSaveButtonText = "Don't Save".Translate();
 
     [ObservableProperty]
-    private string _cancelButtonText = "Cancel";
+    private string _cancelButtonText = "Cancel".Translate();
 
     /// <summary>
     /// Gets the collection of change categories.
@@ -134,6 +135,11 @@ public partial class UnsavedChangesDialogViewModel : ViewModelBase
     /// Gets the total number of changes across all categories.
     /// </summary>
     public int TotalChangeCount => Categories.Sum(c => c.Changes.Count);
+
+    /// <summary>
+    /// Gets the localized text showing the total change count.
+    /// </summary>
+    public string UnsavedChangeCountText => "{0} unsaved change(s)".TranslateFormat(TotalChangeCount);
 
     /// <summary>
     /// Shows the dialog with the specified changes.
@@ -163,6 +169,7 @@ public partial class UnsavedChangesDialogViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(HasChanges));
         OnPropertyChanged(nameof(TotalChangeCount));
+        OnPropertyChanged(nameof(UnsavedChangeCountText));
 
         IsOpen = true;
         _completionSource = new TaskCompletionSource<UnsavedChangesResult>();

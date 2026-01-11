@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -580,8 +581,8 @@ public partial class AppShellViewModel : ViewModelBase
     private async Task<bool> ConfirmDiscardReportChangesAsync()
     {
         var result = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
-            "Unsaved Report Changes",
-            "You have unsaved changes in the layout designer. Would you like to save them?");
+            "Unsaved Report Changes".Translate(),
+            "You have unsaved changes in the layout designer. Would you like to save them?".Translate());
 
         switch (result)
         {
@@ -622,8 +623,8 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Show unsaved changes dialog
         var result = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
-            "Unsaved Report Changes",
-            "You have unsaved changes in the report designer. Would you like to save them before leaving?");
+            "Unsaved Report Changes".Translate(),
+            "You have unsaved changes in the report designer. Would you like to save them before leaving?".Translate());
 
         switch (result)
         {
@@ -737,8 +738,8 @@ public partial class AppShellViewModel : ViewModelBase
         }
 
         var result = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
-            "Unsaved Report Changes",
-            "You have unsaved changes in the report designer. Would you like to save them?");
+            "Unsaved Report Changes".Translate(),
+            "You have unsaved changes in the report designer. Would you like to save them?".Translate());
 
         switch (result)
         {

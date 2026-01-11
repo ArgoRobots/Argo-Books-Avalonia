@@ -734,13 +734,13 @@ public partial class App : Application
                 }
                 else
                 {
-                    _mainWindowViewModel.ShowLoading("Opening company...");
+                    _mainWindowViewModel.ShowLoading("Opening company...".Translate());
                 }
             }
             else if (!string.IsNullOrEmpty(password))
             {
                 // Show loading again after user enters password (if they didn't cancel)
-                _mainWindowViewModel.ShowLoading("Opening company...");
+                _mainWindowViewModel.ShowLoading("Opening company...".Translate());
             }
 
             return password;
@@ -954,7 +954,7 @@ public partial class App : Application
 
             var filePath = file.Path.LocalPath;
 
-            _mainWindowViewModel?.ShowLoading("Creating company...");
+            _mainWindowViewModel?.ShowLoading("Creating company...".Translate());
             try
             {
                 var companyInfo = new CompanyInfo
@@ -1517,7 +1517,7 @@ public partial class App : Application
             if (file == null) return;
 
             var filePath = file.Path.LocalPath;
-            _mainWindowViewModel?.ShowLoading("Exporting data...");
+            _mainWindowViewModel?.ShowLoading("Exporting data...".Translate());
 
             try
             {
@@ -1633,7 +1633,7 @@ public partial class App : Application
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;
 
-            _mainWindowViewModel?.ShowLoading("Validating import file...");
+            _mainWindowViewModel?.ShowLoading("Validating import file...".Translate());
 
             try
             {
@@ -1692,7 +1692,7 @@ public partial class App : Application
                 // Create snapshot of current data for undo
                 var snapshot = CreateCompanyDataSnapshot(companyData);
 
-                _mainWindowViewModel?.ShowLoading("Importing data...");
+                _mainWindowViewModel?.ShowLoading("Importing data...".Translate());
 
                 await importService.ImportFromExcelAsync(filePath, companyData, importOptions);
 
@@ -1867,7 +1867,7 @@ public partial class App : Application
                     // Auto-save before locking
                     try
                     {
-                        _mainWindowViewModel?.ShowLoading("Auto-saving before lock...");
+                        _mainWindowViewModel?.ShowLoading("Auto-saving before lock...".Translate());
                         await CompanyManager.SaveCompanyAsync();
                         _mainWindowViewModel?.HideLoading();
                     }
@@ -1969,7 +1969,7 @@ public partial class App : Application
 
         var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
 
-        _mainWindowViewModel.ShowLoading("Opening company...");
+        _mainWindowViewModel.ShowLoading("Opening company...".Translate());
 
         try
         {
@@ -2036,7 +2036,7 @@ public partial class App : Application
 
         var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
 
-        _mainWindowViewModel.ShowLoading("Opening company...");
+        _mainWindowViewModel.ShowLoading("Opening company...".Translate());
 
         try
         {
@@ -2240,7 +2240,7 @@ public partial class App : Application
             {
                 if (args.IsExporting)
                 {
-                    _mainWindowViewModel?.ShowLoading("Exporting to Google Sheets...");
+                    _mainWindowViewModel?.ShowLoading("Exporting to Google Sheets...".Translate());
                 }
                 else if (args.IsSuccess)
                 {
