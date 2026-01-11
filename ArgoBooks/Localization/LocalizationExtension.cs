@@ -169,7 +169,17 @@ public class LocalizationSource : INotifyPropertyChanged
 
             // Decode the hex key back to the original translation key
             var key = LocExtension.DecodeKeyFromHex(hexKey);
-            return LanguageService.Instance.Translate(key);
+            var result = LanguageService.Instance.Translate(key);
+
+            #if DEBUG
+            // Only log first few to avoid spam
+            if (_usedKeys.Count <= 20)
+            {
+                System.Diagnostics.Debug.WriteLine($"[LOC] '{key}' => '{result}' (lang: {LanguageService.Instance.CurrentIsoCode})");
+            }
+            #endif
+
+            return result;
         }
     }
 
@@ -178,6 +188,8 @@ public class LocalizationSource : INotifyPropertyChanged
     /// </summary>
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
+        System.Diagnostics.Debug.WriteLine($"[LOC] Language changed to {e.NewLanguageName} ({e.NewIsoCode}). Keys to refresh: {_usedKeys.Count}");
+
         // Ensure we're on the UI thread for binding updates
         if (Dispatcher.UIThread.CheckAccess())
         {
@@ -194,6 +206,8 @@ public class LocalizationSource : INotifyPropertyChanged
     /// </summary>
     private void NotifyAllBindings()
     {
+        System.Diagnostics.Debug.WriteLine($"[LOC] NotifyAllBindings called with {_usedKeys.Count} keys");
+
         // Notify with null first (signals all properties changed)
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
 
@@ -202,6 +216,8 @@ public class LocalizationSource : INotifyPropertyChanged
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"Item[{hexKey}]"));
         }
+
+        System.Diagnostics.Debug.WriteLine($"[LOC] NotifyAllBindings completed");
     }
 
     /// <summary>

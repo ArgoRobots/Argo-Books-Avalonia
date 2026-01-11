@@ -444,7 +444,18 @@ public partial class LanguageService
         }
 
         // Look up in translation cache
-        return GetCachedTranslation(_currentIsoCode, text);
+        var result = GetCachedTranslation(_currentIsoCode, text);
+
+        // Debug: Log translation lookups
+        #if DEBUG
+        if (result == text && text.Length < 50)
+        {
+            var key = GetStringKey(text);
+            System.Diagnostics.Debug.WriteLine($"[TRANSLATE] Missing: '{text}' (key: {key}) for {_currentIsoCode}");
+        }
+        #endif
+
+        return result;
     }
 
     /// <summary>
