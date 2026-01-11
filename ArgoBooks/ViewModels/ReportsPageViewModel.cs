@@ -318,6 +318,18 @@ public partial class ReportsPageViewModel : ViewModelBase
         // Load the custom template
         SelectedTemplateName = templateName;
 
+        // Update IsSelected on all built-in template options
+        foreach (var template in ReportTemplateOptions)
+        {
+            template.IsSelected = template.TemplateName == templateName;
+        }
+
+        // Update IsSelected on all custom template options
+        foreach (var customTemplate in CustomTemplateNames)
+        {
+            customTemplate.IsSelected = customTemplate.Name == templateName;
+        }
+
         // Wait briefly for template to load asynchronously
         await Task.Delay(50);
 
