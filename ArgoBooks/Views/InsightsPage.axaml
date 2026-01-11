@@ -14,47 +14,8 @@
     </Design.DataContext>
 
     <!-- Main Content -->
-    <Panel>
-    <!-- Insufficient Data Overlay -->
-    <Border IsVisible="{Binding HasInsufficientData}"
-            Background="{DynamicResource BackgroundBrush}"
-            ZIndex="10">
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="16">
-            <Border Width="80" Height="80"
-                    CornerRadius="40"
-                    Background="{DynamicResource SurfaceAltBrush}">
-                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                          Width="40" Height="40"
-                          Foreground="{DynamicResource TextTertiaryBrush}" />
-            </Border>
-            <TextBlock Text="Insufficient Data"
-                       FontSize="20"
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource TextPrimaryBrush}"
-                       HorizontalAlignment="Center" />
-            <TextBlock Text="{Binding InsufficientDataMessage}"
-                       FontSize="14"
-                       Foreground="{DynamicResource TextSecondaryBrush}"
-                       HorizontalAlignment="Center"
-                       TextAlignment="Center"
-                       MaxWidth="400"
-                       TextWrapping="Wrap" />
-            <Button Classes="primary-button"
-                    Margin="0,8,0,0"
-                    Command="{Binding RefreshInsightsCommand}"
-                    HorizontalAlignment="Center">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <PathIcon Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
-                              Width="16" Height="16" />
-                    <TextBlock Text="Try Again" />
-                </StackPanel>
-            </Button>
-        </StackPanel>
-    </Border>
-
     <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled"
-                  IsVisible="{Binding !HasInsufficientData}">
+                  HorizontalScrollBarVisibility="Disabled">
         <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
@@ -167,8 +128,8 @@
                         <controls:DateRangeSelector Grid.Column="2" VerticalAlignment="Top" />
                     </Grid>
 
-                    <!-- Forecast Cards Row -->
-                    <controls:StatCardsRow>
+                    <!-- Forecast Cards Row (visible when data is available) -->
+                    <controls:StatCardsRow IsVisible="{Binding !HasInsufficientData}">
                         <controls:StatCard Label="{loc:Loc 'Next Month Revenue'}"
                                            Value="{Binding ForecastedRevenue}"
                                            ChangeValue="{Binding RevenueGrowthValue}"
@@ -196,8 +157,48 @@
                                            UseAltBackground="True" />
                     </controls:StatCardsRow>
 
-                    <!-- Confidence Indicator -->
-                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                    <!-- Insufficient Data Message (visible when no data) -->
+                    <Border IsVisible="{Binding HasInsufficientData}"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            CornerRadius="8"
+                            Padding="32">
+                        <StackPanel HorizontalAlignment="Center" Spacing="12">
+                            <Border Width="56" Height="56"
+                                    CornerRadius="28"
+                                    Background="{DynamicResource BackgroundBrush}"
+                                    HorizontalAlignment="Center">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                          Width="28" Height="28"
+                                          Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </Border>
+                            <TextBlock Text="Insufficient Data"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding InsufficientDataMessage}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       MaxWidth="400"
+                                       TextWrapping="Wrap" />
+                            <Button Classes="secondary-button"
+                                    Margin="0,4,0,0"
+                                    Command="{Binding RefreshInsightsCommand}"
+                                    HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
+                                              Width="14" Height="14" />
+                                    <TextBlock Text="Try Again" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Confidence Indicator (visible when data is available) -->
+                    <Border IsVisible="{Binding !HasInsufficientData}"
+                            Background="{DynamicResource SurfaceAltBrush}"
                             CornerRadius="8"
                             Padding="16">
                         <Grid ColumnDefinitions="Auto,*,Auto">
@@ -225,8 +226,8 @@
                 </StackPanel>
             </Border>
 
-            <!-- Insights Content (Row 3) -->
-            <Grid Grid.Row="3" ColumnDefinitions="*,*">
+            <!-- Insights Content (Row 3) - hidden when insufficient data -->
+            <Grid Grid.Row="3" ColumnDefinitions="*,*" IsVisible="{Binding !HasInsufficientData}">
                 <!-- Left Column -->
                 <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,12,0">
                     <!-- Revenue Trends Section -->
@@ -511,5 +512,4 @@
             </Grid>
         </Grid>
     </ScrollViewer>
-    </Panel>
 </UserControl>
