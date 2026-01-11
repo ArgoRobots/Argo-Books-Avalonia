@@ -9,6 +9,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Controls;
 
+/// <summary>
+/// Button group with undo/redo buttons and dropdown history panels.
+/// </summary>
 public partial class UndoRedoButtonGroup : UserControl
 {
     private Popup? _undoPopup;

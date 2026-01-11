@@ -5,6 +5,9 @@ using Avalonia.Controls;
 
 namespace ArgoBooks.Controls;
 
+/// <summary>
+/// Footer control displaying pagination info and page navigation buttons.
+/// </summary>
 public partial class PaginationFooter : UserControl
 {
     public static readonly StyledProperty<string> PaginationTextProperty =
