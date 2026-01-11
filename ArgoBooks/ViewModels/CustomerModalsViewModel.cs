@@ -1,4 +1,5 @@
 using ArgoBooks.Services;
+using ArgoBooks.Localization;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
@@ -421,10 +422,10 @@ public partial class CustomerModalsViewModel : ObservableObject
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Customer",
-            Message = $"Are you sure you want to delete this customer?\n\n{item.Name}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Customer".Translate(),
+            Message = "Are you sure you want to delete this customer?\n\n{0}".TranslateFormat(item.Name),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
@@ -717,13 +718,13 @@ public partial class CustomerModalsViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(ModalFirstName))
         {
-            ModalFirstNameError = "First name is required.";
+            ModalFirstNameError = "First name is required.".Translate();
             isValid = false;
         }
 
         if (string.IsNullOrWhiteSpace(ModalLastName))
         {
-            ModalLastNameError = "Last name is required.";
+            ModalLastNameError = "Last name is required.".Translate();
             isValid = false;
         }
 
@@ -731,7 +732,7 @@ public partial class CustomerModalsViewModel : ObservableObject
         {
             if (!ModalEmail.Contains('@') || !ModalEmail.Contains('.'))
             {
-                ModalEmailError = "Please enter a valid email address.";
+                ModalEmailError = "Please enter a valid email address.".Translate();
                 isValid = false;
             }
         }

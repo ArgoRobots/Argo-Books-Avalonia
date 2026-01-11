@@ -3,6 +3,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
@@ -321,28 +322,28 @@ public partial class MessageBox : UserControl
         {
             case MessageBoxButtons.Ok:
                 if (string.IsNullOrEmpty(PrimaryButtonText) || PrimaryButtonText == "OK" || PrimaryButtonText == "Yes")
-                    PrimaryButtonText = "OK";
+                    PrimaryButtonText = "OK".Translate();
                 SecondaryButtonText = null;
                 TertiaryButtonText = null;
                 break;
 
             case MessageBoxButtons.OkCancel:
                 if (string.IsNullOrEmpty(PrimaryButtonText) || PrimaryButtonText == "Yes")
-                    PrimaryButtonText = "OK";
-                SecondaryButtonText = "Cancel";
+                    PrimaryButtonText = "OK".Translate();
+                SecondaryButtonText = "Cancel".Translate();
                 TertiaryButtonText = null;
                 break;
 
             case MessageBoxButtons.YesNo:
-                PrimaryButtonText = "Yes";
-                SecondaryButtonText = "No";
+                PrimaryButtonText = "Yes".Translate();
+                SecondaryButtonText = "No".Translate();
                 TertiaryButtonText = null;
                 break;
 
             case MessageBoxButtons.YesNoCancel:
-                PrimaryButtonText = "Yes";
-                SecondaryButtonText = "No";
-                TertiaryButtonText = "Cancel";
+                PrimaryButtonText = "Yes".Translate();
+                SecondaryButtonText = "No".Translate();
+                TertiaryButtonText = "Cancel".Translate();
                 break;
         }
 

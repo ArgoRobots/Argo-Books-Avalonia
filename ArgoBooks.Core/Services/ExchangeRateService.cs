@@ -237,7 +237,7 @@ public class ExchangeRateService : IExchangeRateService
         try
         {
             // Use historical endpoint for past dates, latest for today
-            var isToday = date.Date == DateTime.UtcNow.Date;
+            var isToday = date.Date == DateTime.Today;
             var endpoint = isToday
                 ? $"{BaseUrl}/latest.json?app_id={_apiKey}&base={BaseCurrency}"
                 : $"{BaseUrl}/historical/{date:yyyy-MM-dd}.json?app_id={_apiKey}&base={BaseCurrency}";

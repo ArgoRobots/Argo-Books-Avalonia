@@ -3,6 +3,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Localization;
 using Avalonia;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -580,7 +581,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
         if (LineItems.Count == 0)
         {
-            ValidationMessage = "Please add at least one line item";
+            ValidationMessage = "Please add at least one line item".Translate();
             HasValidationMessage = true;
             return;
         }
@@ -598,7 +599,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
         if (hasProductErrors)
         {
-            ValidationMessage = "Please select a product for all line items";
+            ValidationMessage = "Please select a product for all line items".Translate();
             HasValidationMessage = true;
             ScrollToLineItemsRequested?.Invoke(this, EventArgs.Empty);
             return;

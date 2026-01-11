@@ -599,6 +599,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         var currencyChanged = SelectedCurrency != _originalCurrency;
         var maxPieSlicesChanged = MaxPieSlices != _originalMaxPieSlices;
 
+        // Save the previous language in case download fails
+        var previousLanguage = _originalLanguage;
+
         // Extract the new currency code before updating originals
         var newCurrencyCode = CurrencyService.ParseCurrencyCode(SelectedCurrency);
 
@@ -662,6 +665,39 @@ public partial class SettingsModalViewModel : ViewModelBase
                     // Notify that language was saved successfully
                     LanguageSettingsChanged?.Invoke(this, new LanguageSettingsChangedEventArgs(SelectedLanguage, true));
                 }
+                else
+                {
+                    // Download failed - revert to previous language
+                    SetLanguageWithoutNotify(previousLanguage);
+                    _originalLanguage = previousLanguage;
+
+                    // Revert in company settings
+                    if (settings != null)
+                    {
+                        settings.Localization.Language = previousLanguage;
+                    }
+
+                    // Revert in global settings and save
+                    if (globalSettings != null)
+                    {
+                        globalSettings.Ui.Language = previousLanguage;
+                        await App.SettingsService!.SaveGlobalSettingsAsync();
+                    }
+
+                    // Show error message
+                    var dialog = App.ConfirmationDialog;
+                    if (dialog != null)
+                    {
+                        await dialog.ShowAsync(new ConfirmationDialogOptions
+                        {
+                            Title = "Language Download Failed".Translate(),
+                            Message = "Could not download the language file from the server. Please check your internet connection and try again.".Translate(),
+                            PrimaryButtonText = "OK".Translate(),
+                            SecondaryButtonText = null,
+                            CancelButtonText = null
+                        });
+                    }
+                }
             }
             finally
             {
@@ -706,7 +742,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         try
         {
             // Preload rates for today and the past 30 days (covers most common scenarios)
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.Today;
             var dates = Enumerable.Range(0, 30).Select(i => today.AddDays(-i)).ToList();
 
             await exchangeService.PreloadRatesAsync(dates);

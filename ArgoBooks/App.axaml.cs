@@ -390,7 +390,7 @@ public partial class App : Application
                     }
                     catch (Exception ex)
                     {
-                        _appShellViewModel.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
+                        _appShellViewModel.AddNotification("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message), NotificationType.Error);
                     }
                 }
             };
@@ -729,7 +729,7 @@ public partial class App : Application
                 {
                     // Password not found in secure storage - fall back to manual entry
                     _appShellViewModel.PasswordPromptModalViewModel.ShowError(
-                        "Stored password not found. Please enter the password manually.");
+                        "Stored password not found. Please enter the password manually.".Translate());
                     password = await _appShellViewModel.PasswordPromptModalViewModel.WaitForPasswordAsync();
                 }
                 else
@@ -755,7 +755,7 @@ public partial class App : Application
             try
             {
                 var success = await platformService.AuthenticateWithBiometricAsync(
-                    $"Verify your identity to open {passwordModal.CompanyName}");
+                    "Verify your identity to open {0}".TranslateFormat(passwordModal.CompanyName));
 
                 if (success)
                 {
@@ -877,7 +877,7 @@ public partial class App : Application
                 }
                 catch (Exception ex)
                 {
-                    _appShellViewModel.AddNotification("Error", $"Failed to save: {ex.Message}", NotificationType.Error);
+                    _appShellViewModel.AddNotification("Error".Translate(), "Failed to save: {0}".TranslateFormat(ex.Message), NotificationType.Error);
                 }
             }
         };
@@ -976,7 +976,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
-                _appShellViewModel.AddNotification("Error", $"Failed to create company: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error".Translate(), "Failed to create company: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
 
@@ -984,7 +984,7 @@ public partial class App : Application
         {
             var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Select Company Logo",
+                Title = "Select Company Logo".Translate(),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
@@ -1175,11 +1175,11 @@ public partial class App : Application
                         logo);
                 }
 
-                _appShellViewModel.AddNotification("Updated", "Company information updated.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Updated".Translate(), "Company information updated.".Translate(), NotificationType.Success);
             }
             catch (Exception ex)
             {
-                _appShellViewModel.AddNotification("Error", $"Failed to update company: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error".Translate(), "Failed to update company: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
 
@@ -1188,7 +1188,7 @@ public partial class App : Application
         {
             var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Select Company Logo",
+                Title = "Select Company Logo".Translate(),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
@@ -1249,12 +1249,12 @@ public partial class App : Application
                 // Mark as having changes so SavedFeedback shows "Saved" not "No changes found"
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
-                _appShellViewModel.AddNotification("Success", "Password has been set.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Success".Translate(), "Password has been set.".Translate(), NotificationType.Success);
             }
             catch (Exception ex)
             {
                 settings.HasPassword = false;
-                _appShellViewModel.AddNotification("Error", $"Failed to set password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error".Translate(), "Failed to set password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
 
@@ -1276,12 +1276,12 @@ public partial class App : Application
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(args.NewPassword);
                 settings.OnPasswordChanged();
-                _appShellViewModel.AddNotification("Success", "Password has been changed.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Success".Translate(), "Password has been changed.".Translate(), NotificationType.Success);
             }
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                _appShellViewModel.AddNotification("Error", $"Failed to change password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error".Translate(), "Failed to change password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
 
@@ -1303,12 +1303,12 @@ public partial class App : Application
                 _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                 await CompanyManager.ChangePasswordAsync(null);
                 settings.OnPasswordRemoved();
-                _appShellViewModel.AddNotification("Success", "Password has been removed.", NotificationType.Success);
+                _appShellViewModel.AddNotification("Success".Translate(), "Password has been removed.".Translate(), NotificationType.Success);
             }
             catch (Exception ex)
             {
                 settings.OnPasswordVerificationFailed();
-                _appShellViewModel.AddNotification("Error", $"Failed to remove password: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error".Translate(), "Failed to remove password: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
 
@@ -1355,9 +1355,9 @@ public partial class App : Application
                     {
                         await dialog.ShowAsync(new ConfirmationDialogOptions
                         {
-                            Title = "Windows Hello Not Available",
-                            Message = $"Windows Hello cannot be enabled on this device.\n\nReason: {details}",
-                            PrimaryButtonText = "OK",
+                            Title = "Windows Hello Not Available".Translate(),
+                            Message = "Windows Hello cannot be enabled on this device.\n\nReason: {0}".TranslateFormat(details),
+                            PrimaryButtonText = "OK".Translate(),
                             CancelButtonText = ""
                         });
                     }
@@ -1366,7 +1366,7 @@ public partial class App : Application
                 }
 
                 // Request authentication
-                var success = await platformService.AuthenticateWithBiometricAsync("Verify your identity to enable Windows Hello");
+                var success = await platformService.AuthenticateWithBiometricAsync("Verify your identity to enable Windows Hello".Translate());
                 settings.OnWindowsHelloAuthResult(success);
 
                 if (!success)
@@ -1376,9 +1376,9 @@ public partial class App : Application
                     {
                         await dialog.ShowAsync(new ConfirmationDialogOptions
                         {
-                            Title = "Windows Hello",
-                            Message = "Authentication was cancelled or failed. Windows Hello has not been enabled.",
-                            PrimaryButtonText = "OK",
+                            Title = "Windows Hello".Translate(),
+                            Message = "Authentication was cancelled or failed. Windows Hello has not been enabled.".Translate(),
+                            PrimaryButtonText = "OK".Translate(),
                             CancelButtonText = ""
                         });
                     }
@@ -1391,9 +1391,9 @@ public partial class App : Application
                 {
                     await dialog.ShowAsync(new ConfirmationDialogOptions
                     {
-                        Title = "Windows Hello Error",
-                        Message = $"Failed to authenticate with Windows Hello:\n\n{ex.Message}",
-                        PrimaryButtonText = "OK",
+                        Title = "Windows Hello Error".Translate(),
+                        Message = "Failed to authenticate with Windows Hello:\n\n{0}".TranslateFormat(ex.Message),
+                        PrimaryButtonText = "OK".Translate(),
                         CancelButtonText = ""
                     });
                 }
@@ -1473,20 +1473,20 @@ public partial class App : Application
             if (args.Format == "backup")
             {
                 // Backup export - not implemented yet
-                _appShellViewModel.AddNotification("Info", "Backup export will be available in a future update.");
+                _appShellViewModel.AddNotification("Info".Translate(), "Backup export will be available in a future update.".Translate());
                 return;
             }
 
             // Spreadsheet export
             if (args.SelectedDataItems.Count == 0)
             {
-                _appShellViewModel.AddNotification("Warning", "Please select at least one data type to export.", NotificationType.Warning);
+                _appShellViewModel.AddNotification("Warning".Translate(), "Please select at least one data type to export.".Translate(), NotificationType.Warning);
                 return;
             }
 
             if (CompanyManager?.CompanyData == null)
             {
-                _appShellViewModel.AddNotification("Error", "No company is currently open.", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error".Translate(), "No company is currently open.".Translate(), NotificationType.Error);
                 return;
             }
 
@@ -1502,7 +1502,7 @@ public partial class App : Application
 
             var file = await desktop.MainWindow!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Export Data",
+                Title = "Export Data".Translate(),
                 SuggestedFileName = $"{CompanyManager.CurrentCompanyName ?? "Export"}-{DateTime.Now:yyyy-MM-dd}.{extension}",
                 DefaultExtension = extension,
                 FileTypeChoices =
@@ -1583,7 +1583,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
-                _appShellViewModel.AddNotification("Export Failed", $"Failed to export data: {ex.Message}", NotificationType.Error);
+                _appShellViewModel.AddNotification("Export Failed".Translate(), "Failed to export data: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             }
         };
     }
@@ -1603,21 +1603,21 @@ public partial class App : Application
         {
             if (CompanyManager?.CompanyData == null)
             {
-                _appShellViewModel.AddNotification("Error", "No company is currently open.", NotificationType.Error);
+                _appShellViewModel.AddNotification("Error".Translate(), "No company is currently open.".Translate(), NotificationType.Error);
                 return;
             }
 
             // Only Excel import is supported for now
             if (format.ToUpperInvariant() != "EXCEL")
             {
-                _appShellViewModel.AddNotification("Info", $"{format} import will be available in a future update.");
+                _appShellViewModel.AddNotification("Info".Translate(), "{0} import will be available in a future update.".TranslateFormat(format));
                 return;
             }
 
             // Show open file dialog
             var file = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Import Excel File",
+                Title = "Import Excel File".Translate(),
                 AllowMultiple = false,
                 FileTypeFilter =
                 [
@@ -1652,9 +1652,9 @@ public partial class App : Application
                     {
                         await errorDialog.ShowAsync(new ConfirmationDialogOptions
                         {
-                            Title = "Import Failed",
-                            Message = $"Import validation failed:\n\n{string.Join("\n", validationResult.Errors)}",
-                            PrimaryButtonText = "OK",
+                            Title = "Import Failed".Translate(),
+                            Message = "Import validation failed:\n\n{0}".TranslateFormat(string.Join("\n", validationResult.Errors)),
+                            PrimaryButtonText = "OK".Translate(),
                             CancelButtonText = ""
                         });
                     }
@@ -1674,10 +1674,10 @@ public partial class App : Application
                     {
                         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
                         {
-                            Title = "Missing References Found",
-                            Message = $"The import file references {missingCount} item(s) that don't exist:\n\n{missingSummary}\n\nWould you like to create placeholder entries for these missing items?",
-                            PrimaryButtonText = "Create & Import",
-                            CancelButtonText = "Cancel"
+                            Title = "Missing References Found".Translate(),
+                            Message = "The import file references {0} item(s) that don't exist:\n\n{1}\n\nWould you like to create placeholder entries for these missing items?".TranslateFormat(missingCount, missingSummary),
+                            PrimaryButtonText = "Create & Import".Translate(),
+                            CancelButtonText = "Cancel".Translate()
                         });
 
                         if (result != ConfirmationResult.Primary)
@@ -1703,7 +1703,7 @@ public partial class App : Application
 
                 // Record undo action
                 UndoRedoManager.RecordAction(new DelegateAction(
-                    "Import spreadsheet data",
+                    "Import spreadsheet data".Translate(),
                     () => { RestoreCompanyDataFromSnapshot(companyData, snapshot); CompanyManager.MarkAsChanged(); },
                     () => { RestoreCompanyDataFromSnapshot(companyData, importedSnapshot); CompanyManager.MarkAsChanged(); }
                 ));
@@ -1712,20 +1712,20 @@ public partial class App : Application
                 CompanyManager.MarkAsChanged();
 
                 // Build success message with summary
-                var successMessage = "Data has been imported successfully.";
+                var successMessage = "Data has been imported successfully.".Translate();
                 if (validationResult.ImportSummaries.Count > 0)
                 {
                     var summaryLines = validationResult.ImportSummaries
                         .Where(s => s.Value.TotalInFile > 0)
-                        .Select(s => $"{s.Key}: {s.Value.NewRecords} new, {s.Value.UpdatedRecords} updated");
+                        .Select(s => "{0}: {1} new, {2} updated".TranslateFormat(s.Key, s.Value.NewRecords, s.Value.UpdatedRecords));
                     if (summaryLines.Any())
                     {
                         successMessage += $"\n\n{string.Join("\n", summaryLines)}";
                     }
                 }
-                successMessage += "\n\nPlease save to persist changes.";
+                successMessage += "\n\n" + "Please save to persist changes.".Translate();
 
-                _appShellViewModel.AddNotification("Import Complete", successMessage, NotificationType.Success);
+                _appShellViewModel.AddNotification("Import Complete".Translate(), successMessage, NotificationType.Success);
             }
             catch (Exception ex)
             {
@@ -1735,9 +1735,9 @@ public partial class App : Application
                 {
                     await errorDialog.ShowAsync(new ConfirmationDialogOptions
                     {
-                        Title = "Import Failed",
-                        Message = $"Failed to import data:\n\n{ex.Message}",
-                        PrimaryButtonText = "OK",
+                        Title = "Import Failed".Translate(),
+                        Message = "Failed to import data:\n\n{0}".TranslateFormat(ex.Message),
+                        PrimaryButtonText = "OK".Translate(),
                         CancelButtonText = ""
                     });
                 }
@@ -1936,7 +1936,7 @@ public partial class App : Application
     {
         var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Open Company",
+            Title = "Open Company".Translate(),
             AllowMultiple = false,
             FileTypeFilter =
             [
@@ -1993,7 +1993,7 @@ public partial class App : Application
             // Wrong password - show error and retry
             _mainWindowViewModel.HideLoading();
 
-            passwordModal.ShowError("Invalid password. Please try again.");
+            passwordModal.ShowError("Invalid password. Please try again.".Translate());
 
             // Wait for the user to retry
             var newPassword = await passwordModal.WaitForPasswordAsync();
@@ -2012,7 +2012,7 @@ public partial class App : Application
         {
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
-            _appShellViewModel.AddNotification("File Not Found", "The company file no longer exists.", NotificationType.Error);
+            _appShellViewModel.AddNotification("File Not Found".Translate(), "The company file no longer exists.".Translate(), NotificationType.Error);
             SettingsService?.RemoveRecentCompany(filePath);
             await LoadRecentCompaniesAsync();
             return false;
@@ -2021,7 +2021,7 @@ public partial class App : Application
         {
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
-            _appShellViewModel.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
+            _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             return false;
         }
     }
@@ -2058,7 +2058,7 @@ public partial class App : Application
             // Wrong password again - show error and retry
             _mainWindowViewModel.HideLoading();
 
-            passwordModal.ShowError("Invalid password. Please try again.");
+            passwordModal.ShowError("Invalid password. Please try again.".Translate());
 
             // Wait for the user to retry
             var newPassword = await passwordModal.WaitForPasswordAsync();
@@ -2077,7 +2077,7 @@ public partial class App : Application
         {
             _mainWindowViewModel.HideLoading();
             passwordModal.Close();
-            _appShellViewModel.AddNotification("Error", $"Failed to open file: {ex.Message}", NotificationType.Error);
+            _appShellViewModel.AddNotification("Error".Translate(), "Failed to open file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
             return false;
         }
     }
@@ -2099,7 +2099,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            _appShellViewModel?.AddNotification("Error", $"Failed to save file: {ex.Message}", NotificationType.Error);
+            _appShellViewModel?.AddNotification("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
         }
     }
 
@@ -2110,7 +2110,7 @@ public partial class App : Application
     {
         return await desktop.MainWindow!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Save Company",
+            Title = "Save Company".Translate(),
             SuggestedFileName = $"{suggestedFileName}.argo",
             DefaultExtension = "argo",
             FileTypeChoices =
@@ -2250,7 +2250,7 @@ public partial class App : Application
                 else if (!string.IsNullOrEmpty(args.ErrorMessage))
                 {
                     _mainWindowViewModel?.HideLoading();
-                    appShellViewModel.AddNotification("Export Failed", args.ErrorMessage, NotificationType.Error);
+                    appShellViewModel.AddNotification("Export Failed".Translate(), args.ErrorMessage, NotificationType.Error);
                 }
             };
 

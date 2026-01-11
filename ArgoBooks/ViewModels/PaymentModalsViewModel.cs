@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
@@ -423,10 +424,10 @@ public partial class PaymentModalsViewModel : ObservableObject
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Payment",
-            Message = $"Are you sure you want to delete this payment?\n\nPayment ID: {item.Id}\nAmount: {item.AmountFormatted}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Payment".Translate(),
+            Message = "Are you sure you want to delete this payment?\n\nPayment ID: {0}\nAmount: {1}".TranslateFormat(item.Id, item.AmountFormatted),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
@@ -580,12 +581,12 @@ public partial class PaymentModalsViewModel : ObservableObject
         // Validate amount (required and must be a valid number)
         if (string.IsNullOrWhiteSpace(ModalAmount))
         {
-            ModalAmountError = "Amount is required.";
+            ModalAmountError = "Amount is required.".Translate();
             isValid = false;
         }
         else if (!decimal.TryParse(ModalAmount, out var amount) || amount == 0)
         {
-            ModalAmountError = "Please enter a valid amount.";
+            ModalAmountError = "Please enter a valid amount.".Translate();
             isValid = false;
         }
 

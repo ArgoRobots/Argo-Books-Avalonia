@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -476,10 +477,10 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Rental Item",
-            Message = $"Are you sure you want to delete this rental item?\n\n{item.Name}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Rental Item".Translate(),
+            Message = "Are you sure you want to delete this rental item?\n\n{0}".TranslateFormat(item.Name),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
@@ -677,18 +678,18 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
         if (RentOutCustomer == null)
         {
-            RentOutCustomerError = "Customer is required.";
+            RentOutCustomerError = "Customer is required.".Translate();
             isValid = false;
         }
 
         if (!int.TryParse(RentOutQuantity, out var qty) || qty <= 0)
         {
-            RentOutQuantityError = "Please enter a valid quantity.";
+            RentOutQuantityError = "Please enter a valid quantity.".Translate();
             isValid = false;
         }
         else if (qty > RentOutAvailableQuantity)
         {
-            RentOutQuantityError = $"Only {RentOutAvailableQuantity} available.";
+            RentOutQuantityError = "Only {0} available.".TranslateFormat(RentOutAvailableQuantity);
             isValid = false;
         }
 
@@ -758,7 +759,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(ModalItemName))
         {
-            ModalItemNameError = "Item name is required.";
+            ModalItemNameError = "Item name is required.".Translate();
             isValid = false;
         }
         else
@@ -770,14 +771,14 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
             if (existingWithSameName)
             {
-                ModalItemNameError = "An item with this name already exists.";
+                ModalItemNameError = "An item with this name already exists.".Translate();
                 isValid = false;
             }
         }
 
         if (!int.TryParse(ModalTotalQuantity, out var qty) || qty <= 0)
         {
-            ModalQuantityError = "Please enter a valid quantity.";
+            ModalQuantityError = "Please enter a valid quantity.".Translate();
             isValid = false;
         }
 
@@ -788,7 +789,7 @@ public partial class RentalInventoryModalsViewModel : ObservableObject
 
         if (!hasDaily && !hasWeekly && !hasMonthly)
         {
-            ModalDailyRateError = "Please enter at least one rental rate.";
+            ModalDailyRateError = "Please enter at least one rental rate.".Translate();
             isValid = false;
         }
 

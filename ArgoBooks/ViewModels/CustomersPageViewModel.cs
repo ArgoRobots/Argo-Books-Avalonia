@@ -4,6 +4,7 @@ using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -799,7 +800,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         {
             if (!ModalEmail.Contains('@') || !ModalEmail.Contains('.'))
             {
-                ModalEmailError = "Please enter a valid email address.";
+                ModalEmailError = "Please enter a valid email address.".Translate();
                 isValid = false;
             }
         }

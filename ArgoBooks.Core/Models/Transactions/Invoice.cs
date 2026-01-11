@@ -134,7 +134,7 @@ public class Invoice
     [JsonIgnore]
     public bool IsOverdue => Status != InvoiceStatus.Paid &&
                              Status != InvoiceStatus.Cancelled &&
-                             DateTime.UtcNow.Date > DueDate.Date;
+                             DateTime.Today > DueDate.Date;
 
     #region Currency Support
 

@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ArgoBooks.Localization;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -270,6 +272,18 @@ public partial class UpgradeModalViewModel : ViewModelBase
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"Failed to save license: {ex.Message}");
+                        var dialog = App.ConfirmationDialog;
+                        if (dialog != null)
+                        {
+                            await dialog.ShowAsync(new ConfirmationDialogOptions
+                            {
+                                Title = "Warning".Translate(),
+                                Message = "Your license was activated but could not be saved locally. You may need to re-enter your license key next time.".Translate(),
+                                PrimaryButtonText = "OK".Translate(),
+                                SecondaryButtonText = null,
+                                CancelButtonText = null
+                            });
+                        }
                     }
                 }
 

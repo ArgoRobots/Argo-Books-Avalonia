@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
@@ -417,10 +418,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Invoice",
-            Message = $"Are you sure you want to delete this invoice?\n\nInvoice: {item.Id}\nAmount: {item.TotalFormatted}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Invoice".Translate(),
+            Message = "Are you sure you want to delete this invoice?\n\nInvoice: {0}\nAmount: {1}".TranslateFormat(item.Id, item.TotalFormatted),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
@@ -586,14 +587,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
         {
             HasCustomerError = true;
-            ValidationMessage = "Please select a customer";
+            ValidationMessage = "Please select a customer".Translate();
             HasValidationMessage = true;
             return;
         }
 
         if (LineItems.Count == 0)
         {
-            ValidationMessage = "Please add at least one line item";
+            ValidationMessage = "Please add at least one line item".Translate();
             HasValidationMessage = true;
             return;
         }
@@ -611,7 +612,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         if (hasProductErrors)
         {
-            ValidationMessage = "Please select a product for all line items";
+            ValidationMessage = "Please select a product for all line items".Translate();
             HasValidationMessage = true;
             return;
         }
@@ -710,7 +711,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
         {
             HasCustomerError = true;
-            ValidationMessage = "Please select a customer";
+            ValidationMessage = "Please select a customer".Translate();
             HasValidationMessage = true;
             return;
         }
@@ -775,14 +776,14 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (SelectedCustomer == null || string.IsNullOrEmpty(SelectedCustomer.Id))
         {
             HasCustomerError = true;
-            ValidationMessage = "Please select a customer";
+            ValidationMessage = "Please select a customer".Translate();
             HasValidationMessage = true;
             return;
         }
 
         if (LineItems.Count == 0)
         {
-            ValidationMessage = "Please add at least one line item";
+            ValidationMessage = "Please add at least one line item".Translate();
             HasValidationMessage = true;
             return;
         }
@@ -800,7 +801,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         if (hasProductErrors)
         {
-            ValidationMessage = "Please select a product for all line items";
+            ValidationMessage = "Please select a product for all line items".Translate();
             HasValidationMessage = true;
             return;
         }

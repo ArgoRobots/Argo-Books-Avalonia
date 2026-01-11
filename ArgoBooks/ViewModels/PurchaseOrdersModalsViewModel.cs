@@ -3,6 +3,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -296,7 +297,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         // Validate line items
         if (LineItems.Count == 0)
         {
-            AddModalError = "Please add at least one line item.";
+            AddModalError = "Please add at least one line item.".Translate();
             return;
         }
 
@@ -304,24 +305,24 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         {
             if (string.IsNullOrWhiteSpace(li.ProductId))
             {
-                AddModalError = "Please select a product for all line items.";
+                AddModalError = "Please select a product for all line items.".Translate();
                 return;
             }
             if (!int.TryParse(li.Quantity, out var qty) || qty <= 0)
             {
-                AddModalError = "Please enter valid quantities for all line items.";
+                AddModalError = "Please enter valid quantities for all line items.".Translate();
                 return;
             }
             if (!decimal.TryParse(li.UnitCost, out var cost) || cost < 0)
             {
-                AddModalError = "Please enter valid unit costs for all line items.";
+                AddModalError = "Please enter valid unit costs for all line items.".Translate();
                 return;
             }
         }
 
         if (!decimal.TryParse(ShippingCost, out var shipping) || shipping < 0)
         {
-            AddModalError = "Please enter a valid shipping cost.";
+            AddModalError = "Please enter a valid shipping cost.".Translate();
             return;
         }
 
@@ -592,7 +593,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         {
             if (!int.TryParse(li.ReceivingQuantity, out var qty) || qty < 0)
             {
-                ReceiveModalError = "Please enter valid quantities.";
+                ReceiveModalError = "Please enter valid quantities.".Translate();
                 return;
             }
             if (qty > li.Remaining)
@@ -736,10 +737,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Purchase Order",
-            Message = $"Are you sure you want to delete this purchase order?\n\nPO #: {item.PoNumber}\nTotal: {item.TotalDisplay}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Purchase Order".Translate(),
+            Message = "Are you sure you want to delete this purchase order?\n\nPO #: {0}\nTotal: {1}".TranslateFormat(item.PoNumber, item.TotalDisplay),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 

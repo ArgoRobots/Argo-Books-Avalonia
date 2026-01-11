@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
@@ -298,7 +299,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         if (string.IsNullOrEmpty(SelectedItemStatusReason))
         {
             HasItemStatusReasonError = true;
-            ItemStatusReasonErrorMessage = "Please select a reason";
+            ItemStatusReasonErrorMessage = "Please select a reason".Translate();
             return;
         }
 

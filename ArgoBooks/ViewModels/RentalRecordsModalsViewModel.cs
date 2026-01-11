@@ -1,3 +1,4 @@
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
@@ -574,10 +575,10 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
-            Title = "Delete Rental Record",
-            Message = $"Are you sure you want to delete this rental record?\n\nRecord ID: {record.Id}",
-            PrimaryButtonText = "Delete",
-            CancelButtonText = "Cancel",
+            Title = "Delete Rental Record".Translate(),
+            Message = "Are you sure you want to delete this rental record?\n\nRecord ID: {0}".TranslateFormat(record.Id),
+            PrimaryButtonText = "Delete".Translate(),
+            CancelButtonText = "Cancel".Translate(),
             IsPrimaryDestructive = true
         });
 
@@ -928,19 +929,19 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
         if (ModalItem == null)
         {
-            ModalItemError = "Please select an item.";
+            ModalItemError = "Please select an item.".Translate();
             isValid = false;
         }
 
         if (ModalCustomer == null)
         {
-            ModalCustomerError = "Please select a customer.";
+            ModalCustomerError = "Please select a customer.".Translate();
             isValid = false;
         }
 
         if (!int.TryParse(ModalQuantity, out var qty) || qty <= 0)
         {
-            ModalQuantityError = "Please enter a valid quantity.";
+            ModalQuantityError = "Please enter a valid quantity.".Translate();
             isValid = false;
         }
         else if (_editingRecord == null && ModalItem != null)
@@ -956,7 +957,7 @@ public partial class RentalRecordsModalsViewModel : ObservableObject
 
         if (!decimal.TryParse(ModalRateAmount, out var rate) || rate < 0)
         {
-            ModalRateError = "Please enter a valid rate.";
+            ModalRateError = "Please enter a valid rate.".Translate();
             isValid = false;
         }
 
