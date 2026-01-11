@@ -1431,33 +1431,6 @@ public partial class App : Application
             };
         }
 
-        // Save company file when settings modal requests it (e.g., after security settings change)
-        settings.SaveCompanyRequested += async (_, _) =>
-        {
-            if (CompanyManager?.HasUnsavedChanges == true)
-            {
-                try
-                {
-                    // Mark as having changes so SavedFeedback shows "Saved" not "No changes found"
-                    _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
-                    await CompanyManager.SaveCompanyAsync();
-                }
-                catch (Exception ex)
-                {
-                    var dialog = ConfirmationDialog;
-                    if (dialog != null)
-                    {
-                        await dialog.ShowAsync(new ConfirmationDialogOptions
-                        {
-                            Title = "Save Error",
-                            Message = $"Failed to save company file:\n\n{ex.Message}",
-                            PrimaryButtonText = "OK",
-                            CancelButtonText = ""
-                        });
-                    }
-                }
-            }
-        };
     }
 
     /// <summary>

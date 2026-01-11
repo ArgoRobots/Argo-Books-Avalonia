@@ -578,11 +578,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Event raised when the company file should be saved (after security settings change).
-    /// </summary>
-    public event EventHandler? SaveCompanyRequested;
-
-    /// <summary>
     /// Saves the settings and closes the modal.
     /// </summary>
     [RelayCommand]
@@ -661,12 +656,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             {
                 IsDownloadingLanguage = false;
             }
-        }
-
-        // Save the company file if there are unsaved changes (e.g., security settings)
-        if (App.CompanyManager?.HasUnsavedChanges == true)
-        {
-            SaveCompanyRequested?.Invoke(this, EventArgs.Empty);
         }
 
         IsOpen = false;
