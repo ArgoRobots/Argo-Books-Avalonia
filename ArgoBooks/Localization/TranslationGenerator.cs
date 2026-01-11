@@ -33,6 +33,26 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"Loc\.Tr\s*\(\s*""([^""]+)""")]
     private static partial Regex LocTrCallRegex();
 
+    // Pattern for Tr("text") calls (local helper method used in ReportRenderer, etc.)
+    [GeneratedRegex(@"(?<!Loc\.)\bTr\s*\(\s*""([^""]+)""")]
+    private static partial Regex LocalTrCallRegex();
+
+    // Pattern for CreateItem("Label", ...) calls in sidebar/menu
+    [GeneratedRegex(@"CreateItem\s*\(\s*""([^""]+)""")]
+    private static partial Regex CreateItemCallRegex();
+
+    // Pattern for QuickActionItem("Title", "Description", ...) - capture both title and description
+    [GeneratedRegex(@"new\s+QuickActionItem\s*\(\s*""([^""]+)""\s*,\s*""([^""]+)""")]
+    private static partial Regex QuickActionItemRegex();
+
+    // Pattern for public const string = "value" (e.g., DatePresetNames)
+    [GeneratedRegex(@"public\s+const\s+string\s+\w+\s*=\s*""([^""]+)""")]
+    private static partial Regex ConstStringRegex();
+
+    // Pattern for static readonly string[] = ["item1", "item2", ...] or new[] { "item1", ... }
+    [GeneratedRegex(@"static\s+readonly\s+string\s*\[\s*\]\s+\w+\s*=\s*\[([^\]]+)\]")]
+    private static partial Regex StaticStringArrayRegex();
+
     [GeneratedRegex(@"""([^""]+)""\s*\.Translate")]
     private static partial Regex StringTranslateRegex();
 
@@ -182,6 +202,56 @@ public partial class TranslationGenerator
             foreach (Match match in locTrMatches)
             {
                 AddString(strings, match.Groups[1].Value);
+            }
+
+            // Find Tr("text") patterns (local helper method in ReportRenderer, ElementPropertyPanel, etc.)
+            var localTrMatches = LocalTrCallRegex().Matches(content);
+            foreach (Match match in localTrMatches)
+            {
+                AddString(strings, match.Groups[1].Value);
+            }
+
+            // Find CreateItem("Label", ...) patterns for sidebar/menu items
+            var createItemMatches = CreateItemCallRegex().Matches(content);
+            foreach (Match match in createItemMatches)
+            {
+                AddString(strings, match.Groups[1].Value);
+            }
+
+            // Find QuickActionItem("Title", "Description", ...) patterns
+            var quickActionMatches = QuickActionItemRegex().Matches(content);
+            foreach (Match match in quickActionMatches)
+            {
+                AddString(strings, match.Groups[1].Value); // Title
+                AddString(strings, match.Groups[2].Value); // Description
+            }
+
+            // Find public const string = "value" patterns (DatePresetNames, etc.)
+            var constStringMatches = ConstStringRegex().Matches(content);
+            foreach (Match match in constStringMatches)
+            {
+                var text = match.Groups[1].Value;
+                // Only add if it looks like display text (not empty, not a path, not a URL)
+                if (!string.IsNullOrEmpty(text) && text.Length > 1 &&
+                    !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
+                    !text.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                    !text.StartsWith("{"))
+                {
+                    AddString(strings, text);
+                }
+            }
+
+            // Find static readonly string[] = [...] patterns
+            var stringArrayMatches = StaticStringArrayRegex().Matches(content);
+            foreach (Match match in stringArrayMatches)
+            {
+                var arrayContent = match.Groups[1].Value;
+                // Extract individual strings from the array
+                var stringMatches = Regex.Matches(arrayContent, @"""([^""]+)""");
+                foreach (Match stringMatch in stringMatches)
+                {
+                    AddDisplayString(strings, stringMatch.Groups[1].Value);
+                }
             }
 
             // Find switch expression display strings: => "Display Text"
