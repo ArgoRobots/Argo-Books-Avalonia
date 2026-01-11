@@ -41,7 +41,7 @@ public class TranslateConverter : IValueConverter
     /// <summary>
     /// Not supported - translations are one-way.
     /// </summary>
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotSupportedException("TranslateConverter only supports one-way conversion");
     }
@@ -64,7 +64,7 @@ public class UpperCaseConverter : IValueConverter
         return value;
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotSupportedException("UpperCaseConverter only supports one-way conversion");
     }

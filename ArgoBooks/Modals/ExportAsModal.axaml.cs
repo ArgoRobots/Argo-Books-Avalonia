@@ -21,7 +21,7 @@ public partial class ExportAsModal : UserControl
 
         if (DataContext is ExportAsModalViewModel vm)
         {
-            vm.PropertyChanged += (s, args) =>
+            vm.PropertyChanged += (_, args) =>
             {
                 if (args.PropertyName == nameof(vm.IsOpen) && vm.IsOpen)
                 {

@@ -32,7 +32,6 @@ public class ReportRenderer : IDisposable
 
     // Chart colors (matching ChartLoaderService)
     private static readonly SKColor ChartBarColor = SKColor.Parse("#6495ED"); // Cornflower Blue
-    private static readonly SKColor ChartExpenseColor = SKColor.Parse("#EF4444"); // Red
     private static readonly SKColor ChartProfitColor = SKColor.Parse("#22C55E"); // Green
     private static readonly SKColor ChartAxisColor = SKColor.Parse("#374151"); // Gray
     private static readonly SKColor ChartGridColor = SKColor.Parse("#E5E7EB"); // Light gray
@@ -294,14 +293,14 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw chart title
-        var titleHeight = 0f;
         if (chart.ShowTitle)
         {
             using var titleFont = new SKFont(_boldTypeface, (float)chart.TitleFontSize * _renderScale);
-            using var titlePaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+            using var titlePaint = new SKPaint();
+            titlePaint.Color = SKColors.Black;
+            titlePaint.IsAntialias = true;
 
             var title = GetChartTitle(chart.ChartType);
-            titleHeight = 25 * _renderScale;
             canvas.DrawText(title, rect.MidX, rect.Top + 20 * _renderScale, SKTextAlign.Center, titleFont, titlePaint);
         }
 
@@ -381,7 +380,9 @@ public class ReportRenderer : IDisposable
     {
         // Just show text, no background rectangle
         using var noDataFont = new SKFont(_defaultTypeface, 12 * _renderScale);
-        using var noDataPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+        using var noDataPaint = new SKPaint();
+        noDataPaint.Color = SKColors.Gray;
+        noDataPaint.IsAntialias = true;
         canvas.DrawText(Tr("No data available"), chartArea.MidX, chartArea.MidY, SKTextAlign.Center, noDataFont, noDataPaint);
     }
 
@@ -495,13 +496,11 @@ public class ReportRenderer : IDisposable
             : chartArea.Bottom;
 
         // Draw grid lines
-        using var gridPaint = new SKPaint
-        {
-            Color = ChartGridColor,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1 * _renderScale,
-            IsAntialias = true
-        };
+        using var gridPaint = new SKPaint();
+        gridPaint.Color = ChartGridColor;
+        gridPaint.Style = SKPaintStyle.Stroke;
+        gridPaint.StrokeWidth = 1 * _renderScale;
+        gridPaint.IsAntialias = true;
 
         var gridLineCount = 5;
         for (int i = 0; i <= gridLineCount; i++)
@@ -512,18 +511,18 @@ public class ReportRenderer : IDisposable
             // Draw Y-axis value labels using padded max for proper scaling
             var value = paddedMaxValue - (paddedMaxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
             using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
-            using var yLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+            using var yLabelPaint = new SKPaint();
+            yLabelPaint.Color = ChartAxisColor;
+            yLabelPaint.IsAntialias = true;
             canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
         }
 
         // Draw Y-axis
-        using var axisPaint = new SKPaint
-        {
-            Color = ChartAxisColor,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1 * _renderScale,
-            IsAntialias = true
-        };
+        using var axisPaint = new SKPaint();
+        axisPaint.Color = ChartAxisColor;
+        axisPaint.Style = SKPaintStyle.Stroke;
+        axisPaint.StrokeWidth = 1 * _renderScale;
+        axisPaint.IsAntialias = true;
         canvas.DrawLine(chartArea.Left, chartArea.Top, chartArea.Left, chartArea.Bottom, axisPaint);
 
         // Draw X-axis (baseline)
@@ -549,15 +548,15 @@ public class ReportRenderer : IDisposable
             _ => ChartBarColor
         };
 
-        using var barPaint = new SKPaint
-        {
-            Color = barColor,
-            Style = SKPaintStyle.Fill,
-            IsAntialias = true
-        };
+        using var barPaint = new SKPaint();
+        barPaint.Color = barColor;
+        barPaint.Style = SKPaintStyle.Fill;
+        barPaint.IsAntialias = true;
 
         using var xLabelFont = new SKFont(_defaultTypeface, 8 * _renderScale);
-        using var xLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+        using var xLabelPaint = new SKPaint();
+        xLabelPaint.Color = ChartAxisColor;
+        xLabelPaint.IsAntialias = true;
 
         // Draw bars
         for (int i = 0; i < dataPoints.Count; i++)
@@ -570,15 +569,9 @@ public class ReportRenderer : IDisposable
             var barHeight = chartArea.Height * Math.Abs(valueRatio);
 
             // Handle positive vs negative values
-            SKRect barRect;
-            if (point.Value >= 0)
-            {
-                barRect = new SKRect(x, baselineY - barHeight, x + barWidth, baselineY);
-            }
-            else
-            {
-                barRect = new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
-            }
+            var barRect = point.Value >= 0 
+                ? new SKRect(x, baselineY - barHeight, x + barWidth, baselineY) 
+                : new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
 
             canvas.DrawRect(barRect, barPaint);
 
@@ -629,13 +622,11 @@ public class ReportRenderer : IDisposable
             : chartArea.Bottom;
 
         // Draw grid lines
-        using var gridPaint = new SKPaint
-        {
-            Color = ChartGridColor,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1 * _renderScale,
-            IsAntialias = true
-        };
+        using var gridPaint = new SKPaint();
+        gridPaint.Color = ChartGridColor;
+        gridPaint.Style = SKPaintStyle.Stroke;
+        gridPaint.StrokeWidth = 1 * _renderScale;
+        gridPaint.IsAntialias = true;
 
         var gridLineCount = 5;
         for (int i = 0; i <= gridLineCount; i++)
@@ -645,18 +636,18 @@ public class ReportRenderer : IDisposable
 
             var value = paddedMaxValue - (paddedMaxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
             using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
-            using var yLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+            using var yLabelPaint = new SKPaint();
+            yLabelPaint.Color = ChartAxisColor;
+            yLabelPaint.IsAntialias = true;
             canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
         }
 
         // Draw axes
-        using var axisPaint = new SKPaint
-        {
-            Color = ChartAxisColor,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1 * _renderScale,
-            IsAntialias = true
-        };
+        using var axisPaint = new SKPaint();
+        axisPaint.Color = ChartAxisColor;
+        axisPaint.Style = SKPaintStyle.Stroke;
+        axisPaint.StrokeWidth = 1 * _renderScale;
+        axisPaint.IsAntialias = true;
         canvas.DrawLine(chartArea.Left, chartArea.Top, chartArea.Left, chartArea.Bottom, axisPaint);
         canvas.DrawLine(chartArea.Left, baselineY, chartArea.Right, baselineY, axisPaint);
 
@@ -696,27 +687,23 @@ public class ReportRenderer : IDisposable
             path.LineTo(points[^1].X, baselineY);
             path.Close();
 
-            using var fillPaint = new SKPaint
-            {
-                Color = lineColor.WithAlpha(80),
-                Style = SKPaintStyle.Fill,
-                IsAntialias = true
-            };
+            using var fillPaint = new SKPaint();
+            fillPaint.Color = lineColor.WithAlpha(80);
+            fillPaint.Style = SKPaintStyle.Fill;
+            fillPaint.IsAntialias = true;
             canvas.DrawPath(path, fillPaint);
         }
 
         // Draw the line (skip for Scatter charts - only points)
         if (chart.ChartStyle != ReportChartStyle.Scatter)
         {
-            using var linePaint = new SKPaint
-            {
-                Color = lineColor,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = 2 * _renderScale,
-                IsAntialias = true,
-                StrokeCap = SKStrokeCap.Round,
-                StrokeJoin = SKStrokeJoin.Round
-            };
+            using var linePaint = new SKPaint();
+            linePaint.Color = lineColor;
+            linePaint.Style = SKPaintStyle.Stroke;
+            linePaint.StrokeWidth = 2 * _renderScale;
+            linePaint.IsAntialias = true;
+            linePaint.StrokeCap = SKStrokeCap.Round;
+            linePaint.StrokeJoin = SKStrokeJoin.Round;
 
             using var linePath = new SKPath();
             linePath.MoveTo(points[0]);
@@ -743,12 +730,10 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw points
-        using var pointPaint = new SKPaint
-        {
-            Color = lineColor,
-            Style = SKPaintStyle.Fill,
-            IsAntialias = true
-        };
+        using var pointPaint = new SKPaint();
+        pointPaint.Color = lineColor;
+        pointPaint.Style = SKPaintStyle.Fill;
+        pointPaint.IsAntialias = true;
         var pointRadius = 4 * _renderScale;
 
         foreach (var point in points)
@@ -758,7 +743,9 @@ public class ReportRenderer : IDisposable
 
         // Draw X-axis labels
         using var xLabelFont = new SKFont(_defaultTypeface, 8 * _renderScale);
-        using var xLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+        using var xLabelPaint = new SKPaint();
+        xLabelPaint.Color = ChartAxisColor;
+        xLabelPaint.IsAntialias = true;
 
         for (int i = 0; i < pointCount; i++)
         {
@@ -824,7 +811,9 @@ public class ReportRenderer : IDisposable
         var legendY = chartArea.Top + 10 * _renderScale;
 
         using var labelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
-        using var labelPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+        using var labelPaint = new SKPaint();
+        labelPaint.Color = SKColors.Black;
+        labelPaint.IsAntialias = true;
 
         var pieRect = new SKRect(
             centerX - radius,
@@ -841,12 +830,10 @@ public class ReportRenderer : IDisposable
             var color = colors[i % colors.Length];
 
             // Draw pie slice
-            using var slicePaint = new SKPaint
-            {
-                Color = color,
-                Style = SKPaintStyle.Fill,
-                IsAntialias = true
-            };
+            using var slicePaint = new SKPaint();
+            slicePaint.Color = color;
+            slicePaint.Style = SKPaintStyle.Fill;
+            slicePaint.IsAntialias = true;
 
             // Handle full circle (360 degrees) - SkiaSharp ArcTo doesn't handle this well
             if (sweepAngle >= 359.9f)
@@ -864,13 +851,11 @@ public class ReportRenderer : IDisposable
                 canvas.DrawPath(path, slicePaint);
 
                 // Draw slice border
-                using var borderPaint = new SKPaint
-                {
-                    Color = SKColors.White,
-                    Style = SKPaintStyle.Stroke,
-                    StrokeWidth = 2 * _renderScale,
-                    IsAntialias = true
-                };
+                using var borderPaint = new SKPaint();
+                borderPaint.Color = SKColors.White;
+                borderPaint.Style = SKPaintStyle.Stroke;
+                borderPaint.StrokeWidth = 2 * _renderScale;
+                borderPaint.IsAntialias = true;
                 canvas.DrawPath(path, borderPaint);
             }
 
@@ -920,13 +905,11 @@ public class ReportRenderer : IDisposable
             : chartArea.Bottom;
 
         // Draw grid lines
-        using var gridPaint = new SKPaint
-        {
-            Color = ChartGridColor,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1 * _renderScale,
-            IsAntialias = true
-        };
+        using var gridPaint = new SKPaint();
+        gridPaint.Color = ChartGridColor;
+        gridPaint.Style = SKPaintStyle.Stroke;
+        gridPaint.StrokeWidth = 1 * _renderScale;
+        gridPaint.IsAntialias = true;
 
         var gridLineCount = 5;
         for (int i = 0; i <= gridLineCount; i++)
@@ -936,24 +919,24 @@ public class ReportRenderer : IDisposable
 
             var value = paddedMaxValue - (paddedMaxValue - (hasNegatives ? minValue : 0)) * i / gridLineCount;
             using var yLabelFont = new SKFont(_defaultTypeface, 9 * _renderScale);
-            using var yLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+            using var yLabelPaint = new SKPaint();
+            yLabelPaint.Color = ChartAxisColor;
+            yLabelPaint.IsAntialias = true;
             canvas.DrawText($"${value:N0}", chartArea.Left - 5 * _renderScale, y + 4 * _renderScale, SKTextAlign.Right, yLabelFont, yLabelPaint);
         }
 
         // Draw axes
-        using var axisPaint = new SKPaint
-        {
-            Color = ChartAxisColor,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1 * _renderScale,
-            IsAntialias = true
-        };
+        using var axisPaint = new SKPaint();
+        axisPaint.Color = ChartAxisColor;
+        axisPaint.Style = SKPaintStyle.Stroke;
+        axisPaint.StrokeWidth = 1 * _renderScale;
+        axisPaint.IsAntialias = true;
         canvas.DrawLine(chartArea.Left, chartArea.Top, chartArea.Left, chartArea.Bottom, axisPaint);
         canvas.DrawLine(chartArea.Left, baselineY, chartArea.Right, baselineY, axisPaint);
 
         // Get unique labels (X-axis categories) - use formatted dates if available
         var firstSeriesPoints = seriesData.First().DataPoints;
-        var labels = firstSeriesPoints.Select(p => FormatXAxisLabel(p)).ToList();
+        var labels = firstSeriesPoints.Select(FormatXAxisLabel).ToList();
         var categoryCount = labels.Count;
         var seriesCount = seriesData.Count;
 
@@ -967,7 +950,9 @@ public class ReportRenderer : IDisposable
         var barWidth = Math.Min(maxBarWidth, (totalBarSpacePerCategory - (barSpacing * (seriesCount - 1))) / seriesCount);
 
         using var xLabelFont = new SKFont(_defaultTypeface, 8 * _renderScale);
-        using var xLabelPaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+        using var xLabelPaint = new SKPaint();
+        xLabelPaint.Color = ChartAxisColor;
+        xLabelPaint.IsAntialias = true;
 
         // Draw bars for each category
         for (int categoryIndex = 0; categoryIndex < categoryCount; categoryIndex++)
@@ -989,22 +974,15 @@ public class ReportRenderer : IDisposable
                 var barHeight = chartArea.Height * Math.Abs(valueRatio);
 
                 var barColor = SKColor.Parse(series.Color);
-                using var barPaint = new SKPaint
-                {
-                    Color = barColor,
-                    Style = SKPaintStyle.Fill,
-                    IsAntialias = true
-                };
+                using var barPaint = new SKPaint();
+                barPaint.Color = barColor;
+                barPaint.Style = SKPaintStyle.Fill;
+                barPaint.IsAntialias = true;
 
                 SKRect barRect;
-                if (point.Value >= 0)
-                {
-                    barRect = new SKRect(x, baselineY - barHeight, x + barWidth, baselineY);
-                }
-                else
-                {
-                    barRect = new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
-                }
+                barRect = point.Value >= 0 
+                    ? new SKRect(x, baselineY - barHeight, x + barWidth, baselineY) 
+                    : new SKRect(x, baselineY, x + barWidth, baselineY + barHeight);
 
                 canvas.DrawRect(barRect, barPaint);
             }
@@ -1053,12 +1031,15 @@ public class ReportRenderer : IDisposable
         var barHeight = Math.Min(25 * _renderScale, (chartArea.Height - 20 * _renderScale) / Math.Min(sortedData.Count, 10));
         var maxBarWidth = chartArea.Width * 0.6f;
         var labelWidth = chartArea.Width * 0.25f;
-        var valueWidth = chartArea.Width * 0.15f;
 
         using var labelFont = new SKFont(_defaultTypeface, 10 * _renderScale);
         using var valueFont = new SKFont(_defaultTypeface, 9 * _renderScale);
-        using var labelPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
-        using var valuePaint = new SKPaint { Color = ChartAxisColor, IsAntialias = true };
+        using var labelPaint = new SKPaint();
+        labelPaint.Color = SKColors.Black;
+        labelPaint.IsAntialias = true;
+        using var valuePaint = new SKPaint();
+        valuePaint.Color = ChartAxisColor;
+        valuePaint.IsAntialias = true;
 
         // Color gradient from light to dark blue
         var startColor = SKColor.Parse("#93C5FD"); // Light blue
@@ -1080,12 +1061,10 @@ public class ReportRenderer : IDisposable
                 (byte)(startColor.Blue + (endColor.Blue - startColor.Blue) * colorRatio)
             );
 
-            using var barPaint = new SKPaint
-            {
-                Color = barColor,
-                Style = SKPaintStyle.Fill,
-                IsAntialias = true
-            };
+            using var barPaint = new SKPaint();
+            barPaint.Color = barColor;
+            barPaint.Style = SKPaintStyle.Fill;
+            barPaint.IsAntialias = true;
 
             // Draw country name
             var countryName = kvp.Key;
@@ -1108,7 +1087,9 @@ public class ReportRenderer : IDisposable
         if (sortedData.Count > 10)
         {
             using var moreFont = new SKFont(_defaultTypeface, 9 * _renderScale);
-            using var morePaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+            using var morePaint = new SKPaint();
+            morePaint.Color = SKColors.Gray;
+            morePaint.IsAntialias = true;
             var moreCountriesText = string.Format(Tr("and {0} more countries..."), sortedData.Count - 10);
             canvas.DrawText(moreCountriesText, chartArea.Left, currentY + 10 * _renderScale, SKTextAlign.Left, moreFont, morePaint);
         }
@@ -1131,7 +1112,7 @@ public class ReportRenderer : IDisposable
 
         // Calculate total height needed
         var totalHeight = (table.ShowHeaders ? headerRowHeight : 0) + (dataRowCount * dataRowHeight);
-        var tableRect = new SKRect(rect.Left, rect.Top, rect.Right, rect.Top + (float)totalHeight);
+        var tableRect = new SKRect(rect.Left, rect.Top, rect.Right, rect.Top + totalHeight);
 
         // Draw table background for the entire element bounds (matching design canvas)
         canvas.DrawRect(rect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
@@ -1141,13 +1122,15 @@ public class ReportRenderer : IDisposable
         // Draw header row
         if (table.ShowHeaders)
         {
-            var headerRect = new SKRect(rect.Left, currentY, rect.Right, currentY + (float)headerRowHeight);
+            var headerRect = new SKRect(rect.Left, currentY, rect.Right, currentY + headerRowHeight);
             var headerFill = new SKPaint { Color = ParseColor(table.HeaderBackgroundColor), Style = SKPaintStyle.Fill };
             canvas.DrawRect(headerRect, headerFill);
 
             // Draw column headers
             using var headerFont = new SKFont(_boldTypeface, (float)table.FontSize * _renderScale);
-            using var headerTextPaint = new SKPaint { Color = ParseColor(table.HeaderTextColor), IsAntialias = true };
+            using var headerTextPaint = new SKPaint();
+            headerTextPaint.Color = ParseColor(table.HeaderTextColor);
+            headerTextPaint.IsAntialias = true;
 
             for (int i = 0; i < columns.Count; i++)
             {
@@ -1170,17 +1153,19 @@ public class ReportRenderer : IDisposable
                 canvas.DrawLine(rect.Left, headerRect.Bottom, rect.Right, headerRect.Bottom, gridPaint);
             }
 
-            currentY += (float)headerRowHeight;
+            currentY += headerRowHeight;
         }
 
         // Draw data rows
         using var dataFont = new SKFont(_defaultTypeface, (float)table.FontSize * _renderScale);
-        using var dataTextPaint = new SKPaint { Color = ParseColor(table.DataRowTextColor), IsAntialias = true };
+        using var dataTextPaint = new SKPaint();
+        dataTextPaint.Color = ParseColor(table.DataRowTextColor);
+        dataTextPaint.IsAntialias = true;
 
         for (int rowIndex = 0; rowIndex < dataRowCount; rowIndex++)
         {
             var rowData = tableData[rowIndex];
-            var rowRect = new SKRect(rect.Left, currentY, rect.Right, currentY + (float)dataRowHeight);
+            var rowRect = new SKRect(rect.Left, currentY, rect.Right, currentY + dataRowHeight);
 
             // Alternate row colors
             var isAlternate = rowIndex % 2 == 1;
@@ -1212,7 +1197,7 @@ public class ReportRenderer : IDisposable
                 canvas.DrawLine(rect.Left, rowRect.Bottom, rect.Right, rowRect.Bottom, gridPaint);
             }
 
-            currentY += (float)dataRowHeight;
+            currentY += dataRowHeight;
         }
 
         // Draw outer border
@@ -1310,7 +1295,9 @@ public class ReportRenderer : IDisposable
 
         var typeface = SKTypeface.FromFamilyName(label.FontFamily, style) ?? _defaultTypeface;
         using var font = new SKFont(typeface, (float)label.FontSize * _renderScale);
-        using var paint = new SKPaint { Color = ParseColor(label.TextColor), IsAntialias = true };
+        using var paint = new SKPaint();
+        paint.Color = ParseColor(label.TextColor);
+        paint.IsAntialias = true;
 
         var textAlign = label.HorizontalAlignment switch
         {
@@ -1336,7 +1323,7 @@ public class ReportRenderer : IDisposable
             _ => rect.MidY
         };
 
-        canvas.DrawText(label.Text, x, (float)y, textAlign, font, paint);
+        canvas.DrawText(label.Text, x, y, textAlign, font, paint);
 
         // Draw underline if specified
         if (label.IsUnderline)
@@ -1351,7 +1338,7 @@ public class ReportRenderer : IDisposable
             };
 
             var textWidth = font.MeasureText(label.Text);
-            var underlineY = (float)y + (metrics.UnderlinePosition ?? 3 * _renderScale);
+            var underlineY = y + (metrics.UnderlinePosition ?? 3 * _renderScale);
             var startX = label.HorizontalAlignment switch
             {
                 HorizontalTextAlignment.Left => x,
@@ -1445,7 +1432,9 @@ public class ReportRenderer : IDisposable
         var style = dateRange.IsItalic ? SKFontStyle.Italic : SKFontStyle.Normal;
         var typeface = SKTypeface.FromFamilyName(dateRange.FontFamily, style) ?? _defaultTypeface;
         using var font = new SKFont(typeface, (float)dateRange.FontSize * _renderScale);
-        using var paint = new SKPaint { Color = ParseColor(dateRange.TextColor), IsAntialias = true };
+        using var paint = new SKPaint();
+        paint.Color = ParseColor(dateRange.TextColor);
+        paint.IsAntialias = true;
 
         var textAlign = dateRange.HorizontalAlignment switch
         {
@@ -1473,7 +1462,7 @@ public class ReportRenderer : IDisposable
             _ => rect.MidY
         };
 
-        canvas.DrawText(text, x, (float)y, textAlign, font, paint);
+        canvas.DrawText(text, x, y, textAlign, font, paint);
     }
 
     private void RenderSummary(SKCanvas canvas, SummaryReportElement summary)
@@ -1499,7 +1488,9 @@ public class ReportRenderer : IDisposable
 
         // Draw summary statistics
         using var font = new SKFont(_defaultTypeface, (float)summary.FontSize * _renderScale);
-        using var textPaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+        using var textPaint = new SKPaint();
+        textPaint.Color = SKColors.Black;
+        textPaint.IsAntialias = true;
 
         var textAlign = summary.HorizontalAlignment switch
         {
@@ -1603,7 +1594,9 @@ public class ReportRenderer : IDisposable
 
         // Draw timestamp
         using var footerFont = new SKFont(_defaultTypeface, 10 * _renderScale);
-        using var footerPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+        using var footerPaint = new SKPaint();
+        footerPaint.Color = SKColors.Gray;
+        footerPaint.IsAntialias = true;
 
         var timestamp = DateTime.Now.ToString("MMM dd, yyyy HH:mm");
         canvas.DrawText($"{Tr("Generated")}: {timestamp}", margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Left, footerFont, footerPaint);
@@ -1710,7 +1703,9 @@ public class ReportRenderer : IDisposable
         }
 
         using var font = new SKFont(_defaultTypeface, 10 * _renderScale);
-        using var textPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+        using var textPaint = new SKPaint();
+        textPaint.Color = SKColors.Gray;
+        textPaint.IsAntialias = true;
         canvas.DrawText(message, rect.MidX, rect.MidY, SKTextAlign.Center, font, textPaint);
 
         var borderPaint = new SKPaint { Color = SKColors.Black, Style = SKPaintStyle.Stroke, StrokeWidth = 1 };
@@ -1782,18 +1777,18 @@ public class ReportRenderer : IDisposable
 
         return summary.TransactionType switch
         {
-            TransactionType.Revenue => _companyData.Sales?
+            TransactionType.Revenue => _companyData.Sales
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total) ?? 0,
-            TransactionType.Expenses => _companyData.Purchases?
+                .Sum(s => s.Total),
+            TransactionType.Expenses => _companyData.Purchases
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total) ?? 0,
-            _ => (_companyData.Sales?
+                .Sum(p => p.Total) ,
+            _ => (_companyData.Sales
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total) ?? 0) -
-                 (_companyData.Purchases?
+                .Sum(s => s.Total) ) -
+                 (_companyData.Purchases
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total) ?? 0)
+                .Sum(p => p.Total) )
         };
     }
 
@@ -1805,12 +1800,12 @@ public class ReportRenderer : IDisposable
 
         return summary.TransactionType switch
         {
-            TransactionType.Revenue => _companyData.Sales?
-                .Count(s => s.Date >= startDate && s.Date <= endDate) ?? 0,
-            TransactionType.Expenses => _companyData.Purchases?
-                .Count(p => p.Date >= startDate && p.Date <= endDate) ?? 0,
-            _ => (_companyData.Sales?.Count(s => s.Date >= startDate && s.Date <= endDate) ?? 0) +
-                 (_companyData.Purchases?.Count(p => p.Date >= startDate && p.Date <= endDate) ?? 0)
+            TransactionType.Revenue => _companyData.Sales
+                .Count(s => s.Date >= startDate && s.Date <= endDate),
+            TransactionType.Expenses => _companyData.Purchases
+                .Count(p => p.Date >= startDate && p.Date <= endDate),
+            _ => _companyData.Sales.Count(s => s.Date >= startDate && s.Date <= endDate) +
+                 _companyData.Purchases.Count(p => p.Date >= startDate && p.Date <= endDate)
         };
     }
 
@@ -1824,18 +1819,18 @@ public class ReportRenderer : IDisposable
 
         if (summary.TransactionType is TransactionType.Revenue or TransactionType.Both)
         {
-            var sales = _companyData.Sales?
+            var sales = _companyData.Sales
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
                 .Select(s => s.Total);
-            if (sales != null) totals.AddRange(sales);
+            totals.AddRange(sales);
         }
 
         if (summary.TransactionType is TransactionType.Expenses or TransactionType.Both)
         {
-            var purchases = _companyData.Purchases?
+            var purchases = _companyData.Purchases
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
                 .Select(p => p.Total);
-            if (purchases != null) totals.AddRange(purchases);
+            totals.AddRange(purchases);
         }
 
         return totals.Count > 0 ? totals.Average() : 0;
@@ -1860,36 +1855,36 @@ public class ReportRenderer : IDisposable
 
         if (summary.TransactionType == TransactionType.Revenue)
         {
-            currentPeriod = _companyData.Sales?
+            currentPeriod = _companyData.Sales
                 .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total) ?? 0;
-            previousPeriod = _companyData.Sales?
+                .Sum(s => s.Total);
+            previousPeriod = _companyData.Sales
                 .Where(s => s.Date >= previousStart && s.Date <= previousEnd)
-                .Sum(s => s.Total) ?? 0;
+                .Sum(s => s.Total);
         }
         else if (summary.TransactionType == TransactionType.Expenses)
         {
-            currentPeriod = _companyData.Purchases?
+            currentPeriod = _companyData.Purchases
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total) ?? 0;
-            previousPeriod = _companyData.Purchases?
+                .Sum(p => p.Total);
+            previousPeriod = _companyData.Purchases
                 .Where(p => p.Date >= previousStart && p.Date <= previousEnd)
-                .Sum(p => p.Total) ?? 0;
+                .Sum(p => p.Total);
         }
         else
         {
-            currentPeriod = ((_companyData.Sales?
-                .Where(s => s.Date >= startDate && s.Date <= endDate)
-                .Sum(s => s.Total) ?? 0) -
-                (_companyData.Purchases?
-                .Where(p => p.Date >= startDate && p.Date <= endDate)
-                .Sum(p => p.Total) ?? 0));
-            previousPeriod = ((_companyData.Sales?
-                .Where(s => s.Date >= previousStart && s.Date <= previousEnd)
-                .Sum(s => s.Total) ?? 0) -
-                (_companyData.Purchases?
-                .Where(p => p.Date >= previousStart && p.Date <= previousEnd)
-                .Sum(p => p.Total) ?? 0));
+            currentPeriod = _companyData.Sales
+                    .Where(s => s.Date >= startDate && s.Date <= endDate)
+                    .Sum(s => s.Total) -
+                _companyData.Purchases
+                    .Where(p => p.Date >= startDate && p.Date <= endDate)
+                    .Sum(p => p.Total);
+            previousPeriod = _companyData.Sales
+                     .Where(s => s.Date >= previousStart && s.Date <= previousEnd)
+                     .Sum(s => s.Total) -
+                 _companyData.Purchases
+                     .Where(p => p.Date >= previousStart && p.Date <= previousEnd)
+                     .Sum(p => p.Total);
         }
 
         if (previousPeriod == 0)
@@ -1915,7 +1910,7 @@ public class ReportRenderer : IDisposable
     /// </summary>
     private string FormatCurrency(decimal amount)
     {
-        var currencyCode = _companyData?.Settings?.Localization?.Currency ?? "USD";
+        var currencyCode = _companyData?.Settings.Localization.Currency ?? "USD";
         return CurrencyInfo.FormatAmount(amount, currencyCode);
     }
 

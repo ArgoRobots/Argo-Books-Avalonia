@@ -291,7 +291,6 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     private ReturnDisplayItem CreateDisplayItem(Return returnRecord)
     {
-        var companyData = App.CompanyManager?.CompanyData;
         var productNames = GetProductNames(returnRecord);
         var supplierOrCustomerName = GetSupplierOrCustomerName(returnRecord);
         var processedByName = GetProcessedByName(returnRecord);

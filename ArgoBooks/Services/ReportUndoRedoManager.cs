@@ -353,7 +353,7 @@ public class ElementPropertyChangeAction(
         if (value == null)
             return targetType.IsValueType ? Activator.CreateInstance(targetType) : null;
 
-        if (targetType.IsAssignableFrom(value.GetType()))
+        if (targetType.IsInstanceOfType(value))
             return value;
 
         if (targetType.IsEnum && value is string stringValue)

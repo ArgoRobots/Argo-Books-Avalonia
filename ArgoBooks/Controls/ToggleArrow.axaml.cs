@@ -38,7 +38,7 @@ public partial class ToggleArrow : UserControl
     /// Defines the Foreground property.
     /// Controls the color of the arrow icon.
     /// </summary>
-    public static new readonly StyledProperty<IBrush?> ForegroundProperty =
+    public new static readonly StyledProperty<IBrush?> ForegroundProperty =
         AvaloniaProperty.Register<ToggleArrow, IBrush?>(nameof(Foreground));
 
     /// <summary>

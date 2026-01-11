@@ -8,7 +8,7 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class IdleDetectionService : IDisposable
 {
-    private readonly System.Timers.Timer _idleTimer;
+    private readonly Timer _idleTimer;
     private DateTime _lastActivityTime;
     private int _timeoutMinutes;
     private bool _isEnabled;

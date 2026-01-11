@@ -59,14 +59,7 @@ public partial class ProductModalsViewModel : ObservableObject
 
     partial void OnModalCategoryIdChanged(string? value)
     {
-        if (value != null)
-        {
-            ModalCategory = AvailableCategories.FirstOrDefault(c => c.Id == value);
-        }
-        else
-        {
-            ModalCategory = null;
-        }
+        ModalCategory = value != null ? AvailableCategories.FirstOrDefault(c => c.Id == value) : null;
     }
 
     [ObservableProperty]
@@ -224,7 +217,7 @@ public partial class ProductModalsViewModel : ObservableObject
         companyData.MarkAsModified();
 
         var productToUndo = newProduct;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add product '{newProduct.Name}'",
             () =>
             {
@@ -363,7 +356,7 @@ public partial class ProductModalsViewModel : ObservableObject
 
         companyData.MarkAsModified();
 
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit product '{newName}'",
             () =>
             {
@@ -432,7 +425,7 @@ public partial class ProductModalsViewModel : ObservableObject
             companyData.Products.Remove(product);
             companyData.MarkAsModified();
 
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete product '{deletedProduct.Name}'",
                 () =>
                 {

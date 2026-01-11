@@ -45,18 +45,17 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
     #region Properties
 
-    private CountryDialCode? _selectedCountry;
     /// <summary>
     /// Gets the selected country.
     /// </summary>
     public CountryDialCode? SelectedCountry
     {
-        get => _selectedCountry;
+        get;
         private set
         {
-            if (_selectedCountry != value)
+            if (field != value)
             {
-                _selectedCountry = value;
+                field = value;
                 RaisePropertyChanged();
                 RaisePropertyChanged(nameof(SelectedCountryFlag));
             }
@@ -93,18 +92,17 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    private bool _isDropdownOpen;
     /// <summary>
     /// Gets or sets whether the dropdown is open.
     /// </summary>
     public bool IsDropdownOpen
     {
-        get => _isDropdownOpen;
+        get;
         set
         {
-            if (_isDropdownOpen != value)
+            if (field != value)
             {
-                _isDropdownOpen = value;
+                field = value;
                 RaisePropertyChanged();
 
                 if (value)
@@ -116,40 +114,38 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    private bool _hasFilteredCountries;
     /// <summary>
     /// Gets whether there are filtered countries.
     /// </summary>
     public bool HasFilteredCountries
     {
-        get => _hasFilteredCountries;
+        get;
         private set
         {
-            if (_hasFilteredCountries != value)
+            if (field != value)
             {
-                _hasFilteredCountries = value;
+                field = value;
                 RaisePropertyChanged();
             }
         }
     }
 
-    private int _selectedIndex = -1;
     /// <summary>
     /// Gets or sets the currently highlighted index in the dropdown.
     /// </summary>
     public int SelectedIndex
     {
-        get => _selectedIndex;
+        get;
         set
         {
-            if (_selectedIndex != value)
+            if (field != value)
             {
-                _selectedIndex = value;
+                field = value;
                 RaisePropertyChanged();
                 ScrollToSelectedItem();
             }
         }
-    }
+    } = -1;
 
     /// <summary>
     /// Gets the filtered countries based on search.
@@ -324,7 +320,7 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
     {
         FilteredCountries.Clear();
 
-        var searchText = _searchText?.Trim().ToLowerInvariant() ?? string.Empty;
+        var searchText = _searchText.Trim().ToLowerInvariant();
 
         bool showingFullList = string.IsNullOrEmpty(searchText) || searchText == SelectedCountry?.Name.ToLowerInvariant();
 

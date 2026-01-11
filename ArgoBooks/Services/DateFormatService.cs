@@ -22,7 +22,7 @@ public static class DateFormatService
     /// Gets the current date format setting from company settings.
     /// </summary>
     private static string CurrentFormat =>
-        App.CompanyManager?.CompanyData?.Settings?.Localization?.DateFormat ?? "MM/DD/YYYY";
+        App.CompanyManager?.CompanyData?.Settings.Localization.DateFormat ?? "MM/DD/YYYY";
 
     /// <summary>
     /// Converts the user-friendly format string to a .NET format string.

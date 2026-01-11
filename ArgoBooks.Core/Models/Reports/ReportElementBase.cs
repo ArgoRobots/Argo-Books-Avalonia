@@ -26,14 +26,6 @@ public class ElementPropertyChangingEventArgs(string propertyName, object? oldVa
 [JsonDerivedType(typeof(SummaryReportElement), "Summary")]
 public abstract class ReportElementBase : INotifyPropertyChanged
 {
-    private string _id = Guid.NewGuid().ToString();
-    private double _x;
-    private double _y;
-    private double _width = 200;
-    private double _height = 150;
-    private int _zOrder;
-    private bool _isVisible = true;
-
     /// <summary>
     /// Fired when a property changes.
     /// </summary>
@@ -50,9 +42,9 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     [JsonPropertyName("id")]
     public string Id
     {
-        get => _id;
-        set => SetField(ref _id, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = Guid.NewGuid().ToString();
 
     /// <summary>
     /// X position on the page.
@@ -60,8 +52,8 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     [JsonPropertyName("x")]
     public double X
     {
-        get => _x;
-        set => SetField(ref _x, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     /// <summary>
@@ -70,8 +62,8 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     [JsonPropertyName("y")]
     public double Y
     {
-        get => _y;
-        set => SetField(ref _y, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     /// <summary>
@@ -80,9 +72,9 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     [JsonPropertyName("width")]
     public double Width
     {
-        get => _width;
-        set => SetField(ref _width, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 200;
 
     /// <summary>
     /// Element height.
@@ -90,9 +82,9 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     [JsonPropertyName("height")]
     public double Height
     {
-        get => _height;
-        set => SetField(ref _height, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 150;
 
     /// <summary>
     /// Z-order for layering.
@@ -100,8 +92,8 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     [JsonPropertyName("zOrder")]
     public int ZOrder
     {
-        get => _zOrder;
-        set => SetField(ref _zOrder, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     /// <summary>
@@ -110,9 +102,9 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     [JsonPropertyName("isVisible")]
     public bool IsVisible
     {
-        get => _isVisible;
-        set => SetField(ref _isVisible, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     /// <summary>
     /// Minimum size for the element.
@@ -181,86 +173,75 @@ public abstract class ReportElementBase : INotifyPropertyChanged
 /// </summary>
 public class ChartReportElement : ReportElementBase
 {
-    private ChartDataType _chartType = ChartDataType.TotalRevenue;
-    private ReportChartStyle _chartStyle = ReportChartStyle.Bar;
-    private bool _showLegend = true;
-    private bool _showTitle = true;
-    private string _fontFamily = "Segoe UI";
-    private double _titleFontSize = 12;
-    private double _legendFontSize = 11;
-    private string _borderColor = "#808080";
-    private int _borderThickness = 1;
-    private string _backgroundColor = "#FFFFFF";
-
     [JsonPropertyName("chartType")]
     public ChartDataType ChartType
     {
-        get => _chartType;
-        set => SetField(ref _chartType, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = ChartDataType.TotalRevenue;
 
     [JsonPropertyName("chartStyle")]
     public ReportChartStyle ChartStyle
     {
-        get => _chartStyle;
-        set => SetField(ref _chartStyle, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = ReportChartStyle.Bar;
 
     [JsonPropertyName("showLegend")]
     public bool ShowLegend
     {
-        get => _showLegend;
-        set => SetField(ref _showLegend, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showTitle")]
     public bool ShowTitle
     {
-        get => _showTitle;
-        set => SetField(ref _showTitle, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
     {
-        get => _fontFamily;
-        set => SetField(ref _fontFamily, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
 
     [JsonPropertyName("titleFontSize")]
     public double TitleFontSize
     {
-        get => _titleFontSize;
-        set => SetField(ref _titleFontSize, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 12;
 
     [JsonPropertyName("legendFontSize")]
     public double LegendFontSize
     {
-        get => _legendFontSize;
-        set => SetField(ref _legendFontSize, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 11;
 
     [JsonPropertyName("borderColor")]
     public string BorderColor
     {
-        get => _borderColor;
-        set => SetField(ref _borderColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#808080";
 
     [JsonPropertyName("borderThickness")]
     public int BorderThickness
     {
-        get => _borderThickness;
-        set => SetField(ref _borderThickness, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 1;
 
     [JsonPropertyName("backgroundColor")]
     public string BackgroundColor
     {
-        get => _backgroundColor;
-        set => SetField(ref _backgroundColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#FFFFFF";
 
     public override double MinimumSize => 80;
     public override string DisplayName => "Chart";
@@ -296,262 +277,229 @@ public class ChartReportElement : ReportElementBase
 /// </summary>
 public class TableReportElement : ReportElementBase
 {
-    private TransactionType _transactionType = TransactionType.Both;
-    private bool _includeReturns = true;
-    private bool _includeLosses = true;
-    private TableDataSelection _dataSelection = TableDataSelection.All;
-    private TableSortOrder _sortOrder = TableSortOrder.DateDescending;
-    private int _maxRows = 10;
-    private bool _showHeaders = true;
-    private bool _alternateRowColors = true;
-    private bool _showGridLines = true;
-    private bool _showTotalsRow;
-    private bool _autoSizeColumns = true;
-    private double _fontSize = 8;
-    private string _fontFamily = "Segoe UI";
-    private int _dataRowHeight = 20;
-    private int _headerRowHeight = 25;
-    private int _cellPadding = 3;
-    private string _headerBackgroundColor = "#5E94FF";
-    private string _headerTextColor = "#FFFFFF";
-    private string _dataRowTextColor = "#000000";
-    private string _gridLineColor = "#D3D3D3";
-    private string _baseRowColor = "#FFFFFF";
-    private string _alternateRowColor = "#F8F8F8";
-    private bool _showDateColumn = true;
-    private bool _showTransactionIdColumn = true;
-    private bool _showCompanyColumn = true;
-    private bool _showProductColumn = true;
-    private bool _showQuantityColumn = true;
-    private bool _showUnitPriceColumn;
-    private bool _showTotalColumn = true;
-    private bool _showStatusColumn;
-    private bool _showAccountantColumn;
-    private bool _showShippingColumn;
-
     [JsonPropertyName("transactionType")]
     public TransactionType TransactionType
     {
-        get => _transactionType;
-        set => SetField(ref _transactionType, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = TransactionType.Both;
 
     [JsonPropertyName("includeReturns")]
     public bool IncludeReturns
     {
-        get => _includeReturns;
-        set => SetField(ref _includeReturns, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("includeLosses")]
     public bool IncludeLosses
     {
-        get => _includeLosses;
-        set => SetField(ref _includeLosses, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("dataSelection")]
     public TableDataSelection DataSelection
     {
-        get => _dataSelection;
-        set => SetField(ref _dataSelection, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = TableDataSelection.All;
 
     [JsonPropertyName("sortOrder")]
     public TableSortOrder SortOrder
     {
-        get => _sortOrder;
-        set => SetField(ref _sortOrder, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = TableSortOrder.DateDescending;
 
     [JsonPropertyName("maxRows")]
     public int MaxRows
     {
-        get => _maxRows;
-        set => SetField(ref _maxRows, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 10;
 
     [JsonPropertyName("showHeaders")]
     public bool ShowHeaders
     {
-        get => _showHeaders;
-        set => SetField(ref _showHeaders, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("alternateRowColors")]
     public bool AlternateRowColors
     {
-        get => _alternateRowColors;
-        set => SetField(ref _alternateRowColors, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showGridLines")]
     public bool ShowGridLines
     {
-        get => _showGridLines;
-        set => SetField(ref _showGridLines, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showTotalsRow")]
     public bool ShowTotalsRow
     {
-        get => _showTotalsRow;
-        set => SetField(ref _showTotalsRow, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("autoSizeColumns")]
     public bool AutoSizeColumns
     {
-        get => _autoSizeColumns;
-        set => SetField(ref _autoSizeColumns, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("fontSize")]
     public double FontSize
     {
-        get => _fontSize;
-        set => SetField(ref _fontSize, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 8;
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
     {
-        get => _fontFamily;
-        set => SetField(ref _fontFamily, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
 
     [JsonPropertyName("dataRowHeight")]
     public int DataRowHeight
     {
-        get => _dataRowHeight;
-        set => SetField(ref _dataRowHeight, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 20;
 
     [JsonPropertyName("headerRowHeight")]
     public int HeaderRowHeight
     {
-        get => _headerRowHeight;
-        set => SetField(ref _headerRowHeight, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 25;
 
     [JsonPropertyName("cellPadding")]
     public int CellPadding
     {
-        get => _cellPadding;
-        set => SetField(ref _cellPadding, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 3;
 
     [JsonPropertyName("headerBackgroundColor")]
     public string HeaderBackgroundColor
     {
-        get => _headerBackgroundColor;
-        set => SetField(ref _headerBackgroundColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#5E94FF";
 
     [JsonPropertyName("headerTextColor")]
     public string HeaderTextColor
     {
-        get => _headerTextColor;
-        set => SetField(ref _headerTextColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#FFFFFF";
 
     [JsonPropertyName("dataRowTextColor")]
     public string DataRowTextColor
     {
-        get => _dataRowTextColor;
-        set => SetField(ref _dataRowTextColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#000000";
 
     [JsonPropertyName("gridLineColor")]
     public string GridLineColor
     {
-        get => _gridLineColor;
-        set => SetField(ref _gridLineColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#D3D3D3";
 
     [JsonPropertyName("baseRowColor")]
     public string BaseRowColor
     {
-        get => _baseRowColor;
-        set => SetField(ref _baseRowColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#FFFFFF";
 
     [JsonPropertyName("alternateRowColor")]
     public string AlternateRowColor
     {
-        get => _alternateRowColor;
-        set => SetField(ref _alternateRowColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#F8F8F8";
 
     // Column visibility
     [JsonPropertyName("showDateColumn")]
     public bool ShowDateColumn
     {
-        get => _showDateColumn;
-        set => SetField(ref _showDateColumn, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showTransactionIdColumn")]
     public bool ShowTransactionIdColumn
     {
-        get => _showTransactionIdColumn;
-        set => SetField(ref _showTransactionIdColumn, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showCompanyColumn")]
     public bool ShowCompanyColumn
     {
-        get => _showCompanyColumn;
-        set => SetField(ref _showCompanyColumn, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showProductColumn")]
     public bool ShowProductColumn
     {
-        get => _showProductColumn;
-        set => SetField(ref _showProductColumn, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showQuantityColumn")]
     public bool ShowQuantityColumn
     {
-        get => _showQuantityColumn;
-        set => SetField(ref _showQuantityColumn, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showUnitPriceColumn")]
     public bool ShowUnitPriceColumn
     {
-        get => _showUnitPriceColumn;
-        set => SetField(ref _showUnitPriceColumn, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("showTotalColumn")]
     public bool ShowTotalColumn
     {
-        get => _showTotalColumn;
-        set => SetField(ref _showTotalColumn, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showStatusColumn")]
     public bool ShowStatusColumn
     {
-        get => _showStatusColumn;
-        set => SetField(ref _showStatusColumn, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("showAccountantColumn")]
     public bool ShowAccountantColumn
     {
-        get => _showAccountantColumn;
-        set => SetField(ref _showAccountantColumn, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("showShippingColumn")]
     public bool ShowShippingColumn
     {
-        get => _showShippingColumn;
-        set => SetField(ref _showShippingColumn, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     public override double MinimumSize => 100;
@@ -610,78 +558,68 @@ public class TableReportElement : ReportElementBase
 /// </summary>
 public class LabelReportElement : ReportElementBase
 {
-    private string _text = "Sample Text";
-    private string _fontFamily = "Segoe UI";
-    private double _fontSize = 12;
-    private bool _isBold;
-    private bool _isItalic;
-    private bool _isUnderline;
-    private string _textColor = "#000000";
-    private HorizontalTextAlignment _horizontalAlignment = HorizontalTextAlignment.Center;
-    private VerticalTextAlignment _verticalAlignment = VerticalTextAlignment.Center;
-
     [JsonPropertyName("text")]
     public string Text
     {
-        get => _text;
-        set => SetField(ref _text, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "Sample Text";
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
     {
-        get => _fontFamily;
-        set => SetField(ref _fontFamily, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
 
     [JsonPropertyName("fontSize")]
     public double FontSize
     {
-        get => _fontSize;
-        set => SetField(ref _fontSize, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 12;
 
     [JsonPropertyName("isBold")]
     public bool IsBold
     {
-        get => _isBold;
-        set => SetField(ref _isBold, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("isItalic")]
     public bool IsItalic
     {
-        get => _isItalic;
-        set => SetField(ref _isItalic, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("isUnderline")]
     public bool IsUnderline
     {
-        get => _isUnderline;
-        set => SetField(ref _isUnderline, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("textColor")]
     public string TextColor
     {
-        get => _textColor;
-        set => SetField(ref _textColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#000000";
 
     [JsonPropertyName("horizontalAlignment")]
     public HorizontalTextAlignment HorizontalAlignment
     {
-        get => _horizontalAlignment;
-        set => SetField(ref _horizontalAlignment, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = HorizontalTextAlignment.Center;
 
     [JsonPropertyName("verticalAlignment")]
     public VerticalTextAlignment VerticalAlignment
     {
-        get => _verticalAlignment;
-        set => SetField(ref _verticalAlignment, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = VerticalTextAlignment.Center;
 
     public override string DisplayName => "Label";
     public override ReportElementType GetElementType() => ReportElementType.Label;
@@ -715,62 +653,54 @@ public class LabelReportElement : ReportElementBase
 /// </summary>
 public class ImageReportElement : ReportElementBase
 {
-    private string _imagePath = string.Empty;
-    private ImageScaleMode _scaleMode = ImageScaleMode.Fit;
-    private string _backgroundColor = "#00FFFFFF";
-    private string _borderColor = "#00FFFFFF";
-    private int _borderThickness = 1;
-    private int _cornerRadiusPercent;
-    private int _opacity = 100;
-
     [JsonPropertyName("imagePath")]
     public string ImagePath
     {
-        get => _imagePath;
-        set => SetField(ref _imagePath, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = string.Empty;
 
     [JsonPropertyName("scaleMode")]
     public ImageScaleMode ScaleMode
     {
-        get => _scaleMode;
-        set => SetField(ref _scaleMode, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = ImageScaleMode.Fit;
 
     [JsonPropertyName("backgroundColor")]
     public string BackgroundColor
     {
-        get => _backgroundColor;
-        set => SetField(ref _backgroundColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#00FFFFFF";
 
     [JsonPropertyName("borderColor")]
     public string BorderColor
     {
-        get => _borderColor;
-        set => SetField(ref _borderColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#00FFFFFF";
 
     [JsonPropertyName("borderThickness")]
     public int BorderThickness
     {
-        get => _borderThickness;
-        set => SetField(ref _borderThickness, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 1;
 
     [JsonPropertyName("cornerRadiusPercent")]
     public int CornerRadiusPercent
     {
-        get => _cornerRadiusPercent;
-        set => SetField(ref _cornerRadiusPercent, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("opacity")]
     public int Opacity
     {
-        get => _opacity;
-        set => SetField(ref _opacity, Math.Clamp(value, 0, 100));
-    }
+        get;
+        set => SetField(ref field, Math.Clamp(value, 0, 100));
+    } = 100;
 
     public override string DisplayName => "Image";
     public override ReportElementType GetElementType() => ReportElementType.Image;
@@ -802,78 +732,68 @@ public class ImageReportElement : ReportElementBase
 /// </summary>
 public class DateRangeReportElement : ReportElementBase
 {
-    private string _dateFormat = "yyyy-MM-dd";
-    private string _textColor = "#808080";
-    private double _fontSize = 11;
-    private bool _isBold;
-    private bool _isItalic = true;
-    private bool _isUnderline;
-    private string _fontFamily = "Segoe UI";
-    private HorizontalTextAlignment _horizontalAlignment = HorizontalTextAlignment.Center;
-    private VerticalTextAlignment _verticalAlignment = VerticalTextAlignment.Center;
-
     [JsonPropertyName("dateFormat")]
     public string DateFormat
     {
-        get => _dateFormat;
-        set => SetField(ref _dateFormat, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "yyyy-MM-dd";
 
     [JsonPropertyName("textColor")]
     public string TextColor
     {
-        get => _textColor;
-        set => SetField(ref _textColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#808080";
 
     [JsonPropertyName("fontSize")]
     public double FontSize
     {
-        get => _fontSize;
-        set => SetField(ref _fontSize, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 11;
 
     [JsonPropertyName("isBold")]
     public bool IsBold
     {
-        get => _isBold;
-        set => SetField(ref _isBold, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("isItalic")]
     public bool IsItalic
     {
-        get => _isItalic;
-        set => SetField(ref _isItalic, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("isUnderline")]
     public bool IsUnderline
     {
-        get => _isUnderline;
-        set => SetField(ref _isUnderline, value);
+        get;
+        set => SetField(ref field, value);
     }
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
     {
-        get => _fontFamily;
-        set => SetField(ref _fontFamily, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
 
     [JsonPropertyName("horizontalAlignment")]
     public HorizontalTextAlignment HorizontalAlignment
     {
-        get => _horizontalAlignment;
-        set => SetField(ref _horizontalAlignment, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = HorizontalTextAlignment.Center;
 
     [JsonPropertyName("verticalAlignment")]
     public VerticalTextAlignment VerticalAlignment
     {
-        get => _verticalAlignment;
-        set => SetField(ref _verticalAlignment, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = VerticalTextAlignment.Center;
 
     public override string DisplayName => "Date Range";
     public override ReportElementType GetElementType() => ReportElementType.DateRange;
@@ -907,118 +827,103 @@ public class DateRangeReportElement : ReportElementBase
 /// </summary>
 public class SummaryReportElement : ReportElementBase
 {
-    private TransactionType _transactionType = TransactionType.Both;
-    private bool _includeReturns = true;
-    private bool _includeLosses = true;
-    private bool _showTotalSales = true;
-    private bool _showTotalTransactions = true;
-    private bool _showAverageValue = true;
-    private bool _showGrowthRate = true;
-    private string _backgroundColor = "#F5F5F5";
-    private int _borderThickness = 1;
-    private string _borderColor = "#D3D3D3";
-    private string _fontFamily = "Segoe UI";
-    private double _fontSize = 10;
-    private HorizontalTextAlignment _horizontalAlignment = HorizontalTextAlignment.Left;
-    private VerticalTextAlignment _verticalAlignment = VerticalTextAlignment.Top;
-
     [JsonPropertyName("transactionType")]
     public TransactionType TransactionType
     {
-        get => _transactionType;
-        set => SetField(ref _transactionType, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = TransactionType.Both;
 
     [JsonPropertyName("includeReturns")]
     public bool IncludeReturns
     {
-        get => _includeReturns;
-        set => SetField(ref _includeReturns, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("includeLosses")]
     public bool IncludeLosses
     {
-        get => _includeLosses;
-        set => SetField(ref _includeLosses, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showTotalSales")]
     public bool ShowTotalSales
     {
-        get => _showTotalSales;
-        set => SetField(ref _showTotalSales, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showTotalTransactions")]
     public bool ShowTotalTransactions
     {
-        get => _showTotalTransactions;
-        set => SetField(ref _showTotalTransactions, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showAverageValue")]
     public bool ShowAverageValue
     {
-        get => _showAverageValue;
-        set => SetField(ref _showAverageValue, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("showGrowthRate")]
     public bool ShowGrowthRate
     {
-        get => _showGrowthRate;
-        set => SetField(ref _showGrowthRate, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = true;
 
     [JsonPropertyName("backgroundColor")]
     public string BackgroundColor
     {
-        get => _backgroundColor;
-        set => SetField(ref _backgroundColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#F5F5F5";
 
     [JsonPropertyName("borderThickness")]
     public int BorderThickness
     {
-        get => _borderThickness;
-        set => SetField(ref _borderThickness, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 1;
 
     [JsonPropertyName("borderColor")]
     public string BorderColor
     {
-        get => _borderColor;
-        set => SetField(ref _borderColor, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "#D3D3D3";
 
     [JsonPropertyName("fontFamily")]
     public string FontFamily
     {
-        get => _fontFamily;
-        set => SetField(ref _fontFamily, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = "Segoe UI";
 
     [JsonPropertyName("fontSize")]
     public double FontSize
     {
-        get => _fontSize;
-        set => SetField(ref _fontSize, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = 10;
 
     [JsonPropertyName("horizontalAlignment")]
     public HorizontalTextAlignment HorizontalAlignment
     {
-        get => _horizontalAlignment;
-        set => SetField(ref _horizontalAlignment, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = HorizontalTextAlignment.Left;
 
     [JsonPropertyName("verticalAlignment")]
     public VerticalTextAlignment VerticalAlignment
     {
-        get => _verticalAlignment;
-        set => SetField(ref _verticalAlignment, value);
-    }
+        get;
+        set => SetField(ref field, value);
+    } = VerticalTextAlignment.Top;
 
     public override string DisplayName => "Summary";
     public override ReportElementType GetElementType() => ReportElementType.Summary;

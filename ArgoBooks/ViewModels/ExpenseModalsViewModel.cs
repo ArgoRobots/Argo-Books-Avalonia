@@ -178,7 +178,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     {
         if (item == null) return;
 
-        var expense = App.CompanyManager?.CompanyData?.Purchases?.FirstOrDefault(p => p.Id == item.Id);
+        var expense = App.CompanyManager?.CompanyData?.Purchases.FirstOrDefault(p => p.Id == item.Id);
         if (expense == null) return;
 
         LoadCounterpartyOptions();
@@ -220,11 +220,11 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var expense = companyData?.Purchases?.FirstOrDefault(p => p.Id == item.Id);
+        var expense = companyData?.Purchases.FirstOrDefault(p => p.Id == item.Id);
         if (expense == null) return;
 
         // Find and remove associated receipt
-        Core.Models.Tracking.Receipt? deletedReceipt = null;
+        Receipt? deletedReceipt = null;
         if (!string.IsNullOrEmpty(expense.ReceiptId))
         {
             deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == expense.ReceiptId);
@@ -240,20 +240,20 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             $"Delete expense {expense.Id}",
             () =>
             {
-                companyData?.Purchases?.Add(deletedExpense);
+                companyData?.Purchases.Add(deletedExpense);
                 if (capturedReceipt != null)
                     companyData?.Receipts.Add(capturedReceipt);
                 RaiseTransactionDeleted();
             },
             () =>
             {
-                companyData?.Purchases?.Remove(deletedExpense);
+                companyData?.Purchases.Remove(deletedExpense);
                 if (capturedReceipt != null)
                     companyData?.Receipts.Remove(capturedReceipt);
                 RaiseTransactionDeleted();
             });
 
-        companyData?.Purchases?.Remove(expense);
+        companyData?.Purchases.Remove(expense);
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
@@ -363,7 +363,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
         var valueLost = purchase.Total;
 
-        var lostDamaged = new Core.Models.Tracking.LostDamaged
+        var lostDamaged = new LostDamaged
         {
             Id = $"LOST-{++companyData.IdCounters.LostDamaged:D3}",
             ProductId = productId,
@@ -384,7 +384,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     {
         var productId = purchase.LineItems.FirstOrDefault()?.ProductId ?? "";
 
-        var returnRecord = new Core.Models.Tracking.Return
+        var returnRecord = new Return
         {
             Id = $"RET-{++companyData.IdCounters.Return:D3}",
             OriginalTransactionId = purchase.Id,
@@ -462,7 +462,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         };
 
         // Create Receipt if file was attached
-        Core.Models.Tracking.Receipt? receipt = null;
+        Receipt? receipt = null;
         if (!string.IsNullOrEmpty(ReceiptFilePath))
         {
             receipt = CreateReceipt(companyData, expenseId, "Expense", SelectedSupplier?.Name ?? "");
@@ -497,7 +497,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             });
 
         companyData.Purchases.Add(expense);
-        App.UndoRedoManager?.RecordAction(action);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
     }
@@ -533,7 +533,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.UpdatedAt = DateTime.Now;
 
         // Handle receipt
-        Core.Models.Tracking.Receipt? newReceipt = null;
+        Receipt? newReceipt = null;
         if (!string.IsNullOrEmpty(ReceiptFilePath) && string.IsNullOrEmpty(original.ReceiptId))
         {
             newReceipt = CreateReceipt(companyData, expense.Id, "Expense", SelectedSupplier?.Name ?? "");
@@ -586,7 +586,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         RaiseTransactionSaved();
     }
 
-    private Core.Models.Tracking.Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string vendor)
+    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string vendor)
     {
         companyData.IdCounters.Receipt++;
         var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
@@ -684,7 +684,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 /// <summary>
 /// Line item for expense form.
 /// </summary>
-public partial class ExpenseLineItem : TransactionLineItemBase
+public class ExpenseLineItem : TransactionLineItemBase
 {
 }
 

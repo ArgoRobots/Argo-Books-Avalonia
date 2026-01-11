@@ -36,13 +36,12 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private string _selectedTab = "All";
 
-    private int _selectedTabIndex;
     public int SelectedTabIndex
     {
-        get => _selectedTabIndex;
+        get;
         set
         {
-            if (SetProperty(ref _selectedTabIndex, value))
+            if (SetProperty(ref field, value))
             {
                 var tab = value switch
                 {

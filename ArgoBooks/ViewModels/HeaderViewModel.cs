@@ -603,9 +603,6 @@ public enum SearchSuggestionType
 /// </summary>
 public class NotificationItem : ObservableObject
 {
-    private bool _isRead;
-    private bool _isLast;
-
     /// <summary>
     /// Unique identifier.
     /// </summary>
@@ -636,8 +633,8 @@ public class NotificationItem : ObservableObject
     /// </summary>
     public bool IsRead
     {
-        get => _isRead;
-        set => SetProperty(ref _isRead, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     /// <summary>
@@ -645,8 +642,8 @@ public class NotificationItem : ObservableObject
     /// </summary>
     public bool IsLast
     {
-        get => _isLast;
-        set => SetProperty(ref _isLast, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     /// <summary>

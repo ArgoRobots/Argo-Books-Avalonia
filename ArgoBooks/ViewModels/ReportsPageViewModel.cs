@@ -987,10 +987,10 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             var filters = new[]
             {
-                new Avalonia.Platform.Storage.FilePickerFileType("Image files") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif"
+                new FilePickerFileType("Image files") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif"
                     ]
                 },
-                new Avalonia.Platform.Storage.FilePickerFileType("All files") { Patterns = ["*.*"] }
+                new FilePickerFileType("All files") { Patterns = ["*.*"] }
             };
 
             var result = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -1345,16 +1345,16 @@ public partial class ReportsPageViewModel : ViewModelBase
         {
             var filters = SelectedExportFormat switch
             {
-                ExportFormat.PDF => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns =
+                ExportFormat.PDF => new[] { new FilePickerFileType("PDF Document") { Patterns =
                     ["*.pdf"]
                 } },
-                ExportFormat.PNG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PNG Image") { Patterns =
+                ExportFormat.PNG => new[] { new FilePickerFileType("PNG Image") { Patterns =
                     ["*.png"]
                 } },
-                ExportFormat.JPEG => new[] { new Avalonia.Platform.Storage.FilePickerFileType("JPEG Image") { Patterns =
+                ExportFormat.JPEG => new[] { new FilePickerFileType("JPEG Image") { Patterns =
                     ["*.jpg", "*.jpeg"]
                 } },
-                _ => new[] { new Avalonia.Platform.Storage.FilePickerFileType("PDF Document") { Patterns = ["*.pdf"] } }
+                _ => new[] { new FilePickerFileType("PDF Document") { Patterns = ["*.pdf"] } }
             };
 
             var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -2291,7 +2291,7 @@ public partial class ChartOption(
 /// <summary>
 /// Represents a category group of chart options with "Select All" functionality.
 /// </summary>
-public partial class ChartCategoryGroup : ObservableObject
+public class ChartCategoryGroup : ObservableObject
 {
     public ChartCategoryGroup(string name, string accentColor, ObservableCollection<ChartOption> charts, Action onSelectionChanged)
     {
@@ -2303,7 +2303,7 @@ public partial class ChartCategoryGroup : ObservableObject
         // Subscribe to each chart's selection changes
         foreach (var chart in Charts)
         {
-            chart.PropertyChanged += (s, e) =>
+            chart.PropertyChanged += (_, e) =>
             {
                 if (e.PropertyName == nameof(ChartOption.IsSelected))
                 {

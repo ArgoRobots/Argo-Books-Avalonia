@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -23,12 +22,6 @@ public partial class TranslationGenerator
     // Regex patterns for extracting translatable strings
     [GeneratedRegex(@"\{loc:Loc\s+([^}]+)\}")]
     private static partial Regex LocExtensionRegex();
-
-    [GeneratedRegex(@"\.Translate\(\s*\)")]
-    private static partial Regex TranslateCallRegex();
-
-    [GeneratedRegex(@"\.TranslateFormat\s*\(")]
-    private static partial Regex TranslateFormatCallRegex();
 
     [GeneratedRegex(@"Loc\.Tr\s*\(\s*""([^""]+)""")]
     private static partial Regex LocTrCallRegex();
@@ -165,10 +158,7 @@ public partial class TranslationGenerator
                 if (!string.IsNullOrWhiteSpace(text))
                 {
                     var key = LanguageService.GetStringKey(text);
-                    if (!strings.ContainsKey(key))
-                    {
-                        strings[key] = text;
-                    }
+                    strings.TryAdd(key, text);
                 }
             }
         }
@@ -338,10 +328,7 @@ public partial class TranslationGenerator
             return;
 
         var key = LanguageService.GetStringKey(text);
-        if (!strings.ContainsKey(key))
-        {
-            strings[key] = text;
-        }
+        strings.TryAdd(key, text);
     }
 
     /// <summary>
@@ -374,7 +361,7 @@ public partial class TranslationGenerator
             if (Languages.IsValidIsoCode(language))
             {
                 isoCode = language;
-                displayName = Languages.GetLanguageName(language) ?? language;
+                displayName = Languages.GetLanguageName(language);
             }
             else
             {
@@ -644,13 +631,12 @@ public partial class TranslationGenerator
     // Response models for Azure API
     private class TranslationResponse
     {
-        public List<Translation>? translations { get; set; }
+        public List<Translation>? translations { get; }
     }
 
     private class Translation
     {
-        public string? text { get; set; }
-        public string? to { get; set; }
+        public string? text { get; }
     }
 }
 

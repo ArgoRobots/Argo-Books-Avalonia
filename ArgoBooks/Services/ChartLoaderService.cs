@@ -1996,18 +1996,18 @@ public class ChartLoaderService
             {
                 // First try customer country
                 var customer = companyData.GetCustomer(s.CustomerId ?? "");
-                if (!string.IsNullOrEmpty(customer?.Address?.Country))
+                if (!string.IsNullOrEmpty(customer?.Address.Country))
                     return GetCountryIsoCode(customer.Address.Country);
 
                 // Fall back to product's supplier country
-                var firstProductId = s.LineItems?.FirstOrDefault()?.ProductId;
+                var firstProductId = s.LineItems.FirstOrDefault()?.ProductId;
                 if (!string.IsNullOrEmpty(firstProductId))
                 {
                     var product = companyData.GetProduct(firstProductId);
                     if (product != null && !string.IsNullOrEmpty(product.SupplierId))
                     {
                         var supplier = companyData.GetSupplier(product.SupplierId);
-                        if (!string.IsNullOrEmpty(supplier?.Address?.Country))
+                        if (!string.IsNullOrEmpty(supplier?.Address.Country))
                             return GetCountryIsoCode(supplier.Address.Country);
                     }
                 }
@@ -2045,7 +2045,7 @@ public class ChartLoaderService
                 if (!string.IsNullOrEmpty(supplierId))
                 {
                     var supplier = companyData.GetSupplier(supplierId);
-                    if (supplier?.Address?.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
+                    if (supplier?.Address.Country != null && !string.IsNullOrEmpty(supplier.Address.Country))
                         return GetCountryIsoCode(supplier.Address.Country);
                 }
                 return string.Empty;
@@ -2290,7 +2290,7 @@ public class ChartLoaderService
             return purchase.SupplierId;
 
         // Otherwise, look at the first LineItem's product
-        var firstProductId = purchase.LineItems?.FirstOrDefault()?.ProductId;
+        var firstProductId = purchase.LineItems.FirstOrDefault()?.ProductId;
         if (!string.IsNullOrEmpty(firstProductId))
         {
             var product = companyData.GetProduct(firstProductId);
@@ -2331,16 +2331,6 @@ public class ChartLoaderService
         ];
 
         return colors[index % colors.Length];
-    }
-
-    /// <summary>
-    /// Gets a color for a series by index.
-    /// </summary>
-    /// <param name="index">The series index.</param>
-    /// <returns>An SKColor for the series.</returns>
-    private static SKColor GetColorForIndex(int index)
-    {
-        return SKColor.Parse(GetColorHexForIndex(index));
     }
 
     /// <summary>

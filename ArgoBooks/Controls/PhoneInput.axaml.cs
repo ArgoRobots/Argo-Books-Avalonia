@@ -121,18 +121,17 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    private bool _isCountryDropdownOpen;
     /// <summary>
     /// Gets or sets whether the country dropdown is open.
     /// </summary>
     public bool IsCountryDropdownOpen
     {
-        get => _isCountryDropdownOpen;
+        get;
         set
         {
-            if (_isCountryDropdownOpen != value)
+            if (field != value)
             {
-                _isCountryDropdownOpen = value;
+                field = value;
                 RaisePropertyChanged();
 
                 // Refresh the list when opening
@@ -145,40 +144,38 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    private bool _hasFilteredCountries;
     /// <summary>
     /// Gets whether there are filtered countries.
     /// </summary>
     public bool HasFilteredCountries
     {
-        get => _hasFilteredCountries;
+        get;
         private set
         {
-            if (_hasFilteredCountries != value)
+            if (field != value)
             {
-                _hasFilteredCountries = value;
+                field = value;
                 RaisePropertyChanged();
             }
         }
     }
 
-    private int _selectedIndex = -1;
     /// <summary>
     /// Gets or sets the currently highlighted index in the dropdown.
     /// </summary>
     public int SelectedIndex
     {
-        get => _selectedIndex;
+        get;
         set
         {
-            if (_selectedIndex != value)
+            if (field != value)
             {
-                _selectedIndex = value;
+                field = value;
                 RaisePropertyChanged();
                 ScrollToSelectedItem();
             }
         }
-    }
+    } = -1;
 
     /// <summary>
     /// Gets the filtered dial codes based on search.
@@ -615,8 +612,6 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 /// </summary>
 public class CountryDialCode(string code, string name, string dialCode, string phoneFormat, string? flagFileName = null)
 {
-    private IImage? _flagImage;
-
     /// <summary>
     /// ISO country code (e.g., US, GB).
     /// </summary>
@@ -664,20 +659,20 @@ public class CountryDialCode(string code, string name, string dialCode, string p
     {
         get
         {
-            if (_flagImage == null)
+            if (field == null)
             {
                 try
                 {
                     var uri = new Uri(FlagPath);
                     var assets = Avalonia.Platform.AssetLoader.Open(uri);
-                    _flagImage = new Bitmap(assets);
+                    field = new Bitmap(assets);
                 }
                 catch
                 {
                     // Flag not found, return null
                 }
             }
-            return _flagImage;
+            return field;
         }
     }
 

@@ -21,7 +21,7 @@ public partial class CheckForUpdateModal : UserControl
 
         if (DataContext is CheckForUpdateModalViewModel vm)
         {
-            vm.PropertyChanged += (s, args) =>
+            vm.PropertyChanged += (_, args) =>
             {
                 if (args.PropertyName == nameof(vm.IsOpen) && vm.IsOpen)
                 {

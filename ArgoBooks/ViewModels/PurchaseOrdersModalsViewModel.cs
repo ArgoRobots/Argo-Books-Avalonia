@@ -227,7 +227,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
                 Quantity = lineItem.Quantity.ToString(),
                 UnitCost = lineItem.UnitCost.ToString("F2")
             };
-            vm.PropertyChanged += (s, e) => UpdateCalculatedTotals();
+            vm.PropertyChanged += (_, _) => UpdateCalculatedTotals();
             LineItems.Add(vm);
         }
         UpdateCalculatedTotals();
@@ -262,7 +262,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     private void AddLineItem()
     {
         var vm = new OrderLineItemViewModel();
-        vm.PropertyChanged += (s, e) => UpdateCalculatedTotals();
+        vm.PropertyChanged += (_, _) => UpdateCalculatedTotals();
         LineItems.Add(vm);
         UpdateCalculatedTotals();
     }
@@ -400,7 +400,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
     private void SaveEditedOrder(CompanyData companyData, decimal shipping)
     {
-        var order = companyData.PurchaseOrders?.FirstOrDefault(o => o.Id == EditingOrderId);
+        var order = companyData.PurchaseOrders.FirstOrDefault(o => o.Id == EditingOrderId);
         if (order == null) return;
 
         // Store old values for undo
@@ -434,7 +434,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         // Record undo action
         var editedOrder = order;
         var newLineItems = order.LineItems.ToList();
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit order '{order.PoNumber}'",
             () =>
             {
@@ -748,10 +748,10 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
         var companyData = App.CompanyManager?.CompanyData;
 
-        var order = companyData?.PurchaseOrders?.FirstOrDefault(o => o.Id == item.Id);
+        var order = companyData?.PurchaseOrders.FirstOrDefault(o => o.Id == item.Id);
         if (order == null) return;
 
-        companyData?.PurchaseOrders?.Remove(order);
+        companyData?.PurchaseOrders.Remove(order);
         companyData?.MarkAsModified();
 
         // Record undo action
@@ -760,13 +760,13 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             $"Delete order '{orderPoNumber}'",
             () =>
             {
-                companyData?.PurchaseOrders?.Add(order);
+                companyData?.PurchaseOrders.Add(order);
                 companyData?.MarkAsModified();
                 OrderDeleted?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData?.PurchaseOrders?.Remove(order);
+                companyData?.PurchaseOrders.Remove(order);
                 companyData?.MarkAsModified();
                 OrderDeleted?.Invoke(this, EventArgs.Empty);
             }));

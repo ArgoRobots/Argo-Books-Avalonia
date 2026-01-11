@@ -345,7 +345,7 @@ public partial class Header : UserControl
     #endregion
 
     private TextBlock? _asterisk;
-    private StackPanel? _saveButtonContainer;
+    private readonly StackPanel? _saveButtonContainer;
     private bool _isInitialized;
 
     public Header()

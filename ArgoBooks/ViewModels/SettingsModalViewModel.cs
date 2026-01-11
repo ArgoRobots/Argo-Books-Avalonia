@@ -481,14 +481,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             // Load from global settings when no company is open
             var globalSettings = App.SettingsService?.GlobalSettings;
-            if (globalSettings != null)
-            {
-                SetLanguageWithoutNotify(globalSettings.Ui.Language);
-            }
-            else
-            {
-                SetLanguageWithoutNotify(LanguageService.Instance.CurrentLanguage);
-            }
+            SetLanguageWithoutNotify(globalSettings != null
+                ? globalSettings.Ui.Language
+                : LanguageService.Instance.CurrentLanguage);
         }
 
         // Load max pie slices from global settings

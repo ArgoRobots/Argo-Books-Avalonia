@@ -322,9 +322,9 @@ public class LicenseServiceTests
             return Task.FromResult(new MemoryStream(decrypted));
         }
 
-        public bool IsPasswordValid(string password) => password?.Length >= 8;
+        public bool IsPasswordValid(string password) => password.Length >= 8;
         public string? GetPasswordValidationError(string password) =>
-            password?.Length >= 8 ? null : "Password must be at least 8 characters";
+            password.Length >= 8 ? null : "Password must be at least 8 characters";
     }
 
     private class MockGlobalSettingsService : IGlobalSettingsService
@@ -376,7 +376,13 @@ public class LicenseServiceTests
         public string NormalizePath(string path) => path;
         public string CombinePaths(params string[] paths) => string.Join("/", paths);
         public void EnsureDirectoryExists(string path) { }
-
+        public Task<bool> AuthenticateWithBiometricAsync(string reason) => Task.FromResult(false);
+        public void ClearPasswordForBiometric(string key) { }
+        public string? GetPasswordForBiometric(string key) => null;
+        public Task<bool> IsBiometricAvailableAsync() => Task.FromResult(false);
+        public StringComparer PathComparer => StringComparer.OrdinalIgnoreCase;
+        public void StorePasswordForBiometric(string key, string password) { }
+        
         /// <summary>
         /// Returns a stable mock machine ID for testing.
         /// </summary>

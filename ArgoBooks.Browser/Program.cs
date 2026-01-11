@@ -2,7 +2,7 @@
 using Avalonia.Browser;
 using ArgoBooks;
 
-internal sealed partial class Program
+internal sealed class Program
 {
     private static Task Main(string[] args) => BuildAvaloniaApp()
         .WithInterFont()

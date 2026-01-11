@@ -442,22 +442,6 @@ public class FileService(
         return false;
     }
 
-    private static string GetCompanyDirectory(string tempDirectory)
-    {
-        // Find the deepest directory that contains data files (for backward compatibility)
-        var subdirs = Directory.GetDirectories(tempDirectory);
-        if (subdirs.Length == 0)
-            return tempDirectory;
-
-        // Check if this level has data files (appSettings.json is our marker)
-        var candidate = subdirs[0];
-        if (File.Exists(Path.Combine(candidate, "appSettings.json")))
-            return candidate;
-
-        // Otherwise recurse into subdirectories (handles nested archive case)
-        return GetCompanyDirectory(candidate);
-    }
-
     private static string? FindFileInDirectory(string directory, string fileName, int maxDepth = 3)
     {
         // First check directly in directory

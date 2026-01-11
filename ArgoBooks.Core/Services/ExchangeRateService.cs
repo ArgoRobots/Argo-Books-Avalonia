@@ -1,6 +1,4 @@
 using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
@@ -17,7 +15,6 @@ public class ExchangeRateService : IExchangeRateService
     private readonly ExchangeRateCache _cache;
     private readonly HttpClient _httpClient;
     private readonly string? _apiKey;
-    private readonly IPlatformService _platformService;
     private bool _isInitialized;
 
     /// <summary>
@@ -40,7 +37,6 @@ public class ExchangeRateService : IExchangeRateService
     public ExchangeRateService(string? apiKey, IPlatformService platformService, HttpClient httpClient)
     {
         _apiKey = apiKey ?? DotEnv.Get("OPENEXCHANGERATES_API_KEY");
-        _platformService = platformService;
         _httpClient = httpClient;
         _httpClient.Timeout = TimeSpan.FromSeconds(10);
         _cache = new ExchangeRateCache(platformService);
@@ -101,13 +97,6 @@ public class ExchangeRateService : IExchangeRateService
             }
         }
 
-        // Try to use latest cached rate for these currencies (any date)
-        var fallbackRate = GetFallbackRate(fromCurrency, toCurrency);
-        if (fallbackRate > 0)
-        {
-            return fallbackRate;
-        }
-
         return -1m; // Rate unavailable
     }
 
@@ -130,8 +119,7 @@ public class ExchangeRateService : IExchangeRateService
             return rate;
         }
 
-        // Try fallback
-        return GetFallbackRate(fromCurrency, toCurrency);
+        return -1m; // Rate unavailable
     }
 
     /// <summary>
@@ -258,16 +246,6 @@ public class ExchangeRateService : IExchangeRateService
     }
 
     /// <summary>
-    /// Tries to find a rate for any date as a fallback.
-    /// </summary>
-    private decimal GetFallbackRate(string fromCurrency, string toCurrency)
-    {
-        // This is a simple fallback - in a production system you might
-        // want to track the most recent date for each currency pair
-        return -1m;
-    }
-
-    /// <summary>
     /// Saves the cache to disk.
     /// </summary>
     public Task SaveCacheAsync() => _cache.SaveAsync();
@@ -278,19 +256,19 @@ public class ExchangeRateService : IExchangeRateService
     private class OpenExchangeRatesResponse
     {
         [JsonPropertyName("disclaimer")]
-        public string? Disclaimer { get; set; }
+        public string? Disclaimer { get; init; }
 
         [JsonPropertyName("license")]
-        public string? License { get; set; }
+        public string? License { get; init; }
 
         [JsonPropertyName("timestamp")]
-        public long Timestamp { get; set; }
+        public long Timestamp { get; init; }
 
         [JsonPropertyName("base")]
-        public string? Base { get; set; }
+        public string? Base { get; init; }
 
         [JsonPropertyName("rates")]
-        public Dictionary<string, decimal>? Rates { get; set; }
+        public Dictionary<string, decimal>? Rates { get; init; }
     }
 }
 

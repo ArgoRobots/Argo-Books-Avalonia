@@ -29,7 +29,6 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     private ScrollViewer? _itemsScrollViewer;
     private int _highlightedIndex = -1;
     private bool _isSettingFromSelectedItem;
-    private object? _highlightedItem;
 
     #region Styled Properties
 
@@ -286,12 +285,12 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// </summary>
     public object? HighlightedItem
     {
-        get => _highlightedItem;
+        get;
         private set
         {
-            if (_highlightedItem != value)
+            if (field != value)
             {
-                _highlightedItem = value;
+                field = value;
                 RaisePropertyChanged();
             }
         }
@@ -563,11 +562,11 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
         if (scrollOffset < currentOffset)
         {
-            _itemsScrollViewer.Offset = new Avalonia.Vector(0, scrollOffset);
+            _itemsScrollViewer.Offset = new Vector(0, scrollOffset);
         }
         else if (scrollOffset + itemHeight > currentOffset + viewportHeight)
         {
-            _itemsScrollViewer.Offset = new Avalonia.Vector(0, scrollOffset + itemHeight - viewportHeight);
+            _itemsScrollViewer.Offset = new Vector(0, scrollOffset + itemHeight - viewportHeight);
         }
     }
 

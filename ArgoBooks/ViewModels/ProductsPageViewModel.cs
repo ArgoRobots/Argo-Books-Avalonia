@@ -287,14 +287,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     partial void OnModalCategoryIdChanged(string? value)
     {
         // Update ModalCategory when CategoryId changes
-        if (value != null)
-        {
-            ModalCategory = AvailableCategories.FirstOrDefault(c => c.Id == value);
-        }
-        else
-        {
-            ModalCategory = null;
-        }
+        ModalCategory = value != null ? AvailableCategories.FirstOrDefault(c => c.Id == value) : null;
     }
 
     [ObservableProperty]
@@ -612,7 +605,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                     Product = p,
                     NameScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, p.Name),
                     SkuScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, p.Sku),
-                    DescScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, p.Description ?? string.Empty)
+                    DescScore = LevenshteinDistance.ComputeSearchScore(SearchQuery, p.Description)
                 })
                 .Where(x => x.NameScore >= 0 || x.SkuScore >= 0 || x.DescScore >= 0)
                 .OrderByDescending(x => Math.Max(Math.Max(x.NameScore, x.SkuScore), x.DescScore))
@@ -676,7 +669,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 Name = product.Name,
                 Sku = product.Sku,
                 Description = product.Description,
-                ItemType = product.ItemType ?? "Product",
+                ItemType = product.ItemType,
                 CategoryName = category?.Name ?? "-",
                 SupplierName = supplier?.Name ?? "-",
                 CountryOfOrigin = supplier?.Address.Country ?? "-",
@@ -808,7 +801,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var productToUndo = newProduct;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add product '{newProduct.Name}'",
             () =>
             {
@@ -900,7 +893,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit product '{newName}'",
             () =>
             {
@@ -978,7 +971,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete product '{deletedProduct.Name}'",
                 () =>
                 {
@@ -1055,43 +1048,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     #endregion
 
     #region Modal Helpers
-
-    /// <summary>
-    /// Updates categories available in the modal based on current tab.
-    /// </summary>
-    private void UpdateModalCategories()
-    {
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
-
-        AvailableCategories.Clear();
-
-        var targetType = IsExpensesTabSelected ? CategoryType.Purchase : CategoryType.Sales;
-        var categories = companyData.Categories
-            .Where(c => c.Type == targetType)
-            .OrderBy(c => c.Name);
-
-        foreach (var cat in categories)
-        {
-            AvailableCategories.Add(new CategoryOption { Id = cat.Id, Name = cat.Name, ItemType = cat.ItemType });
-        }
-
-        // Update CategoryItems for the searchable input
-        CategoryItems.Clear();
-        foreach (var cat in categories)
-        {
-            CategoryItems.Add(new CategoryItem { Id = cat.Id, Name = cat.Name });
-        }
-        OnPropertyChanged(nameof(HasCategories));
-
-        // Reset suppliers
-        AvailableSuppliers.Clear();
-        foreach (var supplier in companyData.Suppliers.OrderBy(s => s.Name))
-        {
-            AvailableSuppliers.Add(new SupplierOption { Id = supplier.Id, Name = supplier.Name });
-        }
-    }
 
     private void ClearModalFields()
     {

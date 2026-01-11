@@ -294,7 +294,7 @@ public class GlobalSettingsService : ISettingsService, IGlobalSettingsService
     #region IGlobalSettingsService Implementation
 
     /// <inheritdoc />
-    GlobalSettings? IGlobalSettingsService.GetSettings() => _globalSettings;
+    GlobalSettings IGlobalSettingsService.GetSettings() => _globalSettings;
 
     /// <inheritdoc />
     void IGlobalSettingsService.SaveSettings(GlobalSettings settings)

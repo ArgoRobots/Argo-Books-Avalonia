@@ -1,10 +1,5 @@
-using System.ComponentModel;
-using System.Text;
 using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Data;
 using Avalonia.Markup.Xaml;
-using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Threading;
 using ArgoBooks.Services;
 
@@ -21,14 +16,14 @@ public class LocExtension : MarkupExtension
     public string Key
     {
         get => _key;
-        set => _key = value ?? string.Empty;
+        set => _key = value;
     }
 
     public LocExtension() { }
 
     public LocExtension(string key)
     {
-        _key = key ?? string.Empty;
+        _key = key;
     }
 
     public LocExtension(string part1, string part2)
@@ -71,23 +66,23 @@ public static class LocalizationManager
 {
     // Store bindings directly (not weak references to bindings!)
     // Only the Target inside each binding is a weak reference
-    private static readonly List<LocalizationBinding> _bindings = new();
+    private static readonly List<LocalizationBinding> Bindings = [];
     private static bool _initialized;
 
     private class LocalizationBinding
     {
-        public WeakReference<AvaloniaObject> Target { get; set; } = null!;
-        public AvaloniaProperty Property { get; set; } = null!;
-        public string Key { get; set; } = null!;
+        public WeakReference<AvaloniaObject> Target { get; init; } = null!;
+        public AvaloniaProperty Property { get; init; } = null!;
+        public string Key { get; init; } = null!;
     }
 
     public static void Register(AvaloniaObject target, AvaloniaProperty property, string key)
     {
         EnsureInitialized();
 
-        lock (_bindings)
+        lock (Bindings)
         {
-            _bindings.Add(new LocalizationBinding
+            Bindings.Add(new LocalizationBinding
             {
                 Target = new WeakReference<AvaloniaObject>(target),
                 Property = property,
@@ -108,21 +103,18 @@ public static class LocalizationManager
     {
         System.Diagnostics.Debug.WriteLine($"[LOC-MGR] Language changed to {e.NewLanguage}. Refreshing bindings...");
 
-        Dispatcher.UIThread.Post(() =>
-        {
-            RefreshAllBindings();
-        }, DispatcherPriority.Normal);
+        Dispatcher.UIThread.Post(RefreshAllBindings, DispatcherPriority.Normal);
     }
 
     private static void RefreshAllBindings()
     {
-        List<LocalizationBinding> validBindings = new();
-        List<LocalizationBinding> deadBindings = new();
+        List<LocalizationBinding> validBindings = [];
+        List<LocalizationBinding> deadBindings = [];
 
-        lock (_bindings)
+        lock (Bindings)
         {
             // Collect valid bindings and identify dead ones
-            foreach (var binding in _bindings)
+            foreach (var binding in Bindings)
             {
                 if (binding.Target.TryGetTarget(out _))
                 {
@@ -137,7 +129,7 @@ public static class LocalizationManager
             // Remove dead bindings (targets have been garbage collected)
             foreach (var dead in deadBindings)
             {
-                _bindings.Remove(dead);
+                Bindings.Remove(dead);
             }
         }
 

@@ -41,7 +41,7 @@ public class CompressionServiceTests : IDisposable
     [Fact]
     public async Task CompressGZipAsync_DecompressGZipAsync_RoundTrip_RestoresOriginalData()
     {
-        var originalData = Encoding.UTF8.GetBytes("Hello, World! This is test data for compression.");
+        var originalData = "Hello, World! This is test data for compression."u8.ToArray();
 
         using var inputStream = new MemoryStream(originalData);
         using var compressedStream = await _compressionService.CompressGZipAsync(inputStream);
@@ -68,7 +68,7 @@ public class CompressionServiceTests : IDisposable
     [Fact]
     public async Task CompressGZipAsync_ReturnsStreamAtPositionZero()
     {
-        var originalData = Encoding.UTF8.GetBytes("Test data");
+        var originalData = "Test data"u8.ToArray();
 
         using var inputStream = new MemoryStream(originalData);
         using var compressedStream = await _compressionService.CompressGZipAsync(inputStream);
@@ -79,7 +79,7 @@ public class CompressionServiceTests : IDisposable
     [Fact]
     public async Task DecompressGZipAsync_ReturnsStreamAtPositionZero()
     {
-        var originalData = Encoding.UTF8.GetBytes("Test data");
+        var originalData = "Test data"u8.ToArray();
 
         using var inputStream = new MemoryStream(originalData);
         using var compressedStream = await _compressionService.CompressGZipAsync(inputStream);
@@ -120,7 +120,7 @@ public class CompressionServiceTests : IDisposable
     [InlineData(CompressionLevel.SmallestSize)]
     public async Task CompressGZipAsync_WorksWithDifferentCompressionLevels(CompressionLevel level)
     {
-        var originalData = Encoding.UTF8.GetBytes("Test data for different compression levels.");
+        var originalData = "Test data for different compression levels."u8.ToArray();
 
         using var inputStream = new MemoryStream(originalData);
         using var compressedStream = await _compressionService.CompressGZipAsync(inputStream, level);
@@ -152,7 +152,7 @@ public class CompressionServiceTests : IDisposable
         var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var originalData = Encoding.UTF8.GetBytes("Test data");
+        var originalData = "Test data"u8.ToArray();
         using var inputStream = new MemoryStream(originalData);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>

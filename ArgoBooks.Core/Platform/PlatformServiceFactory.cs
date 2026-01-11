@@ -8,7 +8,7 @@ namespace ArgoBooks.Core.Platform;
 public static class PlatformServiceFactory
 {
     private static IPlatformService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lock Lock = new();
 
     /// <summary>
     /// Gets the platform service for the current platform.
@@ -19,7 +19,7 @@ public static class PlatformServiceFactory
         if (_instance != null)
             return _instance;
 
-        lock (_lock)
+        lock (Lock)
         {
             _instance ??= CreatePlatformService();
             return _instance;
@@ -83,7 +83,7 @@ public static class PlatformServiceFactory
     /// </summary>
     internal static void Reset()
     {
-        lock (_lock)
+        lock (Lock)
         {
             _instance = null;
         }

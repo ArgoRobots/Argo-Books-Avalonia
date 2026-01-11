@@ -52,7 +52,7 @@ public static class BoolConverters
     /// Converts bool to one of two strings based on the parameter.
     /// Parameter format: "TrueValue;FalseValue"
     /// </summary>
-    public static new readonly IValueConverter ToString = new BoolToStringConverter();
+    public new static readonly IValueConverter ToString = new BoolToStringConverter();
 
     /// <summary>
     /// Converts bool to "Expenses" (true) or "Revenue" (false).
@@ -350,7 +350,7 @@ public static class StringConverters
     /// <summary>
     /// Returns true if the value equals the parameter.
     /// </summary>
-    public static new readonly IValueConverter Equals =
+    public new static readonly IValueConverter Equals =
         new FuncValueConverter<string, string, bool>((value, parameter) =>
             string.Equals(value, parameter, StringComparison.OrdinalIgnoreCase));
 

@@ -288,7 +288,7 @@ public partial class ElementPropertyPanel : UserControl
             ItemsSource = Enum.GetValues<ChartDataType>(),
             SelectedItem = chart.ChartType
         };
-        chartTypeCombo.SelectionChanged += (s, e) =>
+        chartTypeCombo.SelectionChanged += (_, _) =>
         {
             if (_isUpdating || chartTypeCombo.SelectedItem is not ChartDataType newType) return;
             var oldValue = chart.ChartType;
@@ -311,7 +311,7 @@ public partial class ElementPropertyPanel : UserControl
             ItemsSource = Enum.GetValues<ReportChartStyle>(),
             SelectedItem = chart.ChartStyle
         };
-        chartStyleCombo.SelectionChanged += (s, e) =>
+        chartStyleCombo.SelectionChanged += (_, _) =>
         {
             if (_isUpdating || chartStyleCombo.SelectedItem is not ReportChartStyle newStyle) return;
             var oldValue = chart.ChartStyle;
@@ -328,7 +328,7 @@ public partial class ElementPropertyPanel : UserControl
             IsChecked = chart.ShowTitle,
             Margin = new Thickness(0, 8, 0, 0)
         };
-        showTitleCheck.IsCheckedChanged += (s, e) =>
+        showTitleCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = chart.ShowTitle;
@@ -344,7 +344,7 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "property-checkbox" },
             IsChecked = chart.ShowLegend
         };
-        showLegendCheck.IsCheckedChanged += (s, e) =>
+        showLegendCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = chart.ShowLegend;
@@ -379,7 +379,7 @@ public partial class ElementPropertyPanel : UserControl
             ItemsSource = Enum.GetValues<TableDataSelection>(),
             SelectedItem = table.DataSelection
         };
-        dataSelectionCombo.SelectionChanged += (s, e) =>
+        dataSelectionCombo.SelectionChanged += (_, _) =>
         {
             if (_isUpdating || dataSelectionCombo.SelectedItem is not TableDataSelection newSelection) return;
             var oldValue = table.DataSelection;
@@ -403,7 +403,7 @@ public partial class ElementPropertyPanel : UserControl
             Minimum = 1,
             Maximum = 100
         };
-        rowCountInput.ValueChanged += (s, e) =>
+        rowCountInput.ValueChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = table.MaxRows;
@@ -420,7 +420,7 @@ public partial class ElementPropertyPanel : UserControl
             IsChecked = table.ShowHeaders,
             Margin = new Thickness(0, 8, 0, 0)
         };
-        showHeaderCheck.IsCheckedChanged += (s, e) =>
+        showHeaderCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = table.ShowHeaders;
@@ -435,7 +435,7 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "property-checkbox" },
             IsChecked = table.AlternateRowColors
         };
-        alternatingRowsCheck.IsCheckedChanged += (s, e) =>
+        alternatingRowsCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = table.AlternateRowColors;
@@ -472,7 +472,7 @@ public partial class ElementPropertyPanel : UserControl
             TextWrapping = TextWrapping.Wrap,
             MinHeight = 60
         };
-        textInput.TextChanged += (s, e) =>
+        textInput.TextChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = label.Text;
@@ -496,7 +496,7 @@ public partial class ElementPropertyPanel : UserControl
             Minimum = 8,
             Maximum = 72
         };
-        fontSizeInput.ValueChanged += (s, e) =>
+        fontSizeInput.ValueChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = label.FontSize;
@@ -521,7 +521,7 @@ public partial class ElementPropertyPanel : UserControl
             Height = 32,
             IsChecked = label.IsBold
         };
-        boldCheck.IsCheckedChanged += (s, e) =>
+        boldCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = label.IsBold;
@@ -538,7 +538,7 @@ public partial class ElementPropertyPanel : UserControl
             Height = 32,
             IsChecked = label.IsItalic
         };
-        italicCheck.IsCheckedChanged += (s, e) =>
+        italicCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = label.IsItalic;
@@ -554,7 +554,7 @@ public partial class ElementPropertyPanel : UserControl
             Height = 32,
             IsChecked = label.IsUnderline
         };
-        underlineCheck.IsCheckedChanged += (s, e) =>
+        underlineCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = label.IsUnderline;
@@ -579,7 +579,7 @@ public partial class ElementPropertyPanel : UserControl
             ItemsSource = Enum.GetValues<HorizontalTextAlignment>(),
             SelectedItem = label.HorizontalAlignment
         };
-        hAlignCombo.SelectionChanged += (s, e) =>
+        hAlignCombo.SelectionChanged += (_, _) =>
         {
             if (_isUpdating || hAlignCombo.SelectedItem is not HorizontalTextAlignment align) return;
             var oldValue = label.HorizontalAlignment;
@@ -630,11 +630,6 @@ public partial class ElementPropertyPanel : UserControl
             Padding = new Thickness(8, 6)
         };
         Grid.SetColumn(browseButton, 1);
-        browseButton.Click += async (s, e) =>
-        {
-            // TODO: Implement file browser
-            // For now, just show a placeholder
-        };
         pathPanel.Children.Add(browseButton);
 
         panel.Children.Add(pathPanel);
@@ -653,7 +648,7 @@ public partial class ElementPropertyPanel : UserControl
             ItemsSource = Enum.GetValues<ImageScaleMode>(),
             SelectedItem = image.ScaleMode
         };
-        scaleModeCombo.SelectionChanged += (s, e) =>
+        scaleModeCombo.SelectionChanged += (_, _) =>
         {
             if (_isUpdating || scaleModeCombo.SelectedItem is not ImageScaleMode mode) return;
             var oldValue = image.ScaleMode;
@@ -688,7 +683,7 @@ public partial class ElementPropertyPanel : UserControl
             Text = dateRange.DateFormat,
             Watermark = "MMM dd, yyyy"
         };
-        dateFormatInput.TextChanged += (s, e) =>
+        dateFormatInput.TextChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = dateRange.DateFormat;
@@ -712,7 +707,7 @@ public partial class ElementPropertyPanel : UserControl
             Minimum = 8,
             Maximum = 36
         };
-        fontSizeInput.ValueChanged += (s, e) =>
+        fontSizeInput.ValueChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = dateRange.FontSize;
@@ -747,7 +742,7 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "property-checkbox" },
             IsChecked = summary.ShowTotalSales
         };
-        totalSalesCheck.IsCheckedChanged += (s, e) =>
+        totalSalesCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = summary.ShowTotalSales;
@@ -762,7 +757,7 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "property-checkbox" },
             IsChecked = summary.ShowTotalTransactions
         };
-        transactionCountCheck.IsCheckedChanged += (s, e) =>
+        transactionCountCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = summary.ShowTotalTransactions;
@@ -777,7 +772,7 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "property-checkbox" },
             IsChecked = summary.ShowAverageValue
         };
-        avgValueCheck.IsCheckedChanged += (s, e) =>
+        avgValueCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = summary.ShowAverageValue;
@@ -792,7 +787,7 @@ public partial class ElementPropertyPanel : UserControl
             Classes = { "property-checkbox" },
             IsChecked = summary.ShowGrowthRate
         };
-        growthRateCheck.IsCheckedChanged += (s, e) =>
+        growthRateCheck.IsCheckedChanged += (_, _) =>
         {
             if (_isUpdating) return;
             var oldValue = summary.ShowGrowthRate;

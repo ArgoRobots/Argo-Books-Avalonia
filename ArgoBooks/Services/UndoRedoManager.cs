@@ -77,7 +77,7 @@ public interface IUndoableAction
 /// <summary>
 /// Manages undo and redo operations with history tracking.
 /// </summary>
-public partial class UndoRedoManager : ObservableObject, IUndoRedoManager
+public class UndoRedoManager : ObservableObject, IUndoRedoManager
 {
     private readonly Stack<IUndoableAction> _undoStack = new();
     private readonly Stack<IUndoableAction> _redoStack = new();

@@ -479,7 +479,6 @@ public partial class PaymentsPageViewModel : SortablePageViewModelBase
         var displayItems = filtered.Select(payment =>
         {
             var customer = companyData?.GetCustomer(payment.CustomerId);
-            var invoice = companyData?.GetInvoice(payment.InvoiceId);
             var status = GetPaymentStatus(payment);
 
             return new PaymentDisplayItem

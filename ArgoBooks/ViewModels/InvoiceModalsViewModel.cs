@@ -448,7 +448,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             });
 
         // Remove the invoice
-        companyData?.Invoices?.Remove(invoice);
+        companyData?.Invoices.Remove(invoice);
 
         // Record undo action and mark as changed
         App.UndoRedoManager.RecordAction(action);
@@ -506,7 +506,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     {
         if (item == null) return;
 
-        var invoice = App.CompanyManager?.CompanyData?.Invoices?.FirstOrDefault(i => i.Id == item.Id);
+        var invoice = App.CompanyManager?.CompanyData?.Invoices.FirstOrDefault(i => i.Id == item.Id);
         if (invoice == null) return;
 
         HistoryInvoiceId = invoice.Id;
@@ -524,7 +524,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         };
 
         // Add payment history
-        var payments = App.CompanyManager?.CompanyData?.Payments?
+        var payments = App.CompanyManager?.CompanyData?.Payments
             .Where(p => p.InvoiceId == invoice.Id)
             .OrderBy(p => p.Date)
             .ToList() ?? [];
@@ -540,7 +540,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
 
         // Add status changes from history if available
-        if (invoice.History?.Count > 0)
+        if (invoice.History.Count > 0)
         {
             foreach (var entry in invoice.History.OrderBy(h => h.Timestamp))
             {
@@ -640,7 +640,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (companyData == null) return;
 
         // Generate invoice ID
-        var nextNumber = (companyData.Invoices?.Count ?? 0) + 1;
+        var nextNumber = (companyData.Invoices.Count) + 1;
         var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
 
         var invoice = new Invoice
@@ -669,20 +669,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             $"Create and send invoice {invoiceId}",
             () =>
             {
-                companyData.Invoices!.Remove(invoice);
+                companyData.Invoices.Remove(invoice);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData.Invoices!.Add(invoice);
+                companyData.Invoices.Add(invoice);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             });
 
         // Add the invoice
-        companyData.Invoices!.Add(invoice);
+        companyData.Invoices.Add(invoice);
 
         // Record undo action and mark as changed
-        App.UndoRedoManager?.RecordAction(action);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
         // TODO: Actually send email to customer here
@@ -720,7 +720,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         if (companyData == null) return;
 
         // Generate invoice ID
-        var nextNumber = (companyData.Invoices?.Count ?? 0) + 1;
+        var nextNumber = (companyData.Invoices.Count) + 1;
         var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
 
         var invoice = new Invoice
@@ -749,20 +749,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             $"Add draft invoice {invoiceId}",
             () =>
             {
-                companyData.Invoices!.Remove(invoice);
+                companyData.Invoices.Remove(invoice);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData.Invoices!.Add(invoice);
+                companyData.Invoices.Add(invoice);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             });
 
         // Add the invoice
-        companyData.Invoices!.Add(invoice);
+        companyData.Invoices.Add(invoice);
 
         // Record undo action and mark as changed
-        App.UndoRedoManager?.RecordAction(action);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
@@ -824,7 +824,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private void SaveNewInvoice(CompanyData companyData)
     {
         // Generate invoice ID
-        var nextNumber = (companyData.Invoices?.Count ?? 0) + 1;
+        var nextNumber = (companyData.Invoices.Count) + 1;
         var invoiceId = $"INV-{DateTime.Now:yyyy}-{nextNumber:D5}";
 
         var invoice = new Invoice
@@ -853,20 +853,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             $"Add invoice {invoiceId}",
             () =>
             {
-                companyData.Invoices!.Remove(invoice);
+                companyData.Invoices.Remove(invoice);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData.Invoices!.Add(invoice);
+                companyData.Invoices.Add(invoice);
                 InvoiceSaved?.Invoke(this, EventArgs.Empty);
             });
 
         // Add the invoice
-        companyData.Invoices!.Add(invoice);
+        companyData.Invoices.Add(invoice);
 
         // Record undo action and mark as changed
-        App.UndoRedoManager?.RecordAction(action);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
@@ -874,7 +874,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     private void SaveEditedInvoice(CompanyData companyData)
     {
-        var invoice = companyData.Invoices?.FirstOrDefault(i => i.Id == _editingInvoiceId);
+        var invoice = companyData.Invoices.FirstOrDefault(i => i.Id == _editingInvoiceId);
         if (invoice == null) return;
 
         // Store original values for undo
@@ -935,7 +935,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             });
 
         // Record undo action and mark as changed
-        App.UndoRedoManager?.RecordAction(action);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
 
         InvoiceSaved?.Invoke(this, EventArgs.Empty);

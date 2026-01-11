@@ -10,8 +10,7 @@ namespace ArgoBooks.Services;
 /// </summary>
 public partial class ChartSettingsService : ObservableObject
 {
-    private static ChartSettingsService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lock Lock = new();
 
     private readonly IGlobalSettingsService? _globalSettingsService;
     private bool _isInitialized;
@@ -23,14 +22,14 @@ public partial class ChartSettingsService : ObservableObject
     {
         get
         {
-            if (_instance == null)
+            if (field == null)
             {
-                lock (_lock)
+                lock (Lock)
                 {
-                    _instance ??= new ChartSettingsService();
+                    field ??= new ChartSettingsService();
                 }
             }
-            return _instance;
+            return field;
         }
     }
 

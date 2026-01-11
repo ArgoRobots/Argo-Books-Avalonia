@@ -116,7 +116,7 @@ public class EqualConverter : IValueConverter
 /// </summary>
 public class ObjectEqualsMultiConverter : IMultiValueConverter
 {
-    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count < 2)
             return false;
@@ -201,7 +201,7 @@ public class HighlightBorderBrushMultiConverter : IMultiValueConverter
 /// </summary>
 public class HighlightBorderThicknessMultiConverter : IMultiValueConverter
 {
-    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
     {
         if (values.Count < 2 || !AreEqual(values[0], values[1]))
             return new Thickness(0);

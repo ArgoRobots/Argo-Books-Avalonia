@@ -113,23 +113,16 @@ public partial class SidebarSection : UserControl
 /// </summary>
 public class SidebarItemModel : CommunityToolkit.Mvvm.ComponentModel.ObservableObject
 {
-    private string? _text;
-    private string? _pageName;
     private string? _iconData;
-    private bool _isActive;
-    private bool _isVisible = true;
-    private bool _isCollapsed;
     private string? _badgeText;
-    private bool _showBadge;
-    private ICommand? _command;
 
     /// <summary>
     /// Display text for the item.
     /// </summary>
     public string? Text
     {
-        get => _text;
-        set => SetProperty(ref _text, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     /// <summary>
@@ -137,8 +130,8 @@ public class SidebarItemModel : CommunityToolkit.Mvvm.ComponentModel.ObservableO
     /// </summary>
     public string? PageName
     {
-        get => _pageName;
-        set => SetProperty(ref _pageName, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     /// <summary>
@@ -167,8 +160,8 @@ public class SidebarItemModel : CommunityToolkit.Mvvm.ComponentModel.ObservableO
     /// </summary>
     public bool IsActive
     {
-        get => _isActive;
-        set => SetProperty(ref _isActive, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     /// <summary>
@@ -176,17 +169,17 @@ public class SidebarItemModel : CommunityToolkit.Mvvm.ComponentModel.ObservableO
     /// </summary>
     public bool IsVisible
     {
-        get => _isVisible;
-        set => SetProperty(ref _isVisible, value);
-    }
+        get;
+        set => SetProperty(ref field, value);
+    } = true;
 
     /// <summary>
     /// Whether the sidebar is in collapsed mode.
     /// </summary>
     public bool IsCollapsed
     {
-        get => _isCollapsed;
-        set => SetProperty(ref _isCollapsed, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     /// <summary>
@@ -209,8 +202,8 @@ public class SidebarItemModel : CommunityToolkit.Mvvm.ComponentModel.ObservableO
     /// </summary>
     public bool ShowBadge
     {
-        get => _showBadge || !string.IsNullOrEmpty(_badgeText);
-        set => SetProperty(ref _showBadge, value);
+        get => field || !string.IsNullOrEmpty(_badgeText);
+        set => SetProperty(ref field, value);
     }
 
     /// <summary>
@@ -218,7 +211,7 @@ public class SidebarItemModel : CommunityToolkit.Mvvm.ComponentModel.ObservableO
     /// </summary>
     public ICommand? Command
     {
-        get => _command;
-        set => SetProperty(ref _command, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 }

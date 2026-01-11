@@ -97,22 +97,22 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private bool _showDateColumn = true;
 
     [ObservableProperty]
-    private bool _showQuantityColumn = false;
+    private bool _showQuantityColumn;
 
     [ObservableProperty]
-    private bool _showUnitPriceColumn = false;
+    private bool _showUnitPriceColumn;
 
     [ObservableProperty]
-    private bool _showAmountColumn = false;
+    private bool _showAmountColumn;
 
     [ObservableProperty]
-    private bool _showTaxColumn = false;
+    private bool _showTaxColumn;
 
     [ObservableProperty]
-    private bool _showShippingColumn = false;
+    private bool _showShippingColumn;
 
     [ObservableProperty]
-    private bool _showDiscountColumn = false;
+    private bool _showDiscountColumn;
 
     [ObservableProperty]
     private bool _showTotalColumn = true;
@@ -349,7 +349,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
         // Returns count
         var companyData = App.CompanyManager?.CompanyData;
-        ReturnsCount = companyData?.Returns?.Count(r =>
+        ReturnsCount = companyData?.Returns.Count(r =>
             _allRevenue.Any(s => s.Id == r.OriginalTransactionId)) ?? 0;
     }
 
@@ -513,14 +513,14 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private static string GetStatusDisplay(Sale sale, Core.Data.CompanyData? companyData)
     {
         // Check for lost/damaged related to this sale
-        var relatedLostDamaged = companyData?.LostDamaged?.FirstOrDefault(ld => ld.InventoryItemId == sale.Id);
+        var relatedLostDamaged = companyData?.LostDamaged.FirstOrDefault(ld => ld.InventoryItemId == sale.Id);
         if (relatedLostDamaged != null)
         {
             return "Lost/Damaged";
         }
 
         // Check for returns related to this sale
-        var relatedReturn = companyData?.Returns?.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
+        var relatedReturn = companyData?.Returns.FirstOrDefault(r => r.OriginalTransactionId == sale.Id);
 
         if (relatedReturn is { Status: ReturnStatus.Completed })
         {

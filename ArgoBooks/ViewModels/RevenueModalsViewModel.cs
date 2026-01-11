@@ -172,7 +172,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     {
         if (item == null) return;
 
-        var sale = App.CompanyManager?.CompanyData?.Sales?.FirstOrDefault(s => s.Id == item.Id);
+        var sale = App.CompanyManager?.CompanyData?.Sales.FirstOrDefault(s => s.Id == item.Id);
         if (sale == null) return;
 
         LoadCounterpartyOptions();
@@ -218,7 +218,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         if (sale == null) return;
 
         // Find and remove associated receipt
-        Core.Models.Tracking.Receipt? deletedReceipt = null;
+        Receipt? deletedReceipt = null;
         if (!string.IsNullOrEmpty(sale.ReceiptId))
         {
             deletedReceipt = companyData?.Receipts.FirstOrDefault(r => r.Id == sale.ReceiptId);
@@ -234,7 +234,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             $"Delete sale {sale.Id}",
             () =>
             {
-                companyData?.Sales?.Add(deletedSale);
+                companyData?.Sales.Add(deletedSale);
                 if (capturedReceipt != null)
                     companyData?.Receipts.Add(capturedReceipt);
                 RaiseTransactionDeleted();
@@ -347,7 +347,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
         var valueLost = sale.Total;
 
-        var lostDamaged = new Core.Models.Tracking.LostDamaged
+        var lostDamaged = new LostDamaged
         {
             Id = $"LOST-{++companyData.IdCounters.LostDamaged:D3}",
             ProductId = productId,
@@ -368,7 +368,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     {
         var productId = sale.LineItems.FirstOrDefault()?.ProductId ?? "";
 
-        var returnRecord = new Core.Models.Tracking.Return
+        var returnRecord = new Return
         {
             Id = $"RET-{++companyData.IdCounters.Return:D3}",
             OriginalTransactionId = sale.Id,
@@ -446,7 +446,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         };
 
         // Create Receipt if file was attached
-        Core.Models.Tracking.Receipt? receipt = null;
+        Receipt? receipt = null;
         if (!string.IsNullOrEmpty(ReceiptFilePath))
         {
             receipt = CreateReceipt(companyData, saleId, "Revenue", SelectedCustomer?.Name ?? "");
@@ -517,7 +517,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         sale.UpdatedAt = DateTime.Now;
 
         // Handle receipt
-        Core.Models.Tracking.Receipt? newReceipt = null;
+        Receipt? newReceipt = null;
         if (!string.IsNullOrEmpty(ReceiptFilePath) && string.IsNullOrEmpty(original.ReceiptId))
         {
             newReceipt = CreateReceipt(companyData, sale.Id, "Revenue", SelectedCustomer?.Name ?? "");
@@ -565,12 +565,12 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 RaiseTransactionSaved();
             });
 
-        App.UndoRedoManager?.RecordAction(action);
+        App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
         RaiseTransactionSaved();
     }
 
-    private Core.Models.Tracking.Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string vendor)
+    private Receipt CreateReceipt(CompanyData companyData, string transactionId, string transactionType, string vendor)
     {
         companyData.IdCounters.Receipt++;
         var receiptId = $"RCP-{DateTime.Now:yyyy}-{companyData.IdCounters.Receipt:D5}";
@@ -668,6 +668,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 /// <summary>
 /// Line item for revenue/sale form.
 /// </summary>
-public partial class RevenueLineItem : TransactionLineItemBase
+public class RevenueLineItem : TransactionLineItemBase
 {
 }

@@ -1,7 +1,5 @@
-using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using ArgoBooks.Core.Services;
 using ArgoBooks.Data;
 
 namespace ArgoBooks.Services;
@@ -12,8 +10,7 @@ namespace ArgoBooks.Services;
 /// </summary>
 public partial class LanguageService
 {
-    private static LanguageService? _instance;
-    private static readonly object _lock = new();
+    private static readonly Lock Lock = new();
 
     /// <summary>
     /// Gets the singleton instance of the LanguageService.
@@ -22,14 +19,14 @@ public partial class LanguageService
     {
         get
         {
-            if (_instance == null)
+            if (field == null)
             {
-                lock (_lock)
+                lock (Lock)
                 {
-                    _instance ??= new LanguageService();
+                    field ??= new LanguageService();
                 }
             }
-            return _instance;
+            return field;
         }
     }
 

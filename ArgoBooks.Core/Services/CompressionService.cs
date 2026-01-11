@@ -86,8 +86,7 @@ public class CompressionService
 
         await using var tarReader = new TarReader(tarStream, leaveOpen: true);
 
-        TarEntry? entry;
-        while ((entry = await tarReader.GetNextEntryAsync(true, cancellationToken)) != null)
+        while (await tarReader.GetNextEntryAsync(true, cancellationToken) is { } entry)
         {
             cancellationToken.ThrowIfCancellationRequested();
 

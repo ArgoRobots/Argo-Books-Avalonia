@@ -66,32 +66,32 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             query = query.Take(tableConfig.MaxRows);
         }
 
-        return query.Select(s => CreateSalesRow(s)).ToList();
+        return query.Select(CreateSalesRow).ToList();
     }
 
     private TransactionTableRow CreateSalesRow(Sale sale)
     {
         var customer = companyData?.GetCustomer(sale.CustomerId ?? "");
         var accountant = companyData?.GetAccountant(sale.AccountantId ?? "");
-        var primaryItem = sale.LineItems?.FirstOrDefault();
+        var primaryItem = sale.LineItems.FirstOrDefault();
         var product = primaryItem != null ? companyData?.GetProduct(primaryItem.ProductId ?? "") : null;
 
         return new TransactionTableRow
         {
             Id = sale.Id,
-            TransactionId = sale.ReferenceNumber ?? sale.Id,
+            TransactionId = sale.ReferenceNumber,
             Date = sale.Date,
             TransactionType = "Sale",
             CompanyName = customer?.Name ?? "Unknown",
-            ProductName = product?.Description ?? (sale.LineItems?.Count > 1 ? $"Multiple ({sale.LineItems.Count} items)" : sale.Description),
-            Quantity = (int)(sale.LineItems?.Sum(i => i.Quantity) ?? sale.Quantity),
+            ProductName = product?.Description ?? (sale.LineItems.Count > 1 ? $"Multiple ({sale.LineItems.Count} items)" : sale.Description),
+            Quantity = (int)(sale.LineItems.Sum(i => i.Quantity)),
             UnitPrice = primaryItem?.UnitPrice ?? sale.UnitPrice,
             Total = sale.Total,
             Status = sale.PaymentStatus,
             AccountantName = accountant?.Name ?? "Unknown",
             ShippingCost = sale.ShippingCost,
-            Country = customer?.Address?.Country ?? "",
-            Notes = sale.Notes ?? ""
+            Country = customer?.Address.Country ?? "",
+            Notes = sale.Notes
         };
     }
 
@@ -136,7 +136,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             query = query.Take(tableConfig.MaxRows);
         }
 
-        return query.Select(p => CreatePurchaseRow(p)).ToList();
+        return query.Select(CreatePurchaseRow).ToList();
     }
 
     private TransactionTableRow CreatePurchaseRow(Purchase purchase)
@@ -147,7 +147,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         return new TransactionTableRow
         {
             Id = purchase.Id,
-            TransactionId = purchase.ReferenceNumber ?? purchase.Id,
+            TransactionId = purchase.ReferenceNumber,
             Date = purchase.Date,
             TransactionType = "Purchase",
             CompanyName = supplier?.Name ?? "Unknown",
@@ -158,8 +158,8 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             Status = "Completed",
             AccountantName = accountant?.Name ?? "Unknown",
             ShippingCost = purchase.ShippingCost,
-            Country = supplier?.Address?.Country ?? "",
-            Notes = purchase.Notes ?? ""
+            Country = supplier?.Address.Country ?? "",
+            Notes = purchase.Notes
         };
     }
 
@@ -241,13 +241,13 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             query = query.Take(tableConfig.MaxRows);
         }
 
-        return query.Select(r => CreateReturnRow(r)).ToList();
+        return query.Select(CreateReturnRow).ToList();
     }
 
     private ReturnTableRow CreateReturnRow(Return returnRecord)
     {
         // Get first item's product info (returns can have multiple items)
-        var firstItem = returnRecord.Items?.FirstOrDefault();
+        var firstItem = returnRecord.Items.FirstOrDefault();
         var product = firstItem != null ? companyData?.GetProduct(firstItem.ProductId) : null;
         var category = product != null ? companyData?.GetCategory(product.CategoryId ?? "") : null;
 
@@ -257,9 +257,9 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             ReturnDate = returnRecord.ReturnDate,
             OriginalTransactionId = returnRecord.OriginalTransactionId,
             ReturnType = "Sale", // Returns are from sales
-            ProductName = product?.Name ?? (returnRecord.Items?.Count > 1 ? $"Multiple ({returnRecord.Items.Count} items)" : "Unknown"),
+            ProductName = product?.Name ?? (returnRecord.Items.Count > 1 ? $"Multiple ({returnRecord.Items.Count} items)" : "Unknown"),
             CategoryName = category?.Name ?? "Unknown",
-            Quantity = returnRecord.Items?.Sum(i => i.Quantity) ?? 0,
+            Quantity = returnRecord.Items.Sum(i => i.Quantity),
             RefundAmount = returnRecord.RefundAmount,
             Reason = firstItem?.Reason ?? "Not specified",
             Status = returnRecord.Status.ToString(),
@@ -300,7 +300,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             query = query.Take(tableConfig.MaxRows);
         }
 
-        return query.Select(l => CreateLossRow(l)).ToList();
+        return query.Select(CreateLossRow).ToList();
     }
 
     private LossTableRow CreateLossRow(LostDamaged lossRecord)
@@ -392,19 +392,13 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         {
             var shippingCosts = new List<decimal>();
 
-            if (companyData.Sales != null)
-            {
-                shippingCosts.AddRange(companyData.Sales
-                    .Where(s => s.Date >= startDate && s.Date <= endDate)
-                    .Select(s => s.ShippingCost));
-            }
+            shippingCosts.AddRange(companyData.Sales
+                .Where(s => s.Date >= startDate && s.Date <= endDate)
+                .Select(s => s.ShippingCost));
 
-            if (companyData.Purchases != null)
-            {
-                shippingCosts.AddRange(companyData.Purchases
-                    .Where(p => p.Date >= startDate && p.Date <= endDate)
-                    .Select(p => p.ShippingCost));
-            }
+            shippingCosts.AddRange(companyData.Purchases
+                .Where(p => p.Date >= startDate && p.Date <= endDate)
+                .Select(p => p.ShippingCost));
 
             stats.TotalShippingCosts = shippingCosts.Sum();
             stats.AverageShippingCost = shippingCosts.Count > 0 ? shippingCosts.Average() : 0;
@@ -455,7 +449,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
         var productSales = companyData.Sales
             .Where(s => s.Date >= startDate && s.Date <= endDate)
-            .SelectMany(s => s.LineItems ?? [])
+            .SelectMany(s => s.LineItems)
             .GroupBy(i => i.ProductId)
             .Select(g =>
             {
@@ -501,7 +495,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 {
                     CustomerId = g.Key ?? "",
                     CustomerName = customer?.Name ?? "Unknown",
-                    Country = customer?.Address?.Country ?? "",
+                    Country = customer?.Address.Country ?? "",
                     TotalRevenue = g.Sum(s => s.Total),
                     TransactionCount = g.Count(),
                     AverageTransaction = g.Average(s => s.Total),
@@ -537,7 +531,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
                 {
                     SupplierId = g.Key ?? "",
                     SupplierName = supplier?.Name ?? "Unknown",
-                    Country = supplier?.Address?.Country ?? "",
+                    Country = supplier?.Address.Country ?? "",
                     TotalPurchases = g.Sum(p => p.Total),
                     TransactionCount = g.Count(),
                     AverageTransaction = g.Average(p => p.Total),
@@ -564,30 +558,24 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
         var accountantData = new Dictionary<string, (decimal Sales, decimal Purchases, int Count)>();
 
-        if (companyData.Sales != null)
+        foreach (var sale in companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
         {
-            foreach (var sale in companyData.Sales.Where(s => s.Date >= startDate && s.Date <= endDate))
-            {
-                var accountantId = sale.AccountantId ?? "";
-                if (!accountantData.ContainsKey(accountantId))
-                    accountantData[accountantId] = (0, 0, 0);
+            var accountantId = sale.AccountantId ?? "";
+            if (!accountantData.ContainsKey(accountantId))
+                accountantData[accountantId] = (0, 0, 0);
 
-                var current = accountantData[accountantId];
-                accountantData[accountantId] = (current.Sales + sale.Total, current.Purchases, current.Count + 1);
-            }
+            var current = accountantData[accountantId];
+            accountantData[accountantId] = (current.Sales + sale.Total, current.Purchases, current.Count + 1);
         }
 
-        if (companyData.Purchases != null)
+        foreach (var purchase in companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
         {
-            foreach (var purchase in companyData.Purchases.Where(p => p.Date >= startDate && p.Date <= endDate))
-            {
-                var accountantId = purchase.AccountantId ?? "";
-                if (!accountantData.ContainsKey(accountantId))
-                    accountantData[accountantId] = (0, 0, 0);
+            var accountantId = purchase.AccountantId ?? "";
+            if (!accountantData.ContainsKey(accountantId))
+                accountantData[accountantId] = (0, 0, 0);
 
-                var current = accountantData[accountantId];
-                accountantData[accountantId] = (current.Sales, current.Purchases + purchase.Total, current.Count + 1);
-            }
+            var current = accountantData[accountantId];
+            accountantData[accountantId] = (current.Sales, current.Purchases + purchase.Total, current.Count + 1);
         }
 
         return accountantData

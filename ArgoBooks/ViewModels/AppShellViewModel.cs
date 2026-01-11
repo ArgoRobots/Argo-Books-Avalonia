@@ -803,7 +803,7 @@ public class ObservableDictionary<TKey, TValue> : ObservableCollection<KeyValueP
         {
             _dictionary[key] = value;
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(
-                System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+                NotifyCollectionChangedAction.Reset));
         }
     }
 

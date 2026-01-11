@@ -26,7 +26,7 @@ public static class CurrencyService
     /// Gets the current currency code from company settings (e.g., "USD", "EUR").
     /// </summary>
     public static string CurrentCurrencyCode =>
-        App.CompanyManager?.CompanyData?.Settings?.Localization?.Currency ?? "USD";
+        App.CompanyManager?.CompanyData?.Settings.Localization.Currency ?? "USD";
 
     /// <summary>
     /// Gets the current currency info.
@@ -97,9 +97,6 @@ public static class CurrencyService
     /// <returns>The amount converted to the current display currency.</returns>
     public static decimal GetDisplayAmount(MonetaryValue value)
     {
-        if (value == null)
-            return 0m;
-
         var targetCurrency = CurrentCurrencyCode;
 
         // If target is the original currency, return exact original

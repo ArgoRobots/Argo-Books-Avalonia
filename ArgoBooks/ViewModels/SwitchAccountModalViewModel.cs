@@ -105,7 +105,7 @@ public partial class SwitchAccountModalViewModel : ViewModelBase
     {
         Accounts.Clear();
 
-        var query = SearchQuery?.Trim() ?? string.Empty;
+        var query = SearchQuery.Trim();
 
         // Filter and score accounts
         var filteredAccounts = _allAccounts

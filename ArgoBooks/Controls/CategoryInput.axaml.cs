@@ -88,18 +88,17 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
 
     #region Properties
 
-    private CategoryItem? _selectedCategory;
     /// <summary>
     /// Gets the selected category.
     /// </summary>
     public CategoryItem? SelectedCategory
     {
-        get => _selectedCategory;
+        get;
         private set
         {
-            if (_selectedCategory != value)
+            if (field != value)
             {
-                _selectedCategory = value;
+                field = value;
                 RaisePropertyChanged();
             }
         }
@@ -135,18 +134,17 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    private bool _isDropdownOpen;
     /// <summary>
     /// Gets or sets whether the dropdown is open.
     /// </summary>
     public bool IsDropdownOpen
     {
-        get => _isDropdownOpen;
+        get;
         set
         {
-            if (_isDropdownOpen != value)
+            if (field != value)
             {
-                _isDropdownOpen = value;
+                field = value;
                 RaisePropertyChanged();
 
                 if (value)
@@ -158,40 +156,38 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    private bool _hasFilteredCategories;
     /// <summary>
     /// Gets whether there are filtered categories.
     /// </summary>
     public bool HasFilteredCategories
     {
-        get => _hasFilteredCategories;
+        get;
         private set
         {
-            if (_hasFilteredCategories != value)
+            if (field != value)
             {
-                _hasFilteredCategories = value;
+                field = value;
                 RaisePropertyChanged();
             }
         }
     }
 
-    private int _selectedIndex = -1;
     /// <summary>
     /// Gets or sets the currently highlighted index in the dropdown.
     /// </summary>
     public int SelectedIndex
     {
-        get => _selectedIndex;
+        get;
         set
         {
-            if (_selectedIndex != value)
+            if (field != value)
             {
-                _selectedIndex = value;
+                field = value;
                 RaisePropertyChanged();
                 ScrollToSelectedItem();
             }
         }
-    }
+    } = -1;
 
     /// <summary>
     /// Gets the filtered categories based on search.
@@ -395,11 +391,11 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     {
         FilteredCategories.Clear();
 
-        var searchText = _searchText?.Trim().ToLowerInvariant() ?? string.Empty;
+        var searchText = _searchText.Trim().ToLowerInvariant();
 
         IEnumerable<CategoryItem> filtered;
 
-        if (string.IsNullOrEmpty(searchText) || searchText == SelectedCategory?.Name?.ToLowerInvariant())
+        if (string.IsNullOrEmpty(searchText) || searchText == SelectedCategory?.Name.ToLowerInvariant())
         {
             filtered = Categories;
         }

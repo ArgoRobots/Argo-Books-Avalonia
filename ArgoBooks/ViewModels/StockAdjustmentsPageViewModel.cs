@@ -228,7 +228,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         // Update location options
         LocationOptions.Clear();
         LocationOptions.Add("All");
-        var locations = companyData.Locations?.Select(l => l.Name).Distinct().OrderBy(n => n).ToList() ?? [];
+        var locations = companyData.Locations.Select(l => l.Name).Distinct().OrderBy(n => n).ToList();
         foreach (var location in locations)
         {
             LocationOptions.Add(location);
@@ -237,7 +237,7 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         // Update product options
         ProductOptions.Clear();
         ProductOptions.Add("All");
-        var products = companyData.Products?.Select(p => p.Name).Distinct().OrderBy(n => n).ToList() ?? [];
+        var products = companyData.Products.Select(p => p.Name).Distinct().OrderBy(n => n).ToList();
         foreach (var product in products)
         {
             ProductOptions.Add(product);
@@ -605,7 +605,6 @@ public partial class StockAdjustmentDisplayItem : ObservableObject
     {
         AdjustmentType.Add => $"+{Quantity}",
         AdjustmentType.Remove => $"-{Quantity}",
-        AdjustmentType.Set => Quantity.ToString(),
         _ => Quantity.ToString()
     };
 

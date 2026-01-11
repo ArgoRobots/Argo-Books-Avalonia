@@ -20,10 +20,10 @@ public class LicenseService
     /// </summary>
     private class LicenseData
     {
-        public bool HasStandard { get; set; }
-        public bool HasPremium { get; set; }
-        public string? LicenseKey { get; set; }
-        public DateTime ActivationDate { get; set; }
+        public bool HasStandard { get; init; }
+        public bool HasPremium { get; init; }
+        public string? LicenseKey { get; init; }
+        public DateTime ActivationDate { get; init; }
     }
 
     /// <summary>

@@ -134,10 +134,6 @@ public partial class CreateCompanyViewModel : ViewModelBase
     /// </summary>
     public event EventHandler<CompanyCreatedEventArgs>? CompanyCreated;
 
-    public CreateCompanyViewModel()
-    {
-    }
-
     #region Commands
 
     [RelayCommand]

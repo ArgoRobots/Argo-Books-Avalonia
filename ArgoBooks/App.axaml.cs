@@ -15,7 +15,7 @@ using ArgoBooks.Views;
 
 namespace ArgoBooks;
 
-public partial class App : Application
+public class App : Application
 {
     /// <summary>
     /// Gets the navigation service instance.
@@ -312,7 +312,7 @@ public partial class App : Application
             var fileService = new FileService(compressionService, footerService, encryptionService);
             SettingsService = new GlobalSettingsService();
             LicenseService = new LicenseService(encryptionService, SettingsService);
-            CompanyManager = new CompanyManager(fileService, encryptionService, SettingsService, footerService);
+            CompanyManager = new CompanyManager(fileService, SettingsService, footerService);
 
             // Create navigation service
             NavigationService = new NavigationService();

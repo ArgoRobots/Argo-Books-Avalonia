@@ -212,10 +212,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
             return;
 
         // Load inventory items
-        if (companyData.Inventory != null)
-        {
-            _allItems.AddRange(companyData.Inventory);
-        }
+        _allItems.AddRange(companyData.Inventory);
 
         UpdateStatistics();
         UpdateDropdownOptions();
@@ -251,35 +248,29 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         AvailableCategories.Clear();
         AvailableCategories.Add("All");
 
-        if (companyData.Categories != null)
-        {
-            var categories = companyData.Categories
-                .Where(c => c.ItemType == "Product")
-                .Select(c => c.Name)
-                .Distinct()
-                .OrderBy(c => c);
+        var categories = companyData.Categories
+            .Where(c => c.ItemType == "Product")
+            .Select(c => c.Name)
+            .Distinct()
+            .OrderBy(c => c);
 
-            foreach (var category in categories)
-            {
-                AvailableCategories.Add(category);
-            }
+        foreach (var category in categories)
+        {
+            AvailableCategories.Add(category);
         }
 
         // Update locations
         AvailableLocations.Clear();
         AvailableLocations.Add("All");
 
-        if (companyData.Locations != null)
-        {
-            var locations = companyData.Locations
-                .Select(l => l.Name)
-                .Distinct()
-                .OrderBy(l => l);
+        var locations = companyData.Locations
+            .Select(l => l.Name)
+            .Distinct()
+            .OrderBy(l => l);
 
-            foreach (var location in locations)
-            {
-                AvailableLocations.Add(location);
-            }
+        foreach (var location in locations)
+        {
+            AvailableLocations.Add(location);
         }
     }
 
@@ -317,7 +308,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
-            var searchProducts = companyData.Products ?? [];
+            var searchProducts = companyData.Products;
             filtered = filtered
                 .Select(i => new
                 {
@@ -342,9 +333,9 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         // Apply category filter
         if (FilterCategory != "All")
         {
-            var categoryProducts = (companyData.Categories ?? [])
+            var categoryProducts = (companyData.Categories)
                 .Where(c => c.Name == FilterCategory)
-                .SelectMany(c => (companyData.Products ?? []).Where(p => p.CategoryId == c.Id))
+                .SelectMany(c => (companyData.Products).Where(p => p.CategoryId == c.Id))
                 .Select(p => p.Id)
                 .ToHashSet();
 
@@ -354,7 +345,7 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         // Apply location filter
         if (FilterLocation != "All")
         {
-            var locationId = (companyData.Locations ?? [])
+            var locationId = (companyData.Locations)
                 .FirstOrDefault(l => l.Name == FilterLocation)?.Id;
 
             if (locationId != null)
@@ -382,9 +373,9 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         }
 
         // Create display items
-        var products = companyData.Products ?? [];
-        var locations = companyData.Locations ?? [];
-        var categories = companyData.Categories ?? [];
+        var products = companyData.Products;
+        var locations = companyData.Locations;
+        var categories = companyData.Categories;
 
         var displayItems = filtered.Select(item =>
         {

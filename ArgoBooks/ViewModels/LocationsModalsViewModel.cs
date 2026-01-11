@@ -162,7 +162,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
             : ModalCode.Trim().ToUpperInvariant();
 
         // Check for duplicate ID
-        if (companyData.Locations?.Any(l => l.Id == newId) == true)
+        if (companyData.Locations.Any(l => l.Id == newId))
         {
             ModalError = "A location with this code already exists.".Translate();
             return;
@@ -187,23 +187,22 @@ public partial class LocationsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.UtcNow
         };
 
-        if (companyData.Locations == null) return;
         companyData.Locations.Add(newLocation);
         companyData.MarkAsModified();
 
         // Record undo action
         var locationToUndo = newLocation;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add location '{newLocation.Name}'",
             () =>
             {
-                companyData.Locations?.Remove(locationToUndo);
+                companyData.Locations.Remove(locationToUndo);
                 companyData.MarkAsModified();
                 LocationSaved?.Invoke(this, EventArgs.Empty);
             },
             () =>
             {
-                companyData.Locations?.Add(locationToUndo);
+                companyData.Locations.Add(locationToUndo);
                 companyData.MarkAsModified();
                 LocationSaved?.Invoke(this, EventArgs.Empty);
             }));
@@ -224,7 +223,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
         if (item == null) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        var location = companyData?.Locations?.FirstOrDefault(l => l.Id == item.Id);
+        var location = companyData?.Locations.FirstOrDefault(l => l.Id == item.Id);
         if (location == null) return;
 
         _editingLocation = location;
@@ -269,7 +268,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
 
         // Store old values for undo
         var oldName = _editingLocation.Name;
-        var oldAddress = new Core.Models.Common.Address
+        var oldAddress = new Address
         {
             Street = _editingLocation.Address.Street,
             City = _editingLocation.Address.City,
@@ -280,7 +279,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
 
         // Store new values
         var newName = ModalName.Trim();
-        var newAddress = new Core.Models.Common.Address
+        var newAddress = new Address
         {
             Street = ModalStreetAddress.Trim(),
             City = ModalCity.Trim(),
@@ -297,7 +296,7 @@ public partial class LocationsModalsViewModel : ViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit location '{newName}'",
             () =>
             {
@@ -347,25 +346,25 @@ public partial class LocationsModalsViewModel : ViewModelBase
         if (companyData == null)
             return;
 
-        var location = companyData.Locations?.FirstOrDefault(l => l.Id == item.Id);
+        var location = companyData.Locations.FirstOrDefault(l => l.Id == item.Id);
         if (location != null)
         {
             var deletedLocation = location;
-            companyData.Locations?.Remove(location);
+            companyData.Locations.Remove(location);
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete location '{deletedLocation.Name}'",
                 () =>
                 {
-                    companyData.Locations?.Add(deletedLocation);
+                    companyData.Locations.Add(deletedLocation);
                     companyData.MarkAsModified();
                     LocationDeleted?.Invoke(this, EventArgs.Empty);
                 },
                 () =>
                 {
-                    companyData.Locations?.Remove(deletedLocation);
+                    companyData.Locations.Remove(deletedLocation);
                     companyData.MarkAsModified();
                     LocationDeleted?.Invoke(this, EventArgs.Empty);
                 }));

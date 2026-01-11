@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 using ArgoBooks.Core.Services;
 using Xunit;
 
@@ -112,7 +111,7 @@ public class EncryptionServiceTests
     [Fact]
     public void Encrypt_Decrypt_RoundTrip_RestoresOriginalData()
     {
-        var originalData = Encoding.UTF8.GetBytes("Hello, World! This is a test message.");
+        var originalData = "Hello, World! This is a test message."u8.ToArray();
         var password = "TestPassword123";
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();
@@ -126,7 +125,7 @@ public class EncryptionServiceTests
     [Fact]
     public void Encrypt_ProducesDifferentOutputFromInput()
     {
-        var originalData = Encoding.UTF8.GetBytes("Hello, World!");
+        var originalData = "Hello, World!"u8.ToArray();
         var password = "TestPassword123";
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();
@@ -139,7 +138,7 @@ public class EncryptionServiceTests
     [Fact]
     public void Encrypt_SameDataDifferentIv_ProducesDifferentCiphertext()
     {
-        var originalData = Encoding.UTF8.GetBytes("Hello, World!");
+        var originalData = "Hello, World!"u8.ToArray();
         var password = "TestPassword123";
         var salt = _encryptionService.GenerateSalt();
         var iv1 = _encryptionService.GenerateIv();
@@ -154,7 +153,7 @@ public class EncryptionServiceTests
     [Fact]
     public void Decrypt_WithWrongPassword_ThrowsCryptographicException()
     {
-        var originalData = Encoding.UTF8.GetBytes("Hello, World!");
+        var originalData = "Hello, World!"u8.ToArray();
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();
 
@@ -167,7 +166,7 @@ public class EncryptionServiceTests
     [Fact]
     public void Decrypt_WithWrongIv_ThrowsCryptographicException()
     {
-        var originalData = Encoding.UTF8.GetBytes("Hello, World!");
+        var originalData = "Hello, World!"u8.ToArray();
         var password = "TestPassword123";
         var salt = _encryptionService.GenerateSalt();
         var iv1 = _encryptionService.GenerateIv();
@@ -192,7 +191,7 @@ public class EncryptionServiceTests
     [Fact]
     public void Encrypt_ThrowsOnNullPassword()
     {
-        var data = Encoding.UTF8.GetBytes("test");
+        var data = "test"u8.ToArray();
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();
 
@@ -203,7 +202,7 @@ public class EncryptionServiceTests
     [Fact]
     public void Encrypt_ThrowsOnEmptyPassword()
     {
-        var data = Encoding.UTF8.GetBytes("test");
+        var data = "test"u8.ToArray();
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();
 
@@ -258,7 +257,7 @@ public class EncryptionServiceTests
     [Fact]
     public async Task EncryptAsync_DecryptAsync_RoundTrip_RestoresOriginalData()
     {
-        var originalData = Encoding.UTF8.GetBytes("Hello, Async World!");
+        var originalData = "Hello, Async World!"u8.ToArray();
         var password = "TestPassword123";
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();
@@ -284,7 +283,7 @@ public class EncryptionServiceTests
     [Fact]
     public async Task EncryptAsync_ReturnsStreamAtPositionZero()
     {
-        var originalData = Encoding.UTF8.GetBytes("Test data");
+        var originalData = "Test data"u8.ToArray();
         var password = "TestPassword123";
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();
@@ -333,7 +332,7 @@ public class EncryptionServiceTests
     {
         // Simulate a full file encryption workflow
         var password = "SecurePassword123!";
-        var fileContent = Encoding.UTF8.GetBytes("This is confidential file content.");
+        var fileContent = "This is confidential file content."u8.ToArray();
 
         // Step 1: Generate salt and hash password for storage
         var salt = _encryptionService.GenerateSalt();
@@ -355,7 +354,7 @@ public class EncryptionServiceTests
     [Fact]
     public void TamperedData_FailsAuthentication()
     {
-        var originalData = Encoding.UTF8.GetBytes("Secret message");
+        var originalData = "Secret message"u8.ToArray();
         var password = "TestPassword123";
         var salt = _encryptionService.GenerateSalt();
         var iv = _encryptionService.GenerateIv();

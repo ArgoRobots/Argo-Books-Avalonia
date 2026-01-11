@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -121,7 +120,6 @@ public partial class SkiaReportDesignCanvas : UserControl
     #region Private Fields
 
     private Image? _canvasImage;
-    private Canvas? _overlayCanvas;
     private Rectangle? _selectionRectangle;
     private ScaleTransform? _zoomTransform;
 
@@ -136,7 +134,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     private Point _elementStartPosition;
     private Size _elementStartSize;
     private ResizeHandle _activeResizeHandle = ResizeHandle.None;
-    private Dictionary<string, (Point Position, Size Size)> _multiDragStartBounds = new();
+    private readonly Dictionary<string, (Point Position, Size Size)> _multiDragStartBounds = new();
 
     // Panning state
     private Point _panStartPoint;
@@ -210,7 +208,6 @@ public partial class SkiaReportDesignCanvas : UserControl
     private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         _canvasImage = this.FindControl<Image>("CanvasImage");
-        _overlayCanvas = this.FindControl<Canvas>("OverlayCanvas");
         _selectionRectangle = this.FindControl<Rectangle>("SelectionRectangle");
         _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
 
@@ -345,13 +342,11 @@ public partial class SkiaReportDesignCanvas : UserControl
     private void DrawGrid(SKCanvas canvas, int width, int height)
     {
         var gridSize = (float)GridSize;
-        using var gridPaint = new SKPaint
-        {
-            Color = new SKColor(200, 200, 200, 100),
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1,
-            IsAntialias = false
-        };
+        using var gridPaint = new SKPaint();
+        gridPaint.Color = new SKColor(200, 200, 200, 100);
+        gridPaint.Style = SKPaintStyle.Stroke;
+        gridPaint.StrokeWidth = 1;
+        gridPaint.IsAntialias = false;
 
         // Vertical lines
         for (float x = gridSize; x < width; x += gridSize)
@@ -372,12 +367,10 @@ public partial class SkiaReportDesignCanvas : UserControl
         var footerHeight = (float)PageDimensions.FooterHeight;
 
         // Header separator line
-        using var separatorPaint = new SKPaint
-        {
-            Color = SKColors.LightGray,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1
-        };
+        using var separatorPaint = new SKPaint();
+        separatorPaint.Color = SKColors.LightGray;
+        separatorPaint.Style = SKPaintStyle.Stroke;
+        separatorPaint.StrokeWidth = 1;
 
         canvas.DrawLine(40, headerHeight, width - 40, headerHeight, separatorPaint);
 
@@ -386,13 +379,17 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         // Header title
         using var titleFont = new SKFont(SKTypeface.Default, 18);
-        using var titlePaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+        using var titlePaint = new SKPaint();
+        titlePaint.Color = SKColors.Black;
+        titlePaint.IsAntialias = true;
         var title = Configuration?.Title ?? "Report Title";
         canvas.DrawText(title, width / 2f, 35, SKTextAlign.Center, titleFont, titlePaint);
 
         // Footer text
         using var footerFont = new SKFont(SKTypeface.Default, 11);
-        using var footerPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
+        using var footerPaint = new SKPaint();
+        footerPaint.Color = SKColors.Gray;
+        footerPaint.IsAntialias = true;
         canvas.DrawText("Generated: [Date/Time]", 40, height - 15, SKTextAlign.Left, footerFont, footerPaint);
         canvas.DrawText("Page 1", width - 40, height - 15, SKTextAlign.Right, footerFont, footerPaint);
     }
@@ -416,13 +413,11 @@ public partial class SkiaReportDesignCanvas : UserControl
             (float)(element.Y + element.Height) + 1
         );
 
-        using var borderPaint = new SKPaint
-        {
-            Color = new SKColor(59, 130, 246), // Primary blue
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = (float)SelectionBorderWidth,
-            IsAntialias = true
-        };
+        using var borderPaint = new SKPaint();
+        borderPaint.Color = new SKColor(59, 130, 246); // Primary blue
+        borderPaint.Style = SKPaintStyle.Stroke;
+        borderPaint.StrokeWidth = (float)SelectionBorderWidth;
+        borderPaint.IsAntialias = true;
 
         canvas.DrawRect(rect, borderPaint);
     }
@@ -431,20 +426,16 @@ public partial class SkiaReportDesignCanvas : UserControl
     {
         var handles = GetResizeHandlePositions(element);
 
-        using var fillPaint = new SKPaint
-        {
-            Color = SKColors.White,
-            Style = SKPaintStyle.Fill,
-            IsAntialias = true
-        };
+        using var fillPaint = new SKPaint();
+        fillPaint.Color = SKColors.White;
+        fillPaint.Style = SKPaintStyle.Fill;
+        fillPaint.IsAntialias = true;
 
-        using var borderPaint = new SKPaint
-        {
-            Color = new SKColor(59, 130, 246),
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1,
-            IsAntialias = true
-        };
+        using var borderPaint = new SKPaint();
+        borderPaint.Color = new SKColor(59, 130, 246);
+        borderPaint.Style = SKPaintStyle.Stroke;
+        borderPaint.StrokeWidth = 1;
+        borderPaint.IsAntialias = true;
 
         foreach (var handle in handles.Values)
         {
@@ -473,17 +464,13 @@ public partial class SkiaReportDesignCanvas : UserControl
             (float)element.Y - 1
         );
 
-        using var bgPaint = new SKPaint
-        {
-            Color = new SKColor(59, 130, 246),
-            Style = SKPaintStyle.Fill
-        };
+        using var bgPaint = new SKPaint();
+        bgPaint.Color = new SKColor(59, 130, 246);
+        bgPaint.Style = SKPaintStyle.Fill;
 
-        using var textPaint = new SKPaint
-        {
-            Color = SKColors.White,
-            IsAntialias = true
-        };
+        using var textPaint = new SKPaint();
+        textPaint.Color = SKColors.White;
+        textPaint.IsAntialias = true;
 
         canvas.DrawRect(badgeRect, bgPaint);
         canvas.DrawText(typeName, (float)element.X + 5, (float)element.Y - 5, SKTextAlign.Left, font, textPaint);
@@ -524,13 +511,11 @@ public partial class SkiaReportDesignCanvas : UserControl
             canvas.ClipRect(higherRect, SKClipOperation.Difference);
         }
 
-        using var borderPaint = new SKPaint
-        {
-            Color = new SKColor(59, 130, 246, 180), // Semi-transparent blue
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 2,
-            IsAntialias = true
-        };
+        using var borderPaint = new SKPaint();
+        borderPaint.Color = new SKColor(59, 130, 246, 180); // Semi-transparent blue
+        borderPaint.Style = SKPaintStyle.Stroke;
+        borderPaint.StrokeWidth = 2;
+        borderPaint.IsAntialias = true;
 
         canvas.DrawRect(rect, borderPaint);
 

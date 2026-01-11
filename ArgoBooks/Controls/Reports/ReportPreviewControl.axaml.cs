@@ -122,7 +122,6 @@ public partial class ReportPreviewControl : UserControl
 
     private Image? _previewImage;
     private Border? _pageBorder;
-    private Border? _zoomContainer;
     private Border? _loadingOverlay;
     private Border? _errorOverlay;
     private TextBlock? _errorText;
@@ -162,7 +161,6 @@ public partial class ReportPreviewControl : UserControl
 
         _previewImage = this.FindControl<Image>("PreviewImage");
         _pageBorder = this.FindControl<Border>("PageBorder");
-        _zoomContainer = this.FindControl<Border>("ZoomContainer");
         _loadingOverlay = this.FindControl<Border>("LoadingOverlay");
         _errorOverlay = this.FindControl<Border>("ErrorOverlay");
         _errorText = this.FindControl<TextBlock>("ErrorText");
@@ -419,7 +417,7 @@ public partial class ReportPreviewControl : UserControl
 
     public void OnZoomSelectionChanged(object? sender, Avalonia.Controls.SelectionChangedEventArgs e)
     {
-        if (_zoomComboBox?.SelectedIndex is not int index) return;
+        if (_zoomComboBox?.SelectedIndex is not { } index) return;
 
         switch (index)
         {

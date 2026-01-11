@@ -483,7 +483,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var customerToUndo = newCustomer;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add customer '{newCustomer.Name}'",
             () =>
             {
@@ -544,7 +544,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         var oldName = _editingCustomer.Name;
         var oldEmail = _editingCustomer.Email;
         var oldPhone = _editingCustomer.Phone;
-        var oldAddress = new Core.Models.Common.Address
+        var oldAddress = new Address
         {
             Street = _editingCustomer.Address.Street,
             City = _editingCustomer.Address.City,
@@ -559,7 +559,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         var newName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}".Trim();
         var newEmail = ModalEmail.Trim();
         var newPhone = ModalPhone.Trim();
-        var newAddress = new Core.Models.Common.Address
+        var newAddress = new Address
         {
             Street = ModalStreetAddress.Trim(),
             City = ModalCity.Trim(),
@@ -589,7 +589,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit customer '{newName}'",
             () =>
             {
@@ -663,7 +663,7 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete customer '{deletedCustomer.Name}'",
                 () =>
                 {

@@ -6,7 +6,6 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:panels="using:ArgoBooks.Panels"
              xmlns:modals="using:ArgoBooks.Modals"
-             xmlns:loc="using:ArgoBooks.Localization"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Views.AppShell"
              x:DataType="vm:AppShellViewModel"

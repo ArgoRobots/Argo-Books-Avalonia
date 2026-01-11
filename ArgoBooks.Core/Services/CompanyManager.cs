@@ -10,7 +10,6 @@ namespace ArgoBooks.Core.Services;
 public class CompanyManager : IDisposable
 {
     private readonly FileService _fileService;
-    private readonly IEncryptionService _encryptionService;
     private readonly GlobalSettingsService _settingsService;
     private readonly FooterService _footerService;
 
@@ -135,12 +134,10 @@ public class CompanyManager : IDisposable
     /// </summary>
     public CompanyManager(
         FileService fileService,
-        IEncryptionService encryptionService,
         GlobalSettingsService settingsService,
         FooterService footerService)
     {
         _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
-        _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
         _footerService = footerService ?? throw new ArgumentNullException(nameof(footerService));
     }

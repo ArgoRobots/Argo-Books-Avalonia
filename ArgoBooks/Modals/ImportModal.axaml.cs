@@ -21,7 +21,7 @@ public partial class ImportModal : UserControl
 
         if (DataContext is ImportModalViewModel vm)
         {
-            vm.PropertyChanged += (s, args) =>
+            vm.PropertyChanged += (_, args) =>
             {
                 if (args.PropertyName == nameof(vm.IsOpen) && vm.IsOpen)
                 {

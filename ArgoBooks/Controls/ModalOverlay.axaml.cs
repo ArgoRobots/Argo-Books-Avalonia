@@ -23,7 +23,7 @@ public partial class ModalOverlay : UserControl
     public static readonly StyledProperty<bool> CloseOnEscapeProperty =
         AvaloniaProperty.Register<ModalOverlay, bool>(nameof(CloseOnEscape), true);
 
-    public static readonly new StyledProperty<object?> ContentProperty =
+    public new static readonly StyledProperty<object?> ContentProperty =
         AvaloniaProperty.Register<ModalOverlay, object?>(nameof(Content));
 
     #endregion

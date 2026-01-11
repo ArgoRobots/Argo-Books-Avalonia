@@ -1,4 +1,3 @@
-using System.Text.Json;
 using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
@@ -12,7 +11,7 @@ public class ExchangeRateCache
     private const string CacheFileName = "exchange_rates.json";
     private readonly Dictionary<string, decimal> _memoryCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly IPlatformService _platformService;
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
     private bool _isDirty;
 
     /// <summary>

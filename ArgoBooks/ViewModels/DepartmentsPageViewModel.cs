@@ -439,7 +439,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
         // Record undo action
         var departmentToUndo = newDepartment;
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add department '{newDepartment.Name}'",
             () =>
             {
@@ -518,7 +518,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
         companyData.MarkAsModified();
 
         // Record undo action
-        App.UndoRedoManager?.RecordAction(new DelegateAction(
+        App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit department '{newName}'",
             () =>
             {
@@ -598,7 +598,7 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
             companyData.MarkAsModified();
 
             // Record undo action
-            App.UndoRedoManager?.RecordAction(new DelegateAction(
+            App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete department '{deletedDepartment.Name}'",
                 () =>
                 {

@@ -10,13 +10,12 @@ namespace ArgoBooks.Services;
 /// </summary>
 public class ThemeService : IThemeService
 {
-    private static ThemeService? _instance;
     private IGlobalSettingsService? _globalSettingsService;
 
     /// <summary>
     /// Gets the singleton instance of the ThemeService.
     /// </summary>
-    public static ThemeService Instance => _instance ??= new ThemeService();
+    public static ThemeService Instance => field ??= new ThemeService();
 
     // Accent color definitions: (Primary, Hover, Light, Dark, Secondary/Gradient, IconBg)
     private static readonly Dictionary<string, AccentColorSet> AccentColors = new()
@@ -135,7 +134,6 @@ public class ThemeService : IThemeService
         {
             "Light" => ThemeMode.Light,
             "Dark" => ThemeMode.Dark,
-            "System" => ThemeMode.System,
             _ => ThemeMode.System
         };
         SetTheme(theme);
@@ -192,7 +190,6 @@ public class ThemeService : IThemeService
     {
         ThemeMode.Light => "Light",
         ThemeMode.Dark => "Dark",
-        ThemeMode.System => "System",
         _ => "System"
     };
 
@@ -288,7 +285,6 @@ public class ThemeService : IThemeService
         {
             ThemeMode.Light => ThemeVariant.Light,
             ThemeMode.Dark => ThemeVariant.Dark,
-            ThemeMode.System => ThemeVariant.Default,
             _ => ThemeVariant.Default
         };
 

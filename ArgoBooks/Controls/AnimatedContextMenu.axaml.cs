@@ -23,9 +23,6 @@ public partial class AnimatedContextMenu : UserControl, INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    private double _adjustedMenuX;
-    private double _adjustedMenuY;
-
     #region Styled Properties
 
     public static readonly StyledProperty<bool> IsOpenProperty =
@@ -79,12 +76,12 @@ public partial class AnimatedContextMenu : UserControl, INotifyPropertyChanged
     /// </summary>
     public double AdjustedMenuX
     {
-        get => _adjustedMenuX;
+        get;
         private set
         {
-            if (Math.Abs(_adjustedMenuX - value) > 0.001)
+            if (Math.Abs(field - value) > 0.001)
             {
-                _adjustedMenuX = value;
+                field = value;
                 RaisePropertyChanged();
             }
         }
@@ -95,12 +92,12 @@ public partial class AnimatedContextMenu : UserControl, INotifyPropertyChanged
     /// </summary>
     public double AdjustedMenuY
     {
-        get => _adjustedMenuY;
+        get;
         private set
         {
-            if (Math.Abs(_adjustedMenuY - value) > 0.001)
+            if (Math.Abs(field - value) > 0.001)
             {
-                _adjustedMenuY = value;
+                field = value;
                 RaisePropertyChanged();
             }
         }
