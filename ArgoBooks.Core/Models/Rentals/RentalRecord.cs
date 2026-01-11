@@ -113,11 +113,11 @@ public class RentalRecord
     /// Whether the rental is overdue.
     /// </summary>
     [JsonIgnore]
-    public bool IsOverdue => Status == RentalStatus.Active && DateTime.UtcNow.Date > DueDate.Date;
+    public bool IsOverdue => Status == RentalStatus.Active && DateTime.Today > DueDate.Date;
 
     /// <summary>
     /// Number of days overdue (0 if not overdue).
     /// </summary>
     [JsonIgnore]
-    public int DaysOverdue => IsOverdue ? (int)(DateTime.UtcNow.Date - DueDate.Date).TotalDays : 0;
+    public int DaysOverdue => IsOverdue ? (int)(DateTime.Today - DueDate.Date).TotalDays : 0;
 }

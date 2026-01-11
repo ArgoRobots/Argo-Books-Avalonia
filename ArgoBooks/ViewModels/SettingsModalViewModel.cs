@@ -706,7 +706,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         try
         {
             // Preload rates for today and the past 30 days (covers most common scenarios)
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.Today;
             var dates = Enumerable.Range(0, 30).Select(i => today.AddDays(-i)).ToList();
 
             await exchangeService.PreloadRatesAsync(dates);

@@ -114,7 +114,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Pending,
-            DueDate = DateTime.UtcNow.Date
+            DueDate = DateTime.Today
         };
 
         Assert.False(invoice.IsOverdue);

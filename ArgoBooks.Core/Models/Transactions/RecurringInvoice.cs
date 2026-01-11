@@ -96,5 +96,5 @@ public class RecurringInvoice
     /// </summary>
     [JsonIgnore]
     public bool IsActive => Status == "Active" &&
-                           (EndDate == null || DateTime.UtcNow.Date <= EndDate.Value.Date);
+                           (EndDate == null || DateTime.Today <= EndDate.Value.Date);
 }
