@@ -22,7 +22,7 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
             <ComboBox.Styles>
-                <Style Selector="ComboBox /template/ ContentControl#ContentPresenter > ContentPresenter">
+                <Style Selector="ComboBox /template/ ContentPresenter#ContentPresenter">
                     <Setter Property="ContentTemplate">
                         <DataTemplate>
                             <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />

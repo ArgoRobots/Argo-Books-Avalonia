@@ -154,6 +154,8 @@ public partial class ReturnsPageViewModel : ViewModelBase
 
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
+        // Trigger property change notification to refresh translated titles via converters
+        OnPropertyChanged(nameof(IsExpenseTabActive));
         FilterReturns();
     }
 
