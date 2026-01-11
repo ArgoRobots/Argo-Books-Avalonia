@@ -21,6 +21,15 @@
                     <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
                 </DataTemplate>
             </ComboBox.ItemTemplate>
+            <ComboBox.Styles>
+                <Style Selector="ComboBox /template/ ContentControl#ContentPresenter > ContentPresenter">
+                    <Setter Property="ContentTemplate">
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                        </DataTemplate>
+                    </Setter>
+                </Style>
+            </ComboBox.Styles>
         </ComboBox>
 
         <!-- Applied Custom Date Range Label (visible when custom range is applied) -->

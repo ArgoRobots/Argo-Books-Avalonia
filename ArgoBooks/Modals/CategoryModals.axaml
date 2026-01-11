@@ -64,7 +64,10 @@
                                     <ComboBox ItemsSource="{Binding AvailableIcons}" SelectedItem="{Binding ModalSelectedIconOption}" Classes="form-combobox">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate DataType="vm:IconOption">
-                                                <TextBlock Text="{Binding DisplayName, Converter={StaticResource TranslateConverter}}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="{Binding Icon}" />
+                                                    <TextBlock Text="{Binding Name, Converter={StaticResource TranslateConverter}}" />
+                                                </StackPanel>
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
@@ -130,7 +133,10 @@
                                     <ComboBox ItemsSource="{Binding AvailableIcons}" SelectedItem="{Binding ModalSelectedIconOption}" Classes="form-combobox">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate DataType="vm:IconOption">
-                                                <TextBlock Text="{Binding DisplayName, Converter={StaticResource TranslateConverter}}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Text="{Binding Icon}" />
+                                                    <TextBlock Text="{Binding Name, Converter={StaticResource TranslateConverter}}" />
+                                                </StackPanel>
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
