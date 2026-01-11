@@ -1438,6 +1438,8 @@ public partial class App : Application
             {
                 try
                 {
+                    // Mark as having changes so SavedFeedback shows "Saved" not "No changes found"
+                    _appShellViewModel.HeaderViewModel.HasUnsavedChanges = true;
                     await CompanyManager.SaveCompanyAsync();
                 }
                 catch (Exception ex)
