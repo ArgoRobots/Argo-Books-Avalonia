@@ -610,6 +610,29 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
     {
         // Refresh chart titles that use Loc.Tr()
         LoadDashboardData();
+
+        // Notify computed chart title properties to refresh
+        OnPropertyChanged(nameof(SalesVsExpensesChartTitle));
+
+        // Force ComboBox to re-render items with new translations
+        // by refreshing the collection (items don't change, but triggers re-render)
+        var currentSelection = SelectedDateRange;
+        DateRangeOptions.Clear();
+        foreach (var option in DatePresetNames.StandardDateRangeOptions)
+        {
+            DateRangeOptions.Add(option);
+        }
+        // Restore selection without triggering data reload
+        _isLocalSettingChange = true;
+        try
+        {
+            ChartSettings.SelectedDateRange = currentSelection;
+            OnPropertyChanged(nameof(SelectedDateRange));
+        }
+        finally
+        {
+            _isLocalSettingChange = false;
+        }
     }
 
     private void OnCompanyDataChanged(object? sender, EventArgs e)

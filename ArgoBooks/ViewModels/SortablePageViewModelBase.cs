@@ -21,8 +21,9 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase
 
     /// <summary>
     /// Called when the language changes. Refreshes the page to update translations.
+    /// Override in derived classes to refresh ComboBox options or other translated content.
     /// </summary>
-    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    protected virtual void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
         // Refresh the page data to update translated badge text
         OnSortOrPageChanged();
