@@ -134,6 +134,46 @@ public class ObjectEqualsMultiConverter : IMultiValueConverter
 }
 
 /// <summary>
+/// Multi-value converter that returns a highlight brush if both values are equal, otherwise transparent.
+/// Used for visual highlighting of selected items in lists.
+/// </summary>
+public class HighlightBrushMultiConverter : IMultiValueConverter
+{
+    public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2)
+            return Brushes.Transparent;
+
+        var value1 = values[0];
+        var value2 = values[1];
+
+        bool isEqual = false;
+        if (value1 != null && value2 != null)
+        {
+            isEqual = ReferenceEquals(value1, value2) || value1.Equals(value2);
+        }
+        else if (value1 == null && value2 == null)
+        {
+            isEqual = true;
+        }
+
+        if (isEqual)
+        {
+            // Return the highlight brush from application resources
+            if (Application.Current?.Resources != null &&
+                Application.Current.Resources.TryGetResource("PrimaryLightBrush", Application.Current.ActualThemeVariant, out var resource))
+            {
+                return resource;
+            }
+            // Fallback highlight color
+            return new SolidColorBrush(Color.Parse("#EBF5FF"));
+        }
+
+        return Brushes.Transparent;
+    }
+}
+
+/// <summary>
 /// Converter that returns PrimaryBrush if value equals CompareValue, otherwise BorderBrush.
 /// </summary>
 public class ThemeBorderBrushConverter : IValueConverter

@@ -11,7 +11,7 @@
              Focusable="True">
 
     <UserControl.Resources>
-        <converters:ObjectEqualsMultiConverter x:Key="ObjectEqualsMultiConverter" />
+        <converters:HighlightBrushMultiConverter x:Key="HighlightBrushMultiConverter" />
     </UserControl.Resources>
 
     <StackPanel Spacing="4">
@@ -167,17 +167,12 @@
                                                 Tag="{Binding}"
                                                 Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
                                                 CommandParameter="{Binding}">
-                                            <Button.Classes>
-                                                <MultiBinding Converter="{StaticResource ObjectEqualsMultiConverter}">
+                                            <Button.Background>
+                                                <MultiBinding Converter="{StaticResource HighlightBrushMultiConverter}">
                                                     <Binding Path="." />
                                                     <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
                                                 </MultiBinding>
-                                            </Button.Classes>
-                                            <Button.Styles>
-                                                <Style Selector="Button.True">
-                                                    <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
-                                                </Style>
-                                            </Button.Styles>
+                                            </Button.Background>
                                             <TextBlock Text="{Binding}" />
                                         </Button>
                                     </DataTemplate>
@@ -201,17 +196,12 @@
                                                 Tag="{Binding}"
                                                 Command="{Binding $parent[controls:SearchableDropdown].SelectItemCommand}"
                                                 CommandParameter="{Binding}">
-                                            <Button.Classes>
-                                                <MultiBinding Converter="{StaticResource ObjectEqualsMultiConverter}">
+                                            <Button.Background>
+                                                <MultiBinding Converter="{StaticResource HighlightBrushMultiConverter}">
                                                     <Binding Path="." />
                                                     <Binding Path="$parent[controls:SearchableDropdown].HighlightedItem" />
                                                 </MultiBinding>
-                                            </Button.Classes>
-                                            <Button.Styles>
-                                                <Style Selector="Button.True">
-                                                    <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
-                                                </Style>
-                                            </Button.Styles>
+                                            </Button.Background>
                                             <TextBlock Text="{Binding}" />
                                         </Button>
                                     </DataTemplate>
