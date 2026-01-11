@@ -12,9 +12,9 @@
         <Border Padding="15,15,15,10"
                 IsVisible="{Binding ShowHeader, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
             <Grid ColumnDefinitions="*,Auto">
-                <!-- Title (hidden when collapsed) -->
+                <!-- Title (hidden when collapsed) - displayed in uppercase -->
                 <TextBlock Grid.Column="0"
-                           Text="{Binding Title, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+                           Text="{Binding Title, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}, Converter={StaticResource UpperCaseConverter}}"
                            FontSize="11"
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource SidebarTextMutedBrush}"

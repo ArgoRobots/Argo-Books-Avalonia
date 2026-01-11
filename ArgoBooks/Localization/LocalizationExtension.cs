@@ -1,189 +1,159 @@
 using System.ComponentModel;
 using System.Text;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Markup.Xaml;
 using Avalonia.Markup.Xaml.MarkupExtensions;
+using Avalonia.Threading;
 using ArgoBooks.Services;
 
 namespace ArgoBooks.Localization;
 
 /// <summary>
 /// XAML markup extension for localization.
-/// Usage: {Loc Key} or {Loc 'Some English text'}
+/// Usage: {loc:Loc Key} or {loc:Loc 'Some English text'}
 /// </summary>
-/// <example>
-/// <![CDATA[
-/// <TextBlock Text="{Loc Save}"/>
-/// <Button Content="{Loc 'Add New Customer'}"/>
-/// <TextBlock Text="{Loc SettingsTitle}"/>
-/// ]]>
-/// </example>
 public class LocExtension : MarkupExtension
 {
     private string _key = string.Empty;
 
-    /// <summary>
-    /// The translation key or English text to translate.
-    /// </summary>
     public string Key
     {
         get => _key;
         set => _key = value ?? string.Empty;
     }
 
-    /// <summary>
-    /// Default constructor.
-    /// </summary>
-    public LocExtension()
-    {
-    }
+    public LocExtension() { }
 
-    /// <summary>
-    /// Constructor with key parameter.
-    /// </summary>
-    /// <param name="key">The translation key or English text.</param>
     public LocExtension(string key)
     {
         _key = key ?? string.Empty;
     }
 
-    /// <summary>
-    /// Constructor for XAML escaped single quotes (e.g., 'You''re' becomes two parts).
-    /// </summary>
-    /// <param name="part1">First part of the string.</param>
-    /// <param name="part2">Second part of the string.</param>
     public LocExtension(string part1, string part2)
     {
         _key = $"{part1}'{part2}";
     }
 
-    /// <summary>
-    /// Constructor for XAML escaped single quotes with two escapes (e.g., 'It''s a ''test''').
-    /// </summary>
-    /// <param name="part1">First part of the string.</param>
-    /// <param name="part2">Second part of the string.</param>
-    /// <param name="part3">Third part of the string.</param>
     public LocExtension(string part1, string part2, string part3)
     {
         _key = $"{part1}'{part2}'{part3}";
     }
 
-    /// <summary>
-    /// Provides the translated value.
-    /// </summary>
     public override object ProvideValue(IServiceProvider serviceProvider)
     {
         if (string.IsNullOrEmpty(_key))
             return string.Empty;
 
-        // Encode the key as hex to avoid binding path parsing issues with spaces/special chars
-        var encodedKey = EncodeKeyAsHex(_key);
+        // Get the target object and property
+        var provideTarget = serviceProvider.GetService(typeof(IProvideValueTarget)) as IProvideValueTarget;
 
-        // Create a binding to the localization source using ReflectionBindingExtension
-        var binding = new ReflectionBindingExtension($"[{encodedKey}]")
+        if (provideTarget?.TargetObject is AvaloniaObject targetObject &&
+            provideTarget.TargetProperty is AvaloniaProperty targetProperty)
         {
-            Source = LocalizationSource.Instance,
-            Mode = BindingMode.OneWay
-        };
+            // Register this binding for refresh on language change
+            LocalizationManager.Register(targetObject, targetProperty, _key);
 
-        return binding.ProvideValue(serviceProvider);
-    }
+            // Return the current translation
+            return LanguageService.Instance.Translate(_key);
+        }
 
-    /// <summary>
-    /// Encodes a key as hexadecimal to avoid binding path parsing issues.
-    /// </summary>
-    internal static string EncodeKeyAsHex(string key)
-    {
-        var bytes = Encoding.UTF8.GetBytes(key);
-        return Convert.ToHexString(bytes);
-    }
-
-    /// <summary>
-    /// Decodes a hex-encoded key back to the original string.
-    /// </summary>
-    internal static string DecodeKeyFromHex(string hexKey)
-    {
-        var bytes = Convert.FromHexString(hexKey);
-        return Encoding.UTF8.GetString(bytes);
+        // Fallback: return translated value directly
+        return LanguageService.Instance.Translate(_key);
     }
 }
 
 /// <summary>
-/// Observable source for localized strings.
-/// Provides property indexer for binding in XAML.
+/// Manages localization bindings and refreshes them when language changes.
 /// </summary>
-public class LocalizationSource : INotifyPropertyChanged
+public static class LocalizationManager
 {
-    private static LocalizationSource? _instance;
-    private static readonly object _lock = new();
+    // Store bindings directly (not weak references to bindings!)
+    // Only the Target inside each binding is a weak reference
+    private static readonly List<LocalizationBinding> _bindings = new();
+    private static bool _initialized;
 
-    /// <summary>
-    /// Gets the singleton instance.
-    /// </summary>
-    public static LocalizationSource Instance
+    private class LocalizationBinding
     {
-        get
+        public WeakReference<AvaloniaObject> Target { get; set; } = null!;
+        public AvaloniaProperty Property { get; set; } = null!;
+        public string Key { get; set; } = null!;
+    }
+
+    public static void Register(AvaloniaObject target, AvaloniaProperty property, string key)
+    {
+        EnsureInitialized();
+
+        lock (_bindings)
         {
-            if (_instance == null)
+            _bindings.Add(new LocalizationBinding
             {
-                lock (_lock)
+                Target = new WeakReference<AvaloniaObject>(target),
+                Property = property,
+                Key = key
+            });
+        }
+    }
+
+    private static void EnsureInitialized()
+    {
+        if (_initialized) return;
+
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+        _initialized = true;
+    }
+
+    private static void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine($"[LOC-MGR] Language changed to {e.NewLanguage}. Refreshing bindings...");
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            RefreshAllBindings();
+        }, DispatcherPriority.Normal);
+    }
+
+    private static void RefreshAllBindings()
+    {
+        List<LocalizationBinding> validBindings = new();
+        List<LocalizationBinding> deadBindings = new();
+
+        lock (_bindings)
+        {
+            // Collect valid bindings and identify dead ones
+            foreach (var binding in _bindings)
+            {
+                if (binding.Target.TryGetTarget(out _))
                 {
-                    _instance ??= new LocalizationSource();
+                    validBindings.Add(binding);
+                }
+                else
+                {
+                    deadBindings.Add(binding);
                 }
             }
-            return _instance;
+
+            // Remove dead bindings (targets have been garbage collected)
+            foreach (var dead in deadBindings)
+            {
+                _bindings.Remove(dead);
+            }
         }
-    }
 
-    /// <summary>
-    /// Event raised when a property changes.
-    /// </summary>
-    public event PropertyChangedEventHandler? PropertyChanged;
+        System.Diagnostics.Debug.WriteLine($"[LOC-MGR] Refreshing {validBindings.Count} bindings (removed {deadBindings.Count} dead)");
 
-    /// <summary>
-    /// Private constructor for singleton pattern.
-    /// </summary>
-    private LocalizationSource()
-    {
-        // Subscribe to language changes
-        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
-    }
-
-    /// <summary>
-    /// Gets the translated string for a hex-encoded key.
-    /// </summary>
-    /// <param name="hexKey">The hex-encoded translation key.</param>
-    /// <returns>The translated string.</returns>
-    public string this[string hexKey]
-    {
-        get
+        // Update all valid bindings
+        foreach (var binding in validBindings)
         {
-            if (string.IsNullOrEmpty(hexKey))
-                return string.Empty;
-
-            // Decode the hex key back to the original translation key
-            var key = LocExtension.DecodeKeyFromHex(hexKey);
-            return LanguageService.Instance.Translate(key);
+            if (binding.Target.TryGetTarget(out var target))
+            {
+                var translated = LanguageService.Instance.Translate(binding.Key);
+                target.SetValue(binding.Property, translated);
+            }
         }
-    }
 
-    /// <summary>
-    /// Handles language change events.
-    /// </summary>
-    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
-    {
-        // Notify all bindings that translations have changed
-        // Using Indexer property to force re-evaluation of all Loc bindings
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
-    }
-
-    /// <summary>
-    /// Forces a refresh of all localized strings.
-    /// </summary>
-    public void Refresh()
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
+        System.Diagnostics.Debug.WriteLine($"[LOC-MGR] Refresh complete");
     }
 }
 
@@ -192,37 +162,15 @@ public class LocalizationSource : INotifyPropertyChanged
 /// </summary>
 public static class Loc
 {
-    /// <summary>
-    /// Translates an English string using the current language.
-    /// </summary>
-    /// <param name="text">The English text to translate.</param>
-    /// <returns>The translated text.</returns>
     public static string Tr(string text) => LanguageService.Instance.Translate(text);
 
-    /// <summary>
-    /// Translates an English string with format arguments.
-    /// </summary>
-    /// <param name="text">The English text to translate (with format placeholders).</param>
-    /// <param name="args">Format arguments.</param>
-    /// <returns>The translated and formatted text.</returns>
     public static string Tr(string text, params object[] args)
     {
         var translated = LanguageService.Instance.Translate(text);
         return string.Format(translated, args);
     }
 
-    /// <summary>
-    /// Gets the current language name.
-    /// </summary>
     public static string CurrentLanguage => LanguageService.Instance.CurrentLanguage;
-
-    /// <summary>
-    /// Gets the current language ISO code.
-    /// </summary>
     public static string CurrentIsoCode => LanguageService.Instance.CurrentIsoCode;
-
-    /// <summary>
-    /// Gets whether the current language is English.
-    /// </summary>
     public static bool IsEnglish => LanguageService.Instance.IsEnglish;
 }

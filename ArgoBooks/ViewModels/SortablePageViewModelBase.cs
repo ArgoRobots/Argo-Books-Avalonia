@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using ArgoBooks.Controls;
+using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -12,6 +13,30 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public abstract partial class SortablePageViewModelBase : ViewModelBase
 {
+    protected SortablePageViewModelBase()
+    {
+        // Subscribe to language changes to refresh translated content
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    /// <summary>
+    /// Called when the language changes. Refreshes the page to update translations.
+    /// Override in derived classes to refresh ComboBox options or other translated content.
+    /// </summary>
+    protected virtual void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        // Refresh the page data to update translated badge text
+        OnSortOrPageChanged();
+    }
+
+    /// <summary>
+    /// Unsubscribes from language change events. Call this when the ViewModel is disposed.
+    /// </summary>
+    public virtual void Cleanup()
+    {
+        LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+    }
+
     #region Sorting
 
     [ObservableProperty]

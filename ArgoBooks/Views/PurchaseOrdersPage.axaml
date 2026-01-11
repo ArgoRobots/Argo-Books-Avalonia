@@ -481,7 +481,7 @@
                                                                     HorizontalAlignment="Left"
                                                                     VerticalAlignment="Center"
                                                                     Margin="8,0">
-                                                                <TextBlock Text="{Binding StatusDisplay}"
+                                                                <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding StatusColor}" />

@@ -21,7 +21,7 @@ public partial class TranslationGenerator
     private readonly HttpClient _httpClient = new();
 
     // Regex patterns for extracting translatable strings
-    [GeneratedRegex(@"\{Loc\s+([^}]+)\}")]
+    [GeneratedRegex(@"\{loc:Loc\s+([^}]+)\}")]
     private static partial Regex LocExtensionRegex();
 
     [GeneratedRegex(@"\.Translate\(\s*\)")]
@@ -33,11 +33,46 @@ public partial class TranslationGenerator
     [GeneratedRegex(@"Loc\.Tr\s*\(\s*""([^""]+)""")]
     private static partial Regex LocTrCallRegex();
 
+    // Pattern for Tr("text") calls (local helper method used in ReportRenderer, etc.)
+    [GeneratedRegex(@"(?<!Loc\.)\bTr\s*\(\s*""([^""]+)""")]
+    private static partial Regex LocalTrCallRegex();
+
+    // Pattern for CreateItem("Label", ...) calls in sidebar/menu
+    [GeneratedRegex(@"CreateItem\s*\(\s*""([^""]+)""")]
+    private static partial Regex CreateItemCallRegex();
+
+    // Pattern for QuickActionItem("Title", "Description", ...) - capture both title and description
+    [GeneratedRegex(@"new\s+QuickActionItem\s*\(\s*""([^""]+)""\s*,\s*""([^""]+)""")]
+    private static partial Regex QuickActionItemRegex();
+
+    // Pattern for public const string = "value" (e.g., DatePresetNames)
+    [GeneratedRegex(@"public\s+const\s+string\s+\w+\s*=\s*""([^""]+)""")]
+    private static partial Regex ConstStringRegex();
+
+    // Pattern for static readonly string[] = ["item1", "item2", ...] or new[] { "item1", ... }
+    [GeneratedRegex(@"static\s+readonly\s+string\s*\[\s*\]\s+\w+\s*=\s*\[([^\]]+)\]")]
+    private static partial Regex StaticStringArrayRegex();
+
     [GeneratedRegex(@"""([^""]+)""\s*\.Translate")]
     private static partial Regex StringTranslateRegex();
 
     [GeneratedRegex(@"""([^""]+)""\s*\.TranslateFormat")]
     private static partial Regex StringTranslateFormatRegex();
+
+    // Pattern for LanguageService.Instance.Translate("text") and .Translate("text") calls
+    [GeneratedRegex(@"\.Translate\s*\(\s*""([^""]+)""")]
+    private static partial Regex TranslateWithArgRegex();
+
+    // Pattern for switch expression display strings: => "Some Display Text"
+    [GeneratedRegex(@"=>\s*""([^""]+)""")]
+    private static partial Regex SwitchDisplayStringRegex();
+
+    // Pattern for string array/collection items: "Item" in ["Item1", "Item2"] or new[] { "Item1" }
+    [GeneratedRegex(@"\[\s*""([^""]+)""")]
+    private static partial Regex ArrayItemStartRegex();
+
+    [GeneratedRegex(@",\s*""([^""]+)""")]
+    private static partial Regex ArrayItemContinueRegex();
 
     // Batch size for Azure API calls (max 100 texts per request, max 10000 chars)
     private const int BatchSize = 50;
@@ -70,7 +105,7 @@ public partial class TranslationGenerator
 
         ReportProgress("Scanning source files...", 0, 0);
 
-        // Scan AXAML files for {Loc ...} usages
+        // Scan AXAML files for {loc:Loc ...} usages
         var axamlFiles = Directory.GetFiles(sourceDirectory, "*.axaml", SearchOption.AllDirectories);
         foreach (var file in axamlFiles)
         {
@@ -86,6 +121,18 @@ public partial class TranslationGenerator
                 continue;
 
             CollectFromCsFile(file, strings);
+        }
+
+        // Also scan ArgoBooks.Core for display strings in enums and services
+        var coreDirectory = Path.Combine(Path.GetDirectoryName(sourceDirectory) ?? sourceDirectory, "ArgoBooks.Core");
+        if (Directory.Exists(coreDirectory))
+        {
+            ReportProgress("Scanning ArgoBooks.Core...", 0, 0);
+            var coreFiles = Directory.GetFiles(coreDirectory, "*.cs", SearchOption.AllDirectories);
+            foreach (var file in coreFiles)
+            {
+                CollectFromCsFile(file, strings);
+            }
         }
 
         ReportProgress($"Found {strings.Count} translatable strings", strings.Count, strings.Count);
@@ -154,16 +201,127 @@ public partial class TranslationGenerator
                 AddString(strings, match.Groups[1].Value);
             }
 
+            // Find .Translate("text") patterns (e.g., LanguageService.Instance.Translate("Other"))
+            var translateWithArgMatches = TranslateWithArgRegex().Matches(content);
+            foreach (Match match in translateWithArgMatches)
+            {
+                AddString(strings, match.Groups[1].Value);
+            }
+
             // Find Loc.Tr("text") patterns
             var locTrMatches = LocTrCallRegex().Matches(content);
             foreach (Match match in locTrMatches)
             {
                 AddString(strings, match.Groups[1].Value);
             }
+
+            // Find Tr("text") patterns (local helper method in ReportRenderer, ElementPropertyPanel, etc.)
+            var localTrMatches = LocalTrCallRegex().Matches(content);
+            foreach (Match match in localTrMatches)
+            {
+                AddString(strings, match.Groups[1].Value);
+            }
+
+            // Find CreateItem("Label", ...) patterns for sidebar/menu items
+            var createItemMatches = CreateItemCallRegex().Matches(content);
+            foreach (Match match in createItemMatches)
+            {
+                AddString(strings, match.Groups[1].Value);
+            }
+
+            // Find QuickActionItem("Title", "Description", ...) patterns
+            var quickActionMatches = QuickActionItemRegex().Matches(content);
+            foreach (Match match in quickActionMatches)
+            {
+                AddString(strings, match.Groups[1].Value); // Title
+                AddString(strings, match.Groups[2].Value); // Description
+            }
+
+            // Find public const string = "value" patterns (DatePresetNames, etc.)
+            var constStringMatches = ConstStringRegex().Matches(content);
+            foreach (Match match in constStringMatches)
+            {
+                var text = match.Groups[1].Value;
+                // Only add if it looks like display text (not empty, not a path, not a URL)
+                if (!string.IsNullOrEmpty(text) && text.Length > 1 &&
+                    !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
+                    !text.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                    !text.StartsWith("{"))
+                {
+                    AddString(strings, text);
+                }
+            }
+
+            // Find static readonly string[] = [...] patterns
+            var stringArrayMatches = StaticStringArrayRegex().Matches(content);
+            foreach (Match match in stringArrayMatches)
+            {
+                var arrayContent = match.Groups[1].Value;
+                // Extract individual strings from the array
+                var stringMatches = Regex.Matches(arrayContent, @"""([^""]+)""");
+                foreach (Match stringMatch in stringMatches)
+                {
+                    AddDisplayString(strings, stringMatch.Groups[1].Value);
+                }
+            }
+
+            // Find switch expression display strings: => "Display Text"
+            // Only in files that likely contain display names (enums, services, viewmodels, configurations)
+            if (filePath.Contains("Enum") || filePath.Contains("Service") || filePath.Contains("ViewModel") || filePath.Contains("Configuration"))
+            {
+                var switchMatches = SwitchDisplayStringRegex().Matches(content);
+                foreach (Match match in switchMatches)
+                {
+                    var text = match.Groups[1].Value;
+                    // Only include strings that look like display text (starts with uppercase, has space or common pattern)
+                    if (!string.IsNullOrEmpty(text) && char.IsUpper(text[0]) &&
+                        (text.Contains(' ') || text.Length > 3) &&
+                        !text.Contains('/') && !text.Contains('\\') && !text.Contains('.') &&
+                        !text.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                    {
+                        AddString(strings, text);
+                    }
+                }
+
+                // Find string array items: ["Item1", "Item2", "Item3"]
+                // These are commonly used for ComboBox options
+                var arrayStartMatches = ArrayItemStartRegex().Matches(content);
+                foreach (Match match in arrayStartMatches)
+                {
+                    AddDisplayString(strings, match.Groups[1].Value);
+                }
+
+                var arrayContMatches = ArrayItemContinueRegex().Matches(content);
+                foreach (Match match in arrayContMatches)
+                {
+                    AddDisplayString(strings, match.Groups[1].Value);
+                }
+            }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error scanning {filePath}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Adds a display string if it looks like user-facing text.
+    /// </summary>
+    private static void AddDisplayString(Dictionary<string, string> strings, string text)
+    {
+        if (string.IsNullOrEmpty(text) || text.Length < 2)
+            return;
+
+        // Skip technical strings
+        if (text.Contains('/') || text.Contains('\\') || text.Contains('.') ||
+            text.StartsWith("http", StringComparison.OrdinalIgnoreCase) ||
+            text.StartsWith("{") || text.Contains("{{"))
+            return;
+
+        // Only include strings that look like display text
+        if (char.IsUpper(text[0]) || text.Contains(' '))
+        {
+            AddString(strings, text);
         }
     }
 

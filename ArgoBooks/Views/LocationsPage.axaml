@@ -343,7 +343,7 @@
 
                                                         <!-- Type -->
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:LocationsPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}">
-                                                            <TextBlock Text="{Binding Type}"
+                                                            <TextBlock Text="{Binding Type, Converter={StaticResource TranslateConverter}}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"
@@ -382,7 +382,7 @@
                                                                     HorizontalAlignment="Left"
                                                                     VerticalAlignment="Center"
                                                                     Margin="8,0">
-                                                                <TextBlock Text="{Binding StatusText}"
+                                                                <TextBlock Text="{Binding StatusText, Converter={StaticResource TranslateConverter}}"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding StatusColor}" />

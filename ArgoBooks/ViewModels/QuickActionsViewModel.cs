@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -86,6 +87,18 @@ public partial class QuickActionsViewModel : ViewModelBase
         _navigationService = navigationService;
         InitializeActions();
         FilterActions(null);
+
+        // Subscribe to language changes to refresh translated content
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    /// <summary>
+    /// Called when the language changes. Refreshes the lists to update translations.
+    /// </summary>
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        // Re-filter to force ItemsControls to re-render with new translations
+        FilterActions(SearchQuery);
     }
 
     /// <summary>

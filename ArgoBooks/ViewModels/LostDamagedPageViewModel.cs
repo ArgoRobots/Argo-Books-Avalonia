@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -131,6 +132,14 @@ public partial class LostDamagedPageViewModel : ViewModelBase
             App.LostDamagedModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.LostDamagedModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+
+        // Subscribe to language changes to refresh translated content
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        FilterItems();
     }
 
     private void OnFiltersApplied(object? sender, EventArgs e)

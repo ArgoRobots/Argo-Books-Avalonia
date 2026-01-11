@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -146,6 +147,16 @@ public partial class ReturnsPageViewModel : ViewModelBase
             App.ReturnsModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ReturnsModalsViewModel.FiltersCleared += OnFiltersCleared;
         }
+
+        // Subscribe to language changes to refresh translated content
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        // Trigger property change notification to refresh translated titles via converters
+        OnPropertyChanged(nameof(IsExpenseTabActive));
+        FilterReturns();
     }
 
     private void OnFiltersApplied(object? sender, EventArgs e)

@@ -25,7 +25,7 @@
 
             <!-- Text -->
             <TextBlock Grid.Column="1"
-                       Text="{Binding Text, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
+                       Text="{Binding TranslatedText, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}"
                        VerticalAlignment="Center"
                        Margin="8,0,0,0"
                        IsVisible="{Binding !IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarItem}}" />

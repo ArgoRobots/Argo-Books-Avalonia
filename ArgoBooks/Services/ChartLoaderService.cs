@@ -56,7 +56,7 @@ public class ChartLoaderService
     private static string TruncateLegendLabel(string? label)
     {
         if (string.IsNullOrEmpty(label))
-            return "Unknown";
+            return LanguageService.Instance.Translate("Unknown");
 
         return label.Length > MaxLegendLabelLength
             ? label[..(MaxLegendLabelLength - 1)] + "…"
@@ -72,13 +72,46 @@ public class ChartLoaderService
     {
         var isDarkTheme = ThemeService.Instance.IsDarkTheme;
         var textColor = isDarkTheme ? SKColor.Parse("#F9FAFB") : SKColor.Parse("#1F2937");
+
+        // Handle titles that may already be translated or contain dynamic values
+        // If the text contains a colon followed by a value (e.g., "Total profits: $7,246.51"),
+        // only translate the label part before the colon
+        var translatedText = TranslateChartTitle(text);
+
         return new LabelVisual
         {
-            Text = text,
+            Text = translatedText,
             TextSize = 16,
             Padding = new Padding(15, 12),
             Paint = new SolidColorPaint(textColor) { FontFamily = "Segoe UI", SKFontStyle = new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright) }
         };
+    }
+
+    /// <summary>
+    /// Translates a chart title, handling titles with dynamic values.
+    /// </summary>
+    private static string TranslateChartTitle(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        // Check if the title contains a colon followed by a value (e.g., "Total profits: $7,246.51")
+        var colonIndex = text.IndexOf(':');
+        if (colonIndex > 0 && colonIndex < text.Length - 1)
+        {
+            var label = text[..colonIndex].Trim();
+            var value = text[(colonIndex + 1)..].Trim();
+
+            // Only translate the label part if the value looks like a number/currency
+            if (value.Length > 0 && (char.IsDigit(value[0]) || value[0] == '$' || value[0] == '-' || value[0] == '+'))
+            {
+                var translatedLabel = LanguageService.Instance.Translate(label);
+                return $"{translatedLabel}: {value}";
+            }
+        }
+
+        // Standard translation for simple titles
+        return LanguageService.Instance.Translate(text);
     }
 
     // Country name to ISO 3166-1 alpha-3 code mapping for GeoMap
@@ -210,7 +243,7 @@ public class ChartLoaderService
     private static string GetCountryName(string? isoCode)
     {
         if (string.IsNullOrEmpty(isoCode))
-            return "Unknown";
+            return LanguageService.Instance.Translate("Unknown");
 
         return IsoCodeToCountryName.TryGetValue(isoCode, out var name) ? name : isoCode.ToUpperInvariant();
     }
@@ -2389,15 +2422,16 @@ public class ChartLoaderService
             series.Add(new PieSeries<double>
             {
                 Values = [otherValue],
-                Name = "Other",
+                Name = LanguageService.Instance.Translate("Other"),
                 Fill = new SolidColorPaint(SKColor.Parse(otherColorHex)),
                 Pushout = 0,
                 ToolTipLabelFormatter = point => $"{point.Context.Series.Name}: ${point.Coordinate.PrimaryValue:N2}"
             });
 
+            var itemsText = LanguageService.Instance.Translate("items");
             legendItems.Add(new PieLegendItem
             {
-                Label = $"Other ({otherItems.Count} items)",
+                Label = $"{LanguageService.Instance.Translate("Other")} ({otherItems.Count} {itemsText})",
                 Value = otherValue,
                 Percentage = otherPercentage,
                 ColorHex = otherColorHex

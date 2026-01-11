@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Services;
 
 namespace ArgoBooks.Controls.Reports;
 
@@ -116,6 +117,21 @@ public partial class ElementPropertyPanel : UserControl
     public ElementPropertyPanel()
     {
         InitializeComponent();
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    /// <summary>
+    /// Helper method to translate strings.
+    /// </summary>
+    private static string Tr(string text) => LanguageService.Instance.Translate(text);
+
+    /// <summary>
+    /// Called when the language changes to refresh all translated content.
+    /// </summary>
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        // Refresh the property panel with updated translations
+        UpdateFromSelection();
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
@@ -154,7 +170,10 @@ public partial class ElementPropertyPanel : UserControl
         HasSingleSelection = count == 1;
         HasMultiSelection = count > 1;
 
-        _selectionCountText?.Text = $"{count} elements selected";
+        if (_selectionCountText != null)
+        {
+            _selectionCountText.Text = $"{count} {Tr("elements selected")}";
+        }
     }
 
     private void UpdateFromSelection()
@@ -217,13 +236,13 @@ public partial class ElementPropertyPanel : UserControl
 
         var (typeName, iconData) = element.GetElementType() switch
         {
-            ReportElementType.Chart => ("Chart Element", "M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"),
-            ReportElementType.Table => ("Table Element", "M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z"),
-            ReportElementType.Label => ("Label Element", "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"),
-            ReportElementType.Image => ("Image Element", "M21,17H7V3H21M21,1H7A2,2 0 0,0 5,3V17A2,2 0 0,0 7,19H21A2,2 0 0,0 23,17V3A2,2 0 0,0 21,1M3,5H1V21A2,2 0 0,0 3,23H19V21H3M15.96,10.29L13.21,13.83L11.25,11.47L8.5,15H19.5L15.96,10.29Z"),
-            ReportElementType.DateRange => ("Date Range Element", "M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1"),
-            ReportElementType.Summary => ("Summary Element", "M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z"),
-            _ => ("Element", "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z")
+            ReportElementType.Chart => (Tr("Chart Element"), "M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"),
+            ReportElementType.Table => (Tr("Table Element"), "M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z"),
+            ReportElementType.Label => (Tr("Label Element"), "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"),
+            ReportElementType.Image => (Tr("Image Element"), "M21,17H7V3H21M21,1H7A2,2 0 0,0 5,3V17A2,2 0 0,0 7,19H21A2,2 0 0,0 23,17V3A2,2 0 0,0 21,1M3,5H1V21A2,2 0 0,0 3,23H19V21H3M15.96,10.29L13.21,13.83L11.25,11.47L8.5,15H19.5L15.96,10.29Z"),
+            ReportElementType.DateRange => (Tr("Date Range Element"), "M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1"),
+            ReportElementType.Summary => (Tr("Summary Element"), "M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z"),
+            _ => (Tr("Element"), "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z")
         };
 
         _elementTypeText.Text = typeName;
@@ -253,13 +272,13 @@ public partial class ElementPropertyPanel : UserControl
         // Chart Type
         panel.Children.Add(new TextBlock
         {
-            Text = "Chart Settings",
+            Text = Tr("Chart Settings"),
             Classes = { "section-header" }
         });
 
         panel.Children.Add(new TextBlock
         {
-            Text = "Chart Type",
+            Text = Tr("Chart Type"),
             Classes = { "property-label" }
         });
 
@@ -281,7 +300,7 @@ public partial class ElementPropertyPanel : UserControl
         // Chart Style
         panel.Children.Add(new TextBlock
         {
-            Text = "Chart Style",
+            Text = Tr("Chart Style"),
             Classes = { "property-label" },
             Margin = new Thickness(0, 8, 0, 0)
         });
@@ -304,7 +323,7 @@ public partial class ElementPropertyPanel : UserControl
         // Show Title
         var showTitleCheck = new CheckBox
         {
-            Content = "Show Title",
+            Content = Tr("Show Title"),
             Classes = { "property-checkbox" },
             IsChecked = chart.ShowTitle,
             Margin = new Thickness(0, 8, 0, 0)
@@ -321,7 +340,7 @@ public partial class ElementPropertyPanel : UserControl
         // Show Legend
         var showLegendCheck = new CheckBox
         {
-            Content = "Show Legend",
+            Content = Tr("Show Legend"),
             Classes = { "property-checkbox" },
             IsChecked = chart.ShowLegend
         };
@@ -343,14 +362,14 @@ public partial class ElementPropertyPanel : UserControl
 
         panel.Children.Add(new TextBlock
         {
-            Text = "Table Settings",
+            Text = Tr("Table Settings"),
             Classes = { "section-header" }
         });
 
         // Data Selection
         panel.Children.Add(new TextBlock
         {
-            Text = "Data Selection",
+            Text = Tr("Data Selection"),
             Classes = { "property-label" }
         });
 
@@ -372,7 +391,7 @@ public partial class ElementPropertyPanel : UserControl
         // Row Count
         panel.Children.Add(new TextBlock
         {
-            Text = "Max Rows",
+            Text = Tr("Max Rows"),
             Classes = { "property-label" },
             Margin = new Thickness(0, 8, 0, 0)
         });
@@ -396,7 +415,7 @@ public partial class ElementPropertyPanel : UserControl
         // Checkboxes
         var showHeaderCheck = new CheckBox
         {
-            Content = "Show Header Row",
+            Content = Tr("Show Header Row"),
             Classes = { "property-checkbox" },
             IsChecked = table.ShowHeaders,
             Margin = new Thickness(0, 8, 0, 0)
@@ -412,7 +431,7 @@ public partial class ElementPropertyPanel : UserControl
 
         var alternatingRowsCheck = new CheckBox
         {
-            Content = "Alternating Row Colors",
+            Content = Tr("Alternating Row Colors"),
             Classes = { "property-checkbox" },
             IsChecked = table.AlternateRowColors
         };
@@ -434,14 +453,14 @@ public partial class ElementPropertyPanel : UserControl
 
         panel.Children.Add(new TextBlock
         {
-            Text = "Text Settings",
+            Text = Tr("Text Settings"),
             Classes = { "section-header" }
         });
 
         // Text content
         panel.Children.Add(new TextBlock
         {
-            Text = "Text",
+            Text = Tr("Text"),
             Classes = { "property-label" }
         });
 
@@ -465,7 +484,7 @@ public partial class ElementPropertyPanel : UserControl
         // Font Size
         panel.Children.Add(new TextBlock
         {
-            Text = "Font Size",
+            Text = Tr("Font Size"),
             Classes = { "property-label" },
             Margin = new Thickness(0, 8, 0, 0)
         });
@@ -549,7 +568,7 @@ public partial class ElementPropertyPanel : UserControl
         // Alignment
         panel.Children.Add(new TextBlock
         {
-            Text = "Horizontal Alignment",
+            Text = Tr("Horizontal Alignment"),
             Classes = { "property-label" },
             Margin = new Thickness(0, 8, 0, 0)
         });
@@ -578,14 +597,14 @@ public partial class ElementPropertyPanel : UserControl
 
         panel.Children.Add(new TextBlock
         {
-            Text = "Image Settings",
+            Text = Tr("Image Settings"),
             Classes = { "section-header" }
         });
 
         // Image Path
         panel.Children.Add(new TextBlock
         {
-            Text = "Image Source",
+            Text = Tr("Image Source"),
             Classes = { "property-label" }
         });
 
@@ -598,7 +617,7 @@ public partial class ElementPropertyPanel : UserControl
         {
             Classes = { "property-input" },
             Text = image.ImagePath,
-            Watermark = "Path to image...",
+            Watermark = Tr("Path to image..."),
             IsReadOnly = true
         };
         Grid.SetColumn(pathInput, 0);
@@ -623,7 +642,7 @@ public partial class ElementPropertyPanel : UserControl
         // Scale Mode
         panel.Children.Add(new TextBlock
         {
-            Text = "Scale Mode",
+            Text = Tr("Scale Mode"),
             Classes = { "property-label" },
             Margin = new Thickness(0, 8, 0, 0)
         });
@@ -652,14 +671,14 @@ public partial class ElementPropertyPanel : UserControl
 
         panel.Children.Add(new TextBlock
         {
-            Text = "Date Range Settings",
+            Text = Tr("Date Range Settings"),
             Classes = { "section-header" }
         });
 
         // Date Format
         panel.Children.Add(new TextBlock
         {
-            Text = "Date Format",
+            Text = Tr("Date Format"),
             Classes = { "property-label" }
         });
 
@@ -681,7 +700,7 @@ public partial class ElementPropertyPanel : UserControl
         // Font Size
         panel.Children.Add(new TextBlock
         {
-            Text = "Font Size",
+            Text = Tr("Font Size"),
             Classes = { "property-label" },
             Margin = new Thickness(0, 8, 0, 0)
         });
@@ -711,20 +730,20 @@ public partial class ElementPropertyPanel : UserControl
 
         panel.Children.Add(new TextBlock
         {
-            Text = "Summary Settings",
+            Text = Tr("Summary Settings"),
             Classes = { "section-header" }
         });
 
         // Items to include
         panel.Children.Add(new TextBlock
         {
-            Text = "Include Items",
+            Text = Tr("Include Items"),
             Classes = { "property-label" }
         });
 
         var totalSalesCheck = new CheckBox
         {
-            Content = "Total Sales",
+            Content = Tr("Total Sales"),
             Classes = { "property-checkbox" },
             IsChecked = summary.ShowTotalSales
         };
@@ -739,7 +758,7 @@ public partial class ElementPropertyPanel : UserControl
 
         var transactionCountCheck = new CheckBox
         {
-            Content = "Total Transactions",
+            Content = Tr("Total Transactions"),
             Classes = { "property-checkbox" },
             IsChecked = summary.ShowTotalTransactions
         };
@@ -754,7 +773,7 @@ public partial class ElementPropertyPanel : UserControl
 
         var avgValueCheck = new CheckBox
         {
-            Content = "Average Value",
+            Content = Tr("Average Value"),
             Classes = { "property-checkbox" },
             IsChecked = summary.ShowAverageValue
         };
@@ -769,7 +788,7 @@ public partial class ElementPropertyPanel : UserControl
 
         var growthRateCheck = new CheckBox
         {
-            Content = "Growth Rate",
+            Content = Tr("Growth Rate"),
             Classes = { "property-checkbox" },
             IsChecked = summary.ShowGrowthRate
         };

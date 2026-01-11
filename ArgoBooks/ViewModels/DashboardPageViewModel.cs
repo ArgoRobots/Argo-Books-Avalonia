@@ -3,6 +3,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -582,6 +583,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Subscribe to data change events
         _companyManager.CompanyDataChanged += OnCompanyDataChanged;
+
+        // Subscribe to language changes to refresh translated chart titles
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
     }
 
     /// <summary>
@@ -597,6 +601,38 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Unsubscribe from chart settings events
         ChartSettings.ChartTypeChanged -= OnChartSettingsChartTypeChanged;
         ChartSettings.DateRangeChanged -= OnChartSettingsDateRangeChanged;
+
+        // Unsubscribe from language changes
+        LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        // Refresh chart titles that use Loc.Tr()
+        LoadDashboardData();
+
+        // Notify computed chart title properties to refresh
+        OnPropertyChanged(nameof(SalesVsExpensesChartTitle));
+
+        // Force ComboBox to re-render items with new translations
+        // by refreshing the collection (items don't change, but triggers re-render)
+        var currentSelection = SelectedDateRange;
+        DateRangeOptions.Clear();
+        foreach (var option in DatePresetNames.StandardDateRangeOptions)
+        {
+            DateRangeOptions.Add(option);
+        }
+        // Restore selection without triggering data reload
+        _isLocalSettingChange = true;
+        try
+        {
+            ChartSettings.SelectedDateRange = currentSelection;
+            OnPropertyChanged(nameof(SelectedDateRange));
+        }
+        finally
+        {
+            _isLocalSettingChange = false;
+        }
     }
 
     private void OnCompanyDataChanged(object? sender, EventArgs e)

@@ -462,7 +462,7 @@
                                                                 Padding="8,4"
                                                                 CornerRadius="4"
                                                                 Background="{Binding StatusDisplay, Converter={x:Static local:StringConverters.ToExpenseStatusBackground}}">
-                                                            <TextBlock Text="{Binding StatusDisplay}"
+                                                            <TextBlock Text="{Binding StatusDisplay, Converter={StaticResource TranslateConverter}}"
                                                                        FontSize="12"
                                                                        FontWeight="Medium"
                                                                        TextTrimming="CharacterEllipsis"

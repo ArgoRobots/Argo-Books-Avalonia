@@ -35,6 +35,7 @@ public class UiSettings
     public bool ReportsElementPanelCollapsed { get; set; } = false;
     public string Theme { get; set; } = "Dark";
     public string AccentColor { get; set; } = "Blue";
+    public string Language { get; set; } = "English";
     public ChartSettings Chart { get; set; } = new();
 }
 

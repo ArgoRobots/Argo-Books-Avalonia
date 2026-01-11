@@ -232,7 +232,7 @@
                                                         <!-- Type (Product/Service) -->
                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ColumnWidths.TypeColumnWidth}"
                                                                IsVisible="{Binding $parent[ItemsControl].((vm:CategoriesPageViewModel)DataContext).ShowTypeColumn}">
-                                                            <TextBlock Text="{Binding ItemType}"
+                                                            <TextBlock Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
                                                                        FontSize="14"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        VerticalAlignment="Center"

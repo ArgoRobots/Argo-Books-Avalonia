@@ -459,6 +459,16 @@ public partial class App : Application
             // Initialize language service for localization
             LanguageService.Instance.Initialize();
 
+            // Apply global language setting
+            if (SettingsService != null)
+            {
+                var language = SettingsService.GlobalSettings.Ui.Language;
+                if (!string.IsNullOrEmpty(language) && language != "English")
+                {
+                    await LanguageService.Instance.SetLanguageAsync(language);
+                }
+            }
+
             // Initialize exchange rate service for currency conversion
             await InitializeExchangeRateServiceAsync();
 
@@ -627,6 +637,13 @@ public partial class App : Application
                 if (!string.IsNullOrEmpty(language))
                 {
                     await LanguageService.Instance.SetLanguageAsync(language);
+
+                    // Also update global setting so WelcomeScreen uses same language
+                    if (SettingsService != null)
+                    {
+                        SettingsService.GlobalSettings.Ui.Language = language;
+                        _ = SettingsService.SaveGlobalSettingsAsync();
+                    }
                 }
             }
 
@@ -650,8 +667,9 @@ public partial class App : Application
             // Clear tracked changes when company is closed
             ChangeTrackingService?.ClearAllChanges();
 
-            // Reset language to English when company is closed
-            await LanguageService.Instance.SetLanguageAsync("English");
+            // Reset to global language setting when company is closed
+            var globalLanguage = SettingsService?.GlobalSettings.Ui.Language ?? "English";
+            await LanguageService.Instance.SetLanguageAsync(globalLanguage);
 
             // Navigate back to Welcome screen when company is closed
             NavigationService?.NavigateTo("Welcome");
@@ -1431,31 +1449,6 @@ public partial class App : Application
             };
         }
 
-        // Save company file when settings modal requests it (e.g., after security settings change)
-        settings.SaveCompanyRequested += async (_, _) =>
-        {
-            if (CompanyManager?.HasUnsavedChanges == true)
-            {
-                try
-                {
-                    await CompanyManager.SaveCompanyAsync();
-                }
-                catch (Exception ex)
-                {
-                    var dialog = ConfirmationDialog;
-                    if (dialog != null)
-                    {
-                        await dialog.ShowAsync(new ConfirmationDialogOptions
-                        {
-                            Title = "Save Error",
-                            Message = $"Failed to save company file:\n\n{ex.Message}",
-                            PrimaryButtonText = "OK",
-                            CancelButtonText = ""
-                        });
-                    }
-                }
-            }
-        };
     }
 
     /// <summary>

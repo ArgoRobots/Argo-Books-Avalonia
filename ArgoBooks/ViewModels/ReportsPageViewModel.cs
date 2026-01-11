@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -369,6 +370,7 @@ public partial class ReportsPageViewModel : ViewModelBase
     public event EventHandler? PageSettingsRefreshRequested;
     public event EventHandler? TemplateLoaded;
     public event EventHandler? PreviewFitToWindowRequested;
+    public event EventHandler? CanvasRefreshRequested;
 
     partial void OnSelectedElementChanged(ReportElementBase? oldValue, ReportElementBase? newValue)
     {
@@ -1173,7 +1175,7 @@ public partial class ReportsPageViewModel : ViewModelBase
 
             // Render at 2x resolution for sharper zoom, but display at original size
             const int resolutionMultiplier = 2;
-            using var renderer = new ReportRenderer(Configuration, companyData);
+            using var renderer = new ReportRenderer(Configuration, companyData, 1f, LanguageServiceTranslationProvider.Instance);
             using var skBitmap = renderer.CreatePreview(width * resolutionMultiplier, height * resolutionMultiplier);
             PreviewImage = ConvertToBitmap(skBitmap);
 
@@ -1219,7 +1221,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         try
         {
             var companyData = App.CompanyManager?.CompanyData;
-            using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale);
+            using var renderer = new ReportRenderer(Configuration, companyData, PageDimensions.RenderScale, LanguageServiceTranslationProvider.Instance);
 
             bool success;
             if (SelectedExportFormat == ExportFormat.PDF)
@@ -1400,8 +1402,9 @@ public partial class ReportsPageViewModel : ViewModelBase
         new(Enum.GetValues<PageOrientation>());
 
     // Element property enum collections - uses GetDisplayName() extension method for consistent naming
+    // Wrapped with Loc.Tr() for translation support
     public ObservableCollection<ChartDataTypeOption> ChartTypeOptions { get; } =
-        new(Enum.GetValues<ChartDataType>().Select(t => new ChartDataTypeOption(t, t.GetDisplayName())));
+        new(Enum.GetValues<ChartDataType>().Select(t => new ChartDataTypeOption(t, Loc.Tr(t.GetDisplayName()))));
 
     /// <summary>
     /// Gets or sets the selected chart data type option, syncing with SelectedChartElement.ChartType.
@@ -1751,6 +1754,34 @@ public partial class ReportsPageViewModel : ViewModelBase
         InitializeCollections();
         LoadTemplate(SelectedTemplateName);
         InitializeExportSettings();
+
+        // Subscribe to language changes to refresh preview with updated translations
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
+    }
+
+    /// <summary>
+    /// Called when the language changes. Refreshes the preview to update translations.
+    /// </summary>
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        // Notify property changes for any translated properties
+        OnPropertyChanged(nameof(CurrentStepTitle));
+
+        // Force ItemsControls to re-render with new translations by notifying collection changes
+        OnPropertyChanged(nameof(ReportTemplateOptions));
+        OnPropertyChanged(nameof(DatePresets));
+
+        // Refresh the preview and canvas to show translated content
+        GeneratePreview();
+        CanvasRefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Cleans up event subscriptions when the view model is no longer needed.
+    /// </summary>
+    public void Cleanup()
+    {
+        LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
     }
 
     /// <summary>

@@ -16,6 +16,7 @@ public class ReportRenderer : IDisposable
     private readonly ReportConfiguration _config;
     private readonly float _renderScale;
     private readonly ReportChartDataService? _chartDataService;
+    private readonly ITranslationProvider _translationProvider;
 
     // Cached paints
     private readonly SKPaint _backgroundPaint;
@@ -36,11 +37,12 @@ public class ReportRenderer : IDisposable
     private static readonly SKColor ChartAxisColor = SKColor.Parse("#374151"); // Gray
     private static readonly SKColor ChartGridColor = SKColor.Parse("#E5E7EB"); // Light gray
 
-    public ReportRenderer(ReportConfiguration config, CompanyData? companyData, float renderScale = 1f)
+    public ReportRenderer(ReportConfiguration config, CompanyData? companyData, float renderScale = 1f, ITranslationProvider? translationProvider = null)
     {
         _config = config;
         _companyData = companyData;
         _renderScale = renderScale;
+        _translationProvider = translationProvider ?? DefaultTranslationProvider.Instance;
 
         // Initialize chart data service for rendering actual charts
         if (companyData != null)
@@ -380,7 +382,7 @@ public class ReportRenderer : IDisposable
         // Just show text, no background rectangle
         using var noDataFont = new SKFont(_defaultTypeface, 12 * _renderScale);
         using var noDataPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
-        canvas.DrawText("No data available", chartArea.MidX, chartArea.MidY, SKTextAlign.Center, noDataFont, noDataPaint);
+        canvas.DrawText(Tr("No data available"), chartArea.MidX, chartArea.MidY, SKTextAlign.Center, noDataFont, noDataPaint);
     }
 
     /// <summary>
@@ -1107,7 +1109,8 @@ public class ReportRenderer : IDisposable
         {
             using var moreFont = new SKFont(_defaultTypeface, 9 * _renderScale);
             using var morePaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
-            canvas.DrawText($"and {sortedData.Count - 10} more countries...", chartArea.Left, currentY + 10 * _renderScale, SKTextAlign.Left, moreFont, morePaint);
+            var moreCountriesText = string.Format(Tr("and {0} more countries..."), sortedData.Count - 10);
+            canvas.DrawText(moreCountriesText, chartArea.Left, currentY + 10 * _renderScale, SKTextAlign.Left, moreFont, morePaint);
         }
     }
 
@@ -1408,17 +1411,17 @@ public class ReportRenderer : IDisposable
                 }
                 else
                 {
-                    DrawPlaceholder(canvas, rect, "Image not found", !hasUserBackground);
+                    DrawPlaceholder(canvas, rect, Tr("Image not found"), !hasUserBackground);
                 }
             }
             catch
             {
-                DrawPlaceholder(canvas, rect, "Error loading image", !hasUserBackground);
+                DrawPlaceholder(canvas, rect, Tr("Error loading image"), !hasUserBackground);
             }
         }
         else
         {
-            DrawPlaceholder(canvas, rect, "No image selected", !hasUserBackground);
+            DrawPlaceholder(canvas, rect, Tr("No image selected"), !hasUserBackground);
         }
 
         // Draw border
@@ -1511,27 +1514,27 @@ public class ReportRenderer : IDisposable
         if (summary.ShowTotalSales)
         {
             var total = CalculateTotalSales(summary);
-            var label = summary.TransactionType == TransactionType.Expenses ? "Total Expenses" : "Total Revenue";
+            var label = summary.TransactionType == TransactionType.Expenses ? Tr("Total Expenses") : Tr("Total Revenue");
             lines.Add($"{label}: ${total:N2}");
         }
 
         if (summary.ShowTotalTransactions)
         {
             var count = CalculateTransactionCount(summary);
-            lines.Add($"Transactions: {count:N0}");
+            lines.Add($"{Tr("Transactions")}: {count:N0}");
         }
 
         if (summary.ShowAverageValue)
         {
             var avg = CalculateAverageValue(summary);
-            lines.Add($"Average Value: ${avg:N2}");
+            lines.Add($"{Tr("Average Value")}: ${avg:N2}");
         }
 
         if (summary.ShowGrowthRate)
         {
             var growth = CalculateGrowthRate(summary);
             var sign = growth >= 0 ? "+" : "";
-            lines.Add($"Growth Rate: {sign}{growth:N1}%");
+            lines.Add($"{Tr("Growth Rate")}: {sign}{growth:N1}%");
         }
 
         var lineHeight = (float)summary.FontSize * _renderScale * 1.5f;
@@ -1603,18 +1606,23 @@ public class ReportRenderer : IDisposable
         using var footerPaint = new SKPaint { Color = SKColors.Gray, IsAntialias = true };
 
         var timestamp = DateTime.Now.ToString("MMM dd, yyyy HH:mm");
-        canvas.DrawText($"Generated: {timestamp}", margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Left, footerFont, footerPaint);
+        canvas.DrawText($"{Tr("Generated")}: {timestamp}", margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Left, footerFont, footerPaint);
 
         // Draw page number if enabled
         if (_config.ShowPageNumbers)
         {
-            canvas.DrawText($"Page {_config.CurrentPageNumber}", width - margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Right, footerFont, footerPaint);
+            canvas.DrawText($"{Tr("Page")} {_config.CurrentPageNumber}", width - margin, footerY + footerHeight / 2 + 4 * _renderScale, SKTextAlign.Right, footerFont, footerPaint);
         }
     }
 
     #endregion
 
     #region Helpers
+
+    /// <summary>
+    /// Helper method to translate strings using the translation provider.
+    /// </summary>
+    private string Tr(string text) => _translationProvider.Translate(text);
 
     private SKRect GetScaledRect(ReportElementBase element)
     {
@@ -1687,10 +1695,10 @@ public class ReportRenderer : IDisposable
 
         if (start.HasValue && end.HasValue)
         {
-            return $"Period: {start.Value.ToString(dateFormat)} to {end.Value.ToString(dateFormat)}";
+            return $"{Tr("Period")}: {start.Value.ToString(dateFormat)} {Tr("to")} {end.Value.ToString(dateFormat)}";
         }
 
-        return "Period: All Time";
+        return $"{Tr("Period")}: {Tr("All Time")}";
     }
 
     private void DrawPlaceholder(SKCanvas canvas, SKRect rect, string message, bool drawBackground = true)

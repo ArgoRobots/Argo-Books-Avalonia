@@ -4,6 +4,7 @@ using Avalonia.Data.Converters;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using ArgoBooks.Controls;
+using ArgoBooks.Services;
 
 namespace ArgoBooks.Converters;
 
@@ -179,14 +180,16 @@ public static class BoolConverters
     /// True = "Expense Returns", False = "Customer Returns".
     /// </summary>
     public static readonly IValueConverter ToReturnTableTitle =
-        new FuncValueConverter<bool, string>(value => value ? "Expense Returns" : "Customer Returns");
+        new FuncValueConverter<bool, string>(value =>
+            LanguageService.Instance.Translate(value ? "Expense Returns" : "Customer Returns"));
 
     /// <summary>
     /// Converts bool (isExpenseTab) to column header.
     /// True = "Supplier", False = "Customer".
     /// </summary>
     public static readonly IValueConverter ToSupplierOrCustomerHeader =
-        new FuncValueConverter<bool, string>(value => value ? "Supplier" : "Customer");
+        new FuncValueConverter<bool, string>(value =>
+            LanguageService.Instance.Translate(value ? "Supplier" : "Customer"));
 
     /// <summary>
     /// Converts bool to ScrollBarVisibility.

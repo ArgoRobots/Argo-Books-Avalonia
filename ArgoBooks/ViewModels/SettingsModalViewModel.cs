@@ -479,15 +479,25 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         else
         {
-            // Default language
-            SetLanguageWithoutNotify(LanguageService.Instance.CurrentLanguage);
+            // Load from global settings when no company is open
+            var globalSettings = App.SettingsService?.GlobalSettings;
+            if (globalSettings != null)
+            {
+                SetLanguageWithoutNotify(globalSettings.Ui.Language);
+            }
+            else
+            {
+                SetLanguageWithoutNotify(LanguageService.Instance.CurrentLanguage);
+            }
         }
 
         // Load max pie slices from global settings
-        var globalSettings = App.SettingsService?.GlobalSettings;
-        if (globalSettings != null)
         {
-            MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
+            var globalSettings = App.SettingsService?.GlobalSettings;
+            if (globalSettings != null)
+            {
+                MaxPieSlices = globalSettings.Ui.Chart.MaxPieSlices;
+            }
         }
 
         // Store original values for potential revert
@@ -578,11 +588,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Event raised when the company file should be saved (after security settings change).
-    /// </summary>
-    public event EventHandler? SaveCompanyRequested;
-
-    /// <summary>
     /// Saves the settings and closes the modal.
     /// </summary>
     [RelayCommand]
@@ -616,11 +621,12 @@ public partial class SettingsModalViewModel : ViewModelBase
             settings.ChangesMade = true;
         }
 
-        // Save max pie slices to global settings
+        // Save max pie slices and language to global settings
         var globalSettings = App.SettingsService?.GlobalSettings;
         if (globalSettings != null)
         {
             globalSettings.Ui.Chart.MaxPieSlices = MaxPieSlices;
+            globalSettings.Ui.Language = SelectedLanguage;
             _ = App.SettingsService?.SaveGlobalSettingsAsync();
         }
 
@@ -661,12 +667,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             {
                 IsDownloadingLanguage = false;
             }
-        }
-
-        // Save the company file if there are unsaved changes (e.g., security settings)
-        if (App.CompanyManager?.HasUnsavedChanges == true)
-        {
-            SaveCompanyRequested?.Invoke(this, EventArgs.Empty);
         }
 
         IsOpen = false;

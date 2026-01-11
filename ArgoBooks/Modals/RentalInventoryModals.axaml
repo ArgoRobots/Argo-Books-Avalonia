@@ -196,7 +196,13 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding ModalStatus}" Classes="form-combobox" />
+                                    <ComboBox ItemsSource="{Binding StatusOptions}" SelectedItem="{Binding ModalStatus}" Classes="form-combobox">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
                                 </StackPanel>
                             </Grid>
 
@@ -283,13 +289,25 @@
                             <!-- Status -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding FilterStatusOptions}" SelectedItem="{Binding FilterStatus}" Classes="form-combobox" />
+                                <ComboBox ItemsSource="{Binding FilterStatusOptions}" SelectedItem="{Binding FilterStatus}" Classes="form-combobox">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                             </StackPanel>
 
                             <!-- Availability -->
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{loc:Loc Availability}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                <ComboBox ItemsSource="{Binding AvailabilityOptions}" SelectedItem="{Binding FilterAvailability}" Classes="form-combobox" />
+                                <ComboBox ItemsSource="{Binding AvailabilityOptions}" SelectedItem="{Binding FilterAvailability}" Classes="form-combobox">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                             </StackPanel>
 
                             <!-- Daily Rate Range -->
@@ -385,7 +403,13 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Rate Type'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox ItemsSource="{Binding RateTypeOptions}" SelectedItem="{Binding RentOutRateType}" Classes="form-combobox" />
+                                    <ComboBox ItemsSource="{Binding RateTypeOptions}" SelectedItem="{Binding RentOutRateType}" Classes="form-combobox">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Rate Amount'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
