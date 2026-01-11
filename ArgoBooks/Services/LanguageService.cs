@@ -440,22 +440,47 @@ public partial class LanguageService
             {
                 return englishValue;
             }
-            return text;
+            return DecodeHtmlEntities(text);
         }
 
         // Look up in translation cache
-        var result = GetCachedTranslation(_currentIsoCode, text);
+        var key = GetStringKey(text);
+        var result = GetCachedTranslationByKey(_currentIsoCode, key);
 
-        // Debug: Log translation lookups
-        #if DEBUG
-        if (result == text && text.Length < 50)
+        // Log missing translations to console
+        if (result == null && text.Length < 100)
         {
-            var key = GetStringKey(text);
-            System.Diagnostics.Debug.WriteLine($"[TRANSLATE] Missing: '{text}' (key: {key}) for {_currentIsoCode}");
+            Console.WriteLine($"[TRANSLATE] Missing: '{DecodeHtmlEntities(text)}' (key: {key}) for {_currentIsoCode}");
+            return DecodeHtmlEntities(text);
         }
-        #endif
 
-        return result;
+        return result ?? DecodeHtmlEntities(text);
+    }
+
+    /// <summary>
+    /// Gets a cached translation by key directly.
+    /// </summary>
+    private string? GetCachedTranslationByKey(string isoCode, string key)
+    {
+        if (isoCode == "en")
+        {
+            if (_englishCache.TryGetValue(key, out var cachedTranslation))
+            {
+                return cachedTranslation;
+            }
+        }
+        else
+        {
+            if (_translationCache.TryGetValue(isoCode, out var languageTranslations))
+            {
+                if (languageTranslations.TryGetValue(key, out var cachedTranslation))
+                {
+                    return cachedTranslation;
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -470,38 +495,35 @@ public partial class LanguageService
             return text;
 
         if (isoCode == "en")
-            return text;
+            return DecodeHtmlEntities(text);
 
-        return GetCachedTranslation(isoCode, text);
+        var key = GetStringKey(text);
+        var result = GetCachedTranslationByKey(isoCode, key);
+
+        // Log missing translations to console
+        if (result == null && text.Length < 100)
+        {
+            Console.WriteLine($"[TRANSLATE] Missing: '{DecodeHtmlEntities(text)}' (key: {key}) for {isoCode}");
+            return DecodeHtmlEntities(text);
+        }
+
+        return result ?? DecodeHtmlEntities(text);
     }
 
     /// <summary>
-    /// Gets a cached translation by text content.
+    /// Decodes common HTML/XML entities that may come from XAML markup extensions.
     /// </summary>
-    private string GetCachedTranslation(string isoCode, string originalText)
+    private static string DecodeHtmlEntities(string text)
     {
-        var textKey = GetStringKey(originalText);
+        if (string.IsNullOrEmpty(text) || !text.Contains('&'))
+            return text;
 
-        if (isoCode == "en")
-        {
-            if (_englishCache.TryGetValue(textKey, out var cachedTranslation))
-            {
-                return cachedTranslation;
-            }
-        }
-        else
-        {
-            if (_translationCache.TryGetValue(isoCode, out var languageTranslations))
-            {
-                if (languageTranslations.TryGetValue(textKey, out var cachedTranslation))
-                {
-                    return cachedTranslation;
-                }
-            }
-        }
-
-        // Return original if no translation found
-        return originalText;
+        return text
+            .Replace("&amp;", "&")
+            .Replace("&lt;", "<")
+            .Replace("&gt;", ">")
+            .Replace("&quot;", "\"")
+            .Replace("&apos;", "'");
     }
 
     /// <summary>
@@ -514,8 +536,16 @@ public partial class LanguageService
         if (string.IsNullOrWhiteSpace(text))
             return "";
 
+        // Decode HTML/XML entities that may not be decoded by XAML parser in markup extensions
+        var decodedText = text
+            .Replace("&amp;", "&")
+            .Replace("&lt;", "<")
+            .Replace("&gt;", ">")
+            .Replace("&quot;", "\"")
+            .Replace("&apos;", "'");
+
         // Replace & with "amp" to match server-side key generation
-        var processedText = text.ToLowerInvariant().Replace("&", "amp");
+        var processedText = decodedText.ToLowerInvariant().Replace("&", "amp");
 
         // Remove non-word characters (except placeholders like {0})
         var cleanText = NonWordCharactersRegex().Replace(processedText, "");
