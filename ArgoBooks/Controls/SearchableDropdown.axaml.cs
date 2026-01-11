@@ -424,6 +424,7 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         {
             _searchTextBox.GotFocus += OnSearchTextBoxGotFocus;
             _searchTextBox.KeyDown += OnSearchTextBoxKeyDown;
+            _searchTextBox.PointerPressed += OnSearchTextBoxPointerPressed;
         }
 
         _itemsScrollViewer = this.FindControl<ScrollViewer>("ItemsScrollViewer");
@@ -437,6 +438,15 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     {
         // Always handle the event to prevent propagation to parent scroll viewers
         e.Handled = true;
+    }
+
+    private void OnSearchTextBoxPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Open dropdown when clicking the TextBox, even if it already has focus
+        if (!IsDropdownOpen)
+        {
+            IsDropdownOpen = true;
+        }
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
