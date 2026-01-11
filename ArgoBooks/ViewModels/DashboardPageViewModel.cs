@@ -648,11 +648,38 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         var data = _companyManager?.CompanyData;
         if (data == null) return;
 
+        // Correct rental statuses before displaying
+        CorrectRentalStatuses(data);
+
         LoadStatistics(data);
         LoadRecentTransactions(data);
         LoadActiveRentals(data);
         LoadProfitsChart(data);
         LoadSalesVsExpensesChart(data);
+    }
+
+    /// <summary>
+    /// Corrects rental statuses based on due dates.
+    /// </summary>
+    private static void CorrectRentalStatuses(CompanyData data)
+    {
+        // Mark active rentals as overdue if past due
+        foreach (var rental in data.Rentals.Where(r => r.Status == RentalStatus.Active))
+        {
+            if (rental.IsOverdue)
+            {
+                rental.Status = RentalStatus.Overdue;
+            }
+        }
+
+        // Reset incorrectly marked overdue rentals back to active if due date is in the future
+        foreach (var rental in data.Rentals.Where(r => r.Status == RentalStatus.Overdue))
+        {
+            if (DateTime.Today <= rental.DueDate.Date)
+            {
+                rental.Status = RentalStatus.Active;
+            }
+        }
     }
 
     private void LoadStatistics(CompanyData data)

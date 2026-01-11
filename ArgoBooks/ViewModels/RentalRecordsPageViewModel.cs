@@ -263,6 +263,15 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             }
         }
 
+        // Reset incorrectly marked overdue rentals back to active if due date is in the future
+        foreach (var rental in companyData.Rentals.Where(r => r.Status == RentalStatus.Overdue))
+        {
+            if (DateTime.Today <= rental.DueDate.Date)
+            {
+                rental.Status = RentalStatus.Active;
+            }
+        }
+
         _allRecords.AddRange(companyData.Rentals);
         UpdateStatistics();
         FilterRecords();
