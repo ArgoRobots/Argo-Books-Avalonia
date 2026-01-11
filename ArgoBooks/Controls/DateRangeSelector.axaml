@@ -21,30 +21,6 @@
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
-
-        <!-- Applied Custom Date Range Label (visible when custom range is applied) -->
-        <StackPanel Orientation="Horizontal"
-                    Spacing="6"
-                    IsVisible="{Binding HasAppliedCustomRange}">
-            <TextBlock Text="{Binding AppliedDateRangeText}"
-                       FontSize="12"
-                       Foreground="{DynamicResource TextSecondaryBrush}"
-                       VerticalAlignment="Center"
-                       TextTrimming="CharacterEllipsis" />
-            <Button Classes="link-button"
-                    Padding="0"
-                    MinWidth="0"
-                    MinHeight="0"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Command="{Binding OpenCustomDateRangeModalCommand}"
-                    Cursor="Hand">
-                <TextBlock Text="{loc:Loc change}"
-                           FontSize="12"
-                           Foreground="{DynamicResource PrimaryBrush}"
-                           TextDecorations="Underline" />
-            </Button>
-        </StackPanel>
     </StackPanel>
 
 </UserControl>

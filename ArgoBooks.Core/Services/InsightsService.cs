@@ -93,8 +93,11 @@ public class InsightsService : IInsightsService
     private (bool HasSufficientData, string? Message, int MonthsOfData) CheckDataSufficiency(
         CompanyData companyData, AnalysisDateRange dateRange)
     {
-        var sales = companyData.Sales.Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate).ToList();
-        var purchases = companyData.Purchases.Where(p => p.Date >= dateRange.StartDate && p.Date <= dateRange.EndDate).ToList();
+        // For forecasting, we need historical data - not data from the future date range
+        // Use all historical data (up to today) for sufficiency checks
+        var today = DateTime.Today;
+        var sales = companyData.Sales.Where(s => s.Date <= today).ToList();
+        var purchases = companyData.Purchases.Where(p => p.Date <= today).ToList();
 
         var totalTransactions = sales.Count + purchases.Count;
 
@@ -110,7 +113,7 @@ public class InsightsService : IInsightsService
 
         if (!allDates.Any())
         {
-            return (false, "No transaction data available for the selected period.", 0);
+            return (false, "No historical transaction data available.", 0);
         }
 
         var minDate = allDates.Min();
@@ -128,11 +131,12 @@ public class InsightsService : IInsightsService
     {
         var insights = new List<InsightItem>();
 
-        // Get current and previous period data
-        var previousPeriod = dateRange.GetPreviousPeriod();
+        // For forecasting, use historical periods for trend analysis
+        // Map future date ranges to equivalent historical periods
+        var (currentPeriod, previousPeriod) = GetHistoricalAnalysisPeriods(dateRange);
 
         var currentSales = companyData.Sales
-            .Where(s => s.Date >= dateRange.StartDate && s.Date <= dateRange.EndDate)
+            .Where(s => s.Date >= currentPeriod.StartDate && s.Date <= currentPeriod.EndDate)
             .ToList();
 
         var previousSales = companyData.Sales
@@ -140,7 +144,7 @@ public class InsightsService : IInsightsService
             .ToList();
 
         var currentPurchases = companyData.Purchases
-            .Where(p => p.Date >= dateRange.StartDate && p.Date <= dateRange.EndDate)
+            .Where(p => p.Date >= currentPeriod.StartDate && p.Date <= currentPeriod.EndDate)
             .ToList();
 
         var previousPurchases = companyData.Purchases
@@ -323,26 +327,29 @@ public class InsightsService : IInsightsService
     {
         var anomalies = new List<InsightItem>();
 
+        // Use historical date range for anomaly detection
+        var historicalRange = GetHistoricalDateRange(dateRange);
+
         // Expense spike detection
-        var expenseAnomaly = DetectExpenseAnomalies(companyData, dateRange);
+        var expenseAnomaly = DetectExpenseAnomalies(companyData, historicalRange);
         if (expenseAnomaly != null)
         {
             anomalies.Add(expenseAnomaly);
         }
 
         // Return rate anomaly
-        var returnAnomaly = DetectReturnRateAnomaly(companyData, dateRange);
+        var returnAnomaly = DetectReturnRateAnomaly(companyData, historicalRange);
         if (returnAnomaly != null)
         {
             anomalies.Add(returnAnomaly);
         }
 
         // Revenue anomaly (unusual drop or spike)
-        var revenueAnomalies = DetectRevenueAnomalies(companyData, dateRange);
+        var revenueAnomalies = DetectRevenueAnomalies(companyData, historicalRange);
         anomalies.AddRange(revenueAnomalies);
 
         // Large single transaction anomaly
-        var largeTransactionAnomaly = DetectLargeTransactionAnomaly(companyData, dateRange);
+        var largeTransactionAnomaly = DetectLargeTransactionAnomaly(companyData, historicalRange);
         if (largeTransactionAnomaly != null)
         {
             anomalies.Add(largeTransactionAnomaly);
@@ -628,7 +635,10 @@ public class InsightsService : IInsightsService
     private List<InsightItem> GenerateForecastInsights(CompanyData companyData, AnalysisDateRange dateRange)
     {
         var insights = new List<InsightItem>();
-        var forecast = GenerateForecast(companyData, dateRange);
+
+        // Use historical data range for forecast insights
+        var historicalRange = GetHistoricalDateRange(dateRange);
+        var forecast = GenerateForecast(companyData, historicalRange);
 
         // Revenue forecast insight
         if (forecast.ForecastedRevenue > 0)
@@ -662,7 +672,7 @@ public class InsightsService : IInsightsService
         }
 
         // Inventory depletion alert
-        var inventoryAlerts = CheckInventoryDepletion(companyData, dateRange);
+        var inventoryAlerts = CheckInventoryDepletion(companyData, historicalRange);
         if (inventoryAlerts.Count > 0)
         {
             insights.Add(new InsightItem
@@ -806,15 +816,18 @@ public class InsightsService : IInsightsService
     {
         var recommendations = new List<InsightItem>();
 
+        // Use historical date range for recommendations
+        var historicalRange = GetHistoricalDateRange(dateRange);
+
         // Top performing product
-        var topProductRec = AnalyzeTopProducts(companyData, dateRange);
+        var topProductRec = AnalyzeTopProducts(companyData, historicalRange);
         if (topProductRec != null)
         {
             recommendations.Add(topProductRec);
         }
 
         // Inactive customers
-        var inactiveCustomerRec = AnalyzeInactiveCustomers(companyData, dateRange);
+        var inactiveCustomerRec = AnalyzeInactiveCustomers(companyData, historicalRange);
         if (inactiveCustomerRec != null)
         {
             recommendations.Add(inactiveCustomerRec);
@@ -828,21 +841,21 @@ public class InsightsService : IInsightsService
         }
 
         // Supplier optimization
-        var supplierRec = AnalyzeSupplierOptimization(companyData, dateRange);
+        var supplierRec = AnalyzeSupplierOptimization(companyData, historicalRange);
         if (supplierRec != null)
         {
             recommendations.Add(supplierRec);
         }
 
         // Customer concentration risk
-        var concentrationRec = AnalyzeCustomerConcentration(companyData, dateRange);
+        var concentrationRec = AnalyzeCustomerConcentration(companyData, historicalRange);
         if (concentrationRec != null)
         {
             recommendations.Add(concentrationRec);
         }
 
         // Profit margin analysis
-        var marginRec = AnalyzeProfitMargins(companyData, dateRange);
+        var marginRec = AnalyzeProfitMargins(companyData, historicalRange);
         if (marginRec != null)
         {
             recommendations.Add(marginRec);
@@ -1129,6 +1142,97 @@ public class InsightsService : IInsightsService
     private static string FormatCurrency(decimal amount)
     {
         return amount.ToString("C0");
+    }
+
+    /// <summary>
+    /// Maps a date range (which may be in the future for forecasting) to equivalent historical periods.
+    /// For example, "Next Month" maps to "This Month" (current) and "Last Month" (previous).
+    /// </summary>
+    private static (AnalysisDateRange Current, AnalysisDateRange Previous) GetHistoricalAnalysisPeriods(AnalysisDateRange dateRange)
+    {
+        var today = DateTime.Today;
+        var periodDays = dateRange.DayCount;
+
+        // If the date range is in the future or extends into the future, use equivalent historical periods
+        if (dateRange.StartDate > today)
+        {
+            // Future date range - map to historical equivalents
+            // Current period = most recent completed period of same length
+            // Previous period = the period before that
+
+            // Calculate the period length in months (approximate)
+            var periodMonths = Math.Max(1, (int)Math.Round(periodDays / 30.0));
+
+            DateTime currentStart, currentEnd, previousStart, previousEnd;
+
+            if (periodMonths <= 1)
+            {
+                // Monthly period - use this month and last month
+                currentStart = new DateTime(today.Year, today.Month, 1);
+                currentEnd = today;
+                previousStart = currentStart.AddMonths(-1);
+                previousEnd = currentStart.AddDays(-1);
+            }
+            else if (periodMonths <= 3)
+            {
+                // Quarterly period - use this quarter and last quarter
+                var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1);
+                currentStart = quarterStart;
+                currentEnd = today;
+                previousStart = quarterStart.AddMonths(-3);
+                previousEnd = quarterStart.AddDays(-1);
+            }
+            else
+            {
+                // Yearly period - use this year and last year
+                currentStart = new DateTime(today.Year, 1, 1);
+                currentEnd = today;
+                previousStart = new DateTime(today.Year - 1, 1, 1);
+                previousEnd = new DateTime(today.Year - 1, 12, 31);
+            }
+
+            return (
+                AnalysisDateRange.Custom(currentStart, currentEnd),
+                AnalysisDateRange.Custom(previousStart, previousEnd)
+            );
+        }
+
+        // Date range is historical - use as-is with its previous period
+        return (dateRange, dateRange.GetPreviousPeriod());
+    }
+
+    /// <summary>
+    /// Gets the historical date range to use for analysis when given a future forecast period.
+    /// </summary>
+    private static AnalysisDateRange GetHistoricalDateRange(AnalysisDateRange dateRange)
+    {
+        var today = DateTime.Today;
+
+        if (dateRange.StartDate > today)
+        {
+            // Future date range - use equivalent historical period
+            var periodDays = dateRange.DayCount;
+            var periodMonths = Math.Max(1, (int)Math.Round(periodDays / 30.0));
+
+            if (periodMonths <= 1)
+            {
+                // Use this month
+                return AnalysisDateRange.Custom(new DateTime(today.Year, today.Month, 1), today);
+            }
+            else if (periodMonths <= 3)
+            {
+                // Use this quarter
+                var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1);
+                return AnalysisDateRange.Custom(quarterStart, today);
+            }
+            else
+            {
+                // Use this year
+                return AnalysisDateRange.Custom(new DateTime(today.Year, 1, 1), today);
+            }
+        }
+
+        return dateRange;
     }
 
     #endregion
