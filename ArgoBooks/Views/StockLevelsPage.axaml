@@ -605,7 +605,7 @@
                                                                     CornerRadius="4"
                                                                     Margin="8,0"
                                                                     Background="{Binding StatusBackground}">
-                                                                <TextBlock Text="{Binding StatusText}"
+                                                                <TextBlock Text="{Binding StatusText, Converter={StaticResource TranslateConverter}}"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding StatusColor}" />

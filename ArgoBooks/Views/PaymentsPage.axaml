@@ -394,7 +394,7 @@
                                                                 CornerRadius="4"
                                                                 Margin="8,0"
                                                                 Background="{Binding Status, Converter={x:Static local:StringConverters.ToPaymentTransactionStatusBackground}}">
-                                                            <TextBlock Text="{Binding Status}"
+                                                            <TextBlock Text="{Binding Status, Converter={StaticResource TranslateConverter}}"
                                                                        FontSize="12"
                                                                        FontWeight="Medium"
                                                                        Foreground="{Binding Status, Converter={x:Static local:StringConverters.ToPaymentTransactionStatusForeground}}" />

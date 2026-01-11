@@ -547,7 +547,7 @@
                                                                     HorizontalAlignment="Left"
                                                                     VerticalAlignment="Center"
                                                                     Margin="8,0">
-                                                                <TextBlock Text="{Binding TypeDisplay}"
+                                                                <TextBlock Text="{Binding TypeDisplay, Converter={StaticResource TranslateConverter}}"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding TypeColor}" />

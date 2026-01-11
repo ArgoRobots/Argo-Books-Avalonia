@@ -456,7 +456,7 @@
                                                             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
                                                         </Style>
                                                     </Border.Styles>
-                                                    <TextBlock Text="{Binding Status}"
+                                                    <TextBlock Text="{Binding Status, Converter={StaticResource TranslateConverter}}"
                                                                FontSize="11"
                                                                FontWeight="Medium" />
                                                 </Border>

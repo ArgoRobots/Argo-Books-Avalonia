@@ -391,7 +391,7 @@
                                                         CornerRadius="4"
                                                         Margin="8,0"
                                                         Background="{Binding IsActive, Converter={x:Static local:BoolConverters.ToStatusBackground}}">
-                                                    <TextBlock Text="{Binding StatusText}"
+                                                    <TextBlock Text="{Binding StatusText, Converter={StaticResource TranslateConverter}}"
                                                                FontSize="12"
                                                                FontWeight="Medium"
                                                                Foreground="{Binding IsActive, Converter={x:Static local:BoolConverters.ToStatusForeground}}" />
