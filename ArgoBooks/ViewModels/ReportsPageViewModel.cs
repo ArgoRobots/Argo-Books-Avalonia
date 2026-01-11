@@ -819,7 +819,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         SelectedElement.ZOrder = maxZ + 1;
         var newZOrders = Configuration.Elements.ToDictionary(e => e.Id, e => e.ZOrder);
 
-        UndoRedoManager.RecordAction(new ZOrderChangeAction(Configuration, oldZOrders, newZOrders, "Bring to front"));
+        UndoRedoManager.RecordAction(new ZOrderChangeAction(Configuration, oldZOrders, newZOrders, "Bring to front".Translate()));
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -839,7 +839,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         SelectedElement.ZOrder = minZ;
 
         var newZOrders = Configuration.Elements.ToDictionary(e => e.Id, e => e.ZOrder);
-        UndoRedoManager.RecordAction(new ZOrderChangeAction(Configuration, oldZOrders, newZOrders, "Send to back"));
+        UndoRedoManager.RecordAction(new ZOrderChangeAction(Configuration, oldZOrders, newZOrders, "Send to back".Translate()));
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -877,7 +877,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
 
         var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
-        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, $"Align {alignment}"));
+        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Align {0}".TranslateFormat(alignment)));
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -922,7 +922,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
 
         var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
-        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, $"Distribute {direction}"));
+        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Distribute {0}".TranslateFormat(direction)));
         OnPropertyChanged(nameof(Configuration));
     }
 
@@ -952,7 +952,7 @@ public partial class ReportsPageViewModel : ViewModelBase
         }
 
         var newBounds = SelectedElements.ToDictionary(e => e.Id, e => e.Bounds);
-        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, $"Match {dimension}"));
+        UndoRedoManager.RecordAction(new BatchMoveResizeAction(Configuration, oldBounds, newBounds, "Match {0}".TranslateFormat(dimension)));
         OnPropertyChanged(nameof(Configuration));
     }
 

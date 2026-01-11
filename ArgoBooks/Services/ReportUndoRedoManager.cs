@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Localization;
 
 namespace ArgoBooks.Services;
 
@@ -183,7 +184,7 @@ public class ReportUndoRedoManager(int maxStackSize = 100) : INotifyPropertyChan
 /// </summary>
 public class AddElementAction(ReportConfiguration config, ReportElementBase element) : IReportUndoableAction
 {
-    public string Description => $"Add {element.DisplayName}";
+    public string Description => "Add {0}".TranslateFormat(element.DisplayName);
 
     public void Undo()
     {
@@ -204,7 +205,7 @@ public class RemoveElementAction(ReportConfiguration config, ReportElementBase e
     private readonly ReportElementBase _element = element.Clone();
     private readonly int _originalZOrder = element.ZOrder;
 
-    public string Description => $"Remove {_element.DisplayName}";
+    public string Description => "Remove {0}".TranslateFormat(_element.DisplayName);
 
     public void Undo()
     {
@@ -229,7 +230,7 @@ public class MoveResizeElementAction(
     bool isResize = false)
     : IReportUndoableAction
 {
-    public string Description => isResize ? "Resize element" : "Move element";
+    public string Description => isResize ? "Resize element".Translate() : "Move element".Translate();
 
     public void Undo()
     {
@@ -289,7 +290,7 @@ public class ReportPropertyChangeAction<T>(
     Action? onChanged = null)
     : IReportUndoableAction
 {
-    public string Description => $"Change {propertyName}";
+    public string Description => "Change {0}".TranslateFormat(propertyName);
 
     public void Undo()
     {
@@ -316,7 +317,7 @@ public class ElementPropertyChangeAction(
     object? newValue)
     : IReportUndoableAction
 {
-    public string Description => $"Change {elementDisplayName} {FormatPropertyName(propertyName)}";
+    public string Description => "Change {0} {1}".TranslateFormat(elementDisplayName, FormatPropertyName(propertyName));
 
     public void Undo()
     {

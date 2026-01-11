@@ -5,6 +5,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using ArgoBooks.Localization;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Controls;
@@ -150,12 +151,14 @@ public partial class UndoRedoButtonGroup : UserControl
 
         if (_currentUndoHoverIndex < 0)
         {
-            _undoCountLabel.Text = "Hover to select actions";
+            _undoCountLabel.Text = "Hover to select actions".Translate();
         }
         else
         {
             int count = _currentUndoHoverIndex + 1;
-            _undoCountLabel.Text = count == 1 ? "Undo 1 action" : $"Undo {count} actions";
+            _undoCountLabel.Text = count == 1
+                ? "Undo 1 action".Translate()
+                : "Undo {0} actions".TranslateFormat(count);
         }
     }
 
@@ -165,12 +168,14 @@ public partial class UndoRedoButtonGroup : UserControl
 
         if (_currentRedoHoverIndex < 0)
         {
-            _redoCountLabel.Text = "Hover to select actions";
+            _redoCountLabel.Text = "Hover to select actions".Translate();
         }
         else
         {
             int count = _currentRedoHoverIndex + 1;
-            _redoCountLabel.Text = count == 1 ? "Redo 1 action" : $"Redo {count} actions";
+            _redoCountLabel.Text = count == 1
+                ? "Redo 1 action".Translate()
+                : "Redo {0} actions".TranslateFormat(count);
         }
     }
 

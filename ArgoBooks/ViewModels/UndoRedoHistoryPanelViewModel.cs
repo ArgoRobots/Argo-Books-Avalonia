@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 
 namespace ArgoBooks.ViewModels;
@@ -149,9 +150,18 @@ public partial class UndoRedoHistoryPanelViewModel : ViewModelBase
     /// </summary>
     private void UpdateActionLabel()
     {
-        var action = _isUndoMode ? "Undo" : "Redo";
-        var plural = HighlightedCount == 1 ? "Action" : "Actions";
-        ActionLabel = $"{action} {HighlightedCount} {plural}";
+        if (_isUndoMode)
+        {
+            ActionLabel = HighlightedCount == 1
+                ? "Undo 1 Action".Translate()
+                : "Undo {0} Actions".TranslateFormat(HighlightedCount);
+        }
+        else
+        {
+            ActionLabel = HighlightedCount == 1
+                ? "Redo 1 Action".Translate()
+                : "Redo {0} Actions".TranslateFormat(HighlightedCount);
+        }
     }
 
     /// <summary>
