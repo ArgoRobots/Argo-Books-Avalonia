@@ -69,7 +69,9 @@ public class LocExtension : MarkupExtension
 /// </summary>
 public static class LocalizationManager
 {
-    private static readonly List<WeakReference<LocalizationBinding>> _bindings = new();
+    // Store bindings directly (not weak references to bindings!)
+    // Only the Target inside each binding is a weak reference
+    private static readonly List<LocalizationBinding> _bindings = new();
     private static bool _initialized;
 
     private class LocalizationBinding
@@ -85,12 +87,12 @@ public static class LocalizationManager
 
         lock (_bindings)
         {
-            _bindings.Add(new WeakReference<LocalizationBinding>(new LocalizationBinding
+            _bindings.Add(new LocalizationBinding
             {
                 Target = new WeakReference<AvaloniaObject>(target),
                 Property = property,
                 Key = key
-            }));
+            });
         }
     }
 
@@ -115,32 +117,31 @@ public static class LocalizationManager
     private static void RefreshAllBindings()
     {
         List<LocalizationBinding> validBindings = new();
+        List<LocalizationBinding> deadBindings = new();
 
         lock (_bindings)
         {
-            // Collect valid bindings and remove dead ones
-            var toRemove = new List<WeakReference<LocalizationBinding>>();
-
-            foreach (var weakRef in _bindings)
+            // Collect valid bindings and identify dead ones
+            foreach (var binding in _bindings)
             {
-                if (weakRef.TryGetTarget(out var binding) &&
-                    binding.Target.TryGetTarget(out var target))
+                if (binding.Target.TryGetTarget(out _))
                 {
                     validBindings.Add(binding);
                 }
                 else
                 {
-                    toRemove.Add(weakRef);
+                    deadBindings.Add(binding);
                 }
             }
 
-            foreach (var dead in toRemove)
+            // Remove dead bindings (targets have been garbage collected)
+            foreach (var dead in deadBindings)
             {
                 _bindings.Remove(dead);
             }
         }
 
-        System.Diagnostics.Debug.WriteLine($"[LOC-MGR] Refreshing {validBindings.Count} bindings");
+        System.Diagnostics.Debug.WriteLine($"[LOC-MGR] Refreshing {validBindings.Count} bindings (removed {deadBindings.Count} dead)");
 
         // Update all valid bindings
         foreach (var binding in validBindings)
