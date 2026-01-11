@@ -85,11 +85,11 @@
                                                               Foreground="{DynamicResource PrimaryBrush}" />
                                                 </Border>
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                    <TextBlock Text="{Binding Title}"
+                                                    <TextBlock Text="{Binding Title, Converter={StaticResource TranslateConverter}}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <TextBlock Text="{Binding Description}"
+                                                    <TextBlock Text="{Binding Description, Converter={StaticResource TranslateConverter}}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 </StackPanel>
@@ -124,11 +124,11 @@
                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 </Border>
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                    <TextBlock Text="{Binding Title}"
+                                                    <TextBlock Text="{Binding Title, Converter={StaticResource TranslateConverter}}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <TextBlock Text="{Binding Description}"
+                                                    <TextBlock Text="{Binding Description, Converter={StaticResource TranslateConverter}}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 </StackPanel>
@@ -163,11 +163,11 @@
                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 </Border>
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                    <TextBlock Text="{Binding Title}"
+                                                    <TextBlock Text="{Binding Title, Converter={StaticResource TranslateConverter}}"
                                                                FontSize="14"
                                                                FontWeight="Medium"
                                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <TextBlock Text="{Binding Description}"
+                                                    <TextBlock Text="{Binding Description, Converter={StaticResource TranslateConverter}}"
                                                                FontSize="12"
                                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                                 </StackPanel>
