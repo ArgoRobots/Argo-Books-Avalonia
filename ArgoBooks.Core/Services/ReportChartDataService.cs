@@ -6,6 +6,19 @@ using ArgoBooks.Core.Models.Reports;
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
+/// Granularity options for growth rate calculations.
+/// </summary>
+public enum GrowthRateGranularity
+{
+    /// <summary>Day-over-day comparison.</summary>
+    Daily,
+    /// <summary>Week-over-week comparison.</summary>
+    Weekly,
+    /// <summary>Month-over-month comparison.</summary>
+    Monthly
+}
+
+/// <summary>
 /// Service for generating chart data for reports.
 /// </summary>
 public class ReportChartDataService(CompanyData? companyData, ReportFilters filters)
@@ -309,13 +322,129 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets growth rates over time.
+    /// Gets growth rates over time with dynamic granularity based on the selected date range.
+    /// - Short ranges (up to ~1 month): day-over-day
+    /// - Medium ranges (quarter): week-over-week
+    /// - Long ranges (year+): month-over-month
     /// </summary>
     public List<ChartDataPoint> GetGrowthRates()
     {
         if (companyData?.Sales == null)
             return [];
 
+        var granularity = DetermineGrowthRateGranularity();
+
+        return granularity switch
+        {
+            GrowthRateGranularity.Daily => GetGrowthRatesDaily(),
+            GrowthRateGranularity.Weekly => GetGrowthRatesWeekly(),
+            GrowthRateGranularity.Monthly => GetGrowthRatesMonthly(),
+            _ => GetGrowthRatesMonthly()
+        };
+    }
+
+    /// <summary>
+    /// Gets day-over-day growth rates.
+    /// </summary>
+    private List<ChartDataPoint> GetGrowthRatesDaily()
+    {
+        var (startDate, endDate) = GetDateRange();
+
+        var allDays = GetDaysBetween(startDate, endDate).ToList();
+
+        // Filter to only days that have actual sales data
+        var daysWithData = allDays.Where(day =>
+            companyData!.Sales.Any(s => s.Date.Date == day.Date)
+        ).ToList();
+
+        if (daysWithData.Count < 2)
+            return [];
+
+        var result = new List<ChartDataPoint>();
+
+        for (int i = 1; i < daysWithData.Count; i++)
+        {
+            var currentDay = daysWithData[i];
+            var previousDay = daysWithData[i - 1];
+
+            var currentRevenue = companyData!.Sales
+                .Where(s => s.Date.Date == currentDay.Date)
+                .Sum(s => s.EffectiveTotalUSD);
+
+            var previousRevenue = companyData.Sales
+                .Where(s => s.Date.Date == previousDay.Date)
+                .Sum(s => s.EffectiveTotalUSD);
+
+            double growthRate = CalculateGrowthRate(currentRevenue, previousRevenue);
+
+            result.Add(new ChartDataPoint
+            {
+                Label = currentDay.ToString("MMM d"),
+                Value = growthRate,
+                Date = currentDay
+            });
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets week-over-week growth rates.
+    /// </summary>
+    private List<ChartDataPoint> GetGrowthRatesWeekly()
+    {
+        var (startDate, endDate) = GetDateRange();
+
+        var allWeeks = GetWeeksBetween(startDate, endDate).ToList();
+
+        // Filter to only weeks that have actual sales data
+        var weeksWithData = allWeeks.Where(weekStart =>
+        {
+            var weekEnd = weekStart.AddDays(6);
+            return companyData!.Sales.Any(s => s.Date >= weekStart && s.Date <= weekEnd);
+        }).ToList();
+
+        if (weeksWithData.Count < 2)
+            return [];
+
+        var result = new List<ChartDataPoint>();
+
+        for (int i = 1; i < weeksWithData.Count; i++)
+        {
+            var currentWeekStart = weeksWithData[i];
+            var currentWeekEnd = currentWeekStart.AddDays(6);
+            var previousWeekStart = weeksWithData[i - 1];
+            var previousWeekEnd = previousWeekStart.AddDays(6);
+
+            var currentRevenue = companyData!.Sales
+                .Where(s => s.Date >= currentWeekStart && s.Date <= currentWeekEnd)
+                .Sum(s => s.EffectiveTotalUSD);
+
+            var previousRevenue = companyData.Sales
+                .Where(s => s.Date >= previousWeekStart && s.Date <= previousWeekEnd)
+                .Sum(s => s.EffectiveTotalUSD);
+
+            double growthRate = CalculateGrowthRate(currentRevenue, previousRevenue);
+
+            // Format label as "Jan 6-12" for weekly ranges
+            var label = $"{currentWeekStart:MMM d}-{currentWeekEnd:d}";
+
+            result.Add(new ChartDataPoint
+            {
+                Label = label,
+                Value = growthRate,
+                Date = currentWeekStart
+            });
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets month-over-month growth rates.
+    /// </summary>
+    private List<ChartDataPoint> GetGrowthRatesMonthly()
+    {
         var (startDate, endDate) = GetDateRange();
 
         var allMonths = GetMonthsBetween(startDate, endDate).ToList();
@@ -325,7 +454,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
-            return companyData.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
+            return companyData!.Sales.Any(s => s.Date >= monthStart && s.Date <= monthEnd);
         }).ToList();
 
         if (monthsWithData.Count < 2)
@@ -343,7 +472,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             var previousMonthStart = new DateTime(previousMonth.Year, previousMonth.Month, 1);
             var previousMonthEnd = previousMonthStart.AddMonths(1).AddDays(-1);
 
-            var currentRevenue = companyData.Sales
+            var currentRevenue = companyData!.Sales
                 .Where(s => s.Date >= currentMonthStart && s.Date <= currentMonthEnd)
                 .Sum(s => s.EffectiveTotalUSD);
 
@@ -351,15 +480,7 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 .Where(s => s.Date >= previousMonthStart && s.Date <= previousMonthEnd)
                 .Sum(s => s.EffectiveTotalUSD);
 
-            double growthRate = 0;
-            if (previousRevenue != 0)
-            {
-                growthRate = (double)((currentRevenue - previousRevenue) / previousRevenue * 100);
-            }
-            else if (currentRevenue > 0)
-            {
-                growthRate = 100;
-            }
+            double growthRate = CalculateGrowthRate(currentRevenue, previousRevenue);
 
             result.Add(new ChartDataPoint
             {
@@ -370,6 +491,22 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Calculates the growth rate percentage between two revenue values.
+    /// </summary>
+    private static double CalculateGrowthRate(decimal currentRevenue, decimal previousRevenue)
+    {
+        if (previousRevenue != 0)
+        {
+            return (double)((currentRevenue - previousRevenue) / previousRevenue * 100);
+        }
+        else if (currentRevenue > 0)
+        {
+            return 100;
+        }
+        return 0;
     }
 
     #endregion
@@ -1225,6 +1362,123 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     #endregion
 
     #region Helper Methods
+
+    /// <summary>
+    /// Determines the appropriate granularity for growth rate calculations based on the date range.
+    /// Handles both DatePresetNames constants and UI option names (which may differ in casing).
+    /// </summary>
+    private GrowthRateGranularity DetermineGrowthRateGranularity()
+    {
+        // First, check if we have a date preset name
+        if (!string.IsNullOrEmpty(filters.DatePresetName))
+        {
+            // Normalize to lowercase for case-insensitive comparison
+            var presetLower = filters.DatePresetName.ToLowerInvariant();
+
+            // Skip custom ranges - use span-based determination
+            if (presetLower is "custom" or "custom range")
+                return DetermineGranularityFromSpan();
+
+            // Very short ranges - still use daily for consistency
+            if (presetLower is "today" or "yesterday")
+                return GrowthRateGranularity.Daily;
+
+            // Short ranges (up to ~1 month) - day-over-day
+            if (presetLower is "last 7 days" or "this week" or "last week" or
+                "this month" or "last month" or "last 30 days")
+                return GrowthRateGranularity.Daily;
+
+            // Medium ranges (quarter) - week-over-week
+            if (presetLower is "this quarter" or "last quarter")
+                return GrowthRateGranularity.Weekly;
+
+            // Long ranges (year+) - month-over-month
+            if (presetLower is "this year" or "last year" or "year to date" or "all time")
+                return GrowthRateGranularity.Monthly;
+        }
+
+        // Fall back to calculating based on actual date span
+        return DetermineGranularityFromSpan();
+    }
+
+    /// <summary>
+    /// Determines granularity based on the actual date span.
+    /// </summary>
+    private GrowthRateGranularity DetermineGranularityFromSpan()
+    {
+        var (startDate, endDate) = GetDateRange();
+
+        // Handle extreme dates
+        if (startDate == DateTime.MinValue || endDate == DateTime.MaxValue)
+            return GrowthRateGranularity.Monthly;
+
+        var span = endDate - startDate;
+
+        return span.TotalDays switch
+        {
+            <= 45 => GrowthRateGranularity.Daily,     // Up to ~1.5 months: daily
+            <= 120 => GrowthRateGranularity.Weekly,   // Up to ~4 months: weekly
+            _ => GrowthRateGranularity.Monthly        // Longer periods: monthly
+        };
+    }
+
+    /// <summary>
+    /// Gets the weeks between two dates.
+    /// Each week starts on Monday.
+    /// </summary>
+    private static IEnumerable<DateTime> GetWeeksBetween(DateTime startDate, DateTime endDate)
+    {
+        // Clamp dates to avoid DateTime overflow
+        var minSafeDate = new DateTime(1900, 1, 1);
+        var maxSafeDate = new DateTime(2100, 12, 31);
+
+        if (startDate < minSafeDate) startDate = minSafeDate;
+        if (endDate > maxSafeDate) endDate = maxSafeDate;
+        if (startDate > endDate) yield break;
+
+        // Get the Monday of the week containing startDate
+        var daysToMonday = ((int)startDate.DayOfWeek - 1 + 7) % 7;
+        var current = startDate.AddDays(-daysToMonday).Date;
+
+        // Safety limit (max 520 weeks = 10 years)
+        var maxIterations = 520;
+        var iterations = 0;
+
+        while (current <= endDate && iterations < maxIterations)
+        {
+            yield return current;
+            current = current.AddDays(7);
+            iterations++;
+        }
+    }
+
+    /// <summary>
+    /// Gets the days between two dates.
+    /// </summary>
+    private static IEnumerable<DateTime> GetDaysBetween(DateTime startDate, DateTime endDate)
+    {
+        // Clamp dates to avoid DateTime overflow
+        var minSafeDate = new DateTime(1900, 1, 1);
+        var maxSafeDate = new DateTime(2100, 12, 31);
+
+        if (startDate < minSafeDate) startDate = minSafeDate;
+        if (endDate > maxSafeDate) endDate = maxSafeDate;
+        if (startDate > endDate) yield break;
+
+        var current = startDate.Date;
+        var end = endDate.Date;
+
+        // Safety limit (max 3650 days = 10 years)
+        var maxIterations = 3650;
+        var iterations = 0;
+
+        while (current <= end && iterations < maxIterations)
+        {
+            yield return current;
+            current = current.AddDays(1);
+            iterations++;
+        }
+    }
 
     /// <summary>
     /// Gets the months between two dates.
