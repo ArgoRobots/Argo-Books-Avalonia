@@ -3,6 +3,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Modal dialogs for creating and editing revenue/sales records.
+/// </summary>
 public partial class RevenueModals : UserControl
 {
     public RevenueModals()

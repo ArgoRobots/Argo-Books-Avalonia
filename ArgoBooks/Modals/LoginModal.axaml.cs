@@ -5,6 +5,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Modal dialog for user authentication when opening password-protected company files.
+/// </summary>
 public partial class LoginModal : UserControl
 {
     public LoginModal()

@@ -6,6 +6,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Panels;
 
+/// <summary>
+/// Dropdown panel for switching between recent company files.
+/// </summary>
 public partial class CompanySwitcherPanel : UserControl
 {
     public CompanySwitcherPanel()

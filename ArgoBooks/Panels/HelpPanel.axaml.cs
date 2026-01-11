@@ -6,6 +6,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Panels;
 
+/// <summary>
+/// Dropdown panel providing help resources and support links.
+/// </summary>
 public partial class HelpPanel : UserControl
 {
     private int _focusedIndex = -1;

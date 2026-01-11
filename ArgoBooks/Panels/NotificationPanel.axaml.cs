@@ -6,6 +6,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Panels;
 
+/// <summary>
+/// Dropdown panel displaying application notifications and alerts.
+/// </summary>
 public partial class NotificationPanel : UserControl
 {
     public NotificationPanel()

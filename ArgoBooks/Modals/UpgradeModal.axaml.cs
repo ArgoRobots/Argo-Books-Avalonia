@@ -8,6 +8,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Modal dialog for upgrading to premium plans with license key verification.
+/// </summary>
 public partial class UpgradeModal : UserControl
 {
     public UpgradeModal()

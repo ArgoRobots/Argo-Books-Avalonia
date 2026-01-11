@@ -6,6 +6,9 @@ using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
+/// <summary>
+/// Modal dialog for switching between user accounts.
+/// </summary>
 public partial class SwitchAccountModal : UserControl
 {
     public SwitchAccountModal()
