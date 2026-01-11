@@ -3,6 +3,7 @@ using System.Windows.Input;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 
 namespace ArgoBooks.ViewModels;
@@ -47,10 +48,10 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
     private bool _canRedo;
 
     [ObservableProperty]
-    private string _undoTooltip = "Undo";
+    private string _undoTooltip = "Undo".Translate();
 
     [ObservableProperty]
-    private string _redoTooltip = "Redo";
+    private string _redoTooltip = "Redo".Translate();
 
     /// <summary>
     /// Undo history items.
@@ -118,8 +119,8 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
         {
             CanUndo = false;
             CanRedo = false;
-            UndoTooltip = "Undo";
-            RedoTooltip = "Redo";
+            UndoTooltip = "Undo".Translate();
+            RedoTooltip = "Redo".Translate();
             return;
         }
 
@@ -127,12 +128,12 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
         CanRedo = Manager.CanRedo;
 
         UndoTooltip = Manager.UndoDescription != null
-            ? $"Undo {Manager.UndoDescription}"
-            : "Undo";
+            ? "Undo {0}".TranslateFormat(Manager.UndoDescription)
+            : "Undo".Translate();
 
         RedoTooltip = Manager.RedoDescription != null
-            ? $"Redo {Manager.RedoDescription}"
-            : "Redo";
+            ? "Redo {0}".TranslateFormat(Manager.RedoDescription)
+            : "Redo".Translate();
     }
 
     /// <summary>

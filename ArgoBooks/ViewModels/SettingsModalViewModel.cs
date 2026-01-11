@@ -524,11 +524,11 @@ public partial class SettingsModalViewModel : ViewModelBase
             {
                 var result = await dialog.ShowAsync(new ConfirmationDialogOptions()
                 {
-                    Title = "Unsaved Changes",
-                    Message = "You have unsaved changes. Do you want to save them before closing?",
-                    PrimaryButtonText = "Save",
-                    SecondaryButtonText = "Don't Save",
-                    CancelButtonText = "Cancel"
+                    Title = "Unsaved Changes".Translate(),
+                    Message = "You have unsaved changes. Do you want to save them before closing?".Translate(),
+                    PrimaryButtonText = "Save".Translate(),
+                    SecondaryButtonText = "Don't Save".Translate(),
+                    CancelButtonText = "Cancel".Translate()
                 });
 
                 switch (result)

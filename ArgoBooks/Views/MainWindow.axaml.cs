@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using ArgoBooks.Controls;
+using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using System.ComponentModel;
@@ -163,8 +164,8 @@ public partial class MainWindow : Window
             if (DataContext is MainWindowViewModel { UnsavedChangesDialogViewModel: not null } viewModel)
             {
                 var result = await viewModel.UnsavedChangesDialogViewModel.ShowSimpleAsync(
-                    "Unsaved Changes",
-                    "You have unsaved changes. Would you like to save them before closing?");
+                    "Unsaved Changes".Translate(),
+                    "You have unsaved changes. Would you like to save them before closing?".Translate());
 
                 switch (result)
                 {
