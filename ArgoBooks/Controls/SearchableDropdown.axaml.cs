@@ -424,7 +424,8 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         {
             _searchTextBox.GotFocus += OnSearchTextBoxGotFocus;
             _searchTextBox.KeyDown += OnSearchTextBoxKeyDown;
-            _searchTextBox.PointerPressed += OnSearchTextBoxPointerPressed;
+            // Use tunneling to catch pointer events before TextBox handles them
+            _searchTextBox.AddHandler(PointerPressedEvent, OnSearchTextBoxPointerPressed, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         }
 
         _itemsScrollViewer = this.FindControl<ScrollViewer>("ItemsScrollViewer");
