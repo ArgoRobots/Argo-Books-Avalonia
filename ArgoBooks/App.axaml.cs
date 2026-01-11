@@ -637,6 +637,13 @@ public partial class App : Application
                 if (!string.IsNullOrEmpty(language))
                 {
                     await LanguageService.Instance.SetLanguageAsync(language);
+
+                    // Also update global setting so WelcomeScreen uses same language
+                    if (SettingsService != null)
+                    {
+                        SettingsService.GlobalSettings.Ui.Language = language;
+                        _ = SettingsService.SaveGlobalSettingsAsync();
+                    }
                 }
             }
 
