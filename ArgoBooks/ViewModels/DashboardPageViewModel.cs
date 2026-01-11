@@ -583,6 +583,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Subscribe to data change events
         _companyManager.CompanyDataChanged += OnCompanyDataChanged;
+
+        // Subscribe to language changes to refresh translated chart titles
+        LanguageService.Instance.LanguageChanged += OnLanguageChanged;
     }
 
     /// <summary>
@@ -598,6 +601,15 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         // Unsubscribe from chart settings events
         ChartSettings.ChartTypeChanged -= OnChartSettingsChartTypeChanged;
         ChartSettings.DateRangeChanged -= OnChartSettingsDateRangeChanged;
+
+        // Unsubscribe from language changes
+        LanguageService.Instance.LanguageChanged -= OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+    {
+        // Refresh chart titles that use Loc.Tr()
+        LoadDashboardData();
     }
 
     private void OnCompanyDataChanged(object? sender, EventArgs e)

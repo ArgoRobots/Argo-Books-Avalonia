@@ -226,7 +226,7 @@
                                                                         HorizontalAlignment="Left"
                                                                         VerticalAlignment="Center"
                                                                         Margin="8,0">
-                                                                    <TextBlock Text="{Binding ItemType}"
+                                                                    <TextBlock Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
                                                                                FontSize="10"
                                                                                FontWeight="Medium"
                                                                                Foreground="{Binding TypeBadgeForeground}" />

@@ -669,7 +669,7 @@
                                                                     CornerRadius="4"
                                                                     Margin="8,0"
                                                                     Background="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeBackground}}">
-                                                                <TextBlock Text="{Binding ItemType}"
+                                                                <TextBlock Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
@@ -802,7 +802,7 @@
                                                                     CornerRadius="4"
                                                                     Margin="8,0"
                                                                     Background="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeBackground}}">
-                                                                <TextBlock Text="{Binding ItemType}"
+                                                                <TextBlock Text="{Binding ItemType, Converter={StaticResource TranslateConverter}}"
                                                                            FontSize="12"
                                                                            FontWeight="Medium"
                                                                            Foreground="{Binding ItemType, Converter={x:Static local:StringConverters.ToItemTypeBadgeForeground}}" />
