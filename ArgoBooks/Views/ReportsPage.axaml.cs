@@ -379,11 +379,11 @@ public partial class ReportsPage : UserControl
         if (_designCanvas != null && DataContext is ReportsPageViewModel vm)
         {
             var scrollViewer = _designCanvas.FindControl<ScrollViewer>("CanvasScrollViewer");
-            var zoomContainer = _designCanvas.FindControl<Border>("ZoomContainer");
+            var zoomTransformControl = _designCanvas.FindControl<LayoutTransformControl>("ZoomTransformControl");
 
-            if (scrollViewer != null && zoomContainer != null)
+            if (scrollViewer != null && zoomTransformControl != null)
             {
-                CanvasZoomAtPoint(e.Delta.Y > 0, e.GetPosition(scrollViewer), e.GetPosition(zoomContainer), scrollViewer, vm);
+                CanvasZoomAtPoint(e.Delta.Y > 0, e.GetPosition(scrollViewer), e.GetPosition(zoomTransformControl), scrollViewer, vm);
             }
             else
             {

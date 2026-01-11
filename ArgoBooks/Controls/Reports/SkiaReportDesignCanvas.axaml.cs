@@ -213,9 +213,8 @@ public partial class SkiaReportDesignCanvas : UserControl
             _canvasImage.PointerReleased += OnCanvasPointerReleased;
         }
 
-        // Wire up pointer wheel for zoom-to-cursor
-        // Use AddHandler with handledEventsToo to intercept events that ScrollViewer handles
-        _scrollViewer?.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Bubble, handledEventsToo: true);
+        // Wire up pointer wheel for zoom-to-cursor (only fires when not already handled by parent)
+        _scrollViewer?.AddHandler(PointerWheelChangedEvent, OnPointerWheelChanged, Avalonia.Interactivity.RoutingStrategies.Bubble);
 
         // Wire up keyboard events
         KeyDown += OnKeyDown;
@@ -646,10 +645,6 @@ public partial class SkiaReportDesignCanvas : UserControl
         var canvasX = (mousePosInContent.X - margin) / oldZoom;
         var canvasY = (mousePosInContent.Y - margin) / oldZoom;
 
-        Console.WriteLine($"[Zoom] MouseInViewport: ({mousePosInViewport.X:F1}, {mousePosInViewport.Y:F1}), CenteringOffset: ({centeringOffsetX:F1}, {centeringOffsetY:F1})");
-        Console.WriteLine($"[Zoom] MouseInContent: ({mousePosInContent.X:F1}, {mousePosInContent.Y:F1}), CanvasCoord: ({canvasX:F1}, {canvasY:F1})");
-        Console.WriteLine($"[Zoom] OldZoom: {oldZoom:F2} -> NewZoom: {newZoom:F2}");
-
         // Apply the new zoom level
         ZoomLevel = newZoom;
 
@@ -681,7 +676,6 @@ public partial class SkiaReportDesignCanvas : UserControl
             // If content will be centered after zoom, no scroll adjustment needed
             if (newExtentWidth <= newViewportWidth && newExtentHeight <= newViewportHeight)
             {
-                Console.WriteLine("[Zoom] Content fits in viewport, no scroll adjustment needed");
                 return;
             }
 
@@ -696,8 +690,6 @@ public partial class SkiaReportDesignCanvas : UserControl
 
             newScrollX = Math.Clamp(newScrollX, 0, maxScrollX);
             newScrollY = Math.Clamp(newScrollY, 0, maxScrollY);
-
-            Console.WriteLine($"[Zoom] NewScroll: ({newScrollX:F1}, {newScrollY:F1}), MaxScroll: ({maxScrollX:F1}, {maxScrollY:F1})");
 
             _scrollViewer.Offset = new Vector(newScrollX, newScrollY);
         }, DispatcherPriority.Render);
