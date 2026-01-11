@@ -188,7 +188,7 @@ public class LocalizationSource : INotifyPropertyChanged
     /// </summary>
     private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
     {
-        System.Diagnostics.Debug.WriteLine($"[LOC] Language changed to {e.NewLanguageName} ({e.NewIsoCode}). Keys to refresh: {_usedKeys.Count}");
+        System.Diagnostics.Debug.WriteLine($"[LOC] Language changed to {e.NewLanguage}. Keys to refresh: {_usedKeys.Count}");
 
         // Ensure we're on the UI thread for binding updates
         if (Dispatcher.UIThread.CheckAccess())
