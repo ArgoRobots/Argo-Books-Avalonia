@@ -25,18 +25,32 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 {
     /// <summary>
     /// Gets the date range based on filters.
+    /// Handles both preset names and custom ranges.
     /// </summary>
     private (DateTime Start, DateTime End) GetDateRange()
     {
-        if (!string.IsNullOrEmpty(filters.DatePresetName) &&
-            filters.DatePresetName != DatePresetNames.Custom)
+        // For custom ranges, use the explicit start/end dates from filters
+        if (string.IsNullOrEmpty(filters.DatePresetName) || IsCustomRange(filters.DatePresetName))
         {
-            return DatePresetNames.GetDateRange(filters.DatePresetName);
+            var start = filters.StartDate ?? DateTime.MinValue;
+            var end = filters.EndDate ?? DateTime.MaxValue;
+            return (start, end);
         }
 
-        var start = filters.StartDate ?? DateTime.MinValue;
-        var end = filters.EndDate ?? DateTime.MaxValue;
-        return (start, end);
+        // For preset names, calculate the date range
+        return DatePresetNames.GetDateRange(filters.DatePresetName);
+    }
+
+    /// <summary>
+    /// Checks if the preset name indicates a custom range.
+    /// </summary>
+    private static bool IsCustomRange(string? presetName)
+    {
+        if (string.IsNullOrEmpty(presetName))
+            return true;
+
+        var lower = presetName.ToLowerInvariant();
+        return lower is "custom" or "custom range";
     }
 
     #region Revenue Charts
@@ -1365,37 +1379,28 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     /// <summary>
     /// Determines the appropriate granularity for growth rate calculations based on the date range.
-    /// Handles both DatePresetNames constants and UI option names (which may differ in casing).
+    /// Maps UI options: This Month, Last Month, This Quarter, Last Quarter, This Year, Last Year, All Time, Custom Range.
     /// </summary>
     private GrowthRateGranularity DetermineGrowthRateGranularity()
     {
-        // First, check if we have a date preset name
-        if (!string.IsNullOrEmpty(filters.DatePresetName))
-        {
-            // Normalize to lowercase for case-insensitive comparison
-            var presetLower = filters.DatePresetName.ToLowerInvariant();
+        // For custom ranges or no preset, determine from actual date span
+        if (IsCustomRange(filters.DatePresetName))
+            return DetermineGranularityFromSpan();
 
-            // Skip custom ranges - use span-based determination
-            if (presetLower is "custom" or "custom range")
-                return DetermineGranularityFromSpan();
+        // Normalize to lowercase for case-insensitive comparison
+        var presetLower = filters.DatePresetName!.ToLowerInvariant();
 
-            // Very short ranges - still use daily for consistency
-            if (presetLower is "today" or "yesterday")
-                return GrowthRateGranularity.Daily;
+        // Short ranges (month) - day-over-day
+        if (presetLower is "this month" or "last month")
+            return GrowthRateGranularity.Daily;
 
-            // Short ranges (up to ~1 month) - day-over-day
-            if (presetLower is "last 7 days" or "this week" or "last week" or
-                "this month" or "last month" or "last 30 days")
-                return GrowthRateGranularity.Daily;
+        // Medium ranges (quarter) - week-over-week
+        if (presetLower is "this quarter" or "last quarter")
+            return GrowthRateGranularity.Weekly;
 
-            // Medium ranges (quarter) - week-over-week
-            if (presetLower is "this quarter" or "last quarter")
-                return GrowthRateGranularity.Weekly;
-
-            // Long ranges (year+) - month-over-month
-            if (presetLower is "this year" or "last year" or "year to date" or "all time")
-                return GrowthRateGranularity.Monthly;
-        }
+        // Long ranges (year+) - month-over-month
+        if (presetLower is "this year" or "last year" or "all time")
+            return GrowthRateGranularity.Monthly;
 
         // Fall back to calculating based on actual date span
         return DetermineGranularityFromSpan();
