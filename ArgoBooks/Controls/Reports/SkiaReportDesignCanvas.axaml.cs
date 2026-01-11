@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -129,13 +130,25 @@ public partial class SkiaReportDesignCanvas : UserControl
     private ReportElementBase? _hoveredElement;
 
     // Interaction state
-    private enum InteractionMode { None, Selecting, Dragging, Resizing }
+    private enum InteractionMode { None, Selecting, Dragging, Resizing, Panning }
     private InteractionMode _interactionMode = InteractionMode.None;
     private Point _interactionStartPoint;
     private Point _elementStartPosition;
     private Size _elementStartSize;
     private ResizeHandle _activeResizeHandle = ResizeHandle.None;
     private Dictionary<string, (Point Position, Size Size)> _multiDragStartBounds = new();
+
+    // Panning state
+    private Point _panStartPoint;
+    private Vector _panStartOffset;
+    private ReportElementBase? _rightClickedElement;
+    private const double PanThreshold = 5; // Minimum pixels to move before panning starts
+
+    // Overscroll (rubber-band) state
+    private Vector _overscroll;
+    private LayoutTransformControl? _zoomTransformControl;
+    private const double OverscrollResistance = 0.3; // How much resistance when overscrolling (0-1)
+    private const double OverscrollMaxDistance = 100; // Maximum overscroll distance in pixels
 
     // Render state
     private SKBitmap? _renderBitmap;
@@ -202,8 +215,8 @@ public partial class SkiaReportDesignCanvas : UserControl
         _scrollViewer = this.FindControl<ScrollViewer>("CanvasScrollViewer");
 
         // Get the ScaleTransform from the LayoutTransformControl
-        var zoomTransformControl = this.FindControl<LayoutTransformControl>("ZoomTransformControl");
-        _zoomTransform = zoomTransformControl?.LayoutTransform as ScaleTransform;
+        _zoomTransformControl = this.FindControl<LayoutTransformControl>("ZoomTransformControl");
+        _zoomTransform = _zoomTransformControl?.LayoutTransform as ScaleTransform;
 
         // Wire up pointer events on the canvas image
         if (_canvasImage != null)
@@ -758,25 +771,30 @@ public partial class SkiaReportDesignCanvas : UserControl
         var point = GetCanvasPoint(e);
         var props = e.GetCurrentPoint(_canvasImage).Properties;
 
-        // Handle right-click for context menu
+        // Handle right-click - start potential panning (context menu shown on release if no drag)
         if (props.IsRightButtonPressed)
         {
             var element = GetElementAtPoint(point);
-            if (element != null)
-            {
-                // Select the element if not already selected
-                if (!_selectedElements.Contains(element))
-                {
-                    _selectedElements.Clear();
-                    _selectedElements.Add(element);
-                    NotifySelectionChanged();
-                    InvalidateCanvas();
-                }
+            _rightClickedElement = element;
 
-                // Get the position relative to the parent control for menu positioning
-                var screenPoint = e.GetPosition(this);
-                ContextMenuRequested?.Invoke(this, new ContextMenuRequestedEventArgs(screenPoint.X, screenPoint.Y, element));
+            // Select the element if clicking on one and not already selected
+            if (element != null && !_selectedElements.Contains(element))
+            {
+                _selectedElements.Clear();
+                _selectedElements.Add(element);
+                NotifySelectionChanged();
+                InvalidateCanvas();
             }
+
+            // Start tracking for potential pan - store starting position
+            _interactionMode = InteractionMode.None; // Will switch to Panning if user drags
+            _interactionStartPoint = point;
+            if (_scrollViewer != null)
+            {
+                _panStartPoint = e.GetPosition(_scrollViewer);
+                _panStartOffset = new Vector(_scrollViewer.Offset.X, _scrollViewer.Offset.Y);
+            }
+            e.Pointer.Capture(_canvasImage);
             e.Handled = true;
             return;
         }
@@ -840,6 +858,76 @@ public partial class SkiaReportDesignCanvas : UserControl
         if (Configuration == null) return;
 
         var point = GetCanvasPoint(e);
+        var props = e.GetCurrentPoint(_canvasImage).Properties;
+
+        // Handle right-button drag for panning
+        if (props.IsRightButtonPressed && _scrollViewer != null)
+        {
+            var currentPoint = e.GetPosition(_scrollViewer);
+            var delta = _panStartPoint - currentPoint;
+            var distance = Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
+
+            // Start panning if we've moved past the threshold
+            if (_interactionMode != InteractionMode.Panning && distance > PanThreshold)
+            {
+                _interactionMode = InteractionMode.Panning;
+                Cursor = new Cursor(StandardCursorType.SizeAll);
+            }
+
+            // Update scroll position while panning with overscroll effect
+            if (_interactionMode == InteractionMode.Panning)
+            {
+                // Calculate desired offset
+                var desiredX = _panStartOffset.X + delta.X;
+                var desiredY = _panStartOffset.Y + delta.Y;
+
+                // Calculate bounds
+                var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+                var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+
+                // Calculate overscroll with resistance
+                double overscrollX = 0;
+                double overscrollY = 0;
+                double clampedX = desiredX;
+                double clampedY = desiredY;
+
+                if (desiredX < 0)
+                {
+                    overscrollX = desiredX * OverscrollResistance;
+                    overscrollX = Math.Max(overscrollX, -OverscrollMaxDistance);
+                    clampedX = 0;
+                }
+                else if (desiredX > maxX)
+                {
+                    overscrollX = (desiredX - maxX) * OverscrollResistance;
+                    overscrollX = Math.Min(overscrollX, OverscrollMaxDistance);
+                    clampedX = maxX;
+                }
+
+                if (desiredY < 0)
+                {
+                    overscrollY = desiredY * OverscrollResistance;
+                    overscrollY = Math.Max(overscrollY, -OverscrollMaxDistance);
+                    clampedY = 0;
+                }
+                else if (desiredY > maxY)
+                {
+                    overscrollY = (desiredY - maxY) * OverscrollResistance;
+                    overscrollY = Math.Min(overscrollY, OverscrollMaxDistance);
+                    clampedY = maxY;
+                }
+
+                // Apply clamped scroll offset
+                _scrollViewer.Offset = new Vector(clampedX, clampedY);
+
+                // Apply overscroll visual effect
+                _overscroll = new Vector(overscrollX, overscrollY);
+                ApplyOverscrollTransform();
+
+                e.Handled = true;
+                return;
+            }
+        }
 
         switch (_interactionMode)
         {
@@ -853,6 +941,10 @@ public partial class SkiaReportDesignCanvas : UserControl
 
             case InteractionMode.Selecting:
                 UpdateSelectionRectangle(point);
+                break;
+
+            case InteractionMode.Panning:
+                // Handled above
                 break;
 
             case InteractionMode.None:
@@ -874,6 +966,35 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void OnCanvasPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
+        // Handle right-click release - show context menu if we didn't pan
+        if (e.InitialPressMouseButton == MouseButton.Right)
+        {
+            e.Pointer.Capture(null);
+
+            if (_interactionMode == InteractionMode.Panning)
+            {
+                // We were panning, reset cursor and animate overscroll snap-back
+                Cursor = Cursor.Default;
+
+                // Animate overscroll back to zero (rubberband snap-back)
+                if (_overscroll.X != 0 || _overscroll.Y != 0)
+                {
+                    AnimateOverscrollSnapBack();
+                }
+            }
+            else if (_rightClickedElement != null)
+            {
+                // No panning occurred, show context menu
+                var screenPoint = e.GetPosition(this);
+                ContextMenuRequested?.Invoke(this, new ContextMenuRequestedEventArgs(screenPoint.X, screenPoint.Y, _rightClickedElement));
+            }
+
+            _interactionMode = InteractionMode.None;
+            _rightClickedElement = null;
+            e.Handled = true;
+            return;
+        }
+
         switch (_interactionMode)
         {
             case InteractionMode.Dragging:
@@ -887,10 +1008,62 @@ public partial class SkiaReportDesignCanvas : UserControl
             case InteractionMode.Selecting:
                 EndSelectionRectangle();
                 break;
+
+            case InteractionMode.Panning:
+                // Already handled above for right-click
+                break;
         }
 
         _interactionMode = InteractionMode.None;
         InvalidateCanvas();
+    }
+
+    #endregion
+
+    #region Overscroll (Rubber-band Effect)
+
+    /// <summary>
+    /// Applies the current overscroll as a visual transform.
+    /// </summary>
+    private void ApplyOverscrollTransform()
+    {
+        if (_zoomTransformControl == null) return;
+
+        // Apply translation to show overscroll effect
+        // The overscroll is inverted because dragging right should show content from left
+        var translateTransform = new TranslateTransform(-_overscroll.X, -_overscroll.Y);
+        _zoomTransformControl.RenderTransform = translateTransform;
+    }
+
+    /// <summary>
+    /// Animates the overscroll back to zero with a spring-like effect.
+    /// </summary>
+    private async void AnimateOverscrollSnapBack()
+    {
+        const int steps = 12;
+        const int delayMs = 16; // ~60fps
+
+        var startOverscroll = _overscroll;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            // Ease-out curve for smooth deceleration
+            double t = i / (double)steps;
+            double easeOut = 1 - Math.Pow(1 - t, 3); // Cubic ease-out
+
+            _overscroll = new Vector(
+                startOverscroll.X * (1 - easeOut),
+                startOverscroll.Y * (1 - easeOut)
+            );
+
+            ApplyOverscrollTransform();
+
+            await Task.Delay(delayMs);
+        }
+
+        // Ensure we end at exactly zero
+        _overscroll = new Vector(0, 0);
+        ApplyOverscrollTransform();
     }
 
     #endregion
