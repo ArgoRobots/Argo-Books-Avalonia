@@ -559,6 +559,6 @@
     </ScrollViewer>
 
     <!-- Prediction Info Modal -->
-    <modals:PredictionInfoModal />
+    <modals:PredictionInfoModal DataContext="{Binding}" />
     </Panel>
 </UserControl>
