@@ -95,13 +95,13 @@
                                                FontSize="15"
                                                FontWeight="SemiBold"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource PrimaryDarkBrush}" />
+                                               Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock Text="Forecast = Avg x Period"
                                                FontFamily="Consolas,Monaco,monospace"
                                                FontSize="15"
                                                FontWeight="SemiBold"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource PrimaryDarkBrush}" />
+                                               Foreground="{DynamicResource PrimaryBrush}" />
                                 </StackPanel>
                             </Border>
                             <TextBlock TextWrapping="Wrap"
@@ -136,7 +136,7 @@
                                                FontSize="14"
                                                FontWeight="SemiBold"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource PrimaryDarkBrush}" />
+                                               Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock Text="More historical data = higher score"
                                                FontSize="12"
                                                TextWrapping="Wrap"
@@ -158,7 +158,7 @@
                                                FontSize="14"
                                                FontWeight="SemiBold"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource PrimaryDarkBrush}" />
+                                               Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock TextWrapping="Wrap"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
@@ -196,7 +196,7 @@
                                                FontSize="14"
                                                FontWeight="SemiBold"
                                                TextWrapping="Wrap"
-                                               Foreground="{DynamicResource PrimaryDarkBrush}" />
+                                               Foreground="{DynamicResource PrimaryBrush}" />
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -210,20 +210,20 @@
                             <Grid ColumnDefinitions="*,*,*" Margin="0,4,0,0">
                                 <Border Grid.Column="0" Background="{DynamicResource SuccessDarkBrush}" CornerRadius="6" Padding="12" Margin="0,0,4,0">
                                     <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                        <TextBlock Text="High" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextInverseBrush}" HorizontalAlignment="Center" />
-                                        <TextBlock Text="80%+" FontSize="14" Foreground="{DynamicResource TextInverseBrush}" Opacity="0.9" HorizontalAlignment="Center" />
+                                        <TextBlock Text="High" FontSize="16" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" />
+                                        <TextBlock Text="80%+" FontSize="14" Foreground="White" Opacity="0.9" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
                                 <Border Grid.Column="1" Background="{DynamicResource WarningDarkBrush}" CornerRadius="6" Padding="12" Margin="2,0">
                                     <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                        <TextBlock Text="Medium" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextInverseBrush}" HorizontalAlignment="Center" />
-                                        <TextBlock Text="50-79%" FontSize="14" Foreground="{DynamicResource TextInverseBrush}" Opacity="0.9" HorizontalAlignment="Center" />
+                                        <TextBlock Text="Medium" FontSize="16" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" />
+                                        <TextBlock Text="50-79%" FontSize="14" Foreground="White" Opacity="0.9" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
                                 <Border Grid.Column="2" Background="{DynamicResource ErrorDarkBrush}" CornerRadius="6" Padding="12" Margin="4,0,0,0">
                                     <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                        <TextBlock Text="Low" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextInverseBrush}" HorizontalAlignment="Center" />
-                                        <TextBlock Text="&lt;50%" FontSize="14" Foreground="{DynamicResource TextInverseBrush}" Opacity="0.9" HorizontalAlignment="Center" />
+                                        <TextBlock Text="Low" FontSize="16" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" />
+                                        <TextBlock Text="&lt;50%" FontSize="14" Foreground="White" Opacity="0.9" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
                             </Grid>
