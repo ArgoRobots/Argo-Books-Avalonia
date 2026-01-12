@@ -79,7 +79,7 @@ public partial class InsightsPageViewModel : ViewModelBase
     public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.FutureDateRangeOptions);
 
     [ObservableProperty]
-    private string _selectedDateRange = "Next Month";
+    private int _selectedDateRangeIndex = 0;
 
     [ObservableProperty]
     private DateTime _startDate;
@@ -87,8 +87,16 @@ public partial class InsightsPageViewModel : ViewModelBase
     [ObservableProperty]
     private DateTime _endDate;
 
-    partial void OnSelectedDateRangeChanged(string value)
+    /// <summary>
+    /// Gets the currently selected date range string.
+    /// </summary>
+    public string SelectedDateRange => DateRangeOptions.Count > SelectedDateRangeIndex
+        ? DateRangeOptions[SelectedDateRangeIndex]
+        : "Next Month";
+
+    partial void OnSelectedDateRangeIndexChanged(int value)
     {
+        OnPropertyChanged(nameof(SelectedDateRange));
         UpdateDateRangeFromSelection();
         _ = RefreshInsightsAsync();
     }
