@@ -98,7 +98,8 @@ public partial class InsightsPageViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(SelectedDateRange));
         UpdateDateRangeFromSelection();
-        _ = RefreshInsightsAsync();
+        // Only refresh the forecast cards, not the insights
+        _ = RefreshForecastAsync();
     }
 
     /// <summary>
@@ -201,7 +202,33 @@ public partial class InsightsPageViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Refreshes only the forecast cards based on the selected date range.
+    /// </summary>
+    private async Task RefreshForecastAsync()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        try
+        {
+            // Create date range for forecast using the future date preset
+            var dateRange = AnalysisDateRange.Custom(StartDate, EndDate);
+
+            // Generate forecast only
+            var forecast = await _insightsService.GenerateForecastAsync(companyData, dateRange);
+
+            // Update forecast display
+            UpdateForecastDisplay(forecast);
+        }
+        catch
+        {
+            // Silently fail - the insights are still valid
+        }
+    }
+
+    /// <summary>
     /// Refreshes the insights data using the InsightsService.
+    /// Insights use a standard historical period, not affected by date range selection.
     /// </summary>
     [RelayCommand]
     private async Task RefreshInsightsAsync()
@@ -221,11 +248,14 @@ public partial class InsightsPageViewModel : ViewModelBase
 
         try
         {
-            // Create date range for analysis using the future date preset
-            var dateRange = AnalysisDateRange.Custom(StartDate, EndDate);
+            // Insights always use a standard historical analysis period (last 3 months)
+            var insightsDateRange = AnalysisDateRange.Custom(
+                DateTime.Today.AddMonths(-3),
+                DateTime.Today
+            );
 
-            // Generate insights using the service
-            var insights = await _insightsService.GenerateInsightsAsync(companyData, dateRange);
+            // Generate insights using the service with historical data
+            var insights = await _insightsService.GenerateInsightsAsync(companyData, insightsDateRange);
 
             // Check for sufficient data
             if (!insights.HasSufficientData)
@@ -242,14 +272,16 @@ public partial class InsightsPageViewModel : ViewModelBase
             AnomaliesDetected = insights.Summary.AnomaliesDetected.ToString();
             Opportunities = insights.Summary.Opportunities.ToString();
 
-            // Update forecast data
-            UpdateForecastDisplay(insights.Forecast);
-
-            // Update insight collections
+            // Update insight collections (these don't change with date range)
             UpdateInsightCollection(RevenueTrends, insights.RevenueTrends);
             UpdateInsightCollection(Anomalies, insights.Anomalies);
             UpdateInsightCollection(Forecasts, insights.Forecasts);
             UpdateInsightCollection(Recommendations, insights.Recommendations);
+
+            // Now update forecast based on selected date range
+            var forecastDateRange = AnalysisDateRange.Custom(StartDate, EndDate);
+            var forecast = await _insightsService.GenerateForecastAsync(companyData, forecastDateRange);
+            UpdateForecastDisplay(forecast);
 
             LastUpdated = DateTime.Now.ToString("h:mm tt");
         }
