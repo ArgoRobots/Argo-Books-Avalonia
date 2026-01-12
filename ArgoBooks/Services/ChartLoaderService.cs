@@ -1082,18 +1082,24 @@ public class ChartLoaderService
     }
 
     /// <summary>
-    /// Loads growth rates chart data.
+    /// Loads growth rates chart data with dynamic granularity based on date range.
     /// Uses ReportChartDataService for data fetching.
     /// </summary>
+    /// <param name="companyData">The company data containing sales information.</param>
+    /// <param name="startDate">Optional start date for filtering.</param>
+    /// <param name="endDate">Optional end date for filtering.</param>
+    /// <param name="datePresetName">Optional date preset name (e.g., "This Month", "Last Quarter") to determine granularity.</param>
     public (ObservableCollection<ISeries> Series, string[] Labels) LoadGrowthRatesChart(
         CompanyData? companyData,
         DateTime? startDate = null,
-        DateTime? endDate = null)
+        DateTime? endDate = null,
+        string? datePresetName = null)
     {
         var series = new ObservableCollection<ISeries>();
         var labels = Array.Empty<string>();
 
         var filters = CreateFiltersMonths(startDate, endDate, 12);
+        filters.DatePresetName = datePresetName;
         var dataService = new ReportChartDataService(companyData, filters);
 
         var dataPoints = dataService.GetGrowthRates();

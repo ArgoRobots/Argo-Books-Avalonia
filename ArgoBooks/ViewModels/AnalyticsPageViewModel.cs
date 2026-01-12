@@ -1558,7 +1558,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase
 
     private void LoadGrowthRatesChart(CompanyData data)
     {
-        var (series, labels) = _chartLoaderService.LoadGrowthRatesChart(data, StartDate, EndDate);
+        var (series, labels) = _chartLoaderService.LoadGrowthRatesChart(data, StartDate, EndDate, SelectedDateRange);
         GrowthRatesSeries = series;
         GrowthRatesXAxes = _chartLoaderService.CreateXAxes(labels);
         GrowthRatesYAxes = _chartLoaderService.CreateNumberYAxes();
