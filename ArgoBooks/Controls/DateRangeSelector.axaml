@@ -13,7 +13,7 @@
                 Width="165">
         <!-- Date Range Dropdown -->
         <ComboBox ItemsSource="{Binding DateRangeOptions}"
-                  SelectedItem="{Binding SelectedDateRange}"
+                  SelectedItem="{Binding SelectedDateRange, Mode=TwoWay}"
                   Classes="form-combobox">
             <ComboBox.ItemTemplate>
                 <DataTemplate>
