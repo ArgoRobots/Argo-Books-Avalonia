@@ -124,14 +124,14 @@
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <!-- Info Button -->
                                 <Button Classes="icon-button"
-                                        Width="20" Height="20"
+                                        Width="28" Height="28"
                                         Padding="0"
                                         VerticalAlignment="Center"
                                         Command="{Binding ShowPredictionInfoCommand}"
                                         ToolTip.Tip="How predictions are calculated">
                                     <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
-                                              Width="14" Height="14"
-                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                              Width="18" Height="18"
+                                              Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Button>
                             </StackPanel>
                             <TextBlock Text="{Binding ForecastDateRangeLabel}"
