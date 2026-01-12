@@ -645,35 +645,27 @@ public class InsightsService : IInsightsService
 
     /// <summary>
     /// Gets a scaled historical value for comparison with a forecast period.
-    /// If we have less data than the period months, scales up the available data.
+    /// Uses monthly average scaled by the period months for consistent comparison.
     /// </summary>
-    private static decimal GetScaledHistoricalValue(List<decimal> monthlyData, int periodMonths)
+    private static decimal GetScaledHistoricalValue(List<decimal> monthlyData, decimal periodMonths)
     {
         if (monthlyData.Count == 0) return 0;
 
-        if (monthlyData.Count >= periodMonths)
-        {
-            // We have enough data - use actual values from last N months
-            return monthlyData.TakeLast(periodMonths).Sum();
-        }
-        else
-        {
-            // Not enough data - scale up based on monthly average
-            var monthlyAverage = monthlyData.Average();
-            return monthlyAverage * periodMonths;
-        }
+        // Always use average-based scaling for consistent comparison
+        // This ensures fair comparison regardless of how many months of data we have
+        var monthlyAverage = monthlyData.Average();
+        return monthlyAverage * periodMonths;
     }
 
     /// <summary>
     /// Determines how many months the forecast period covers based on the date range.
+    /// Returns a decimal for precise day-based scaling.
     /// </summary>
-    private static int GetForecastPeriodMonths(AnalysisDateRange dateRange)
+    private static decimal GetForecastPeriodMonths(AnalysisDateRange dateRange)
     {
         var periodDays = dateRange.DayCount;
-
-        if (periodDays <= 35) return 1;        // ~1 month
-        if (periodDays <= 100) return 3;       // ~1 quarter
-        return 12;                              // ~1 year
+        // Use 30.44 days per month (average days in a month)
+        return periodDays / 30.44m;
     }
 
     private List<InsightItem> GenerateForecastInsights(CompanyData companyData, AnalysisDateRange dateRange)
