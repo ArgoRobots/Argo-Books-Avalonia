@@ -112,11 +112,17 @@ public partial class InsightsPageViewModel : ViewModelBase
             "Next Month" => DatePresetNames.NextMonth,
             "Next Quarter" => DatePresetNames.NextQuarter,
             "Next Year" => DatePresetNames.NextYear,
+            "Next 30 Days" => DatePresetNames.NextMonthToDate,
+            "Next 90 Days" => DatePresetNames.NextQuarterToDate,
+            "Next 365 Days" => DatePresetNames.NextYearToDate,
             _ => DatePresetNames.NextMonth
         });
 
         StartDate = start;
         EndDate = end;
+
+        // Update forecast date range label to show exact dates
+        ForecastDateRangeLabel = $"{start:MMM d, yyyy} – {end:MMM d, yyyy}";
 
         // Update forecast card labels based on selected period
         switch (SelectedDateRange)
@@ -134,6 +140,27 @@ public partial class InsightsPageViewModel : ViewModelBase
                 ProfitLabel = "Projected Annual Profit";
                 CustomersLabel = "Expected New Customers (Year)";
                 ComparisonLabel = "vs last year";
+                break;
+            case "Next 30 Days":
+                RevenueLabel = "Next 30 Days Revenue";
+                ExpensesLabel = "Next 30 Days Expenses";
+                ProfitLabel = "Projected Profit (30 Days)";
+                CustomersLabel = "Expected New Customers (30 Days)";
+                ComparisonLabel = "vs last 30 days";
+                break;
+            case "Next 90 Days":
+                RevenueLabel = "Next 90 Days Revenue";
+                ExpensesLabel = "Next 90 Days Expenses";
+                ProfitLabel = "Projected Profit (90 Days)";
+                CustomersLabel = "Expected New Customers (90 Days)";
+                ComparisonLabel = "vs last 90 days";
+                break;
+            case "Next 365 Days":
+                RevenueLabel = "Next 365 Days Revenue";
+                ExpensesLabel = "Next 365 Days Expenses";
+                ProfitLabel = "Projected Annual Profit";
+                CustomersLabel = "Expected New Customers (Year)";
+                ComparisonLabel = "vs last 365 days";
                 break;
             default: // Next Month
                 RevenueLabel = "Next Month Revenue";
@@ -209,6 +236,40 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// </summary>
     [ObservableProperty]
     private string _comparisonLabel = "vs last month";
+
+    /// <summary>
+    /// Shows the exact date range being forecasted.
+    /// </summary>
+    [ObservableProperty]
+    private string _forecastDateRangeLabel = string.Empty;
+
+    #endregion
+
+    #region Info Modal
+
+    /// <summary>
+    /// Whether the prediction info modal is visible.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isInfoModalVisible;
+
+    /// <summary>
+    /// Opens the prediction methodology info modal.
+    /// </summary>
+    [RelayCommand]
+    private void ShowPredictionInfo()
+    {
+        IsInfoModalVisible = true;
+    }
+
+    /// <summary>
+    /// Closes the prediction methodology info modal.
+    /// </summary>
+    [RelayCommand]
+    private void CloseInfoModal()
+    {
+        IsInfoModalVisible = false;
+    }
 
     #endregion
 

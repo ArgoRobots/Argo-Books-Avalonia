@@ -374,6 +374,9 @@ public static class DatePresetNames
     public const string NextMonth = "Next month";
     public const string NextQuarter = "Next quarter";
     public const string NextYear = "Next year";
+    public const string NextMonthToDate = "Next month to date";
+    public const string NextQuarterToDate = "Next quarter to date";
+    public const string NextYearToDate = "Next year to date";
 
     /// <summary>
     /// Gets the date range for a preset name.
@@ -401,6 +404,9 @@ public static class DatePresetNames
             NextMonth => GetNextMonthRange(now),
             NextQuarter => GetNextQuarterRange(now),
             NextYear => GetNextYearRange(now),
+            NextMonthToDate => GetNextMonthToDateRange(now),
+            NextQuarterToDate => GetNextQuarterToDateRange(now),
+            NextYearToDate => GetNextYearToDateRange(now),
             _ => (today.AddDays(-29), today.AddDays(1).AddSeconds(-1)) // Default to last 30 days
         };
     }
@@ -446,6 +452,30 @@ public static class DatePresetNames
         return (start, end);
     }
 
+    private static (DateTime Start, DateTime End) GetNextMonthToDateRange(DateTime now)
+    {
+        // From tomorrow to 30 days from now
+        var start = now.Date.AddDays(1);
+        var end = now.Date.AddDays(30).AddDays(1).AddSeconds(-1);
+        return (start, end);
+    }
+
+    private static (DateTime Start, DateTime End) GetNextQuarterToDateRange(DateTime now)
+    {
+        // From tomorrow to 90 days from now
+        var start = now.Date.AddDays(1);
+        var end = now.Date.AddDays(90).AddDays(1).AddSeconds(-1);
+        return (start, end);
+    }
+
+    private static (DateTime Start, DateTime End) GetNextYearToDateRange(DateTime now)
+    {
+        // From tomorrow to 365 days from now
+        var start = now.Date.AddDays(1);
+        var end = now.Date.AddDays(365).AddDays(1).AddSeconds(-1);
+        return (start, end);
+    }
+
     /// <summary>
     /// Gets all available preset names.
     /// </summary>
@@ -477,6 +507,9 @@ public static class DatePresetNames
     [
         "Next Month",
         "Next Quarter",
-        "Next Year"
+        "Next Year",
+        "Next 30 Days",
+        "Next 90 Days",
+        "Next 365 Days"
     ];
 }
