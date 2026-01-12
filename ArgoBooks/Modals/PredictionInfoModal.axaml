@@ -5,7 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
              x:Class="ArgoBooks.Modals.PredictionInfoModal"
-             x:DataType="vm:InsightsPageViewModel">
+             x:CompileBindings="False">
 
     <Panel IsVisible="{Binding IsInfoModalVisible}">
         <!-- Modal Backdrop -->
