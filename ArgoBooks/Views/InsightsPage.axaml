@@ -599,10 +599,8 @@
 
                 <!-- Modal Content -->
                 <ScrollViewer Grid.Row="1"
-                              Padding="24,24,24,24"
-                              HorizontalScrollBarVisibility="Disabled"
-                              HorizontalContentAlignment="Stretch">
-                    <StackPanel Spacing="20">
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="20" Margin="24">
                         <!-- Forecast Calculation -->
                         <StackPanel Spacing="8">
                             <TextBlock Text="Forecast Calculation"
