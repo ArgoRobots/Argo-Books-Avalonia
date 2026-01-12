@@ -88,6 +88,11 @@ public class InsightsSummary
 public class ForecastData
 {
     /// <summary>
+    /// Number of months the forecast period covers (e.g., 0.99 for 30 days, 2.96 for 90 days).
+    /// </summary>
+    public decimal PeriodMonths { get; set; } = 1;
+
+    /// <summary>
     /// Forecasted revenue for the next period.
     /// </summary>
     public decimal ForecastedRevenue { get; set; }

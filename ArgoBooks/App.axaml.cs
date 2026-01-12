@@ -138,6 +138,11 @@ public class App : Application
     public static ReportModalsViewModel? ReportModalsViewModel => _appShellViewModel?.ReportModalsViewModel;
 
     /// <summary>
+    /// Gets the prediction info modal view model for shared access.
+    /// </summary>
+    public static PredictionInfoModalViewModel? PredictionInfoModalViewModel => _appShellViewModel?.PredictionInfoModalViewModel;
+
+    /// <summary>
     /// Adds a notification to the notification panel.
     /// </summary>
     /// <param name="title">The notification title.</param>

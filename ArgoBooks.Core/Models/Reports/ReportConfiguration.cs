@@ -370,6 +370,14 @@ public static class DatePresetNames
     public const string AllTime = "All time";
     public const string Custom = "Custom";
 
+    // Future date range presets (for insights/forecasting)
+    public const string NextMonth = "Next month";
+    public const string NextQuarter = "Next quarter";
+    public const string NextYear = "Next year";
+    public const string NextMonthToDate = "Next month to date";
+    public const string NextQuarterToDate = "Next quarter to date";
+    public const string NextYearToDate = "Next year to date";
+
     /// <summary>
     /// Gets the date range for a preset name.
     /// Handles case-insensitive matching to support both constant values and UI display values.
@@ -419,6 +427,54 @@ public static class DatePresetNames
         return (start, end);
     }
 
+    private static (DateTime Start, DateTime End) GetNextMonthRange(DateTime now)
+    {
+        var nextMonth = now.AddMonths(1);
+        var start = new DateTime(nextMonth.Year, nextMonth.Month, 1);
+        var end = start.AddMonths(1).AddSeconds(-1);
+        return (start, end);
+    }
+
+    private static (DateTime Start, DateTime End) GetNextQuarterRange(DateTime now)
+    {
+        int quarter = (now.Month - 1) / 3;
+        var thisQuarterStart = new DateTime(now.Year, quarter * 3 + 1, 1);
+        var nextQuarterStart = thisQuarterStart.AddMonths(3);
+        var end = nextQuarterStart.AddMonths(3).AddSeconds(-1);
+        return (nextQuarterStart, end);
+    }
+
+    private static (DateTime Start, DateTime End) GetNextYearRange(DateTime now)
+    {
+        var start = new DateTime(now.Year + 1, 1, 1);
+        var end = new DateTime(now.Year + 1, 12, 31, 23, 59, 59);
+        return (start, end);
+    }
+
+    private static (DateTime Start, DateTime End) GetNextMonthToDateRange(DateTime now)
+    {
+        // From tomorrow to 30 days from now
+        var start = now.Date.AddDays(1);
+        var end = now.Date.AddDays(30).AddDays(1).AddSeconds(-1);
+        return (start, end);
+    }
+
+    private static (DateTime Start, DateTime End) GetNextQuarterToDateRange(DateTime now)
+    {
+        // From tomorrow to 90 days from now
+        var start = now.Date.AddDays(1);
+        var end = now.Date.AddDays(90).AddDays(1).AddSeconds(-1);
+        return (start, end);
+    }
+
+    private static (DateTime Start, DateTime End) GetNextYearToDateRange(DateTime now)
+    {
+        // From tomorrow to 365 days from now
+        var start = now.Date.AddDays(1);
+        var end = now.Date.AddDays(365).AddDays(1).AddSeconds(-1);
+        return (start, end);
+    }
+
     /// <summary>
     /// Gets all available preset names.
     /// </summary>
@@ -441,5 +497,18 @@ public static class DatePresetNames
         "Last Year",
         "All Time",
         "Custom Range"
+    ];
+
+    /// <summary>
+    /// Future date range options for insights/forecasting UI dropdowns.
+    /// </summary>
+    public static readonly string[] FutureDateRangeOptions =
+    [
+        "Next Month",
+        "Next Quarter",
+        "Next Year",
+        "Next 30 Days",
+        "Next 90 Days",
+        "Next 365 Days"
     ];
 }

@@ -74,210 +74,100 @@ public partial class InsightsPageViewModel : ViewModelBase
     #region Date Range
 
     /// <summary>
-    /// Available date range options.
+    /// Available date range options for insights (future-focused).
     /// </summary>
-    public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.StandardDateRangeOptions);
+    public ObservableCollection<string> DateRangeOptions { get; } = new(DatePresetNames.FutureDateRangeOptions);
 
     [ObservableProperty]
-    private string _selectedDateRange = "All Time";
+    private int _selectedDateRangeIndex = 0;
 
     [ObservableProperty]
-    private DateTime _startDate = new(2000, 1, 1);
+    private DateTime _startDate;
 
     [ObservableProperty]
-    private DateTime _endDate = DateTime.Now;
-
-    // Temporary date values for the modal (before applying)
-    [ObservableProperty]
-    private DateTime _modalStartDate = new(2000, 1, 1);
-
-    [ObservableProperty]
-    private DateTime _modalEndDate = DateTime.Now;
+    private DateTime _endDate;
 
     /// <summary>
-    /// Gets or sets whether the custom date range modal is open.
+    /// Gets the currently selected date range string.
     /// </summary>
-    [ObservableProperty]
-    private bool _isCustomDateRangeModalOpen;
+    public string SelectedDateRange => DateRangeOptions.Count > SelectedDateRangeIndex
+        ? DateRangeOptions[SelectedDateRangeIndex]
+        : "Next Month";
 
-    /// <summary>
-    /// Gets or sets whether a custom date range has been applied.
-    /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(AppliedDateRangeText))]
-    private bool _hasAppliedCustomRange;
-
-    /// <summary>
-    /// Gets the formatted text showing the applied custom date range.
-    /// </summary>
-    public string AppliedDateRangeText => HasAppliedCustomRange
-        ? $"{StartDate:MMM d, yyyy} - {EndDate:MMM d, yyyy}"
-        : string.Empty;
-
-    /// <summary>
-    /// Gets or sets the modal start date as DateTimeOffset for DatePicker binding.
-    /// </summary>
-    public DateTimeOffset? ModalStartDateOffset
+    partial void OnSelectedDateRangeIndexChanged(int value)
     {
-        get => new DateTimeOffset(ModalStartDate);
-        set
-        {
-            if (value.HasValue)
-            {
-                ModalStartDate = value.Value.DateTime;
-            }
-        }
+        OnPropertyChanged(nameof(SelectedDateRange));
+        UpdateDateRangeFromSelection();
+        // Only refresh the forecast cards, not the insights
+        _ = RefreshForecastAsync();
     }
 
     /// <summary>
-    /// Gets or sets the modal end date as DateTimeOffset for DatePicker binding.
-    /// </summary>
-    public DateTimeOffset? ModalEndDateOffset
-    {
-        get => new DateTimeOffset(ModalEndDate);
-        set
-        {
-            if (value.HasValue)
-            {
-                ModalEndDate = value.Value.DateTime;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets whether the custom date range option is selected.
-    /// </summary>
-    public bool IsCustomDateRange => SelectedDateRange == "Custom Range";
-
-    partial void OnSelectedDateRangeChanged(string value)
-    {
-        OnPropertyChanged(nameof(IsCustomDateRange));
-
-        if (value == "Custom Range")
-        {
-            OpenCustomDateRangeModal();
-        }
-        else
-        {
-            HasAppliedCustomRange = false;
-            UpdateDateRangeFromSelection();
-            _ = RefreshInsightsAsync();
-        }
-    }
-
-    /// <summary>
-    /// Opens the custom date range modal.
-    /// </summary>
-    [RelayCommand]
-    private void OpenCustomDateRangeModal()
-    {
-        ModalStartDate = StartDate;
-        ModalEndDate = EndDate;
-        OnPropertyChanged(nameof(ModalStartDateOffset));
-        OnPropertyChanged(nameof(ModalEndDateOffset));
-        IsCustomDateRangeModalOpen = true;
-    }
-
-    /// <summary>
-    /// Applies the custom date range from the modal.
-    /// </summary>
-    [RelayCommand]
-    private async Task ApplyCustomDateRange()
-    {
-        if (ModalStartDate > ModalEndDate)
-        {
-            var result = await App.ConfirmationDialog!.ShowAsync(new ConfirmationDialogOptions
-            {
-                Title = "Invalid Date Range",
-                Message = "The start date is after the end date. Would you like to swap the dates?",
-                PrimaryButtonText = "Swap Dates",
-                CancelButtonText = "Cancel"
-            });
-
-            if (result == ConfirmationResult.Primary)
-            {
-                (ModalStartDate, ModalEndDate) = (ModalEndDate, ModalStartDate);
-                OnPropertyChanged(nameof(ModalStartDateOffset));
-                OnPropertyChanged(nameof(ModalEndDateOffset));
-            }
-            else
-            {
-                return;
-            }
-        }
-
-        StartDate = ModalStartDate;
-        EndDate = ModalEndDate;
-        HasAppliedCustomRange = true;
-        OnPropertyChanged(nameof(AppliedDateRangeText));
-        IsCustomDateRangeModalOpen = false;
-        await RefreshInsightsAsync();
-    }
-
-    /// <summary>
-    /// Cancels the custom date range modal.
-    /// </summary>
-    [RelayCommand]
-    private void CancelCustomDateRange()
-    {
-        IsCustomDateRangeModalOpen = false;
-
-        if (!HasAppliedCustomRange)
-        {
-            SelectedDateRange = "This Month";
-        }
-    }
-
-    /// <summary>
-    /// Updates the start and end dates based on the selected date range option.
+    /// Updates the start and end dates based on the selected future date range option.
     /// </summary>
     private void UpdateDateRangeFromSelection()
     {
-        var now = DateTime.Now;
+        var (start, end) = DatePresetNames.GetDateRange(SelectedDateRange switch
+        {
+            "Next Month" => DatePresetNames.NextMonth,
+            "Next Quarter" => DatePresetNames.NextQuarter,
+            "Next Year" => DatePresetNames.NextYear,
+            "Next 30 Days" => DatePresetNames.NextMonthToDate,
+            "Next 90 Days" => DatePresetNames.NextQuarterToDate,
+            "Next 365 Days" => DatePresetNames.NextYearToDate,
+            _ => DatePresetNames.NextMonth
+        });
 
+        StartDate = start;
+        EndDate = end;
+
+        // Update forecast date range label to show exact dates
+        ForecastDateRangeLabel = $"{start:MMM d, yyyy} - {end:MMM d, yyyy}";
+
+        // Update forecast card labels based on selected period
         switch (SelectedDateRange)
         {
-            case "This Month":
-                StartDate = new DateTime(now.Year, now.Month, 1);
-                EndDate = now;
+            case "Next Quarter":
+                RevenueLabel = "Next Quarter Revenue";
+                ExpensesLabel = "Next Quarter Expenses";
+                ProfitLabel = "Projected Quarterly Profit";
+                CustomersLabel = "Expected New Customers (Quarter)";
+                ComparisonLabel = "vs last quarter";
                 break;
-
-            case "Last Month":
-                var lastMonth = now.AddMonths(-1);
-                StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
-                EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
+            case "Next Year":
+                RevenueLabel = "Next Year Revenue";
+                ExpensesLabel = "Next Year Expenses";
+                ProfitLabel = "Projected Annual Profit";
+                CustomersLabel = "Expected New Customers (Year)";
+                ComparisonLabel = "vs last year";
                 break;
-
-            case "This Quarter":
-                var quarterStart = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1);
-                StartDate = quarterStart;
-                EndDate = now;
+            case "Next 30 Days":
+                RevenueLabel = "Next 30 Days Revenue";
+                ExpensesLabel = "Next 30 Days Expenses";
+                ProfitLabel = "Projected Profit (30 Days)";
+                CustomersLabel = "Expected New Customers (30 Days)";
+                ComparisonLabel = "vs last 30 days";
                 break;
-
-            case "Last Quarter":
-                var lastQuarterEnd = new DateTime(now.Year, ((now.Month - 1) / 3) * 3 + 1, 1).AddDays(-1);
-                var lastQuarterStart = lastQuarterEnd.AddMonths(-2);
-                lastQuarterStart = new DateTime(lastQuarterStart.Year, lastQuarterStart.Month, 1);
-                StartDate = lastQuarterStart;
-                EndDate = lastQuarterEnd;
+            case "Next 90 Days":
+                RevenueLabel = "Next 90 Days Revenue";
+                ExpensesLabel = "Next 90 Days Expenses";
+                ProfitLabel = "Projected Profit (90 Days)";
+                CustomersLabel = "Expected New Customers (90 Days)";
+                ComparisonLabel = "vs last 90 days";
                 break;
-
-            case "This Year":
-                StartDate = new DateTime(now.Year, 1, 1);
-                EndDate = now;
+            case "Next 365 Days":
+                RevenueLabel = "Next 365 Days Revenue";
+                ExpensesLabel = "Next 365 Days Expenses";
+                ProfitLabel = "Projected Annual Profit";
+                CustomersLabel = "Expected New Customers (Year)";
+                ComparisonLabel = "vs last 365 days";
                 break;
-
-            case "Last Year":
-                StartDate = new DateTime(now.Year - 1, 1, 1);
-                EndDate = new DateTime(now.Year - 1, 12, 31);
-                break;
-
-            case "All Time":
-                StartDate = new DateTime(2000, 1, 1);
-                EndDate = now;
-                break;
-
-            case "Custom Range":
+            default: // Next Month
+                RevenueLabel = "Next Month Revenue";
+                ExpensesLabel = "Next Month Expenses";
+                ProfitLabel = "Projected Profit";
+                CustomersLabel = "Expected New Customers";
+                ComparisonLabel = "vs last month";
                 break;
         }
     }
@@ -328,6 +218,54 @@ public partial class InsightsPageViewModel : ViewModelBase
     [ObservableProperty]
     private string _dataMonthsNote = "Insufficient data for forecasting";
 
+    // Dynamic labels based on selected forecast period
+    [ObservableProperty]
+    private string _revenueLabel = "Next Month Revenue";
+
+    [ObservableProperty]
+    private string _expensesLabel = "Next Month Expenses";
+
+    [ObservableProperty]
+    private string _profitLabel = "Projected Profit";
+
+    [ObservableProperty]
+    private string _customersLabel = "Expected New Customers";
+
+    /// <summary>
+    /// Dynamic comparison label that shows what period the forecast is compared against.
+    /// </summary>
+    [ObservableProperty]
+    private string _comparisonLabel = "vs last month";
+
+    /// <summary>
+    /// Shows the exact date range being forecasted.
+    /// </summary>
+    [ObservableProperty]
+    private string _forecastDateRangeLabel = string.Empty;
+
+    #endregion
+
+    #region Info Modal
+
+    /// <summary>
+    /// Opens the prediction methodology info modal.
+    /// </summary>
+    [RelayCommand]
+    private void ShowPredictionInfo()
+    {
+        App.PredictionInfoModalViewModel?.OpenCommand.Execute(null);
+    }
+
+    #endregion
+
+    #region Insights Period
+
+    /// <summary>
+    /// Description of the analysis period used for insights (always historical).
+    /// </summary>
+    [ObservableProperty]
+    private string _insightsAnalysisPeriod = "Based on last 3 months";
+
     #endregion
 
     #region Insight Collections
@@ -347,7 +285,8 @@ public partial class InsightsPageViewModel : ViewModelBase
         // Instantiate the InsightsService directly
         _insightsService = new InsightsService();
 
-        // Load insights on initialization
+        // Initialize date range and load insights
+        UpdateDateRangeFromSelection();
         _ = RefreshInsightsAsync();
     }
 
@@ -357,11 +296,40 @@ public partial class InsightsPageViewModel : ViewModelBase
     public InsightsPageViewModel(IInsightsService insightsService)
     {
         _insightsService = insightsService;
+
+        // Initialize date range and load insights
+        UpdateDateRangeFromSelection();
         _ = RefreshInsightsAsync();
     }
 
     /// <summary>
+    /// Refreshes only the forecast cards based on the selected date range.
+    /// </summary>
+    private async Task RefreshForecastAsync()
+    {
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        try
+        {
+            // Create date range for forecast using the future date preset
+            var dateRange = AnalysisDateRange.Custom(StartDate, EndDate);
+
+            // Generate forecast only
+            var forecast = await _insightsService.GenerateForecastAsync(companyData, dateRange);
+
+            // Update forecast display
+            UpdateForecastDisplay(forecast);
+        }
+        catch
+        {
+            // Silently fail - the insights are still valid
+        }
+    }
+
+    /// <summary>
     /// Refreshes the insights data using the InsightsService.
+    /// Insights use a standard historical period, not affected by date range selection.
     /// </summary>
     [RelayCommand]
     private async Task RefreshInsightsAsync()
@@ -381,13 +349,16 @@ public partial class InsightsPageViewModel : ViewModelBase
 
         try
         {
-            // Create date range for analysis
-            var dateRange = HasAppliedCustomRange
-                ? AnalysisDateRange.Custom(StartDate, EndDate)
-                : AnalysisDateRange.FromPreset(SelectedDateRange);
+            // Insights always use a standard historical analysis period (last 3 months)
+            var insightsStartDate = DateTime.Today.AddMonths(-3);
+            var insightsEndDate = DateTime.Today;
+            var insightsDateRange = AnalysisDateRange.Custom(insightsStartDate, insightsEndDate);
 
-            // Generate insights using the service
-            var insights = await _insightsService.GenerateInsightsAsync(companyData, dateRange);
+            // Update the analysis period description
+            InsightsAnalysisPeriod = $"Based on {insightsStartDate:MMM d} - {insightsEndDate:MMM d, yyyy}";
+
+            // Generate insights using the service with historical data
+            var insights = await _insightsService.GenerateInsightsAsync(companyData, insightsDateRange);
 
             // Check for sufficient data
             if (!insights.HasSufficientData)
@@ -404,14 +375,16 @@ public partial class InsightsPageViewModel : ViewModelBase
             AnomaliesDetected = insights.Summary.AnomaliesDetected.ToString();
             Opportunities = insights.Summary.Opportunities.ToString();
 
-            // Update forecast data
-            UpdateForecastDisplay(insights.Forecast);
-
-            // Update insight collections
+            // Update insight collections (these don't change with date range)
             UpdateInsightCollection(RevenueTrends, insights.RevenueTrends);
             UpdateInsightCollection(Anomalies, insights.Anomalies);
             UpdateInsightCollection(Forecasts, insights.Forecasts);
             UpdateInsightCollection(Recommendations, insights.Recommendations);
+
+            // Now update forecast based on selected date range
+            var forecastDateRange = AnalysisDateRange.Custom(StartDate, EndDate);
+            var forecast = await _insightsService.GenerateForecastAsync(companyData, forecastDateRange);
+            UpdateForecastDisplay(forecast);
 
             LastUpdated = DateTime.Now.ToString("h:mm tt");
         }
