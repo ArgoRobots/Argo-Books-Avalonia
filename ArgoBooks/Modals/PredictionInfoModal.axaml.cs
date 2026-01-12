@@ -19,11 +19,11 @@ public partial class PredictionInfoModal : UserControl
     {
         base.OnLoaded(e);
 
-        if (DataContext is InsightsPageViewModel vm)
+        if (DataContext is PredictionInfoModalViewModel vm)
         {
             vm.PropertyChanged += (_, args) =>
             {
-                if (args.PropertyName == nameof(vm.IsInfoModalVisible) && vm.IsInfoModalVisible)
+                if (args.PropertyName == nameof(vm.IsOpen) && vm.IsOpen)
                 {
                     AnimateOpen();
                 }
@@ -42,17 +42,17 @@ public partial class PredictionInfoModal : UserControl
 
     private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (DataContext is InsightsPageViewModel vm)
+        if (DataContext is PredictionInfoModalViewModel vm)
         {
-            vm.CloseInfoModalCommand.Execute(null);
+            vm.CloseCommand.Execute(null);
         }
     }
 
     private void Modal_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && DataContext is InsightsPageViewModel vm)
+        if (e.Key == Key.Escape && DataContext is PredictionInfoModalViewModel vm)
         {
-            vm.CloseInfoModalCommand.Execute(null);
+            vm.CloseCommand.Execute(null);
             e.Handled = true;
         }
     }

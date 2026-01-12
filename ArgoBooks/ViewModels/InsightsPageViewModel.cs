@@ -248,27 +248,12 @@ public partial class InsightsPageViewModel : ViewModelBase
     #region Info Modal
 
     /// <summary>
-    /// Whether the prediction info modal is visible.
-    /// </summary>
-    [ObservableProperty]
-    private bool _isInfoModalVisible;
-
-    /// <summary>
     /// Opens the prediction methodology info modal.
     /// </summary>
     [RelayCommand]
     private void ShowPredictionInfo()
     {
-        IsInfoModalVisible = true;
-    }
-
-    /// <summary>
-    /// Closes the prediction methodology info modal.
-    /// </summary>
-    [RelayCommand]
-    private void CloseInfoModal()
-    {
-        IsInfoModalVisible = false;
+        App.PredictionInfoModalViewModel?.OpenCommand.Execute(null);
     }
 
     #endregion

@@ -83,6 +83,11 @@ public partial class AppShellViewModel : ViewModelBase
     public CheckForUpdateModalViewModel CheckForUpdateModalViewModel { get; }
 
     /// <summary>
+    /// Gets the prediction info modal view model.
+    /// </summary>
+    public PredictionInfoModalViewModel PredictionInfoModalViewModel { get; }
+
+    /// <summary>
     /// Gets the import modal view model.
     /// </summary>
     public ImportModalViewModel ImportModalViewModel { get; }
@@ -284,6 +289,9 @@ public partial class AppShellViewModel : ViewModelBase
 
         // Create check for update modal
         CheckForUpdateModalViewModel = new CheckForUpdateModalViewModel();
+
+        // Create prediction info modal
+        PredictionInfoModalViewModel = new PredictionInfoModalViewModel();
 
         // Create import modal
         ImportModalViewModel = new ImportModalViewModel();

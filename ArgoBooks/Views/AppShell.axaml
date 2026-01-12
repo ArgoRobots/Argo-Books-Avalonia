@@ -87,6 +87,9 @@
         <!-- Check for Update Modal -->
         <modals:CheckForUpdateModal DataContext="{Binding CheckForUpdateModalViewModel}" />
 
+        <!-- Prediction Info Modal -->
+        <modals:PredictionInfoModal DataContext="{Binding PredictionInfoModalViewModel}" />
+
         <!-- Import Modal -->
         <modals:ImportModal DataContext="{Binding ImportModalViewModel}" />
 
