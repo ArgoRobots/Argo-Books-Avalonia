@@ -117,6 +117,29 @@ public partial class InsightsPageViewModel : ViewModelBase
 
         StartDate = start;
         EndDate = end;
+
+        // Update forecast card labels based on selected period
+        switch (SelectedDateRange)
+        {
+            case "Next Quarter":
+                RevenueLabel = "Next Quarter Revenue";
+                ExpensesLabel = "Next Quarter Expenses";
+                ProfitLabel = "Projected Quarterly Profit";
+                CustomersLabel = "Expected New Customers (Quarter)";
+                break;
+            case "Next Year":
+                RevenueLabel = "Next Year Revenue";
+                ExpensesLabel = "Next Year Expenses";
+                ProfitLabel = "Projected Annual Profit";
+                CustomersLabel = "Expected New Customers (Year)";
+                break;
+            default: // Next Month
+                RevenueLabel = "Next Month Revenue";
+                ExpensesLabel = "Next Month Expenses";
+                ProfitLabel = "Projected Profit";
+                CustomersLabel = "Expected New Customers";
+                break;
+        }
     }
 
     #endregion
@@ -164,6 +187,29 @@ public partial class InsightsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _dataMonthsNote = "Insufficient data for forecasting";
+
+    // Dynamic labels based on selected forecast period
+    [ObservableProperty]
+    private string _revenueLabel = "Next Month Revenue";
+
+    [ObservableProperty]
+    private string _expensesLabel = "Next Month Expenses";
+
+    [ObservableProperty]
+    private string _profitLabel = "Projected Profit";
+
+    [ObservableProperty]
+    private string _customersLabel = "Expected New Customers";
+
+    #endregion
+
+    #region Insights Period
+
+    /// <summary>
+    /// Description of the analysis period used for insights (always historical).
+    /// </summary>
+    [ObservableProperty]
+    private string _insightsAnalysisPeriod = "Based on last 3 months";
 
     #endregion
 
@@ -249,10 +295,12 @@ public partial class InsightsPageViewModel : ViewModelBase
         try
         {
             // Insights always use a standard historical analysis period (last 3 months)
-            var insightsDateRange = AnalysisDateRange.Custom(
-                DateTime.Today.AddMonths(-3),
-                DateTime.Today
-            );
+            var insightsStartDate = DateTime.Today.AddMonths(-3);
+            var insightsEndDate = DateTime.Today;
+            var insightsDateRange = AnalysisDateRange.Custom(insightsStartDate, insightsEndDate);
+
+            // Update the analysis period description
+            InsightsAnalysisPeriod = $"Based on {insightsStartDate:MMM d} - {insightsEndDate:MMM d, yyyy}";
 
             // Generate insights using the service with historical data
             var insights = await _insightsService.GenerateInsightsAsync(companyData, insightsDateRange);

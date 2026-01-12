@@ -559,6 +559,11 @@ public class InsightsService : IInsightsService
     {
         var forecast = new ForecastData();
 
+        // Calculate the forecast period multiplier based on the date range
+        // (how many months the forecast should cover)
+        var periodMonths = GetForecastPeriodMonths(dateRange);
+        forecast.PeriodMonths = periodMonths;
+
         // Get monthly data for forecasting
         var monthlyRevenue = GetMonthlyTotals(companyData.Sales, s => s.EffectiveTotalUSD);
         var monthlyExpenses = GetMonthlyTotals(companyData.Purchases, p => p.EffectiveTotalUSD);
@@ -568,26 +573,28 @@ public class InsightsService : IInsightsService
         if (monthlyRevenue.Count >= MinimumMonthsForForecasting)
         {
             // Revenue forecast using linear regression with exponential smoothing fallback
-            var revenueForecast = ForecastNextPeriod(monthlyRevenue);
-            forecast.ForecastedRevenue = Math.Max(0, revenueForecast.Value);
+            var monthlyRevenueForecast = ForecastNextPeriod(monthlyRevenue);
+            // Scale by period months
+            forecast.ForecastedRevenue = Math.Max(0, monthlyRevenueForecast.Value * periodMonths);
 
-            // Calculate growth
-            var lastMonthRevenue = monthlyRevenue.LastOrDefault();
-            if (lastMonthRevenue > 0)
+            // Calculate growth compared to equivalent historical period
+            var historicalRevenue = monthlyRevenue.TakeLast(periodMonths).Sum();
+            if (historicalRevenue > 0)
             {
-                forecast.RevenueGrowthPercent = CalculatePercentChange(lastMonthRevenue, forecast.ForecastedRevenue);
+                forecast.RevenueGrowthPercent = CalculatePercentChange(historicalRevenue, forecast.ForecastedRevenue);
             }
         }
 
         if (monthlyExpenses.Count >= MinimumMonthsForForecasting)
         {
-            var expenseForecast = ForecastNextPeriod(monthlyExpenses);
-            forecast.ForecastedExpenses = Math.Max(0, expenseForecast.Value);
+            var monthlyExpenseForecast = ForecastNextPeriod(monthlyExpenses);
+            // Scale by period months
+            forecast.ForecastedExpenses = Math.Max(0, monthlyExpenseForecast.Value * periodMonths);
 
-            var lastMonthExpenses = monthlyExpenses.LastOrDefault();
-            if (lastMonthExpenses > 0)
+            var historicalExpenses = monthlyExpenses.TakeLast(periodMonths).Sum();
+            if (historicalExpenses > 0)
             {
-                forecast.ExpenseGrowthPercent = CalculatePercentChange(lastMonthExpenses, forecast.ForecastedExpenses);
+                forecast.ExpenseGrowthPercent = CalculatePercentChange(historicalExpenses, forecast.ForecastedExpenses);
             }
         }
 
@@ -595,23 +602,24 @@ public class InsightsService : IInsightsService
         forecast.ForecastedProfit = forecast.ForecastedRevenue - forecast.ForecastedExpenses;
 
         // Calculate profit growth
-        var currentProfit = monthlyRevenue.LastOrDefault() - monthlyExpenses.LastOrDefault();
-        if (currentProfit != 0)
+        var historicalProfit = monthlyRevenue.TakeLast(periodMonths).Sum() - monthlyExpenses.TakeLast(periodMonths).Sum();
+        if (historicalProfit != 0)
         {
-            forecast.ProfitGrowthPercent = CalculatePercentChange(currentProfit, forecast.ForecastedProfit);
+            forecast.ProfitGrowthPercent = CalculatePercentChange(historicalProfit, forecast.ForecastedProfit);
         }
 
         // Customer growth forecast
         var monthlyNewCustomers = GetMonthlyNewCustomers(companyData);
         if (monthlyNewCustomers.Count >= MinimumMonthsForForecasting)
         {
-            var customerForecast = ForecastNextPeriod(monthlyNewCustomers.Select(x => (decimal)x).ToList());
-            forecast.ExpectedNewCustomers = Math.Max(0, (int)Math.Round(customerForecast.Value));
+            var monthlyCustomerForecast = ForecastNextPeriod(monthlyNewCustomers.Select(x => (decimal)x).ToList());
+            // Scale by period months
+            forecast.ExpectedNewCustomers = Math.Max(0, (int)Math.Round(monthlyCustomerForecast.Value * periodMonths));
 
-            var lastMonthCustomers = monthlyNewCustomers.LastOrDefault();
-            if (lastMonthCustomers > 0)
+            var historicalCustomers = monthlyNewCustomers.TakeLast(periodMonths).Sum();
+            if (historicalCustomers > 0)
             {
-                forecast.CustomerGrowthPercent = CalculatePercentChange(lastMonthCustomers, forecast.ExpectedNewCustomers);
+                forecast.CustomerGrowthPercent = CalculatePercentChange(historicalCustomers, forecast.ExpectedNewCustomers);
             }
         }
 
@@ -630,6 +638,18 @@ public class InsightsService : IInsightsService
         };
 
         return forecast;
+    }
+
+    /// <summary>
+    /// Determines how many months the forecast period covers based on the date range.
+    /// </summary>
+    private static int GetForecastPeriodMonths(AnalysisDateRange dateRange)
+    {
+        var periodDays = dateRange.DayCount;
+
+        if (periodDays <= 35) return 1;        // ~1 month
+        if (periodDays <= 100) return 3;       // ~1 quarter
+        return 12;                              // ~1 year
     }
 
     private List<InsightItem> GenerateForecastInsights(CompanyData companyData, AnalysisDateRange dateRange)

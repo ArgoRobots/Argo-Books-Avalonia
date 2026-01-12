@@ -130,26 +130,26 @@
 
                     <!-- Forecast Cards Row (visible when data is available) -->
                     <controls:StatCardsRow IsVisible="{Binding !HasInsufficientData}">
-                        <controls:StatCard Label="{loc:Loc 'Next Month Revenue'}"
+                        <controls:StatCard Label="{Binding RevenueLabel}"
                                            Value="{Binding ForecastedRevenue}"
                                            ChangeValue="{Binding RevenueGrowthValue}"
                                            ChangeText="{Binding RevenueGrowth}"
                                            ChangeLabel="{loc:Loc 'from current period'}"
                                            UseAltBackground="True" />
-                        <controls:StatCard Label="{loc:Loc 'Next Month Expenses'}"
+                        <controls:StatCard Label="{Binding ExpensesLabel}"
                                            Value="{Binding ForecastedExpenses}"
                                            ChangeValue="{Binding ExpenseGrowthValue}"
                                            ChangeText="{Binding ExpenseGrowth}"
                                            ChangeLabel="{loc:Loc 'from current period'}"
                                            UseAltBackground="True" />
-                        <controls:StatCard Label="{loc:Loc 'Projected Profit'}"
+                        <controls:StatCard Label="{Binding ProfitLabel}"
                                            Value="{Binding ForecastedProfit}"
                                            ChangeValue="{Binding ProfitGrowthValue}"
                                            ChangeText="{Binding ProfitGrowth}"
                                            ChangeLabel="{loc:Loc 'from current period'}"
                                            ValueColor="Success"
                                            UseAltBackground="True" />
-                        <controls:StatCard Label="{loc:Loc 'Expected New Customers'}"
+                        <controls:StatCard Label="{Binding CustomersLabel}"
                                            Value="{Binding ForecastedCustomers}"
                                            ChangeValue="{Binding CustomerGrowthValue}"
                                            ChangeText="{Binding CustomerGrowth}"
@@ -227,7 +227,35 @@
             </Border>
 
             <!-- Insights Content (Row 3) - hidden when insufficient data -->
-            <Grid Grid.Row="3" ColumnDefinitions="*,*" IsVisible="{Binding !HasInsufficientData}">
+            <Grid Grid.Row="3" RowDefinitions="Auto,*" IsVisible="{Binding !HasInsufficientData}">
+                <!-- Insights Period Header -->
+                <Border Grid.Row="0"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        CornerRadius="8"
+                        Padding="16"
+                        Margin="0,0,0,16">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                                  Width="16" Height="16"
+                                  Foreground="{DynamicResource TextTertiaryBrush}" />
+                        <TextBlock Text="{loc:Loc 'Business Insights'}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="•"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextTertiaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding InsightsAnalysisPeriod}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Insights Grid -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,*">
                 <!-- Left Column -->
                 <StackPanel Grid.Column="0" Spacing="16" Margin="0,0,12,0">
                     <!-- Revenue Trends Section -->
@@ -509,6 +537,7 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
+                </Grid>
             </Grid>
         </Grid>
     </ScrollViewer>

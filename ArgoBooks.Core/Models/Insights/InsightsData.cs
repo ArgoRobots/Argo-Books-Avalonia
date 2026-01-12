@@ -88,6 +88,11 @@ public class InsightsSummary
 public class ForecastData
 {
     /// <summary>
+    /// Number of months the forecast period covers (1 = month, 3 = quarter, 12 = year).
+    /// </summary>
+    public int PeriodMonths { get; set; } = 1;
+
+    /// <summary>
     /// Forecasted revenue for the next period.
     /// </summary>
     public decimal ForecastedRevenue { get; set; }
