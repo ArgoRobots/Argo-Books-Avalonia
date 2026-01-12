@@ -598,7 +598,9 @@
                 </Border>
 
                 <!-- Modal Content -->
-                <ScrollViewer Grid.Row="1" Padding="24">
+                <ScrollViewer Grid.Row="1"
+                              Padding="24"
+                              HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="20">
                         <!-- Forecast Calculation -->
                         <StackPanel Spacing="8">
@@ -615,20 +617,22 @@
                                     Padding="16"
                                     Margin="0,8,0,0">
                                 <StackPanel Spacing="8">
-                                    <TextBlock Text="Monthly Average = Sum(Monthly Values) / Number of Months"
+                                    <TextBlock Text="Avg = Sum(Values) / Months"
                                                FontFamily="Consolas,Monaco,monospace"
                                                FontSize="12"
+                                               TextWrapping="Wrap"
                                                Foreground="{DynamicResource PrimaryBrush}" />
-                                    <TextBlock Text="Forecast = Monthly Average × Period Months"
+                                    <TextBlock Text="Forecast = Avg × Period"
                                                FontFamily="Consolas,Monaco,monospace"
                                                FontSize="12"
+                                               TextWrapping="Wrap"
                                                Foreground="{DynamicResource PrimaryBrush}" />
                                 </StackPanel>
                             </Border>
                             <TextBlock TextWrapping="Wrap"
                                        FontSize="12"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
-                                       Text="Period months: 1 for monthly, 3 for quarterly, 12 for yearly forecasts." />
+                                       Text="Period is calculated from actual days (days ÷ 30.44)." />
                         </StackPanel>
 
                         <!-- Confidence Score -->
@@ -648,16 +652,18 @@
                                     Padding="16"
                                     Margin="0,8,0,0">
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="1. Data Quantity Score (0-40 points)"
+                                    <TextBlock Text="1. Data Quantity (0-40 pts)"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="dataScore = min(40, (monthsOfRevenue + monthsOfExpenses) × 3)"
+                                    <TextBlock Text="min(40, totalMonths × 3)"
                                                FontFamily="Consolas,Monaco,monospace"
                                                FontSize="11"
+                                               TextWrapping="Wrap"
                                                Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock Text="More historical data = higher score"
                                                FontSize="12"
+                                               TextWrapping="Wrap"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
                                 </StackPanel>
                             </Border>
@@ -667,18 +673,19 @@
                                     CornerRadius="8"
                                     Padding="16">
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="2. Stability Score (10-40 points)"
+                                    <TextBlock Text="2. Stability (10-40 pts)"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="CV = StandardDeviation / Mean"
+                                    <TextBlock Text="CV = StdDev / Mean"
                                                FontFamily="Consolas,Monaco,monospace"
                                                FontSize="11"
+                                               TextWrapping="Wrap"
                                                Foreground="{DynamicResource PrimaryBrush}" />
                                     <TextBlock TextWrapping="Wrap"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               Text="CV &lt; 0.1 = 40pts | CV &lt; 0.3 = 30pts | CV &lt; 0.5 = 20pts | CV ≥ 0.5 = 10pts" />
+                                               Text="CV&lt;0.1=40 | CV&lt;0.3=30 | CV&lt;0.5=20 | else=10" />
                                 </StackPanel>
                             </Border>
 
@@ -687,14 +694,14 @@
                                     CornerRadius="8"
                                     Padding="16">
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="3. Recency Bonus (0-20 points)"
+                                    <TextBlock Text="3. Recency Bonus (0-20 pts)"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock TextWrapping="Wrap"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextTertiaryBrush}"
-                                               Text="3+ months of data = 20pts | 1-2 months = 10pts | 0 months = 0pts" />
+                                               Text="3+ months=20 | 1-2 months=10 | 0=0" />
                                 </StackPanel>
                             </Border>
 
@@ -703,13 +710,14 @@
                                     CornerRadius="8"
                                     Padding="16">
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="Final Confidence Score"
+                                    <TextBlock Text="Final Score"
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Confidence = min(100, dataScore + stabilityScore + recencyBonus)"
+                                    <TextBlock Text="min(100, data + stability + recency)"
                                                FontFamily="Consolas,Monaco,monospace"
                                                FontSize="11"
+                                               TextWrapping="Wrap"
                                                Foreground="{DynamicResource PrimaryBrush}" />
                                 </StackPanel>
                             </Border>
