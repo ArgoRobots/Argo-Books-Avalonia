@@ -599,8 +599,9 @@
 
                 <!-- Modal Content -->
                 <ScrollViewer Grid.Row="1"
-                              Padding="24"
-                              HorizontalScrollBarVisibility="Disabled">
+                              Padding="24,24,24,24"
+                              HorizontalScrollBarVisibility="Disabled"
+                              HorizontalContentAlignment="Stretch">
                     <StackPanel Spacing="20">
                         <!-- Forecast Calculation -->
                         <StackPanel Spacing="8">
@@ -729,26 +730,26 @@
                                        FontSize="14"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-                                <Border Background="#DCFCE7" CornerRadius="6" Padding="12,8">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Text="High" FontWeight="SemiBold" Foreground="#22C55E" />
-                                        <TextBlock Text="≥80%" FontSize="12" Foreground="#22C55E" Opacity="0.8" />
+                            <Grid ColumnDefinitions="*,*,*" Margin="0,4,0,0">
+                                <Border Grid.Column="0" Background="#DCFCE7" CornerRadius="6" Padding="8" Margin="0,0,4,0">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="High" FontWeight="SemiBold" Foreground="#22C55E" HorizontalAlignment="Center" />
+                                        <TextBlock Text="≥80%" FontSize="11" Foreground="#22C55E" Opacity="0.8" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FEF3C7" CornerRadius="6" Padding="12,8">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Text="Medium" FontWeight="SemiBold" Foreground="#F59E0B" />
-                                        <TextBlock Text="50-79%" FontSize="12" Foreground="#F59E0B" Opacity="0.8" />
+                                <Border Grid.Column="1" Background="#FEF3C7" CornerRadius="6" Padding="8" Margin="2,0">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Medium" FontWeight="SemiBold" Foreground="#F59E0B" HorizontalAlignment="Center" />
+                                        <TextBlock Text="50-79%" FontSize="11" Foreground="#F59E0B" Opacity="0.8" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
-                                <Border Background="#FEE2E2" CornerRadius="6" Padding="12,8">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Text="Low" FontWeight="SemiBold" Foreground="#EF4444" />
-                                        <TextBlock Text="&lt;50%" FontSize="12" Foreground="#EF4444" Opacity="0.8" />
+                                <Border Grid.Column="2" Background="#FEE2E2" CornerRadius="6" Padding="8" Margin="4,0,0,0">
+                                    <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Low" FontWeight="SemiBold" Foreground="#EF4444" HorizontalAlignment="Center" />
+                                        <TextBlock Text="&lt;50%" FontSize="11" Foreground="#EF4444" Opacity="0.8" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </Border>
-                            </StackPanel>
+                            </Grid>
                         </StackPanel>
 
                         <!-- Important Note -->
