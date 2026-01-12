@@ -126,18 +126,21 @@ public partial class InsightsPageViewModel : ViewModelBase
                 ExpensesLabel = "Next Quarter Expenses";
                 ProfitLabel = "Projected Quarterly Profit";
                 CustomersLabel = "Expected New Customers (Quarter)";
+                ComparisonLabel = "vs last quarter";
                 break;
             case "Next Year":
                 RevenueLabel = "Next Year Revenue";
                 ExpensesLabel = "Next Year Expenses";
                 ProfitLabel = "Projected Annual Profit";
                 CustomersLabel = "Expected New Customers (Year)";
+                ComparisonLabel = "vs last year";
                 break;
             default: // Next Month
                 RevenueLabel = "Next Month Revenue";
                 ExpensesLabel = "Next Month Expenses";
                 ProfitLabel = "Projected Profit";
                 CustomersLabel = "Expected New Customers";
+                ComparisonLabel = "vs last month";
                 break;
         }
     }
@@ -200,6 +203,12 @@ public partial class InsightsPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _customersLabel = "Expected New Customers";
+
+    /// <summary>
+    /// Dynamic comparison label that shows what period the forecast is compared against.
+    /// </summary>
+    [ObservableProperty]
+    private string _comparisonLabel = "vs last month";
 
     #endregion
 

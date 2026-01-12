@@ -134,26 +134,26 @@
                                            Value="{Binding ForecastedRevenue}"
                                            ChangeValue="{Binding RevenueGrowthValue}"
                                            ChangeText="{Binding RevenueGrowth}"
-                                           ChangeLabel="{loc:Loc 'from current period'}"
+                                           ChangeLabel="{Binding ComparisonLabel}"
                                            UseAltBackground="True" />
                         <controls:StatCard Label="{Binding ExpensesLabel}"
                                            Value="{Binding ForecastedExpenses}"
                                            ChangeValue="{Binding ExpenseGrowthValue}"
                                            ChangeText="{Binding ExpenseGrowth}"
-                                           ChangeLabel="{loc:Loc 'from current period'}"
+                                           ChangeLabel="{Binding ComparisonLabel}"
                                            UseAltBackground="True" />
                         <controls:StatCard Label="{Binding ProfitLabel}"
                                            Value="{Binding ForecastedProfit}"
                                            ChangeValue="{Binding ProfitGrowthValue}"
                                            ChangeText="{Binding ProfitGrowth}"
-                                           ChangeLabel="{loc:Loc 'from current period'}"
+                                           ChangeLabel="{Binding ComparisonLabel}"
                                            ValueColor="Success"
                                            UseAltBackground="True" />
                         <controls:StatCard Label="{Binding CustomersLabel}"
                                            Value="{Binding ForecastedCustomers}"
                                            ChangeValue="{Binding CustomerGrowthValue}"
                                            ChangeText="{Binding CustomerGrowth}"
-                                           ChangeLabel="{loc:Loc 'from current period'}"
+                                           ChangeLabel="{Binding ComparisonLabel}"
                                            UseAltBackground="True" />
                     </controls:StatCardsRow>
 
