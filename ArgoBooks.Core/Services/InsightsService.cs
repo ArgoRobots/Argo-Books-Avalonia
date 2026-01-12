@@ -578,7 +578,8 @@ public class InsightsService : IInsightsService
             forecast.ForecastedRevenue = Math.Max(0, monthlyRevenueForecast.Value * periodMonths);
 
             // Calculate growth compared to equivalent historical period
-            var historicalRevenue = monthlyRevenue.TakeLast(periodMonths).Sum();
+            // Scale historical data if we don't have enough months for fair comparison
+            var historicalRevenue = GetScaledHistoricalValue(monthlyRevenue, periodMonths);
             if (historicalRevenue > 0)
             {
                 forecast.RevenueGrowthPercent = CalculatePercentChange(historicalRevenue, forecast.ForecastedRevenue);
@@ -591,7 +592,7 @@ public class InsightsService : IInsightsService
             // Scale by period months
             forecast.ForecastedExpenses = Math.Max(0, monthlyExpenseForecast.Value * periodMonths);
 
-            var historicalExpenses = monthlyExpenses.TakeLast(periodMonths).Sum();
+            var historicalExpenses = GetScaledHistoricalValue(monthlyExpenses, periodMonths);
             if (historicalExpenses > 0)
             {
                 forecast.ExpenseGrowthPercent = CalculatePercentChange(historicalExpenses, forecast.ForecastedExpenses);
@@ -601,8 +602,9 @@ public class InsightsService : IInsightsService
         // Calculate profit forecast
         forecast.ForecastedProfit = forecast.ForecastedRevenue - forecast.ForecastedExpenses;
 
-        // Calculate profit growth
-        var historicalProfit = monthlyRevenue.TakeLast(periodMonths).Sum() - monthlyExpenses.TakeLast(periodMonths).Sum();
+        // Calculate profit growth using scaled historical values
+        var historicalProfit = GetScaledHistoricalValue(monthlyRevenue, periodMonths) -
+                               GetScaledHistoricalValue(monthlyExpenses, periodMonths);
         if (historicalProfit != 0)
         {
             forecast.ProfitGrowthPercent = CalculatePercentChange(historicalProfit, forecast.ForecastedProfit);
@@ -616,7 +618,8 @@ public class InsightsService : IInsightsService
             // Scale by period months
             forecast.ExpectedNewCustomers = Math.Max(0, (int)Math.Round(monthlyCustomerForecast.Value * periodMonths));
 
-            var historicalCustomers = monthlyNewCustomers.TakeLast(periodMonths).Sum();
+            var historicalCustomers = GetScaledHistoricalValue(
+                monthlyNewCustomers.Select(x => (decimal)x).ToList(), periodMonths);
             if (historicalCustomers > 0)
             {
                 forecast.CustomerGrowthPercent = CalculatePercentChange(historicalCustomers, forecast.ExpectedNewCustomers);
@@ -638,6 +641,27 @@ public class InsightsService : IInsightsService
         };
 
         return forecast;
+    }
+
+    /// <summary>
+    /// Gets a scaled historical value for comparison with a forecast period.
+    /// If we have less data than the period months, scales up the available data.
+    /// </summary>
+    private static decimal GetScaledHistoricalValue(List<decimal> monthlyData, int periodMonths)
+    {
+        if (monthlyData.Count == 0) return 0;
+
+        if (monthlyData.Count >= periodMonths)
+        {
+            // We have enough data - use actual values from last N months
+            return monthlyData.TakeLast(periodMonths).Sum();
+        }
+        else
+        {
+            // Not enough data - scale up based on monthly average
+            var monthlyAverage = monthlyData.Average();
+            return monthlyAverage * periodMonths;
+        }
     }
 
     /// <summary>
