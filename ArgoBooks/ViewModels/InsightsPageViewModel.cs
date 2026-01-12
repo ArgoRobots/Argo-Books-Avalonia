@@ -122,7 +122,7 @@ public partial class InsightsPageViewModel : ViewModelBase
         EndDate = end;
 
         // Update forecast date range label to show exact dates
-        ForecastDateRangeLabel = $"{start:MMM d, yyyy} – {end:MMM d, yyyy}";
+        ForecastDateRangeLabel = $"{start:MMM d, yyyy} - {end:MMM d, yyyy}";
 
         // Update forecast card labels based on selected period
         switch (SelectedDateRange)
