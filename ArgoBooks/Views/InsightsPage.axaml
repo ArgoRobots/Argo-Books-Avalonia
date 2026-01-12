@@ -705,7 +705,7 @@
                             </Border>
 
                             <!-- Final Formula -->
-                            <Border Background="{DynamicResource PrimaryLightBrush}"
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="8"
                                     Padding="16">
                                 <StackPanel Spacing="4">
@@ -754,17 +754,19 @@
                         <Border Background="{DynamicResource SurfaceAltBrush}"
                                 CornerRadius="8"
                                 Padding="16">
-                            <StackPanel Orientation="Horizontal" Spacing="12">
-                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
-                                          Width="20" Height="20"
+                            <Grid ColumnDefinitions="Auto,*">
+                                <PathIcon Grid.Column="0"
+                                          Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                          Width="18" Height="18"
                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                           VerticalAlignment="Top"
-                                          Margin="0,2,0,0" />
-                                <TextBlock TextWrapping="Wrap"
+                                          Margin="0,2,12,0" />
+                                <TextBlock Grid.Column="1"
+                                           TextWrapping="Wrap"
                                            FontSize="12"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Text="Note: Confidence measures data quality, not prediction accuracy. A 'High' confidence means you have stable, plentiful data—the forecast may still differ from actual results due to unforeseen factors." />
-                            </StackPanel>
+                                           Text="Confidence measures data quality, not prediction accuracy. A 'High' confidence means stable, plentiful data—the forecast may still differ from actual results." />
+                            </Grid>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
