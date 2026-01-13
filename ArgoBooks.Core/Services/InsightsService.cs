@@ -964,20 +964,6 @@ public class InsightsService : IInsightsService
             });
         }
 
-        // Cash flow projection
-        if (forecast.ForecastedProfit != 0)
-        {
-            var isPositive = forecast.ForecastedProfit > 0;
-            insights.Add(new InsightItem
-            {
-                Title = "Cash Flow Projection",
-                Description = $"Projected cash flow for the next 30 days is {(isPositive ? "positive" : "negative")}. Expected {(isPositive ? "surplus" : "shortfall")}: {FormatCurrency(Math.Abs(forecast.ForecastedProfit))}.",
-                Severity = isPositive ? InsightSeverity.Success : InsightSeverity.Warning,
-                Category = InsightCategory.Forecast,
-                MetricValue = forecast.ForecastedProfit
-            });
-        }
-
         // Inventory depletion alert
         var inventoryAlerts = CheckInventoryDepletion(companyData, historicalRange);
         if (inventoryAlerts.Count > 0)
