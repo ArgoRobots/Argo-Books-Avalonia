@@ -338,7 +338,7 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// Description of the analysis period used for insights (always historical).
     /// </summary>
     [ObservableProperty]
-    private string _insightsAnalysisPeriod = "Based on last 3 months";
+    private string _insightsAnalysisPeriod = "Based on last 3 months of data";
 
     #endregion
 
@@ -432,7 +432,7 @@ public partial class InsightsPageViewModel : ViewModelBase
             var insightsDateRange = AnalysisDateRange.Custom(insightsStartDate, insightsEndDate);
 
             // Update the analysis period description
-            InsightsAnalysisPeriod = $"Based on {insightsStartDate:MMM d} - {insightsEndDate:MMM d, yyyy}";
+            InsightsAnalysisPeriod = "Based on last 3 months of data";
 
             // Generate insights using the service with historical data
             var insights = await _insightsService.GenerateInsightsAsync(companyData, insightsDateRange);

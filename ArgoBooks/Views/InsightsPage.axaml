@@ -17,7 +17,7 @@
     <!-- Main Content -->
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-        <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24">
+        <Grid RowDefinitions="Auto,Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                 <controls:StatCard Label="{loc:Loc 'AI Insights'}"
@@ -38,66 +38,8 @@
                                    IconColor="Primary" />
             </controls:StatCardsRow>
 
-            <!-- Page Header (Row 1) -->
+            <!-- Forecasted Growth Section (Row 1) -->
             <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    Padding="24,20"
-                    Margin="0,0,0,24">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <!-- AI Icon and Title -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                        <Border Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="{DynamicResource PrimaryLightBrush}">
-                            <PathIcon Data="M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58s9.14-3.47 12.65 0L21 3v7.12zM12.5 8v4.25l3.5 2.08-.72 1.21L11 13V8h1.5z"
-                                      Width="24" Height="24"
-                                      Foreground="{DynamicResource PrimaryBrush}" />
-                        </Border>
-                        <StackPanel>
-                            <TextBlock Text="{loc:Loc 'AI Business Insights'}"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="{loc:Loc 'Intelligent analysis of your business data'}"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Last Updated -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <TextBlock Text="{loc:Loc 'Last updated:'}"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding LastUpdated}"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   VerticalAlignment="Center" />
-                        <Button Classes="secondary-button"
-                                Margin="16,0,0,0"
-                                Command="{Binding RefreshInsightsCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Classes.sync-spinning="{Binding IsRefreshing}"
-                                          Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
-                                          Width="16" Height="16"
-                                          RenderTransformOrigin="50%,50%">
-                                    <PathIcon.RenderTransform>
-                                        <RotateTransform />
-                                    </PathIcon.RenderTransform>
-                                </PathIcon>
-                                <TextBlock Text="{loc:Loc Refresh}" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- Forecasted Growth Section (Row 2) -->
-            <Border Grid.Row="2"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -317,8 +259,8 @@
                 </StackPanel>
             </Border>
 
-            <!-- Insights Content (Row 3) - hidden when insufficient data -->
-            <Grid Grid.Row="3" RowDefinitions="Auto,*" IsVisible="{Binding !HasInsufficientData}">
+            <!-- Insights Content (Row 2) - hidden when insufficient data -->
+            <Grid Grid.Row="2" RowDefinitions="Auto,*" IsVisible="{Binding !HasInsufficientData}">
                 <!-- Insights Period Header -->
                 <Border Grid.Row="0"
                         Background="{DynamicResource SurfaceAltBrush}"
