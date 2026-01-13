@@ -146,42 +146,42 @@ public partial class InsightsPageViewModel : ViewModelBase
                 ExpensesLabel = "Next Quarter Expenses";
                 ProfitLabel = "Projected Quarterly Profit";
                 CustomersLabel = "Expected New Customers (Quarter)";
-                ComparisonLabel = "vs last quarter";
+                ComparisonLabel = "vs quarterly avg";
                 break;
             case "Next Year":
                 RevenueLabel = "Next Year Revenue";
                 ExpensesLabel = "Next Year Expenses";
                 ProfitLabel = "Projected Annual Profit";
                 CustomersLabel = "Expected New Customers (Year)";
-                ComparisonLabel = "vs last year";
+                ComparisonLabel = "vs annual avg";
                 break;
             case "Next 30 Days":
                 RevenueLabel = "Next 30 Days Revenue";
                 ExpensesLabel = "Next 30 Days Expenses";
                 ProfitLabel = "Projected Profit (30 Days)";
                 CustomersLabel = "Expected New Customers (30 Days)";
-                ComparisonLabel = "vs last 30 days";
+                ComparisonLabel = "vs 30-day avg";
                 break;
             case "Next 90 Days":
                 RevenueLabel = "Next 90 Days Revenue";
                 ExpensesLabel = "Next 90 Days Expenses";
                 ProfitLabel = "Projected Profit (90 Days)";
                 CustomersLabel = "Expected New Customers (90 Days)";
-                ComparisonLabel = "vs last 90 days";
+                ComparisonLabel = "vs 90-day avg";
                 break;
             case "Next 365 Days":
                 RevenueLabel = "Next 365 Days Revenue";
                 ExpensesLabel = "Next 365 Days Expenses";
                 ProfitLabel = "Projected Annual Profit";
                 CustomersLabel = "Expected New Customers (Year)";
-                ComparisonLabel = "vs last 365 days";
+                ComparisonLabel = "vs annual avg";
                 break;
             default: // Next Month
                 RevenueLabel = "Next Month Revenue";
                 ExpensesLabel = "Next Month Expenses";
                 ProfitLabel = "Projected Profit";
                 CustomersLabel = "Expected New Customers";
-                ComparisonLabel = "vs last month";
+                ComparisonLabel = "vs monthly avg";
                 break;
         }
     }
@@ -249,7 +249,7 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// Dynamic comparison label that shows what period the forecast is compared against.
     /// </summary>
     [ObservableProperty]
-    private string _comparisonLabel = "vs last month";
+    private string _comparisonLabel = "vs monthly avg";
 
     /// <summary>
     /// Shows the exact date range being forecasted.
