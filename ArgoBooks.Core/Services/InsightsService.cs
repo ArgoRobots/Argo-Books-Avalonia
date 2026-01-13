@@ -884,56 +884,6 @@ public class InsightsService : IInsightsService
             });
         }
 
-        // ML-detected seasonal pattern insight
-        if (forecast.SeasonalInfo?.HasSeasonalPattern == true)
-        {
-            var trendAdvice = forecast.SeasonalInfo.TrendDirection switch
-            {
-                "Increasing" => "Combined with the upward trend, consider planning for growth.",
-                "Decreasing" => "Be mindful of the downward trend when planning.",
-                _ => "The overall trend is stable."
-            };
-
-            insights.Add(new InsightItem
-            {
-                Title = "Seasonal Pattern Detected",
-                Description = $"ML analysis detected: {forecast.SeasonalInfo.Description} {trendAdvice}",
-                Recommendation = "Use this seasonal insight to optimize inventory, staffing, and marketing timing.",
-                Severity = InsightSeverity.Info,
-                Category = InsightCategory.Forecast,
-                PercentageChange = (decimal)(forecast.SeasonalInfo.Strength * 100)
-            });
-        }
-
-        // ML trend direction insight
-        if (forecast.SeasonalInfo != null)
-        {
-            var trendSeverity = forecast.SeasonalInfo.TrendDirection switch
-            {
-                "Increasing" => InsightSeverity.Success,
-                "Decreasing" => InsightSeverity.Warning,
-                _ => InsightSeverity.Info
-            };
-
-            var trendDescription = forecast.SeasonalInfo.TrendDirection switch
-            {
-                "Increasing" => "ML analysis shows your business is on an upward trajectory. Revenue and growth metrics are trending positively.",
-                "Decreasing" => "ML analysis indicates a downward trend. Consider reviewing business strategies to reverse this pattern.",
-                _ => "Your business metrics are stable with no significant trend detected by ML analysis."
-            };
-
-            if (forecast.SeasonalInfo.TrendDirection != "Stable")
-            {
-                insights.Add(new InsightItem
-                {
-                    Title = $"ML Trend Analysis: {forecast.SeasonalInfo.TrendDirection}",
-                    Description = trendDescription,
-                    Severity = trendSeverity,
-                    Category = InsightCategory.RevenueTrend
-                });
-            }
-        }
-
         // Historical accuracy insight
         var accuracyData = _forecastAccuracyService.GetAccuracyData(companyData);
         if (accuracyData.ValidatedForecastCount > 0)
