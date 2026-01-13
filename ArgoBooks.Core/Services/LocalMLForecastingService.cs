@@ -194,9 +194,21 @@ public class LocalMLForecastingService : ILocalMLForecastingService
             var forecastEngine = model.CreateTimeSeriesEngine<TimeSeriesInput, TimeSeriesOutput>(_mlContext);
             var forecast = forecastEngine.Predict();
 
-            result.ForecastedValues = forecast.Forecast.Select(f => (decimal)Math.Max(0, f)).ToList();
-            result.LowerBounds = forecast.LowerBound.Select(f => (decimal)Math.Max(0, f)).ToList();
-            result.UpperBounds = forecast.UpperBound.Select(f => (decimal)f).ToList();
+            // Apply sanity checks to SSA forecasts
+            var historicalMax = data.Max();
+            var historicalAvg = data.Average();
+            var maxReasonableForecast = historicalMax * 3m; // Cap at 3x historical max
+            var minReasonableForecast = historicalAvg * 0.1m; // Floor at 10% of average
+
+            result.ForecastedValues = forecast.Forecast
+                .Select(f => Math.Max(minReasonableForecast, Math.Min(maxReasonableForecast, (decimal)Math.Max(0, f))))
+                .ToList();
+            result.LowerBounds = forecast.LowerBound
+                .Select(f => (decimal)Math.Max(0, f))
+                .ToList();
+            result.UpperBounds = forecast.UpperBound
+                .Select(f => Math.Min(maxReasonableForecast, (decimal)f))
+                .ToList();
             result.MethodUsed = "ML.NET SSA";
 
             // Calculate confidence based on prediction interval width
@@ -225,21 +237,30 @@ public class LocalMLForecastingService : ILocalMLForecastingService
         var candidateLengths = new[] { 12, 6, 4, 3 };
         var seasonLength = data.Count >= 12
             ? _holtWinters.DetectSeasonLength(data, candidateLengths)
-            : Math.Min(4, data.Count / 2);
+            : Math.Min(4, Math.Max(2, data.Count / 2));
 
         seasonLength = Math.Max(2, seasonLength);
 
         var hwResult = _holtWinters.AutoForecast(data, seasonLength, periodsToForecast);
 
-        result.ForecastedValues = hwResult.ForecastedValues;
+        // Apply sanity checks to prevent unrealistic forecasts
+        var historicalMax = data.Max();
+        var historicalAvg = data.Average();
+        var maxReasonableForecast = historicalMax * 3m; // Cap at 3x historical max
+        var minReasonableForecast = historicalAvg * 0.1m; // Floor at 10% of average
+
+        result.ForecastedValues = hwResult.ForecastedValues
+            .Select(v => Math.Max(minReasonableForecast, Math.Min(maxReasonableForecast, v)))
+            .ToList();
+
         result.SeasonalPattern = hwResult.SeasonalPattern;
         result.MethodUsed = hwResult.Method;
         result.ConfidenceScore = CalculateConfidenceScore(data, hwResult.SeasonalPattern, null);
 
         // Estimate confidence bounds (±15% for medium confidence)
         var boundsPercent = result.ConfidenceScore >= 70 ? 0.10m : 0.20m;
-        result.LowerBounds = hwResult.ForecastedValues.Select(v => v * (1 - boundsPercent)).ToList();
-        result.UpperBounds = hwResult.ForecastedValues.Select(v => v * (1 + boundsPercent)).ToList();
+        result.LowerBounds = result.ForecastedValues.Select(v => v * (1 - boundsPercent)).ToList();
+        result.UpperBounds = result.ForecastedValues.Select(v => v * (1 + boundsPercent)).ToList();
 
         return result;
     }

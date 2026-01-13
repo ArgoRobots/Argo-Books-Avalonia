@@ -381,9 +381,11 @@ public partial class InsightsPageViewModel : ViewModelBase
             // Update forecast display
             UpdateForecastDisplay(forecast);
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail - the insights are still valid
+            // Log or show error - don't silently fail
+            System.Diagnostics.Debug.WriteLine($"Forecast refresh error: {ex.Message}");
+            DataMonthsNote = $"Error refreshing forecast: {ex.Message}";
         }
     }
 

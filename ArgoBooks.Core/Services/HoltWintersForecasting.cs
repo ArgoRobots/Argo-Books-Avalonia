@@ -412,28 +412,53 @@ public class HoltWintersForecasting
         var minIndex = seasonals.IndexOf(seasonals.Min());
 
         string peakPeriod, troughPeriod;
+        string cycleDescription;
+
         if (seasonLength == 12)
         {
             var months = new[] { "January", "February", "March", "April", "May", "June",
                                  "July", "August", "September", "October", "November", "December" };
-            peakPeriod = months[maxIndex];
-            troughPeriod = months[minIndex];
+            peakPeriod = months[maxIndex % 12];
+            troughPeriod = months[minIndex % 12];
+            cycleDescription = "yearly";
+        }
+        else if (seasonLength == 6)
+        {
+            var biAnnual = new[] { "Jan-Feb", "Mar-Apr", "May-Jun", "Jul-Aug", "Sep-Oct", "Nov-Dec" };
+            peakPeriod = biAnnual[maxIndex % 6];
+            troughPeriod = biAnnual[minIndex % 6];
+            cycleDescription = "bi-monthly";
         }
         else if (seasonLength == 4)
         {
-            var quarters = new[] { "Q1", "Q2", "Q3", "Q4" };
-            peakPeriod = quarters[maxIndex];
-            troughPeriod = quarters[minIndex];
+            var quarters = new[] { "Q1 (Jan-Mar)", "Q2 (Apr-Jun)", "Q3 (Jul-Sep)", "Q4 (Oct-Dec)" };
+            peakPeriod = quarters[maxIndex % 4];
+            troughPeriod = quarters[minIndex % 4];
+            cycleDescription = "quarterly";
+        }
+        else if (seasonLength == 3)
+        {
+            // For 3-period cycles, describe as ordinal within cycle
+            peakPeriod = maxIndex == 0 ? "beginning" : maxIndex == 1 ? "middle" : "end";
+            troughPeriod = minIndex == 0 ? "beginning" : minIndex == 1 ? "middle" : "end";
+            cycleDescription = "3-month";
+        }
+        else if (seasonLength == 2)
+        {
+            peakPeriod = maxIndex == 0 ? "first month" : "second month";
+            troughPeriod = minIndex == 0 ? "first month" : "second month";
+            cycleDescription = "bi-monthly";
         }
         else
         {
-            peakPeriod = $"Period {maxIndex + 1}";
-            troughPeriod = $"Period {minIndex + 1}";
+            peakPeriod = $"period {maxIndex + 1}";
+            troughPeriod = $"period {minIndex + 1}";
+            cycleDescription = $"{seasonLength}-period";
         }
 
         var strengthDesc = strength > 0.5 ? "strong" : strength > 0.25 ? "moderate" : "mild";
 
-        return $"A {strengthDesc} seasonal pattern detected. Peak typically in {peakPeriod}, lowest in {troughPeriod}.";
+        return $"A {strengthDesc} {cycleDescription} pattern detected. Peak at {peakPeriod} of cycle, lowest at {troughPeriod}.";
     }
 
     #endregion

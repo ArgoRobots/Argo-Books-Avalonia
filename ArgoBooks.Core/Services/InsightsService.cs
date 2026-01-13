@@ -1236,7 +1236,9 @@ public class InsightsService : IInsightsService
     private static decimal CalculatePercentChange(decimal oldValue, decimal newValue)
     {
         if (oldValue == 0) return newValue > 0 ? 100 : 0;
-        return (newValue - oldValue) / Math.Abs(oldValue) * 100;
+        var change = (newValue - oldValue) / Math.Abs(oldValue) * 100;
+        // Cap at ±999% to prevent absurd values from display issues
+        return Math.Max(-999, Math.Min(999, change));
     }
 
     private static (double Mean, double StandardDeviation) CalculateStatistics(List<double> values)
