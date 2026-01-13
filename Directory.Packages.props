@@ -44,6 +44,10 @@
         <PackageVersion Include="Google.Apis.Sheets.v4" Version="1.68.0.3525" />
         <PackageVersion Include="Google.Apis.Drive.v3" Version="1.68.0.3533" />
 
+        <!-- Machine Learning (for local forecasting) -->
+        <PackageVersion Include="Microsoft.ML" Version="4.0.2" />
+        <PackageVersion Include="Microsoft.ML.TimeSeries" Version="4.0.2" />
+
         <!-- Testing -->
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
         <PackageVersion Include="xunit" Version="2.9.2" />

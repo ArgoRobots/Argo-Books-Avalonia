@@ -98,6 +98,16 @@ public class ForecastData
     public decimal ForecastedRevenue { get; set; }
 
     /// <summary>
+    /// Lower bound of revenue forecast (confidence interval).
+    /// </summary>
+    public decimal ForecastedRevenueLower { get; set; }
+
+    /// <summary>
+    /// Upper bound of revenue forecast (confidence interval).
+    /// </summary>
+    public decimal ForecastedRevenueUpper { get; set; }
+
+    /// <summary>
     /// Revenue growth percentage.
     /// </summary>
     public decimal RevenueGrowthPercent { get; set; }
@@ -106,6 +116,16 @@ public class ForecastData
     /// Forecasted expenses for the next period.
     /// </summary>
     public decimal ForecastedExpenses { get; set; }
+
+    /// <summary>
+    /// Lower bound of expenses forecast (confidence interval).
+    /// </summary>
+    public decimal ForecastedExpensesLower { get; set; }
+
+    /// <summary>
+    /// Upper bound of expenses forecast (confidence interval).
+    /// </summary>
+    public decimal ForecastedExpensesUpper { get; set; }
 
     /// <summary>
     /// Expense growth percentage (positive means expenses increased).
@@ -146,6 +166,58 @@ public class ForecastData
     /// Number of months of data used for forecasting.
     /// </summary>
     public int DataMonthsUsed { get; set; }
+
+    /// <summary>
+    /// The forecasting method used (e.g., "Combined (SSA + Holt-Winters)").
+    /// </summary>
+    public string? ForecastMethod { get; set; }
+
+    /// <summary>
+    /// Historical accuracy percentage based on past forecasts (0-100).
+    /// Null if no validated forecasts exist yet.
+    /// </summary>
+    public double? HistoricalAccuracyPercent { get; set; }
+
+    /// <summary>
+    /// Description of historical forecast accuracy.
+    /// </summary>
+    public string? AccuracyDescription { get; set; }
+
+    /// <summary>
+    /// Number of past forecasts that have been validated against actuals.
+    /// </summary>
+    public int ValidatedForecastCount { get; set; }
+
+    /// <summary>
+    /// Detected seasonal pattern information.
+    /// </summary>
+    public SeasonalPatternInfo? SeasonalInfo { get; set; }
+}
+
+/// <summary>
+/// Simplified seasonal pattern info for display in UI.
+/// </summary>
+public class SeasonalPatternInfo
+{
+    /// <summary>
+    /// Whether a significant seasonal pattern was detected.
+    /// </summary>
+    public bool HasSeasonalPattern { get; set; }
+
+    /// <summary>
+    /// Strength of the seasonal pattern (0-1).
+    /// </summary>
+    public double Strength { get; set; }
+
+    /// <summary>
+    /// Human-readable description of the pattern.
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The detected trend direction.
+    /// </summary>
+    public string TrendDirection { get; set; } = "Stable";
 }
 
 /// <summary>

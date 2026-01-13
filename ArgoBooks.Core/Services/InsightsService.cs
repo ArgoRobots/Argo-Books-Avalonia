@@ -6,9 +6,8 @@ using ArgoBooks.Core.Models.Transactions;
 namespace ArgoBooks.Core.Services;
 
 /// <summary>
-/// Service for generating business insights using local statistical analysis.
-/// Uses deterministic algorithms (no external AI) for trend detection, anomaly detection,
-/// forecasting, and recommendations.
+/// Service for generating business insights using local statistical analysis and ML.
+/// Uses ML.NET SSA and Holt-Winters for forecasting, with accuracy tracking.
 /// </summary>
 public class InsightsService : IInsightsService
 {
@@ -16,6 +15,24 @@ public class InsightsService : IInsightsService
     private const int MinimumTransactionsForInsights = 5;
     private const int MinimumDaysForTrends = 14;
     private const int MinimumMonthsForForecasting = 2;
+
+    // ML forecasting service
+    private readonly ILocalMLForecastingService _mlForecastingService;
+    private readonly IForecastAccuracyService _forecastAccuracyService;
+
+    public InsightsService()
+    {
+        _mlForecastingService = new LocalMLForecastingService();
+        _forecastAccuracyService = new ForecastAccuracyService();
+    }
+
+    public InsightsService(
+        ILocalMLForecastingService mlForecastingService,
+        IForecastAccuracyService forecastAccuracyService)
+    {
+        _mlForecastingService = mlForecastingService;
+        _forecastAccuracyService = forecastAccuracyService;
+    }
 
     // Anomaly detection thresholds
     private const double ZScoreThreshold = 2.0; // Standard deviations for anomaly
@@ -560,7 +577,6 @@ public class InsightsService : IInsightsService
         var forecast = new ForecastData();
 
         // Calculate the forecast period multiplier based on the date range
-        // (how many months the forecast should cover)
         var periodMonths = GetForecastPeriodMonths(dateRange);
         forecast.PeriodMonths = periodMonths;
 
@@ -570,15 +586,44 @@ public class InsightsService : IInsightsService
 
         forecast.DataMonthsUsed = Math.Max(monthlyRevenue.Count, monthlyExpenses.Count);
 
+        // Validate past forecasts and get accuracy data
+        var accuracyData = _forecastAccuracyService.GetAccuracyData(companyData);
+        forecast.ValidatedForecastCount = accuracyData.ValidatedForecastCount;
+
+        if (accuracyData.ValidatedForecastCount > 0)
+        {
+            forecast.HistoricalAccuracyPercent = accuracyData.AverageRevenueAccuracy;
+            forecast.AccuracyDescription = accuracyData.AccuracyDescription;
+        }
+
+        // Revenue forecast using ML methods
         if (monthlyRevenue.Count >= MinimumMonthsForForecasting)
         {
-            // Revenue forecast using linear regression with exponential smoothing fallback
-            var monthlyRevenueForecast = ForecastNextPeriod(monthlyRevenue);
-            // Scale by period months
-            forecast.ForecastedRevenue = Math.Max(0, monthlyRevenueForecast.Value * periodMonths);
+            var periodsToForecast = Math.Max(1, (int)Math.Ceiling(periodMonths));
+            var revenueForecast = _mlForecastingService.GenerateEnhancedForecast(
+                monthlyRevenue, periodsToForecast, ForecastMethod.Auto);
 
-            // Calculate growth compared to equivalent historical period
-            // Scale historical data if we don't have enough months for fair comparison
+            // Scale by period months for partial months
+            var scaleFactor = periodMonths / periodsToForecast;
+            forecast.ForecastedRevenue = Math.Max(0, revenueForecast.ForecastedValues.Sum() * scaleFactor);
+            forecast.ForecastedRevenueLower = Math.Max(0, revenueForecast.LowerBounds.Sum() * scaleFactor);
+            forecast.ForecastedRevenueUpper = revenueForecast.UpperBounds.Sum() * scaleFactor;
+
+            // Store seasonal pattern info
+            if (revenueForecast.SeasonalPattern.SeasonalStrength > 0.1)
+            {
+                forecast.SeasonalInfo = new SeasonalPatternInfo
+                {
+                    HasSeasonalPattern = true,
+                    Strength = revenueForecast.SeasonalPattern.SeasonalStrength,
+                    Description = revenueForecast.SeasonalPattern.Description,
+                    TrendDirection = revenueForecast.SeasonalPattern.Trend.ToString()
+                };
+            }
+
+            forecast.ForecastMethod = revenueForecast.MethodUsed;
+
+            // Calculate growth compared to historical average
             var historicalRevenue = GetScaledHistoricalValue(monthlyRevenue, periodMonths);
             if (historicalRevenue > 0)
             {
@@ -586,11 +631,17 @@ public class InsightsService : IInsightsService
             }
         }
 
+        // Expense forecast using ML methods
         if (monthlyExpenses.Count >= MinimumMonthsForForecasting)
         {
-            var monthlyExpenseForecast = ForecastNextPeriod(monthlyExpenses);
-            // Scale by period months
-            forecast.ForecastedExpenses = Math.Max(0, monthlyExpenseForecast.Value * periodMonths);
+            var periodsToForecast = Math.Max(1, (int)Math.Ceiling(periodMonths));
+            var expenseForecast = _mlForecastingService.GenerateEnhancedForecast(
+                monthlyExpenses, periodsToForecast, ForecastMethod.Auto);
+
+            var scaleFactor = periodMonths / periodsToForecast;
+            forecast.ForecastedExpenses = Math.Max(0, expenseForecast.ForecastedValues.Sum() * scaleFactor);
+            forecast.ForecastedExpensesLower = Math.Max(0, expenseForecast.LowerBounds.Sum() * scaleFactor);
+            forecast.ForecastedExpensesUpper = expenseForecast.UpperBounds.Sum() * scaleFactor;
 
             var historicalExpenses = GetScaledHistoricalValue(monthlyExpenses, periodMonths);
             if (historicalExpenses > 0)
@@ -602,7 +653,7 @@ public class InsightsService : IInsightsService
         // Calculate profit forecast
         forecast.ForecastedProfit = forecast.ForecastedRevenue - forecast.ForecastedExpenses;
 
-        // Calculate profit growth using scaled historical values
+        // Calculate profit growth
         var historicalProfit = GetScaledHistoricalValue(monthlyRevenue, periodMonths) -
                                GetScaledHistoricalValue(monthlyExpenses, periodMonths);
         if (historicalProfit != 0)
@@ -610,27 +661,33 @@ public class InsightsService : IInsightsService
             forecast.ProfitGrowthPercent = CalculatePercentChange(historicalProfit, forecast.ForecastedProfit);
         }
 
-        // Customer growth forecast
+        // Customer growth forecast using ML
         var monthlyNewCustomers = GetMonthlyNewCustomers(companyData);
         if (monthlyNewCustomers.Count >= MinimumMonthsForForecasting)
         {
-            var monthlyCustomerForecast = ForecastNextPeriod(monthlyNewCustomers.Select(x => (decimal)x).ToList());
-            // Scale by period months
-            forecast.ExpectedNewCustomers = Math.Max(0, (int)Math.Round(monthlyCustomerForecast.Value * periodMonths));
+            var periodsToForecast = Math.Max(1, (int)Math.Ceiling(periodMonths));
+            var customerData = monthlyNewCustomers.Select(x => (decimal)x).ToList();
+            var customerForecast = _mlForecastingService.GenerateEnhancedForecast(
+                customerData, periodsToForecast, ForecastMethod.HoltWinters);
 
-            var historicalCustomers = GetScaledHistoricalValue(
-                monthlyNewCustomers.Select(x => (decimal)x).ToList(), periodMonths);
+            var scaleFactor = periodMonths / periodsToForecast;
+            forecast.ExpectedNewCustomers = Math.Max(0, (int)Math.Round(customerForecast.ForecastedValues.Sum() * scaleFactor));
+
+            var historicalCustomers = GetScaledHistoricalValue(customerData, periodMonths);
             if (historicalCustomers > 0)
             {
                 forecast.CustomerGrowthPercent = CalculatePercentChange(historicalCustomers, forecast.ExpectedNewCustomers);
             }
         }
 
-        // Calculate confidence score
-        forecast.ConfidenceScore = CalculateConfidenceScore(
-            monthlyRevenue.Count,
-            CalculateDataVariance(monthlyRevenue),
-            monthlyExpenses.Count
+        // Calculate confidence score using ML service
+        forecast.ConfidenceScore = _mlForecastingService.CalculateConfidenceScore(
+            monthlyRevenue,
+            forecast.SeasonalInfo != null ? new SeasonalPattern
+            {
+                SeasonalStrength = forecast.SeasonalInfo.Strength
+            } : null,
+            forecast.HistoricalAccuracyPercent
         );
 
         forecast.ConfidenceLevel = forecast.ConfidenceScore switch
@@ -640,7 +697,30 @@ public class InsightsService : IInsightsService
             _ => "Low"
         };
 
+        // Save this forecast for future accuracy tracking
+        var forecastPeriod = CalculateForecastPeriod(dateRange);
+        _forecastAccuracyService.SaveForecast(companyData, forecast, forecastPeriod);
+
         return forecast;
+    }
+
+    /// <summary>
+    /// Calculates the date range for the forecast period (the future period being predicted).
+    /// </summary>
+    private static AnalysisDateRange CalculateForecastPeriod(AnalysisDateRange currentRange)
+    {
+        // The forecast period is the next period after the current analysis range
+        var today = DateTime.Today;
+        var periodDays = currentRange.DayCount;
+
+        // Start from today (or end of current range if it's in the past)
+        var forecastStart = currentRange.EndDate < today
+            ? today
+            : currentRange.EndDate.AddDays(1);
+
+        var forecastEnd = forecastStart.AddDays(periodDays - 1);
+
+        return AnalysisDateRange.Custom(forecastStart, forecastEnd);
     }
 
     /// <summary>

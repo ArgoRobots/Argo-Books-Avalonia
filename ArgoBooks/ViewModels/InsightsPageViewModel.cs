@@ -243,6 +243,66 @@ public partial class InsightsPageViewModel : ViewModelBase
     [ObservableProperty]
     private string _forecastDateRangeLabel = string.Empty;
 
+    /// <summary>
+    /// The forecasting method used (e.g., "Combined (SSA + Holt-Winters)").
+    /// </summary>
+    [ObservableProperty]
+    private string _forecastMethod = string.Empty;
+
+    /// <summary>
+    /// Revenue forecast range (lower - upper bounds).
+    /// </summary>
+    [ObservableProperty]
+    private string _revenueRange = string.Empty;
+
+    /// <summary>
+    /// Expenses forecast range (lower - upper bounds).
+    /// </summary>
+    [ObservableProperty]
+    private string _expensesRange = string.Empty;
+
+    /// <summary>
+    /// Whether historical accuracy data is available.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasAccuracyData;
+
+    /// <summary>
+    /// Historical forecast accuracy percentage.
+    /// </summary>
+    [ObservableProperty]
+    private string _historicalAccuracy = string.Empty;
+
+    /// <summary>
+    /// Description of the forecast accuracy.
+    /// </summary>
+    [ObservableProperty]
+    private string _accuracyDescription = string.Empty;
+
+    /// <summary>
+    /// Number of validated forecasts used for accuracy calculation.
+    /// </summary>
+    [ObservableProperty]
+    private string _validatedForecastsNote = string.Empty;
+
+    /// <summary>
+    /// Whether a seasonal pattern was detected.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasSeasonalPattern;
+
+    /// <summary>
+    /// Description of the detected seasonal pattern.
+    /// </summary>
+    [ObservableProperty]
+    private string _seasonalPatternDescription = string.Empty;
+
+    /// <summary>
+    /// The detected trend direction.
+    /// </summary>
+    [ObservableProperty]
+    private string _trendDirection = string.Empty;
+
     #endregion
 
     #region Info Modal
@@ -404,6 +464,7 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// </summary>
     private void UpdateForecastDisplay(ForecastData forecast)
     {
+        // Main forecast values
         ForecastedRevenue = forecast.ForecastedRevenue.ToString("C0");
         RevenueGrowthValue = (double)forecast.RevenueGrowthPercent;
         RevenueGrowth = $"{Math.Abs(forecast.RevenueGrowthPercent):F1}%";
@@ -421,9 +482,65 @@ public partial class InsightsPageViewModel : ViewModelBase
         CustomerGrowth = $"{Math.Abs(forecast.CustomerGrowthPercent):F1}%";
 
         PredictionConfidence = $"{forecast.ConfidenceScore:F0}% {forecast.ConfidenceLevel}";
+
+        // Data months and method info
+        var methodInfo = !string.IsNullOrEmpty(forecast.ForecastMethod)
+            ? $" using {forecast.ForecastMethod}"
+            : "";
         DataMonthsNote = forecast.DataMonthsUsed > 0
-            ? $"Based on {forecast.DataMonthsUsed} months of historical data"
+            ? $"Based on {forecast.DataMonthsUsed} months of data{methodInfo}"
             : "Insufficient data for forecasting";
+
+        ForecastMethod = forecast.ForecastMethod ?? string.Empty;
+
+        // Confidence bounds/ranges
+        if (forecast.ForecastedRevenueLower > 0 || forecast.ForecastedRevenueUpper > 0)
+        {
+            RevenueRange = $"Range: {forecast.ForecastedRevenueLower:C0} - {forecast.ForecastedRevenueUpper:C0}";
+        }
+        else
+        {
+            RevenueRange = string.Empty;
+        }
+
+        if (forecast.ForecastedExpensesLower > 0 || forecast.ForecastedExpensesUpper > 0)
+        {
+            ExpensesRange = $"Range: {forecast.ForecastedExpensesLower:C0} - {forecast.ForecastedExpensesUpper:C0}";
+        }
+        else
+        {
+            ExpensesRange = string.Empty;
+        }
+
+        // Historical accuracy data
+        HasAccuracyData = forecast.ValidatedForecastCount > 0;
+        if (HasAccuracyData)
+        {
+            HistoricalAccuracy = forecast.HistoricalAccuracyPercent.HasValue
+                ? $"{forecast.HistoricalAccuracyPercent.Value:F0}%"
+                : "--";
+            AccuracyDescription = forecast.AccuracyDescription ?? string.Empty;
+            ValidatedForecastsNote = $"Based on {forecast.ValidatedForecastCount} validated forecast(s)";
+        }
+        else
+        {
+            HistoricalAccuracy = string.Empty;
+            AccuracyDescription = "No validated forecasts yet. Accuracy will be calculated after the current forecast period ends.";
+            ValidatedForecastsNote = string.Empty;
+        }
+
+        // Seasonal pattern info
+        HasSeasonalPattern = forecast.SeasonalInfo?.HasSeasonalPattern ?? false;
+        if (HasSeasonalPattern && forecast.SeasonalInfo != null)
+        {
+            SeasonalPatternDescription = forecast.SeasonalInfo.Description;
+            TrendDirection = forecast.SeasonalInfo.TrendDirection;
+        }
+        else
+        {
+            SeasonalPatternDescription = string.Empty;
+            TrendDirection = string.Empty;
+        }
     }
 
     /// <summary>
@@ -486,6 +603,18 @@ public partial class InsightsPageViewModel : ViewModelBase
         CustomerGrowth = "0%";
         PredictionConfidence = "-- --";
         DataMonthsNote = "Insufficient data for forecasting";
+
+        // Clear new ML/accuracy properties
+        ForecastMethod = string.Empty;
+        RevenueRange = string.Empty;
+        ExpensesRange = string.Empty;
+        HasAccuracyData = false;
+        HistoricalAccuracy = string.Empty;
+        AccuracyDescription = string.Empty;
+        ValidatedForecastsNote = string.Empty;
+        HasSeasonalPattern = false;
+        SeasonalPatternDescription = string.Empty;
+        TrendDirection = string.Empty;
 
         RevenueTrends.Clear();
         Anomalies.Clear();

@@ -217,27 +217,102 @@
                             Background="{DynamicResource SurfaceAltBrush}"
                             CornerRadius="8"
                             Padding="16">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                                          Width="16" Height="16"
-                                          Foreground="#22C55E" />
-                                <TextBlock Text="{loc:Loc 'Prediction Confidence:'}"
-                                           FontSize="13"
+                        <StackPanel Spacing="12">
+                            <!-- Main confidence row -->
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                              Width="16" Height="16"
+                                              Foreground="#22C55E" />
+                                    <TextBlock Text="{loc:Loc 'Prediction Confidence:'}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding PredictionConfidence}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="#22C55E"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding DataMonthsNote}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Revenue range row (visible when bounds exist) -->
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  IsVisible="{Binding RevenueRange, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                              Width="14" Height="14"
+                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="Revenue Forecast"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding RevenueRange}"
+                                           FontSize="12"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding PredictionConfidence}"
-                                           FontSize="13"
-                                           FontWeight="SemiBold"
-                                           Foreground="#22C55E"
+                            </Grid>
+
+                            <!-- Historical accuracy row (visible when data exists) -->
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  IsVisible="{Binding HasAccuracyData}">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                              Width="14" Height="14"
+                                              Foreground="#3B82F6" />
+                                    <TextBlock Text="Historical Accuracy:"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding HistoricalAccuracy}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="#3B82F6"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding ValidatedForecastsNote}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                            VerticalAlignment="Center" />
-                            </StackPanel>
-                            <TextBlock Grid.Column="2"
-                                       Text="{Binding DataMonthsNote}"
-                                       FontSize="12"
+                            </Grid>
+
+                            <!-- Seasonal pattern row (visible when pattern detected) -->
+                            <Grid ColumnDefinitions="Auto,*"
+                                  IsVisible="{Binding HasSeasonalPattern}">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                                              Width="14" Height="14"
+                                              Foreground="#8B5CF6" />
+                                    <TextBlock Text="Seasonal Pattern:"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding SeasonalPatternDescription}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="8,0,0,0"
+                                           TextWrapping="Wrap"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Accuracy description (visible when no accuracy data yet) -->
+                            <TextBlock IsVisible="{Binding !HasAccuracyData}"
+                                       Text="{Binding AccuracyDescription}"
+                                       FontSize="11"
+                                       FontStyle="Italic"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
-                                       VerticalAlignment="Center" />
-                        </Grid>
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </Border>
