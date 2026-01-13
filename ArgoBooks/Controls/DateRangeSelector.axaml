@@ -11,9 +11,9 @@
     <StackPanel Orientation="Vertical"
                 Spacing="4"
                 Width="165">
-        <!-- Date Range Dropdown -->
+        <!-- Date Range Dropdown - binds to SelectedDateRange (string) -->
         <ComboBox ItemsSource="{Binding DateRangeOptions}"
-                  SelectedIndex="{Binding SelectedDateRangeIndex, Mode=TwoWay}"
+                  SelectedItem="{Binding SelectedDateRange, Mode=TwoWay}"
                   Classes="form-combobox">
             <ComboBox.ItemTemplate>
                 <DataTemplate>

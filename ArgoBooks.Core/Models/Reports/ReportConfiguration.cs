@@ -414,6 +414,10 @@ public static class DatePresetNames
             "next 30 days" => GetNextMonthToDateRange(now),
             "next 90 days" => GetNextQuarterToDateRange(now),
             "next 365 days" => GetNextYearToDateRange(now),
+            // Also handle the constant form (e.g., "Next month to date")
+            "next month to date" => GetNextMonthToDateRange(now),
+            "next quarter to date" => GetNextQuarterToDateRange(now),
+            "next year to date" => GetNextYearToDateRange(now),
 
             _ => (today.AddDays(-29), today.AddDays(1).AddSeconds(-1)) // Default to last 30 days
         };

@@ -88,11 +88,25 @@ public partial class InsightsPageViewModel : ViewModelBase
     private DateTime _endDate;
 
     /// <summary>
-    /// Gets the currently selected date range string.
+    /// Gets or sets the currently selected date range string.
     /// </summary>
-    public string SelectedDateRange => DateRangeOptions.Count > SelectedDateRangeIndex
-        ? DateRangeOptions[SelectedDateRangeIndex]
-        : "Next Month";
+    public string SelectedDateRange
+    {
+        get => DateRangeOptions.Count > SelectedDateRangeIndex
+            ? DateRangeOptions[SelectedDateRangeIndex]
+            : "Next Month";
+        set
+        {
+            if (string.IsNullOrEmpty(value)) return;
+
+            var index = DateRangeOptions.IndexOf(value);
+            if (index >= 0 && index != SelectedDateRangeIndex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Insights] SelectedDateRange setter called with: {value}, found index: {index}");
+                SelectedDateRangeIndex = index;
+            }
+        }
+    }
 
     partial void OnSelectedDateRangeIndexChanged(int value)
     {
