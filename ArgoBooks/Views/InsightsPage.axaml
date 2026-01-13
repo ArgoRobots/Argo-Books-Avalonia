@@ -326,7 +326,7 @@
                                                 BorderThickness="0,0,0,1"
                                                 Classes.last-item="{Binding IsLastItem}">
                                             <Border.Styles>
-                                                <Style Selector="Border.last-item">
+                                                <Style Selector=":self.last-item">
                                                     <Setter Property="BorderThickness" Value="0" />
                                                 </Style>
                                             </Border.Styles>
@@ -395,7 +395,7 @@
                                                 BorderThickness="0,0,0,1"
                                                 Classes.last-item="{Binding IsLastItem}">
                                             <Border.Styles>
-                                                <Style Selector="Border.last-item">
+                                                <Style Selector=":self.last-item">
                                                     <Setter Property="BorderThickness" Value="0" />
                                                 </Style>
                                             </Border.Styles>
@@ -467,7 +467,7 @@
                                                 BorderThickness="0,0,0,1"
                                                 Classes.last-item="{Binding IsLastItem}">
                                             <Border.Styles>
-                                                <Style Selector="Border.last-item">
+                                                <Style Selector=":self.last-item">
                                                     <Setter Property="BorderThickness" Value="0" />
                                                 </Style>
                                             </Border.Styles>
@@ -536,7 +536,7 @@
                                                 BorderThickness="0,0,0,1"
                                                 Classes.last-item="{Binding IsLastItem}">
                                             <Border.Styles>
-                                                <Style Selector="Border.last-item">
+                                                <Style Selector=":self.last-item">
                                                     <Setter Property="BorderThickness" Value="0" />
                                                 </Style>
                                             </Border.Styles>
