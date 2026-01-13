@@ -13,6 +13,12 @@
         <vm:InsightsPageViewModel />
     </Design.DataContext>
 
+    <UserControl.Styles>
+        <Style Selector="Border.last-item">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </UserControl.Styles>
+
     <Panel>
     <!-- Main Content -->
     <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -325,11 +331,6 @@
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1"
                                                 Classes.last-item="{Binding IsLastItem}">
-                                            <Border.Styles>
-                                                <Style Selector=":self.last-item">
-                                                    <Setter Property="BorderThickness" Value="0" />
-                                                </Style>
-                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -394,11 +395,6 @@
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1"
                                                 Classes.last-item="{Binding IsLastItem}">
-                                            <Border.Styles>
-                                                <Style Selector=":self.last-item">
-                                                    <Setter Property="BorderThickness" Value="0" />
-                                                </Style>
-                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -466,11 +462,6 @@
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1"
                                                 Classes.last-item="{Binding IsLastItem}">
-                                            <Border.Styles>
-                                                <Style Selector=":self.last-item">
-                                                    <Setter Property="BorderThickness" Value="0" />
-                                                </Style>
-                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -535,11 +526,6 @@
                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                 BorderThickness="0,0,0,1"
                                                 Classes.last-item="{Binding IsLastItem}">
-                                            <Border.Styles>
-                                                <Style Selector=":self.last-item">
-                                                    <Setter Property="BorderThickness" Value="0" />
-                                                </Style>
-                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
