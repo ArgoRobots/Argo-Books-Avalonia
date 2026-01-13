@@ -241,7 +241,57 @@ public class InsightsService : IInsightsService
             insights.Add(volumeTrendInsight);
         }
 
+        // ML-based overall trend analysis
+        var mlTrendInsight = AnalyzeMLTrend(companyData);
+        if (mlTrendInsight != null)
+        {
+            insights.Add(mlTrendInsight);
+        }
+
         return insights;
+    }
+
+    private InsightItem? AnalyzeMLTrend(CompanyData companyData)
+    {
+        // Get monthly revenue data for ML trend analysis
+        var monthlyRevenue = GetMonthlyTotals(companyData.Sales, s => s.EffectiveTotalUSD);
+
+        if (monthlyRevenue.Count < 3) return null;
+
+        // Use ML service to detect trend
+        var seasonalPattern = _mlForecastingService.DetectSeasonality(monthlyRevenue);
+
+        // Only report if there's a significant trend
+        if (seasonalPattern.Trend == TrendDirection.Stable)
+            return null;
+
+        var trendDescription = seasonalPattern.Trend switch
+        {
+            TrendDirection.Increasing => $"Your business shows consistent growth. ML analysis detected an upward trend with a slope of {seasonalPattern.TrendSlope:F2} per month.",
+            TrendDirection.Decreasing => $"ML analysis detected a declining trend. Revenue is decreasing by approximately {Math.Abs(seasonalPattern.TrendSlope):F2} per month.",
+            _ => null
+        };
+
+        if (trendDescription == null) return null;
+
+        var recommendation = seasonalPattern.Trend switch
+        {
+            TrendDirection.Increasing => "Consider investing in growth areas and preparing for increased demand.",
+            TrendDirection.Decreasing => "Review pricing, marketing, and customer retention strategies to reverse this trend.",
+            _ => null
+        };
+
+        return new InsightItem
+        {
+            Title = $"ML Trend: {seasonalPattern.Trend}",
+            Description = trendDescription,
+            Recommendation = recommendation,
+            Severity = seasonalPattern.Trend == TrendDirection.Increasing
+                ? InsightSeverity.Success
+                : InsightSeverity.Warning,
+            Category = InsightCategory.RevenueTrend,
+            PercentageChange = (decimal)seasonalPattern.TrendSlope
+        };
     }
 
     private InsightItem? AnalyzeDayOfWeekPattern(List<Sale> sales)
@@ -279,20 +329,71 @@ public class InsightsService : IInsightsService
 
     private InsightItem? AnalyzeSeasonalPattern(List<Sale> allSales, AnalysisDateRange dateRange)
     {
-        // Need at least 12 months of data for seasonal analysis
+        // Get monthly revenue data for ML analysis
         var monthlyData = allSales
+            .Where(s => s.Date >= DateTime.Now.AddMonths(-12))
+            .GroupBy(s => new { s.Date.Year, s.Date.Month })
+            .OrderBy(g => g.Key.Year)
+            .ThenBy(g => g.Key.Month)
+            .Select(g => g.Sum(s => s.EffectiveTotalUSD))
+            .ToList();
+
+        if (monthlyData.Count < 6) return null;
+
+        // Use ML service to detect seasonal pattern
+        var seasonalPattern = _mlForecastingService.DetectSeasonality(monthlyData);
+
+        if (seasonalPattern.SeasonalStrength > 0.2) // Significant seasonal pattern detected
+        {
+            // Find the best performing period based on seasonal factors
+            var bestPeriodIndex = seasonalPattern.SeasonalFactors.Count > 0
+                ? seasonalPattern.SeasonalFactors
+                    .Select((factor, index) => new { Factor = factor, Index = index })
+                    .OrderByDescending(x => x.Factor)
+                    .First().Index
+                : 0;
+
+            var cycleDescription = seasonalPattern.SeasonLength switch
+            {
+                12 => "yearly",
+                6 => "semi-annual",
+                4 => "quarterly",
+                3 => "quarterly",
+                _ => $"{seasonalPattern.SeasonLength}-month"
+            };
+
+            var strengthDescription = seasonalPattern.SeasonalStrength switch
+            {
+                >= 0.7 => "strong",
+                >= 0.4 => "moderate",
+                _ => "mild"
+            };
+
+            return new InsightItem
+            {
+                Title = "ML-Detected Seasonal Pattern",
+                Description = $"Machine learning analysis detected a {strengthDescription} {cycleDescription} seasonal pattern ({seasonalPattern.SeasonalStrength:P0} strength). {seasonalPattern.Description}",
+                Recommendation = "Use this pattern to optimize inventory timing, staffing schedules, and marketing campaigns.",
+                Severity = InsightSeverity.Info,
+                Category = InsightCategory.RevenueTrend,
+                PercentageChange = (decimal)(seasonalPattern.SeasonalStrength * 100)
+            };
+        }
+
+        // Fallback to simple analysis if no strong ML pattern detected
+        var monthlyByMonth = allSales
             .Where(s => s.Date >= DateTime.Now.AddMonths(-12))
             .GroupBy(s => s.Date.Month)
             .Select(g => new { Month = g.Key, Total = g.Sum(s => s.EffectiveTotalUSD) })
             .OrderByDescending(x => x.Total)
             .ToList();
 
-        if (monthlyData.Count < 6) return null;
+        if (monthlyByMonth.Count < 6) return null;
 
-        var bestMonth = monthlyData.First();
-        var averageMonthly = monthlyData.Average(x => x.Total);
+        var bestMonth = monthlyByMonth.First();
+        var averageMonthly = monthlyByMonth.Average(x => x.Total);
 
-        if (bestMonth.Total > averageMonthly * 1.25m) // 25% above average
+        if (bestMonth.Total > averageMonthly * 1.25m)
         {
             var monthName = new DateTime(2024, bestMonth.Month, 1).ToString("MMMM");
             var percentAbove = ((bestMonth.Total / averageMonthly) - 1) * 100;
@@ -756,20 +857,110 @@ public class InsightsService : IInsightsService
         var historicalRange = GetHistoricalDateRange(dateRange);
         var forecast = GenerateForecast(companyData, historicalRange);
 
-        // Revenue forecast insight
+        // Revenue forecast insight with ML-enhanced details
         if (forecast.ForecastedRevenue > 0)
         {
-            var confidenceRange = forecast.ConfidenceScore >= 70 ? "±10%" : "±20%";
-            var lowEstimate = forecast.ForecastedRevenue * (forecast.ConfidenceScore >= 70 ? 0.9m : 0.8m);
-            var highEstimate = forecast.ForecastedRevenue * (forecast.ConfidenceScore >= 70 ? 1.1m : 1.2m);
+            var methodDescription = forecast.ForecastMethod switch
+            {
+                "Combined (SSA + Holt-Winters)" => "Using combined ML analysis (SSA + Holt-Winters)",
+                "ML.NET SSA" => "Using ML.NET Singular Spectrum Analysis",
+                var m when m?.Contains("Holt-Winters") == true => "Using Holt-Winters seasonal forecasting",
+                _ => $"Based on {forecast.DataMonthsUsed} months of data"
+            };
+
+            var confidenceNote = forecast.ConfidenceScore >= 80
+                ? "High confidence prediction"
+                : forecast.ConfidenceScore >= 50
+                    ? "Moderate confidence prediction"
+                    : "Low confidence - consider adding more data";
 
             insights.Add(new InsightItem
             {
-                Title = "Next Month Revenue Forecast",
-                Description = $"Based on {forecast.DataMonthsUsed} months of historical data, expected revenue for next month is {FormatCurrency(lowEstimate)} - {FormatCurrency(highEstimate)} ({confidenceRange}).",
-                Severity = InsightSeverity.Info,
+                Title = "ML Revenue Forecast",
+                Description = $"{methodDescription}: Expected revenue is {FormatCurrency(forecast.ForecastedRevenueLower)} - {FormatCurrency(forecast.ForecastedRevenueUpper)}. {confidenceNote} ({forecast.ConfidenceScore:F0}%).",
+                Severity = forecast.ConfidenceScore >= 60 ? InsightSeverity.Info : InsightSeverity.Warning,
                 Category = InsightCategory.Forecast,
                 MetricValue = forecast.ForecastedRevenue
+            });
+        }
+
+        // ML-detected seasonal pattern insight
+        if (forecast.SeasonalInfo?.HasSeasonalPattern == true)
+        {
+            var trendAdvice = forecast.SeasonalInfo.TrendDirection switch
+            {
+                "Increasing" => "Combined with the upward trend, consider planning for growth.",
+                "Decreasing" => "Be mindful of the downward trend when planning.",
+                _ => "The overall trend is stable."
+            };
+
+            insights.Add(new InsightItem
+            {
+                Title = "Seasonal Pattern Detected",
+                Description = $"ML analysis detected: {forecast.SeasonalInfo.Description} {trendAdvice}",
+                Recommendation = "Use this seasonal insight to optimize inventory, staffing, and marketing timing.",
+                Severity = InsightSeverity.Info,
+                Category = InsightCategory.Forecast,
+                PercentageChange = (decimal)(forecast.SeasonalInfo.Strength * 100)
+            });
+        }
+
+        // ML trend direction insight
+        if (forecast.SeasonalInfo != null)
+        {
+            var trendSeverity = forecast.SeasonalInfo.TrendDirection switch
+            {
+                "Increasing" => InsightSeverity.Success,
+                "Decreasing" => InsightSeverity.Warning,
+                _ => InsightSeverity.Info
+            };
+
+            var trendDescription = forecast.SeasonalInfo.TrendDirection switch
+            {
+                "Increasing" => "ML analysis shows your business is on an upward trajectory. Revenue and growth metrics are trending positively.",
+                "Decreasing" => "ML analysis indicates a downward trend. Consider reviewing business strategies to reverse this pattern.",
+                _ => "Your business metrics are stable with no significant trend detected by ML analysis."
+            };
+
+            if (forecast.SeasonalInfo.TrendDirection != "Stable")
+            {
+                insights.Add(new InsightItem
+                {
+                    Title = $"ML Trend Analysis: {forecast.SeasonalInfo.TrendDirection}",
+                    Description = trendDescription,
+                    Severity = trendSeverity,
+                    Category = InsightCategory.RevenueTrend
+                });
+            }
+        }
+
+        // Historical accuracy insight
+        var accuracyData = _forecastAccuracyService.GetAccuracyData(companyData);
+        if (accuracyData.ValidatedForecastCount > 0)
+        {
+            var accuracySeverity = accuracyData.AverageRevenueAccuracy >= 80
+                ? InsightSeverity.Success
+                : accuracyData.AverageRevenueAccuracy >= 60
+                    ? InsightSeverity.Info
+                    : InsightSeverity.Warning;
+
+            var trendNote = accuracyData.AccuracyTrend switch
+            {
+                AccuracyTrend.Improving => " Accuracy is improving over time.",
+                AccuracyTrend.Declining => " Note: accuracy has been declining recently.",
+                _ => ""
+            };
+
+            insights.Add(new InsightItem
+            {
+                Title = "Forecast Accuracy Tracking",
+                Description = $"Based on {accuracyData.ValidatedForecastCount} validated forecast(s), average accuracy is {accuracyData.AverageRevenueAccuracy:F0}%.{trendNote}",
+                Recommendation = accuracyData.AverageRevenueAccuracy < 70
+                    ? "More consistent data entry and longer history will improve forecast accuracy."
+                    : null,
+                Severity = accuracySeverity,
+                Category = InsightCategory.Forecast,
+                PercentageChange = (decimal)accuracyData.AverageRevenueAccuracy
             });
         }
 
