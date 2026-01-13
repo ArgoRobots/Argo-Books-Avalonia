@@ -96,8 +96,15 @@ public partial class InsightsPageViewModel : ViewModelBase
 
     partial void OnSelectedDateRangeIndexChanged(int value)
     {
+        System.Diagnostics.Debug.WriteLine($"[Insights] SelectedDateRangeIndex changed to: {value}");
+        System.Diagnostics.Debug.WriteLine($"[Insights] SelectedDateRange is now: {SelectedDateRange}");
+
         OnPropertyChanged(nameof(SelectedDateRange));
         UpdateDateRangeFromSelection();
+
+        System.Diagnostics.Debug.WriteLine($"[Insights] After update - StartDate: {StartDate}, EndDate: {EndDate}");
+        System.Diagnostics.Debug.WriteLine($"[Insights] ForecastDateRangeLabel: {ForecastDateRangeLabel}");
+
         // Only refresh the forecast cards, not the insights
         _ = RefreshForecastAsync();
     }
@@ -367,24 +374,34 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// </summary>
     private async Task RefreshForecastAsync()
     {
+        System.Diagnostics.Debug.WriteLine($"[Insights] RefreshForecastAsync called - StartDate: {StartDate}, EndDate: {EndDate}");
+
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
+        if (companyData == null)
+        {
+            System.Diagnostics.Debug.WriteLine("[Insights] RefreshForecastAsync - No company data");
+            return;
+        }
 
         try
         {
             // Create date range for forecast using the future date preset
             var dateRange = AnalysisDateRange.Custom(StartDate, EndDate);
+            System.Diagnostics.Debug.WriteLine($"[Insights] Generating forecast for date range: {dateRange.StartDate} - {dateRange.EndDate}");
 
             // Generate forecast only
             var forecast = await _insightsService.GenerateForecastAsync(companyData, dateRange);
+            System.Diagnostics.Debug.WriteLine($"[Insights] Forecast generated - Revenue: {forecast.ForecastedRevenue}, Method: {forecast.ForecastMethod}");
 
             // Update forecast display
             UpdateForecastDisplay(forecast);
+            System.Diagnostics.Debug.WriteLine("[Insights] Forecast display updated");
         }
         catch (Exception ex)
         {
             // Log or show error - don't silently fail
-            System.Diagnostics.Debug.WriteLine($"Forecast refresh error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[Insights] Forecast refresh error: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[Insights] Stack trace: {ex.StackTrace}");
             DataMonthsNote = $"Error refreshing forecast: {ex.Message}";
         }
     }
