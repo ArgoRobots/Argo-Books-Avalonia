@@ -126,7 +126,7 @@
                                 <Button Classes="icon-button"
                                         Width="28" Height="28"
                                         Padding="0"
-                                        Margin="0,-3,0,0"
+                                        Margin="0,-5,0,0"
                                         VerticalAlignment="Center"
                                         Command="{Binding ShowPredictionInfoCommand}"
                                         ToolTip.Tip="How predictions are calculated">
