@@ -406,6 +406,15 @@ public static class DatePresetNames
             "year to date" => (new DateTime(now.Year, 1, 1), today.AddDays(1).AddSeconds(-1)),
             "last year" => (new DateTime(now.Year - 1, 1, 1), new DateTime(now.Year, 1, 1).AddSeconds(-1)),
             "all time" => (DateTime.MinValue, DateTime.MaxValue),
+
+            // Future date presets for forecasting
+            "next month" => GetNextMonthRange(now),
+            "next quarter" => GetNextQuarterRange(now),
+            "next year" => GetNextYearRange(now),
+            "next 30 days" => GetNextMonthToDateRange(now),
+            "next 90 days" => GetNextQuarterToDateRange(now),
+            "next 365 days" => GetNextYearToDateRange(now),
+
             _ => (today.AddDays(-29), today.AddDays(1).AddSeconds(-1)) // Default to last 30 days
         };
     }
