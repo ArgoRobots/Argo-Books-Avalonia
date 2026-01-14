@@ -6,21 +6,25 @@ namespace ArgoBooks.Core.Services;
 /// <summary>
 /// Azure Document Intelligence implementation of receipt scanning.
 /// Uses the prebuilt receipt model for high-accuracy extraction.
+/// Credentials are loaded from .env file (AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT and AZURE_DOCUMENT_INTELLIGENCE_API_KEY).
 /// </summary>
 public class AzureReceiptScannerService : IReceiptScannerService
 {
-    private readonly Func<AzureReceiptSettings?> _getSettings;
+    private const string EndpointEnvVar = "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT";
+    private const string ApiKeyEnvVar = "AZURE_DOCUMENT_INTELLIGENCE_API_KEY";
+
     private DocumentAnalysisClient? _client;
     private string? _lastEndpoint;
     private string? _lastApiKey;
 
     /// <summary>
     /// Creates a new instance of the Azure receipt scanner service.
+    /// Credentials are loaded from .env file.
     /// </summary>
-    /// <param name="getSettings">Function to retrieve current Azure settings.</param>
-    public AzureReceiptScannerService(Func<AzureReceiptSettings?> getSettings)
+    public AzureReceiptScannerService()
     {
-        _getSettings = getSettings;
+        // Ensure .env file is loaded
+        DotEnv.Load();
     }
 
     /// <inheritdoc />
@@ -28,10 +32,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
     {
         get
         {
-            var settings = _getSettings();
-            return settings != null &&
-                   !string.IsNullOrWhiteSpace(settings.Endpoint) &&
-                   !string.IsNullOrWhiteSpace(settings.ApiKey);
+            return DotEnv.HasValue(EndpointEnvVar) && DotEnv.HasValue(ApiKeyEnvVar);
         }
     }
 
@@ -43,7 +44,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
             var client = GetOrCreateClient();
             if (client == null)
             {
-                return ReceiptScanResult.Failed("Azure Document Intelligence is not configured. Please add your API key and endpoint in Settings.");
+                return ReceiptScanResult.Failed("Azure Document Intelligence is not configured. Please add AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT and AZURE_DOCUMENT_INTELLIGENCE_API_KEY to your .env file.");
             }
 
             // Validate file size (4MB limit for free tier)
@@ -73,11 +74,11 @@ public class AzureReceiptScannerService : IReceiptScannerService
         }
         catch (RequestFailedException ex) when (ex.Status == 401)
         {
-            return ReceiptScanResult.Failed("Invalid Azure API key. Please check your credentials in Settings.");
+            return ReceiptScanResult.Failed("Invalid Azure API key. Please check your AZURE_DOCUMENT_INTELLIGENCE_API_KEY in .env file.");
         }
         catch (RequestFailedException ex) when (ex.Status == 403)
         {
-            return ReceiptScanResult.Failed("Azure API access denied. Please verify your subscription and endpoint.");
+            return ReceiptScanResult.Failed("Azure API access denied. Please verify your subscription and endpoint in .env file.");
         }
         catch (RequestFailedException ex) when (ex.Status == 429)
         {
@@ -143,24 +144,26 @@ public class AzureReceiptScannerService : IReceiptScannerService
 
     private DocumentAnalysisClient? GetOrCreateClient()
     {
-        var settings = _getSettings();
-        if (settings == null || string.IsNullOrWhiteSpace(settings.Endpoint) || string.IsNullOrWhiteSpace(settings.ApiKey))
+        var envEndpoint = DotEnv.Get(EndpointEnvVar);
+        var envApiKey = DotEnv.Get(ApiKeyEnvVar);
+
+        if (string.IsNullOrWhiteSpace(envEndpoint) || string.IsNullOrWhiteSpace(envApiKey))
         {
             return null;
         }
 
         // Recreate client if settings changed
-        if (_client == null || _lastEndpoint != settings.Endpoint || _lastApiKey != settings.ApiKey)
+        if (_client == null || _lastEndpoint != envEndpoint || _lastApiKey != envApiKey)
         {
-            var endpoint = settings.Endpoint.TrimEnd('/');
+            var endpoint = envEndpoint.TrimEnd('/');
             if (!endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
                 endpoint = "https://" + endpoint;
             }
 
-            _client = new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(settings.ApiKey));
-            _lastEndpoint = settings.Endpoint;
-            _lastApiKey = settings.ApiKey;
+            _client = new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(envApiKey));
+            _lastEndpoint = envEndpoint;
+            _lastApiKey = envApiKey;
         }
 
         return _client;
@@ -346,24 +349,3 @@ public class AzureReceiptScannerService : IReceiptScannerService
     }
 }
 
-/// <summary>
-/// Azure Document Intelligence settings.
-/// </summary>
-public class AzureReceiptSettings
-{
-    /// <summary>
-    /// Azure Document Intelligence endpoint URL.
-    /// Example: https://your-resource-name.cognitiveservices.azure.com/
-    /// </summary>
-    public string Endpoint { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Azure API key.
-    /// </summary>
-    public string ApiKey { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Whether the settings are valid.
-    /// </summary>
-    public bool IsValid => !string.IsNullOrWhiteSpace(Endpoint) && !string.IsNullOrWhiteSpace(ApiKey);
-}

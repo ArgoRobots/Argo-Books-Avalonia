@@ -634,53 +634,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private IReceiptScannerService? CreateScannerService()
     {
-        return new AzureReceiptScannerService(() =>
-        {
-            var azureSettings = App.SettingsService?.GlobalSettings.Azure;
-            if (azureSettings == null || !azureSettings.IsConfigured)
-                return null;
-
-            // Decrypt API key
-            var apiKey = DecryptApiKey(azureSettings);
-            if (string.IsNullOrEmpty(apiKey))
-                return null;
-
-            return new AzureReceiptSettings
-            {
-                Endpoint = azureSettings.Endpoint ?? string.Empty,
-                ApiKey = apiKey
-            };
-        });
-    }
-
-    private static string? DecryptApiKey(AzureDocumentIntelligenceSettings settings)
-    {
-        if (string.IsNullOrWhiteSpace(settings.EncryptedApiKey) ||
-            string.IsNullOrWhiteSpace(settings.Salt) ||
-            string.IsNullOrWhiteSpace(settings.Iv))
-            return null;
-
-        try
-        {
-            var encryptionService = new EncryptionService();
-            var encryptedBytes = Convert.FromBase64String(settings.EncryptedApiKey);
-            var decryptedBytes = encryptionService.Decrypt(
-                encryptedBytes,
-                GetMachineKey(),
-                settings.Salt,
-                settings.Iv);
-            return System.Text.Encoding.UTF8.GetString(decryptedBytes);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static string GetMachineKey()
-    {
-        // Use machine name as part of the key for machine-specific encryption
-        return $"ArgoBooks-{Environment.MachineName}-ReceiptScanner";
+        // Credentials are loaded from .env file by the service
+        return new AzureReceiptScannerService();
     }
 
     private OcrData CreateOcrData()
