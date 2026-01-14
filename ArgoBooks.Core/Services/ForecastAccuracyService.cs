@@ -452,15 +452,15 @@ public class ForecastAccuracyService : IForecastAccuracyService
     /// </summary>
     private double CalculateRecordAccuracy(ForecastAccuracyRecord record)
     {
-        if (record.ActualRevenue == 0) return 0;
+        if (!record.ActualRevenue.HasValue || record.ActualRevenue.Value == 0) return 0;
 
-        var revenueError = Math.Abs(record.ForecastedRevenue - record.ActualRevenue) / record.ActualRevenue;
+        var revenueError = Math.Abs(record.ForecastedRevenue - record.ActualRevenue.Value) / record.ActualRevenue.Value;
         var revenueAccuracy = Math.Max(0, 100 * (1 - (double)revenueError));
 
         // Also consider expense accuracy if available
-        if (record.ActualExpenses > 0)
+        if (record.ActualExpenses.HasValue && record.ActualExpenses.Value > 0)
         {
-            var expenseError = Math.Abs(record.ForecastedExpenses - record.ActualExpenses) / record.ActualExpenses;
+            var expenseError = Math.Abs(record.ForecastedExpenses - record.ActualExpenses.Value) / record.ActualExpenses.Value;
             var expenseAccuracy = Math.Max(0, 100 * (1 - (double)expenseError));
             return (revenueAccuracy + expenseAccuracy) / 2;
         }

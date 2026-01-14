@@ -924,7 +924,7 @@ public class InsightsService : IInsightsService
             insights.Add(new InsightItem
             {
                 Title = "Inventory Depletion Alert",
-                Description = $"At current sales velocity, {inventoryAlerts.Count} product(s) will reach reorder point within 2 weeks.",
+                Description = $"At current sales velocity, {inventoryAlerts.Count} {(inventoryAlerts.Count == 1 ? "product" : "products")} will reach reorder point within 2 weeks.",
                 Recommendation = "Review and place orders for low-stock items: " + string.Join(", ", inventoryAlerts.Take(3)),
                 Severity = InsightSeverity.Warning,
                 Category = InsightCategory.Inventory,
@@ -1093,7 +1093,7 @@ public class InsightsService : IInsightsService
         return new InsightItem
         {
             Title = "Customer Retention Opportunity",
-            Description = $"{previouslyActiveCount} previously active customer(s) haven't made a purchase in over {inactivityThreshold} days.",
+            Description = $"{previouslyActiveCount} previously active {(previouslyActiveCount == 1 ? "customer hasn't" : "customers haven't")} made a purchase in over {inactivityThreshold} days.",
             Recommendation = "Consider sending re-engagement emails, special offers, or conducting a satisfaction survey.",
             Severity = InsightSeverity.Info,
             Category = InsightCategory.Customer,
@@ -1116,7 +1116,7 @@ public class InsightsService : IInsightsService
         return new InsightItem
         {
             Title = "Payment Collection Needed",
-            Description = $"{overdueInvoices.Count} invoice(s) totaling {FormatCurrency(totalOverdue)} are overdue. Oldest is {oldestDaysOverdue} days past due.",
+            Description = $"{overdueInvoices.Count} {(overdueInvoices.Count == 1 ? "invoice" : "invoices")} totaling {FormatCurrency(totalOverdue)} {(overdueInvoices.Count == 1 ? "is" : "are")} overdue. Oldest is {oldestDaysOverdue} days past due.",
             Recommendation = "Send payment reminders and follow up with these customers to improve cash flow.",
             Severity = oldestDaysOverdue > 30 ? InsightSeverity.Warning : InsightSeverity.Info,
             Category = InsightCategory.Payment,

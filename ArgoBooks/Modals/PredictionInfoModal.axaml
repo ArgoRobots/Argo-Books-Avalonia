@@ -178,6 +178,34 @@
                                 </Grid>
                             </Border>
 
+                            <!-- Historical Accuracy Explanation -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="36" Height="36"
+                                            CornerRadius="8"
+                                            Background="#F0FDF4"
+                                            Margin="0,0,12,0"
+                                            VerticalAlignment="Top">
+                                        <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                                                  Width="18" Height="18"
+                                                  Foreground="#16A34A" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="4">
+                                        <TextBlock Text="How Accuracy is Calculated"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="The Historical Accuracy percentage shows how close predictions were to actual results. For example, 85% accuracy means predictions were typically within 15% of the actual values. It's calculated by comparing each past forecast to the actual outcome, then averaging the results."
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
                             <!-- Adaptive Learning -->
                             <Border Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="8"
