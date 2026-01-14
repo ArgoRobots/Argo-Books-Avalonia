@@ -33,6 +33,11 @@ public class App : Application
     public static GlobalSettingsService? SettingsService { get; private set; }
 
     /// <summary>
+    /// Gets the file service instance for sample company creation.
+    /// </summary>
+    private static FileService? _fileService;
+
+    /// <summary>
     /// Gets the license service instance for secure license storage.
     /// </summary>
     public static LicenseService? LicenseService { get; private set; }
@@ -314,10 +319,10 @@ public class App : Application
             var compressionService = new CompressionService();
             var footerService = new FooterService();
             var encryptionService = new EncryptionService();
-            var fileService = new FileService(compressionService, footerService, encryptionService);
+            _fileService = new FileService(compressionService, footerService, encryptionService);
             SettingsService = new GlobalSettingsService();
             LicenseService = new LicenseService(encryptionService, SettingsService);
-            CompanyManager = new CompanyManager(fileService, SettingsService, footerService);
+            CompanyManager = new CompanyManager(_fileService, SettingsService, footerService);
 
             // Create navigation service
             NavigationService = new NavigationService();
@@ -1063,6 +1068,74 @@ public class App : Application
                 await SettingsService.SaveGlobalSettingsAsync();
             }
         };
+
+        // Open sample company
+        _welcomeScreenViewModel.OpenSampleCompanyRequested += async (_, _) =>
+        {
+            await OpenSampleCompanyAsync();
+        };
+    }
+
+    /// <summary>
+    /// Creates and opens a sample company with pre-populated demo data.
+    /// </summary>
+    private static async Task OpenSampleCompanyAsync()
+    {
+        if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null || _fileService == null)
+            return;
+
+        _mainWindowViewModel.ShowLoading("Creating sample company...".Translate());
+
+        try
+        {
+            // Get the embedded sample data Excel file
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "ArgoBooks.Resources.SampleCompanyData.xlsx";
+
+            await using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                _mainWindowViewModel.HideLoading();
+                _appShellViewModel.AddNotification(
+                    "Error".Translate(),
+                    "Sample company data not found.".Translate(),
+                    NotificationType.Error);
+                return;
+            }
+
+            // Create the sample company
+            var importService = new SpreadsheetImportService();
+            var sampleService = new SampleCompanyService(_fileService, importService);
+            var sampleFilePath = await sampleService.CreateSampleCompanyAsync(stream);
+
+            // Open the created sample company
+            var success = await CompanyManager.OpenCompanyAsync(sampleFilePath);
+
+            if (success)
+            {
+                await LoadRecentCompaniesAsync();
+                _appShellViewModel.AddNotification(
+                    "Welcome!".Translate(),
+                    "You're exploring TechFlow Solutions - a sample company. Feel free to experiment!".Translate(),
+                    NotificationType.Information);
+            }
+            else
+            {
+                _mainWindowViewModel.HideLoading();
+                _appShellViewModel.AddNotification(
+                    "Error".Translate(),
+                    "Failed to open sample company.".Translate(),
+                    NotificationType.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel.HideLoading();
+            _appShellViewModel.AddNotification(
+                "Error".Translate(),
+                "Failed to create sample company: {0}".TranslateFormat(ex.Message),
+                NotificationType.Error);
+        }
     }
 
     /// <summary>
