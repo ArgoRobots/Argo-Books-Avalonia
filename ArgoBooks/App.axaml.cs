@@ -1117,7 +1117,7 @@ public class App : Application
                 _appShellViewModel.AddNotification(
                     "Welcome!".Translate(),
                     "You're exploring TechFlow Solutions - a sample company. Feel free to experiment!".Translate(),
-                    NotificationType.Information);
+                    NotificationType.Info);
             }
             else
             {
