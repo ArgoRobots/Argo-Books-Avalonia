@@ -370,7 +370,41 @@ public partial class InsightsPageViewModel : ViewModelBase
     #region Insights Period
 
     /// <summary>
-    /// Description of the analysis period used for insights (always historical).
+    /// Available date range options for historical insights analysis.
+    /// </summary>
+    public ObservableCollection<string> InsightsDateRangeOptions { get; } = new(DatePresetNames.InsightsHistoricalDateRangeOptions);
+
+    [ObservableProperty]
+    private int _selectedInsightsDateRangeIndex = 1; // Default to "Last 3 Months"
+
+    /// <summary>
+    /// Gets or sets the currently selected insights date range string.
+    /// </summary>
+    public string SelectedInsightsDateRange
+    {
+        get => InsightsDateRangeOptions.Count > SelectedInsightsDateRangeIndex
+            ? InsightsDateRangeOptions[SelectedInsightsDateRangeIndex]
+            : "Last 3 Months";
+        set
+        {
+            if (string.IsNullOrEmpty(value)) return;
+
+            var index = InsightsDateRangeOptions.IndexOf(value);
+            if (index >= 0 && index != SelectedInsightsDateRangeIndex)
+            {
+                SelectedInsightsDateRangeIndex = index;
+            }
+        }
+    }
+
+    partial void OnSelectedInsightsDateRangeIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(SelectedInsightsDateRange));
+        _ = RefreshInsightsAsync();
+    }
+
+    /// <summary>
+    /// Description of the analysis period used for insights.
     /// </summary>
     [ObservableProperty]
     private string _insightsAnalysisPeriod = "Based on last 3 months of data";
@@ -383,6 +417,26 @@ public partial class InsightsPageViewModel : ViewModelBase
     public ObservableCollection<InsightItemViewModel> Anomalies { get; } = [];
     public ObservableCollection<InsightItemViewModel> Forecasts { get; } = [];
     public ObservableCollection<InsightItemViewModel> Recommendations { get; } = [];
+
+    /// <summary>
+    /// Indicates if the Revenue Trends collection is empty.
+    /// </summary>
+    public bool HasNoRevenueTrends => RevenueTrends.Count == 0;
+
+    /// <summary>
+    /// Indicates if the Anomalies collection is empty.
+    /// </summary>
+    public bool HasNoAnomalies => Anomalies.Count == 0;
+
+    /// <summary>
+    /// Indicates if the Forecasts collection is empty.
+    /// </summary>
+    public bool HasNoForecasts => Forecasts.Count == 0;
+
+    /// <summary>
+    /// Indicates if the Recommendations collection is empty.
+    /// </summary>
+    public bool HasNoRecommendations => Recommendations.Count == 0;
 
     #endregion
 
@@ -472,13 +526,14 @@ public partial class InsightsPageViewModel : ViewModelBase
             // Check if we should run backtesting first
             await RunBacktestIfNeededAsync(companyData, companySettings);
 
-            // Insights always use a standard historical analysis period (last 3 months)
-            var insightsStartDate = DateTime.Today.AddMonths(-3);
-            var insightsEndDate = DateTime.Today;
+            // Use the selected historical date range for insights
+            var (insightsStartDate, insightsEndDate) = DatePresetNames.GetDateRange(SelectedInsightsDateRange);
             var insightsDateRange = AnalysisDateRange.Custom(insightsStartDate, insightsEndDate);
 
             // Update the analysis period description
-            InsightsAnalysisPeriod = "Based on last 3 months of data";
+            InsightsAnalysisPeriod = SelectedInsightsDateRange == "All Time"
+                ? "Based on all available data"
+                : $"Based on {SelectedInsightsDateRange.ToLowerInvariant()} of data";
 
             // Generate insights using the service with historical data
             var insights = await _insightsService.GenerateInsightsAsync(companyData, insightsDateRange);
@@ -674,6 +729,12 @@ public partial class InsightsPageViewModel : ViewModelBase
                 IsLastItem = i == items.Count - 1
             });
         }
+
+        // Notify empty state properties
+        OnPropertyChanged(nameof(HasNoRevenueTrends));
+        OnPropertyChanged(nameof(HasNoAnomalies));
+        OnPropertyChanged(nameof(HasNoForecasts));
+        OnPropertyChanged(nameof(HasNoRecommendations));
     }
 
     /// <summary>
@@ -732,5 +793,11 @@ public partial class InsightsPageViewModel : ViewModelBase
         Anomalies.Clear();
         Forecasts.Clear();
         Recommendations.Clear();
+
+        // Notify empty state properties
+        OnPropertyChanged(nameof(HasNoRevenueTrends));
+        OnPropertyChanged(nameof(HasNoAnomalies));
+        OnPropertyChanged(nameof(HasNoForecasts));
+        OnPropertyChanged(nameof(HasNoRecommendations));
     }
 }

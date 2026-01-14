@@ -400,6 +400,8 @@ public static class DatePresetNames
             "last week" => (today.AddDays(-(int)today.DayOfWeek - 7), today.AddDays(-(int)today.DayOfWeek).AddSeconds(-1)),
             "this month" => (new DateTime(now.Year, now.Month, 1), new DateTime(now.Year, now.Month, 1).AddMonths(1).AddSeconds(-1)),
             "last month" => (new DateTime(now.Year, now.Month, 1).AddMonths(-1), new DateTime(now.Year, now.Month, 1).AddSeconds(-1)),
+            "last 3 months" => (today.AddMonths(-3), today.AddDays(1).AddSeconds(-1)),
+            "last 6 months" => (today.AddMonths(-6), today.AddDays(1).AddSeconds(-1)),
             "this quarter" => GetThisQuarterRange(now),
             "last quarter" => GetLastQuarterRange(now),
             "this year" => (new DateTime(now.Year, 1, 1), new DateTime(now.Year, 12, 31, 23, 59, 59)),
@@ -523,5 +525,17 @@ public static class DatePresetNames
         "Next 30 Days",
         "Next 90 Days",
         "Next 365 Days"
+    ];
+
+    /// <summary>
+    /// Historical date range options for insights analysis UI dropdowns.
+    /// </summary>
+    public static readonly string[] InsightsHistoricalDateRangeOptions =
+    [
+        "Last Month",
+        "Last 3 Months",
+        "Last 6 Months",
+        "Last Year",
+        "All Time"
     ];
 }
