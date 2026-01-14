@@ -185,11 +185,9 @@ public class ForecastAccuracyService : IForecastAccuracyService
         // Get all months with transaction data
         var allDates = companyData.Sales.Select(s => s.Date)
             .Concat(companyData.Purchases.Select(p => p.Date))
-            .Where(d => d.HasValue)
-            .Select(d => d!.Value)
             .ToList();
 
-        if (!allDates.Any())
+        if (allDates.Count == 0)
             return false;
 
         // Get distinct months
@@ -327,14 +325,12 @@ public class ForecastAccuracyService : IForecastAccuracyService
     {
         // Aggregate sales by month
         var salesByMonth = companyData.Sales
-            .Where(s => s.Date.HasValue)
-            .GroupBy(s => new DateTime(s.Date!.Value.Year, s.Date.Value.Month, 1))
+            .GroupBy(s => new DateTime(s.Date.Year, s.Date.Month, 1))
             .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveTotalUSD));
 
         // Aggregate purchases by month
         var purchasesByMonth = companyData.Purchases
-            .Where(p => p.Date.HasValue)
-            .GroupBy(p => new DateTime(p.Date!.Value.Year, p.Date.Value.Month, 1))
+            .GroupBy(p => new DateTime(p.Date.Year, p.Date.Month, 1))
             .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveTotalUSD));
 
         // Get all months with any data
