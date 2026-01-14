@@ -74,12 +74,8 @@ public class SampleCompanyService
             // Create receipts subdirectory
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
 
-            // Determine where to save the .argo file
-            // Use a predictable location in temp so we can clean it up later
-            var sampleFilePath = Path.Combine(
-                Path.GetTempPath(),
-                "ArgoBooks",
-                "SampleCompany.argo");
+            // Get the sample company file path
+            var sampleFilePath = GetSampleCompanyPath();
 
             // Ensure directory exists
             var sampleDir = Path.GetDirectoryName(sampleFilePath);
@@ -153,14 +149,22 @@ public class SampleCompanyService
     }
 
     /// <summary>
+    /// Gets the path where the sample company file is stored.
+    /// </summary>
+    public static string GetSampleCompanyPath()
+    {
+        return Path.Combine(
+            Path.GetTempPath(),
+            "ArgoBooks",
+            "SampleCompany.argo");
+    }
+
+    /// <summary>
     /// Cleans up any leftover sample company files.
     /// </summary>
     public static void CleanupSampleCompanyFiles()
     {
-        var sampleFilePath = Path.Combine(
-            Path.GetTempPath(),
-            "ArgoBooks",
-            "SampleCompany.argo");
+        var sampleFilePath = GetSampleCompanyPath();
 
         if (File.Exists(sampleFilePath))
         {

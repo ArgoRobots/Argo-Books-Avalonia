@@ -677,6 +677,9 @@ public class App : Application
             // Clear tracked changes when company is closed
             ChangeTrackingService?.ClearAllChanges();
 
+            // Clear notifications when company is closed
+            _appShellViewModel.HeaderViewModel.ClearNotifications();
+
             // Reset to global language setting when company is closed
             var globalLanguage = SettingsService?.GlobalSettings.Ui.Language ?? "English";
             await LanguageService.Instance.SetLanguageAsync(globalLanguage);
@@ -1084,31 +1087,41 @@ public class App : Application
         if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null || _fileService == null)
             return;
 
-        _mainWindowViewModel.ShowLoading("Creating sample company...".Translate());
+        // Check if sample company already exists
+        var sampleFilePath = SampleCompanyService.GetSampleCompanyPath();
+        var sampleExists = File.Exists(sampleFilePath);
+
+        _mainWindowViewModel.ShowLoading(sampleExists
+            ? "Opening sample company...".Translate()
+            : "Creating sample company...".Translate());
 
         try
         {
-            // Get the embedded sample data Excel file
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "ArgoBooks.Resources.SampleCompanyData.xlsx";
-
-            await using var stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream == null)
+            // Create the sample company if it doesn't exist
+            if (!sampleExists)
             {
-                _mainWindowViewModel.HideLoading();
-                _appShellViewModel.AddNotification(
-                    "Error".Translate(),
-                    "Sample company data not found.".Translate(),
-                    NotificationType.Error);
-                return;
+                // Get the embedded sample data Excel file
+                var assembly = Assembly.GetExecutingAssembly();
+                var resourceName = "ArgoBooks.Resources.SampleCompanyData.xlsx";
+
+                await using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream == null)
+                {
+                    _mainWindowViewModel.HideLoading();
+                    _appShellViewModel.AddNotification(
+                        "Error".Translate(),
+                        "Sample company data not found.".Translate(),
+                        NotificationType.Error);
+                    return;
+                }
+
+                // Create the sample company
+                var importService = new SpreadsheetImportService();
+                var sampleService = new SampleCompanyService(_fileService, importService);
+                sampleFilePath = await sampleService.CreateSampleCompanyAsync(stream);
             }
 
-            // Create the sample company
-            var importService = new SpreadsheetImportService();
-            var sampleService = new SampleCompanyService(_fileService, importService);
-            var sampleFilePath = await sampleService.CreateSampleCompanyAsync(stream);
-
-            // Open the created sample company
+            // Open the sample company
             var success = await CompanyManager.OpenCompanyAsync(sampleFilePath);
 
             if (success)
@@ -1133,7 +1146,7 @@ public class App : Application
             _mainWindowViewModel.HideLoading();
             _appShellViewModel.AddNotification(
                 "Error".Translate(),
-                "Failed to create sample company: {0}".TranslateFormat(ex.Message),
+                "Failed to open sample company: {0}".TranslateFormat(ex.Message),
                 NotificationType.Error);
         }
     }
