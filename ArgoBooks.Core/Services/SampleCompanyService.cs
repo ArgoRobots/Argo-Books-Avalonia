@@ -132,7 +132,7 @@ public class SampleCompanyService
         companyData.Settings.AppVersion = "2.0.0";
 
         // Enable all modules so users can explore everything
-        companyData.Settings.EnabledModules = new EnabledModules
+        companyData.Settings.EnabledModules = new EnabledModulesSettings
         {
             Invoices = true,
             Payments = true,
@@ -142,9 +142,9 @@ public class SampleCompanyService
         };
 
         // Set localization defaults
-        companyData.Settings.Localization = new Localization
+        companyData.Settings.Localization = new LocalizationSettings
         {
-            Language = "en-US",
+            Language = "English",
             Currency = "USD",
             DateFormat = "MM/dd/yyyy"
         };
