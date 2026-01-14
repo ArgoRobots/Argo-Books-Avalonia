@@ -904,7 +904,7 @@ public class InsightsService : IInsightsService
             insights.Add(new InsightItem
             {
                 Title = "Forecast Accuracy Tracking",
-                Description = $"Based on {accuracyData.ValidatedForecastCount} validated forecast(s), average accuracy is {accuracyData.AverageRevenueAccuracy:F0}%.{trendNote}",
+                Description = $"Based on {accuracyData.ValidatedForecastCount} validated {(accuracyData.ValidatedForecastCount == 1 ? "forecast" : "forecasts")}, average accuracy is {accuracyData.AverageRevenueAccuracy:F0}%.{trendNote}",
                 Recommendation = accuracyData.AverageRevenueAccuracy < 70
                     ? "More consistent data entry and longer history will improve forecast accuracy."
                     : null,

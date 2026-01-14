@@ -158,7 +158,7 @@ public class ForecastAccuracyService : IForecastAccuracyService
         var avgAccuracy = (recentAccuracy.Value.RevenueAccuracy + recentAccuracy.Value.ExpenseAccuracy) / 2;
         var errorMargin = 100 - avgAccuracy;
 
-        return $"Based on {validatedCount} validated forecast(s), predictions were within ±{errorMargin:F0}% of actual values on average.";
+        return $"Based on {validatedCount} validated {(validatedCount == 1 ? "forecast" : "forecasts")}, predictions were within ±{errorMargin:F0}% of actual values on average.";
     }
 
     /// <inheritdoc />
@@ -313,7 +313,7 @@ public class ForecastAccuracyService : IForecastAccuracyService
                 companyData.MarkAsModified();
             }
 
-            progress?.Report((total, total, $"Completed! {recordsCreated} forecast(s) validated."));
+            progress?.Report((total, total, $"Completed! {recordsCreated} {(recordsCreated == 1 ? "forecast" : "forecasts")} validated."));
             return recordsCreated;
         });
     }

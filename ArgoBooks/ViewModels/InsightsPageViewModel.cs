@@ -632,7 +632,7 @@ public partial class InsightsPageViewModel : ViewModelBase
                 ? $"{forecast.HistoricalAccuracyPercent.Value:F0}%"
                 : "--";
             AccuracyDescription = forecast.AccuracyDescription ?? string.Empty;
-            ValidatedForecastsNote = $"Based on {forecast.ValidatedForecastCount} validated forecast(s)";
+            ValidatedForecastsNote = $"Based on {forecast.ValidatedForecastCount} validated {(forecast.ValidatedForecastCount == 1 ? "forecast" : "forecasts")}";
         }
         else
         {
