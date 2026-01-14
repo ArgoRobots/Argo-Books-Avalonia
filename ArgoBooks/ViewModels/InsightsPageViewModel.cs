@@ -456,7 +456,7 @@ public partial class InsightsPageViewModel : ViewModelBase
         if (IsRefreshing) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        var companySettings = App.CompanyManager?.Settings;
+        var companySettings = App.CompanyManager?.CurrentCompanySettings;
         if (companyData == null || companySettings == null)
         {
             HasInsufficientData = true;
