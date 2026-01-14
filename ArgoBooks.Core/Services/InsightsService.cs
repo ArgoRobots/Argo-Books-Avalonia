@@ -697,12 +697,15 @@ public class InsightsService : IInsightsService
             forecast.AccuracyDescription = accuracyData.AccuracyDescription;
         }
 
-        // Revenue forecast using ML methods
+        // Get method accuracy for adaptive weighting
+        var methodAccuracy = _forecastAccuracyService.GetMethodAccuracies(companyData);
+
+        // Revenue forecast using ML methods with adaptive weighting
         if (monthlyRevenue.Count >= MinimumMonthsForForecasting)
         {
             var periodsToForecast = Math.Max(1, (int)Math.Ceiling(periodMonths));
             var revenueForecast = _mlForecastingService.GenerateEnhancedForecast(
-                monthlyRevenue, periodsToForecast, ForecastMethod.Auto);
+                monthlyRevenue, periodsToForecast, ForecastMethod.Auto, methodAccuracy);
 
             // Scale by period months for partial months
             var scaleFactor = periodMonths / periodsToForecast;
@@ -732,12 +735,12 @@ public class InsightsService : IInsightsService
             }
         }
 
-        // Expense forecast using ML methods
+        // Expense forecast using ML methods with adaptive weighting
         if (monthlyExpenses.Count >= MinimumMonthsForForecasting)
         {
             var periodsToForecast = Math.Max(1, (int)Math.Ceiling(periodMonths));
             var expenseForecast = _mlForecastingService.GenerateEnhancedForecast(
-                monthlyExpenses, periodsToForecast, ForecastMethod.Auto);
+                monthlyExpenses, periodsToForecast, ForecastMethod.Auto, methodAccuracy);
 
             var scaleFactor = periodMonths / periodsToForecast;
             forecast.ForecastedExpenses = Math.Max(0, expenseForecast.ForecastedValues.Sum() * scaleFactor);

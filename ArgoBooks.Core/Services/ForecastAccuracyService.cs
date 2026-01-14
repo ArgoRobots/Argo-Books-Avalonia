@@ -357,6 +357,116 @@ public class ForecastAccuracyService : IForecastAccuracyService
         public decimal Revenue { get; set; }
         public decimal Expenses { get; set; }
     }
+
+    /// <inheritdoc />
+    public MethodAccuracyData GetMethodAccuracies(CompanyData companyData)
+    {
+        var result = new MethodAccuracyData();
+
+        var validatedRecords = companyData.ForecastRecords
+            .Where(r => r.IsValidated && !string.IsNullOrEmpty(r.ForecastMethod))
+            .ToList();
+
+        if (!validatedRecords.Any())
+        {
+            return result;
+        }
+
+        // Group by method and calculate accuracy for each
+        var ssaRecords = validatedRecords
+            .Where(r => r.ForecastMethod.Contains("SSA") && !r.ForecastMethod.Contains("Combined"))
+            .ToList();
+
+        var hwRecords = validatedRecords
+            .Where(r => r.ForecastMethod.Contains("Holt") && !r.ForecastMethod.Contains("Combined"))
+            .ToList();
+
+        var combinedRecords = validatedRecords
+            .Where(r => r.ForecastMethod.Contains("Combined"))
+            .ToList();
+
+        // Calculate accuracy for each method
+        if (ssaRecords.Any())
+        {
+            result.SSACount = ssaRecords.Count;
+            result.SSAAccuracy = ssaRecords
+                .Select(r => CalculateRecordAccuracy(r))
+                .Average();
+        }
+
+        if (hwRecords.Any())
+        {
+            result.HoltWintersCount = hwRecords.Count;
+            result.HoltWintersAccuracy = hwRecords
+                .Select(r => CalculateRecordAccuracy(r))
+                .Average();
+        }
+
+        if (combinedRecords.Any())
+        {
+            result.CombinedCount = combinedRecords.Count;
+            result.CombinedAccuracy = combinedRecords
+                .Select(r => CalculateRecordAccuracy(r))
+                .Average();
+        }
+
+        // Calculate overall accuracy
+        var allAccuracies = validatedRecords
+            .Select(r => CalculateRecordAccuracy(r))
+            .ToList();
+        result.OverallAccuracy = allAccuracies.Average();
+
+        // Calculate adaptive weights based on accuracy
+        // Only if we have data for both SSA and Holt-Winters methods
+        if (result.SSACount > 0 && result.HoltWintersCount > 0)
+        {
+            // Use softmax-style weighting: better accuracy = exponentially higher weight
+            var ssaScore = Math.Pow(result.SSAAccuracy / 100, 2);
+            var hwScore = Math.Pow(result.HoltWintersAccuracy / 100, 2);
+            var totalScore = ssaScore + hwScore;
+
+            if (totalScore > 0)
+            {
+                result.SSAWeight = ssaScore / totalScore;
+                result.HoltWintersWeight = hwScore / totalScore;
+            }
+        }
+        else if (result.SSACount > 0)
+        {
+            // Only SSA data - weight it higher if accurate
+            result.SSAWeight = Math.Min(0.7, result.SSAAccuracy / 100);
+            result.HoltWintersWeight = 1 - result.SSAWeight;
+        }
+        else if (result.HoltWintersCount > 0)
+        {
+            // Only HW data - weight it higher if accurate
+            result.HoltWintersWeight = Math.Min(0.7, result.HoltWintersAccuracy / 100);
+            result.SSAWeight = 1 - result.HoltWintersWeight;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Calculates the accuracy percentage for a single forecast record.
+    /// </summary>
+    private double CalculateRecordAccuracy(ForecastAccuracyRecord record)
+    {
+        if (record.ActualRevenue == 0) return 0;
+
+        var revenueError = Math.Abs(record.ForecastedRevenue - record.ActualRevenue) / record.ActualRevenue;
+        var revenueAccuracy = Math.Max(0, 100 * (1 - (double)revenueError));
+
+        // Also consider expense accuracy if available
+        if (record.ActualExpenses > 0)
+        {
+            var expenseError = Math.Abs(record.ForecastedExpenses - record.ActualExpenses) / record.ActualExpenses;
+            var expenseAccuracy = Math.Max(0, 100 * (1 - (double)expenseError));
+            return (revenueAccuracy + expenseAccuracy) / 2;
+        }
+
+        return revenueAccuracy;
+    }
 }
 
 /// <summary>
@@ -433,4 +543,77 @@ public interface IForecastAccuracyService
         ILocalMLForecastingService mlService,
         int minTrainingMonths = 3,
         IProgress<(int current, int total, string message)>? progress = null);
+
+    /// <summary>
+    /// Calculates accuracy statistics for each forecasting method based on historical performance.
+    /// Used to adaptively weight methods in combined forecasts.
+    /// </summary>
+    /// <param name="companyData">The company data to analyze.</param>
+    /// <returns>Method accuracy data with weights for adaptive forecasting.</returns>
+    MethodAccuracyData GetMethodAccuracies(CompanyData companyData);
+}
+
+/// <summary>
+/// Contains accuracy statistics for different forecasting methods.
+/// Used to adaptively weight methods based on historical performance.
+/// </summary>
+public class MethodAccuracyData
+{
+    /// <summary>
+    /// Average accuracy of SSA forecasts (0-100).
+    /// </summary>
+    public double SSAAccuracy { get; set; }
+
+    /// <summary>
+    /// Average accuracy of Holt-Winters forecasts (0-100).
+    /// </summary>
+    public double HoltWintersAccuracy { get; set; }
+
+    /// <summary>
+    /// Average accuracy of Combined method forecasts (0-100).
+    /// </summary>
+    public double CombinedAccuracy { get; set; }
+
+    /// <summary>
+    /// Number of validated SSA forecasts.
+    /// </summary>
+    public int SSACount { get; set; }
+
+    /// <summary>
+    /// Number of validated Holt-Winters forecasts.
+    /// </summary>
+    public int HoltWintersCount { get; set; }
+
+    /// <summary>
+    /// Number of validated Combined forecasts.
+    /// </summary>
+    public int CombinedCount { get; set; }
+
+    /// <summary>
+    /// Calculated weight for SSA in combined forecasts (0-1).
+    /// Higher accuracy = higher weight.
+    /// </summary>
+    public double SSAWeight { get; set; } = 0.5;
+
+    /// <summary>
+    /// Calculated weight for Holt-Winters in combined forecasts (0-1).
+    /// </summary>
+    public double HoltWintersWeight { get; set; } = 0.5;
+
+    /// <summary>
+    /// Overall historical accuracy across all methods.
+    /// </summary>
+    public double OverallAccuracy { get; set; }
+
+    /// <summary>
+    /// Whether there's enough data to use adaptive weights.
+    /// </summary>
+    public bool HasSufficientData => SSACount + HoltWintersCount + CombinedCount >= 3;
+
+    /// <summary>
+    /// Description of the adaptive weighting for display.
+    /// </summary>
+    public string WeightingDescription => HasSufficientData
+        ? $"Methods weighted by historical accuracy: SSA {SSAWeight:P0}, Holt-Winters {HoltWintersWeight:P0}"
+        : "Default equal weighting (insufficient historical data)";
 }

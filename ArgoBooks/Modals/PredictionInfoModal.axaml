@@ -84,7 +84,7 @@
                             <TextBlock TextWrapping="Wrap"
                                        FontSize="13"
                                        Foreground="{DynamicResource TextSecondaryBrush}"
-                                       Text="Our forecasting system analyzes your historical business data to predict future revenue, expenses, and customer growth. Everything runs locally on your device - your data never leaves your computer." />
+                                       Text="Our forecasting system uses multiple ML algorithms to predict future revenue, expenses, and customer growth. It continuously tests predictions against actual outcomes and adapts its methods based on what works best for your business. Everything runs locally - your data never leaves your computer." />
                         </StackPanel>
 
                         <!-- Key Features -->
@@ -178,6 +178,34 @@
                                 </Grid>
                             </Border>
 
+                            <!-- Adaptive Learning -->
+                            <Border Background="{DynamicResource SurfaceAltBrush}"
+                                    CornerRadius="8"
+                                    Padding="16">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="36" Height="36"
+                                            CornerRadius="8"
+                                            Background="#FEE2E2"
+                                            Margin="0,0,12,0"
+                                            VerticalAlignment="Top">
+                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                                  Width="18" Height="18"
+                                                  Foreground="#EF4444" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="4">
+                                        <TextBlock Text="Adaptive Learning"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="The system learns which prediction method works best for your business. Methods that have been more accurate historically are weighted more heavily in future forecasts."
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
                             <!-- Confidence Range -->
                             <Border Background="{DynamicResource SurfaceAltBrush}"
                                     CornerRadius="8"
@@ -256,11 +284,11 @@
                                                FontSize="12"
                                                TextWrapping="Wrap"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBlock Text="• Keep your records consistent and up to date."
+                                    <TextBlock Text="• The system improves over time as it learns from your data."
                                                FontSize="12"
                                                TextWrapping="Wrap"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <TextBlock Text="• Check historical accuracy after a few forecast periods."
+                                    <TextBlock Text="• Keep your records consistent and up to date."
                                                FontSize="12"
                                                TextWrapping="Wrap"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />

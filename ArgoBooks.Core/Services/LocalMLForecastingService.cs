@@ -26,12 +26,27 @@ public class LocalMLForecastingService : ILocalMLForecastingService
         _holtWinters = new HoltWintersForecasting();
     }
 
+    // Stores method accuracy for use in combined forecasts
+    private MethodAccuracyData? _currentMethodAccuracy;
+
     /// <inheritdoc />
     public EnhancedForecastResult GenerateEnhancedForecast(
         List<decimal> monthlyData,
         int periodsToForecast = 1,
         ForecastMethod preferredMethod = ForecastMethod.Auto)
     {
+        return GenerateEnhancedForecast(monthlyData, periodsToForecast, preferredMethod, null);
+    }
+
+    /// <inheritdoc />
+    public EnhancedForecastResult GenerateEnhancedForecast(
+        List<decimal> monthlyData,
+        int periodsToForecast,
+        ForecastMethod preferredMethod,
+        MethodAccuracyData? methodAccuracy)
+    {
+        _currentMethodAccuracy = methodAccuracy;
+
         var result = new EnhancedForecastResult
         {
             DataPointsUsed = monthlyData.Count,
@@ -275,10 +290,23 @@ public class LocalMLForecastingService : ILocalMLForecastingService
         ssaResult = GenerateSSAForecast(data, periodsToForecast, ssaResult);
         hwResult = GenerateHoltWintersForecast(data, periodsToForecast, hwResult);
 
-        // Combine forecasts with weighted average
-        // Weight SSA higher when we have more data (it's more sophisticated)
-        var ssaWeight = data.Count >= 36 ? 0.6 : 0.5;
-        var hwWeight = 1 - ssaWeight;
+        // Determine weights - use adaptive weights if available, otherwise data-based defaults
+        double ssaWeight, hwWeight;
+
+        if (_currentMethodAccuracy != null && _currentMethodAccuracy.HasSufficientData)
+        {
+            // Use historically-proven accuracy to weight methods
+            ssaWeight = _currentMethodAccuracy.SSAWeight;
+            hwWeight = _currentMethodAccuracy.HoltWintersWeight;
+            result.MethodUsed = $"Adaptive Combined (SSA {ssaWeight:P0} + HW {hwWeight:P0})";
+        }
+        else
+        {
+            // Default: Weight SSA higher when we have more data (it's more sophisticated)
+            ssaWeight = data.Count >= 36 ? 0.6 : 0.5;
+            hwWeight = 1 - ssaWeight;
+            result.MethodUsed = "Combined (SSA + Holt-Winters)";
+        }
 
         var combinedForecasts = new List<decimal>();
         var combinedLower = new List<decimal>();
@@ -305,12 +333,19 @@ public class LocalMLForecastingService : ILocalMLForecastingService
         result.LowerBounds = combinedLower;
         result.UpperBounds = combinedUpper;
         result.SeasonalPattern = hwResult.SeasonalPattern; // Use HW for seasonal pattern
-        result.MethodUsed = "Combined (SSA + Holt-Winters)";
 
-        // Confidence is boosted when methods agree
+        // Confidence incorporates historical accuracy if available
         var methodAgreement = CalculateMethodAgreement(ssaResult.ForecastedValues, hwResult.ForecastedValues);
         var baseConfidence = (ssaResult.ConfidenceScore + hwResult.ConfidenceScore) / 2;
-        result.ConfidenceScore = Math.Min(100, baseConfidence + (methodAgreement * 10));
+
+        // Boost confidence based on historical accuracy data
+        double accuracyBonus = 0;
+        if (_currentMethodAccuracy != null && _currentMethodAccuracy.HasSufficientData)
+        {
+            accuracyBonus = (_currentMethodAccuracy.OverallAccuracy / 100) * 15; // Up to 15 point bonus
+        }
+
+        result.ConfidenceScore = Math.Min(100, baseConfidence + (methodAgreement * 10) + accuracyBonus);
 
         return result;
     }
@@ -381,6 +416,15 @@ public interface ILocalMLForecastingService
         List<decimal> monthlyData,
         int periodsToForecast = 1,
         ForecastMethod preferredMethod = ForecastMethod.Auto);
+
+    /// <summary>
+    /// Generates an enhanced forecast with adaptive method weighting based on historical accuracy.
+    /// </summary>
+    EnhancedForecastResult GenerateEnhancedForecast(
+        List<decimal> monthlyData,
+        int periodsToForecast,
+        ForecastMethod preferredMethod,
+        MethodAccuracyData? methodAccuracy);
 
     /// <summary>
     /// Detects seasonal patterns in the data.
