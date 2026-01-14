@@ -407,7 +407,7 @@ public static class DatePresetNames
             "this year" => (new DateTime(now.Year, 1, 1), new DateTime(now.Year, 12, 31, 23, 59, 59)),
             "year to date" => (new DateTime(now.Year, 1, 1), today.AddDays(1).AddSeconds(-1)),
             "last year" => (new DateTime(now.Year - 1, 1, 1), new DateTime(now.Year, 1, 1).AddSeconds(-1)),
-            "all time" => (DateTime.MinValue, DateTime.MaxValue),
+            "all time" => (new DateTime(2000, 1, 1), today.AddDays(1).AddSeconds(-1)),
 
             // Future date presets for forecasting
             "next month" => GetNextMonthRange(now),
