@@ -199,7 +199,7 @@ public class AzureReceiptScannerService : IReceiptScannerService
                     case "TransactionDate":
                         if (fieldValue.FieldType == DocumentFieldType.Date && fieldValue.Value.AsDate() is { } date)
                         {
-                            scanResult.TransactionDate = date.ToDateTime(TimeOnly.MinValue);
+                            scanResult.TransactionDate = date.DateTime;
                         }
                         break;
 
