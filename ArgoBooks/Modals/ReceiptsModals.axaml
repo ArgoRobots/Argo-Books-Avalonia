@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             xmlns:controls="using:ArgoBooks.Controls"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
 
@@ -156,6 +157,464 @@
                                     Content="{loc:Loc 'Apply Filters'}"
                                     Classes="primary-button"
                                     Command="{Binding ApplyFiltersCommand}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- ======================= AI SCAN REVIEW MODAL ======================= -->
+        <Panel IsVisible="{Binding IsScanReviewModalOpen}">
+            <!-- Overlay -->
+            <Border Background="#80000000" />
+
+            <!-- Modal -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="950"
+                    MaxHeight="750"
+                    Background="{DynamicResource SurfaceBrush}"
+                    CornerRadius="12"
+                    BoxShadow="0 8 32 0 #40000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <!-- Header -->
+                    <Border Grid.Row="0"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                                <PathIcon Data="M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-.29.02-.58.05-.86 2.36-1.05 4.23-2.98 5.21-5.37C11.07 8.33 14.05 10 17.42 10c.78 0 1.53-.09 2.25-.26.21.71.33 1.47.33 2.26 0 4.41-3.59 8-8 8z"
+                                          Width="24" Height="24"
+                                          Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'AI Receipt Scanner'}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Classes="icon-button"
+                                    Command="{Binding CloseScanReviewModalCommand}">
+                                <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                          Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <Panel>
+                            <!-- Loading State -->
+                            <StackPanel IsVisible="{Binding IsScanning}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="16"
+                                        Margin="48">
+                                <controls:LoadingSpinner Width="48" Height="48" />
+                                <TextBlock Text="{Binding ScanningMessage}"
+                                           FontSize="16"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{loc:Loc 'This may take a few seconds...'}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Error State -->
+                            <StackPanel IsVisible="{Binding HasScanError}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Spacing="16"
+                                        Margin="48"
+                                        MaxWidth="400">
+                                <Border Background="#FEE2E2"
+                                        CornerRadius="50"
+                                        Padding="16"
+                                        HorizontalAlignment="Center">
+                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                                              Width="32" Height="32"
+                                              Foreground="#DC2626" />
+                                </Border>
+                                <TextBlock Text="{loc:Loc 'Scan Failed'}"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding ScanErrorMessage}"
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap"
+                                           TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                                <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Center" Margin="0,8,0,0">
+                                    <Button Classes="secondary-button"
+                                            Command="{Binding RetryScanCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <PathIcon Data="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                                                      Width="16" Height="16" />
+                                            <TextBlock Text="{loc:Loc 'Retry'}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="secondary-button"
+                                            Command="{Binding CloseScanReviewModalCommand}"
+                                            Content="{loc:Loc 'Cancel'}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Results State -->
+                            <Grid IsVisible="{Binding HasScanResult}"
+                                  ColumnDefinitions="320,*"
+                                  Margin="24">
+                                <!-- Left: Receipt Preview -->
+                                <Border Grid.Column="0"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        CornerRadius="8"
+                                        Margin="0,0,24,0"
+                                        ClipToBounds="True">
+                                    <Grid RowDefinitions="Auto,*">
+                                        <TextBlock Grid.Row="0"
+                                                   Text="{loc:Loc 'Receipt Preview'}"
+                                                   FontSize="13"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   Margin="16,12" />
+                                        <Border Grid.Row="1"
+                                                Background="#1A000000"
+                                                Margin="8,0,8,8"
+                                                CornerRadius="4">
+                                            <Image Source="{Binding ReceiptImagePath}"
+                                                   Stretch="Uniform"
+                                                   MaxHeight="400" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Right: Extracted Data -->
+                                <StackPanel Grid.Column="1" Spacing="20">
+                                    <!-- Confidence Score -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="8"
+                                            Padding="16">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{loc:Loc 'Extraction Confidence'}"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding ConfidenceText}"
+                                                               FontSize="24"
+                                                               FontWeight="Bold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <Border Background="#DCFCE7"
+                                                            CornerRadius="4"
+                                                            Padding="8,4"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsHighConfidence}">
+                                                        <TextBlock Text="{loc:Loc 'High'}"
+                                                                   FontSize="12"
+                                                                   FontWeight="Medium"
+                                                                   Foreground="#16A34A" />
+                                                    </Border>
+                                                    <Border Background="#FEF3C7"
+                                                            CornerRadius="4"
+                                                            Padding="8,4"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsMediumConfidence}">
+                                                        <TextBlock Text="{loc:Loc 'Medium'}"
+                                                                   FontSize="12"
+                                                                   FontWeight="Medium"
+                                                                   Foreground="#CA8A04" />
+                                                    </Border>
+                                                    <Border Background="#FEE2E2"
+                                                            CornerRadius="4"
+                                                            Padding="8,4"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsLowConfidence}">
+                                                        <TextBlock Text="{loc:Loc 'Low - Review Carefully'}"
+                                                                   FontSize="12"
+                                                                   FontWeight="Medium"
+                                                                   Foreground="#DC2626" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <PathIcon Grid.Column="1"
+                                                      Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                                      Width="24" Height="24"
+                                                      Foreground="#16A34A"
+                                                      VerticalAlignment="Center"
+                                                      IsVisible="{Binding IsHighConfidence}" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Basic Info -->
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="{loc:Loc 'Extracted Information'}"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                                        <!-- Vendor -->
+                                        <StackPanel Spacing="6">
+                                            <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                <Run Text="{loc:Loc 'Vendor'}" /><Run Text=" *" Foreground="#dc2626" />
+                                            </TextBlock>
+                                            <TextBox Text="{Binding ExtractedVendor}"
+                                                     Watermark="{loc:Loc 'Enter vendor name'}"
+                                                     Classes="{Binding HasVendorError, Converter={StaticResource BoolToClassConverter}, ConverterParameter='error-border'}" />
+                                            <TextBlock Text="{Binding VendorErrorMessage}"
+                                                       FontSize="12"
+                                                       Foreground="#dc2626"
+                                                       IsVisible="{Binding HasVendorError}" />
+                                        </StackPanel>
+
+                                        <!-- Date and Total Row -->
+                                        <Grid ColumnDefinitions="*,16,*">
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Date'}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <DatePicker SelectedDate="{Binding ExtractedDate}"
+                                                            Classes="form-datepicker"
+                                                            HorizontalAlignment="Stretch" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="6">
+                                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                    <Run Text="{loc:Loc 'Total'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                </TextBlock>
+                                                <TextBox Text="{Binding ExtractedTotal}"
+                                                         Watermark="0.00"
+                                                         Classes="{Binding HasTotalError, Converter={StaticResource BoolToClassConverter}, ConverterParameter='error-border'}" />
+                                                <TextBlock Text="{Binding TotalErrorMessage}"
+                                                           FontSize="12"
+                                                           Foreground="#dc2626"
+                                                           IsVisible="{Binding HasTotalError}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Subtotal and Tax Row -->
+                                        <Grid ColumnDefinitions="*,16,*">
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Subtotal'}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding ExtractedSubtotal}"
+                                                         Watermark="0.00" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Tax'}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding ExtractedTax}"
+                                                         Watermark="0.00" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <!-- Line Items Section -->
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0"
+                                                       Text="{loc:Loc 'Line Items'}"
+                                                       FontSize="14"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <Button Grid.Column="1"
+                                                    Classes="secondary-button"
+                                                    Command="{Binding AddLineItemCommand}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
+                                                              Width="14" Height="14" />
+                                                    <TextBlock Text="{loc:Loc 'Add Item'}" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+
+                                        <!-- Line Items Header -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="6"
+                                                Padding="12,8"
+                                                IsVisible="{Binding LineItems.Count}">
+                                            <Grid ColumnDefinitions="*,70,80,80,32">
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Description'}" FontSize="12" FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc 'Qty'}" FontSize="12" FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           HorizontalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="{loc:Loc 'Unit Price'}" FontSize="12" FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           HorizontalAlignment="Center" />
+                                                <TextBlock Grid.Column="3" Text="{loc:Loc 'Total'}" FontSize="12" FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Line Items List -->
+                                        <ItemsControl ItemsSource="{Binding LineItems}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="vm:ScannedLineItemViewModel">
+                                                    <Border Padding="12,8"
+                                                            BorderBrush="{DynamicResource BorderBrush}"
+                                                            BorderThickness="0,0,0,1">
+                                                        <Grid ColumnDefinitions="*,70,80,80,32">
+                                                            <TextBox Grid.Column="0"
+                                                                     Text="{Binding Description}"
+                                                                     Watermark="{loc:Loc 'Item description'}"
+                                                                     Margin="0,0,8,0" />
+                                                            <TextBox Grid.Column="1"
+                                                                     Text="{Binding Quantity}"
+                                                                     HorizontalContentAlignment="Center"
+                                                                     Margin="0,0,8,0" />
+                                                            <TextBox Grid.Column="2"
+                                                                     Text="{Binding UnitPrice}"
+                                                                     HorizontalContentAlignment="Center"
+                                                                     Margin="0,0,8,0" />
+                                                            <TextBlock Grid.Column="3"
+                                                                       Text="{Binding TotalPrice, StringFormat='${0}'}"
+                                                                       FontSize="14"
+                                                                       FontWeight="Medium"
+                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                       HorizontalAlignment="Right"
+                                                                       VerticalAlignment="Center" />
+                                                            <Button Grid.Column="4"
+                                                                    Classes="icon-button danger"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).RemoveLineItemCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="{loc:Loc 'Remove item'}">
+                                                                <PathIcon Data="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                                                                          Width="14" Height="14" />
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- No Line Items Message -->
+                                        <Border Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                Padding="24,16"
+                                                IsVisible="{Binding !LineItems.Count}">
+                                            <TextBlock Text="{loc:Loc 'No line items detected. Click Add Item to manually add items.'}"
+                                                       FontSize="13"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                       HorizontalAlignment="Center" />
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Additional Options -->
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="{loc:Loc 'Additional Options'}"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                                        <!-- Supplier and Category Row -->
+                                        <Grid ColumnDefinitions="*,16,*">
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Supplier'}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <ComboBox ItemsSource="{Binding SupplierOptions}"
+                                                          SelectedItem="{Binding SelectedSupplier}"
+                                                          HorizontalAlignment="Stretch"
+                                                          PlaceholderText="{loc:Loc 'Select supplier (optional)'}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate DataType="vm:SupplierOption">
+                                                            <TextBlock Text="{Binding Name}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Category'}"
+                                                           FontSize="13"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <ComboBox ItemsSource="{Binding CategoryOptions}"
+                                                          SelectedItem="{Binding SelectedCategory}"
+                                                          HorizontalAlignment="Stretch"
+                                                          PlaceholderText="{loc:Loc 'Select category (optional)'}">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate DataType="vm:CategoryOption">
+                                                            <TextBlock Text="{Binding Name}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Payment Method -->
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Payment Method'}"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <ComboBox ItemsSource="{Binding PaymentMethodOptions}"
+                                                      SelectedItem="{Binding SelectedPaymentMethod}"
+                                                      HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </StackPanel>
+
+                                        <!-- Notes -->
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Notes'}"
+                                                       FontSize="13"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding Notes}"
+                                                     Watermark="{loc:Loc 'Add any additional notes...'}"
+                                                     AcceptsReturn="True"
+                                                     TextWrapping="Wrap"
+                                                     Height="60" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Panel>
+                    </ScrollViewer>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2"
+                            Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0"
+                            IsVisible="{Binding HasScanResult}">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                                          Width="16" Height="16"
+                                          Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Text="{loc:Loc 'Review the extracted data before creating the expense.'}"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Content="{loc:Loc Cancel}"
+                                    Classes="secondary-button"
+                                    Margin="0,0,12,0"
+                                    Command="{Binding CloseScanReviewModalCommand}" />
+                            <Button Grid.Column="2"
+                                    Classes="primary-button"
+                                    Command="{Binding CreateExpenseCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                              Width="16" Height="16" />
+                                    <TextBlock Text="{loc:Loc 'Create Expense'}" />
+                                </StackPanel>
+                            </Button>
                         </Grid>
                     </Border>
                 </Grid>

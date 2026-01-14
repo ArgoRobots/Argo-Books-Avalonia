@@ -1,0 +1,369 @@
+using Azure;
+using Azure.AI.FormRecognizer.DocumentAnalysis;
+
+namespace ArgoBooks.Core.Services;
+
+/// <summary>
+/// Azure Document Intelligence implementation of receipt scanning.
+/// Uses the prebuilt receipt model for high-accuracy extraction.
+/// </summary>
+public class AzureReceiptScannerService : IReceiptScannerService
+{
+    private readonly Func<AzureReceiptSettings?> _getSettings;
+    private DocumentAnalysisClient? _client;
+    private string? _lastEndpoint;
+    private string? _lastApiKey;
+
+    /// <summary>
+    /// Creates a new instance of the Azure receipt scanner service.
+    /// </summary>
+    /// <param name="getSettings">Function to retrieve current Azure settings.</param>
+    public AzureReceiptScannerService(Func<AzureReceiptSettings?> getSettings)
+    {
+        _getSettings = getSettings;
+    }
+
+    /// <inheritdoc />
+    public bool IsConfigured
+    {
+        get
+        {
+            var settings = _getSettings();
+            return settings != null &&
+                   !string.IsNullOrWhiteSpace(settings.Endpoint) &&
+                   !string.IsNullOrWhiteSpace(settings.ApiKey);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<ReceiptScanResult> ScanReceiptAsync(byte[] imageData, string fileName, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var client = GetOrCreateClient();
+            if (client == null)
+            {
+                return ReceiptScanResult.Failed("Azure Document Intelligence is not configured. Please add your API key and endpoint in Settings.");
+            }
+
+            // Validate file size (4MB limit for free tier)
+            const int maxFileSizeBytes = 4 * 1024 * 1024;
+            if (imageData.Length > maxFileSizeBytes)
+            {
+                return ReceiptScanResult.Failed($"File size exceeds the 4MB limit. Please use a smaller image.");
+            }
+
+            // Validate file type
+            var contentType = GetContentType(fileName);
+            if (contentType == null)
+            {
+                return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, or PDF files.");
+            }
+
+            // Analyze the receipt using Azure's prebuilt receipt model
+            using var stream = new MemoryStream(imageData);
+            var operation = await client.AnalyzeDocumentAsync(
+                WaitUntil.Completed,
+                "prebuilt-receipt",
+                stream,
+                cancellationToken: cancellationToken);
+
+            var result = operation.Value;
+            return ParseAnalyzeResult(result);
+        }
+        catch (RequestFailedException ex) when (ex.Status == 401)
+        {
+            return ReceiptScanResult.Failed("Invalid Azure API key. Please check your credentials in Settings.");
+        }
+        catch (RequestFailedException ex) when (ex.Status == 403)
+        {
+            return ReceiptScanResult.Failed("Azure API access denied. Please verify your subscription and endpoint.");
+        }
+        catch (RequestFailedException ex) when (ex.Status == 429)
+        {
+            return ReceiptScanResult.Failed("Azure API rate limit exceeded. Please try again later or upgrade your plan.");
+        }
+        catch (RequestFailedException ex)
+        {
+            return ReceiptScanResult.Failed($"Azure API error: {ex.Message}");
+        }
+        catch (TaskCanceledException)
+        {
+            return ReceiptScanResult.Failed("Scan operation was cancelled.");
+        }
+        catch (Exception ex)
+        {
+            return ReceiptScanResult.Failed($"Failed to scan receipt: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<ReceiptScanResult> ScanReceiptFromFileAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (!File.Exists(filePath))
+            {
+                return ReceiptScanResult.Failed("File not found.");
+            }
+
+            var imageData = await File.ReadAllBytesAsync(filePath, cancellationToken);
+            var fileName = Path.GetFileName(filePath);
+            return await ScanReceiptAsync(imageData, fileName, cancellationToken);
+        }
+        catch (IOException ex)
+        {
+            return ReceiptScanResult.Failed($"Failed to read file: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ValidateConfigurationAsync()
+    {
+        if (!IsConfigured)
+            return false;
+
+        try
+        {
+            var client = GetOrCreateClient();
+            if (client == null)
+                return false;
+
+            // Try to get service info to validate credentials
+            // We'll do a minimal request to check if the API is accessible
+            // Note: There's no direct "ping" endpoint, so we just verify the client was created
+            await Task.CompletedTask;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private DocumentAnalysisClient? GetOrCreateClient()
+    {
+        var settings = _getSettings();
+        if (settings == null || string.IsNullOrWhiteSpace(settings.Endpoint) || string.IsNullOrWhiteSpace(settings.ApiKey))
+        {
+            return null;
+        }
+
+        // Recreate client if settings changed
+        if (_client == null || _lastEndpoint != settings.Endpoint || _lastApiKey != settings.ApiKey)
+        {
+            var endpoint = settings.Endpoint.TrimEnd('/');
+            if (!endpoint.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                endpoint = "https://" + endpoint;
+            }
+
+            _client = new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(settings.ApiKey));
+            _lastEndpoint = settings.Endpoint;
+            _lastApiKey = settings.ApiKey;
+        }
+
+        return _client;
+    }
+
+    private static ReceiptScanResult ParseAnalyzeResult(AnalyzeResult result)
+    {
+        var scanResult = new ReceiptScanResult
+        {
+            IsSuccess = true,
+            LineItems = [],
+            RawText = result.Content
+        };
+
+        // Calculate overall confidence from document confidence
+        var confidenceScores = new List<double>();
+
+        foreach (var document in result.Documents)
+        {
+            confidenceScores.Add(document.Confidence);
+
+            foreach (var field in document.Fields)
+            {
+                var fieldName = field.Key;
+                var fieldValue = field.Value;
+
+                switch (fieldName)
+                {
+                    case "MerchantName":
+                        scanResult.VendorName = fieldValue.Content;
+                        break;
+
+                    case "TransactionDate":
+                        if (fieldValue.FieldType == DocumentFieldType.Date && fieldValue.Value.AsDate() is { } date)
+                        {
+                            scanResult.TransactionDate = date.ToDateTime(TimeOnly.MinValue);
+                        }
+                        break;
+
+                    case "Subtotal":
+                        if (fieldValue.FieldType == DocumentFieldType.Currency && fieldValue.Value.AsCurrency() is { } subtotal)
+                        {
+                            scanResult.Subtotal = (decimal)subtotal.Amount;
+                            scanResult.CurrencyCode ??= subtotal.Code;
+                        }
+                        break;
+
+                    case "TotalTax":
+                        if (fieldValue.FieldType == DocumentFieldType.Currency && fieldValue.Value.AsCurrency() is { } tax)
+                        {
+                            scanResult.TaxAmount = (decimal)tax.Amount;
+                        }
+                        break;
+
+                    case "Total":
+                        if (fieldValue.FieldType == DocumentFieldType.Currency && fieldValue.Value.AsCurrency() is { } total)
+                        {
+                            scanResult.TotalAmount = (decimal)total.Amount;
+                            scanResult.CurrencyCode ??= total.Code;
+                        }
+                        break;
+
+                    case "Items":
+                        if (fieldValue.FieldType == DocumentFieldType.List)
+                        {
+                            foreach (var item in fieldValue.Value.AsList())
+                            {
+                                if (item.FieldType == DocumentFieldType.Dictionary)
+                                {
+                                    var lineItem = ParseLineItem(item.Value.AsDictionary());
+                                    if (lineItem != null)
+                                    {
+                                        scanResult.LineItems.Add(lineItem);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                }
+            }
+        }
+
+        // Calculate average confidence
+        scanResult.Confidence = confidenceScores.Count > 0
+            ? confidenceScores.Average()
+            : 0.5;
+
+        // If we didn't get a subtotal but have total and tax, calculate it
+        if (scanResult.Subtotal == null && scanResult.TotalAmount != null && scanResult.TaxAmount != null)
+        {
+            scanResult.Subtotal = scanResult.TotalAmount - scanResult.TaxAmount;
+        }
+
+        // If we didn't get a total but have line items, calculate it
+        if (scanResult.TotalAmount == null && scanResult.LineItems.Count > 0)
+        {
+            scanResult.TotalAmount = scanResult.LineItems.Sum(li => li.TotalPrice);
+        }
+
+        return scanResult;
+    }
+
+    private static ScannedLineItem? ParseLineItem(IReadOnlyDictionary<string, DocumentField> itemFields)
+    {
+        var lineItem = new ScannedLineItem();
+        var hasData = false;
+        var confidenceScores = new List<double>();
+
+        foreach (var field in itemFields)
+        {
+            switch (field.Key)
+            {
+                case "Description":
+                    lineItem.Description = field.Value.Content ?? string.Empty;
+                    hasData = true;
+                    if (field.Value.Confidence.HasValue)
+                        confidenceScores.Add(field.Value.Confidence.Value);
+                    break;
+
+                case "Quantity":
+                    if (field.Value.FieldType == DocumentFieldType.Double && field.Value.Value.AsDouble() is { } qty)
+                    {
+                        lineItem.Quantity = (decimal)qty;
+                        if (field.Value.Confidence.HasValue)
+                            confidenceScores.Add(field.Value.Confidence.Value);
+                    }
+                    break;
+
+                case "Price":
+                    if (field.Value.FieldType == DocumentFieldType.Currency && field.Value.Value.AsCurrency() is { } price)
+                    {
+                        lineItem.UnitPrice = (decimal)price.Amount;
+                        hasData = true;
+                        if (field.Value.Confidence.HasValue)
+                            confidenceScores.Add(field.Value.Confidence.Value);
+                    }
+                    break;
+
+                case "TotalPrice":
+                    if (field.Value.FieldType == DocumentFieldType.Currency && field.Value.Value.AsCurrency() is { } totalPrice)
+                    {
+                        lineItem.TotalPrice = (decimal)totalPrice.Amount;
+                        hasData = true;
+                        if (field.Value.Confidence.HasValue)
+                            confidenceScores.Add(field.Value.Confidence.Value);
+                    }
+                    break;
+            }
+        }
+
+        if (!hasData)
+            return null;
+
+        // Calculate total price if not provided
+        if (lineItem.TotalPrice == 0 && lineItem.UnitPrice > 0)
+        {
+            lineItem.TotalPrice = lineItem.UnitPrice * lineItem.Quantity;
+        }
+
+        // Calculate unit price if only total was provided
+        if (lineItem.UnitPrice == 0 && lineItem.TotalPrice > 0 && lineItem.Quantity > 0)
+        {
+            lineItem.UnitPrice = lineItem.TotalPrice / lineItem.Quantity;
+        }
+
+        lineItem.Confidence = confidenceScores.Count > 0 ? confidenceScores.Average() : 0.5;
+
+        return lineItem;
+    }
+
+    private static string? GetContentType(string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".pdf" => "application/pdf",
+            ".bmp" => "image/bmp",
+            ".tiff" or ".tif" => "image/tiff",
+            _ => null
+        };
+    }
+}
+
+/// <summary>
+/// Azure Document Intelligence settings.
+/// </summary>
+public class AzureReceiptSettings
+{
+    /// <summary>
+    /// Azure Document Intelligence endpoint URL.
+    /// Example: https://your-resource-name.cognitiveservices.azure.com/
+    /// </summary>
+    public string Endpoint { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Azure API key.
+    /// </summary>
+    public string ApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether the settings are valid.
+    /// </summary>
+    public bool IsValid => !string.IsNullOrWhiteSpace(Endpoint) && !string.IsNullOrWhiteSpace(ApiKey);
+}

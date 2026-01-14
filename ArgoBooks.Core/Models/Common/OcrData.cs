@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 
 namespace ArgoBooks.Core.Models.Common;
 
@@ -25,10 +26,34 @@ public class OcrData
     public decimal? ExtractedAmount { get; set; }
 
     /// <summary>
-    /// Individual items extracted from receipt.
+    /// Subtotal (before tax) extracted from receipt.
+    /// </summary>
+    [JsonPropertyName("extractedSubtotal")]
+    public decimal? ExtractedSubtotal { get; set; }
+
+    /// <summary>
+    /// Tax amount extracted from receipt.
+    /// </summary>
+    [JsonPropertyName("extractedTaxAmount")]
+    public decimal? ExtractedTaxAmount { get; set; }
+
+    /// <summary>
+    /// Currency code extracted from receipt (e.g., "USD", "EUR").
+    /// </summary>
+    [JsonPropertyName("extractedCurrency")]
+    public string? ExtractedCurrency { get; set; }
+
+    /// <summary>
+    /// Individual items extracted from receipt (legacy: simple string list).
     /// </summary>
     [JsonPropertyName("extractedItems")]
     public List<string> ExtractedItems { get; set; } = [];
+
+    /// <summary>
+    /// Detailed line items extracted from receipt with quantity, price, etc.
+    /// </summary>
+    [JsonPropertyName("lineItems")]
+    public List<OcrLineItem> LineItems { get; set; } = [];
 
     /// <summary>
     /// Confidence score of the OCR extraction (0.0 to 1.0).
@@ -41,4 +66,40 @@ public class OcrData
     /// </summary>
     [JsonPropertyName("rawText")]
     public string? RawText { get; set; }
+}
+
+/// <summary>
+/// A line item extracted from a scanned receipt.
+/// </summary>
+public class OcrLineItem
+{
+    /// <summary>
+    /// Item description/name.
+    /// </summary>
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Quantity of items.
+    /// </summary>
+    [JsonPropertyName("quantity")]
+    public decimal Quantity { get; set; } = 1;
+
+    /// <summary>
+    /// Unit price per item.
+    /// </summary>
+    [JsonPropertyName("unitPrice")]
+    public decimal UnitPrice { get; set; }
+
+    /// <summary>
+    /// Total price for this line item.
+    /// </summary>
+    [JsonPropertyName("totalPrice")]
+    public decimal TotalPrice { get; set; }
+
+    /// <summary>
+    /// Confidence score for this line item extraction (0.0 to 1.0).
+    /// </summary>
+    [JsonPropertyName("confidence")]
+    public double Confidence { get; set; }
 }

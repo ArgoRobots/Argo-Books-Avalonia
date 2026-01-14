@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -270,11 +272,89 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     #endregion
 
+    #region AI Scan State
+
+    [ObservableProperty]
+    private bool _isDragOver;
+
+    [ObservableProperty]
+    private bool _isAzureConfigured;
+
+    /// <summary>
+    /// Event raised when a file needs to be scanned via file picker.
+    /// The view handles the file picker and passes the result.
+    /// </summary>
+    public event EventHandler? ScanFileRequested;
+
+    partial void OnHasPremiumChanged(bool value)
+    {
+        CheckAzureConfiguration();
+    }
+
+    private void CheckAzureConfiguration()
+    {
+        var azureSettings = App.SettingsService?.GlobalSettings.Azure;
+        IsAzureConfigured = azureSettings?.IsConfigured ?? false;
+    }
+
+    /// <summary>
+    /// Called by the view after a file is selected or dropped.
+    /// </summary>
+    public async Task HandleFileSelectedAsync(string filePath)
+    {
+        if (string.IsNullOrEmpty(filePath)) return;
+
+        if (!HasPremium)
+        {
+            App.AddNotification(
+                Localization.TranslationExtensions.Translate("Premium Feature"),
+                Localization.TranslationExtensions.Translate("AI Receipt Scanning requires a Premium subscription."),
+                NotificationType.Warning);
+            return;
+        }
+
+        if (!IsAzureConfigured)
+        {
+            App.AddNotification(
+                Localization.TranslationExtensions.Translate("Configuration Required"),
+                Localization.TranslationExtensions.Translate("Please configure Azure Document Intelligence in Settings to use AI scanning."),
+                NotificationType.Warning);
+            return;
+        }
+
+        await App.ReceiptsModalsViewModel!.OpenScanModalAsync(filePath);
+    }
+
+    /// <summary>
+    /// Called by the view when files are dropped.
+    /// </summary>
+    public async Task HandleFilesDroppedAsync(IEnumerable<string> filePaths)
+    {
+        var filePath = filePaths.FirstOrDefault();
+        if (string.IsNullOrEmpty(filePath)) return;
+
+        // Validate file type
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        if (extension != ".jpg" && extension != ".jpeg" && extension != ".png" && extension != ".pdf")
+        {
+            App.AddNotification(
+                Localization.TranslationExtensions.Translate("Invalid File"),
+                Localization.TranslationExtensions.Translate("Please drop a JPEG, PNG, or PDF file."),
+                NotificationType.Warning);
+            return;
+        }
+
+        await HandleFileSelectedAsync(filePath);
+    }
+
+    #endregion
+
     #region Constructor
 
     public ReceiptsPageViewModel()
     {
         LoadReceipts();
+        CheckAzureConfiguration();
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
@@ -284,7 +364,14 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         {
             App.ReceiptsModalsViewModel.FiltersApplied += OnFiltersApplied;
             App.ReceiptsModalsViewModel.FiltersCleared += OnFiltersCleared;
+            App.ReceiptsModalsViewModel.ReceiptScanned += OnReceiptScanned;
         }
+    }
+
+    private void OnReceiptScanned(object? sender, EventArgs e)
+    {
+        // Refresh the receipts list after a new scan
+        LoadReceipts();
     }
 
     private void OnFiltersApplied(object? sender, EventArgs e)
@@ -534,8 +621,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [RelayCommand]
     private void AiScanReceipt()
     {
-        // TODO: Open AI scan modal/workflow
-        // This would integrate with Google Cloud Vision API
+        // Trigger file picker in the view
+        ScanFileRequested?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]
