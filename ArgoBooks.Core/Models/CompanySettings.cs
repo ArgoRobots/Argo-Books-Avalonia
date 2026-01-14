@@ -13,6 +13,12 @@ public class CompanySettings
     [JsonIgnore]
     public bool ChangesMade { get; set; } = false;
 
+    /// <summary>
+    /// Tracks the newest month of data when backtesting was last run.
+    /// Format: "2025-12" (year-month). Used to avoid redundant backtests.
+    /// </summary>
+    public string? LastBacktestedMonth { get; set; }
+
     public CompanyInfo Company { get; set; } = new();
     public LocalizationSettings Localization { get; set; } = new();
     public AppearanceSettings Appearance { get; set; } = new();

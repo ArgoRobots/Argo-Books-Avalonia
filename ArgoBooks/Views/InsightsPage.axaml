@@ -560,5 +560,77 @@
             </Grid>
         </Grid>
     </ScrollViewer>
+
+    <!-- Backtest Loading Overlay -->
+    <Border IsVisible="{Binding IsRunningBacktest}"
+            Background="#80000000"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="16"
+                Padding="48"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                MinWidth="400"
+                BoxShadow="0 8 32 0 #40000000">
+            <StackPanel Spacing="24" HorizontalAlignment="Center">
+                <!-- Animated Icon -->
+                <Border Width="72" Height="72"
+                        CornerRadius="36"
+                        Background="#DBEAFE"
+                        HorizontalAlignment="Center">
+                    <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                              Width="32" Height="32"
+                              Foreground="#3B82F6" />
+                </Border>
+
+                <!-- Title -->
+                <TextBlock Text="Analyzing Historical Data"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           HorizontalAlignment="Center" />
+
+                <!-- Progress Message -->
+                <TextBlock Text="{Binding BacktestProgressMessage}"
+                           FontSize="14"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+
+                <!-- Progress Bar -->
+                <StackPanel Spacing="8" MinWidth="300">
+                    <ProgressBar Value="{Binding BacktestProgressPercent}"
+                                 Minimum="0"
+                                 Maximum="100"
+                                 Height="8"
+                                 Foreground="#3B82F6"
+                                 IsIndeterminate="{Binding !BacktestProgressTotal}" />
+                    <TextBlock HorizontalAlignment="Center"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextTertiaryBrush}">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0} of {1} months processed">
+                                <Binding Path="BacktestProgressCurrent" />
+                                <Binding Path="BacktestProgressTotal" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                        <TextBlock.IsVisible>
+                            <Binding Path="BacktestProgressTotal"
+                                     Converter="{x:Static ObjectConverters.IsNotNull}" />
+                        </TextBlock.IsVisible>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Description -->
+                <TextBlock Text="Testing predictions against historical outcomes to measure accuracy..."
+                           FontSize="12"
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           MaxWidth="350"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </Border>
     </Panel>
 </UserControl>

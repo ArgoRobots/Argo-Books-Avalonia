@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
@@ -40,6 +41,40 @@ public partial class InsightsPageViewModel : ViewModelBase
     #region Services
 
     private readonly IInsightsService _insightsService;
+    private readonly IForecastAccuracyService _forecastAccuracyService;
+    private readonly ILocalMLForecastingService _mlForecastingService;
+
+    #endregion
+
+    #region Backtest Loading State
+
+    [ObservableProperty]
+    private bool _isRunningBacktest;
+
+    [ObservableProperty]
+    private string _backtestProgressMessage = "Analyzing historical data...";
+
+    [ObservableProperty]
+    private int _backtestProgressCurrent;
+
+    [ObservableProperty]
+    private int _backtestProgressTotal;
+
+    /// <summary>
+    /// Shows the backtest progress as a percentage (0-100).
+    /// </summary>
+    public double BacktestProgressPercent =>
+        BacktestProgressTotal > 0 ? (double)BacktestProgressCurrent / BacktestProgressTotal * 100 : 0;
+
+    partial void OnBacktestProgressCurrentChanged(int value)
+    {
+        OnPropertyChanged(nameof(BacktestProgressPercent));
+    }
+
+    partial void OnBacktestProgressTotalChanged(int value)
+    {
+        OnPropertyChanged(nameof(BacktestProgressPercent));
+    }
 
     #endregion
 
@@ -356,8 +391,10 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// </summary>
     public InsightsPageViewModel()
     {
-        // Instantiate the InsightsService directly
+        // Instantiate services directly
         _insightsService = new InsightsService();
+        _forecastAccuracyService = new ForecastAccuracyService();
+        _mlForecastingService = new LocalMLForecastingService();
 
         // Initialize date range and load insights
         UpdateDateRangeFromSelection();
@@ -367,9 +404,14 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// <summary>
     /// Constructor for dependency injection.
     /// </summary>
-    public InsightsPageViewModel(IInsightsService insightsService)
+    public InsightsPageViewModel(
+        IInsightsService insightsService,
+        IForecastAccuracyService? forecastAccuracyService = null,
+        ILocalMLForecastingService? mlForecastingService = null)
     {
         _insightsService = insightsService;
+        _forecastAccuracyService = forecastAccuracyService ?? new ForecastAccuracyService();
+        _mlForecastingService = mlForecastingService ?? new LocalMLForecastingService();
 
         // Initialize date range and load insights
         UpdateDateRangeFromSelection();
@@ -414,7 +456,8 @@ public partial class InsightsPageViewModel : ViewModelBase
         if (IsRefreshing) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
+        var companySettings = App.CompanyManager?.Settings;
+        if (companyData == null || companySettings == null)
         {
             HasInsufficientData = true;
             InsufficientDataMessage = "No company data loaded. Please open or create a company file.";
@@ -426,6 +469,9 @@ public partial class InsightsPageViewModel : ViewModelBase
 
         try
         {
+            // Check if we should run backtesting first
+            await RunBacktestIfNeededAsync(companyData, companySettings);
+
             // Insights always use a standard historical analysis period (last 3 months)
             var insightsStartDate = DateTime.Today.AddMonths(-3);
             var insightsEndDate = DateTime.Today;
@@ -473,6 +519,55 @@ public partial class InsightsPageViewModel : ViewModelBase
         finally
         {
             IsRefreshing = false;
+        }
+    }
+
+    /// <summary>
+    /// Runs backtesting if needed to build historical accuracy data.
+    /// Shows a loading screen during the process.
+    /// </summary>
+    private async Task RunBacktestIfNeededAsync(Core.Data.CompanyData companyData, CompanySettings settings)
+    {
+        // Check if backtest should run
+        if (!_forecastAccuracyService.ShouldRunBacktest(companyData, settings))
+        {
+            return;
+        }
+
+        // Show loading screen
+        IsRunningBacktest = true;
+        BacktestProgressMessage = "Analyzing historical data...";
+        BacktestProgressCurrent = 0;
+        BacktestProgressTotal = 0;
+
+        try
+        {
+            // Create progress reporter
+            var progress = new Progress<(int current, int total, string message)>(report =>
+            {
+                BacktestProgressCurrent = report.current;
+                BacktestProgressTotal = report.total;
+                BacktestProgressMessage = report.message;
+            });
+
+            // Run backtest
+            var recordsCreated = await _forecastAccuracyService.RunBacktestAsync(
+                companyData,
+                settings,
+                _mlForecastingService,
+                minTrainingMonths: 3,
+                progress: progress);
+
+            if (recordsCreated > 0)
+            {
+                // Mark data as modified so it gets saved
+                companyData.MarkAsModified();
+                settings.ChangesMade = true;
+            }
+        }
+        finally
+        {
+            IsRunningBacktest = false;
         }
     }
 
