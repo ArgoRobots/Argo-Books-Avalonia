@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
@@ -40,6 +41,40 @@ public partial class InsightsPageViewModel : ViewModelBase
     #region Services
 
     private readonly IInsightsService _insightsService;
+    private readonly IForecastAccuracyService _forecastAccuracyService;
+    private readonly ILocalMLForecastingService _mlForecastingService;
+
+    #endregion
+
+    #region Backtest Loading State
+
+    [ObservableProperty]
+    private bool _isRunningBacktest;
+
+    [ObservableProperty]
+    private string _backtestProgressMessage = "Analyzing historical data...";
+
+    [ObservableProperty]
+    private int _backtestProgressCurrent;
+
+    [ObservableProperty]
+    private int _backtestProgressTotal;
+
+    /// <summary>
+    /// Shows the backtest progress as a percentage (0-100).
+    /// </summary>
+    public double BacktestProgressPercent =>
+        BacktestProgressTotal > 0 ? (double)BacktestProgressCurrent / BacktestProgressTotal * 100 : 0;
+
+    partial void OnBacktestProgressCurrentChanged(int value)
+    {
+        OnPropertyChanged(nameof(BacktestProgressPercent));
+    }
+
+    partial void OnBacktestProgressTotalChanged(int value)
+    {
+        OnPropertyChanged(nameof(BacktestProgressPercent));
+    }
 
     #endregion
 
@@ -88,16 +123,30 @@ public partial class InsightsPageViewModel : ViewModelBase
     private DateTime _endDate;
 
     /// <summary>
-    /// Gets the currently selected date range string.
+    /// Gets or sets the currently selected date range string.
     /// </summary>
-    public string SelectedDateRange => DateRangeOptions.Count > SelectedDateRangeIndex
-        ? DateRangeOptions[SelectedDateRangeIndex]
-        : "Next Month";
+    public string SelectedDateRange
+    {
+        get => DateRangeOptions.Count > SelectedDateRangeIndex
+            ? DateRangeOptions[SelectedDateRangeIndex]
+            : "Next Month";
+        set
+        {
+            if (string.IsNullOrEmpty(value)) return;
+
+            var index = DateRangeOptions.IndexOf(value);
+            if (index >= 0 && index != SelectedDateRangeIndex)
+            {
+                SelectedDateRangeIndex = index;
+            }
+        }
+    }
 
     partial void OnSelectedDateRangeIndexChanged(int value)
     {
         OnPropertyChanged(nameof(SelectedDateRange));
         UpdateDateRangeFromSelection();
+
         // Only refresh the forecast cards, not the insights
         _ = RefreshForecastAsync();
     }
@@ -132,42 +181,42 @@ public partial class InsightsPageViewModel : ViewModelBase
                 ExpensesLabel = "Next Quarter Expenses";
                 ProfitLabel = "Projected Quarterly Profit";
                 CustomersLabel = "Expected New Customers (Quarter)";
-                ComparisonLabel = "vs last quarter";
+                ComparisonLabel = "vs quarterly avg";
                 break;
             case "Next Year":
                 RevenueLabel = "Next Year Revenue";
                 ExpensesLabel = "Next Year Expenses";
                 ProfitLabel = "Projected Annual Profit";
                 CustomersLabel = "Expected New Customers (Year)";
-                ComparisonLabel = "vs last year";
+                ComparisonLabel = "vs annual avg";
                 break;
             case "Next 30 Days":
                 RevenueLabel = "Next 30 Days Revenue";
                 ExpensesLabel = "Next 30 Days Expenses";
                 ProfitLabel = "Projected Profit (30 Days)";
                 CustomersLabel = "Expected New Customers (30 Days)";
-                ComparisonLabel = "vs last 30 days";
+                ComparisonLabel = "vs 30-day avg";
                 break;
             case "Next 90 Days":
                 RevenueLabel = "Next 90 Days Revenue";
                 ExpensesLabel = "Next 90 Days Expenses";
                 ProfitLabel = "Projected Profit (90 Days)";
                 CustomersLabel = "Expected New Customers (90 Days)";
-                ComparisonLabel = "vs last 90 days";
+                ComparisonLabel = "vs 90-day avg";
                 break;
             case "Next 365 Days":
                 RevenueLabel = "Next 365 Days Revenue";
                 ExpensesLabel = "Next 365 Days Expenses";
                 ProfitLabel = "Projected Annual Profit";
                 CustomersLabel = "Expected New Customers (Year)";
-                ComparisonLabel = "vs last 365 days";
+                ComparisonLabel = "vs annual avg";
                 break;
             default: // Next Month
                 RevenueLabel = "Next Month Revenue";
                 ExpensesLabel = "Next Month Expenses";
                 ProfitLabel = "Projected Profit";
                 CustomersLabel = "Expected New Customers";
-                ComparisonLabel = "vs last month";
+                ComparisonLabel = "vs monthly avg";
                 break;
         }
     }
@@ -235,13 +284,73 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// Dynamic comparison label that shows what period the forecast is compared against.
     /// </summary>
     [ObservableProperty]
-    private string _comparisonLabel = "vs last month";
+    private string _comparisonLabel = "vs monthly avg";
 
     /// <summary>
     /// Shows the exact date range being forecasted.
     /// </summary>
     [ObservableProperty]
     private string _forecastDateRangeLabel = string.Empty;
+
+    /// <summary>
+    /// The forecasting method used (e.g., "Combined (SSA + Holt-Winters)").
+    /// </summary>
+    [ObservableProperty]
+    private string _forecastMethod = string.Empty;
+
+    /// <summary>
+    /// Revenue forecast range (lower - upper bounds).
+    /// </summary>
+    [ObservableProperty]
+    private string _revenueRange = string.Empty;
+
+    /// <summary>
+    /// Expenses forecast range (lower - upper bounds).
+    /// </summary>
+    [ObservableProperty]
+    private string _expensesRange = string.Empty;
+
+    /// <summary>
+    /// Whether historical accuracy data is available.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasAccuracyData;
+
+    /// <summary>
+    /// Historical forecast accuracy percentage.
+    /// </summary>
+    [ObservableProperty]
+    private string _historicalAccuracy = string.Empty;
+
+    /// <summary>
+    /// Description of the forecast accuracy.
+    /// </summary>
+    [ObservableProperty]
+    private string _accuracyDescription = string.Empty;
+
+    /// <summary>
+    /// Number of validated forecasts used for accuracy calculation.
+    /// </summary>
+    [ObservableProperty]
+    private string _validatedForecastsNote = string.Empty;
+
+    /// <summary>
+    /// Whether a seasonal pattern was detected.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasSeasonalPattern;
+
+    /// <summary>
+    /// Description of the detected seasonal pattern.
+    /// </summary>
+    [ObservableProperty]
+    private string _seasonalPatternDescription = string.Empty;
+
+    /// <summary>
+    /// The detected trend direction.
+    /// </summary>
+    [ObservableProperty]
+    private string _trendDirection = string.Empty;
 
     #endregion
 
@@ -264,7 +373,7 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// Description of the analysis period used for insights (always historical).
     /// </summary>
     [ObservableProperty]
-    private string _insightsAnalysisPeriod = "Based on last 3 months";
+    private string _insightsAnalysisPeriod = "Based on last 3 months of data";
 
     #endregion
 
@@ -282,8 +391,10 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// </summary>
     public InsightsPageViewModel()
     {
-        // Instantiate the InsightsService directly
+        // Instantiate services directly
         _insightsService = new InsightsService();
+        _forecastAccuracyService = new ForecastAccuracyService();
+        _mlForecastingService = new LocalMLForecastingService();
 
         // Initialize date range and load insights
         UpdateDateRangeFromSelection();
@@ -293,9 +404,14 @@ public partial class InsightsPageViewModel : ViewModelBase
     /// <summary>
     /// Constructor for dependency injection.
     /// </summary>
-    public InsightsPageViewModel(IInsightsService insightsService)
+    public InsightsPageViewModel(
+        IInsightsService insightsService,
+        IForecastAccuracyService? forecastAccuracyService = null,
+        ILocalMLForecastingService? mlForecastingService = null)
     {
         _insightsService = insightsService;
+        _forecastAccuracyService = forecastAccuracyService ?? new ForecastAccuracyService();
+        _mlForecastingService = mlForecastingService ?? new LocalMLForecastingService();
 
         // Initialize date range and load insights
         UpdateDateRangeFromSelection();
@@ -308,7 +424,10 @@ public partial class InsightsPageViewModel : ViewModelBase
     private async Task RefreshForecastAsync()
     {
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
+        if (companyData == null)
+        {
+            return;
+        }
 
         try
         {
@@ -321,9 +440,9 @@ public partial class InsightsPageViewModel : ViewModelBase
             // Update forecast display
             UpdateForecastDisplay(forecast);
         }
-        catch
+        catch (Exception ex)
         {
-            // Silently fail - the insights are still valid
+            DataMonthsNote = $"Error refreshing forecast: {ex.Message}";
         }
     }
 
@@ -337,7 +456,8 @@ public partial class InsightsPageViewModel : ViewModelBase
         if (IsRefreshing) return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
+        var companySettings = App.CompanyManager?.CurrentCompanySettings;
+        if (companyData == null || companySettings == null)
         {
             HasInsufficientData = true;
             InsufficientDataMessage = "No company data loaded. Please open or create a company file.";
@@ -349,13 +469,16 @@ public partial class InsightsPageViewModel : ViewModelBase
 
         try
         {
+            // Check if we should run backtesting first
+            await RunBacktestIfNeededAsync(companyData, companySettings);
+
             // Insights always use a standard historical analysis period (last 3 months)
             var insightsStartDate = DateTime.Today.AddMonths(-3);
             var insightsEndDate = DateTime.Today;
             var insightsDateRange = AnalysisDateRange.Custom(insightsStartDate, insightsEndDate);
 
             // Update the analysis period description
-            InsightsAnalysisPeriod = $"Based on {insightsStartDate:MMM d} - {insightsEndDate:MMM d, yyyy}";
+            InsightsAnalysisPeriod = "Based on last 3 months of data";
 
             // Generate insights using the service with historical data
             var insights = await _insightsService.GenerateInsightsAsync(companyData, insightsDateRange);
@@ -400,10 +523,60 @@ public partial class InsightsPageViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Runs backtesting if needed to build historical accuracy data.
+    /// Shows a loading screen during the process.
+    /// </summary>
+    private async Task RunBacktestIfNeededAsync(Core.Data.CompanyData companyData, CompanySettings settings)
+    {
+        // Check if backtest should run
+        if (!_forecastAccuracyService.ShouldRunBacktest(companyData, settings))
+        {
+            return;
+        }
+
+        // Show loading screen
+        IsRunningBacktest = true;
+        BacktestProgressMessage = "Analyzing historical data...";
+        BacktestProgressCurrent = 0;
+        BacktestProgressTotal = 0;
+
+        try
+        {
+            // Create progress reporter
+            var progress = new Progress<(int current, int total, string message)>(report =>
+            {
+                BacktestProgressCurrent = report.current;
+                BacktestProgressTotal = report.total;
+                BacktestProgressMessage = report.message;
+            });
+
+            // Run backtest
+            var recordsCreated = await _forecastAccuracyService.RunBacktestAsync(
+                companyData,
+                settings,
+                _mlForecastingService,
+                minTrainingMonths: 3,
+                progress: progress);
+
+            if (recordsCreated > 0)
+            {
+                // Mark data as modified so it gets saved
+                companyData.MarkAsModified();
+                settings.ChangesMade = true;
+            }
+        }
+        finally
+        {
+            IsRunningBacktest = false;
+        }
+    }
+
+    /// <summary>
     /// Updates the forecast display with the generated data.
     /// </summary>
     private void UpdateForecastDisplay(ForecastData forecast)
     {
+        // Main forecast values
         ForecastedRevenue = forecast.ForecastedRevenue.ToString("C0");
         RevenueGrowthValue = (double)forecast.RevenueGrowthPercent;
         RevenueGrowth = $"{Math.Abs(forecast.RevenueGrowthPercent):F1}%";
@@ -421,9 +594,65 @@ public partial class InsightsPageViewModel : ViewModelBase
         CustomerGrowth = $"{Math.Abs(forecast.CustomerGrowthPercent):F1}%";
 
         PredictionConfidence = $"{forecast.ConfidenceScore:F0}% {forecast.ConfidenceLevel}";
+
+        // Data months and method info
+        var methodInfo = !string.IsNullOrEmpty(forecast.ForecastMethod)
+            ? $" using {forecast.ForecastMethod}"
+            : "";
         DataMonthsNote = forecast.DataMonthsUsed > 0
-            ? $"Based on {forecast.DataMonthsUsed} months of historical data"
+            ? $"Based on {forecast.DataMonthsUsed} months of data{methodInfo}"
             : "Insufficient data for forecasting";
+
+        ForecastMethod = forecast.ForecastMethod ?? string.Empty;
+
+        // Confidence bounds/ranges
+        if (forecast.ForecastedRevenueLower > 0 || forecast.ForecastedRevenueUpper > 0)
+        {
+            RevenueRange = $"Range: {forecast.ForecastedRevenueLower:C0} - {forecast.ForecastedRevenueUpper:C0}";
+        }
+        else
+        {
+            RevenueRange = string.Empty;
+        }
+
+        if (forecast.ForecastedExpensesLower > 0 || forecast.ForecastedExpensesUpper > 0)
+        {
+            ExpensesRange = $"Range: {forecast.ForecastedExpensesLower:C0} - {forecast.ForecastedExpensesUpper:C0}";
+        }
+        else
+        {
+            ExpensesRange = string.Empty;
+        }
+
+        // Historical accuracy data
+        HasAccuracyData = forecast.ValidatedForecastCount > 0;
+        if (HasAccuracyData)
+        {
+            HistoricalAccuracy = forecast.HistoricalAccuracyPercent.HasValue
+                ? $"{forecast.HistoricalAccuracyPercent.Value:F0}%"
+                : "--";
+            AccuracyDescription = forecast.AccuracyDescription ?? string.Empty;
+            ValidatedForecastsNote = $"Based on {forecast.ValidatedForecastCount} validated {(forecast.ValidatedForecastCount == 1 ? "forecast" : "forecasts")}";
+        }
+        else
+        {
+            HistoricalAccuracy = string.Empty;
+            AccuracyDescription = "No validated forecasts yet. Accuracy will be calculated after the current forecast period ends.";
+            ValidatedForecastsNote = string.Empty;
+        }
+
+        // Seasonal pattern info
+        HasSeasonalPattern = forecast.SeasonalInfo?.HasSeasonalPattern ?? false;
+        if (HasSeasonalPattern && forecast.SeasonalInfo != null)
+        {
+            SeasonalPatternDescription = forecast.SeasonalInfo.Description;
+            TrendDirection = forecast.SeasonalInfo.TrendDirection;
+        }
+        else
+        {
+            SeasonalPatternDescription = string.Empty;
+            TrendDirection = string.Empty;
+        }
     }
 
     /// <summary>
@@ -486,6 +715,18 @@ public partial class InsightsPageViewModel : ViewModelBase
         CustomerGrowth = "0%";
         PredictionConfidence = "-- --";
         DataMonthsNote = "Insufficient data for forecasting";
+
+        // Clear new ML/accuracy properties
+        ForecastMethod = string.Empty;
+        RevenueRange = string.Empty;
+        ExpensesRange = string.Empty;
+        HasAccuracyData = false;
+        HistoricalAccuracy = string.Empty;
+        AccuracyDescription = string.Empty;
+        ValidatedForecastsNote = string.Empty;
+        HasSeasonalPattern = false;
+        SeasonalPatternDescription = string.Empty;
+        TrendDirection = string.Empty;
 
         RevenueTrends.Clear();
         Anomalies.Clear();

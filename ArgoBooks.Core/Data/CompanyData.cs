@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
 using ArgoBooks.Core.Models.Reports;
@@ -185,6 +186,16 @@ public class CompanyData
     /// </summary>
     [JsonPropertyName("reportTemplates")]
     public List<ReportTemplate> ReportTemplates { get; init; } = [];
+
+    #endregion
+
+    #region Insights
+
+    /// <summary>
+    /// Historical forecast records for accuracy tracking.
+    /// </summary>
+    [JsonPropertyName("forecastRecords")]
+    public List<ForecastAccuracyRecord> ForecastRecords { get; init; } = [];
 
     #endregion
 

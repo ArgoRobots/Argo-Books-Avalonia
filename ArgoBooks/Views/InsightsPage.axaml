@@ -13,11 +13,20 @@
         <vm:InsightsPageViewModel />
     </Design.DataContext>
 
+    <UserControl.Styles>
+        <Style Selector="Border.insight-item">
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+        <Style Selector="Border.insight-item.last-item">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </UserControl.Styles>
+
     <Panel>
     <!-- Main Content -->
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-        <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24">
+        <Grid RowDefinitions="Auto,Auto,*" Margin="24">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                 <controls:StatCard Label="{loc:Loc 'AI Insights'}"
@@ -38,66 +47,8 @@
                                    IconColor="Primary" />
             </controls:StatCardsRow>
 
-            <!-- Page Header (Row 1) -->
+            <!-- Forecasted Growth Section (Row 1) -->
             <Border Grid.Row="1"
-                    Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="1"
-                    Padding="24,20"
-                    Margin="0,0,0,24">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <!-- AI Icon and Title -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                        <Border Width="48" Height="48"
-                                CornerRadius="10"
-                                Background="{DynamicResource PrimaryLightBrush}">
-                            <PathIcon Data="M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58s9.14-3.47 12.65 0L21 3v7.12zM12.5 8v4.25l3.5 2.08-.72 1.21L11 13V8h1.5z"
-                                      Width="24" Height="24"
-                                      Foreground="{DynamicResource PrimaryBrush}" />
-                        </Border>
-                        <StackPanel>
-                            <TextBlock Text="{loc:Loc 'AI Business Insights'}"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                            <TextBlock Text="{loc:Loc 'Intelligent analysis of your business data'}"
-                                       FontSize="13"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" />
-                        </StackPanel>
-                    </StackPanel>
-
-                    <!-- Last Updated -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <TextBlock Text="{loc:Loc 'Last updated:'}"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                   VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding LastUpdated}"
-                                   FontSize="13"
-                                   Foreground="{DynamicResource TextSecondaryBrush}"
-                                   VerticalAlignment="Center" />
-                        <Button Classes="secondary-button"
-                                Margin="16,0,0,0"
-                                Command="{Binding RefreshInsightsCommand}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <PathIcon Classes.sync-spinning="{Binding IsRefreshing}"
-                                          Data="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
-                                          Width="16" Height="16"
-                                          RenderTransformOrigin="50%,50%">
-                                    <PathIcon.RenderTransform>
-                                        <RotateTransform />
-                                    </PathIcon.RenderTransform>
-                                </PathIcon>
-                                <TextBlock Text="{loc:Loc Refresh}" />
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- Forecasted Growth Section (Row 2) -->
-            <Border Grid.Row="2"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     BorderBrush="{DynamicResource BorderBrush}"
@@ -217,33 +168,105 @@
                             Background="{DynamicResource SurfaceAltBrush}"
                             CornerRadius="8"
                             Padding="16">
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                                          Width="16" Height="16"
-                                          Foreground="#22C55E" />
-                                <TextBlock Text="{loc:Loc 'Prediction Confidence:'}"
-                                           FontSize="13"
+                        <StackPanel Spacing="12">
+                            <!-- Main confidence row -->
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                              Width="16" Height="16"
+                                              Foreground="#22C55E" />
+                                    <TextBlock Text="{loc:Loc 'Prediction Confidence:'}"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding PredictionConfidence}"
+                                               FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="#22C55E"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding DataMonthsNote}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Revenue range row (visible when bounds exist) -->
+                            <StackPanel Orientation="Horizontal" Spacing="8"
+                                        IsVisible="{Binding RevenueRange, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                                          Width="14" Height="14"
+                                          Foreground="{DynamicResource TextTertiaryBrush}" />
+                                <TextBlock Text="Revenue Forecast:"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding RevenueRange}"
+                                           FontSize="12"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding PredictionConfidence}"
-                                           FontSize="13"
-                                           FontWeight="SemiBold"
-                                           Foreground="#22C55E"
-                                           VerticalAlignment="Center" />
                             </StackPanel>
-                            <TextBlock Grid.Column="2"
-                                       Text="{Binding DataMonthsNote}"
-                                       FontSize="12"
+
+                            <!-- Historical accuracy row (visible when data exists) -->
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  IsVisible="{Binding HasAccuracyData}">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                                              Width="14" Height="14"
+                                              Foreground="#3B82F6" />
+                                    <TextBlock Text="Historical Accuracy:"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding HistoricalAccuracy}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Foreground="#3B82F6"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding ValidatedForecastsNote}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Seasonal pattern row (visible when pattern detected) -->
+                            <Grid ColumnDefinitions="Auto,*"
+                                  IsVisible="{Binding HasSeasonalPattern}">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                                              Width="14" Height="14"
+                                              Foreground="#8B5CF6" />
+                                    <TextBlock Text="Seasonal Pattern:"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding SeasonalPatternDescription}"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="8,0,0,0"
+                                           TextWrapping="Wrap"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Accuracy description (visible when no accuracy data yet) -->
+                            <TextBlock IsVisible="{Binding !HasAccuracyData}"
+                                       Text="{Binding AccuracyDescription}"
+                                       FontSize="11"
+                                       FontStyle="Italic"
                                        Foreground="{DynamicResource TextTertiaryBrush}"
-                                       VerticalAlignment="Center" />
-                        </Grid>
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
                     </Border>
                 </StackPanel>
             </Border>
 
-            <!-- Insights Content (Row 3) - hidden when insufficient data -->
-            <Grid Grid.Row="3" RowDefinitions="Auto,*" IsVisible="{Binding !HasInsufficientData}">
+            <!-- Insights Content (Row 2) - hidden when insufficient data -->
+            <Grid Grid.Row="2" RowDefinitions="Auto,*" IsVisible="{Binding !HasInsufficientData}">
                 <!-- Insights Period Header -->
                 <Border Grid.Row="0"
                         Background="{DynamicResource SurfaceAltBrush}"
@@ -306,13 +329,8 @@
                                     <DataTemplate DataType="vm:InsightItemViewModel">
                                         <Border Padding="20"
                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="0,0,0,1"
+                                                Classes="insight-item"
                                                 Classes.last-item="{Binding IsLastItem}">
-                                            <Border.Styles>
-                                                <Style Selector="Border.last-item">
-                                                    <Setter Property="BorderThickness" Value="0" />
-                                                </Style>
-                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -375,13 +393,8 @@
                                     <DataTemplate DataType="vm:InsightItemViewModel">
                                         <Border Padding="20"
                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="0,0,0,1"
+                                                Classes="insight-item"
                                                 Classes.last-item="{Binding IsLastItem}">
-                                            <Border.Styles>
-                                                <Style Selector="Border.last-item">
-                                                    <Setter Property="BorderThickness" Value="0" />
-                                                </Style>
-                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -447,13 +460,8 @@
                                     <DataTemplate DataType="vm:InsightItemViewModel">
                                         <Border Padding="20"
                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="0,0,0,1"
+                                                Classes="insight-item"
                                                 Classes.last-item="{Binding IsLastItem}">
-                                            <Border.Styles>
-                                                <Style Selector="Border.last-item">
-                                                    <Setter Property="BorderThickness" Value="0" />
-                                                </Style>
-                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -516,13 +524,8 @@
                                     <DataTemplate DataType="vm:InsightItemViewModel">
                                         <Border Padding="20"
                                                 BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="0,0,0,1"
+                                                Classes="insight-item"
                                                 Classes.last-item="{Binding IsLastItem}">
-                                            <Border.Styles>
-                                                <Style Selector="Border.last-item">
-                                                    <Setter Property="BorderThickness" Value="0" />
-                                                </Style>
-                                            </Border.Styles>
                                             <Grid ColumnDefinitions="Auto,*">
                                                 <Border Grid.Column="0"
                                                         Width="8" Height="8"
@@ -557,5 +560,77 @@
             </Grid>
         </Grid>
     </ScrollViewer>
+
+    <!-- Backtest Loading Overlay -->
+    <Border IsVisible="{Binding IsRunningBacktest}"
+            Background="#80000000"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                CornerRadius="16"
+                Padding="48"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                MinWidth="400"
+                BoxShadow="0 8 32 0 #40000000">
+            <StackPanel Spacing="24" HorizontalAlignment="Center">
+                <!-- Animated Icon -->
+                <Border Width="72" Height="72"
+                        CornerRadius="36"
+                        Background="#DBEAFE"
+                        HorizontalAlignment="Center">
+                    <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"
+                              Width="32" Height="32"
+                              Foreground="#3B82F6" />
+                </Border>
+
+                <!-- Title -->
+                <TextBlock Text="Analyzing Historical Data"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           HorizontalAlignment="Center" />
+
+                <!-- Progress Message -->
+                <TextBlock Text="{Binding BacktestProgressMessage}"
+                           FontSize="14"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+
+                <!-- Progress Bar -->
+                <StackPanel Spacing="8" MinWidth="300">
+                    <ProgressBar Value="{Binding BacktestProgressPercent}"
+                                 Minimum="0"
+                                 Maximum="100"
+                                 Height="8"
+                                 Foreground="#3B82F6"
+                                 IsIndeterminate="{Binding !BacktestProgressTotal}" />
+                    <TextBlock HorizontalAlignment="Center"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextTertiaryBrush}">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{}{0} of {1} months processed">
+                                <Binding Path="BacktestProgressCurrent" />
+                                <Binding Path="BacktestProgressTotal" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                        <TextBlock.IsVisible>
+                            <Binding Path="BacktestProgressTotal"
+                                     Converter="{x:Static ObjectConverters.IsNotNull}" />
+                        </TextBlock.IsVisible>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Description -->
+                <TextBlock Text="Testing predictions against historical outcomes to measure accuracy..."
+                           FontSize="12"
+                           Foreground="{DynamicResource TextTertiaryBrush}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           MaxWidth="350"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </Border>
     </Panel>
 </UserControl>

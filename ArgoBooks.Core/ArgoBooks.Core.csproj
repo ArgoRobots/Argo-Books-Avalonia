@@ -34,6 +34,10 @@
         <!-- Google APIs -->
         <PackageReference Include="Google.Apis.Sheets.v4" />
         <PackageReference Include="Google.Apis.Drive.v3" />
+
+        <!-- Machine Learning (for local forecasting) -->
+        <PackageReference Include="Microsoft.ML" />
+        <PackageReference Include="Microsoft.ML.TimeSeries" />
     </ItemGroup>
 
     <!-- Windows-specific packages -->
