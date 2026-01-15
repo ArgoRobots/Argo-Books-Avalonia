@@ -33,6 +33,14 @@ public partial class ExpensesPage : UserControl
         InitializeComponent();
     }
 
+    private void OnHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is ExpensesPageViewModel viewModel && e.WidthChanged)
+        {
+            viewModel.HeaderWidth = e.NewSize.Width;
+        }
+    }
+
     private void OnTableHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)

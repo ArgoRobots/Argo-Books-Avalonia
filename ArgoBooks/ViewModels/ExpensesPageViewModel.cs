@@ -155,6 +155,70 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Responsive Layout
+
+    /// <summary>
+    /// Current width of the header area for responsive calculations.
+    /// </summary>
+    [ObservableProperty]
+    private double _headerWidth;
+
+    /// <summary>
+    /// Whether the header is in compact mode (smaller buttons, icon-only).
+    /// </summary>
+    [ObservableProperty]
+    private bool _isCompactMode;
+
+    /// <summary>
+    /// Whether to show button text (false in compact mode).
+    /// </summary>
+    [ObservableProperty]
+    private bool _showButtonText = true;
+
+    /// <summary>
+    /// Width of the search box, responsive to available space.
+    /// </summary>
+    [ObservableProperty]
+    private double _searchBoxWidth = 250;
+
+    /// <summary>
+    /// Spacing between header controls, responsive to available space.
+    /// </summary>
+    [ObservableProperty]
+    private double _headerSpacing = 12;
+
+    partial void OnHeaderWidthChanged(double value)
+    {
+        // Breakpoints for responsive layout
+        // < 600: Compact mode - icon-only buttons, smaller search
+        // 600-800: Medium mode - shorter text, medium search
+        // > 800: Full mode - full text, full search
+
+        if (value < 600)
+        {
+            IsCompactMode = true;
+            ShowButtonText = false;
+            SearchBoxWidth = 150;
+            HeaderSpacing = 8;
+        }
+        else if (value < 800)
+        {
+            IsCompactMode = false;
+            ShowButtonText = true;
+            SearchBoxWidth = 180;
+            HeaderSpacing = 10;
+        }
+        else
+        {
+            IsCompactMode = false;
+            ShowButtonText = true;
+            SearchBoxWidth = 250;
+            HeaderSpacing = 12;
+        }
+    }
+
+    #endregion
+
     #region Expenses Collection
 
     private readonly List<Purchase> _allExpenses = [];
