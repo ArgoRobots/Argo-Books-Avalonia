@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -19,6 +20,7 @@ public partial class ReceiptViewerModal : UserControl
     private ScrollViewer? _imageScrollViewer;
     private LayoutTransformControl? _zoomTransformControl;
     private Image? _receiptImage;
+    private OverscrollHelper? _overscrollHelper;
 
     // Zoom settings
     private double _zoomLevel = 1.0;
@@ -30,11 +32,6 @@ public partial class ReceiptViewerModal : UserControl
     private bool _isPanning;
     private Point _panStartPoint;
     private Vector _panStartOffset;
-
-    // Rubber band overscroll effect
-    private Vector _overscroll;
-    private const double OverscrollResistance = 0.3;
-    private const double OverscrollMaxDistance = 100;
 
     #endregion
 
@@ -65,6 +62,11 @@ public partial class ReceiptViewerModal : UserControl
         _imageScrollViewer ??= this.FindControl<ScrollViewer>("ImageScrollViewer");
         _zoomTransformControl ??= this.FindControl<LayoutTransformControl>("ZoomTransformControl");
         _receiptImage ??= this.FindControl<Image>("ReceiptImage");
+
+        if (_zoomTransformControl != null && _overscrollHelper == null)
+        {
+            _overscrollHelper = new OverscrollHelper(_zoomTransformControl);
+        }
     }
 
     #region Event Handlers
@@ -228,7 +230,7 @@ public partial class ReceiptViewerModal : UserControl
     {
         base.OnPointerMoved(e);
 
-        if (_isPanning && _imageScrollViewer != null)
+        if (_isPanning && _imageScrollViewer != null && _overscrollHelper != null)
         {
             var currentPoint = e.GetPosition(this);
             var delta = _panStartPoint - currentPoint;
@@ -239,41 +241,11 @@ public partial class ReceiptViewerModal : UserControl
             var maxX = Math.Max(0, _imageScrollViewer.Extent.Width - _imageScrollViewer.Viewport.Width);
             var maxY = Math.Max(0, _imageScrollViewer.Extent.Height - _imageScrollViewer.Viewport.Height);
 
-            double overscrollX = 0;
-            double overscrollY = 0;
-            double clampedX = desiredX;
-            double clampedY = desiredY;
-
-            if (desiredX < 0)
-            {
-                overscrollX = desiredX * OverscrollResistance;
-                overscrollX = Math.Max(overscrollX, -OverscrollMaxDistance);
-                clampedX = 0;
-            }
-            else if (desiredX > maxX)
-            {
-                overscrollX = (desiredX - maxX) * OverscrollResistance;
-                overscrollX = Math.Min(overscrollX, OverscrollMaxDistance);
-                clampedX = maxX;
-            }
-
-            if (desiredY < 0)
-            {
-                overscrollY = desiredY * OverscrollResistance;
-                overscrollY = Math.Max(overscrollY, -OverscrollMaxDistance);
-                clampedY = 0;
-            }
-            else if (desiredY > maxY)
-            {
-                overscrollY = (desiredY - maxY) * OverscrollResistance;
-                overscrollY = Math.Min(overscrollY, OverscrollMaxDistance);
-                clampedY = maxY;
-            }
+            var (clampedX, clampedY, overscrollX, overscrollY) =
+                _overscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
             _imageScrollViewer.Offset = new Vector(clampedX, clampedY);
-
-            _overscroll = new Vector(overscrollX, overscrollY);
-            ApplyOverscrollTransform();
+            _overscrollHelper.ApplyOverscroll(overscrollX, overscrollY);
 
             e.Handled = true;
         }
@@ -289,45 +261,13 @@ public partial class ReceiptViewerModal : UserControl
             e.Pointer.Capture(null);
             Cursor = Cursor.Default;
 
-            if (_overscroll.X != 0 || _overscroll.Y != 0)
+            if (_overscrollHelper?.HasOverscroll == true)
             {
-                AnimateOverscrollSnapBack();
+                _ = _overscrollHelper.AnimateSnapBackAsync();
             }
 
             e.Handled = true;
         }
-    }
-
-    private void ApplyOverscrollTransform()
-    {
-        if (_zoomTransformControl == null) return;
-        var translateTransform = new TranslateTransform(-_overscroll.X, -_overscroll.Y);
-        _zoomTransformControl.RenderTransform = translateTransform;
-    }
-
-    private async void AnimateOverscrollSnapBack()
-    {
-        const int steps = 12;
-        const int delayMs = 16;
-
-        var startOverscroll = _overscroll;
-
-        for (int i = 1; i <= steps; i++)
-        {
-            double t = i / (double)steps;
-            double easeOut = 1 - Math.Pow(1 - t, 3);
-
-            _overscroll = new Vector(
-                startOverscroll.X * (1 - easeOut),
-                startOverscroll.Y * (1 - easeOut)
-            );
-
-            ApplyOverscrollTransform();
-            await Task.Delay(delayMs);
-        }
-
-        _overscroll = new Vector(0, 0);
-        ApplyOverscrollTransform();
     }
 
     #endregion
