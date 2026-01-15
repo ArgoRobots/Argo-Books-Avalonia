@@ -255,11 +255,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public async Task OpenScanModalWithDataAsync(byte[] imageData, string fileName, string? tempFilePath = null)
     {
+        // Reset state first, before setting new data
+        ResetScanModal();
+
         _currentImageData = imageData;
         _currentFileName = fileName;
 
-        // Reset state
-        ResetScanModal();
         LoadSupplierOptions();
         LoadCategoryOptions();
 
