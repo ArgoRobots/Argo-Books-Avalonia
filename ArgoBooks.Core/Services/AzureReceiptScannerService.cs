@@ -204,26 +204,24 @@ public class AzureReceiptScannerService : IReceiptScannerService
                         break;
 
                     case "Subtotal":
-                        if (fieldValue.FieldType == DocumentFieldType.Currency && fieldValue.Value.AsCurrency() is { } subtotal)
-                        {
-                            scanResult.Subtotal = (decimal)subtotal.Amount;
-                            scanResult.CurrencyCode ??= subtotal.Code;
-                        }
+                        scanResult.Subtotal = ExtractDecimalValue(fieldValue, out var subtotalCurrency);
+                        scanResult.CurrencyCode ??= subtotalCurrency;
                         break;
 
                     case "TotalTax":
-                        if (fieldValue.FieldType == DocumentFieldType.Currency && fieldValue.Value.AsCurrency() is { } tax)
-                        {
-                            scanResult.TaxAmount = (decimal)tax.Amount;
-                        }
+                    case "Tax":
+                        scanResult.TaxAmount = ExtractDecimalValue(fieldValue, out _);
                         break;
 
                     case "Total":
-                        if (fieldValue.FieldType == DocumentFieldType.Currency && fieldValue.Value.AsCurrency() is { } total)
+                    case "Tip":
+                        if (fieldName == "Tip")
                         {
-                            scanResult.TotalAmount = (decimal)total.Amount;
-                            scanResult.CurrencyCode ??= total.Code;
+                            // Skip tips, we want the actual total
+                            break;
                         }
+                        scanResult.TotalAmount = ExtractDecimalValue(fieldValue, out var totalCurrency);
+                        scanResult.CurrencyCode ??= totalCurrency;
                         break;
 
                     case "Items":
@@ -284,18 +282,21 @@ public class AzureReceiptScannerService : IReceiptScannerService
                     break;
 
                 case "Quantity":
-                    if (field.Value.FieldType == DocumentFieldType.Double && field.Value.Value.AsDouble() is { } qty)
+                    var qtyValue = ExtractDecimalValue(field.Value, out _);
+                    if (qtyValue.HasValue)
                     {
-                        lineItem.Quantity = (decimal)qty;
+                        lineItem.Quantity = qtyValue.Value;
                         if (field.Value.Confidence.HasValue)
                             confidenceScores.Add(field.Value.Confidence.Value);
                     }
                     break;
 
                 case "Price":
-                    if (field.Value.FieldType == DocumentFieldType.Currency && field.Value.Value.AsCurrency() is { } price)
+                case "UnitPrice":
+                    var priceValue = ExtractDecimalValue(field.Value, out _);
+                    if (priceValue.HasValue)
                     {
-                        lineItem.UnitPrice = (decimal)price.Amount;
+                        lineItem.UnitPrice = priceValue.Value;
                         hasData = true;
                         if (field.Value.Confidence.HasValue)
                             confidenceScores.Add(field.Value.Confidence.Value);
@@ -303,9 +304,11 @@ public class AzureReceiptScannerService : IReceiptScannerService
                     break;
 
                 case "TotalPrice":
-                    if (field.Value.FieldType == DocumentFieldType.Currency && field.Value.Value.AsCurrency() is { } totalPrice)
+                case "Amount":
+                    var totalPriceValue = ExtractDecimalValue(field.Value, out _);
+                    if (totalPriceValue.HasValue)
                     {
-                        lineItem.TotalPrice = (decimal)totalPrice.Amount;
+                        lineItem.TotalPrice = totalPriceValue.Value;
                         hasData = true;
                         if (field.Value.Confidence.HasValue)
                             confidenceScores.Add(field.Value.Confidence.Value);
@@ -346,6 +349,75 @@ public class AzureReceiptScannerService : IReceiptScannerService
             ".tiff" or ".tif" => "image/tiff",
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Extracts a decimal value from a document field, trying multiple approaches.
+    /// </summary>
+    private static decimal? ExtractDecimalValue(DocumentField field, out string? currencyCode)
+    {
+        currencyCode = null;
+
+        // Try Currency type first
+        if (field.FieldType == DocumentFieldType.Currency)
+        {
+            try
+            {
+                var currency = field.Value.AsCurrency();
+                currencyCode = currency.Code;
+                return (decimal)currency.Amount;
+            }
+            catch
+            {
+                // Fall through to other methods
+            }
+        }
+
+        // Try Double type
+        if (field.FieldType == DocumentFieldType.Double)
+        {
+            try
+            {
+                return (decimal)field.Value.AsDouble();
+            }
+            catch
+            {
+                // Fall through to content parsing
+            }
+        }
+
+        // Try Int64 type
+        if (field.FieldType == DocumentFieldType.Int64)
+        {
+            try
+            {
+                return field.Value.AsInt64();
+            }
+            catch
+            {
+                // Fall through to content parsing
+            }
+        }
+
+        // Try parsing from Content string as last resort
+        if (!string.IsNullOrWhiteSpace(field.Content))
+        {
+            // Remove currency symbols and parse
+            var content = field.Content
+                .Replace("$", "")
+                .Replace("€", "")
+                .Replace("£", "")
+                .Replace("¥", "")
+                .Replace(",", "")
+                .Trim();
+
+            if (decimal.TryParse(content, out var parsed))
+            {
+                return parsed;
+            }
+        }
+
+        return null;
     }
 }
 
