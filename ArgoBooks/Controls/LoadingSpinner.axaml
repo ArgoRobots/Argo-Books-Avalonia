@@ -7,54 +7,44 @@
              x:Class="ArgoBooks.Controls.LoadingSpinner"
              x:DataType="controls:LoadingSpinner">
 
-    <Border x:Name="SpinnerContainer"
-            Width="{Binding ComputedSize, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
-            Height="{Binding ComputedSize, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
-            RenderTransformOrigin="0.5,0.5"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            IsVisible="{Binding IsSpinning, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}">
-        <Border.RenderTransform>
-            <RotateTransform />
-        </Border.RenderTransform>
-        <Border.Styles>
-            <Style Selector="Border#SpinnerContainer">
-                <Style.Animations>
-                    <Animation Duration="0:0:1" IterationCount="INFINITE">
-                        <KeyFrame Cue="0%">
-                            <Setter Property="RotateTransform.Angle" Value="0" />
-                        </KeyFrame>
-                        <KeyFrame Cue="100%">
-                            <Setter Property="RotateTransform.Angle" Value="360" />
-                        </KeyFrame>
-                    </Animation>
-                </Style.Animations>
-            </Style>
-        </Border.Styles>
-
-        <!-- Arc spinner using PathIcon -->
-        <Panel>
-            <!-- Background circle (lighter) -->
-            <Ellipse StrokeThickness="{Binding StrokeThickness, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+    <Viewbox Width="{Binding ComputedSize, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+             Height="{Binding ComputedSize, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+             HorizontalAlignment="Center"
+             VerticalAlignment="Center"
+             IsVisible="{Binding IsSpinning, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}">
+        <Panel Width="24" Height="24">
+            <!-- Background circle -->
+            <Ellipse Width="24" Height="24"
+                     StrokeThickness="3"
                      Stroke="{DynamicResource SurfaceHoverBrush}"
                      Fill="Transparent" />
 
-            <!-- Spinning arc -->
-            <Path Stroke="{Binding SpinnerBrush, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
-                  StrokeThickness="{Binding StrokeThickness, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
-                  StrokeLineCap="Round">
-                <Path.Data>
-                    <PathGeometry>
-                        <PathFigure StartPoint="{Binding ArcStart, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
-                                    IsClosed="False">
-                            <ArcSegment Point="{Binding ArcEnd, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
-                                        Size="{Binding ArcSize, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
-                                        SweepDirection="Clockwise"
-                                        IsLargeArc="False" />
-                        </PathFigure>
-                    </PathGeometry>
-                </Path.Data>
-            </Path>
+            <!-- Spinning arc container - rotates around center -->
+            <Panel x:Name="SpinnerArc"
+                   Width="24" Height="24"
+                   RenderTransformOrigin="0.5,0.5">
+                <Panel.RenderTransform>
+                    <RotateTransform />
+                </Panel.RenderTransform>
+                <Panel.Styles>
+                    <Style Selector="Panel#SpinnerArc">
+                        <Style.Animations>
+                            <Animation Duration="0:0:1" IterationCount="INFINITE">
+                                <KeyFrame Cue="0%">
+                                    <Setter Property="RotateTransform.Angle" Value="0" />
+                                </KeyFrame>
+                                <KeyFrame Cue="100%">
+                                    <Setter Property="RotateTransform.Angle" Value="360" />
+                                </KeyFrame>
+                            </Animation>
+                        </Style.Animations>
+                    </Style>
+                </Panel.Styles>
+                <Path Stroke="{Binding SpinnerBrush, RelativeSource={RelativeSource AncestorType=controls:LoadingSpinner}}"
+                      StrokeThickness="3"
+                      StrokeLineCap="Round"
+                      Data="M 12,1.5 A 10.5,10.5 0 0 1 22.5,12" />
+            </Panel>
         </Panel>
-    </Border>
+    </Viewbox>
 </UserControl>

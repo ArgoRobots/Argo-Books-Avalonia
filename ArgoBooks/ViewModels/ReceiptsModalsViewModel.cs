@@ -223,6 +223,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _totalErrorMessage = string.Empty;
 
+    [ObservableProperty]
+    private bool _hasSupplierError;
+
+    [ObservableProperty]
+    private bool _hasCategoryError;
+
     #endregion
 
     #region AI Scan Commands
@@ -430,20 +436,39 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Validate
         HasVendorError = false;
         HasTotalError = false;
+        HasSupplierError = false;
+        HasCategoryError = false;
+
+        var hasErrors = false;
 
         if (string.IsNullOrWhiteSpace(ExtractedVendor))
         {
             HasVendorError = true;
             VendorErrorMessage = "Vendor name is required.".Translate();
-            return;
+            hasErrors = true;
         }
 
         if (!decimal.TryParse(ExtractedTotal, out var total) || total <= 0)
         {
             HasTotalError = true;
             TotalErrorMessage = "Please enter a valid total amount.".Translate();
-            return;
+            hasErrors = true;
         }
+
+        if (SelectedSupplier == null)
+        {
+            HasSupplierError = true;
+            hasErrors = true;
+        }
+
+        if (SelectedCategory == null)
+        {
+            HasCategoryError = true;
+            hasErrors = true;
+        }
+
+        if (hasErrors)
+            return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
@@ -551,11 +576,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         ReceiptScanned?.Invoke(this, EventArgs.Empty);
         CloseScanReviewModal();
-
-        App.AddNotification(
-            "Receipt Scanned".Translate(),
-            "Expense {0} created from scanned receipt.".TranslateFormat(expenseId),
-            NotificationType.Success);
     }
 
     [RelayCommand]
@@ -603,6 +623,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         Notes = string.Empty;
         HasVendorError = false;
         HasTotalError = false;
+        HasSupplierError = false;
+        HasCategoryError = false;
         _currentImageData = null;
         _currentFileName = null;
     }

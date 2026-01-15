@@ -15,6 +15,12 @@ public partial class AppShellViewModel : ViewModelBase
 {
     private readonly INavigationService? _navigationService;
 
+    /// <summary>
+    /// Raised when the user requests to open a file for scanning via quick action.
+    /// The view should handle this by opening a file picker.
+    /// </summary>
+    public event EventHandler? OpenFileScanRequested;
+
     #region ViewModels
 
     /// <summary>
@@ -537,6 +543,10 @@ public partial class AppShellViewModel : ViewModelBase
                     break;
                 case "OpenImport":
                     ImportModalViewModel.OpenCommand.Execute(null);
+                    break;
+                case "OpenScanModal":
+                    // Request file picker from view - can't open scan modal without a file
+                    OpenFileScanRequested?.Invoke(this, EventArgs.Empty);
                     break;
             }
         };

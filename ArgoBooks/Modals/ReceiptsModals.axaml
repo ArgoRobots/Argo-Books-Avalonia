@@ -518,14 +518,14 @@
                                         <!-- Supplier and Category Row -->
                                         <Grid ColumnDefinitions="*,16,*">
                                             <StackPanel Grid.Column="0" Spacing="6">
-                                                <TextBlock Text="{loc:Loc 'Supplier'}"
-                                                           FontSize="13"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                    <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                </TextBlock>
                                                 <ComboBox ItemsSource="{Binding SupplierOptions}"
                                                           SelectedItem="{Binding SelectedSupplier}"
                                                           HorizontalAlignment="Stretch"
-                                                          PlaceholderText="{loc:Loc 'Select supplier (optional)'}">
+                                                          PlaceholderText="{loc:Loc 'Select supplier'}"
+                                                          BorderBrush="{Binding HasSupplierError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate DataType="vm:SupplierOption">
                                                             <TextBlock Text="{Binding Name}" />
@@ -534,14 +534,14 @@
                                                 </ComboBox>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
-                                                <TextBlock Text="{loc:Loc 'Category'}"
-                                                           FontSize="13"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                    <Run Text="{loc:Loc 'Category'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                </TextBlock>
                                                 <ComboBox ItemsSource="{Binding CategoryOptions}"
                                                           SelectedItem="{Binding SelectedCategory}"
                                                           HorizontalAlignment="Stretch"
-                                                          PlaceholderText="{loc:Loc 'Select category (optional)'}">
+                                                          PlaceholderText="{loc:Loc 'Select category'}"
+                                                          BorderBrush="{Binding HasCategoryError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate DataType="vm:CategoryOption">
                                                             <TextBlock Text="{Binding Name}" />
