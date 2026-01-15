@@ -199,6 +199,12 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private Avalonia.Thickness _searchIconMargin = new(12, 0, 8, 0);
 
+    /// <summary>
+    /// Header padding, responsive to available space.
+    /// </summary>
+    [ObservableProperty]
+    private Avalonia.Thickness _headerPadding = new(24, 20);
+
     partial void OnHeaderWidthChanged(double value)
     {
         // Breakpoints for responsive layout
@@ -214,6 +220,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             SearchBoxWidth = 140;
             HeaderSpacing = 6;
             SearchIconMargin = new Avalonia.Thickness(8, 0, 6, 0);
+            HeaderPadding = new Avalonia.Thickness(24, 12);
         }
         else if (value < 950)
         {
@@ -223,6 +230,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             SearchBoxWidth = 180;
             HeaderSpacing = 8;
             SearchIconMargin = new Avalonia.Thickness(10, 0, 6, 0);
+            HeaderPadding = new Avalonia.Thickness(24, 16);
         }
         else
         {
@@ -232,6 +240,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             SearchBoxWidth = 250;
             HeaderSpacing = 12;
             SearchIconMargin = new Avalonia.Thickness(12, 0, 8, 0);
+            HeaderPadding = new Avalonia.Thickness(24, 20);
         }
     }
 

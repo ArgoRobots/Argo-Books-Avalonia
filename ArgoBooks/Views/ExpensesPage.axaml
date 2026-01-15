@@ -54,7 +54,7 @@
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header with Title, Search and Buttons -->
                     <Border Grid.Row="0"
-                            Padding="24,20"
+                            Padding="{Binding HeaderPadding}"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="Auto,*,Auto">
