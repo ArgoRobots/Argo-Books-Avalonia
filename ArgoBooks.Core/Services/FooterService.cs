@@ -202,20 +202,4 @@ public class FooterService
             return false;
         }
     }
-
-    /// <summary>
-    /// Checks if the file version is compatible with this application.
-    /// </summary>
-    /// <param name="footer">File footer to check.</param>
-    /// <returns>True if compatible.</returns>
-    public bool IsVersionCompatible(FileFooter footer)
-    {
-        // Parse version (format: "major.minor.patch")
-        var parts = footer.Version.Split('.');
-        if (parts.Length < 1 || !int.TryParse(parts[0], out var major))
-            return false;
-
-        // For now, only version 1.x.x is supported
-        return major <= FileFormatConstants.MaxSupportedVersion;
-    }
 }

@@ -91,10 +91,6 @@ public class FileService(
         var footer = await footerService.ReadFooterAsync(filePath, cancellationToken)
             ?? throw new InvalidDataException("Invalid file format or corrupted file.");
 
-        // Check version compatibility
-        if (!footerService.IsVersionCompatible(footer))
-            throw new NotSupportedException($"File version {footer.Version} is not supported.");
-
         // Verify password if encrypted
         if (footer.IsEncrypted)
         {
@@ -160,7 +156,7 @@ public class FileService(
         // Create footer
         var footer = new FileFooter
         {
-            Version = "1.0.0",
+            Version = GetAppVersionFromDirectory(tempDirectory),
             IsEncrypted = !string.IsNullOrEmpty(password),
             Salt = salt,
             Iv = iv,
@@ -440,6 +436,28 @@ public class FileService(
         }
 
         return false;
+    }
+
+    private string GetAppVersionFromDirectory(string tempDirectory)
+    {
+        // Read the app version from the company settings
+        try
+        {
+            var settingsPath = FindFileInDirectory(tempDirectory, "appSettings.json");
+            if (settingsPath != null && File.Exists(settingsPath))
+            {
+                var json = File.ReadAllText(settingsPath);
+                var settings = JsonSerializer.Deserialize<CompanySettings>(json, JsonOptions);
+                if (!string.IsNullOrEmpty(settings?.AppVersion))
+                    return settings.AppVersion;
+            }
+        }
+        catch
+        {
+            // Default to 1.0.0
+        }
+
+        return "1.0.0";
     }
 
     private static string? FindFileInDirectory(string directory, string fileName, int maxDepth = 3)

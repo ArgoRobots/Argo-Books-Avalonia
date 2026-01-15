@@ -33,6 +33,11 @@ public class App : Application
     public static GlobalSettingsService? SettingsService { get; private set; }
 
     /// <summary>
+    /// Gets the file service instance for sample company creation.
+    /// </summary>
+    private static FileService? _fileService;
+
+    /// <summary>
     /// Gets the license service instance for secure license storage.
     /// </summary>
     public static LicenseService? LicenseService { get; private set; }
@@ -314,10 +319,10 @@ public class App : Application
             var compressionService = new CompressionService();
             var footerService = new FooterService();
             var encryptionService = new EncryptionService();
-            var fileService = new FileService(compressionService, footerService, encryptionService);
+            _fileService = new FileService(compressionService, footerService, encryptionService);
             SettingsService = new GlobalSettingsService();
             LicenseService = new LicenseService(encryptionService, SettingsService);
-            CompanyManager = new CompanyManager(fileService, SettingsService, footerService);
+            CompanyManager = new CompanyManager(_fileService, SettingsService, footerService);
 
             // Create navigation service
             NavigationService = new NavigationService();
@@ -493,7 +498,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log error but don't crash the app
-            System.Diagnostics.Debug.WriteLine($"Error during async initialization: {ex.Message}");
+            Console.WriteLine($"Error during async initialization: {ex.Message}");
         }
     }
 
@@ -509,12 +514,12 @@ public class App : Application
 
             if (!exchangeService.HasApiKey)
             {
-                System.Diagnostics.Debug.WriteLine("Exchange rate service initialized without API key - currency conversion will use cached rates only");
+                Console.WriteLine("Exchange rate service initialized without API key - currency conversion will use cached rates only");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to initialize exchange rate service: {ex.Message}");
+            Console.WriteLine($"Failed to initialize exchange rate service: {ex.Message}");
         }
     }
 
@@ -543,7 +548,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log but don't crash - file association is not critical
-            System.Diagnostics.Debug.WriteLine($"Failed to register file type associations: {ex.Message}");
+            Console.WriteLine($"Failed to register file type associations: {ex.Message}");
         }
     }
 
@@ -600,12 +605,12 @@ public class App : Application
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("Could not find icon resource");
+            Console.WriteLine("Could not find icon resource");
             return null;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to extract icon: {ex.Message}");
+            Console.WriteLine($"Failed to extract icon: {ex.Message}");
             return null;
         }
     }
@@ -671,6 +676,9 @@ public class App : Application
 
             // Clear tracked changes when company is closed
             ChangeTrackingService?.ClearAllChanges();
+
+            // Clear notifications when company is closed
+            _appShellViewModel.HeaderViewModel.ClearNotifications();
 
             // Reset to global language setting when company is closed
             var globalLanguage = SettingsService?.GlobalSettings.Ui.Language ?? "English";
@@ -1063,6 +1071,109 @@ public class App : Application
                 await SettingsService.SaveGlobalSettingsAsync();
             }
         };
+
+        // Open sample company
+        _welcomeScreenViewModel.OpenSampleCompanyRequested += async (_, _) =>
+        {
+            await OpenSampleCompanyAsync();
+        };
+    }
+
+    /// <summary>
+    /// Creates and opens a sample company with pre-populated demo data.
+    /// </summary>
+    private static async Task OpenSampleCompanyAsync()
+    {
+        if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null || _fileService == null)
+            return;
+
+        try
+        {
+            // Check if sample company already exists and is up to date
+            var sampleFilePath = SampleCompanyService.GetSampleCompanyPath();
+            var needsCreation = true;
+
+            if (File.Exists(sampleFilePath))
+            {
+                var footer = await CompanyManager.GetFileInfoAsync(sampleFilePath);
+                if (footer != null && IsVersionUpToDate(footer.Version))
+                    needsCreation = false;
+                else
+                    SampleCompanyService.CleanupSampleCompanyFiles();
+            }
+
+            _mainWindowViewModel.ShowLoading(needsCreation
+                ? "Creating sample company...".Translate()
+                : "Opening sample company...".Translate());
+
+            // Create the sample company if needed
+            if (needsCreation)
+            {
+                var assembly = Assembly.GetExecutingAssembly();
+                var resourceName = "ArgoBooks.Resources.SampleCompanyData.xlsx";
+
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream == null)
+                {
+                    _mainWindowViewModel.HideLoading();
+                    _appShellViewModel.AddNotification(
+                        "Error".Translate(),
+                        "Sample company data not found.".Translate(),
+                        NotificationType.Error);
+                    return;
+                }
+
+                var importService = new SpreadsheetImportService();
+                var sampleService = new SampleCompanyService(_fileService, importService);
+                sampleFilePath = await sampleService.CreateSampleCompanyAsync(stream);
+            }
+
+            // Open the sample company
+            var success = await CompanyManager.OpenCompanyAsync(sampleFilePath);
+
+            if (success)
+            {
+                await LoadRecentCompaniesAsync();
+                _appShellViewModel.AddNotification(
+                    "Welcome!".Translate(),
+                    "You're exploring TechFlow Solutions - a sample company. Feel free to experiment!".Translate(),
+                    NotificationType.Info);
+            }
+            else
+            {
+                _mainWindowViewModel.HideLoading();
+                _appShellViewModel.AddNotification(
+                    "Error".Translate(),
+                    "Failed to open sample company.".Translate(),
+                    NotificationType.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _mainWindowViewModel.HideLoading();
+            _appShellViewModel.AddNotification(
+                "Error".Translate(),
+                "Failed to open sample company: {0}".TranslateFormat(ex.Message),
+                NotificationType.Error);
+        }
+    }
+
+    /// <summary>
+    /// Checks if the sample company version is up to date with the current app version.
+    /// </summary>
+    private static bool IsVersionUpToDate(string sampleVersion)
+    {
+        if (!Version.TryParse(sampleVersion, out var sampleVer))
+            return false;
+
+        var appVersion = AppInfo.AssemblyVersion;
+        if (appVersion == null)
+            return false;
+
+        // Sample is up to date if major.minor.build matches
+        return sampleVer.Major == appVersion.Major &&
+               sampleVer.Minor == appVersion.Minor &&
+               sampleVer.Build == appVersion.Build;
     }
 
     /// <summary>

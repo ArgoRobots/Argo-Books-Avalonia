@@ -17,6 +17,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- Sample company data embedded resource -->
+        <EmbeddedResource Include="Resources\SampleCompanyData.xlsx" />
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- Avalonia -->
         <PackageReference Include="Avalonia" />
         <PackageReference Include="Avalonia.Themes.Fluent" />
