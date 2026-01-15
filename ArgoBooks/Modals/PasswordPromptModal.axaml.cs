@@ -78,4 +78,13 @@ public partial class PasswordPromptModal : UserControl
             e.Handled = true;
         }
     }
+
+    private void Modal_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && DataContext is PasswordPromptModalViewModel vm)
+        {
+            vm.CancelCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
 }

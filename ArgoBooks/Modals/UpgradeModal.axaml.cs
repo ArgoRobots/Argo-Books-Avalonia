@@ -1,6 +1,7 @@
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -307,6 +308,23 @@ public partial class UpgradeModal : UserControl
     }
 
     private bool _isFormatting;
+
+    private void Modal_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && DataContext is UpgradeModalViewModel vm)
+        {
+            // If the enter key modal is open, close that first
+            if (vm.IsEnterKeyModalOpen)
+            {
+                vm.CloseEnterKeyCommand.Execute(null);
+            }
+            else
+            {
+                vm.CloseCommand.Execute(null);
+            }
+            e.Handled = true;
+        }
+    }
 
     private void LicenseKeyTextBox_TextChanged(object? sender, TextChangedEventArgs e)
     {

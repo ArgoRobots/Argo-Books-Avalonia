@@ -45,4 +45,13 @@ public partial class EditCompanyModal : UserControl
             viewModel.RequestClose();
         }
     }
+
+    private void Modal_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && DataContext is EditCompanyModalViewModel viewModel)
+        {
+            viewModel.RequestClose();
+            e.Handled = true;
+        }
+    }
 }
