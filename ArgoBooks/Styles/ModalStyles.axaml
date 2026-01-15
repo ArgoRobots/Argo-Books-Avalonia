@@ -1,17 +1,24 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:helpers="using:ArgoBooks.Helpers">
 
     <!--
         Argo Books Modal Styles
         Shared styles for modal dialogs with fade-in/scale animations.
 
-        Usage:
-        1. Apply Classes="modal-backdrop" to the backdrop Border
-        2. Apply Classes="modal-content" to the modal content Border
-        3. Set x:Name="ModalBorder" on the content Border
-        4. In code-behind, call ModalAnimationHelper.AnimateIn/Out or manually:
-           - AnimateIn: ModalBorder.Opacity = 1; ModalBorder.RenderTransform = new ScaleTransform(1, 1);
-           - AnimateOut: ModalBorder.Opacity = 0; ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
+        RECOMMENDED: Use the ModalAnimationBehavior attached property for automatic animations:
+
+        <Border Classes="modal-animated"
+                helpers:ModalAnimationBehavior.IsEnabled="True"
+                helpers:ModalAnimationBehavior.OpenPropertyName="IsAddModalOpen">
+            ... modal content ...
+        </Border>
+
+        This eliminates the need for any code-behind animation logic.
+
+        ALTERNATIVE: Manual animation with ModalAnimationHelper:
+        1. Apply Classes="modal-content" to the modal content Border
+        2. In code-behind, call ModalAnimationHelper.AnimateIn/Out
     -->
 
     <!-- Modal Backdrop - semi-transparent overlay with fade animation -->
@@ -21,6 +28,18 @@
         <Setter Property="Transitions">
             <Transitions>
                 <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- Modal Animated - use with ModalAnimationBehavior for automatic animations -->
+    <Style Selector="Border.modal-animated">
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="BoxShadow" Value="0 8 32 0 #40000000" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
             </Transitions>
         </Setter>
     </Style>
