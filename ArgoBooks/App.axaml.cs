@@ -498,7 +498,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log error but don't crash the app
-            System.Diagnostics.Debug.WriteLine($"Error during async initialization: {ex.Message}");
+            Console.WriteLine($"Error during async initialization: {ex.Message}");
         }
     }
 
@@ -514,12 +514,12 @@ public class App : Application
 
             if (!exchangeService.HasApiKey)
             {
-                System.Diagnostics.Debug.WriteLine("Exchange rate service initialized without API key - currency conversion will use cached rates only");
+                Console.WriteLine("Exchange rate service initialized without API key - currency conversion will use cached rates only");
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to initialize exchange rate service: {ex.Message}");
+            Console.WriteLine($"Failed to initialize exchange rate service: {ex.Message}");
         }
     }
 
@@ -548,7 +548,7 @@ public class App : Application
         catch (Exception ex)
         {
             // Log but don't crash - file association is not critical
-            System.Diagnostics.Debug.WriteLine($"Failed to register file type associations: {ex.Message}");
+            Console.WriteLine($"Failed to register file type associations: {ex.Message}");
         }
     }
 
@@ -605,12 +605,12 @@ public class App : Application
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine("Could not find icon resource");
+            Console.WriteLine("Could not find icon resource");
             return null;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to extract icon: {ex.Message}");
+            Console.WriteLine($"Failed to extract icon: {ex.Message}");
             return null;
         }
     }
@@ -1075,7 +1075,16 @@ public class App : Application
         // Open sample company
         _welcomeScreenViewModel.OpenSampleCompanyRequested += async (_, _) =>
         {
-            await OpenSampleCompanyAsync();
+            Console.WriteLine("[SampleCompany] Event handler triggered");
+            try
+            {
+                await OpenSampleCompanyAsync();
+                Console.WriteLine("[SampleCompany] Event handler completed successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SampleCompany] Event handler EXCEPTION: {ex}");
+            }
         };
     }
 
@@ -1084,30 +1093,45 @@ public class App : Application
     /// </summary>
     private static async Task OpenSampleCompanyAsync()
     {
+        Console.WriteLine("[SampleCompany] OpenSampleCompanyAsync started");
+
         if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null || _fileService == null)
+        {
+            Console.WriteLine($"[SampleCompany] Null check failed - CompanyManager: {CompanyManager != null}, MainWindowVM: {_mainWindowViewModel != null}, AppShellVM: {_appShellViewModel != null}, FileService: {_fileService != null}");
             return;
+        }
 
         try
         {
             // Check if sample company already exists and is up to date
             var sampleFilePath = SampleCompanyService.GetSampleCompanyPath();
+            Console.WriteLine($"[SampleCompany] Sample file path: {sampleFilePath}");
             var needsCreation = true;
 
             if (File.Exists(sampleFilePath))
             {
+                Console.WriteLine("[SampleCompany] File exists, checking version...");
                 // Check if the sample company version matches current app version
                 var footer = await CompanyManager.GetFileInfoAsync(sampleFilePath);
+                Console.WriteLine($"[SampleCompany] Footer: {footer?.Version ?? "null"}");
                 if (footer != null && IsVersionUpToDate(footer.Version))
                 {
                     needsCreation = false;
+                    Console.WriteLine("[SampleCompany] Version is up to date, will open existing");
                 }
                 else
                 {
                     // Version mismatch - delete old sample company
+                    Console.WriteLine("[SampleCompany] Version mismatch, cleaning up...");
                     SampleCompanyService.CleanupSampleCompanyFiles();
                 }
             }
+            else
+            {
+                Console.WriteLine("[SampleCompany] File does not exist, will create new");
+            }
 
+            Console.WriteLine($"[SampleCompany] needsCreation: {needsCreation}");
             _mainWindowViewModel.ShowLoading(needsCreation
                 ? "Creating sample company...".Translate()
                 : "Opening sample company...".Translate());
@@ -1115,11 +1139,17 @@ public class App : Application
             // Create the sample company if needed
             if (needsCreation)
             {
+                Console.WriteLine("[SampleCompany] Getting embedded resource...");
                 // Get the embedded sample data Excel file
                 var assembly = Assembly.GetExecutingAssembly();
                 var resourceName = "ArgoBooks.Resources.SampleCompanyData.xlsx";
 
+                // Debug: list all resources
+                var allResources = assembly.GetManifestResourceNames();
+                Console.WriteLine($"[SampleCompany] Available resources: {string.Join(", ", allResources)}");
+
                 using var stream = assembly.GetManifestResourceStream(resourceName);
+                Console.WriteLine($"[SampleCompany] Stream is null: {stream == null}");
                 if (stream == null)
                 {
                     _mainWindowViewModel.HideLoading();
@@ -1130,14 +1160,19 @@ public class App : Application
                     return;
                 }
 
+                Console.WriteLine($"[SampleCompany] Stream length: {stream.Length}");
                 // Create the sample company
                 var importService = new SpreadsheetImportService();
                 var sampleService = new SampleCompanyService(_fileService, importService);
+                Console.WriteLine("[SampleCompany] Creating sample company...");
                 sampleFilePath = await sampleService.CreateSampleCompanyAsync(stream);
+                Console.WriteLine($"[SampleCompany] Sample company created at: {sampleFilePath}");
             }
 
             // Open the sample company
+            Console.WriteLine($"[SampleCompany] Opening company at: {sampleFilePath}");
             var success = await CompanyManager.OpenCompanyAsync(sampleFilePath);
+            Console.WriteLine($"[SampleCompany] Open result: {success}");
 
             if (success)
             {
@@ -1158,12 +1193,15 @@ public class App : Application
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[SampleCompany] EXCEPTION: {ex}");
             _mainWindowViewModel.HideLoading();
             _appShellViewModel.AddNotification(
                 "Error".Translate(),
                 "Failed to open sample company: {0}".TranslateFormat(ex.Message),
                 NotificationType.Error);
         }
+
+        Console.WriteLine("[SampleCompany] OpenSampleCompanyAsync completed");
     }
 
     /// <summary>
