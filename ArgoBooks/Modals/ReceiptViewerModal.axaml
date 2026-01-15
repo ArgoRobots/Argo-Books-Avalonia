@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.ReceiptViewerModal"
              x:DataType="vm:ReceiptViewerModalViewModel"
@@ -19,18 +20,13 @@
     <!-- Modal Overlay -->
     <Grid IsVisible="{Binding IsOpen}">
         <!-- Backdrop -->
-        <Border Background="#80000000"
-                IsHitTestVisible="True"
-                PointerPressed="Backdrop_PointerPressed">
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
-                </Transitions>
-            </Border.Transitions>
-        </Border>
+        <Border Classes="modal-backdrop"
+                PointerPressed="Backdrop_PointerPressed" />
 
         <!-- Modal Content -->
-        <Border x:Name="ModalBorder"
+        <Border Classes="modal-animated"
+                helpers:ModalAnimationBehavior.IsEnabled="True"
+                helpers:ModalAnimationBehavior.OpenPropertyName="IsOpen"
                 Background="{DynamicResource SurfaceBrush}"
                 CornerRadius="12"
                 Width="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenWidth}}"
@@ -38,20 +34,7 @@
                 Margin="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenMargin}}"
                 HorizontalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenHorizontalAlignment}}"
                 VerticalAlignment="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenVerticalAlignment}}"
-                BoxShadow="0 8 32 0 #40000000"
-                Focusable="True"
-                KeyDown="Modal_KeyDown"
-                Opacity="0"
-                RenderTransformOrigin="0.5,0.5">
-            <Border.RenderTransform>
-                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-            </Border.RenderTransform>
-            <Border.Transitions>
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                </Transitions>
-            </Border.Transitions>
+                KeyDown="Modal_KeyDown">
 
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Modal Header -->
