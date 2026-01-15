@@ -301,6 +301,32 @@
         <Setter Property="Height" Value="14" />
     </Style>
 
+    <!-- Medium Primary Button (smaller text and padding) -->
+    <Style Selector="Button.primary-button.medium">
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button.primary-button.medium PathIcon">
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Height" Value="14" />
+    </Style>
+    <Style Selector="Button.primary-button.medium StackPanel">
+        <Setter Property="Spacing" Value="6" />
+    </Style>
+
+    <!-- Medium Secondary Button (smaller text and padding) -->
+    <Style Selector="Button.secondary-button.medium">
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Button.secondary-button.medium PathIcon">
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Height" Value="14" />
+    </Style>
+    <Style Selector="Button.secondary-button.medium StackPanel">
+        <Setter Property="Spacing" Value="6" />
+    </Style>
+
     <!-- Link Button (inline text link, color change on hover) -->
     <Style Selector="Button.link-button">
         <Setter Property="Background" Value="Transparent" />

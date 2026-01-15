@@ -170,6 +170,12 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private bool _isCompactMode;
 
     /// <summary>
+    /// Whether the header is in medium mode (smaller text).
+    /// </summary>
+    [ObservableProperty]
+    private bool _isMediumMode;
+
+    /// <summary>
     /// Whether to show button text (false in compact mode).
     /// </summary>
     [ObservableProperty]
@@ -187,33 +193,45 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private double _headerSpacing = 12;
 
+    /// <summary>
+    /// Search icon margin, responsive to available space.
+    /// </summary>
+    [ObservableProperty]
+    private Avalonia.Thickness _searchIconMargin = new(12, 0, 8, 0);
+
     partial void OnHeaderWidthChanged(double value)
     {
         // Breakpoints for responsive layout
         // < 750: Compact mode - icon-only buttons, smaller search
-        // 750-950: Medium mode - shorter text, medium search
+        // 750-950: Medium mode - smaller text, medium search
         // > 950: Full mode - full text, full search
 
         if (value < 750)
         {
             IsCompactMode = true;
+            IsMediumMode = false;
             ShowButtonText = false;
             SearchBoxWidth = 140;
             HeaderSpacing = 6;
+            SearchIconMargin = new Avalonia.Thickness(8, 0, 6, 0);
         }
         else if (value < 950)
         {
             IsCompactMode = false;
+            IsMediumMode = true;
             ShowButtonText = true;
             SearchBoxWidth = 180;
             HeaderSpacing = 8;
+            SearchIconMargin = new Avalonia.Thickness(10, 0, 6, 0);
         }
         else
         {
             IsCompactMode = false;
+            IsMediumMode = false;
             ShowButtonText = true;
             SearchBoxWidth = 250;
             HeaderSpacing = 12;
+            SearchIconMargin = new Avalonia.Thickness(12, 0, 8, 0);
         }
     }
 
