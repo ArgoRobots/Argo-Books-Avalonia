@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:modals="using:ArgoBooks.Modals"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReportModals"
              x:DataType="vm:ReportModalsViewModel">
@@ -16,53 +17,31 @@
     <Panel>
         <!-- ======================= PAGE SETTINGS MODAL ======================= -->
         <Panel IsVisible="{Binding IsPageSettingsOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <modals:ReportPageSettingsModal x:Name="PageSettingsModal"
-                                             DataContext="{Binding ReportsPageViewModel}"
+            <Border Classes="modal-backdrop" />
+            <modals:ReportPageSettingsModal DataContext="{Binding ReportsPageViewModel}"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
         </Panel>
 
         <!-- ======================= SAVE TEMPLATE MODAL ======================= -->
         <Panel IsVisible="{Binding IsSaveTemplateOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <modals:ReportSaveTemplateModal x:Name="SaveTemplateModal"
-                                             DataContext="{Binding ReportsPageViewModel}"
+            <Border Classes="modal-backdrop" />
+            <modals:ReportSaveTemplateModal DataContext="{Binding ReportsPageViewModel}"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
         </Panel>
 
         <!-- ======================= DELETE TEMPLATE MODAL ======================= -->
         <Panel IsVisible="{Binding IsDeleteTemplateOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <Border x:Name="DeleteTemplateModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsDeleteTemplateOpen"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="400"
                     Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    CornerRadius="12">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -121,29 +100,15 @@
 
         <!-- ======================= RENAME TEMPLATE MODAL ======================= -->
         <Panel IsVisible="{Binding IsRenameTemplateOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <Border x:Name="RenameTemplateModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsRenameTemplateOpen"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="400"
                     Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    CornerRadius="12">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"

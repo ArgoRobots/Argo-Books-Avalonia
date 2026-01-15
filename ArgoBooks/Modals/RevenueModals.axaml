@@ -6,6 +6,7 @@
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.RevenueModals"
              x:DataType="vm:RevenueModalsViewModel">
@@ -17,30 +18,17 @@
     <Panel>
         <!-- ======================= ADD / EDIT REVENUE MODAL ======================= -->
         <Panel IsVisible="{Binding IsAddEditModalOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <Border x:Name="AddEditModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsAddEditModalOpen"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="750"
                     MaxHeight="700"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -64,7 +52,7 @@
                     </Border>
 
                     <!-- Content -->
-                    <ScrollViewer x:Name="AddEditScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="24" Spacing="20">
                             <!-- Date and Payment Method Row -->
                             <Grid ColumnDefinitions="*,16,*">
@@ -379,30 +367,17 @@
 
         <!-- ======================= FILTER MODAL ======================= -->
         <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <Border x:Name="FilterModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="500"
                     MaxHeight="600"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -537,29 +512,16 @@
 
         <!-- ======================= ITEM STATUS MODAL ======================= -->
         <Panel IsVisible="{Binding IsItemStatusModalOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <Border x:Name="ItemStatusModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsItemStatusModalOpen"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="450"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    BoxShadow="0 8 32 0 #40000000">
                 <StackPanel>
                     <!-- Header -->
                     <Border Padding="24,16"

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.LostDamagedModals"
              x:DataType="vm:LostDamagedModalsViewModel">
@@ -11,26 +12,15 @@
     <Panel>
         <!-- Filter Modal -->
         <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Background="#80000000" />
-            <Border x:Name="FilterModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     Width="480"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    VerticalAlignment="Center">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
                     <Border Grid.Row="0"

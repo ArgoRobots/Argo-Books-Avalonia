@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -9,8 +8,6 @@ namespace ArgoBooks.Modals;
 /// </summary>
 public partial class ExpenseModals : UserControl
 {
-    private bool _eventsSubscribed;
-
     public ExpenseModals()
     {
         InitializeComponent();
@@ -22,21 +19,6 @@ public partial class ExpenseModals : UserControl
         if (DataContext is ExpenseModalsViewModel vm)
         {
             vm.ScrollToLineItemsRequested += OnScrollToLineItemsRequested;
-
-            if (!_eventsSubscribed)
-            {
-                _eventsSubscribed = true;
-                vm.PropertyChanged += (_, args) =>
-                {
-                    if (args.PropertyName == nameof(ExpenseModalsViewModel.IsAddEditModalOpen))
-                    {
-                        if (vm.IsAddEditModalOpen)
-                            ModalAnimationHelper.AnimateIn(AddEditModalBorder);
-                        else
-                            ModalAnimationHelper.AnimateOut(AddEditModalBorder);
-                    }
-                };
-            }
         }
     }
 

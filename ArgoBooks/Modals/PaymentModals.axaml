@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.PaymentModals"
              x:DataType="vm:PaymentModalsViewModel">
@@ -17,8 +18,10 @@
     <Panel>
         <!-- Add Payment Modal -->
         <Panel IsVisible="{Binding IsAddModalOpen}">
-            <Border Background="#80000000" />
-            <Border x:Name="AddModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsAddModalOpen"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -26,20 +29,7 @@
                     Width="500"
                     MaxHeight="600"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    VerticalAlignment="Center">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -154,8 +144,10 @@
 
         <!-- Edit Payment Modal -->
         <Panel IsVisible="{Binding IsEditModalOpen}">
-            <Border Background="#80000000" />
-            <Border x:Name="EditModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsEditModalOpen"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
@@ -163,20 +155,7 @@
                     Width="500"
                     MaxHeight="600"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    VerticalAlignment="Center">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
@@ -277,28 +256,17 @@
 
         <!-- Filter Modal -->
         <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Background="#80000000" />
-            <Border x:Name="FilterModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
                     Width="450"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    VerticalAlignment="Center">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">

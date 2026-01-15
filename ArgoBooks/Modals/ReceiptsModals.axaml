@@ -6,6 +6,7 @@
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
@@ -13,26 +14,16 @@
     <Panel>
         <!-- Filter Modal -->
         <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Background="#80000000" />
-            <Border x:Name="FilterModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     Width="480"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
                     <Border Grid.Row="0"
@@ -179,30 +170,17 @@
 
         <!-- ======================= AI SCAN REVIEW MODAL ======================= -->
         <Panel IsVisible="{Binding IsScanReviewModalOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <Border x:Name="ScanReviewModalBorder"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsScanReviewModalOpen"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="950"
                     MaxHeight="750"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000"
-                    Focusable="True"
-                    Opacity="0"
-                    RenderTransformOrigin="0.5,0.5">
-                <Border.RenderTransform>
-                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
-                </Border.RenderTransform>
-                <Border.Transitions>
-                    <Transitions>
-                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
+                    BoxShadow="0 8 32 0 #40000000">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
