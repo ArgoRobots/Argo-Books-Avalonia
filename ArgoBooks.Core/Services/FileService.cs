@@ -91,10 +91,6 @@ public class FileService(
         var footer = await footerService.ReadFooterAsync(filePath, cancellationToken)
             ?? throw new InvalidDataException("Invalid file format or corrupted file.");
 
-        // Check version compatibility
-        if (!footerService.IsVersionCompatible(footer))
-            throw new NotSupportedException($"File version {footer.Version} is not supported.");
-
         // Verify password if encrypted
         if (footer.IsEncrypted)
         {

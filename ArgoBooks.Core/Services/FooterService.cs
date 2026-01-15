@@ -202,15 +202,4 @@ public class FooterService
             return false;
         }
     }
-
-    /// <summary>
-    /// Checks if the file version is compatible with this application.
-    /// </summary>
-    /// <param name="footer">File footer to check.</param>
-    /// <returns>True if compatible.</returns>
-    public bool IsVersionCompatible(FileFooter footer)
-    {
-        // File format is backward compatible - all versions are supported
-        return !string.IsNullOrEmpty(footer.Version);
-    }
 }
