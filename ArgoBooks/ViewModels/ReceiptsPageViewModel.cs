@@ -172,36 +172,16 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     #region Preview Modal
 
-    [ObservableProperty]
-    private bool _isPreviewModalOpen;
-
-    [ObservableProperty]
-    private ReceiptDisplayItem? _previewReceipt;
-
-    [ObservableProperty]
-    private bool _isPreviewFullscreen;
-
     [RelayCommand]
     private void OpenPreview(ReceiptDisplayItem? receipt)
     {
         if (receipt == null) return;
-        PreviewReceipt = receipt;
-        IsPreviewModalOpen = true;
-        IsPreviewFullscreen = false;
-    }
 
-    [RelayCommand]
-    private void ClosePreview()
-    {
-        IsPreviewModalOpen = false;
-        IsPreviewFullscreen = false;
-        PreviewReceipt = null;
-    }
+        var title = $"Receipt #{receipt.Id}";
+        if (!string.IsNullOrEmpty(receipt.Vendor))
+            title += $"\n{receipt.Vendor}";
 
-    [RelayCommand]
-    private void TogglePreviewFullscreen()
-    {
-        IsPreviewFullscreen = !IsPreviewFullscreen;
+        App.ReceiptViewerModal?.Show(receipt.ImagePath ?? string.Empty, receipt.Id, title);
     }
 
     #endregion
