@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
@@ -721,7 +722,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         else if (suggestion.ShouldCreateNewSupplier && suggestion.NewSupplier != null)
         {
             ShowCreateSupplierSuggestion = true;
-            SuggestedSupplierName = suggestion.NewSupplier.Name;
+            SuggestedSupplierName = ToTitleCase(suggestion.NewSupplier.Name);
             SupplierMatchConfidence = 0;
         }
 
@@ -738,9 +739,20 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         else if (suggestion.ShouldCreateNewCategory && suggestion.NewCategory != null)
         {
             ShowCreateCategorySuggestion = true;
-            SuggestedCategoryName = suggestion.NewCategory.Name;
+            SuggestedCategoryName = ToTitleCase(suggestion.NewCategory.Name);
             CategoryMatchConfidence = 0;
         }
+    }
+
+    /// <summary>
+    /// Converts a string to title case (e.g., "HARBOR LANE CAFE" -> "Harbor Lane Cafe").
+    /// </summary>
+    private static string ToTitleCase(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLower());
     }
 
     /// <summary>
