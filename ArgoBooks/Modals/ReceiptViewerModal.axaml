@@ -98,24 +98,60 @@
                         Padding="24,12"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,1,0,0">
-                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Left: Fullscreen toggle -->
                         <Button Grid.Column="0"
                                 Classes="icon-button"
-                                ToolTip.Tip="{loc:Loc 'Toggle Fullscreen'}"
+                                ToolTip.Tip="{loc:Loc 'Toggle Fullscreen (F)'}"
                                 Command="{Binding ToggleFullscreenCommand}">
                             <PathIcon Data="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
                                       Width="16" Height="16" />
                         </Button>
-                        <Button Grid.Column="1"
-                                Classes="icon-button"
-                                Margin="8,0,0,0"
-                                ToolTip.Tip="{loc:Loc 'Fit to Window'}"
-                                Click="FitToWindow_Click">
-                            <!-- Fit to window icon (arrows pointing inward) -->
-                            <PathIcon Data="M4 4h4V2H2v6h2V4zm16 0v4h2V2h-6v2h4zM4 20v-4H2v6h6v-2H4zm16 0h-4v2h6v-6h-2v4z"
-                                      Width="16" Height="16" />
-                        </Button>
-                        <Button Grid.Column="3"
+
+                        <!-- Center: Zoom Controls -->
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="4"
+                                    HorizontalAlignment="Center">
+                            <Button Classes="icon-button"
+                                    Click="ZoomOut_Click"
+                                    ToolTip.Tip="{loc:Loc 'Zoom Out (-)'}">
+                                <!-- Magnifying glass with minus -->
+                                <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"
+                                          Width="16" Height="16" />
+                            </Button>
+                            <Slider x:Name="ZoomSlider"
+                                    Minimum="0.25"
+                                    Maximum="4.0"
+                                    Width="120"
+                                    VerticalAlignment="Center"
+                                    ValueChanged="ZoomSlider_ValueChanged" />
+                            <Button Classes="icon-button"
+                                    Click="ZoomIn_Click"
+                                    ToolTip.Tip="{loc:Loc 'Zoom In (+)'}">
+                                <!-- Magnifying glass with plus -->
+                                <PathIcon Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z"
+                                          Width="16" Height="16" />
+                            </Button>
+                            <TextBlock x:Name="ZoomPercentText"
+                                       Text="100%"
+                                       VerticalAlignment="Center"
+                                       FontSize="12"
+                                       Width="45"
+                                       TextAlignment="Center"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <Button Classes="icon-button"
+                                    Margin="8,0,0,0"
+                                    Click="FitToWindow_Click"
+                                    ToolTip.Tip="{loc:Loc 'Fit to Window (W)'}">
+                                <!-- Fit to window icon: corners with center focus dot -->
+                                <PathIcon Data="M5 15H3v4c0 1.1.9 2 2 2h4v-2H5v-4zM5 5h4V3H5c-1.1 0-2 .9-2 2v4h2V5zm14-2h-4v2h4v4h2V5c0-1.1-.9-2-2-2zm0 16h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zM12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"
+                                          Width="16" Height="16" />
+                            </Button>
+                        </StackPanel>
+
+                        <!-- Right: Close button -->
+                        <Button Grid.Column="2"
                                 Content="{loc:Loc 'Close'}"
                                 Classes="secondary-button"
                                 Command="{Binding CloseCommand}" />

@@ -23,7 +23,10 @@ public partial class ReceiptViewerModal : UserControl
     private LayoutTransformControl? _zoomTransformControl;
     private Image? _receiptImage;
     private OverscrollHelper? _overscrollHelper;
+    private Slider? _zoomSlider;
+    private TextBlock? _zoomPercentText;
     private bool _eventsSubscribed;
+    private bool _updatingSlider;
 
     // Zoom settings
     private double _zoomLevel = 1.0;
@@ -96,11 +99,23 @@ public partial class ReceiptViewerModal : UserControl
         _imageScrollViewer ??= this.FindControl<ScrollViewer>("ImageScrollViewer");
         _zoomTransformControl ??= this.FindControl<LayoutTransformControl>("ZoomTransformControl");
         _receiptImage ??= this.FindControl<Image>("ReceiptImage");
+        _zoomSlider ??= this.FindControl<Slider>("ZoomSlider");
+        _zoomPercentText ??= this.FindControl<TextBlock>("ZoomPercentText");
 
         if (_zoomTransformControl != null && _overscrollHelper == null)
         {
             _overscrollHelper = new OverscrollHelper(_zoomTransformControl);
         }
+
+        // Initialize slider value
+        if (_zoomSlider != null)
+        {
+            _updatingSlider = true;
+            _zoomSlider.Value = _zoomLevel;
+            _updatingSlider = false;
+        }
+
+        UpdateZoomDisplay();
     }
 
     #region Event Handlers
@@ -156,10 +171,39 @@ public partial class ReceiptViewerModal : UserControl
     {
         if (_zoomTransformControl == null) return;
         _zoomTransformControl.LayoutTransform = new ScaleTransform(_zoomLevel, _zoomLevel);
+        UpdateZoomDisplay();
+    }
+
+    private void UpdateZoomDisplay()
+    {
+        // Update slider (without triggering the event)
+        if (_zoomSlider != null && !_updatingSlider)
+        {
+            _updatingSlider = true;
+            _zoomSlider.Value = _zoomLevel;
+            _updatingSlider = false;
+        }
+
+        // Update percentage text
+        if (_zoomPercentText != null)
+        {
+            _zoomPercentText.Text = $"{_zoomLevel:P0}";
+        }
     }
 
     private void ZoomIn() => ZoomTowardsCenter(true);
     private void ZoomOut() => ZoomTowardsCenter(false);
+
+    private void ZoomIn_Click(object? sender, RoutedEventArgs e) => ZoomIn();
+    private void ZoomOut_Click(object? sender, RoutedEventArgs e) => ZoomOut();
+
+    private void ZoomSlider_ValueChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (_updatingSlider) return;
+
+        _zoomLevel = e.NewValue;
+        ApplyZoom();
+    }
 
     private void ResetZoom()
     {
