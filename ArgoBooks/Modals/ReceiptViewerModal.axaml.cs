@@ -201,8 +201,43 @@ public partial class ReceiptViewerModal : UserControl
     {
         if (_updatingSlider) return;
 
-        _zoomLevel = e.NewValue;
+        ZoomToLevel(e.NewValue);
+    }
+
+    /// <summary>
+    /// Zooms to a specific level while maintaining center focus.
+    /// </summary>
+    private void ZoomToLevel(double newZoom)
+    {
+        if (_imageScrollViewer == null || _zoomTransformControl == null) return;
+
+        var oldZoom = _zoomLevel;
+        newZoom = Math.Clamp(newZoom, MinZoom, MaxZoom);
+
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        // Get the center of the viewport in content coordinates
+        var viewportCenterX = _imageScrollViewer.Viewport.Width / 2;
+        var viewportCenterY = _imageScrollViewer.Viewport.Height / 2;
+
+        var contentCenterX = (_imageScrollViewer.Offset.X + viewportCenterX) / oldZoom;
+        var contentCenterY = (_imageScrollViewer.Offset.Y + viewportCenterY) / oldZoom;
+
+        _zoomLevel = newZoom;
         ApplyZoom();
+        _zoomTransformControl.UpdateLayout();
+
+        // Calculate new offset to keep the same content point at center
+        var newOffsetX = contentCenterX * newZoom - viewportCenterX;
+        var newOffsetY = contentCenterY * newZoom - viewportCenterY;
+
+        var maxX = Math.Max(0, _imageScrollViewer.Extent.Width - _imageScrollViewer.Viewport.Width);
+        var maxY = Math.Max(0, _imageScrollViewer.Extent.Height - _imageScrollViewer.Viewport.Height);
+
+        _imageScrollViewer.Offset = new Vector(
+            Math.Clamp(newOffsetX, 0, maxX),
+            Math.Clamp(newOffsetY, 0, maxY)
+        );
     }
 
     private void ResetZoom()
@@ -252,35 +287,11 @@ public partial class ReceiptViewerModal : UserControl
 
     private void ZoomTowardsCenter(bool zoomIn)
     {
-        if (_imageScrollViewer == null || _zoomTransformControl == null) return;
-
-        var oldZoom = _zoomLevel;
         var newZoom = zoomIn
-            ? Math.Min(oldZoom + ZoomStep, MaxZoom)
-            : Math.Max(oldZoom - ZoomStep, MinZoom);
+            ? Math.Min(_zoomLevel + ZoomStep, MaxZoom)
+            : Math.Max(_zoomLevel - ZoomStep, MinZoom);
 
-        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
-
-        var viewportCenterX = _imageScrollViewer.Viewport.Width / 2;
-        var viewportCenterY = _imageScrollViewer.Viewport.Height / 2;
-
-        var contentCenterX = (_imageScrollViewer.Offset.X + viewportCenterX) / oldZoom;
-        var contentCenterY = (_imageScrollViewer.Offset.Y + viewportCenterY) / oldZoom;
-
-        _zoomLevel = newZoom;
-        ApplyZoom();
-        _zoomTransformControl.UpdateLayout();
-
-        var newOffsetX = contentCenterX * newZoom - viewportCenterX;
-        var newOffsetY = contentCenterY * newZoom - viewportCenterY;
-
-        var maxX = Math.Max(0, _imageScrollViewer.Extent.Width - _imageScrollViewer.Viewport.Width);
-        var maxY = Math.Max(0, _imageScrollViewer.Extent.Height - _imageScrollViewer.Viewport.Height);
-
-        _imageScrollViewer.Offset = new Vector(
-            Math.Clamp(newOffsetX, 0, maxX),
-            Math.Clamp(newOffsetY, 0, maxY)
-        );
+        ZoomToLevel(newZoom);
     }
 
     private void OnScrollViewerPointerWheelChanged(object? sender, PointerWheelEventArgs e)
@@ -306,18 +317,48 @@ public partial class ReceiptViewerModal : UserControl
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
-        var unscaledX = scaledContentPoint.X / oldZoom;
-        var unscaledY = scaledContentPoint.Y / oldZoom;
+        // Account for centering when content is smaller than viewport
+        var oldExtent = _imageScrollViewer.Extent;
+        var viewportWidth = _imageScrollViewer.Viewport.Width;
+        var viewportHeight = _imageScrollViewer.Viewport.Height;
+        var oldOffset = _imageScrollViewer.Offset;
+
+        var centeringOffsetX = oldExtent.Width < viewportWidth
+            ? (viewportWidth - oldExtent.Width) / 2
+            : 0;
+        var centeringOffsetY = oldExtent.Height < viewportHeight
+            ? (viewportHeight - oldExtent.Height) / 2
+            : 0;
+
+        // Calculate mouse position in content space
+        var contentX = viewportPoint.X + oldOffset.X - centeringOffsetX;
+        var contentY = viewportPoint.Y + oldOffset.Y - centeringOffsetY;
+
+        // Convert to unscaled coordinates
+        var unscaledX = contentX / oldZoom;
+        var unscaledY = contentY / oldZoom;
 
         _zoomLevel = newZoom;
         ApplyZoom();
         _zoomTransformControl.UpdateLayout();
 
-        var newOffsetX = unscaledX * newZoom - viewportPoint.X;
-        var newOffsetY = unscaledY * newZoom - viewportPoint.Y;
+        // Calculate new offset to keep mouse position at same content point
+        var newExtent = _imageScrollViewer.Extent;
+        var newCenteringOffsetX = newExtent.Width < viewportWidth
+            ? (viewportWidth - newExtent.Width) / 2
+            : 0;
+        var newCenteringOffsetY = newExtent.Height < viewportHeight
+            ? (viewportHeight - newExtent.Height) / 2
+            : 0;
 
-        var maxX = Math.Max(0, _imageScrollViewer.Extent.Width - _imageScrollViewer.Viewport.Width);
-        var maxY = Math.Max(0, _imageScrollViewer.Extent.Height - _imageScrollViewer.Viewport.Height);
+        var newContentX = unscaledX * newZoom;
+        var newContentY = unscaledY * newZoom;
+
+        var newOffsetX = newContentX - viewportPoint.X + newCenteringOffsetX;
+        var newOffsetY = newContentY - viewportPoint.Y + newCenteringOffsetY;
+
+        var maxX = Math.Max(0, newExtent.Width - viewportWidth);
+        var maxY = Math.Max(0, newExtent.Height - viewportHeight);
 
         _imageScrollViewer.Offset = new Vector(
             Math.Clamp(newOffsetX, 0, maxX),

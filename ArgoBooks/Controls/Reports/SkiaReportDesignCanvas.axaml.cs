@@ -147,6 +147,10 @@ public partial class SkiaReportDesignCanvas : UserControl
     private LayoutTransformControl? _zoomTransformControl;
     private OverscrollHelper? _overscrollHelper;
 
+    // Zoom state tracking
+    private double _previousZoomLevel = 1.0;
+    private bool _zoomingFromWheel;
+
     // Render state
     private SKBitmap? _renderBitmap;
     private bool _needsRender = true;
@@ -593,11 +597,46 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void UpdateZoomTransform()
     {
-        if (_zoomTransform != null)
+        if (_zoomTransform == null) return;
+
+        var oldZoom = _previousZoomLevel;
+        var newZoom = ZoomLevel;
+        _previousZoomLevel = newZoom;
+
+        _zoomTransform.ScaleX = newZoom;
+        _zoomTransform.ScaleY = newZoom;
+
+        // If zooming from wheel, the wheel handler manages the scroll offset
+        if (_zoomingFromWheel || _scrollViewer == null)
         {
-            _zoomTransform.ScaleX = ZoomLevel;
-            _zoomTransform.ScaleY = ZoomLevel;
+            _zoomingFromWheel = false;
+            return;
         }
+
+        // Maintain center focus for slider/button zoom changes
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        var viewportCenterX = _scrollViewer.Viewport.Width / 2;
+        var viewportCenterY = _scrollViewer.Viewport.Height / 2;
+
+        var contentCenterX = (_scrollViewer.Offset.X + viewportCenterX) / oldZoom;
+        var contentCenterY = (_scrollViewer.Offset.Y + viewportCenterY) / oldZoom;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_scrollViewer == null) return;
+
+            var newOffsetX = contentCenterX * newZoom - viewportCenterX;
+            var newOffsetY = contentCenterY * newZoom - viewportCenterY;
+
+            var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+            var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+
+            _scrollViewer.Offset = new Vector(
+                Math.Clamp(newOffsetX, 0, maxX),
+                Math.Clamp(newOffsetY, 0, maxY)
+            );
+        }, DispatcherPriority.Render);
     }
 
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
@@ -646,6 +685,9 @@ public partial class SkiaReportDesignCanvas : UserControl
         const double margin = 10;
         var canvasX = (mousePosInContent.X - margin) / oldZoom;
         var canvasY = (mousePosInContent.Y - margin) / oldZoom;
+
+        // Mark that we're zooming from wheel (so UpdateZoomTransform doesn't also adjust offset)
+        _zoomingFromWheel = true;
 
         // Apply the new zoom level
         ZoomLevel = newZoom;

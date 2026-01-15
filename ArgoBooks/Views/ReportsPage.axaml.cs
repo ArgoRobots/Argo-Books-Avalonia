@@ -511,12 +511,22 @@ public partial class ReportsPage : UserControl
     /// </summary>
     private void PreviewZoomTowardsCenter(bool zoomIn)
     {
+        var newZoom = zoomIn
+            ? Math.Min(_previewZoomLevel + SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(_previewZoomLevel - SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MinZoom);
+
+        PreviewZoomToLevel(newZoom);
+    }
+
+    /// <summary>
+    /// Zooms the preview to a specific level while maintaining center focus.
+    /// </summary>
+    private void PreviewZoomToLevel(double newZoom)
+    {
         if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
 
         var oldZoom = _previewZoomLevel;
-        var newZoom = zoomIn
-            ? Math.Min(oldZoom + SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MaxZoom)
-            : Math.Max(oldZoom - SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MinZoom);
+        newZoom = Math.Clamp(newZoom, SkiaReportDesignCanvas.MinZoom, SkiaReportDesignCanvas.MaxZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
@@ -759,8 +769,7 @@ public partial class ReportsPage : UserControl
         {
             if (Math.Abs(_previewZoomLevel - vm.PreviewZoom) > 0.001)
             {
-                _previewZoomLevel = vm.PreviewZoom;
-                ApplyPreviewZoom();
+                PreviewZoomToLevel(vm.PreviewZoom);
             }
         }
     }
