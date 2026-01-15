@@ -1087,31 +1087,31 @@ public class App : Application
         if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null || _fileService == null)
             return;
 
-        // Check if sample company already exists and is up to date
-        var sampleFilePath = SampleCompanyService.GetSampleCompanyPath();
-        var needsCreation = true;
-
-        if (File.Exists(sampleFilePath))
-        {
-            // Check if the sample company version matches current app version
-            var footer = await CompanyManager.GetFileInfoAsync(sampleFilePath);
-            if (footer != null && IsVersionUpToDate(footer.Version))
-            {
-                needsCreation = false;
-            }
-            else
-            {
-                // Version mismatch - delete old sample company
-                SampleCompanyService.CleanupSampleCompanyFiles();
-            }
-        }
-
-        _mainWindowViewModel.ShowLoading(needsCreation
-            ? "Creating sample company...".Translate()
-            : "Opening sample company...".Translate());
-
         try
         {
+            // Check if sample company already exists and is up to date
+            var sampleFilePath = SampleCompanyService.GetSampleCompanyPath();
+            var needsCreation = true;
+
+            if (File.Exists(sampleFilePath))
+            {
+                // Check if the sample company version matches current app version
+                var footer = await CompanyManager.GetFileInfoAsync(sampleFilePath);
+                if (footer != null && IsVersionUpToDate(footer.Version))
+                {
+                    needsCreation = false;
+                }
+                else
+                {
+                    // Version mismatch - delete old sample company
+                    SampleCompanyService.CleanupSampleCompanyFiles();
+                }
+            }
+
+            _mainWindowViewModel.ShowLoading(needsCreation
+                ? "Creating sample company...".Translate()
+                : "Opening sample company...".Translate());
+
             // Create the sample company if needed
             if (needsCreation)
             {
@@ -1119,7 +1119,7 @@ public class App : Application
                 var assembly = Assembly.GetExecutingAssembly();
                 var resourceName = "ArgoBooks.Resources.SampleCompanyData.xlsx";
 
-                await using var stream = assembly.GetManifestResourceStream(resourceName);
+                using var stream = assembly.GetManifestResourceStream(resourceName);
                 if (stream == null)
                 {
                     _mainWindowViewModel.HideLoading();
