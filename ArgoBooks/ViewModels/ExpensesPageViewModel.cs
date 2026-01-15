@@ -618,19 +618,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     #endregion
 
-    #region Receipt Preview Modal
-
-    [ObservableProperty]
-    private bool _isReceiptPreviewOpen;
-
-    [ObservableProperty]
-    private string _previewReceiptPath = string.Empty;
-
-    [ObservableProperty]
-    private string _previewReceiptId = string.Empty;
-
-    [ObservableProperty]
-    private bool _isReceiptFullscreen;
+    #region Receipt Preview
 
     [RelayCommand]
     private void ViewReceipt(ExpenseDisplayItem? item)
@@ -638,20 +626,15 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         if (item == null || !item.HasReceipt)
             return;
 
-        // Try to get the receipt path - check if file exists, otherwise load from stored data
         var receiptPath = GetReceiptImagePath(item.Id);
         if (string.IsNullOrEmpty(receiptPath))
             return;
 
-        PreviewReceiptPath = receiptPath;
-        PreviewReceiptId = item.Id;
-        IsReceiptPreviewOpen = true;
-        IsReceiptFullscreen = false;
+        App.ReceiptViewerModal?.Show(receiptPath, item.Id);
     }
 
-    private string? GetReceiptImagePath(string expenseId)
+    private static string? GetReceiptImagePath(string expenseId)
     {
-        // Always load from company file to ensure consistency
         var companyData = App.CompanyManager?.CompanyData;
 
         var expense = companyData?.Purchases.FirstOrDefault(p => p.Id == expenseId);
@@ -662,7 +645,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
         try
         {
-            // Create temp file from Base64 data stored in company file
             var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", "Receipts");
             Directory.CreateDirectory(tempDir);
             var tempPath = Path.Combine(tempDir, receipt.FileName);
@@ -674,20 +656,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         {
             return null;
         }
-    }
-
-    [RelayCommand]
-    private void CloseReceiptPreview()
-    {
-        IsReceiptPreviewOpen = false;
-        IsReceiptFullscreen = false;
-        PreviewReceiptPath = string.Empty;
-    }
-
-    [RelayCommand]
-    private void ToggleReceiptFullscreen()
-    {
-        IsReceiptFullscreen = !IsReceiptFullscreen;
     }
 
     #endregion

@@ -286,6 +286,11 @@ public class App : Application
     public static UnsavedChangesDialogViewModel? UnsavedChangesDialog { get; private set; }
 
     /// <summary>
+    /// Gets the receipt viewer modal ViewModel for viewing receipt images.
+    /// </summary>
+    public static ReceiptViewerModalViewModel? ReceiptViewerModal { get; private set; }
+
+    /// <summary>
     /// Checks if the reports page has unsaved changes.
     /// </summary>
     public static bool HasReportsPageUnsavedChanges => _appShellViewModel?.HasReportsPageUnsavedChanges ?? false;
@@ -330,6 +335,7 @@ public class App : Application
             _mainWindowViewModel = new MainWindowViewModel();
             ConfirmationDialog = new ConfirmationDialogViewModel();
             UnsavedChangesDialog = new UnsavedChangesDialogViewModel();
+            ReceiptViewerModal = new ReceiptViewerModalViewModel();
             ChangeTrackingService = new ChangeTrackingService();
             _idleDetectionService = new IdleDetectionService();
 
@@ -419,6 +425,9 @@ public class App : Application
 
             // Share UnsavedChangesDialogViewModel with MainWindow for unsaved changes dialogs
             _mainWindowViewModel.UnsavedChangesDialogViewModel = UnsavedChangesDialog;
+
+            // Share ReceiptViewerModalViewModel with MainWindow for receipt viewing
+            _mainWindowViewModel.ReceiptViewerModalViewModel = ReceiptViewerModal;
 
             // Final reset of unsaved changes before window is shown - ensures clean startup state
             _mainWindowViewModel.HasUnsavedChanges = false;

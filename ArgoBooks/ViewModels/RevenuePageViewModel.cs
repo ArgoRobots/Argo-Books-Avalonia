@@ -604,19 +604,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     #endregion
 
-    #region Receipt Preview Modal
-
-    [ObservableProperty]
-    private bool _isReceiptPreviewOpen;
-
-    [ObservableProperty]
-    private string _previewReceiptPath = string.Empty;
-
-    [ObservableProperty]
-    private string _previewReceiptId = string.Empty;
-
-    [ObservableProperty]
-    private bool _isReceiptFullscreen;
+    #region Receipt Preview
 
     [RelayCommand]
     private void ViewReceipt(RevenueDisplayItem? item)
@@ -629,13 +617,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         if (string.IsNullOrEmpty(receiptPath))
             return;
 
-        PreviewReceiptPath = receiptPath;
-        PreviewReceiptId = item.Id;
-        IsReceiptPreviewOpen = true;
-        IsReceiptFullscreen = false;
+        // Use the shared receipt viewer modal
+        App.ReceiptViewerModal?.Show(receiptPath, item.Id);
     }
 
-    private string? GetReceiptImagePath(string saleId)
+    private static string? GetReceiptImagePath(string saleId)
     {
         // Always load from company file to ensure consistency
         var companyData = App.CompanyManager?.CompanyData;
@@ -660,20 +646,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         {
             return null;
         }
-    }
-
-    [RelayCommand]
-    private void CloseReceiptPreview()
-    {
-        IsReceiptPreviewOpen = false;
-        IsReceiptFullscreen = false;
-        PreviewReceiptPath = string.Empty;
-    }
-
-    [RelayCommand]
-    private void ToggleReceiptFullscreen()
-    {
-        IsReceiptFullscreen = !IsReceiptFullscreen;
     }
 
     #endregion
