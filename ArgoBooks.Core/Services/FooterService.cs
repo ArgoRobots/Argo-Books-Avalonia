@@ -210,12 +210,7 @@ public class FooterService
     /// <returns>True if compatible.</returns>
     public bool IsVersionCompatible(FileFooter footer)
     {
-        // Parse version (format: "major.minor.patch")
-        var parts = footer.Version.Split('.');
-        if (parts.Length < 1 || !int.TryParse(parts[0], out var major))
-            return false;
-
-        // For now, only version 1.x.x is supported
-        return major <= FileFormatConstants.MaxSupportedVersion;
+        // File format is backward compatible - all versions are supported
+        return !string.IsNullOrEmpty(footer.Version);
     }
 }

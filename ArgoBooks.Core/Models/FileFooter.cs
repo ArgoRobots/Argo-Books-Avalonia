@@ -102,8 +102,4 @@ public static class FileFormatConstants
     /// </summary>
     public const string TemplateFileExtension = ".argotemplate";
 
-    /// <summary>
-    /// Maximum supported file format version.
-    /// </summary>
-    public const int MaxSupportedVersion = 1;
 }
