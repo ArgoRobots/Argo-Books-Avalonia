@@ -7,7 +7,9 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.ReturnsModals"
-             x:DataType="vm:ReturnsModalsViewModel">
+             x:DataType="vm:ReturnsModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
 
     <Panel>
         <!-- Filter Modal -->

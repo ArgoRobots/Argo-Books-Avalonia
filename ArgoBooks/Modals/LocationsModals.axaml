@@ -8,7 +8,9 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.LocationsModals"
-             x:DataType="vm:LocationsModalsViewModel">
+             x:DataType="vm:LocationsModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
 
     <Panel>
         <!-- Add Location Modal -->

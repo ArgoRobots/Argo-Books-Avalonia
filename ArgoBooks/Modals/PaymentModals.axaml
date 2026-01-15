@@ -8,7 +8,9 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="550"
              x:Class="ArgoBooks.Modals.PaymentModals"
-             x:DataType="vm:PaymentModalsViewModel">
+             x:DataType="vm:PaymentModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
 
     <Design.DataContext>
         <vm:PaymentModalsViewModel />

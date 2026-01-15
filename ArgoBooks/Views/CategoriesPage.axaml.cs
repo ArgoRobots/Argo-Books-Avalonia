@@ -35,4 +35,12 @@ public partial class CategoriesPage : UserControl
             viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
         }
     }
+
+    private void OnHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is CategoriesPageViewModel viewModel && e.WidthChanged)
+        {
+            viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
+        }
+    }
 }

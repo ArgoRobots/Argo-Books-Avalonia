@@ -19,6 +19,8 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class ReceiptsPageViewModel : ViewModelBase
 {
+    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+
     #region Statistics
 
     [ObservableProperty]

@@ -10,7 +10,9 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.RentalRecordsModals"
-             x:DataType="vm:RentalRecordsModalsViewModel">
+             x:DataType="vm:RentalRecordsModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
 
     <Panel>
         <!-- Add Record Modal -->

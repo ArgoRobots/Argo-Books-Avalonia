@@ -41,7 +41,9 @@
                     VerticalAlignment="Center"
                     Width="400"
                     Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12">
+                    CornerRadius="12"
+                    Focusable="True"
+                    KeyDown="OnDeleteTemplateKeyDown">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -108,7 +110,9 @@
                     VerticalAlignment="Center"
                     Width="400"
                     Background="{DynamicResource SurfaceBrush}"
-                    CornerRadius="12">
+                    CornerRadius="12"
+                    Focusable="True"
+                    KeyDown="OnRenameTemplateKeyDown">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"

@@ -14,6 +14,12 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
 {
+    #region Responsive Header
+
+    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+
+    #endregion
+
     #region Statistics
 
     [ObservableProperty]

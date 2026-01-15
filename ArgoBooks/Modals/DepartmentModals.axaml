@@ -4,7 +4,9 @@
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:helpers="using:ArgoBooks.Helpers"
              x:Class="ArgoBooks.Modals.DepartmentModals"
-             x:DataType="vm:DepartmentModalsViewModel">
+             x:DataType="vm:DepartmentModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
     <Panel>
         <!-- Add Department Modal -->
         <Panel IsVisible="{Binding IsAddModalOpen}">

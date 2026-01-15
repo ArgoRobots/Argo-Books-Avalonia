@@ -8,7 +8,9 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.ProductModals"
-             x:DataType="vm:ProductModalsViewModel">
+             x:DataType="vm:ProductModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
 
     <Design.DataContext>
         <vm:ProductModalsViewModel />

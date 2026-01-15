@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
 
@@ -11,5 +13,15 @@ public partial class ReturnsModals : UserControl
     public ReturnsModals()
     {
         InitializeComponent();
+    }
+
+    private void Modal_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && DataContext is ReturnsModalsViewModel vm)
+        {
+            if (vm.IsFilterModalOpen)
+                vm.CloseFilterModalCommand.Execute(null);
+            e.Handled = true;
+        }
     }
 }

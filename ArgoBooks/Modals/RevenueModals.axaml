@@ -9,7 +9,9 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.RevenueModals"
-             x:DataType="vm:RevenueModalsViewModel">
+             x:DataType="vm:RevenueModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
 
     <Design.DataContext>
         <vm:RevenueModalsViewModel />
