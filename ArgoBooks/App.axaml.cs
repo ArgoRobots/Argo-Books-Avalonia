@@ -1103,34 +1103,10 @@ public class App : Application
 
         try
         {
-            // Check if sample company already exists and is up to date
+            // Check if sample company already exists
             var sampleFilePath = SampleCompanyService.GetSampleCompanyPath();
             Console.WriteLine($"[SampleCompany] Sample file path: {sampleFilePath}");
-            var needsCreation = true;
-
-            if (File.Exists(sampleFilePath))
-            {
-                Console.WriteLine("[SampleCompany] File exists, checking version...");
-                // Check if the sample company version matches current app version
-                var footer = await CompanyManager.GetFileInfoAsync(sampleFilePath);
-                Console.WriteLine($"[SampleCompany] Footer: {footer?.Version ?? "null"}");
-                if (footer != null && IsVersionUpToDate(footer.Version))
-                {
-                    needsCreation = false;
-                    Console.WriteLine("[SampleCompany] Version is up to date, will open existing");
-                }
-                else
-                {
-                    // Version mismatch - delete old sample company
-                    Console.WriteLine("[SampleCompany] Version mismatch, cleaning up...");
-                    SampleCompanyService.CleanupSampleCompanyFiles();
-                }
-            }
-            else
-            {
-                Console.WriteLine("[SampleCompany] File does not exist, will create new");
-            }
-
+            var needsCreation = !File.Exists(sampleFilePath);
             Console.WriteLine($"[SampleCompany] needsCreation: {needsCreation}");
             _mainWindowViewModel.ShowLoading(needsCreation
                 ? "Creating sample company...".Translate()
@@ -1202,27 +1178,6 @@ public class App : Application
         }
 
         Console.WriteLine("[SampleCompany] OpenSampleCompanyAsync completed");
-    }
-
-    /// <summary>
-    /// Checks if the sample company version is up to date with the current app version.
-    /// </summary>
-    private static bool IsVersionUpToDate(string sampleVersion)
-    {
-        // Parse sample version (format: "1.0.0" or "2.0.0")
-        if (!Version.TryParse(sampleVersion, out var sampleVer))
-            return false;
-
-        // Get current app version
-        var appVersion = AppInfo.AssemblyVersion;
-        if (appVersion == null)
-            return false;
-
-        // Sample is up to date if its version matches or is newer than app version
-        // (Compare major.minor.build, ignore revision)
-        return sampleVer.Major == appVersion.Major &&
-               sampleVer.Minor == appVersion.Minor &&
-               sampleVer.Build == appVersion.Build;
     }
 
     /// <summary>

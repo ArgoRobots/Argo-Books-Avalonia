@@ -125,7 +125,7 @@ public class SampleCompanyService
             Phone = "555-100-0000"
         };
 
-        companyData.Settings.AppVersion = "2.0.0";
+        companyData.Settings.AppVersion = "1.0.0"; // Must be 1.x.x for file format compatibility
 
         // Enable all modules so users can explore everything
         companyData.Settings.EnabledModules = new EnabledModulesSettings
