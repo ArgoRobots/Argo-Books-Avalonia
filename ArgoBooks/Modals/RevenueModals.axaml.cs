@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -8,6 +9,8 @@ namespace ArgoBooks.Modals;
 /// </summary>
 public partial class RevenueModals : UserControl
 {
+    private bool _eventsSubscribed;
+
     public RevenueModals()
     {
         InitializeComponent();
@@ -19,6 +22,35 @@ public partial class RevenueModals : UserControl
         if (DataContext is RevenueModalsViewModel vm)
         {
             vm.ScrollToLineItemsRequested += OnScrollToLineItemsRequested;
+
+            if (!_eventsSubscribed)
+            {
+                _eventsSubscribed = true;
+                vm.PropertyChanged += (_, args) =>
+                {
+                    if (args.PropertyName == nameof(RevenueModalsViewModel.IsAddEditModalOpen))
+                    {
+                        if (vm.IsAddEditModalOpen)
+                            ModalAnimationHelper.AnimateIn(AddEditModalBorder);
+                        else
+                            ModalAnimationHelper.AnimateOut(AddEditModalBorder);
+                    }
+                    else if (args.PropertyName == nameof(RevenueModalsViewModel.IsFilterModalOpen))
+                    {
+                        if (vm.IsFilterModalOpen)
+                            ModalAnimationHelper.AnimateIn(FilterModalBorder);
+                        else
+                            ModalAnimationHelper.AnimateOut(FilterModalBorder);
+                    }
+                    else if (args.PropertyName == nameof(RevenueModalsViewModel.IsItemStatusModalOpen))
+                    {
+                        if (vm.IsItemStatusModalOpen)
+                            ModalAnimationHelper.AnimateIn(ItemStatusModalBorder);
+                        else
+                            ModalAnimationHelper.AnimateOut(ItemStatusModalBorder);
+                    }
+                };
+            }
         }
     }
 

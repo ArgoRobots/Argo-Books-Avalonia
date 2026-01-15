@@ -13,11 +13,24 @@
         <!-- Add Adjustment Modal -->
         <Panel IsVisible="{Binding IsAddModalOpen}">
             <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+            <Border x:Name="AddModalBorder"
+                    Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="550"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 32 0 #40000000"
+                    Focusable="True"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
@@ -147,11 +160,24 @@
         <!-- View Details Modal -->
         <Panel IsVisible="{Binding IsViewModalOpen}">
             <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+            <Border x:Name="ViewModalBorder"
+                    Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1" CornerRadius="12" Width="500"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 32 0 #40000000"
+                    Focusable="True"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Modal Header -->
                     <Border Grid.Row="0" Padding="24,20" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
@@ -274,12 +300,25 @@
         <!-- Filter Modal -->
         <Panel IsVisible="{Binding IsFilterModalOpen}">
             <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+            <Border x:Name="FilterModalBorder"
+                    Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     Width="480"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 32 0 #40000000"
+                    Focusable="True"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <StackPanel>
                     <!-- Modal Header -->
                     <Border Padding="24,20"

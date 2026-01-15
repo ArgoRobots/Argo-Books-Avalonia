@@ -20,7 +20,8 @@
             <Border Background="#80000000" />
 
             <!-- Modal -->
-            <modals:ReportPageSettingsModal DataContext="{Binding ReportsPageViewModel}"
+            <modals:ReportPageSettingsModal x:Name="PageSettingsModal"
+                                             DataContext="{Binding ReportsPageViewModel}"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
         </Panel>
@@ -31,7 +32,8 @@
             <Border Background="#80000000" />
 
             <!-- Modal -->
-            <modals:ReportSaveTemplateModal DataContext="{Binding ReportsPageViewModel}"
+            <modals:ReportSaveTemplateModal x:Name="SaveTemplateModal"
+                                             DataContext="{Binding ReportsPageViewModel}"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center" />
         </Panel>
@@ -42,12 +44,25 @@
             <Border Background="#80000000" />
 
             <!-- Modal -->
-            <Border HorizontalAlignment="Center"
+            <Border x:Name="DeleteTemplateModalBorder"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="400"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 32 0 #40000000"
+                    Focusable="True"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
@@ -110,12 +125,25 @@
             <Border Background="#80000000" />
 
             <!-- Modal -->
-            <Border HorizontalAlignment="Center"
+            <Border x:Name="RenameTemplateModalBorder"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="400"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 32 0 #40000000"
+                    Focusable="True"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
