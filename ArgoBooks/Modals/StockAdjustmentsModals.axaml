@@ -8,7 +8,9 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.StockAdjustmentsModals"
-             x:DataType="vm:StockAdjustmentsModalsViewModel">
+             x:DataType="vm:StockAdjustmentsModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
 
     <Panel>
         <!-- Add Adjustment Modal -->

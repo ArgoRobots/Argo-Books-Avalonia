@@ -7,7 +7,9 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="ArgoBooks.Modals.CategoryModals"
-             x:DataType="vm:CategoryModalsViewModel">
+             x:DataType="vm:CategoryModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
 
     <Panel>
         <!-- Add Category Modal -->

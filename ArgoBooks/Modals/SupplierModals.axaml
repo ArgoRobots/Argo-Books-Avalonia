@@ -5,7 +5,9 @@
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:helpers="using:ArgoBooks.Helpers"
              x:Class="ArgoBooks.Modals.SupplierModals"
-             x:DataType="vm:SupplierModalsViewModel">
+             x:DataType="vm:SupplierModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
    <Panel>
         <!-- Add Supplier Modal -->
         <Panel IsVisible="{Binding IsAddModalOpen}">

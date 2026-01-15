@@ -9,7 +9,9 @@
              xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
-             x:DataType="vm:ReceiptsModalsViewModel">
+             x:DataType="vm:ReceiptsModalsViewModel"
+             Focusable="True"
+             KeyDown="Modal_KeyDown">
 
     <Panel>
         <!-- Filter Modal -->
