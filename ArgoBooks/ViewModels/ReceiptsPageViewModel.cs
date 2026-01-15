@@ -1,10 +1,14 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -618,10 +622,54 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void DownloadReceipt(ReceiptDisplayItem? receipt)
+    private async Task DownloadReceipt(ReceiptDisplayItem? receipt)
     {
-        if (receipt == null) return;
-        // TODO: Implement download functionality
+        if (receipt == null || string.IsNullOrEmpty(receipt.ImagePath)) return;
+
+        try
+        {
+            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel?.StorageProvider == null) return;
+
+            // Determine file extension from source
+            var sourceExtension = Path.GetExtension(receipt.ImagePath);
+            if (string.IsNullOrEmpty(sourceExtension))
+                sourceExtension = ".png";
+
+            var filters = new[]
+            {
+                new FilePickerFileType("Image files") { Patterns = [$"*{sourceExtension}"] }
+            };
+
+            var suggestedName = $"Receipt_{receipt.Id}{sourceExtension}";
+
+            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save Receipt Image",
+                SuggestedFileName = suggestedName,
+                FileTypeChoices = filters,
+                DefaultExtension = sourceExtension.TrimStart('.')
+            });
+
+            if (result != null)
+            {
+                var destinationPath = result.Path.LocalPath;
+
+                // Copy the file
+                if (File.Exists(receipt.ImagePath))
+                {
+                    File.Copy(receipt.ImagePath, destinationPath, overwrite: true);
+                    App.AddNotification("Receipt saved successfully", false);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            App.AddNotification($"Failed to save receipt: {ex.Message}", true);
+        }
     }
 
     [RelayCommand]

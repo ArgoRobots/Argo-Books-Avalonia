@@ -1,3 +1,7 @@
+using System.IO;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -52,5 +56,56 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     private void ToggleFullscreen()
     {
         IsFullscreen = !IsFullscreen;
+    }
+
+    [RelayCommand]
+    private async Task Download()
+    {
+        if (string.IsNullOrEmpty(ReceiptPath)) return;
+
+        try
+        {
+            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel?.StorageProvider == null) return;
+
+            // Determine file extension from source
+            var sourceExtension = Path.GetExtension(ReceiptPath);
+            if (string.IsNullOrEmpty(sourceExtension))
+                sourceExtension = ".png";
+
+            var filters = new[]
+            {
+                new FilePickerFileType("Image files") { Patterns = [$"*{sourceExtension}"] }
+            };
+
+            var suggestedName = $"Receipt_{ReceiptId}{sourceExtension}";
+
+            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save Receipt Image",
+                SuggestedFileName = suggestedName,
+                FileTypeChoices = filters,
+                DefaultExtension = sourceExtension.TrimStart('.')
+            });
+
+            if (result != null)
+            {
+                var destinationPath = result.Path.LocalPath;
+
+                // Copy the file
+                if (File.Exists(ReceiptPath))
+                {
+                    File.Copy(ReceiptPath, destinationPath, overwrite: true);
+                    App.AddNotification("Receipt saved successfully", false);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            App.AddNotification($"Failed to save receipt: {ex.Message}", true);
+        }
     }
 }
