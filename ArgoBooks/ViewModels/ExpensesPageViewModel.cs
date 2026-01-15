@@ -217,9 +217,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             IsCompactMode = true;
             IsMediumMode = false;
             ShowButtonText = false;
-            SearchBoxWidth = 140;
+            SearchBoxWidth = 200;
             HeaderSpacing = 6;
-            SearchIconMargin = new Avalonia.Thickness(8, 0, 6, 0);
             HeaderPadding = new Avalonia.Thickness(24, 12);
         }
         else if (value < 950)
@@ -227,9 +226,9 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             IsCompactMode = false;
             IsMediumMode = true;
             ShowButtonText = true;
-            SearchBoxWidth = 180;
+            SearchBoxWidth = 200;
             HeaderSpacing = 8;
-            SearchIconMargin = new Avalonia.Thickness(10, 0, 6, 0);
+            SearchIconMargin = new Avalonia.Thickness(12, 0, 20, 0);
             HeaderPadding = new Avalonia.Thickness(24, 16);
         }
         else
