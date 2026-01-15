@@ -1,4 +1,5 @@
 using ArgoBooks.Controls.Reports;
+using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
@@ -35,9 +36,7 @@ public partial class ReportsPage : UserControl
     private double _previewZoomLevel = 1.0;
 
     // Rubberband overscroll effect for preview
-    private Vector _previewOverscroll;
-    private const double OverscrollResistance = 0.3;
-    private const double OverscrollMaxDistance = 100;
+    private OverscrollHelper? _previewOverscrollHelper;
 
     public ReportsPage()
     {
@@ -51,6 +50,12 @@ public partial class ReportsPage : UserControl
         _designCanvas = this.FindControl<SkiaReportDesignCanvas>("DesignCanvas");
         _previewScrollViewer = this.FindControl<ScrollViewer>("PreviewScrollViewer");
         _previewZoomTransformControl = this.FindControl<LayoutTransformControl>("PreviewZoomTransformControl");
+
+        if (_previewZoomTransformControl != null)
+        {
+            _previewOverscrollHelper = new OverscrollHelper(_previewZoomTransformControl);
+        }
+
         _toolbarScrollViewer = this.FindControl<ScrollViewer>("ToolbarScrollViewer");
         _toolbarContent = this.FindControl<StackPanel>("ToolbarContent");
         _saveButtonContainer = this.FindControl<Grid>("SaveButtonContainer");
@@ -506,12 +511,22 @@ public partial class ReportsPage : UserControl
     /// </summary>
     private void PreviewZoomTowardsCenter(bool zoomIn)
     {
+        var newZoom = zoomIn
+            ? Math.Min(_previewZoomLevel + SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MaxZoom)
+            : Math.Max(_previewZoomLevel - SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MinZoom);
+
+        PreviewZoomToLevel(newZoom);
+    }
+
+    /// <summary>
+    /// Zooms the preview to a specific level while maintaining center focus.
+    /// </summary>
+    private void PreviewZoomToLevel(double newZoom)
+    {
         if (_previewScrollViewer == null || _previewZoomTransformControl == null) return;
 
         var oldZoom = _previewZoomLevel;
-        var newZoom = zoomIn
-            ? Math.Min(oldZoom + SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MaxZoom)
-            : Math.Max(oldZoom - SkiaReportDesignCanvas.ZoomStep, SkiaReportDesignCanvas.MinZoom);
+        newZoom = Math.Clamp(newZoom, SkiaReportDesignCanvas.MinZoom, SkiaReportDesignCanvas.MaxZoom);
 
         if (Math.Abs(oldZoom - newZoom) < 0.001) return;
 
@@ -623,7 +638,7 @@ public partial class ReportsPage : UserControl
 
     private void OnPreviewPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_isPanning && _previewScrollViewer != null)
+        if (_isPanning && _previewScrollViewer != null && _previewOverscrollHelper != null)
         {
             var currentPoint = e.GetPosition(_previewScrollViewer);
             var delta = _panStartPoint - currentPoint;
@@ -636,45 +651,14 @@ public partial class ReportsPage : UserControl
             var maxX = Math.Max(0, _previewScrollViewer.Extent.Width - _previewScrollViewer.Viewport.Width);
             var maxY = Math.Max(0, _previewScrollViewer.Extent.Height - _previewScrollViewer.Viewport.Height);
 
-            // Calculate overscroll with resistance
-            double overscrollX = 0;
-            double overscrollY = 0;
-
-            double clampedX = desiredX;
-            double clampedY = desiredY;
-
-            if (desiredX < 0)
-            {
-                overscrollX = desiredX * OverscrollResistance;
-                overscrollX = Math.Max(overscrollX, -OverscrollMaxDistance);
-                clampedX = 0;
-            }
-            else if (desiredX > maxX)
-            {
-                overscrollX = (desiredX - maxX) * OverscrollResistance;
-                overscrollX = Math.Min(overscrollX, OverscrollMaxDistance);
-                clampedX = maxX;
-            }
-
-            if (desiredY < 0)
-            {
-                overscrollY = desiredY * OverscrollResistance;
-                overscrollY = Math.Max(overscrollY, -OverscrollMaxDistance);
-                clampedY = 0;
-            }
-            else if (desiredY > maxY)
-            {
-                overscrollY = (desiredY - maxY) * OverscrollResistance;
-                overscrollY = Math.Min(overscrollY, OverscrollMaxDistance);
-                clampedY = maxY;
-            }
+            var (clampedX, clampedY, overscrollX, overscrollY) =
+                _previewOverscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
             // Apply clamped scroll offset
             _previewScrollViewer.Offset = new Vector(clampedX, clampedY);
 
             // Apply overscroll visual effect
-            _previewOverscroll = new Vector(overscrollX, overscrollY);
-            ApplyPreviewOverscrollTransform();
+            _previewOverscrollHelper.ApplyOverscroll(overscrollX, overscrollY);
 
             e.Handled = true;
         }
@@ -689,57 +673,13 @@ public partial class ReportsPage : UserControl
             _previewScrollViewer.Cursor = new Cursor(StandardCursorType.Arrow);
 
             // Animate overscroll back to zero (rubberband snap-back)
-            if (_previewOverscroll.X != 0 || _previewOverscroll.Y != 0)
+            if (_previewOverscrollHelper?.HasOverscroll == true)
             {
-                AnimatePreviewOverscrollSnapBack();
+                _ = _previewOverscrollHelper.AnimateSnapBackAsync();
             }
 
             e.Handled = true;
         }
-    }
-
-    /// <summary>
-    /// Applies the current overscroll as a visual transform on the preview.
-    /// </summary>
-    private void ApplyPreviewOverscrollTransform()
-    {
-        if (_previewZoomTransformControl == null) return;
-
-        // Apply translation to show overscroll effect
-        // The overscroll is inverted because dragging right should show content from left
-        var translateTransform = new TranslateTransform(-_previewOverscroll.X, -_previewOverscroll.Y);
-        _previewZoomTransformControl.RenderTransform = translateTransform;
-    }
-
-    /// <summary>
-    /// Animates the preview overscroll back to zero with a spring-like effect.
-    /// </summary>
-    private async void AnimatePreviewOverscrollSnapBack()
-    {
-        const int steps = 12;
-        const int delayMs = 16; // ~60fps
-
-        var startOverscroll = _previewOverscroll;
-
-        for (int i = 1; i <= steps; i++)
-        {
-            // Ease-out curve for smooth deceleration
-            double t = i / (double)steps;
-            double easeOut = 1 - Math.Pow(1 - t, 3); // Cubic ease-out
-
-            _previewOverscroll = new Vector(
-                startOverscroll.X * (1 - easeOut),
-                startOverscroll.Y * (1 - easeOut)
-            );
-
-            ApplyPreviewOverscrollTransform();
-
-            await Task.Delay(delayMs);
-        }
-
-        // Ensure we end at exactly zero
-        _previewOverscroll = new Vector(0, 0);
-        ApplyPreviewOverscrollTransform();
     }
 
     /// <summary>
@@ -829,8 +769,7 @@ public partial class ReportsPage : UserControl
         {
             if (Math.Abs(_previewZoomLevel - vm.PreviewZoom) > 0.001)
             {
-                _previewZoomLevel = vm.PreviewZoom;
-                ApplyPreviewZoom();
+                PreviewZoomToLevel(vm.PreviewZoom);
             }
         }
     }

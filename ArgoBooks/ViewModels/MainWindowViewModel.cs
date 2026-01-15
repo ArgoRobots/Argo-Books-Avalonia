@@ -83,6 +83,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private UnsavedChangesDialogViewModel? _unsavedChangesDialogViewModel;
 
     /// <summary>
+    /// Gets or sets the ReceiptViewerModalViewModel for viewing receipt images.
+    /// </summary>
+    [ObservableProperty]
+    private ReceiptViewerModalViewModel? _receiptViewerModalViewModel;
+
+    /// <summary>
     /// Whether to show the welcome screen (when no company is open).
     /// </summary>
     [ObservableProperty]

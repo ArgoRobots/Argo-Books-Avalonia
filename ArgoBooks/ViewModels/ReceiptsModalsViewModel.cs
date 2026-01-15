@@ -1,7 +1,10 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
@@ -229,6 +232,37 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasCategoryError;
 
+    // AI Suggestion State
+    [ObservableProperty]
+    private bool _isLoadingAiSuggestions;
+
+    [ObservableProperty]
+    private bool _hasAiSuggestions;
+
+    [ObservableProperty]
+    private SupplierCategorySuggestion? _aiSuggestion;
+
+    [ObservableProperty]
+    private double _supplierMatchConfidence;
+
+    [ObservableProperty]
+    private double _categoryMatchConfidence;
+
+    [ObservableProperty]
+    private bool _showCreateSupplierSuggestion;
+
+    [ObservableProperty]
+    private string _suggestedSupplierName = string.Empty;
+
+    [ObservableProperty]
+    private bool _showCreateCategorySuggestion;
+
+    [ObservableProperty]
+    private string _suggestedCategoryName = string.Empty;
+
+    [ObservableProperty]
+    private bool _isAiConfigured;
+
     #endregion
 
     #region AI Scan Commands
@@ -343,7 +377,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
     }
 
-    private void PopulateScanResults(ReceiptScanResult result)
+    private async void PopulateScanResults(ReceiptScanResult result)
     {
         ExtractedVendor = result.VendorName ?? string.Empty;
         ExtractedDate = result.TransactionDate.HasValue
@@ -374,18 +408,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             });
         }
 
-        // Try to match vendor to existing supplier
-        if (!string.IsNullOrEmpty(result.VendorName))
-        {
-            var matchedSupplier = SupplierOptions.FirstOrDefault(s =>
-                s.Name.Contains(result.VendorName, StringComparison.OrdinalIgnoreCase) ||
-                result.VendorName.Contains(s.Name, StringComparison.OrdinalIgnoreCase));
-
-            if (matchedSupplier != null)
-            {
-                SelectedSupplier = matchedSupplier;
-            }
-        }
+        // Get AI suggestions for supplier and category
+        await GetAiSuggestionsAsync(result);
     }
 
     [RelayCommand]
@@ -604,6 +628,246 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // The settings modal should be opened from the header
     }
 
+    /// <summary>
+    /// Gets AI suggestions for supplier and category based on receipt data.
+    /// </summary>
+    private async Task GetAiSuggestionsAsync(ReceiptScanResult result)
+    {
+        var openAiService = new OpenAiService();
+        IsAiConfigured = openAiService.IsConfigured;
+
+        if (!openAiService.IsConfigured)
+        {
+            // Fall back to basic matching
+            TryBasicSupplierMatch(result.VendorName);
+            return;
+        }
+
+        IsLoadingAiSuggestions = true;
+        HasAiSuggestions = false;
+        ShowCreateSupplierSuggestion = false;
+        ShowCreateCategorySuggestion = false;
+
+        try
+        {
+            var companyData = App.CompanyManager?.CompanyData;
+            if (companyData == null)
+            {
+                TryBasicSupplierMatch(result.VendorName);
+                return;
+            }
+
+            var request = new ReceiptAnalysisRequest
+            {
+                VendorName = result.VendorName ?? string.Empty,
+                RawText = result.RawText,
+                LineItemDescriptions = result.LineItems.Select(li => li.Description).ToList(),
+                TotalAmount = result.TotalAmount ?? 0,
+                ExistingSuppliers = companyData.Suppliers?.Select(s => new ExistingSupplierInfo
+                {
+                    Id = s.Id,
+                    Name = s.Name
+                }).ToList() ?? [],
+                ExistingCategories = companyData.Categories?
+                    .Where(c => c.Type == CategoryType.Purchase)
+                    .Select(c => new ExistingCategoryInfo
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Description = c.Description
+                    }).ToList() ?? []
+            };
+
+            var suggestion = await openAiService.GetSupplierCategorySuggestionAsync(request);
+
+            if (suggestion != null)
+            {
+                ApplyAiSuggestion(suggestion);
+            }
+            else
+            {
+                // AI failed, fall back to basic matching
+                TryBasicSupplierMatch(result.VendorName);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"AI suggestion failed: {ex.Message}");
+            TryBasicSupplierMatch(result.VendorName);
+        }
+        finally
+        {
+            IsLoadingAiSuggestions = false;
+        }
+    }
+
+    /// <summary>
+    /// Applies AI suggestions to the form.
+    /// </summary>
+    private void ApplyAiSuggestion(SupplierCategorySuggestion suggestion)
+    {
+        AiSuggestion = suggestion;
+        HasAiSuggestions = true;
+
+        // Apply supplier suggestion
+        if (!string.IsNullOrEmpty(suggestion.MatchedSupplierId))
+        {
+            var supplier = SupplierOptions.FirstOrDefault(s => s.Id == suggestion.MatchedSupplierId);
+            if (supplier != null)
+            {
+                SelectedSupplier = supplier;
+                SupplierMatchConfidence = suggestion.SupplierConfidence;
+            }
+        }
+        else if (suggestion.ShouldCreateNewSupplier && suggestion.NewSupplier != null)
+        {
+            ShowCreateSupplierSuggestion = true;
+            SuggestedSupplierName = ToTitleCase(suggestion.NewSupplier.Name);
+            SupplierMatchConfidence = 0;
+        }
+
+        // Apply category suggestion
+        if (!string.IsNullOrEmpty(suggestion.MatchedCategoryId))
+        {
+            var category = CategoryOptions.FirstOrDefault(c => c.Id == suggestion.MatchedCategoryId);
+            if (category != null)
+            {
+                SelectedCategory = category;
+                CategoryMatchConfidence = suggestion.CategoryConfidence;
+            }
+        }
+        else if (suggestion.ShouldCreateNewCategory && suggestion.NewCategory != null)
+        {
+            ShowCreateCategorySuggestion = true;
+            SuggestedCategoryName = ToTitleCase(suggestion.NewCategory.Name);
+            CategoryMatchConfidence = 0;
+        }
+    }
+
+    /// <summary>
+    /// Converts a string to title case (e.g., "HARBOR LANE CAFE" -> "Harbor Lane Cafe").
+    /// </summary>
+    private static string ToTitleCase(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLower());
+    }
+
+    /// <summary>
+    /// Falls back to basic string matching for supplier.
+    /// </summary>
+    private void TryBasicSupplierMatch(string? vendorName)
+    {
+        if (string.IsNullOrEmpty(vendorName))
+            return;
+
+        var matchedSupplier = SupplierOptions.FirstOrDefault(s =>
+            s.Name.Contains(vendorName, StringComparison.OrdinalIgnoreCase) ||
+            vendorName.Contains(s.Name, StringComparison.OrdinalIgnoreCase));
+
+        if (matchedSupplier != null)
+        {
+            SelectedSupplier = matchedSupplier;
+            SupplierMatchConfidence = 0.7; // Assume medium confidence for basic match
+        }
+    }
+
+    /// <summary>
+    /// Creates a new supplier from the AI suggestion.
+    /// </summary>
+    [RelayCommand]
+    private void CreateSuggestedSupplier()
+    {
+        if (AiSuggestion?.NewSupplier == null || string.IsNullOrEmpty(SuggestedSupplierName))
+            return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        // Generate ID
+        companyData.IdCounters.Supplier++;
+        var newId = $"SUP-{companyData.IdCounters.Supplier:D4}";
+
+        // Create supplier
+        var newSupplier = new Supplier
+        {
+            Id = newId,
+            Name = SuggestedSupplierName,
+            Notes = AiSuggestion.NewSupplier.Notes ?? "Created from AI receipt scan".Translate()
+        };
+
+        companyData.Suppliers.Add(newSupplier);
+
+        // Add to options and select
+        var option = new SupplierOption { Id = newId, Name = newSupplier.Name };
+        SupplierOptions.Add(option);
+        SelectedSupplier = option;
+
+        ShowCreateSupplierSuggestion = false;
+        SupplierMatchConfidence = 1.0;
+
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    /// <summary>
+    /// Creates a new category from the AI suggestion.
+    /// </summary>
+    [RelayCommand]
+    private void CreateSuggestedCategory()
+    {
+        if (AiSuggestion?.NewCategory == null || string.IsNullOrEmpty(SuggestedCategoryName))
+            return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData == null) return;
+
+        // Generate ID
+        companyData.IdCounters.Category++;
+        var newId = $"CAT-PUR-{companyData.IdCounters.Category:D3}";
+
+        // Create category
+        var newCategory = new Category
+        {
+            Id = newId,
+            Type = CategoryType.Purchase,
+            Name = SuggestedCategoryName,
+            Description = AiSuggestion.NewCategory.Description,
+            ItemType = AiSuggestion.NewCategory.ItemType
+        };
+
+        companyData.Categories.Add(newCategory);
+
+        // Add to options and select
+        var option = new CategoryOption { Id = newId, Name = newCategory.Name };
+        CategoryOptions.Add(option);
+        SelectedCategory = option;
+
+        ShowCreateCategorySuggestion = false;
+        CategoryMatchConfidence = 1.0;
+
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    /// <summary>
+    /// Dismisses the supplier suggestion without creating.
+    /// </summary>
+    [RelayCommand]
+    private void DismissSupplierSuggestion()
+    {
+        ShowCreateSupplierSuggestion = false;
+    }
+
+    /// <summary>
+    /// Dismisses the category suggestion without creating.
+    /// </summary>
+    [RelayCommand]
+    private void DismissCategorySuggestion()
+    {
+        ShowCreateCategorySuggestion = false;
+    }
+
     #endregion
 
     #region Helper Methods
@@ -636,6 +900,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         HasCategoryError = false;
         _currentImageData = null;
         _currentFileName = null;
+
+        // Reset AI suggestion state
+        IsLoadingAiSuggestions = false;
+        HasAiSuggestions = false;
+        AiSuggestion = null;
+        SupplierMatchConfidence = 0;
+        CategoryMatchConfidence = 0;
+        ShowCreateSupplierSuggestion = false;
+        ShowCreateCategorySuggestion = false;
+        SuggestedSupplierName = string.Empty;
+        SuggestedCategoryName = string.Empty;
     }
 
     private void LoadSupplierOptions()

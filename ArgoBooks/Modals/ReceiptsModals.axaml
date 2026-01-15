@@ -6,6 +6,7 @@
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
              xmlns:local="using:ArgoBooks.Converters"
+             xmlns:helpers="using:ArgoBooks.Helpers"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
@@ -13,8 +14,11 @@
     <Panel>
         <!-- Filter Modal -->
         <Panel IsVisible="{Binding IsFilterModalOpen}">
-            <Border Background="#80000000" />
-            <Border Background="{DynamicResource SurfaceBrush}"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsFilterModalOpen"
+                    Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
                     Width="480"
                     HorizontalAlignment="Center"
@@ -166,11 +170,11 @@
 
         <!-- ======================= AI SCAN REVIEW MODAL ======================= -->
         <Panel IsVisible="{Binding IsScanReviewModalOpen}">
-            <!-- Overlay -->
-            <Border Background="#80000000" />
-
-            <!-- Modal -->
-            <Border HorizontalAlignment="Center"
+            <Border Classes="modal-backdrop" />
+            <Border Classes="modal-animated"
+                    helpers:ModalAnimationBehavior.IsEnabled="True"
+                    helpers:ModalAnimationBehavior.OpenPropertyName="IsScanReviewModalOpen"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="950"
                     MaxHeight="750"
@@ -485,7 +489,8 @@
                                                                        FontWeight="Medium"
                                                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                                                        HorizontalAlignment="Right"
-                                                                       VerticalAlignment="Center" />
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="0,0,10,0" />
                                                             <Button Grid.Column="4"
                                                                     Classes="icon-button danger"
                                                                     Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).RemoveLineItemCommand}"
@@ -519,6 +524,21 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
 
+                                        <!-- AI Loading Indicator -->
+                                        <Border IsVisible="{Binding IsLoadingAiSuggestions}"
+                                                Background="#EBF5FF"
+                                                CornerRadius="6"
+                                                Padding="12"
+                                                Margin="0,0,0,8">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <controls:LoadingSpinner SizePreset="Small" />
+                                                <TextBlock Text="{loc:Loc 'AI is suggesting supplier and category...'}"
+                                                           FontSize="13"
+                                                           Foreground="#1E40AF"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+
                                         <!-- Supplier and Category Row -->
                                         <Grid ColumnDefinitions="*,16,*">
                                             <StackPanel Grid.Column="0" Spacing="6">
@@ -535,6 +555,41 @@
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}"
                                                     HasError="{Binding HasSupplierError}" />
+                                                <!-- AI Create Supplier Suggestion -->
+                                                <Border IsVisible="{Binding ShowCreateSupplierSuggestion}"
+                                                        Background="#FEF3C7"
+                                                        CornerRadius="6"
+                                                        Padding="10">
+                                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                                        <StackPanel Grid.Column="0" Spacing="2">
+                                                            <TextBlock Text="{loc:Loc 'Suggested supplier:'}"
+                                                                       FontSize="11"
+                                                                       Foreground="#92400E" />
+                                                            <TextBlock Text="{Binding SuggestedSupplierName}"
+                                                                       FontSize="12"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="#78350F" />
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1"
+                                                                Content="{loc:Loc 'Create'}"
+                                                                Command="{Binding CreateSuggestedSupplierCommand}"
+                                                                Classes="accent"
+                                                                Padding="10,4"
+                                                                Margin="8,0,0,0"
+                                                                FontSize="11" />
+                                                        <Button Grid.Column="2"
+                                                                Command="{Binding DismissSupplierSuggestionCommand}"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Padding="8,4"
+                                                                Margin="4,0,0,0"
+                                                                Cursor="Hand">
+                                                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                                      Width="14" Height="14"
+                                                                      Foreground="#92400E" />
+                                                        </Button>
+                                                    </Grid>
+                                                </Border>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
@@ -550,6 +605,41 @@
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}"
                                                     HasError="{Binding HasCategoryError}" />
+                                                <!-- AI Create Category Suggestion -->
+                                                <Border IsVisible="{Binding ShowCreateCategorySuggestion}"
+                                                        Background="#FEF3C7"
+                                                        CornerRadius="6"
+                                                        Padding="10">
+                                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                                        <StackPanel Grid.Column="0" Spacing="2">
+                                                            <TextBlock Text="{loc:Loc 'Suggested category:'}"
+                                                                       FontSize="11"
+                                                                       Foreground="#92400E" />
+                                                            <TextBlock Text="{Binding SuggestedCategoryName}"
+                                                                       FontSize="12"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="#78350F" />
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1"
+                                                                Content="{loc:Loc 'Create'}"
+                                                                Command="{Binding CreateSuggestedCategoryCommand}"
+                                                                Classes="accent"
+                                                                Padding="10,4"
+                                                                Margin="8,0,0,0"
+                                                                FontSize="11" />
+                                                        <Button Grid.Column="2"
+                                                                Command="{Binding DismissCategorySuggestionCommand}"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Padding="8,4"
+                                                                Margin="4,0,0,0"
+                                                                Cursor="Hand">
+                                                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                                      Width="14" Height="14"
+                                                                      Foreground="#92400E" />
+                                                        </Button>
+                                                    </Grid>
+                                                </Border>
                                             </StackPanel>
                                         </Grid>
 

@@ -1,10 +1,14 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -172,36 +176,16 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     #region Preview Modal
 
-    [ObservableProperty]
-    private bool _isPreviewModalOpen;
-
-    [ObservableProperty]
-    private ReceiptDisplayItem? _previewReceipt;
-
-    [ObservableProperty]
-    private bool _isPreviewFullscreen;
-
     [RelayCommand]
     private void OpenPreview(ReceiptDisplayItem? receipt)
     {
         if (receipt == null) return;
-        PreviewReceipt = receipt;
-        IsPreviewModalOpen = true;
-        IsPreviewFullscreen = false;
-    }
 
-    [RelayCommand]
-    private void ClosePreview()
-    {
-        IsPreviewModalOpen = false;
-        IsPreviewFullscreen = false;
-        PreviewReceipt = null;
-    }
+        var title = $"Receipt #{receipt.Id}";
+        if (!string.IsNullOrEmpty(receipt.Vendor))
+            title += $"\n{receipt.Vendor}";
 
-    [RelayCommand]
-    private void TogglePreviewFullscreen()
-    {
-        IsPreviewFullscreen = !IsPreviewFullscreen;
+        App.ReceiptViewerModal?.Show(receipt.ImagePath ?? string.Empty, receipt.Id, title);
     }
 
     #endregion
@@ -638,10 +622,54 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void DownloadReceipt(ReceiptDisplayItem? receipt)
+    private async Task DownloadReceipt(ReceiptDisplayItem? receipt)
     {
-        if (receipt == null) return;
-        // TODO: Implement download functionality
+        if (receipt == null || string.IsNullOrEmpty(receipt.ImagePath)) return;
+
+        try
+        {
+            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel?.StorageProvider == null) return;
+
+            // Determine file extension from source
+            var sourceExtension = Path.GetExtension(receipt.ImagePath);
+            if (string.IsNullOrEmpty(sourceExtension))
+                sourceExtension = ".png";
+
+            var filters = new[]
+            {
+                new FilePickerFileType("Image files") { Patterns = [$"*{sourceExtension}"] }
+            };
+
+            var suggestedName = $"Receipt_{receipt.Id}{sourceExtension}";
+
+            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save Receipt Image",
+                SuggestedFileName = suggestedName,
+                FileTypeChoices = filters,
+                DefaultExtension = sourceExtension.TrimStart('.')
+            });
+
+            if (result != null)
+            {
+                var destinationPath = result.Path.LocalPath;
+
+                // Copy the file
+                if (File.Exists(receipt.ImagePath))
+                {
+                    File.Copy(receipt.ImagePath, destinationPath, overwrite: true);
+                    App.AddNotification("Success", "Receipt saved successfully", NotificationType.Success);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            App.AddNotification("Error", $"Failed to save receipt: {ex.Message}", NotificationType.Error);
+        }
     }
 
     [RelayCommand]

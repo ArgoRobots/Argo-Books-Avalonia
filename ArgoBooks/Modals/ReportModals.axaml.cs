@@ -6,6 +6,7 @@ namespace ArgoBooks.Modals;
 
 /// <summary>
 /// Modal dialogs for report template management.
+/// Animation is handled automatically by ModalAnimationBehavior in XAML.
 /// </summary>
 public partial class ReportModals : UserControl
 {

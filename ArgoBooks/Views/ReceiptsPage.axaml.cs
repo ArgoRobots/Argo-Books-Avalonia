@@ -105,22 +105,22 @@ public partial class ReceiptsPage : UserControl
         if (DataContext is not ReceiptsPageViewModel viewModel) return;
 
         // Check if the data contains files
-        if (e.Data.Contains(DataFormats.Files))
+#pragma warning disable CS0618 // Using deprecated API until full migration path is clear
+        var files = e.Data.GetFiles();
+#pragma warning restore CS0618
+        if (files != null)
         {
-            var fileNames = e.Data.GetFileNames();
-            if (fileNames != null)
+            foreach (var file in files)
             {
-                foreach (var path in fileNames)
+                var path = file.TryGetLocalPath();
+                if (!string.IsNullOrEmpty(path))
                 {
-                    if (!string.IsNullOrEmpty(path))
+                    var extension = Path.GetExtension(path).ToLowerInvariant();
+                    if (extension is ".jpg" or ".jpeg" or ".png" or ".pdf")
                     {
-                        var extension = Path.GetExtension(path).ToLowerInvariant();
-                        if (extension is ".jpg" or ".jpeg" or ".png" or ".pdf")
-                        {
-                            e.DragEffects = DragDropEffects.Copy;
-                            viewModel.IsDragOver = true;
-                            return;
-                        }
+                        e.DragEffects = DragDropEffects.Copy;
+                        viewModel.IsDragOver = true;
+                        return;
                     }
                 }
             }
@@ -144,16 +144,18 @@ public partial class ReceiptsPage : UserControl
 
         viewModel.IsDragOver = false;
 
-        if (e.Data.Contains(DataFormats.Files))
+#pragma warning disable CS0618 // Using deprecated API until full migration path is clear
+        var files = e.Data.GetFiles();
+#pragma warning restore CS0618
+        if (files != null)
         {
-            var fileNames = e.Data.GetFileNames();
-            if (fileNames != null)
+            var filePaths = files
+                .Select(f => f.TryGetLocalPath())
+                .Where(p => !string.IsNullOrEmpty(p))
+                .ToList();
+            if (filePaths.Count > 0)
             {
-                var filePaths = fileNames.Where(p => !string.IsNullOrEmpty(p)).ToList();
-                if (filePaths.Count > 0)
-                {
-                    await viewModel.HandleFilesDroppedAsync(filePaths!);
-                }
+                await viewModel.HandleFilesDroppedAsync(filePaths!);
             }
         }
     }

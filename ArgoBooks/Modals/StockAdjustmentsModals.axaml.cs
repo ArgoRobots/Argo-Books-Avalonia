@@ -3,7 +3,8 @@ using Avalonia.Controls;
 namespace ArgoBooks.Modals;
 
 /// <summary>
-/// Code-behind for the Stock Adjustments modals.
+/// Modal dialogs for creating and viewing stock adjustment records.
+/// Animation is handled automatically by ModalAnimationBehavior in XAML.
 /// </summary>
 public partial class StockAdjustmentsModals : UserControl
 {

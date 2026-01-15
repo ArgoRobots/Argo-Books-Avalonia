@@ -8,6 +8,7 @@ using Avalonia.Platform;
 using Avalonia.Threading;
 using ArgoBooks.Core.Models.Reports;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Helpers;
 using ArgoBooks.Services;
 using SkiaSharp;
 
@@ -143,10 +144,12 @@ public partial class SkiaReportDesignCanvas : UserControl
     private const double PanThreshold = 5; // Minimum pixels to move before panning starts
 
     // Overscroll (rubber-band) state
-    private Vector _overscroll;
     private LayoutTransformControl? _zoomTransformControl;
-    private const double OverscrollResistance = 0.3; // How much resistance when overscrolling (0-1)
-    private const double OverscrollMaxDistance = 100; // Maximum overscroll distance in pixels
+    private OverscrollHelper? _overscrollHelper;
+
+    // Zoom state tracking
+    private double _previousZoomLevel = 1.0;
+    private bool _zoomingFromWheel;
 
     // Render state
     private SKBitmap? _renderBitmap;
@@ -214,6 +217,11 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Get the ScaleTransform from the LayoutTransformControl
         _zoomTransformControl = this.FindControl<LayoutTransformControl>("ZoomTransformControl");
         _zoomTransform = _zoomTransformControl?.LayoutTransform as ScaleTransform;
+
+        if (_zoomTransformControl != null)
+        {
+            _overscrollHelper = new OverscrollHelper(_zoomTransformControl);
+        }
 
         // Wire up pointer events on the canvas image
         if (_canvasImage != null)
@@ -589,11 +597,46 @@ public partial class SkiaReportDesignCanvas : UserControl
 
     private void UpdateZoomTransform()
     {
-        if (_zoomTransform != null)
+        if (_zoomTransform == null) return;
+
+        var oldZoom = _previousZoomLevel;
+        var newZoom = ZoomLevel;
+        _previousZoomLevel = newZoom;
+
+        _zoomTransform.ScaleX = newZoom;
+        _zoomTransform.ScaleY = newZoom;
+
+        // If zooming from wheel, the wheel handler manages the scroll offset
+        if (_zoomingFromWheel || _scrollViewer == null)
         {
-            _zoomTransform.ScaleX = ZoomLevel;
-            _zoomTransform.ScaleY = ZoomLevel;
+            _zoomingFromWheel = false;
+            return;
         }
+
+        // Maintain center focus for slider/button zoom changes
+        if (Math.Abs(oldZoom - newZoom) < 0.001) return;
+
+        var viewportCenterX = _scrollViewer.Viewport.Width / 2;
+        var viewportCenterY = _scrollViewer.Viewport.Height / 2;
+
+        var contentCenterX = (_scrollViewer.Offset.X + viewportCenterX) / oldZoom;
+        var contentCenterY = (_scrollViewer.Offset.Y + viewportCenterY) / oldZoom;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_scrollViewer == null) return;
+
+            var newOffsetX = contentCenterX * newZoom - viewportCenterX;
+            var newOffsetY = contentCenterY * newZoom - viewportCenterY;
+
+            var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
+            var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
+
+            _scrollViewer.Offset = new Vector(
+                Math.Clamp(newOffsetX, 0, maxX),
+                Math.Clamp(newOffsetY, 0, maxY)
+            );
+        }, DispatcherPriority.Render);
     }
 
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
@@ -642,6 +685,9 @@ public partial class SkiaReportDesignCanvas : UserControl
         const double margin = 10;
         var canvasX = (mousePosInContent.X - margin) / oldZoom;
         var canvasY = (mousePosInContent.Y - margin) / oldZoom;
+
+        // Mark that we're zooming from wheel (so UpdateZoomTransform doesn't also adjust offset)
+        _zoomingFromWheel = true;
 
         // Apply the new zoom level
         ZoomLevel = newZoom;
@@ -860,7 +906,7 @@ public partial class SkiaReportDesignCanvas : UserControl
             }
 
             // Update scroll position while panning with overscroll effect
-            if (_interactionMode == InteractionMode.Panning)
+            if (_interactionMode == InteractionMode.Panning && _overscrollHelper != null)
             {
                 // Calculate desired offset
                 var desiredX = _panStartOffset.X + delta.X;
@@ -870,44 +916,14 @@ public partial class SkiaReportDesignCanvas : UserControl
                 var maxX = Math.Max(0, _scrollViewer.Extent.Width - _scrollViewer.Viewport.Width);
                 var maxY = Math.Max(0, _scrollViewer.Extent.Height - _scrollViewer.Viewport.Height);
 
-                // Calculate overscroll with resistance
-                double overscrollX = 0;
-                double overscrollY = 0;
-                double clampedX = desiredX;
-                double clampedY = desiredY;
-
-                if (desiredX < 0)
-                {
-                    overscrollX = desiredX * OverscrollResistance;
-                    overscrollX = Math.Max(overscrollX, -OverscrollMaxDistance);
-                    clampedX = 0;
-                }
-                else if (desiredX > maxX)
-                {
-                    overscrollX = (desiredX - maxX) * OverscrollResistance;
-                    overscrollX = Math.Min(overscrollX, OverscrollMaxDistance);
-                    clampedX = maxX;
-                }
-
-                if (desiredY < 0)
-                {
-                    overscrollY = desiredY * OverscrollResistance;
-                    overscrollY = Math.Max(overscrollY, -OverscrollMaxDistance);
-                    clampedY = 0;
-                }
-                else if (desiredY > maxY)
-                {
-                    overscrollY = (desiredY - maxY) * OverscrollResistance;
-                    overscrollY = Math.Min(overscrollY, OverscrollMaxDistance);
-                    clampedY = maxY;
-                }
+                var (clampedX, clampedY, overscrollX, overscrollY) =
+                    _overscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
                 // Apply clamped scroll offset
                 _scrollViewer.Offset = new Vector(clampedX, clampedY);
 
                 // Apply overscroll visual effect
-                _overscroll = new Vector(overscrollX, overscrollY);
-                ApplyOverscrollTransform();
+                _overscrollHelper.ApplyOverscroll(overscrollX, overscrollY);
 
                 e.Handled = true;
                 return;
@@ -962,9 +978,9 @@ public partial class SkiaReportDesignCanvas : UserControl
                 Cursor = Cursor.Default;
 
                 // Animate overscroll back to zero (rubberband snap-back)
-                if (_overscroll.X != 0 || _overscroll.Y != 0)
+                if (_overscrollHelper?.HasOverscroll == true)
                 {
-                    AnimateOverscrollSnapBack();
+                    _ = _overscrollHelper.AnimateSnapBackAsync();
                 }
             }
             else if (_rightClickedElement != null)
@@ -1001,54 +1017,6 @@ public partial class SkiaReportDesignCanvas : UserControl
 
         _interactionMode = InteractionMode.None;
         InvalidateCanvas();
-    }
-
-    #endregion
-
-    #region Overscroll (Rubber-band Effect)
-
-    /// <summary>
-    /// Applies the current overscroll as a visual transform.
-    /// </summary>
-    private void ApplyOverscrollTransform()
-    {
-        if (_zoomTransformControl == null) return;
-
-        // Apply translation to show overscroll effect
-        // The overscroll is inverted because dragging right should show content from left
-        var translateTransform = new TranslateTransform(-_overscroll.X, -_overscroll.Y);
-        _zoomTransformControl.RenderTransform = translateTransform;
-    }
-
-    /// <summary>
-    /// Animates the overscroll back to zero with a spring-like effect.
-    /// </summary>
-    private async void AnimateOverscrollSnapBack()
-    {
-        const int steps = 12;
-        const int delayMs = 16; // ~60fps
-
-        var startOverscroll = _overscroll;
-
-        for (int i = 1; i <= steps; i++)
-        {
-            // Ease-out curve for smooth deceleration
-            double t = i / (double)steps;
-            double easeOut = 1 - Math.Pow(1 - t, 3); // Cubic ease-out
-
-            _overscroll = new Vector(
-                startOverscroll.X * (1 - easeOut),
-                startOverscroll.Y * (1 - easeOut)
-            );
-
-            ApplyOverscrollTransform();
-
-            await Task.Delay(delayMs);
-        }
-
-        // Ensure we end at exactly zero
-        _overscroll = new Vector(0, 0);
-        ApplyOverscrollTransform();
     }
 
     #endregion

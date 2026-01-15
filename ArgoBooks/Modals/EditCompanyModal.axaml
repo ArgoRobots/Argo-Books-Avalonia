@@ -22,7 +22,8 @@
         </Border>
 
         <!-- Modal -->
-        <Border HorizontalAlignment="Center"
+        <Border x:Name="ModalBorder"
+                HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Background="{DynamicResource SurfaceBrush}"
                 CornerRadius="12"
@@ -30,7 +31,19 @@
                 Width="480"
                 MaxHeight="550"
                 ClipToBounds="True"
-                IsVisible="{Binding IsOpen}">
+                IsVisible="{Binding IsOpen}"
+                Focusable="True"
+                Opacity="0"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- Header -->
                 <Border Grid.Row="0"
