@@ -526,7 +526,7 @@
                                                 Padding="12"
                                                 Margin="0,0,0,8">
                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                <ProgressRing Width="16" Height="16" IsActive="True" />
+                                                <controls:LoadingSpinner SizePreset="Small" />
                                                 <TextBlock Text="{loc:Loc 'AI is suggesting supplier and category...'}"
                                                            FontSize="13"
                                                            Foreground="{DynamicResource TextSecondaryBrush}"
