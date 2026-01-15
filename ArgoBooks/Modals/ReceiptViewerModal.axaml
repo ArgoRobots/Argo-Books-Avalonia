@@ -98,7 +98,7 @@
                         Padding="24,12"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,1,0,0">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
                         <Button Grid.Column="0"
                                 Classes="icon-button"
                                 ToolTip.Tip="{loc:Loc 'Toggle Fullscreen'}"
@@ -106,7 +106,16 @@
                             <PathIcon Data="{Binding IsFullscreen, Converter={x:Static local:BoolConverters.ToFullscreenIcon}}"
                                       Width="16" Height="16" />
                         </Button>
-                        <Button Grid.Column="2"
+                        <Button Grid.Column="1"
+                                Classes="icon-button"
+                                Margin="8,0,0,0"
+                                ToolTip.Tip="{loc:Loc 'Fit to Window'}"
+                                Click="FitToWindow_Click">
+                            <!-- Fit to window icon (arrows pointing inward) -->
+                            <PathIcon Data="M4 4h4V2H2v6h2V4zm16 0v4h2V2h-6v2h4zM4 20v-4H2v6h6v-2H4zm16 0h-4v2h6v-6h-2v4z"
+                                      Width="16" Height="16" />
+                        </Button>
+                        <Button Grid.Column="3"
                                 Content="{loc:Loc 'Close'}"
                                 Classes="secondary-button"
                                 Command="{Binding CloseCommand}" />

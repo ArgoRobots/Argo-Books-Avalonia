@@ -1,9 +1,11 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
@@ -21,6 +23,7 @@ public partial class ReceiptViewerModal : UserControl
     private LayoutTransformControl? _zoomTransformControl;
     private Image? _receiptImage;
     private OverscrollHelper? _overscrollHelper;
+    private bool _eventsSubscribed;
 
     // Zoom settings
     private double _zoomLevel = 1.0;
@@ -55,6 +58,37 @@ public partial class ReceiptViewerModal : UserControl
         {
             _imageScrollViewer.AddHandler(PointerWheelChangedEvent, OnScrollViewerPointerWheelChanged, RoutingStrategies.Tunnel);
         }
+
+        // Subscribe to ViewModel property changes
+        if (DataContext is ReceiptViewerModalViewModel vm && !_eventsSubscribed)
+        {
+            _eventsSubscribed = true;
+            vm.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not ReceiptViewerModalViewModel vm) return;
+
+        // Fit to window when fullscreen is toggled or modal opens
+        if (e.PropertyName == nameof(ReceiptViewerModalViewModel.IsFullscreen))
+        {
+            // Delay to allow layout to update after fullscreen change
+            _ = FitToWindowAfterLayoutAsync();
+        }
+        else if (e.PropertyName == nameof(ReceiptViewerModalViewModel.IsOpen) && vm.IsOpen)
+        {
+            // Delay to allow layout to update and image to load
+            _ = FitToWindowAfterLayoutAsync();
+        }
+    }
+
+    private async Task FitToWindowAfterLayoutAsync()
+    {
+        // Wait for layout to update
+        await Task.Delay(100);
+        ZoomToFit();
     }
 
     private void FindControls()
@@ -106,6 +140,10 @@ public partial class ReceiptViewerModal : UserControl
                     ResetZoom();
                     e.Handled = true;
                     break;
+                case Key.W:
+                    ZoomToFit();
+                    e.Handled = true;
+                    break;
             }
         }
     }
@@ -126,6 +164,45 @@ public partial class ReceiptViewerModal : UserControl
     private void ResetZoom()
     {
         _zoomLevel = 1.0;
+        ApplyZoom();
+    }
+
+    private void FitToWindow_Click(object? sender, RoutedEventArgs e)
+    {
+        ZoomToFit();
+    }
+
+    /// <summary>
+    /// Zooms to fit the entire image in the viewport.
+    /// </summary>
+    private void ZoomToFit()
+    {
+        if (_imageScrollViewer == null || _receiptImage?.Source == null) return;
+
+        // Get the actual image dimensions
+        var imageSource = _receiptImage.Source;
+        double imageWidth = 0;
+        double imageHeight = 0;
+
+        if (imageSource is Bitmap bitmap)
+        {
+            imageWidth = bitmap.PixelSize.Width;
+            imageHeight = bitmap.PixelSize.Height;
+        }
+
+        if (imageWidth <= 0 || imageHeight <= 0) return;
+
+        // Get viewport size (accounting for padding)
+        var viewportWidth = _imageScrollViewer.Bounds.Width - 32; // 16px padding on each side
+        var viewportHeight = _imageScrollViewer.Bounds.Height - 32;
+
+        if (viewportWidth <= 0 || viewportHeight <= 0) return;
+
+        // Calculate zoom to fit
+        var scaleX = viewportWidth / imageWidth;
+        var scaleY = viewportHeight / imageHeight;
+
+        _zoomLevel = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, MaxZoom);
         ApplyZoom();
     }
 
