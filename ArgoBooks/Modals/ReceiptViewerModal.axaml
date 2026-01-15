@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
-             xmlns:local="using:ArgoBooks"
+             xmlns:local="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Modals.ReceiptViewerModal"
              x:DataType="vm:ReceiptViewerModalViewModel"
