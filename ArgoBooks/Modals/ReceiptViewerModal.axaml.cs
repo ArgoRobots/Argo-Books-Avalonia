@@ -120,12 +120,6 @@ public partial class ReceiptViewerModal : UserControl
 
     #region Event Handlers
 
-    private void Backdrop_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (DataContext is ReceiptViewerModalViewModel vm)
-            vm.CloseCommand.Execute(null);
-    }
-
     private void Modal_KeyDown(object? sender, KeyEventArgs e)
     {
         if (DataContext is ReceiptViewerModalViewModel vm)
