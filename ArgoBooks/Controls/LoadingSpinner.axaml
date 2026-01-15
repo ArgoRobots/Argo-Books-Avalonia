@@ -29,7 +29,7 @@
                 <Panel.Styles>
                     <Style Selector="Panel#SpinnerArc">
                         <Style.Animations>
-                            <Animation Duration="0:0:1" IterationCount="INFINITE">
+                            <Animation Duration="0:0:1" IterationCount="Infinite">
                                 <KeyFrame Cue="0%">
                                     <Setter Property="RotateTransform.Angle" Value="0" />
                                 </KeyFrame>

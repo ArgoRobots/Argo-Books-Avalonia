@@ -363,6 +363,7 @@
                                             </TextBlock>
                                             <TextBox Text="{Binding ExtractedVendor}"
                                                      Watermark="{loc:Loc 'Enter vendor name'}"
+                                                     Classes="form-input"
                                                      BorderBrush="{Binding HasVendorError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}" />
                                             <TextBlock Text="{Binding VendorErrorMessage}"
                                                        FontSize="12"
@@ -387,6 +388,7 @@
                                                 </TextBlock>
                                                 <TextBox Text="{Binding ExtractedTotal}"
                                                          Watermark="0.00"
+                                                         Classes="form-input"
                                                          BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}" />
                                                 <TextBlock Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
@@ -403,7 +405,8 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedSubtotal}"
-                                                         Watermark="0.00" />
+                                                         Watermark="0.00"
+                                                         Classes="form-input" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock Text="{loc:Loc 'Tax'}"
@@ -411,7 +414,8 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedTax}"
-                                                         Watermark="0.00" />
+                                                         Watermark="0.00"
+                                                         Classes="form-input" />
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>
@@ -521,33 +525,31 @@
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                                     <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="#dc2626" />
                                                 </TextBlock>
-                                                <ComboBox ItemsSource="{Binding SupplierOptions}"
-                                                          SelectedItem="{Binding SelectedSupplier}"
-                                                          HorizontalAlignment="Stretch"
-                                                          PlaceholderText="{loc:Loc 'Select supplier'}"
-                                                          BorderBrush="{Binding HasSupplierError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate DataType="vm:SupplierOption">
-                                                            <TextBlock Text="{Binding Name}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
+                                                <controls:SearchableDropdown
+                                                    ItemsSource="{Binding SupplierOptions}"
+                                                    SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
+                                                    DisplayMemberPath="Name"
+                                                    Placeholder="{loc:Loc 'Search for a supplier...'}"
+                                                    ShowAddNew="False"
+                                                    EmptyMessage="{loc:Loc 'No suppliers found.'}"
+                                                    EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                    EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}"
+                                                    HasError="{Binding HasSupplierError}" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
                                                     <Run Text="{loc:Loc 'Category'}" /><Run Text=" *" Foreground="#dc2626" />
                                                 </TextBlock>
-                                                <ComboBox ItemsSource="{Binding CategoryOptions}"
-                                                          SelectedItem="{Binding SelectedCategory}"
-                                                          HorizontalAlignment="Stretch"
-                                                          PlaceholderText="{loc:Loc 'Select category'}"
-                                                          BorderBrush="{Binding HasCategoryError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate DataType="vm:CategoryOption">
-                                                            <TextBlock Text="{Binding Name}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
+                                                <controls:SearchableDropdown
+                                                    ItemsSource="{Binding CategoryOptions}"
+                                                    SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                                    DisplayMemberPath="Name"
+                                                    Placeholder="{loc:Loc 'Search for a category...'}"
+                                                    ShowAddNew="False"
+                                                    EmptyMessage="{loc:Loc 'No categories found.'}"
+                                                    EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                    EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}"
+                                                    HasError="{Binding HasCategoryError}" />
                                             </StackPanel>
                                         </Grid>
 
@@ -559,6 +561,7 @@
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <ComboBox ItemsSource="{Binding PaymentMethodOptions}"
                                                       SelectedItem="{Binding SelectedPaymentMethod}"
+                                                      Classes="form-combobox"
                                                       HorizontalAlignment="Stretch">
                                                 <ComboBox.ItemTemplate>
                                                     <DataTemplate>
@@ -576,6 +579,7 @@
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <TextBox Text="{Binding Notes}"
                                                      Watermark="{loc:Loc 'Add any additional notes...'}"
+                                                     Classes="form-input"
                                                      AcceptsReturn="True"
                                                      TextWrapping="Wrap"
                                                      Height="60" />

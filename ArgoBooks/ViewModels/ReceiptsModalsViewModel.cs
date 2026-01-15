@@ -588,6 +588,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void NavigateToCreateCategory()
+    {
+        // Close modal and navigate to categories page with add modal open
+        CloseScanReviewModal();
+        App.NavigationService?.NavigateTo("Categories");
+        App.CategoryModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
     private void NavigateToSettings()
     {
         // Close modal and open settings
