@@ -728,21 +728,3 @@ public partial class ScannedLineItemViewModel : ObservableObject
         }
     }
 }
-
-/// <summary>
-/// Supplier option for dropdown.
-/// </summary>
-public class SupplierOption
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Category option for dropdown.
-/// </summary>
-public class CategoryOption
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-}
