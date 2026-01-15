@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -293,8 +294,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
     private void CheckAzureConfiguration()
     {
-        var azureSettings = App.SettingsService?.GlobalSettings.Azure;
-        IsAzureConfigured = azureSettings?.IsConfigured ?? false;
+        // Check if Azure credentials are configured in .env file
+        IsAzureConfigured = DotEnv.HasValue("AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT") &&
+                           DotEnv.HasValue("AZURE_DOCUMENT_INTELLIGENCE_API_KEY");
     }
 
     /// <summary>
@@ -307,8 +309,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         if (!HasPremium)
         {
             App.AddNotification(
-                Localization.TranslationExtensions.Translate("Premium Feature"),
-                Localization.TranslationExtensions.Translate("AI Receipt Scanning requires a Premium subscription."),
+                Loc.Tr("Premium Feature"),
+                Loc.Tr("AI Receipt Scanning requires a Premium subscription."),
                 NotificationType.Warning);
             return;
         }
@@ -316,8 +318,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         if (!IsAzureConfigured)
         {
             App.AddNotification(
-                Localization.TranslationExtensions.Translate("Configuration Required"),
-                Localization.TranslationExtensions.Translate("Please configure Azure Document Intelligence in Settings to use AI scanning."),
+                Loc.Tr("Configuration Required"),
+                Loc.Tr("Please add AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT and AZURE_DOCUMENT_INTELLIGENCE_API_KEY to your .env file."),
                 NotificationType.Warning);
             return;
         }
@@ -338,8 +340,8 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         if (extension != ".jpg" && extension != ".jpeg" && extension != ".png" && extension != ".pdf")
         {
             App.AddNotification(
-                Localization.TranslationExtensions.Translate("Invalid File"),
-                Localization.TranslationExtensions.Translate("Please drop a JPEG, PNG, or PDF file."),
+                Loc.Tr("Invalid File"),
+                Loc.Tr("Please drop a JPEG, PNG, or PDF file."),
                 NotificationType.Warning);
             return;
         }

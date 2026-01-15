@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
@@ -184,7 +185,7 @@
                             BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-                                <PathIcon Data="M9 11.75c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zm6 0c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-.29.02-.58.05-.86 2.36-1.05 4.23-2.98 5.21-5.37C11.07 8.33 14.05 10 17.42 10c.78 0 1.53-.09 2.25-.26.21.71.33 1.47.33 2.26 0 4.41-3.59 8-8 8z"
+                                <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9.18-6.95L7.4 14.46 10.94 18l5.66-5.66-1.41-1.41-4.24 4.24-2.13-2.12z"
                                           Width="24" Height="24"
                                           Foreground="{DynamicResource PrimaryBrush}" />
                                 <TextBlock Text="{loc:Loc 'AI Receipt Scanner'}"
@@ -211,7 +212,7 @@
                                         VerticalAlignment="Center"
                                         Spacing="16"
                                         Margin="48">
-                                <controls:LoadingSpinner Width="48" Height="48" />
+                                <controls:LoadingSpinner SizePreset="Large" />
                                 <TextBlock Text="{Binding ScanningMessage}"
                                            FontSize="16"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
@@ -284,7 +285,7 @@
                                                 Background="#1A000000"
                                                 Margin="8,0,8,8"
                                                 CornerRadius="4">
-                                            <Image Source="{Binding ReceiptImagePath}"
+                                            <Image Source="{Binding ReceiptImagePath, Converter={x:Static local:BoolConverters.ToImageSource}}"
                                                    Stretch="Uniform"
                                                    MaxHeight="400" />
                                         </Border>
@@ -362,7 +363,8 @@
                                             </TextBlock>
                                             <TextBox Text="{Binding ExtractedVendor}"
                                                      Watermark="{loc:Loc 'Enter vendor name'}"
-                                                     Classes="{Binding HasVendorError, Converter={StaticResource BoolToClassConverter}, ConverterParameter='error-border'}" />
+                                                     Classes="form-input"
+                                                     BorderBrush="{Binding HasVendorError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}" />
                                             <TextBlock Text="{Binding VendorErrorMessage}"
                                                        FontSize="12"
                                                        Foreground="#dc2626"
@@ -386,7 +388,8 @@
                                                 </TextBlock>
                                                 <TextBox Text="{Binding ExtractedTotal}"
                                                          Watermark="0.00"
-                                                         Classes="{Binding HasTotalError, Converter={StaticResource BoolToClassConverter}, ConverterParameter='error-border'}" />
+                                                         Classes="form-input"
+                                                         BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}" />
                                                 <TextBlock Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
                                                            Foreground="#dc2626"
@@ -402,7 +405,8 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedSubtotal}"
-                                                         Watermark="0.00" />
+                                                         Watermark="0.00"
+                                                         Classes="form-input" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock Text="{loc:Loc 'Tax'}"
@@ -410,7 +414,8 @@
                                                            FontWeight="Medium"
                                                            Foreground="{DynamicResource TextSecondaryBrush}" />
                                                 <TextBox Text="{Binding ExtractedTax}"
-                                                         Watermark="0.00" />
+                                                         Watermark="0.00"
+                                                         Classes="form-input" />
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>
@@ -517,36 +522,34 @@
                                         <!-- Supplier and Category Row -->
                                         <Grid ColumnDefinitions="*,16,*">
                                             <StackPanel Grid.Column="0" Spacing="6">
-                                                <TextBlock Text="{loc:Loc 'Supplier'}"
-                                                           FontSize="13"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <ComboBox ItemsSource="{Binding SupplierOptions}"
-                                                          SelectedItem="{Binding SelectedSupplier}"
-                                                          HorizontalAlignment="Stretch"
-                                                          PlaceholderText="{loc:Loc 'Select supplier (optional)'}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate DataType="vm:SupplierOption">
-                                                            <TextBlock Text="{Binding Name}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
+                                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                    <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                </TextBlock>
+                                                <controls:SearchableDropdown
+                                                    ItemsSource="{Binding SupplierOptions}"
+                                                    SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
+                                                    DisplayMemberPath="Name"
+                                                    Placeholder="{loc:Loc 'Search for a supplier...'}"
+                                                    ShowAddNew="False"
+                                                    EmptyMessage="{loc:Loc 'No suppliers found.'}"
+                                                    EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                    EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}"
+                                                    HasError="{Binding HasSupplierError}" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
-                                                <TextBlock Text="{loc:Loc 'Category'}"
-                                                           FontSize="13"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                <ComboBox ItemsSource="{Binding CategoryOptions}"
-                                                          SelectedItem="{Binding SelectedCategory}"
-                                                          HorizontalAlignment="Stretch"
-                                                          PlaceholderText="{loc:Loc 'Select category (optional)'}">
-                                                    <ComboBox.ItemTemplate>
-                                                        <DataTemplate DataType="vm:CategoryOption">
-                                                            <TextBlock Text="{Binding Name}" />
-                                                        </DataTemplate>
-                                                    </ComboBox.ItemTemplate>
-                                                </ComboBox>
+                                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                    <Run Text="{loc:Loc 'Category'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                </TextBlock>
+                                                <controls:SearchableDropdown
+                                                    ItemsSource="{Binding CategoryOptions}"
+                                                    SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                                    DisplayMemberPath="Name"
+                                                    Placeholder="{loc:Loc 'Search for a category...'}"
+                                                    ShowAddNew="False"
+                                                    EmptyMessage="{loc:Loc 'No categories found.'}"
+                                                    EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                    EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}"
+                                                    HasError="{Binding HasCategoryError}" />
                                             </StackPanel>
                                         </Grid>
 
@@ -558,6 +561,7 @@
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <ComboBox ItemsSource="{Binding PaymentMethodOptions}"
                                                       SelectedItem="{Binding SelectedPaymentMethod}"
+                                                      Classes="form-combobox"
                                                       HorizontalAlignment="Stretch">
                                                 <ComboBox.ItemTemplate>
                                                     <DataTemplate>
@@ -575,6 +579,7 @@
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />
                                             <TextBox Text="{Binding Notes}"
                                                      Watermark="{loc:Loc 'Add any additional notes...'}"
+                                                     Classes="form-input"
                                                      AcceptsReturn="True"
                                                      TextWrapping="Wrap"
                                                      Height="60" />

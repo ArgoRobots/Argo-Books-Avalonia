@@ -223,6 +223,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _totalErrorMessage = string.Empty;
 
+    [ObservableProperty]
+    private bool _hasSupplierError;
+
+    [ObservableProperty]
+    private bool _hasCategoryError;
+
     #endregion
 
     #region AI Scan Commands
@@ -255,11 +261,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public async Task OpenScanModalWithDataAsync(byte[] imageData, string fileName, string? tempFilePath = null)
     {
+        // Reset state first, before setting new data
+        ResetScanModal();
+
         _currentImageData = imageData;
         _currentFileName = fileName;
 
-        // Reset state
-        ResetScanModal();
         LoadSupplierOptions();
         LoadCategoryOptions();
 
@@ -429,20 +436,39 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Validate
         HasVendorError = false;
         HasTotalError = false;
+        HasSupplierError = false;
+        HasCategoryError = false;
+
+        var hasErrors = false;
 
         if (string.IsNullOrWhiteSpace(ExtractedVendor))
         {
             HasVendorError = true;
             VendorErrorMessage = "Vendor name is required.".Translate();
-            return;
+            hasErrors = true;
         }
 
         if (!decimal.TryParse(ExtractedTotal, out var total) || total <= 0)
         {
             HasTotalError = true;
             TotalErrorMessage = "Please enter a valid total amount.".Translate();
-            return;
+            hasErrors = true;
         }
+
+        if (SelectedSupplier == null)
+        {
+            HasSupplierError = true;
+            hasErrors = true;
+        }
+
+        if (SelectedCategory == null)
+        {
+            HasCategoryError = true;
+            hasErrors = true;
+        }
+
+        if (hasErrors)
+            return;
 
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null)
@@ -550,11 +576,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         ReceiptScanned?.Invoke(this, EventArgs.Empty);
         CloseScanReviewModal();
-
-        App.AddNotification(
-            "Receipt Scanned".Translate(),
-            "Expense {0} created from scanned receipt.".TranslateFormat(expenseId),
-            NotificationType.Success);
     }
 
     [RelayCommand]
@@ -564,6 +585,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         CloseScanReviewModal();
         App.NavigationService?.NavigateTo("Suppliers");
         App.SupplierModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NavigateToCreateCategory()
+    {
+        // Close modal and navigate to categories page with add modal open
+        CloseScanReviewModal();
+        App.NavigationService?.NavigateTo("Categories");
+        App.CategoryModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
@@ -602,6 +632,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         Notes = string.Empty;
         HasVendorError = false;
         HasTotalError = false;
+        HasSupplierError = false;
+        HasCategoryError = false;
         _currentImageData = null;
         _currentFileName = null;
     }
@@ -625,7 +657,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (companyData?.Categories == null) return;
 
         foreach (var category in companyData.Categories
-            .Where(c => c.Type == CategoryType.Purchase || c.Type == CategoryType.Both)
+            .Where(c => c.Type == CategoryType.Purchase)
             .OrderBy(c => c.Name))
         {
             CategoryOptions.Add(new CategoryOption { Id = category.Id, Name = category.Name });
@@ -634,53 +666,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     private IReceiptScannerService? CreateScannerService()
     {
-        return new AzureReceiptScannerService(() =>
-        {
-            var azureSettings = App.SettingsService?.GlobalSettings.Azure;
-            if (azureSettings == null || !azureSettings.IsConfigured)
-                return null;
-
-            // Decrypt API key
-            var apiKey = DecryptApiKey(azureSettings);
-            if (string.IsNullOrEmpty(apiKey))
-                return null;
-
-            return new AzureReceiptSettings
-            {
-                Endpoint = azureSettings.Endpoint ?? string.Empty,
-                ApiKey = apiKey
-            };
-        });
-    }
-
-    private static string? DecryptApiKey(AzureDocumentIntelligenceSettings settings)
-    {
-        if (string.IsNullOrWhiteSpace(settings.EncryptedApiKey) ||
-            string.IsNullOrWhiteSpace(settings.Salt) ||
-            string.IsNullOrWhiteSpace(settings.Iv))
-            return null;
-
-        try
-        {
-            var encryptionService = new EncryptionService();
-            var encryptedBytes = Convert.FromBase64String(settings.EncryptedApiKey);
-            var decryptedBytes = encryptionService.Decrypt(
-                encryptedBytes,
-                GetMachineKey(),
-                settings.Salt,
-                settings.Iv);
-            return System.Text.Encoding.UTF8.GetString(decryptedBytes);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static string GetMachineKey()
-    {
-        // Use machine name as part of the key for machine-specific encryption
-        return $"ArgoBooks-{Environment.MachineName}-ReceiptScanner";
+        // Credentials are loaded from .env file by the service
+        return new AzureReceiptScannerService();
     }
 
     private OcrData CreateOcrData()
@@ -772,22 +759,4 @@ public partial class ScannedLineItemViewModel : ObservableObject
             TotalPrice = (qty * price).ToString("F2");
         }
     }
-}
-
-/// <summary>
-/// Supplier option for dropdown.
-/// </summary>
-public class SupplierOption
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Category option for dropdown.
-/// </summary>
-public class CategoryOption
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
 }

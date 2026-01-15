@@ -16,7 +16,7 @@
         <!-- Note: System.Text.Json and System.Formats.Tar are built into .NET 7+ -->
 
         <!-- Azure Document Intelligence (AI Receipt Scanning) -->
-        <PackageReference Include="Azure.AI.FormRecognizer" Version="4.1.0" />
+        <PackageReference Include="Azure.AI.FormRecognizer" />
 
         <!-- MVVM -->
         <PackageReference Include="CommunityToolkit.Mvvm" />
