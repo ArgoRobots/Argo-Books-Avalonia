@@ -105,7 +105,9 @@ public partial class ReceiptsPage : UserControl
         if (DataContext is not ReceiptsPageViewModel viewModel) return;
 
         // Check if the data contains files
-        var files = e.DataTransfer.GetFiles();
+#pragma warning disable CS0618 // Using deprecated API until full migration path is clear
+        var files = e.Data.GetFiles();
+#pragma warning restore CS0618
         if (files != null)
         {
             foreach (var file in files)
@@ -142,7 +144,9 @@ public partial class ReceiptsPage : UserControl
 
         viewModel.IsDragOver = false;
 
-        var files = e.DataTransfer.GetFiles();
+#pragma warning disable CS0618 // Using deprecated API until full migration path is clear
+        var files = e.Data.GetFiles();
+#pragma warning restore CS0618
         if (files != null)
         {
             var filePaths = files
