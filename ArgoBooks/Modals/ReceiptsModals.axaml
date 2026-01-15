@@ -519,12 +519,39 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
 
+                                        <!-- AI Loading Indicator -->
+                                        <Border IsVisible="{Binding IsLoadingAiSuggestions}"
+                                                Background="#EBF5FF"
+                                                CornerRadius="6"
+                                                Padding="12"
+                                                Margin="0,0,0,8">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <ProgressRing Width="16" Height="16" IsActive="True" />
+                                                <TextBlock Text="{loc:Loc 'AI is suggesting supplier and category...'}"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+
                                         <!-- Supplier and Category Row -->
                                         <Grid ColumnDefinitions="*,16,*">
                                             <StackPanel Grid.Column="0" Spacing="6">
-                                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                                    <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="#dc2626" />
-                                                </TextBlock>
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                        <Run Text="{loc:Loc 'Supplier'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                    </TextBlock>
+                                                    <!-- AI Confidence Badge -->
+                                                    <Border Grid.Column="1"
+                                                            IsVisible="{Binding HasAiSuggestions}"
+                                                            Background="#10B981"
+                                                            CornerRadius="4"
+                                                            Padding="6,2">
+                                                        <TextBlock FontSize="10"
+                                                                   Foreground="White"
+                                                                   Text="{Binding SupplierMatchConfidence, StringFormat='{}{0:P0} AI'}" />
+                                                    </Border>
+                                                </Grid>
                                                 <controls:SearchableDropdown
                                                     ItemsSource="{Binding SupplierOptions}"
                                                     SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
@@ -535,11 +562,55 @@
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}"
                                                     HasError="{Binding HasSupplierError}" />
+                                                <!-- AI Create Supplier Suggestion -->
+                                                <Border IsVisible="{Binding ShowCreateSupplierSuggestion}"
+                                                        Background="#FEF3C7"
+                                                        CornerRadius="6"
+                                                        Padding="10"
+                                                        Margin="0,4,0,0">
+                                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                                        <StackPanel Grid.Column="0" Spacing="2">
+                                                            <TextBlock Text="{loc:Loc 'AI suggests creating:'}"
+                                                                       FontSize="11"
+                                                                       Foreground="#92400E" />
+                                                            <TextBlock Text="{Binding SuggestedSupplierName}"
+                                                                       FontSize="12"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="#78350F" />
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1"
+                                                                Content="{loc:Loc 'Create'}"
+                                                                Command="{Binding CreateSuggestedSupplierCommand}"
+                                                                Classes="accent"
+                                                                Padding="10,4"
+                                                                Margin="8,0,0,0"
+                                                                FontSize="11" />
+                                                        <Button Grid.Column="2"
+                                                                Content="X"
+                                                                Command="{Binding DismissSupplierSuggestionCommand}"
+                                                                Classes="ghost"
+                                                                Padding="6,4"
+                                                                Margin="4,0,0,0"
+                                                                FontSize="11" />
+                                                    </Grid>
+                                                </Border>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="6">
-                                                <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                                    <Run Text="{loc:Loc 'Category'}" /><Run Text=" *" Foreground="#dc2626" />
-                                                </TextBlock>
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                        <Run Text="{loc:Loc 'Category'}" /><Run Text=" *" Foreground="#dc2626" />
+                                                    </TextBlock>
+                                                    <!-- AI Confidence Badge -->
+                                                    <Border Grid.Column="1"
+                                                            IsVisible="{Binding HasAiSuggestions}"
+                                                            Background="#10B981"
+                                                            CornerRadius="4"
+                                                            Padding="6,2">
+                                                        <TextBlock FontSize="10"
+                                                                   Foreground="White"
+                                                                   Text="{Binding CategoryMatchConfidence, StringFormat='{}{0:P0} AI'}" />
+                                                    </Border>
+                                                </Grid>
                                                 <controls:SearchableDropdown
                                                     ItemsSource="{Binding CategoryOptions}"
                                                     SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
@@ -550,6 +621,38 @@
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}"
                                                     HasError="{Binding HasCategoryError}" />
+                                                <!-- AI Create Category Suggestion -->
+                                                <Border IsVisible="{Binding ShowCreateCategorySuggestion}"
+                                                        Background="#FEF3C7"
+                                                        CornerRadius="6"
+                                                        Padding="10"
+                                                        Margin="0,4,0,0">
+                                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                                        <StackPanel Grid.Column="0" Spacing="2">
+                                                            <TextBlock Text="{loc:Loc 'AI suggests creating:'}"
+                                                                       FontSize="11"
+                                                                       Foreground="#92400E" />
+                                                            <TextBlock Text="{Binding SuggestedCategoryName}"
+                                                                       FontSize="12"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="#78350F" />
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1"
+                                                                Content="{loc:Loc 'Create'}"
+                                                                Command="{Binding CreateSuggestedCategoryCommand}"
+                                                                Classes="accent"
+                                                                Padding="10,4"
+                                                                Margin="8,0,0,0"
+                                                                FontSize="11" />
+                                                        <Button Grid.Column="2"
+                                                                Content="X"
+                                                                Command="{Binding DismissCategorySuggestionCommand}"
+                                                                Classes="ghost"
+                                                                Padding="6,4"
+                                                                Margin="4,0,0,0"
+                                                                FontSize="11" />
+                                                    </Grid>
+                                                </Border>
                                             </StackPanel>
                                         </Grid>
 
