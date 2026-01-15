@@ -1087,18 +1087,33 @@ public class App : Application
         if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null || _fileService == null)
             return;
 
-        // Check if sample company already exists
+        // Check if sample company already exists and is up to date
         var sampleFilePath = SampleCompanyService.GetSampleCompanyPath();
-        var sampleExists = File.Exists(sampleFilePath);
+        var needsCreation = true;
 
-        _mainWindowViewModel.ShowLoading(sampleExists
-            ? "Opening sample company...".Translate()
-            : "Creating sample company...".Translate());
+        if (File.Exists(sampleFilePath))
+        {
+            // Check if the sample company version matches current app version
+            var footer = await CompanyManager.GetFileInfoAsync(sampleFilePath);
+            if (footer != null && IsVersionUpToDate(footer.Version))
+            {
+                needsCreation = false;
+            }
+            else
+            {
+                // Version mismatch - delete old sample company
+                SampleCompanyService.CleanupSampleCompanyFiles();
+            }
+        }
+
+        _mainWindowViewModel.ShowLoading(needsCreation
+            ? "Creating sample company...".Translate()
+            : "Opening sample company...".Translate());
 
         try
         {
-            // Create the sample company if it doesn't exist
-            if (!sampleExists)
+            // Create the sample company if needed
+            if (needsCreation)
             {
                 // Get the embedded sample data Excel file
                 var assembly = Assembly.GetExecutingAssembly();
@@ -1149,6 +1164,27 @@ public class App : Application
                 "Failed to open sample company: {0}".TranslateFormat(ex.Message),
                 NotificationType.Error);
         }
+    }
+
+    /// <summary>
+    /// Checks if the sample company version is up to date with the current app version.
+    /// </summary>
+    private static bool IsVersionUpToDate(string sampleVersion)
+    {
+        // Parse sample version (format: "1.0.0" or "2.0.0")
+        if (!Version.TryParse(sampleVersion, out var sampleVer))
+            return false;
+
+        // Get current app version
+        var appVersion = AppInfo.AssemblyVersion;
+        if (appVersion == null)
+            return false;
+
+        // Sample is up to date if its version matches or is newer than app version
+        // (Compare major.minor.build, ignore revision)
+        return sampleVer.Major == appVersion.Major &&
+               sampleVer.Minor == appVersion.Minor &&
+               sampleVer.Build == appVersion.Build;
     }
 
     /// <summary>
