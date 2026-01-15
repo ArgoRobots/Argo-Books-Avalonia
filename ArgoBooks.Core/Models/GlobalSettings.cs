@@ -1,3 +1,5 @@
+using ArgoBooks.Core.Services;
+
 namespace ArgoBooks.Core.Models;
 
 /// <summary>
