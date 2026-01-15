@@ -105,9 +105,9 @@ public partial class ReceiptsPage : UserControl
         if (DataContext is not ReceiptsPageViewModel viewModel) return;
 
         // Check if the data contains files
-        if (e.Data.Contains(DataFormats.Files))
+        if (e.DataTransfer.Contains(DataFormat.File))
         {
-            var files = e.Data.GetFiles();
+            var files = e.DataTransfer.GetFiles();
             if (files != null)
             {
                 foreach (var file in files)
@@ -145,9 +145,9 @@ public partial class ReceiptsPage : UserControl
 
         viewModel.IsDragOver = false;
 
-        if (e.Data.Contains(DataFormats.Files))
+        if (e.DataTransfer.Contains(DataFormat.File))
         {
-            var files = e.Data.GetFiles();
+            var files = e.DataTransfer.GetFiles();
             if (files != null)
             {
                 var filePaths = new List<string>();
