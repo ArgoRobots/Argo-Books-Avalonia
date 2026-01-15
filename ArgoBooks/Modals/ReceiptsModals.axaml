@@ -5,6 +5,7 @@
              xmlns:vm="using:ArgoBooks.ViewModels"
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:local="using:ArgoBooks.Converters"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
@@ -362,7 +363,7 @@
                                             </TextBlock>
                                             <TextBox Text="{Binding ExtractedVendor}"
                                                      Watermark="{loc:Loc 'Enter vendor name'}"
-                                                     Classes="{Binding HasVendorError, Converter={StaticResource BoolToClassConverter}, ConverterParameter='error-border'}" />
+                                                     BorderBrush="{Binding HasVendorError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}" />
                                             <TextBlock Text="{Binding VendorErrorMessage}"
                                                        FontSize="12"
                                                        Foreground="#dc2626"
@@ -386,7 +387,7 @@
                                                 </TextBlock>
                                                 <TextBox Text="{Binding ExtractedTotal}"
                                                          Watermark="0.00"
-                                                         Classes="{Binding HasTotalError, Converter={StaticResource BoolToClassConverter}, ConverterParameter='error-border'}" />
+                                                         BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}" />
                                                 <TextBlock Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
                                                            Foreground="#dc2626"
