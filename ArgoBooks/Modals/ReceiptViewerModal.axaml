@@ -61,12 +61,22 @@
                 <!-- Receipt Image Preview -->
                 <Border Grid.Row="1"
                         Background="{DynamicResource SurfaceAltBrush}"
-                        Margin="16">
+                        ClipToBounds="True">
                     <Panel>
-                        <Image Source="{Binding ReceiptPath, Converter={x:Static local:BoolConverters.ToImageSource}}"
-                               Stretch="Uniform"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
+                        <!-- Scrollable/Zoomable Image Container -->
+                        <ScrollViewer x:Name="ImageScrollViewer"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto"
+                                      Padding="16">
+                            <LayoutTransformControl x:Name="ZoomTransformControl"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center">
+                                <Image x:Name="ReceiptImage"
+                                       Source="{Binding ReceiptPath, Converter={x:Static local:BoolConverters.ToImageSource}}"
+                                       Stretch="Uniform" />
+                            </LayoutTransformControl>
+                        </ScrollViewer>
+
                         <!-- Fallback for when image can't load -->
                         <StackPanel HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
