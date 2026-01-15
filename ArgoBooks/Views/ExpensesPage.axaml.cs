@@ -37,7 +37,7 @@ public partial class ExpensesPage : UserControl
     {
         if (DataContext is ExpensesPageViewModel viewModel && e.WidthChanged)
         {
-            viewModel.HeaderWidth = e.NewSize.Width;
+            viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
         }
     }
 

@@ -63,6 +63,12 @@ public partial class DepartmentsPageViewModel : SortablePageViewModelBase
 
     #endregion
 
+    #region Responsive Header
+
+    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+
+    #endregion
+
     #region Column Visibility and Widths
 
     [ObservableProperty]

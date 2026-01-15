@@ -14,6 +14,14 @@ public partial class DepartmentsPage : UserControl
         InitializeComponent();
     }
 
+    private void OnHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is DepartmentsPageViewModel viewModel && e.WidthChanged)
+        {
+            viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
+        }
+    }
+
     private void OnTableHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(this).Properties.IsRightButtonPressed)

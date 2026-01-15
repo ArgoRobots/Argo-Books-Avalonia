@@ -63,12 +63,13 @@
                         Background="{DynamicResource SurfaceBrush}"
                         CornerRadius="12"
                         BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1">
+                        BorderThickness="1"
+                        SizeChanged="OnHeaderSizeChanged">
 
                     <Grid RowDefinitions="Auto,*,Auto">
                         <!-- Header with Title, Search and Buttons -->
                         <Border Grid.Row="0"
-                                Padding="24,20"
+                                Padding="{Binding ResponsiveHeader.HeaderPadding}"
                                 BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="0,0,0,1">
                             <Grid ColumnDefinitions="*,Auto">
@@ -88,17 +89,17 @@
                                 <!-- Action Buttons (Right aligned) -->
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal"
-                                            Spacing="12">
+                                            Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
                                     <!-- Search Box -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="6"
-                                            Width="250">
+                                            Width="{Binding ResponsiveHeader.SearchBoxWidth}">
                                         <Grid ColumnDefinitions="Auto,*">
                                             <PathIcon Grid.Column="0"
                                                       Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
                                                       Width="16" Height="16"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="12,0,8,0" />
+                                                      Margin="{Binding ResponsiveHeader.SearchIconMargin}" />
                                             <TextBox Grid.Column="1"
                                                      Text="{Binding SearchQuery, Mode=TwoWay}"
                                                      Watermark="{loc:Loc 'Search returns...'}"
@@ -108,11 +109,14 @@
 
                                     <!-- Filter Button -->
                                     <Button Classes="secondary-button"
-                                            Command="{Binding OpenFilterModalCommand}">
+                                            Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
+                                            Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
+                                            Command="{Binding OpenFilterModalCommand}"
+                                            ToolTip.Tip="{loc:Loc 'Filter'}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                       Width="16" Height="16" />
-                                            <TextBlock Text="{loc:Loc 'Filter'}" />
+                                            <TextBlock Text="{loc:Loc 'Filter'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>

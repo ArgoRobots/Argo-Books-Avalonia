@@ -20,4 +20,12 @@ public partial class ProductsPage : UserControl
             viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
         }
     }
+
+    private void OnHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is ProductsPageViewModel viewModel && e.WidthChanged)
+        {
+            viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
+        }
+    }
 }

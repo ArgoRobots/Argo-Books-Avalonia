@@ -23,4 +23,13 @@ public partial class PurchaseOrdersPage : UserControl
             viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width - 48); // Account for padding
         }
     }
+
+    /// <summary>
+    /// Handles header size changes for responsive layout.
+    /// </summary>
+    private void OnHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is PurchaseOrdersPageViewModel viewModel && e.WidthChanged)
+            viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
+    }
 }

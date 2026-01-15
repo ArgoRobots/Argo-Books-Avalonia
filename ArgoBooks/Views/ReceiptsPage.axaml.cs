@@ -74,6 +74,14 @@ public partial class ReceiptsPage : UserControl
         }
     }
 
+    private void OnHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is ReceiptsPageViewModel viewModel && e.WidthChanged)
+        {
+            viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
+        }
+    }
+
     private async void OnAiScanButtonClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         var viewModel = DataContext as ReceiptsPageViewModel;

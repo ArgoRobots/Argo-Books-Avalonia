@@ -14,6 +14,15 @@ namespace ArgoBooks.ViewModels;
 /// </summary>
 public partial class LostDamagedPageViewModel : ViewModelBase
 {
+    #region Responsive Header
+
+    /// <summary>
+    /// Helper for responsive header layout adjustments.
+    /// </summary>
+    public Helpers.ResponsiveHeaderHelper ResponsiveHeader { get; } = new();
+
+    #endregion
+
     #region Table Column Widths
 
     /// <summary>

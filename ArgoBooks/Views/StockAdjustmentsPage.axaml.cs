@@ -14,6 +14,15 @@ public partial class StockAdjustmentsPage : UserControl
     }
 
     /// <summary>
+    /// Handles header size changes to update responsive layout.
+    /// </summary>
+    private void OnHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is StockAdjustmentsPageViewModel viewModel && e.WidthChanged)
+            viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
+    }
+
+    /// <summary>
     /// Handles table size changes to recalculate column widths.
     /// </summary>
     private void OnTableSizeChanged(object? sender, SizeChangedEventArgs e)

@@ -23,4 +23,15 @@ public partial class StockLevelsPage : UserControl
             viewModel.ColumnWidths.SetAvailableWidth(e.NewSize.Width);
         }
     }
+
+    /// <summary>
+    /// Handles the header size changed event for responsive layout.
+    /// </summary>
+    private void OnHeaderSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is StockLevelsPageViewModel viewModel && e.WidthChanged)
+        {
+            viewModel.ResponsiveHeader.HeaderWidth = e.NewSize.Width;
+        }
+    }
 }
