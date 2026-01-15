@@ -1,0 +1,72 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        Argo Books Modal Styles
+        Shared styles for modal dialogs with fade-in/scale animations.
+
+        Usage:
+        1. Apply Classes="modal-backdrop" to the backdrop Border
+        2. Apply Classes="modal-content" to the modal content Border
+        3. Set x:Name="ModalBorder" on the content Border
+        4. In code-behind, call ModalAnimationHelper.AnimateIn/Out or manually:
+           - AnimateIn: ModalBorder.Opacity = 1; ModalBorder.RenderTransform = new ScaleTransform(1, 1);
+           - AnimateOut: ModalBorder.Opacity = 0; ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
+    -->
+
+    <!-- Modal Backdrop - semi-transparent overlay with fade animation -->
+    <Style Selector="Border.modal-backdrop">
+        <Setter Property="Background" Value="#80000000" />
+        <Setter Property="IsHitTestVisible" Value="True" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- Modal Content - the dialog box with fade + scale animation -->
+    <Style Selector="Border.modal-content">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="BoxShadow" Value="0 8 32 0 #40000000" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+        </Setter>
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- Modal Content variant without border (for modals that define their own border) -->
+    <Style Selector="Border.modal-content-noborder">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="BoxShadow" Value="0 8 32 0 #40000000" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+        </Setter>
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+</Styles>

@@ -21,6 +21,7 @@
         <StyleInclude Source="avares://ArgoBooks/Styles/CardStyles.axaml" />
         <StyleInclude Source="avares://ArgoBooks/Styles/TableStyles.axaml" />
         <StyleInclude Source="avares://ArgoBooks/Styles/SyncIconStyles.axaml" />
+        <StyleInclude Source="avares://ArgoBooks/Styles/ModalStyles.axaml" />
     </Application.Styles>
 
     <Application.Resources>

@@ -1,8 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media;
-using Avalonia.Threading;
+using ArgoBooks.Helpers;
 using ArgoBooks.ViewModels;
 
 namespace ArgoBooks.Modals;
@@ -32,30 +31,9 @@ public partial class ReceiptViewerModal : UserControl
                 if (args.PropertyName == nameof(ReceiptViewerModalViewModel.IsOpen))
                 {
                     if (vm.IsOpen)
-                    {
-                        // Animate in
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            if (ModalBorder != null)
-                            {
-                                ModalBorder.Opacity = 1;
-                                ModalBorder.RenderTransform = new ScaleTransform(1, 1);
-                            }
-                            ModalBorder?.Focus();
-                        }, DispatcherPriority.Render);
-                    }
+                        ModalAnimationHelper.AnimateIn(ModalBorder);
                     else
-                    {
-                        // Reset for next open
-                        Dispatcher.UIThread.Post(() =>
-                        {
-                            if (ModalBorder != null)
-                            {
-                                ModalBorder.Opacity = 0;
-                                ModalBorder.RenderTransform = new ScaleTransform(0.95, 0.95);
-                            }
-                        }, DispatcherPriority.Background);
-                    }
+                        ModalAnimationHelper.AnimateOut(ModalBorder);
                 }
             };
         }
