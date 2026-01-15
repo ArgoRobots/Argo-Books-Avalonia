@@ -1,5 +1,75 @@
 # AI-Powered Supplier & Category Selection Plan
 
+## Simple Explanation
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    YOU UPLOAD A RECEIPT                          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│         STEP 1: AZURE DOCUMENT INTELLIGENCE (Eyes)               │
+│                                                                  │
+│   Reads the image and extracts text:                            │
+│   • Vendor: "WALMART SUPERCENTER"                               │
+│   • Date: January 15, 2026                                      │
+│   • Total: $47.82                                               │
+│   • Items: Milk, Bread, Eggs...                                 │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              STEP 2: CHATGPT (Brain)                             │
+│                                                                  │
+│   Receives:                                                      │
+│   • Vendor name from Azure                                      │
+│   • Your existing suppliers list                                │
+│   • Your existing categories list                               │
+│                                                                  │
+│   Thinks and returns:                                            │
+│   • Supplier: "Walmart Inc." (95% confident)                    │
+│   • Category: "Food & Beverages" (87% confident)                │
+│   • OR suggests creating new ones if no match                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                STEP 3: YOU REVIEW                                │
+│                                                                  │
+│   ┌─────────────────────────────────────────┐                   │
+│   │  Supplier: [Walmart Inc. ▼]  95% match  │                   │
+│   │  Category: [Food & Beverages ▼] 87%     │                   │
+│   │                                         │                   │
+│   │  [Confirm]  [Edit]                      │                   │
+│   └─────────────────────────────────────────┘                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### In Simple Terms
+
+| Step | Service | Job |
+|------|---------|-----|
+| 1 | **Azure** | Reads the receipt image (OCR) |
+| 2 | **ChatGPT** | Matches to your suppliers/categories |
+| 3 | **You** | Review and confirm |
+
+**Azure = Eyes** (reads the receipt)
+**ChatGPT = Brain** (figures out which supplier/category)
+
+---
+
+## Reference Implementation
+
+This follows the same pattern as `AIQueryTranslator.cs` in **Argo-Books-WinForms**:
+- Location: `Argo Books/AISearch/AIQueryTranslator.cs`
+- Uses `HttpClient` with Bearer token auth
+- Calls `https://api.openai.com/v1/chat/completions`
+- Model: `gpt-3.5-turbo` (we'll use `gpt-4o-mini` for better results)
+- Builds a prompt, sends request, parses JSON response
+
+---
+
 ## Overview
 
 This document outlines the implementation plan for using AI (ChatGPT/OpenAI) to automatically select the best matching supplier and category, or create new ones when no good match exists, during the receipt scanning process.
