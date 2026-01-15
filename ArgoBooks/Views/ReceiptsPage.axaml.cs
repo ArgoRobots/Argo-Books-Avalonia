@@ -107,7 +107,7 @@ public partial class ReceiptsPage : UserControl
         // Check if the data contains files
         if (e.DataTransfer.Contains(DataFormat.File))
         {
-            var files = e.DataTransfer.GetFiles();
+            var files = e.DataTransfer.Get<IEnumerable<IStorageItem>>(DataFormat.File);
             if (files != null)
             {
                 foreach (var file in files)
@@ -147,7 +147,7 @@ public partial class ReceiptsPage : UserControl
 
         if (e.DataTransfer.Contains(DataFormat.File))
         {
-            var files = e.DataTransfer.GetFiles();
+            var files = e.DataTransfer.Get<IEnumerable<IStorageItem>>(DataFormat.File);
             if (files != null)
             {
                 var filePaths = new List<string>();
