@@ -625,7 +625,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (companyData?.Categories == null) return;
 
         foreach (var category in companyData.Categories
-            .Where(c => c.Type == CategoryType.Purchase || c.Type == CategoryType.Both)
+            .Where(c => c.Type == CategoryType.Purchase)
             .OrderBy(c => c.Name))
         {
             CategoryOptions.Add(new CategoryOption { Id = category.Id, Name = category.Name });
