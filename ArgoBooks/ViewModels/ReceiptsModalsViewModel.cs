@@ -809,7 +809,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SupplierMatchConfidence = 1.0;
 
         App.CompanyManager?.MarkAsChanged();
-        App.AddNotification("Supplier Created".Translate(), "Created new supplier: {0}".TranslateFormat(newSupplier.Name), NotificationType.Success);
     }
 
     /// <summary>
@@ -849,7 +848,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         CategoryMatchConfidence = 1.0;
 
         App.CompanyManager?.MarkAsChanged();
-        App.AddNotification("Category Created".Translate(), "Created new category: {0}".TranslateFormat(newCategory.Name), NotificationType.Success);
     }
 
     /// <summary>
