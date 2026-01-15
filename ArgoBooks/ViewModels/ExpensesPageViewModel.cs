@@ -190,23 +190,23 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     partial void OnHeaderWidthChanged(double value)
     {
         // Breakpoints for responsive layout
-        // < 600: Compact mode - icon-only buttons, smaller search
-        // 600-800: Medium mode - shorter text, medium search
-        // > 800: Full mode - full text, full search
+        // < 750: Compact mode - icon-only buttons, smaller search
+        // 750-950: Medium mode - shorter text, medium search
+        // > 950: Full mode - full text, full search
 
-        if (value < 600)
+        if (value < 750)
         {
             IsCompactMode = true;
             ShowButtonText = false;
-            SearchBoxWidth = 150;
-            HeaderSpacing = 8;
+            SearchBoxWidth = 140;
+            HeaderSpacing = 6;
         }
-        else if (value < 800)
+        else if (value < 950)
         {
             IsCompactMode = false;
             ShowButtonText = true;
             SearchBoxWidth = 180;
-            HeaderSpacing = 10;
+            HeaderSpacing = 8;
         }
         else
         {

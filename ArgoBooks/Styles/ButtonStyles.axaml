@@ -275,20 +275,30 @@
         <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryDarkBrush}" />
     </Style>
 
-    <!-- Compact Primary Button (icon-only, reduced padding) -->
+    <!-- Compact Primary Button (icon-only, reduced padding and size) -->
     <Style Selector="Button.primary-button.compact">
-        <Setter Property="Padding" Value="10,10" />
+        <Setter Property="Padding" Value="8,8" />
+        <Setter Property="FontSize" Value="12" />
     </Style>
     <Style Selector="Button.primary-button.compact StackPanel">
         <Setter Property="Spacing" Value="0" />
     </Style>
+    <Style Selector="Button.primary-button.compact PathIcon">
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Height" Value="14" />
+    </Style>
 
-    <!-- Compact Secondary Button (icon-only, reduced padding) -->
+    <!-- Compact Secondary Button (icon-only, reduced padding and size) -->
     <Style Selector="Button.secondary-button.compact">
-        <Setter Property="Padding" Value="10,10" />
+        <Setter Property="Padding" Value="8,8" />
+        <Setter Property="FontSize" Value="12" />
     </Style>
     <Style Selector="Button.secondary-button.compact StackPanel">
         <Setter Property="Spacing" Value="0" />
+    </Style>
+    <Style Selector="Button.secondary-button.compact PathIcon">
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Height" Value="14" />
     </Style>
 
     <!-- Link Button (inline text link, color change on hover) -->
