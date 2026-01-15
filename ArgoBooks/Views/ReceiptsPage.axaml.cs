@@ -105,14 +105,13 @@ public partial class ReceiptsPage : UserControl
         if (DataContext is not ReceiptsPageViewModel viewModel) return;
 
         // Check if the data contains files
-        if (e.DataTransfer.Contains(DataFormat.File))
+        if (e.Data.Contains(DataFormats.Files))
         {
-            var files = e.DataTransfer.Get<IEnumerable<IStorageItem>>(DataFormat.File);
-            if (files != null)
+            var fileNames = e.Data.GetFileNames();
+            if (fileNames != null)
             {
-                foreach (var file in files)
+                foreach (var path in fileNames)
                 {
-                    var path = file.TryGetLocalPath();
                     if (!string.IsNullOrEmpty(path))
                     {
                         var extension = Path.GetExtension(path).ToLowerInvariant();
@@ -145,24 +144,15 @@ public partial class ReceiptsPage : UserControl
 
         viewModel.IsDragOver = false;
 
-        if (e.DataTransfer.Contains(DataFormat.File))
+        if (e.Data.Contains(DataFormats.Files))
         {
-            var files = e.DataTransfer.Get<IEnumerable<IStorageItem>>(DataFormat.File);
-            if (files != null)
+            var fileNames = e.Data.GetFileNames();
+            if (fileNames != null)
             {
-                var filePaths = new List<string>();
-                foreach (var file in files)
-                {
-                    var path = file.TryGetLocalPath();
-                    if (!string.IsNullOrEmpty(path))
-                    {
-                        filePaths.Add(path);
-                    }
-                }
-
+                var filePaths = fileNames.Where(p => !string.IsNullOrEmpty(p)).ToList();
                 if (filePaths.Count > 0)
                 {
-                    await viewModel.HandleFilesDroppedAsync(filePaths);
+                    await viewModel.HandleFilesDroppedAsync(filePaths!);
                 }
             }
         }
