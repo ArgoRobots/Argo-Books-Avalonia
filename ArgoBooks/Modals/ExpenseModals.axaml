@@ -18,16 +18,29 @@
         <!-- ======================= ADD / EDIT EXPENSE MODAL ======================= -->
         <Panel IsVisible="{Binding IsAddEditModalOpen}">
             <!-- Overlay -->
-            <Border Background="#80000000" />
+            <Border Background="#80000000" Classes="modal-backdrop" />
 
             <!-- Modal -->
-            <Border HorizontalAlignment="Center"
+            <Border x:Name="AddEditModalBorder"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Width="750"
                     MaxHeight="700"
                     Background="{DynamicResource SurfaceBrush}"
                     CornerRadius="12"
-                    BoxShadow="0 8 32 0 #40000000">
+                    BoxShadow="0 8 32 0 #40000000"
+                    Focusable="True"
+                    Opacity="0"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform ScaleX="0.95" ScaleY="0.95" />
+                </Border.RenderTransform>
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <Grid RowDefinitions="Auto,*,Auto">
                     <!-- Header -->
                     <Border Grid.Row="0"
