@@ -662,13 +662,13 @@ public partial class ReceiptsPageViewModel : ViewModelBase
                 if (File.Exists(receipt.ImagePath))
                 {
                     File.Copy(receipt.ImagePath, destinationPath, overwrite: true);
-                    App.AddNotification("Receipt saved successfully", false);
+                    App.AddNotification("Success", "Receipt saved successfully", NotificationType.Success);
                 }
             }
         }
         catch (Exception ex)
         {
-            App.AddNotification($"Failed to save receipt: {ex.Message}", true);
+            App.AddNotification("Error", $"Failed to save receipt: {ex.Message}", NotificationType.Error);
         }
     }
 

@@ -99,13 +99,13 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
                 if (File.Exists(ReceiptPath))
                 {
                     File.Copy(ReceiptPath, destinationPath, overwrite: true);
-                    App.AddNotification("Receipt saved successfully", false);
+                    App.AddNotification("Success", "Receipt saved successfully", NotificationType.Success);
                 }
             }
         }
         catch (Exception ex)
         {
-            App.AddNotification($"Failed to save receipt: {ex.Message}", true);
+            App.AddNotification("Error", $"Failed to save receipt: {ex.Message}", NotificationType.Error);
         }
     }
 }
