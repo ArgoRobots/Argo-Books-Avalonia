@@ -663,7 +663,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         try
         {
             var mainWindow = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-                ? desktop.MainWindow as Views.MainWindow
+                ? desktop.MainWindow as MainWindow
                 : null;
 
             if (mainWindow?.StorageProvider == null) return;
@@ -677,7 +677,16 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             if (folders.Count == 0) return;
 
-            var exportFolder = folders[0].Path.LocalPath;
+            var baseFolder = folders[0].Path.LocalPath;
+
+            // Create subfolder with company name and date
+            var companyName = App.CompanyManager?.CurrentCompanyName ?? "Receipts";
+            var safeName = string.Join("_", companyName.Split(Path.GetInvalidFileNameChars()));
+            var exportFolderName = $"{safeName}_{DateTime.Now:yyyy-MM-dd}";
+            var exportFolder = Path.Combine(baseFolder, exportFolderName);
+
+            Directory.CreateDirectory(exportFolder);
+
             var exportedCount = 0;
 
             foreach (var receipt in selectedReceipts)
@@ -715,7 +724,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase
         catch (Exception ex)
         {
             var mainWindow = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-                ? desktop.MainWindow as Views.MainWindow
+                ? desktop.MainWindow as MainWindow
                 : null;
 
             if (mainWindow?.MessageBoxService != null)
