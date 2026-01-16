@@ -541,7 +541,8 @@
                                                     EmptyMessage="{loc:Loc 'No suppliers found.'}"
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateSupplierCommand}"
-                                                    HasError="{Binding HasSupplierError}" />
+                                                    HasError="{Binding HasSupplierError}"
+                                                    ErrorMessage="{Binding SupplierErrorMessage}" />
                                                 <!-- AI Create Supplier Suggestion -->
                                                 <Border IsVisible="{Binding ShowCreateSupplierSuggestion}"
                                                         Background="#FEF3C7"
@@ -591,7 +592,8 @@
                                                     EmptyMessage="{loc:Loc 'No categories found.'}"
                                                     EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                     EmptyCreateCommand="{Binding NavigateToCreateCategoryCommand}"
-                                                    HasError="{Binding HasCategoryError}" />
+                                                    HasError="{Binding HasCategoryError}"
+                                                    ErrorMessage="{Binding CategoryErrorMessage}" />
                                                 <!-- AI Create Category Suggestion -->
                                                 <Border IsVisible="{Binding ShowCreateCategorySuggestion}"
                                                         Background="#FEF3C7"

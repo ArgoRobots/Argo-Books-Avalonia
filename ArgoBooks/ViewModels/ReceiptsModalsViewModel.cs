@@ -223,7 +223,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private bool _hasSupplierError;
 
     [ObservableProperty]
+    private string _supplierErrorMessage = string.Empty;
+
+    [ObservableProperty]
     private bool _hasCategoryError;
+
+    [ObservableProperty]
+    private string _categoryErrorMessage = string.Empty;
 
     // AI Suggestion State
     [ObservableProperty]
@@ -467,12 +473,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (SelectedSupplier == null)
         {
             HasSupplierError = true;
+            SupplierErrorMessage = "Please select a supplier.".Translate();
             hasErrors = true;
         }
 
         if (SelectedCategory == null)
         {
             HasCategoryError = true;
+            CategoryErrorMessage = "Please select a category.".Translate();
             hasErrors = true;
         }
 
