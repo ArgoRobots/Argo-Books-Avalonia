@@ -26,10 +26,10 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceActiveBrush}" />
         </Style>
         <Style Selector="Button.context-menu-item.danger:pointerover">
-            <Setter Property="Background" Value="#FFEBEE" />
+            <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
         </Style>
         <Style Selector="Button.context-menu-item.danger:pressed">
-            <Setter Property="Background" Value="#FFCDD2" />
+            <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
         </Style>
     </UserControl.Styles>
 

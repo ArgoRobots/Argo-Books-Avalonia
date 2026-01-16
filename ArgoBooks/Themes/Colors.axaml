@@ -16,25 +16,39 @@
     <!-- Accent Color (used in gradients) -->
     <Color x:Key="AccentColor">#5C6AC4</Color>
 
-    <!-- Semantic Colors - Success (from mockup: #28a745) -->
-    <Color x:Key="SuccessColor">#28A745</Color>
-    <Color x:Key="SuccessLightColor">#34D399</Color>
-    <Color x:Key="SuccessDarkColor">#059669</Color>
+    <!-- Semantic Colors - Success -->
+    <Color x:Key="SuccessColor">#22C55E</Color>
+    <Color x:Key="SuccessLightColor">#DCFCE7</Color>
+    <Color x:Key="SuccessDarkColor">#16A34A</Color>
+    <Color x:Key="SuccessTextColor">#166534</Color>
+    <Color x:Key="SuccessTextLightColor">#15803D</Color>
 
-    <!-- Semantic Colors - Warning (from mockup: #ffc107) -->
-    <Color x:Key="WarningColor">#FFC107</Color>
-    <Color x:Key="WarningLightColor">#FBBF24</Color>
+    <!-- Semantic Colors - Warning/Amber -->
+    <Color x:Key="WarningColor">#F59E0B</Color>
+    <Color x:Key="WarningLightColor">#FEF3C7</Color>
     <Color x:Key="WarningDarkColor">#D97706</Color>
+    <Color x:Key="WarningTextColor">#854D0E</Color>
+    <Color x:Key="WarningTextLightColor">#A16207</Color>
 
-    <!-- Semantic Colors - Error/Danger (from mockup: #dc3545) -->
-    <Color x:Key="ErrorColor">#DC3545</Color>
-    <Color x:Key="ErrorLightColor">#F87171</Color>
-    <Color x:Key="ErrorDarkColor">#DC2626</Color>
+    <!-- Semantic Colors - Error/Danger -->
+    <Color x:Key="ErrorColor">#DC2626</Color>
+    <Color x:Key="ErrorLightColor">#FEE2E2</Color>
+    <Color x:Key="ErrorDarkColor">#B91C1C</Color>
+    <Color x:Key="ErrorTextColor">#B91C1C</Color>
 
-    <!-- Semantic Colors - Info (from mockup: #17a2b8) -->
-    <Color x:Key="InfoColor">#17A2B8</Color>
-    <Color x:Key="InfoLightColor">#22D3EE</Color>
-    <Color x:Key="InfoDarkColor">#0891B2</Color>
+    <!-- Semantic Colors - Info/Blue -->
+    <Color x:Key="InfoColor">#0369A1</Color>
+    <Color x:Key="InfoLightColor">#F0F9FF</Color>
+    <Color x:Key="InfoDarkColor">#0C4A6E</Color>
+    <Color x:Key="InfoTextColor">#0C4A6E</Color>
+
+    <!-- Semantic Colors - Purple (for categories/special) -->
+    <Color x:Key="PurpleColor">#A855F7</Color>
+    <Color x:Key="PurpleLightColor">#F3E8FF</Color>
+    <Color x:Key="PurpleDarkColor">#9333EA</Color>
+
+    <!-- Selection Colors -->
+    <Color x:Key="SelectionHoverColor">#3060A5FA</Color>
 
     <!-- Solid Color Brushes - Primary -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}" />
@@ -47,14 +61,19 @@
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="SuccessLightBrush" Color="{StaticResource SuccessLightColor}" />
     <SolidColorBrush x:Key="SuccessDarkBrush" Color="{StaticResource SuccessDarkColor}" />
+    <SolidColorBrush x:Key="SuccessTextBrush" Color="{StaticResource SuccessTextColor}" />
+    <SolidColorBrush x:Key="SuccessTextLightBrush" Color="{StaticResource SuccessTextLightColor}" />
 
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
     <SolidColorBrush x:Key="WarningLightBrush" Color="{StaticResource WarningLightColor}" />
     <SolidColorBrush x:Key="WarningDarkBrush" Color="{StaticResource WarningDarkColor}" />
+    <SolidColorBrush x:Key="WarningTextBrush" Color="{StaticResource WarningTextColor}" />
+    <SolidColorBrush x:Key="WarningTextLightBrush" Color="{StaticResource WarningTextLightColor}" />
 
     <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
     <SolidColorBrush x:Key="ErrorLightBrush" Color="{StaticResource ErrorLightColor}" />
     <SolidColorBrush x:Key="ErrorDarkBrush" Color="{StaticResource ErrorDarkColor}" />
+    <SolidColorBrush x:Key="ErrorTextBrush" Color="{StaticResource ErrorTextColor}" />
 
     <!-- Danger aliases (same as Error) -->
     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource ErrorColor}" />
@@ -64,6 +83,15 @@
     <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
     <SolidColorBrush x:Key="InfoLightBrush" Color="{StaticResource InfoLightColor}" />
     <SolidColorBrush x:Key="InfoDarkBrush" Color="{StaticResource InfoDarkColor}" />
+    <SolidColorBrush x:Key="InfoTextBrush" Color="{StaticResource InfoTextColor}" />
+
+    <!-- Purple Brushes -->
+    <SolidColorBrush x:Key="PurpleBrush" Color="{StaticResource PurpleColor}" />
+    <SolidColorBrush x:Key="PurpleLightBrush" Color="{StaticResource PurpleLightColor}" />
+    <SolidColorBrush x:Key="PurpleDarkBrush" Color="{StaticResource PurpleDarkColor}" />
+
+    <!-- Selection Brushes -->
+    <SolidColorBrush x:Key="SelectionHoverBrush" Color="{StaticResource SelectionHoverColor}" />
 
 
 </ResourceDictionary>

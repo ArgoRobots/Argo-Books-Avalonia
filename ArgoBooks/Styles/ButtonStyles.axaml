@@ -94,7 +94,7 @@
 
     <!-- Danger Button (for destructive actions) -->
     <Style Selector="Button.danger-button">
-        <Setter Property="Background" Value="#DC2626" />
+        <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="6" />
@@ -104,10 +104,10 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
     <Style Selector="Button.danger-button /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#DC2626" />
+        <Setter Property="Background" Value="{DynamicResource ErrorBrush}" />
     </Style>
     <Style Selector="Button.danger-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#B91C1C" />
+        <Setter Property="Background" Value="{DynamicResource ErrorDarkBrush}" />
     </Style>
     <Style Selector="Button.danger-button PathIcon">
         <Setter Property="Foreground" Value="White" />
@@ -118,7 +118,7 @@
 
     <!-- Success Button (for positive actions) -->
     <Style Selector="Button.success-button">
-        <Setter Property="Background" Value="#22C55E" />
+        <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="6" />
@@ -128,15 +128,15 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
     <Style Selector="Button.success-button /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#22C55E" />
+        <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
     </Style>
     <Style Selector="Button.success-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#16A34A" />
+        <Setter Property="Background" Value="{DynamicResource SuccessDarkBrush}" />
     </Style>
 
     <!-- Warning Button (for cautionary actions) -->
     <Style Selector="Button.warning-button">
-        <Setter Property="Background" Value="#F59E0B" />
+        <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
         <Setter Property="Foreground" Value="White" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="6" />
@@ -146,10 +146,10 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
     <Style Selector="Button.warning-button /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#F59E0B" />
+        <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
     </Style>
     <Style Selector="Button.warning-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#D97706" />
+        <Setter Property="Background" Value="{DynamicResource WarningDarkBrush}" />
     </Style>
 
     <!-- Text Button (no background, text only) -->
@@ -225,10 +225,10 @@
     </Style>
     <!-- Icon Button Danger Variant (red on hover) -->
     <Style Selector="Button.icon-button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#FEE2E2" />
+        <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
     </Style>
     <Style Selector="Button.icon-button.danger:pointerover PathIcon">
-        <Setter Property="Foreground" Value="#DC2626" />
+        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
     </Style>
 
     <!-- Icon Button Small (smaller variant for compact areas) -->
@@ -252,10 +252,10 @@
     </Style>
     <!-- Icon Button Small Danger Variant (red on hover) -->
     <Style Selector="Button.icon-button-small.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#FEE2E2" />
+        <Setter Property="Background" Value="{DynamicResource ErrorLightBrush}" />
     </Style>
     <Style Selector="Button.icon-button-small.danger:pointerover PathIcon">
-        <Setter Property="Foreground" Value="#DC2626" />
+        <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
     </Style>
 
     <!-- Link Button (looks like a hyperlink, with underline on hover) -->
