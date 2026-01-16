@@ -232,6 +232,24 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _categoryErrorMessage = string.Empty;
 
+    partial void OnSelectedSupplierChanged(SupplierOption? value)
+    {
+        if (value != null)
+        {
+            HasSupplierError = false;
+            SupplierErrorMessage = string.Empty;
+        }
+    }
+
+    partial void OnSelectedCategoryChanged(CategoryOption? value)
+    {
+        if (value != null)
+        {
+            HasCategoryError = false;
+            CategoryErrorMessage = string.Empty;
+        }
+    }
+
     // AI Suggestion State
     [ObservableProperty]
     private bool _isLoadingAiSuggestions;
@@ -468,6 +486,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         HasSupplierError = false;
         HasCategoryError = false;
 
+        // Clear product errors on all line items
+        foreach (var lineItem in LineItems)
+        {
+            lineItem.HasProductError = false;
+            lineItem.ProductErrorMessage = string.Empty;
+        }
+
         var hasErrors = false;
 
         if (!decimal.TryParse(ExtractedTotal, out var total) || total <= 0)
@@ -489,6 +514,17 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             HasCategoryError = true;
             CategoryErrorMessage = "Please select a category.".Translate();
             hasErrors = true;
+        }
+
+        // Validate line items have products selected
+        foreach (var lineItem in LineItems)
+        {
+            if (lineItem.SelectedProduct == null)
+            {
+                lineItem.HasProductError = true;
+                lineItem.ProductErrorMessage = "Please select a product.".Translate();
+                hasErrors = true;
+            }
         }
 
         if (hasErrors)
@@ -1174,6 +1210,7 @@ public partial class ScannedLineItemViewModel : ObservableObject
                 UnitPrice = value.UnitPrice.ToString("F2");
             }
             HasProductError = false;
+            ProductErrorMessage = string.Empty;
             ShowCreateProductSuggestion = false;
         }
         RecalculateTotal();
