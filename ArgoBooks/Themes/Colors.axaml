@@ -11,6 +11,7 @@
     <Color x:Key="PrimaryLightColor">#DBEAFE</Color>
     <Color x:Key="PrimaryDarkColor">#1D4ED8</Color>
     <Color x:Key="PrimaryHoverColor">#2563EB</Color>
+    <Color x:Key="PrimaryHoverLightColor">#3064B5F6</Color>
 
     <!-- Accent Color (used in gradients) -->
     <Color x:Key="AccentColor">#5C6AC4</Color>
@@ -40,6 +41,7 @@
     <SolidColorBrush x:Key="PrimaryLightBrush" Color="{StaticResource PrimaryLightColor}" />
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDarkColor}" />
     <SolidColorBrush x:Key="PrimaryHoverBrush" Color="{StaticResource PrimaryHoverColor}" />
+    <SolidColorBrush x:Key="PrimaryHoverLightBrush" Color="{StaticResource PrimaryHoverLightColor}" />
 
     <!-- Solid Color Brushes - Semantic -->
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
