@@ -214,12 +214,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     ];
 
     [ObservableProperty]
-    private bool _hasVendorError;
-
-    [ObservableProperty]
-    private string _vendorErrorMessage = string.Empty;
-
-    [ObservableProperty]
     private bool _hasTotalError;
 
     [ObservableProperty]
@@ -457,19 +451,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void CreateExpense()
     {
         // Validate
-        HasVendorError = false;
         HasTotalError = false;
         HasSupplierError = false;
         HasCategoryError = false;
 
         var hasErrors = false;
-
-        if (string.IsNullOrWhiteSpace(ExtractedVendor))
-        {
-            HasVendorError = true;
-            VendorErrorMessage = "Vendor name is required.".Translate();
-            hasErrors = true;
-        }
 
         if (!decimal.TryParse(ExtractedTotal, out var total) || total <= 0)
         {
@@ -893,7 +879,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SelectedCategory = null;
         SelectedPaymentMethod = "Cash";
         Notes = string.Empty;
-        HasVendorError = false;
         HasTotalError = false;
         HasSupplierError = false;
         HasCategoryError = false;
