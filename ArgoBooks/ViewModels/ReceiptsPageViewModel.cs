@@ -654,13 +654,69 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ExportSelected()
+    private async Task ExportSelected()
     {
         var selectedReceipts = Receipts.Where(r => r.IsSelected).ToList();
         if (selectedReceipts.Count == 0) return;
 
-        // TODO: Implement export functionality
-        // Export selected receipts to ZIP or folder
+        try
+        {
+            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel?.StorageProvider == null) return;
+
+            // Let user pick a folder to export to
+            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Select Export Folder",
+                AllowMultiple = false
+            });
+
+            if (folders.Count == 0) return;
+
+            var exportFolder = folders[0].Path.LocalPath;
+            var exportedCount = 0;
+
+            foreach (var receipt in selectedReceipts)
+            {
+                if (string.IsNullOrEmpty(receipt.ImagePath) || !File.Exists(receipt.ImagePath))
+                    continue;
+
+                var extension = Path.GetExtension(receipt.FileName);
+                if (string.IsNullOrEmpty(extension))
+                    extension = Path.GetExtension(receipt.ImagePath);
+
+                var fileName = $"Receipt_{receipt.Id}_{receipt.DateFormatted.Replace(",", "").Replace(" ", "_")}{extension}";
+                var destinationPath = Path.Combine(exportFolder, fileName);
+
+                File.Copy(receipt.ImagePath, destinationPath, overwrite: true);
+                exportedCount++;
+            }
+
+            if (exportedCount > 0)
+            {
+                App.AddNotification(
+                    "Export Complete",
+                    $"Successfully exported {exportedCount} receipt(s) to {exportFolder}",
+                    NotificationType.Success);
+
+                // Exit selection mode after successful export
+                IsSelectionMode = false;
+            }
+            else
+            {
+                App.AddNotification(
+                    "Export Failed",
+                    "No receipts could be exported. Files may be missing.",
+                    NotificationType.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            App.AddNotification("Error", $"Failed to export receipts: {ex.Message}", NotificationType.Error);
+        }
     }
 
     [RelayCommand]
@@ -724,13 +780,21 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [RelayCommand]
     private void SelectAll()
     {
-        IsAllSelected = true;
+        foreach (var receipt in Receipts)
+        {
+            receipt.IsSelected = true;
+        }
+        UpdateSelectionState();
     }
 
     [RelayCommand]
     private void DeselectAll()
     {
-        IsAllSelected = false;
+        foreach (var receipt in Receipts)
+        {
+            receipt.IsSelected = false;
+        }
+        UpdateSelectionState();
     }
 
     #endregion
