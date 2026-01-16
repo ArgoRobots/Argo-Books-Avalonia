@@ -871,5 +871,10 @@
         <Style Selector="Border.selection-mode">
             <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
         </Style>
+
+        <!-- Icon button hover in selection mode header - use semi-transparent primary -->
+        <Style Selector="Border.selection-mode Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#3064B5F6" />
+        </Style>
     </UserControl.Styles>
 </UserControl>
