@@ -141,17 +141,17 @@ public static class BoolConverters
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal width.
-    /// Fullscreen = NaN (stretch), Normal = 600px.
+    /// Fullscreen = NaN (stretch), Normal = 800px.
     /// </summary>
     public static readonly IValueConverter ToFullscreenWidth =
-        new FuncValueConverter<bool, double>(value => value ? double.NaN : 600);
+        new FuncValueConverter<bool, double>(value => value ? double.NaN : 800);
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal height.
-    /// Fullscreen = NaN (stretch), Normal = 500px.
+    /// Fullscreen = NaN (stretch), Normal = 650px.
     /// </summary>
     public static readonly IValueConverter ToFullscreenHeight =
-        new FuncValueConverter<bool, double>(value => value ? double.NaN : 500);
+        new FuncValueConverter<bool, double>(value => value ? double.NaN : 650);
 
     /// <summary>
     /// Converts bool (isFullscreen) to modal margin.

@@ -47,7 +47,33 @@ public partial class ReceiptsPage : UserControl
         {
             if (DataContext is ReceiptsPageViewModel viewModel)
             {
-                viewModel.OpenPreviewCommand.Execute(receipt);
+                // In selection mode, toggle selection instead of opening preview
+                if (viewModel.IsSelectionMode)
+                {
+                    viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
+                }
+                else
+                {
+                    viewModel.OpenPreviewCommand.Execute(receipt);
+                }
+            }
+        }
+    }
+
+    private void OnReceiptRowPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Ignore if clicking on checkbox or action buttons
+        if (e.Source is CheckBox or Button) return;
+
+        if (sender is Border { DataContext: ReceiptDisplayItem receipt })
+        {
+            if (DataContext is ReceiptsPageViewModel viewModel)
+            {
+                // In selection mode, toggle selection
+                if (viewModel.IsSelectionMode)
+                {
+                    viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
+                }
             }
         }
     }

@@ -49,6 +49,9 @@
         <Thickness x:Key="BorderThin">1</Thickness>
         <Thickness x:Key="BorderMedium">2</Thickness>
         <Thickness x:Key="BorderThick">3</Thickness>
+
+        <!-- Animation Colors (must be defined locally for StaticResource in animations) -->
+        <Color x:Key="HighlightAnimationColor">#3060A5FA</Color>
     </Styles.Resources>
 
     <!-- Scrollbar Styling -->
@@ -191,11 +194,11 @@
 
     <!-- Transaction Row Highlight Style with fade animation -->
     <Style Selector="Border.highlighted-row">
-        <Setter Property="Background" Value="#3060A5FA" />
+        <Setter Property="Background" Value="{DynamicResource SelectionHoverBrush}" />
         <Style.Animations>
             <Animation Duration="0:0:3" FillMode="Forward">
                 <KeyFrame Cue="0%">
-                    <Setter Property="Background" Value="#3060A5FA" />
+                    <Setter Property="Background" Value="{StaticResource HighlightAnimationColor}" />
                 </KeyFrame>
                 <KeyFrame Cue="100%">
                     <Setter Property="Background" Value="Transparent" />

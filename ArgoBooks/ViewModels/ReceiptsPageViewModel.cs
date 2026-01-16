@@ -4,6 +4,7 @@ using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
+using ArgoBooks.Views;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
@@ -90,6 +91,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     #region Selection
 
     [ObservableProperty]
+    private bool _isSelectionMode;
+
+    [ObservableProperty]
     private bool _hasSelectedReceipts;
 
     [ObservableProperty]
@@ -98,12 +102,45 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isAllSelected;
 
+    partial void OnIsSelectionModeChanged(bool value)
+    {
+        // Clear selection when exiting selection mode
+        if (!value)
+        {
+            foreach (var receipt in Receipts)
+            {
+                receipt.IsSelected = false;
+            }
+            UpdateSelectionState();
+        }
+    }
+
     partial void OnIsAllSelectedChanged(bool value)
     {
         foreach (var receipt in Receipts)
         {
             receipt.IsSelected = value;
         }
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    private void ToggleSelectionMode()
+    {
+        IsSelectionMode = !IsSelectionMode;
+    }
+
+    [RelayCommand]
+    private void ExitSelectionMode()
+    {
+        IsSelectionMode = false;
+    }
+
+    [RelayCommand]
+    private void ToggleReceiptSelection(ReceiptDisplayItem? receipt)
+    {
+        if (receipt == null) return;
+        receipt.IsSelected = !receipt.IsSelected;
         UpdateSelectionState();
     }
 
@@ -567,6 +604,12 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     {
         SelectedCount = Receipts.Count(r => r.IsSelected);
         HasSelectedReceipts = SelectedCount > 0;
+
+        // Auto-enter selection mode when items are selected (e.g., via checkbox)
+        if (HasSelectedReceipts && !IsSelectionMode)
+        {
+            IsSelectionMode = true;
+        }
     }
 
     private static string GetReceiptImagePath(Receipt receipt)
@@ -612,13 +655,85 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ExportSelected()
+    private async Task ExportSelected()
     {
         var selectedReceipts = Receipts.Where(r => r.IsSelected).ToList();
         if (selectedReceipts.Count == 0) return;
 
-        // TODO: Implement export functionality
-        // Export selected receipts to ZIP or folder
+        try
+        {
+            var mainWindow = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow as MainWindow
+                : null;
+
+            if (mainWindow?.StorageProvider == null) return;
+
+            // Let user pick a folder to export to
+            var folders = await mainWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Select Export Folder",
+                AllowMultiple = false
+            });
+
+            if (folders.Count == 0) return;
+
+            var baseFolder = folders[0].Path.LocalPath;
+
+            // Create subfolder with company name and date
+            var companyName = App.CompanyManager?.CurrentCompanyName ?? "Receipts";
+            var safeName = string.Join("_", companyName.Split(Path.GetInvalidFileNameChars()));
+            var exportFolderName = $"{safeName}_{DateTime.Now:yyyy-MM-dd}";
+            var exportFolder = Path.Combine(baseFolder, exportFolderName);
+
+            Directory.CreateDirectory(exportFolder);
+
+            var exportedCount = 0;
+
+            foreach (var receipt in selectedReceipts)
+            {
+                if (string.IsNullOrEmpty(receipt.ImagePath) || !File.Exists(receipt.ImagePath))
+                    continue;
+
+                var extension = Path.GetExtension(receipt.FileName);
+                if (string.IsNullOrEmpty(extension))
+                    extension = Path.GetExtension(receipt.ImagePath);
+
+                var fileName = $"Receipt_{receipt.Id}_{receipt.DateFormatted.Replace(",", "").Replace(" ", "_")}{extension}";
+                var destinationPath = Path.Combine(exportFolder, fileName);
+
+                File.Copy(receipt.ImagePath, destinationPath, overwrite: true);
+                exportedCount++;
+            }
+
+            if (exportedCount > 0)
+            {
+                // Exit selection mode after successful export
+                IsSelectionMode = false;
+            }
+            else
+            {
+                // Show error message box
+                if (mainWindow.MessageBoxService != null)
+                {
+                    await mainWindow.MessageBoxService.ShowWarningAsync(
+                        "Export Failed",
+                        "No receipts could be exported. Files may be missing.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            var mainWindow = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow as MainWindow
+                : null;
+
+            if (mainWindow?.MessageBoxService != null)
+            {
+                await mainWindow.MessageBoxService.ShowErrorAsync(
+                    "Export Error",
+                    $"Failed to export receipts: {ex.Message}");
+            }
+        }
     }
 
     [RelayCommand]
@@ -682,13 +797,21 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [RelayCommand]
     private void SelectAll()
     {
-        IsAllSelected = true;
+        foreach (var receipt in Receipts)
+        {
+            receipt.IsSelected = true;
+        }
+        UpdateSelectionState();
     }
 
     [RelayCommand]
     private void DeselectAll()
     {
-        IsAllSelected = false;
+        foreach (var receipt in Receipts)
+        {
+            receipt.IsSelected = false;
+        }
+        UpdateSelectionState();
     }
 
     #endregion

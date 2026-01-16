@@ -240,13 +240,13 @@
         </Popup>
 
         <!-- Helper Text / Error Message -->
-        <TextBlock FontSize="{StaticResource FontSizeXs}"
+        <TextBlock FontSize="12"
                    Margin="0,2,0,0"
                    Foreground="{DynamicResource TextTertiaryBrush}"
                    Text="{Binding HelperText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"
                    IsVisible="{Binding HelperText, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
-        <TextBlock FontSize="{StaticResource FontSizeXs}"
+        <TextBlock FontSize="12"
                    Margin="0,2,0,0"
                    Foreground="{DynamicResource ErrorBrush}"
                    Text="{Binding ErrorMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}"

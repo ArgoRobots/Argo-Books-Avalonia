@@ -40,7 +40,7 @@
                                        IconColor="Success" />
                     <controls:StatCard Label="{loc:Loc 'AI Scanned'}"
                                        Value="{Binding AiScannedReceipts}"
-                                       Icon="M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3zM7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5zM16 17H8v-2h8v2zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"
+                                       Icon="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9.18-6.95L7.4 14.46 10.94 18l5.66-5.66-1.41-1.41-4.24 4.24-2.13-2.12z"
                                        IconColor="Info" />
                 </controls:StatCardsRow>
 
@@ -57,19 +57,44 @@
                         <Border Grid.Row="0"
                                 Padding="{Binding ResponsiveHeader.HeaderPadding}"
                                 BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="0,0,0,1">
+                                BorderThickness="0,0,0,1"
+                                Classes.selection-mode="{Binding IsSelectionMode}">
                             <Grid ColumnDefinitions="*,Auto">
                                 <!-- Title and Selection Info -->
                                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                                    <!-- Normal Title (shown when not in selection mode) -->
                                     <TextBlock Text="{loc:Loc 'Receipt Archive'}"
                                                FontSize="18"
                                                FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <!-- Selection Count Badge -->
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               IsVisible="{Binding !IsSelectionMode}" />
+
+                                    <!-- Selection Mode Title -->
+                                    <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding IsSelectionMode}">
+                                        <Button Classes="icon-button"
+                                                Command="{Binding ExitSelectionModeCommand}"
+                                                ToolTip.Tip="{loc:Loc 'Cancel Selection'}">
+                                            <PathIcon Data="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                                                      Width="20" Height="20"
+                                                      Foreground="{DynamicResource PrimaryBrush}" />
+                                        </Button>
+                                        <TextBlock FontSize="18"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource PrimaryBrush}"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0} selected">
+                                                    <Binding Path="SelectedCount" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Selection Count Badge (shown when items selected but not in selection mode UI) -->
                                     <Border Background="{DynamicResource PrimaryLightBrush}"
                                             CornerRadius="12"
                                             Padding="12,4"
-                                            IsVisible="{Binding HasSelectedReceipts}">
+                                            IsVisible="False">
                                         <TextBlock Foreground="{DynamicResource PrimaryBrush}"
                                                    FontSize="12"
                                                    FontWeight="Medium">
@@ -82,10 +107,11 @@
                                     </Border>
                                 </StackPanel>
 
-                                <!-- Action Buttons (Right aligned) -->
+                                <!-- Action Buttons (Right aligned) - Normal Mode -->
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal"
-                                            Spacing="{Binding ResponsiveHeader.HeaderSpacing}">
+                                            Spacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                            IsVisible="{Binding !IsSelectionMode}">
                                     <!-- Search Box -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="6"
@@ -116,6 +142,19 @@
                                         </StackPanel>
                                     </Button>
 
+                                    <!-- Select Button -->
+                                    <Button Classes="secondary-button"
+                                            Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
+                                            Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
+                                            Command="{Binding ToggleSelectionModeCommand}"
+                                            ToolTip.Tip="{loc:Loc 'Select receipts'}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM17.99 9l-1.41-1.42-6.59 6.59-2.58-2.57-1.42 1.41 4 3.99z"
+                                                      Width="16" Height="16" />
+                                            <TextBlock Text="{loc:Loc 'Select'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
+                                        </StackPanel>
+                                    </Button>
+
                                     <!-- AI Scan Button -->
                                     <Button x:Name="AiScanButton"
                                             Classes="primary-button"
@@ -128,6 +167,59 @@
                                                       Width="16" Height="16"
                                                       Foreground="White" />
                                             <TextBlock Text="{loc:Loc 'AI Scan Receipt'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- View Toggle -->
+                                    <Border Background="{DynamicResource SurfaceAltBrush}"
+                                            CornerRadius="6"
+                                            Padding="4">
+                                        <StackPanel Orientation="Horizontal" Spacing="2">
+                                            <Button Classes="view-toggle-button"
+                                                    Classes.selected="{Binding IsGridView}"
+                                                    Command="{Binding SetGridViewCommand}">
+                                                <PathIcon Data="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"
+                                                          Width="16" Height="16" />
+                                            </Button>
+                                            <Button Classes="view-toggle-button"
+                                                    Classes.selected="{Binding IsListView}"
+                                                    Command="{Binding SetListViewCommand}">
+                                                <PathIcon Data="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"
+                                                          Width="16" Height="16" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Action Buttons (Right aligned) - Selection Mode -->
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            Spacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                                            IsVisible="{Binding IsSelectionMode}">
+                                    <!-- Select All Button -->
+                                    <Button Classes="secondary-button"
+                                            Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
+                                            Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
+                                            Command="{Binding SelectAllCommand}"
+                                            ToolTip.Tip="{loc:Loc 'Select All'}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"
+                                                      Width="16" Height="16" />
+                                            <TextBlock Text="{loc:Loc 'Select All'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
+                                        </StackPanel>
+                                    </Button>
+
+                                    <!-- Deselect All Button -->
+                                    <Button Classes="secondary-button"
+                                            Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
+                                            Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
+                                            Command="{Binding DeselectAllCommand}"
+                                            IsVisible="{Binding HasSelectedReceipts}"
+                                            ToolTip.Tip="{loc:Loc 'Deselect All'}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <PathIcon Data="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"
+                                                      Width="16" Height="16" />
+                                            <TextBlock Text="{loc:Loc 'Deselect All'}" IsVisible="{Binding ResponsiveHeader.ShowButtonText}" />
                                         </StackPanel>
                                     </Button>
 
@@ -146,20 +238,20 @@
                                         </StackPanel>
                                     </Button>
 
-                                    <!-- View Toggle -->
+                                    <!-- View Toggle (also available in selection mode) -->
                                     <Border Background="{DynamicResource SurfaceAltBrush}"
                                             CornerRadius="6"
                                             Padding="4">
                                         <StackPanel Orientation="Horizontal" Spacing="2">
                                             <Button Classes="view-toggle-button"
-                                                    Command="{Binding SetGridViewCommand}"
-                                                    Background="{Binding IsGridView, Converter={x:Static local:BoolConverters.ToViewToggleBackground}}">
+                                                    Classes.selected="{Binding IsGridView}"
+                                                    Command="{Binding SetGridViewCommand}">
                                                 <PathIcon Data="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"
                                                           Width="16" Height="16" />
                                             </Button>
                                             <Button Classes="view-toggle-button"
-                                                    Command="{Binding SetListViewCommand}"
-                                                    Background="{Binding IsListView, Converter={x:Static local:BoolConverters.ToViewToggleBackground}}">
+                                                    Classes.selected="{Binding IsListView}"
+                                                    Command="{Binding SetListViewCommand}">
                                                 <PathIcon Data="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"
                                                           Width="16" Height="16" />
                                             </Button>
@@ -191,9 +283,11 @@
                                                     BorderBrush="{DynamicResource BorderBrush}"
                                                     BorderThickness="1"
                                                     Cursor="Hand"
+                                                    Classes="receipt-card"
+                                                    Classes.selected="{Binding IsSelected}"
                                                     PointerPressed="OnReceiptCardPressed">
                                                 <Border.Styles>
-                                                    <Style Selector="Border:pointerover">
+                                                    <Style Selector="Border.receipt-card:pointerover:not(.selected)">
                                                         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
                                                     </Style>
                                                 </Border.Styles>
@@ -337,6 +431,12 @@
                                                     MinHeight="40"
                                                     PointerPressed="OnTableHeaderPointerPressed">
                                                 <StackPanel Orientation="Horizontal" x:Name="HeaderPanel">
+                                                    <!-- Selection Checkbox -->
+                                                    <Panel Width="48" IsVisible="{Binding IsSelectionMode}">
+                                                        <CheckBox IsChecked="{Binding IsAllSelected}"
+                                                                  HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center" />
+                                                    </Panel>
                                                     <!-- Receipt # -->
                                                     <Panel Width="{Binding ColumnWidths.IdColumnWidth}" IsVisible="{Binding ShowIdColumn}">
                                                         <TextBlock Text="{loc:Loc 'Receipt #'}" FontSize="12" FontWeight="SemiBold"
@@ -410,8 +510,17 @@
                                                                 <Border Padding="24,0"
                                                                         BorderBrush="{DynamicResource BorderBrush}"
                                                                         BorderThickness="0,0,0,1"
-                                                                        MinHeight="56">
+                                                                        MinHeight="56"
+                                                                        Classes="receipt-row"
+                                                                        Classes.selected="{Binding IsSelected}"
+                                                                        PointerPressed="OnReceiptRowPressed">
                                                                     <StackPanel Orientation="Horizontal">
+                                                                        <!-- Selection Checkbox -->
+                                                                        <Panel Width="48" IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).IsSelectionMode}">
+                                                                            <CheckBox IsChecked="{Binding IsSelected}"
+                                                                                      HorizontalAlignment="Center"
+                                                                                      VerticalAlignment="Center" />
+                                                                        </Panel>
                                                                         <!-- Receipt # -->
                                                                         <Panel Width="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
                                                                                IsVisible="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).ShowIdColumn}">
@@ -532,8 +641,13 @@
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
+                                                </Panel>
+                                            </ScrollViewer>
+                                        </Grid>
+                                    </ScrollViewer>
+                                </Panel>
 
-                                <!-- Empty State -->
+                                <!-- Empty State (shown when no receipts) -->
                                 <Border Padding="40"
                                         IsVisible="{Binding Receipts.Count, Converter={x:Static local:IntConverters.IsZero}}">
                                     <StackPanel HorizontalAlignment="Center"
@@ -562,7 +676,7 @@
                                         <Button Classes="primary-button"
                                                 HorizontalAlignment="Center"
                                                 Margin="0,8,0,0"
-                                                Command="{Binding AiScanReceiptCommand}">
+                                                Click="OnAiScanButtonClick">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9.18-6.95L7.4 14.46 10.94 18l5.66-5.66-1.41-1.41-4.24 4.24-2.13-2.12z"
                                                           Width="16" Height="16"
@@ -572,11 +686,6 @@
                                         </Button>
                                     </StackPanel>
                                 </Border>
-                                                </Panel>
-                                            </ScrollViewer>
-                                        </Grid>
-                                    </ScrollViewer>
-                                </Panel>
                             </Panel>
                         </ScrollViewer>
 
@@ -727,7 +836,7 @@
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.view-toggle-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{TemplateBinding Background}" />
+            <Setter Property="Background" Value="Transparent" />
             <Setter Property="CornerRadius" Value="4" />
         </Style>
         <Style Selector="Button.view-toggle-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -735,6 +844,37 @@
         </Style>
         <Style Selector="Button.view-toggle-button PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <!-- Selected state for view toggle button -->
+        <Style Selector="Button.view-toggle-button.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+        </Style>
+        <Style Selector="Button.view-toggle-button.selected PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.view-toggle-button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+        </Style>
+
+        <!-- Receipt card selected state -->
+        <Style Selector="Border.receipt-card.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+
+        <!-- Receipt row selected state -->
+        <Style Selector="Border.receipt-row.selected">
+            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+        </Style>
+
+        <!-- Selection mode header styling -->
+        <Style Selector="Border.selection-mode">
+            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+        </Style>
+
+        <!-- Icon button hover in selection mode header - use semi-transparent primary -->
+        <Style Selector="Border.selection-mode Button.icon-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryHoverLightBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>

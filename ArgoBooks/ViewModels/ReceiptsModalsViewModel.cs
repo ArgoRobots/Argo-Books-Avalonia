@@ -202,6 +202,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     public ObservableCollection<SupplierOption> SupplierOptions { get; } = [];
     public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
+    public ObservableCollection<ProductOption> ProductOptions { get; } = [];
     public ObservableCollection<string> PaymentMethodOptions { get; } =
     [
         "Cash",
@@ -223,7 +224,31 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private bool _hasSupplierError;
 
     [ObservableProperty]
+    private string _supplierErrorMessage = string.Empty;
+
+    [ObservableProperty]
     private bool _hasCategoryError;
+
+    [ObservableProperty]
+    private string _categoryErrorMessage = string.Empty;
+
+    partial void OnSelectedSupplierChanged(SupplierOption? value)
+    {
+        if (value != null)
+        {
+            HasSupplierError = false;
+            SupplierErrorMessage = string.Empty;
+        }
+    }
+
+    partial void OnSelectedCategoryChanged(CategoryOption? value)
+    {
+        if (value != null)
+        {
+            HasCategoryError = false;
+            CategoryErrorMessage = string.Empty;
+        }
+    }
 
     // AI Suggestion State
     [ObservableProperty]
@@ -296,6 +321,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         LoadSupplierOptions();
         LoadCategoryOptions();
+        LoadProductOptions();
 
         // Set the image path for preview
         if (!string.IsNullOrEmpty(tempFilePath) && File.Exists(tempFilePath))
@@ -391,14 +417,19 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         LineItems.Clear();
         foreach (var item in result.LineItems)
         {
-            LineItems.Add(new ScannedLineItemViewModel
+            var lineItem = new ScannedLineItemViewModel
             {
                 Description = item.Description,
                 Quantity = item.Quantity.ToString("F2"),
                 UnitPrice = item.UnitPrice.ToString("F2"),
                 TotalPrice = item.TotalPrice.ToString("F2"),
                 Confidence = item.Confidence
-            });
+            };
+
+            // Try to match to existing product
+            TryMatchProduct(lineItem, item.Description);
+
+            LineItems.Add(lineItem);
         }
 
         // Get AI suggestions for supplier and category
@@ -455,6 +486,13 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         HasSupplierError = false;
         HasCategoryError = false;
 
+        // Clear product errors on all line items
+        foreach (var lineItem in LineItems)
+        {
+            lineItem.HasProductError = false;
+            lineItem.ProductErrorMessage = string.Empty;
+        }
+
         var hasErrors = false;
 
         if (!decimal.TryParse(ExtractedTotal, out var total) || total <= 0)
@@ -467,13 +505,26 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         if (SelectedSupplier == null)
         {
             HasSupplierError = true;
+            SupplierErrorMessage = "Please select a supplier.".Translate();
             hasErrors = true;
         }
 
         if (SelectedCategory == null)
         {
             HasCategoryError = true;
+            CategoryErrorMessage = "Please select a category.".Translate();
             hasErrors = true;
+        }
+
+        // Validate line items have products selected
+        foreach (var lineItem in LineItems)
+        {
+            if (lineItem.SelectedProduct == null)
+            {
+                lineItem.HasProductError = true;
+                lineItem.ProductErrorMessage = "Please select a product.".Translate();
+                hasErrors = true;
+            }
         }
 
         if (hasErrors)
@@ -501,11 +552,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             decimal.TryParse(li.UnitPrice, out var unitPrice);
             return new LineItem
             {
-                Description = li.Description,
+                ProductId = li.SelectedProduct?.Id,
+                Description = li.SelectedProduct?.Name ?? li.Description,
                 Quantity = qty > 0 ? qty : 1,
                 UnitPrice = unitPrice
             };
-        }).Where(li => !string.IsNullOrWhiteSpace(li.Description)).ToList();
+        }).Where(li => !string.IsNullOrWhiteSpace(li.Description) || li.ProductId != null).ToList();
 
         var expense = new Purchase
         {
@@ -603,6 +655,71 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         CloseScanReviewModal();
         App.NavigationService?.NavigateTo("Categories");
         App.CategoryModalsViewModel?.OpenAddModal();
+    }
+
+    [RelayCommand]
+    private void NavigateToCreateProduct()
+    {
+        // Close modal and navigate to products page with add modal open
+        CloseScanReviewModal();
+        App.NavigationService?.NavigateTo("Products");
+        App.ProductModalsViewModel?.OpenAddModal();
+    }
+
+    /// <summary>
+    /// Creates a new product from a line item suggestion.
+    /// </summary>
+    [RelayCommand]
+    private void CreateSuggestedProduct(ScannedLineItemViewModel? lineItem)
+    {
+        if (lineItem == null || string.IsNullOrEmpty(lineItem.SuggestedProductName))
+            return;
+
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Products == null) return;
+
+        // Create new product with default purchase category
+        var newId = Guid.NewGuid().ToString();
+        var defaultCategory = companyData.Categories?
+            .FirstOrDefault(c => c.Type == CategoryType.Purchase);
+
+        var newProduct = new Product
+        {
+            Id = newId,
+            Name = lineItem.SuggestedProductName,
+            Description = lineItem.Description,
+            CostPrice = decimal.TryParse(lineItem.UnitPrice, out var price) ? price : 0,
+            UnitPrice = 0,
+            CategoryId = defaultCategory?.Id
+        };
+
+        companyData.Products.Add(newProduct);
+
+        // Add to options and select
+        var option = new ProductOption
+        {
+            Id = newId,
+            Name = newProduct.Name,
+            Description = newProduct.Description,
+            UnitPrice = newProduct.CostPrice
+        };
+        ProductOptions.Add(option);
+        lineItem.SelectedProduct = option;
+        lineItem.ShowCreateProductSuggestion = false;
+
+        companyData.MarkAsModified();
+    }
+
+    /// <summary>
+    /// Dismisses the create product suggestion for a line item.
+    /// </summary>
+    [RelayCommand]
+    private void DismissProductSuggestion(ScannedLineItemViewModel? lineItem)
+    {
+        if (lineItem != null)
+        {
+            lineItem.ShowCreateProductSuggestion = false;
+        }
     }
 
     [RelayCommand]
@@ -756,6 +873,43 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         {
             SelectedSupplier = matchedSupplier;
             SupplierMatchConfidence = 0.7; // Assume medium confidence for basic match
+        }
+    }
+
+    /// <summary>
+    /// Tries to match a scanned line item description to an existing product.
+    /// </summary>
+    private void TryMatchProduct(ScannedLineItemViewModel lineItem, string description)
+    {
+        if (string.IsNullOrEmpty(description))
+        {
+            lineItem.SuggestedProductName = string.Empty;
+            lineItem.ShowCreateProductSuggestion = false;
+            return;
+        }
+
+        // Try to find exact or close match
+        var matchedProduct = ProductOptions.FirstOrDefault(p =>
+            p.Name.Equals(description, StringComparison.OrdinalIgnoreCase));
+
+        if (matchedProduct == null)
+        {
+            // Try partial match
+            matchedProduct = ProductOptions.FirstOrDefault(p =>
+                p.Name.Contains(description, StringComparison.OrdinalIgnoreCase) ||
+                description.Contains(p.Name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (matchedProduct != null)
+        {
+            lineItem.SelectedProduct = matchedProduct;
+            lineItem.ShowCreateProductSuggestion = false;
+        }
+        else
+        {
+            // No match found - suggest creating new product
+            lineItem.SuggestedProductName = ToTitleCase(description);
+            lineItem.ShowCreateProductSuggestion = true;
         }
     }
 
@@ -923,6 +1077,29 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
     }
 
+    private void LoadProductOptions()
+    {
+        ProductOptions.Clear();
+        var companyData = App.CompanyManager?.CompanyData;
+        if (companyData?.Products == null) return;
+
+        foreach (var product in companyData.Products.OrderBy(p => p.Name))
+        {
+            // Filter to purchase-type products (for expense receipts)
+            var category = companyData.Categories?.FirstOrDefault(c => c.Id == product.CategoryId);
+            if (category?.Type == CategoryType.Sales)
+                continue;
+
+            ProductOptions.Add(new ProductOption
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                UnitPrice = product.CostPrice // Use cost price for expenses
+            });
+        }
+    }
+
     private IReceiptScannerService? CreateScannerService()
     {
         // Credentials are loaded from .env file by the service
@@ -984,6 +1161,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 public partial class ScannedLineItemViewModel : ObservableObject
 {
     [ObservableProperty]
+    private ProductOption? _selectedProduct;
+
+    [ObservableProperty]
     private string _description = string.Empty;
 
     [ObservableProperty]
@@ -1000,6 +1180,41 @@ public partial class ScannedLineItemViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isManuallyAdded;
+
+    [ObservableProperty]
+    private bool _hasProductError;
+
+    [ObservableProperty]
+    private string _productErrorMessage = string.Empty;
+
+    /// <summary>
+    /// Suggested product name when no match found (for creating new product).
+    /// </summary>
+    [ObservableProperty]
+    private string _suggestedProductName = string.Empty;
+
+    /// <summary>
+    /// Whether to show the create product suggestion.
+    /// </summary>
+    [ObservableProperty]
+    private bool _showCreateProductSuggestion;
+
+    partial void OnSelectedProductChanged(ProductOption? value)
+    {
+        if (value != null)
+        {
+            Description = value.Name;
+            // Only update unit price if it's currently 0 or not set
+            if (UnitPrice == "0.00" || string.IsNullOrEmpty(UnitPrice))
+            {
+                UnitPrice = value.UnitPrice.ToString("F2");
+            }
+            HasProductError = false;
+            ProductErrorMessage = string.Empty;
+            ShowCreateProductSuggestion = false;
+        }
+        RecalculateTotal();
+    }
 
     partial void OnQuantityChanged(string value)
     {

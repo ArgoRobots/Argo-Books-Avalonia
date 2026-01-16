@@ -47,7 +47,7 @@
                             <!-- Rental Item -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Rental Item'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Rental Item'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableItems}"
                                                             SelectedItem="{Binding ModalItem}"
@@ -56,14 +56,14 @@
                                                             EmptyMessage="{loc:Loc 'No rental items available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateRentalItemCommand}" />
-                                <TextBlock Text="{Binding ModalItemError}" Foreground="#dc2626" FontSize="12"
+                                <TextBlock Text="{Binding ModalItemError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Customer -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableCustomers}"
                                                             SelectedItem="{Binding ModalCustomer}"
@@ -73,7 +73,7 @@
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
-                                <TextBlock Text="{Binding ModalCustomerError}" Foreground="#dc2626" FontSize="12"
+                                <TextBlock Text="{Binding ModalCustomerError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
@@ -81,11 +81,11 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalQuantity}" Watermark="1" Classes="form-input"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" />
-                                    <TextBlock Text="{Binding ModalQuantityError}" Foreground="#dc2626" FontSize="12"
+                                    <TextBlock Text="{Binding ModalQuantityError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                                IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
@@ -99,7 +99,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Rate Type'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Rate Type'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <ComboBox ItemsSource="{Binding RateTypeOptions}"
                                               SelectedItem="{Binding ModalRateType}"
@@ -113,11 +113,11 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Rate Amount'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Rate Amount'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00" Classes="form-input"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" />
-                                    <TextBlock Text="{Binding ModalRateError}" Foreground="#dc2626" FontSize="12"
+                                    <TextBlock Text="{Binding ModalRateError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                                IsVisible="{Binding ModalRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
@@ -125,7 +125,7 @@
                             <!-- Start Date -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Start Date'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Start Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                             </StackPanel>
@@ -133,7 +133,7 @@
                             <!-- Due Date -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                             </StackPanel>
@@ -190,7 +190,7 @@
                             <!-- Rental Item -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Rental Item'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Rental Item'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableItems}"
                                                             SelectedItem="{Binding ModalItem}"
@@ -199,14 +199,14 @@
                                                             EmptyMessage="{loc:Loc 'No rental items available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateRentalItemCommand}" />
-                                <TextBlock Text="{Binding ModalItemError}" Foreground="#dc2626" FontSize="12"
+                                <TextBlock Text="{Binding ModalItemError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
                             <!-- Customer -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc Customer}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <controls:SearchableDropdown ItemsSource="{Binding AvailableCustomers}"
                                                             SelectedItem="{Binding ModalCustomer}"
@@ -216,7 +216,7 @@
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding NavigateToCreateCustomerCommand}" />
-                                <TextBlock Text="{Binding ModalCustomerError}" Foreground="#dc2626" FontSize="12"
+                                <TextBlock Text="{Binding ModalCustomerError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
@@ -224,11 +224,11 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc Quantity}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalQuantity}" Watermark="1" Classes="form-input"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" />
-                                    <TextBlock Text="{Binding ModalQuantityError}" Foreground="#dc2626" FontSize="12"
+                                    <TextBlock Text="{Binding ModalQuantityError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                                IsVisible="{Binding ModalQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
@@ -242,7 +242,7 @@
                             <Grid ColumnDefinitions="*,16,*">
                                 <StackPanel Grid.Column="0" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Rate Type'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Rate Type'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <ComboBox ItemsSource="{Binding RateTypeOptions}"
                                               SelectedItem="{Binding ModalRateType}"
@@ -256,11 +256,11 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
                                     <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                        <Run Text="{loc:Loc 'Rate Amount'}" /><Run Text=" *" Foreground="#dc2626" />
+                                        <Run Text="{loc:Loc 'Rate Amount'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalRateAmount}" Watermark="0.00" Classes="form-input"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" />
-                                    <TextBlock Text="{Binding ModalRateError}" Foreground="#dc2626" FontSize="12"
+                                    <TextBlock Text="{Binding ModalRateError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                                IsVisible="{Binding ModalRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
@@ -268,7 +268,7 @@
                             <!-- Start Date -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Start Date'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Start Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <DatePicker SelectedDate="{Binding ModalStartDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                             </StackPanel>
@@ -276,7 +276,7 @@
                             <!-- Due Date -->
                             <StackPanel Spacing="6">
                                 <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                    <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="#dc2626" />
+                                    <Run Text="{loc:Loc 'Due Date'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <DatePicker SelectedDate="{Binding ModalDueDate}" Classes="form-datepicker" HorizontalAlignment="Stretch" />
                             </StackPanel>
@@ -456,25 +456,25 @@
                         </StackPanel>
 
                         <!-- Total Cost -->
-                        <Border Background="#f0fdf4" CornerRadius="8" Padding="16">
+                        <Border Background="{DynamicResource SuccessLightBrush}" CornerRadius="8" Padding="16">
                             <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel>
-                                    <TextBlock Text="{loc:Loc 'Total Rental Cost'}" FontWeight="Medium" Foreground="#166534" />
-                                    <TextBlock Text="{loc:Loc 'Calculated based on rental duration'}" FontSize="12" Foreground="#16a34a" />
+                                    <TextBlock Text="{loc:Loc 'Total Rental Cost'}" FontWeight="Medium" Foreground="{DynamicResource SuccessTextBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Calculated based on rental duration'}" FontSize="12" Foreground="{DynamicResource SuccessTextLightBrush}" />
                                 </StackPanel>
-                                <TextBlock Grid.Column="1" Text="{Binding ReturnTotalCostFormatted}" FontSize="24" FontWeight="Bold" Foreground="#166534" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding ReturnTotalCostFormatted}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource SuccessTextBrush}" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
 
                         <!-- Security Deposit -->
-                        <Border Background="#fefce8" CornerRadius="8" Padding="16">
+                        <Border Background="{DynamicResource WarningLightBrush}" CornerRadius="8" Padding="16">
                             <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="{loc:Loc 'Security Deposit'}" FontWeight="Medium" Foreground="#854d0e" />
-                                    <TextBlock Text="{Binding ReturnDepositFormatted}" FontSize="18" FontWeight="SemiBold" Foreground="#a16207" />
+                                    <TextBlock Text="{loc:Loc 'Security Deposit'}" FontWeight="Medium" Foreground="{DynamicResource WarningTextBrush}" />
+                                    <TextBlock Text="{Binding ReturnDepositFormatted}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource WarningTextLightBrush}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <CheckBox IsChecked="{Binding ReturnRefundDeposit}" Content="{loc:Loc 'Refund Deposit'}" Foreground="#854d0e" />
+                                    <CheckBox IsChecked="{Binding ReturnRefundDeposit}" Content="{loc:Loc 'Refund Deposit'}" Foreground="{DynamicResource WarningTextBrush}" />
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -580,30 +580,30 @@
                             </Grid>
 
                             <!-- Dates -->
-                            <Border Background="#f0f9ff" CornerRadius="8" Padding="16">
+                            <Border Background="{DynamicResource InfoLightBrush}" CornerRadius="8" Padding="16">
                                 <Grid ColumnDefinitions="*,*,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="{loc:Loc 'Start Date'}" FontSize="12" Foreground="#0369a1" />
-                                        <TextBlock Text="{Binding ViewStartDateFormatted}" FontWeight="SemiBold" Foreground="#0c4a6e" />
+                                        <TextBlock Text="{loc:Loc 'Start Date'}" FontSize="12" Foreground="{DynamicResource InfoBrush}" />
+                                        <TextBlock Text="{Binding ViewStartDateFormatted}" FontWeight="SemiBold" Foreground="{DynamicResource InfoTextBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Spacing="4">
-                                        <TextBlock Text="{loc:Loc 'Due Date'}" FontSize="12" Foreground="#0369a1" />
-                                        <TextBlock Text="{Binding ViewDueDateFormatted}" FontWeight="SemiBold" Foreground="#0c4a6e" />
+                                        <TextBlock Text="{loc:Loc 'Due Date'}" FontSize="12" Foreground="{DynamicResource InfoBrush}" />
+                                        <TextBlock Text="{Binding ViewDueDateFormatted}" FontWeight="SemiBold" Foreground="{DynamicResource InfoTextBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" Spacing="4">
-                                        <TextBlock Text="{loc:Loc 'Return Date'}" FontSize="12" Foreground="#0369a1" />
-                                        <TextBlock Text="{Binding ViewReturnDateFormatted}" FontWeight="SemiBold" Foreground="#0c4a6e" />
+                                        <TextBlock Text="{loc:Loc 'Return Date'}" FontSize="12" Foreground="{DynamicResource InfoBrush}" />
+                                        <TextBlock Text="{Binding ViewReturnDateFormatted}" FontWeight="SemiBold" Foreground="{DynamicResource InfoTextBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
 
                             <!-- Overdue Warning -->
-                            <Border Background="#fef2f2" CornerRadius="8" Padding="16"
+                            <Border Background="{DynamicResource ErrorLightBrush}" CornerRadius="8" Padding="16"
                                     IsVisible="{Binding ViewDaysOverdue, Converter={x:Static conv:IntConverters.IsPositive}}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
-                                              Width="20" Height="20" Foreground="#dc2626" />
-                                    <TextBlock Foreground="#b91c1c">
+                                              Width="20" Height="20" Foreground="{DynamicResource ErrorBrush}" />
+                                    <TextBlock Foreground="{DynamicResource ErrorTextBrush}">
                                         <Run Text="{loc:Loc 'This rental is '}" />
                                         <Run Text="{Binding ViewDaysOverdue}" FontWeight="Bold" />
                                         <Run Text="{loc:Loc ' days overdue'}" />
@@ -612,15 +612,15 @@
                             </Border>
 
                             <!-- Financial Summary -->
-                            <Border Background="#f0fdf4" CornerRadius="8" Padding="16">
+                            <Border Background="{DynamicResource SuccessLightBrush}" CornerRadius="8" Padding="16">
                                 <Grid ColumnDefinitions="*,*">
                                     <StackPanel Grid.Column="0" Spacing="4">
-                                        <TextBlock Text="{loc:Loc 'Total Cost'}" FontSize="12" Foreground="#166534" />
-                                        <TextBlock Text="{Binding ViewTotalCostFormatted}" FontSize="20" FontWeight="Bold" Foreground="#15803d" />
+                                        <TextBlock Text="{loc:Loc 'Total Cost'}" FontSize="12" Foreground="{DynamicResource SuccessTextBrush}" />
+                                        <TextBlock Text="{Binding ViewTotalCostFormatted}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource SuccessTextLightBrush}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Spacing="4">
-                                        <TextBlock Text="{loc:Loc 'Deposit Status'}" FontSize="12" Foreground="#166534" />
-                                        <TextBlock Text="{Binding ViewDepositStatusFormatted}" FontWeight="SemiBold" Foreground="#15803d" />
+                                        <TextBlock Text="{loc:Loc 'Deposit Status'}" FontSize="12" Foreground="{DynamicResource SuccessTextBrush}" />
+                                        <TextBlock Text="{Binding ViewDepositStatusFormatted}" FontWeight="SemiBold" Foreground="{DynamicResource SuccessTextLightBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
