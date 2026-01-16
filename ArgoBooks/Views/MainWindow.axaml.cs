@@ -173,7 +173,16 @@ public partial class MainWindow : Window
                         // Save and close
                         if (App.CompanyManager != null)
                         {
-                            await App.CompanyManager.SaveCompanyAsync();
+                            // Sample company cannot be saved directly - redirect to Save As
+                            if (App.CompanyManager.IsSampleCompany)
+                            {
+                                var saved = await App.SaveCompanyAsFromWindowAsync();
+                                if (!saved) return; // User cancelled Save As, don't close
+                            }
+                            else
+                            {
+                                await App.CompanyManager.SaveCompanyAsync();
+                            }
                         }
                         _isClosingConfirmed = true;
                         Close();
