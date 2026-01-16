@@ -7,6 +7,7 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="60"
              x:Class="ArgoBooks.Controls.PhoneInput"
              x:DataType="controls:PhoneInput"
+             x:Name="Root"
              Focusable="True">
 
     <Grid ColumnDefinitions="Auto,8,*">
@@ -18,7 +19,7 @@
                 Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 MinWidth="80"
-                Classes.focused="{Binding IsCountryDropdownOpen}">
+                Classes.focused="{Binding #Root.IsCountryDropdownOpen}">
             <Border.Styles>
                 <Style Selector="Border.focused">
                     <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
@@ -32,7 +33,7 @@
                 <!-- Search/Display TextBox -->
                 <TextBox x:Name="CountrySearchBox"
                          Grid.Column="0"
-                         Text="{Binding CountrySearchText, Mode=TwoWay}"
+                         Text="{Binding #Root.CountrySearchText, Mode=TwoWay}"
                          Watermark="+1"
                          Background="Transparent"
                          BorderThickness="0"
@@ -50,7 +51,7 @@
                         Padding="0"
                         CornerRadius="4"
                         Cursor="Hand"
-                        Command="{Binding ToggleCountryDropdownCommand}">
+                        Command="{Binding #Root.ToggleCountryDropdownCommand}">
                     <PathIcon Data="M7 10l5 5 5-5z"
                               Width="12" Height="12"
                               Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -61,7 +62,7 @@
         <!-- Country Dropdown Popup -->
         <Popup Grid.Column="0"
                x:Name="CountryDropdownPopup"
-               IsOpen="{Binding IsCountryDropdownOpen, Mode=TwoWay}"
+               IsOpen="{Binding #Root.IsCountryDropdownOpen, Mode=TwoWay}"
                PlacementTarget="{Binding #CountryDropdownBorder}"
                Placement="Bottom"
                PlacementGravity="BottomLeft"
@@ -85,17 +86,17 @@
                                Foreground="{DynamicResource TextTertiaryBrush}"
                                Padding="12,16"
                                HorizontalAlignment="Center"
-                               IsVisible="{Binding !HasFilteredCountries}" />
+                               IsVisible="{Binding !#Root.HasFilteredCountries}" />
 
                     <!-- Filtered Items -->
                     <ListBox Grid.Row="1"
                              x:Name="CountryListBox"
-                             ItemsSource="{Binding FilteredDialCodes}"
-                             SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                             ItemsSource="{Binding #Root.FilteredDialCodes}"
+                             SelectedIndex="{Binding #Root.SelectedIndex, Mode=TwoWay}"
                              Background="Transparent"
                              BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             IsVisible="{Binding HasFilteredCountries}">
+                             IsVisible="{Binding #Root.HasFilteredCountries}">
                         <ListBox.Styles>
                             <Style Selector="ListBoxItem">
                                 <Setter Property="Padding" Value="10,6" />

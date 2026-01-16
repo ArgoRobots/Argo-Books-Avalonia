@@ -220,9 +220,6 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 
         InitializeComponent();
 
-        // Set DataContext to self for simpler bindings
-        DataContext = this;
-
         // Initialize with US as default
         SelectedCountry = AllDialCodes.FirstOrDefault(c => c.Code == "US");
         UpdateCountrySearchText();
