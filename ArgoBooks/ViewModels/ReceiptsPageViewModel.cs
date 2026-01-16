@@ -4,6 +4,7 @@ using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Utilities;
+using ArgoBooks.Views;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
@@ -661,14 +662,14 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
         try
         {
-            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
-                ? desktop.MainWindow
+            var mainWindow = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow as Views.MainWindow
                 : null;
 
-            if (topLevel?.StorageProvider == null) return;
+            if (mainWindow?.StorageProvider == null) return;
 
             // Let user pick a folder to export to
-            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            var folders = await mainWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 Title = "Select Export Folder",
                 AllowMultiple = false
@@ -697,25 +698,32 @@ public partial class ReceiptsPageViewModel : ViewModelBase
 
             if (exportedCount > 0)
             {
-                App.AddNotification(
-                    "Export Complete",
-                    $"Successfully exported {exportedCount} receipt(s) to {exportFolder}",
-                    NotificationType.Success);
-
                 // Exit selection mode after successful export
                 IsSelectionMode = false;
             }
             else
             {
-                App.AddNotification(
-                    "Export Failed",
-                    "No receipts could be exported. Files may be missing.",
-                    NotificationType.Warning);
+                // Show error message box
+                if (mainWindow.MessageBoxService != null)
+                {
+                    await mainWindow.MessageBoxService.ShowWarningAsync(
+                        "Export Failed",
+                        "No receipts could be exported. Files may be missing.");
+                }
             }
         }
         catch (Exception ex)
         {
-            App.AddNotification("Error", $"Failed to export receipts: {ex.Message}", NotificationType.Error);
+            var mainWindow = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow as Views.MainWindow
+                : null;
+
+            if (mainWindow?.MessageBoxService != null)
+            {
+                await mainWindow.MessageBoxService.ShowErrorAsync(
+                    "Export Error",
+                    $"Failed to export receipts: {ex.Message}");
+            }
         }
     }
 
