@@ -98,7 +98,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     // Command aliases for AXAML bindings
     public IRelayCommand SaveExpenseCommand => SaveTransactionCommand;
-    public IRelayCommand DeleteExpenseCommand => DeleteTransactionCommand;
 
     // Expense-specific filter
     [ObservableProperty]
@@ -258,11 +257,6 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         App.CompanyManager?.MarkAsChanged();
 
         RaiseTransactionDeleted();
-    }
-
-    protected override void DeleteTransaction()
-    {
-        // No longer used - delete logic is now in OpenDeleteConfirm
     }
 
     #endregion

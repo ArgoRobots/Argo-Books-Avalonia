@@ -97,7 +97,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
     // Command aliases for AXAML bindings
     public IRelayCommand SaveRevenueCommand => SaveTransactionCommand;
-    public IRelayCommand DeleteRevenueCommand => DeleteTransactionCommand;
 
     #endregion
 
@@ -252,11 +251,6 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         App.CompanyManager?.MarkAsChanged();
 
         RaiseTransactionDeleted();
-    }
-
-    protected override void DeleteTransaction()
-    {
-        // No longer used - delete logic is now in OpenDeleteConfirm
     }
 
     #endregion
