@@ -1,5 +1,4 @@
 using ArgoBooks.Core.Data;
-using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Transactions;
 

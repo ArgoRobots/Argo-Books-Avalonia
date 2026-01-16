@@ -362,21 +362,6 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
 
-                                        <!-- Vendor -->
-                                        <StackPanel Spacing="6">
-                                            <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}">
-                                                <Run Text="{loc:Loc 'Vendor'}" /><Run Text=" *" Foreground="#dc2626" />
-                                            </TextBlock>
-                                            <TextBox Text="{Binding ExtractedVendor}"
-                                                     Watermark="{loc:Loc 'Enter vendor name'}"
-                                                     Classes="form-input"
-                                                     BorderBrush="{Binding HasVendorError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}" />
-                                            <TextBlock Text="{Binding VendorErrorMessage}"
-                                                       FontSize="12"
-                                                       Foreground="#dc2626"
-                                                       IsVisible="{Binding HasVendorError}" />
-                                        </StackPanel>
-
                                         <!-- Date and Total Row -->
                                         <Grid ColumnDefinitions="*,16,*">
                                             <StackPanel Grid.Column="0" Spacing="6">

@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 using ArgoBooks.Core.Models.AI;
 
 namespace ArgoBooks.Core.Services;

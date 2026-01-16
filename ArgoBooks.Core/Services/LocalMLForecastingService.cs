@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Insights;
 using Microsoft.ML;
 using Microsoft.ML.Transforms.TimeSeries;

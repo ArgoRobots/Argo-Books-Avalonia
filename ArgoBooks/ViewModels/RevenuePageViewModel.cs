@@ -160,12 +160,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     public ObservableCollection<RevenueDisplayItem> Revenue { get; } = [];
 
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Completed", "Pending", "Partial Return", "Returned", "Cancelled"];
-
-    public ObservableCollection<CustomerOption> CustomerOptions { get; } = [];
-
-    public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
-
     #endregion
 
     #region Pagination
@@ -188,7 +182,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
         InitializeColumnVisibility();
         LoadRevenue();
-        LoadDropdownOptions();
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
@@ -299,35 +292,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         FilterRevenue();
     }
 
-    private void LoadDropdownOptions()
-    {
-        CustomerOptions.Clear();
-        CustomerOptions.Add(new CustomerOption { Id = null, Name = "All Customers" });
-
-        CategoryOptions.Clear();
-        CategoryOptions.Add(new CategoryOption { Id = null, Name = "All Categories" });
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
-
-        // Load customers
-        foreach (var customer in companyData.Customers.OrderBy(c => c.Name))
-        {
-            CustomerOptions.Add(new CustomerOption { Id = customer.Id, Name = customer.Name });
-        }
-
-        // Load sales categories
-        var salesCategories = companyData.Categories
-            .Where(c => c.Type == CategoryType.Sales)
-            .OrderBy(c => c.Name);
-
-        foreach (var category in salesCategories)
-        {
-            CategoryOptions.Add(new CategoryOption { Id = category.Id, Name = category.Name });
-        }
-    }
-
     private void UpdateStatistics()
     {
         var now = DateTime.Now;
@@ -359,7 +323,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private void RefreshRevenue()
     {
         LoadRevenue();
-        LoadDropdownOptions();
     }
 
     private void FilterRevenue()

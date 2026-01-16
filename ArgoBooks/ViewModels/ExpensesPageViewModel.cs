@@ -170,12 +170,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     public ObservableCollection<ExpenseDisplayItem> Expenses { get; } = [];
 
-    public ObservableCollection<string> StatusOptions { get; } = ["All", "Completed", "Pending", "Partial Return", "Returned", "Cancelled"];
-
-    public ObservableCollection<SupplierOption> SupplierOptions { get; } = [];
-
-    public ObservableCollection<CategoryOption> CategoryOptions { get; } = [];
-
     #endregion
 
     #region Pagination
@@ -200,7 +194,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         InitializeColumnVisibility();
 
         LoadExpenses();
-        LoadDropdownOptions();
 
         // Subscribe to undo/redo state changes to refresh UI
         App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
@@ -314,35 +307,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         FilterExpenses();
     }
 
-    private void LoadDropdownOptions()
-    {
-        SupplierOptions.Clear();
-        SupplierOptions.Add(new SupplierOption { Id = null, Name = "All Suppliers" });
-
-        CategoryOptions.Clear();
-        CategoryOptions.Add(new CategoryOption { Id = null, Name = "All Categories" });
-
-        var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null)
-            return;
-
-        // Load suppliers
-        foreach (var supplier in companyData.Suppliers.OrderBy(s => s.Name))
-        {
-            SupplierOptions.Add(new SupplierOption { Id = supplier.Id, Name = supplier.Name });
-        }
-
-        // Load expense (purchase) categories
-        var purchaseCategories = companyData.Categories
-            .Where(c => c.Type == CategoryType.Purchase)
-            .OrderBy(c => c.Name);
-
-        foreach (var category in purchaseCategories)
-        {
-            CategoryOptions.Add(new CategoryOption { Id = category.Id, Name = category.Name });
-        }
-    }
-
     private void UpdateStatistics()
     {
         var now = DateTime.Now;
@@ -370,7 +334,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private void RefreshExpenses()
     {
         LoadExpenses();
-        LoadDropdownOptions();
     }
 
     private void FilterExpenses()

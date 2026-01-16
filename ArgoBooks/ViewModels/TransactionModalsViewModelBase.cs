@@ -240,8 +240,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     #region Delete Confirmation
 
-    protected string DeleteTransactionIdInternal = string.Empty;
-
     [ObservableProperty]
     private string _deleteTransactionId = string.Empty;
 
@@ -458,20 +456,10 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     protected void CloseDeleteConfirm()
     {
         IsDeleteConfirmOpen = false;
-        DeleteTransactionIdInternal = string.Empty;
         DeleteTransactionId = string.Empty;
         DeleteTransactionDescription = string.Empty;
         DeleteTransactionAmount = string.Empty;
     }
-
-    [RelayCommand(CanExecute = nameof(CanDeleteTransaction))]
-    protected abstract void DeleteTransaction();
-
-    /// <summary>
-    /// Determines whether the delete transaction command can execute.
-    /// Override in derived classes to customize behavior.
-    /// </summary>
-    protected virtual bool CanDeleteTransaction() => true;
 
     #endregion
 

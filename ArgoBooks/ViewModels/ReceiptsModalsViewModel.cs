@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
-using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.Common;
@@ -213,12 +212,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         "PayPal",
         "Other"
     ];
-
-    [ObservableProperty]
-    private bool _hasVendorError;
-
-    [ObservableProperty]
-    private string _vendorErrorMessage = string.Empty;
 
     [ObservableProperty]
     private bool _hasTotalError;
@@ -458,19 +451,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void CreateExpense()
     {
         // Validate
-        HasVendorError = false;
         HasTotalError = false;
         HasSupplierError = false;
         HasCategoryError = false;
 
         var hasErrors = false;
-
-        if (string.IsNullOrWhiteSpace(ExtractedVendor))
-        {
-            HasVendorError = true;
-            VendorErrorMessage = "Vendor name is required.".Translate();
-            hasErrors = true;
-        }
 
         if (!decimal.TryParse(ExtractedTotal, out var total) || total <= 0)
         {
@@ -894,7 +879,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SelectedCategory = null;
         SelectedPaymentMethod = "Cash";
         Notes = string.Empty;
-        HasVendorError = false;
         HasTotalError = false;
         HasSupplierError = false;
         HasCategoryError = false;
