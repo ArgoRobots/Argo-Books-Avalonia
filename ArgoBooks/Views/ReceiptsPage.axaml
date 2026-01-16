@@ -152,14 +152,14 @@
                                             Padding="4">
                                         <StackPanel Orientation="Horizontal" Spacing="2">
                                             <Button Classes="view-toggle-button"
-                                                    Command="{Binding SetGridViewCommand}"
-                                                    Background="{Binding IsGridView, Converter={x:Static local:BoolConverters.ToViewToggleBackground}}">
+                                                    Classes.selected="{Binding IsGridView}"
+                                                    Command="{Binding SetGridViewCommand}">
                                                 <PathIcon Data="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"
                                                           Width="16" Height="16" />
                                             </Button>
                                             <Button Classes="view-toggle-button"
-                                                    Command="{Binding SetListViewCommand}"
-                                                    Background="{Binding IsListView, Converter={x:Static local:BoolConverters.ToViewToggleBackground}}">
+                                                    Classes.selected="{Binding IsListView}"
+                                                    Command="{Binding SetListViewCommand}">
                                                 <PathIcon Data="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h12v-4H9v4zm0 5h12v-4H9v4zM9 5v4h12V5H9z"
                                                           Width="16" Height="16" />
                                             </Button>
@@ -532,8 +532,13 @@
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
                                                     </ItemsControl>
+                                                </Panel>
+                                            </ScrollViewer>
+                                        </Grid>
+                                    </ScrollViewer>
+                                </Panel>
 
-                                <!-- Empty State -->
+                                <!-- Empty State (shown when no receipts) -->
                                 <Border Padding="40"
                                         IsVisible="{Binding Receipts.Count, Converter={x:Static local:IntConverters.IsZero}}">
                                     <StackPanel HorizontalAlignment="Center"
@@ -572,11 +577,6 @@
                                         </Button>
                                     </StackPanel>
                                 </Border>
-                                                </Panel>
-                                            </ScrollViewer>
-                                        </Grid>
-                                    </ScrollViewer>
-                                </Panel>
                             </Panel>
                         </ScrollViewer>
 
@@ -727,7 +727,7 @@
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style Selector="Button.view-toggle-button /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{TemplateBinding Background}" />
+            <Setter Property="Background" Value="Transparent" />
             <Setter Property="CornerRadius" Value="4" />
         </Style>
         <Style Selector="Button.view-toggle-button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -735,6 +735,16 @@
         </Style>
         <Style Selector="Button.view-toggle-button PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <!-- Selected state for view toggle button -->
+        <Style Selector="Button.view-toggle-button.selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+        </Style>
+        <Style Selector="Button.view-toggle-button.selected PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.view-toggle-button.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
         </Style>
     </UserControl.Styles>
 </UserControl>
