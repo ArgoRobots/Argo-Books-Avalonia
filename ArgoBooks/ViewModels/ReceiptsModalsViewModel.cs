@@ -640,7 +640,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             return;
 
         var companyData = App.CompanyManager?.CompanyData;
-        if (companyData == null) return;
+        if (companyData?.Products == null) return;
 
         // Create new product with default purchase category
         var newId = Guid.NewGuid().ToString();
@@ -657,7 +657,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CategoryId = defaultCategory?.Id
         };
 
-        companyData.Products ??= [];
         companyData.Products.Add(newProduct);
 
         // Add to options and select
@@ -672,7 +671,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         lineItem.SelectedProduct = option;
         lineItem.ShowCreateProductSuggestion = false;
 
-        App.CompanyManager?.SaveCompany();
+        companyData.MarkAsModified();
     }
 
     /// <summary>
