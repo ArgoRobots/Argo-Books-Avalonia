@@ -400,6 +400,13 @@ public class App : Application
             {
                 if (CompanyManager?.IsCompanyOpen == true)
                 {
+                    // Sample company cannot be saved directly - redirect to Save As
+                    if (CompanyManager.IsSampleCompany)
+                    {
+                        await SaveCompanyAsDialogAsync(desktop);
+                        return;
+                    }
+
                     try
                     {
                         await CompanyManager.SaveCompanyAsync();
@@ -893,6 +900,13 @@ public class App : Application
         {
             if (CompanyManager?.IsCompanyOpen == true)
             {
+                // Sample company cannot be saved directly - redirect to Save As
+                if (CompanyManager.IsSampleCompany)
+                {
+                    await SaveCompanyAsDialogAsync(desktop);
+                    return;
+                }
+
                 try
                 {
                     await CompanyManager.SaveCompanyAsync();
@@ -925,7 +939,16 @@ public class App : Application
                     switch (result)
                     {
                         case UnsavedChangesResult.Save:
-                            await CompanyManager.SaveCompanyAsync();
+                            // Sample company cannot be saved directly - redirect to Save As
+                            if (CompanyManager.IsSampleCompany)
+                            {
+                                var saved = await SaveCompanyAsDialogAsync(desktop);
+                                if (!saved) return; // User cancelled Save As, don't close
+                            }
+                            else
+                            {
+                                await CompanyManager.SaveCompanyAsync();
+                            }
                             await CompanyManager.CloseCompanyAsync();
                             break;
                         case UnsavedChangesResult.DontSave:
@@ -1269,8 +1292,8 @@ public class App : Application
                     // Mark settings as changed
                     settings.ChangesMade = true;
 
-                    // If company name changed, save and rename file
-                    if (nameChanged && CompanyManager.CurrentFilePath != null)
+                    // If company name changed, save and rename file (skip for sample company)
+                    if (nameChanged && CompanyManager.CurrentFilePath != null && !CompanyManager.IsSampleCompany)
                     {
                         // Save first to persist the new name in the file
                         await CompanyManager.SaveCompanyAsync();
@@ -1986,8 +2009,8 @@ public class App : Application
             {
                 if (CompanyManager.IsCompanyOpen != true) return;
 
-                // Check for unsaved changes
-                if (CompanyManager.HasUnsavedChanges)
+                // Check for unsaved changes (skip auto-save for sample company)
+                if (CompanyManager.HasUnsavedChanges && !CompanyManager.IsSampleCompany)
                 {
                     // Auto-save before locking
                     try
@@ -2210,10 +2233,11 @@ public class App : Application
     /// <summary>
     /// Opens the save dialog for Save As.
     /// </summary>
-    private static async Task SaveCompanyAsDialogAsync(IClassicDesktopStyleApplicationLifetime desktop)
+    /// <returns>True if the file was saved successfully, false if cancelled or failed.</returns>
+    private static async Task<bool> SaveCompanyAsDialogAsync(IClassicDesktopStyleApplicationLifetime desktop)
     {
         var file = await ShowSaveFileDialogAsync(desktop, CompanyManager?.CurrentCompanyName ?? "Company");
-        if (file == null) return;
+        if (file == null) return false;
 
         var filePath = file.Path.LocalPath;
 
@@ -2221,11 +2245,25 @@ public class App : Application
         {
             await CompanyManager!.SaveCompanyAsAsync(filePath);
             await LoadRecentCompaniesAsync();
+            return true;
         }
         catch (Exception ex)
         {
             _appShellViewModel?.AddNotification("Error".Translate(), "Failed to save file: {0}".TranslateFormat(ex.Message), NotificationType.Error);
+            return false;
         }
+    }
+
+    /// <summary>
+    /// Public entry point for SaveAs dialog, callable from MainWindow.
+    /// </summary>
+    /// <returns>True if the file was saved successfully, false if cancelled or failed.</returns>
+    public static async Task<bool> SaveCompanyAsFromWindowAsync()
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return false;
+
+        return await SaveCompanyAsDialogAsync(desktop);
     }
 
     /// <summary>

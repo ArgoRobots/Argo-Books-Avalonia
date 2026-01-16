@@ -50,6 +50,13 @@ public class CompanyManager : IDisposable
     public bool IsEncrypted => !string.IsNullOrEmpty(_currentPassword);
 
     /// <summary>
+    /// Gets whether the currently open company is the sample company.
+    /// The sample company should not be modified directly; use Save As instead.
+    /// </summary>
+    public bool IsSampleCompany => _currentFilePath != null &&
+        string.Equals(_currentFilePath, SampleCompanyService.GetSampleCompanyPath(), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
     /// Verifies if the provided password matches the current company's password.
     /// </summary>
     /// <param name="password">The password to verify.</param>
