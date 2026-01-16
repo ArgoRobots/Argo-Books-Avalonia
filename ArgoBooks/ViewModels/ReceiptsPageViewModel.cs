@@ -90,6 +90,9 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     #region Selection
 
     [ObservableProperty]
+    private bool _isSelectionMode;
+
+    [ObservableProperty]
     private bool _hasSelectedReceipts;
 
     [ObservableProperty]
@@ -98,12 +101,45 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isAllSelected;
 
+    partial void OnIsSelectionModeChanged(bool value)
+    {
+        // Clear selection when exiting selection mode
+        if (!value)
+        {
+            foreach (var receipt in Receipts)
+            {
+                receipt.IsSelected = false;
+            }
+            UpdateSelectionState();
+        }
+    }
+
     partial void OnIsAllSelectedChanged(bool value)
     {
         foreach (var receipt in Receipts)
         {
             receipt.IsSelected = value;
         }
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    private void ToggleSelectionMode()
+    {
+        IsSelectionMode = !IsSelectionMode;
+    }
+
+    [RelayCommand]
+    private void ExitSelectionMode()
+    {
+        IsSelectionMode = false;
+    }
+
+    [RelayCommand]
+    private void ToggleReceiptSelection(ReceiptDisplayItem? receipt)
+    {
+        if (receipt == null) return;
+        receipt.IsSelected = !receipt.IsSelected;
         UpdateSelectionState();
     }
 
@@ -567,6 +603,12 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     {
         SelectedCount = Receipts.Count(r => r.IsSelected);
         HasSelectedReceipts = SelectedCount > 0;
+
+        // Auto-enter selection mode when items are selected (e.g., via checkbox)
+        if (HasSelectedReceipts && !IsSelectionMode)
+        {
+            IsSelectionMode = true;
+        }
     }
 
     private static string GetReceiptImagePath(Receipt receipt)
