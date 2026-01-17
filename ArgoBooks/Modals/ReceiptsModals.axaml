@@ -490,7 +490,7 @@
                                                                                 Content="{loc:Loc 'Create'}"
                                                                                 Command="{Binding $parent[ItemsControl].((vm:ReceiptsModalsViewModel)DataContext).CreateSuggestedProductCommand}"
                                                                                 CommandParameter="{Binding}"
-                                                                                Classes="accent"
+                                                                                Classes="primary-button"
                                                                                 Padding="10,4"
                                                                                 Margin="8,0,0,0"
                                                                                 FontSize="11" />
@@ -611,7 +611,7 @@
                                                         <Button Grid.Column="1"
                                                                 Content="{loc:Loc 'Create'}"
                                                                 Command="{Binding CreateSuggestedSupplierCommand}"
-                                                                Classes="accent"
+                                                                Classes="primary-button"
                                                                 Padding="10,4"
                                                                 Margin="8,0,0,0"
                                                                 FontSize="11" />
@@ -662,7 +662,7 @@
                                                         <Button Grid.Column="1"
                                                                 Content="{loc:Loc 'Create'}"
                                                                 Command="{Binding CreateSuggestedCategoryCommand}"
-                                                                Classes="accent"
+                                                                Classes="primary-button"
                                                                 Padding="10,4"
                                                                 Margin="8,0,0,0"
                                                                 FontSize="11" />

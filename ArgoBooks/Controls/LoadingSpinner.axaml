@@ -24,7 +24,7 @@
                    Width="24" Height="24"
                    RenderTransformOrigin="0.5,0.5">
                 <Panel.RenderTransform>
-                    <RotateTransform />
+                    <RotateTransform CenterX="11.5" CenterY="11.5" />
                 </Panel.RenderTransform>
                 <Panel.Styles>
                     <Style Selector="Panel#SpinnerArc">
