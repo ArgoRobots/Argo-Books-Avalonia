@@ -65,6 +65,24 @@ public partial class ChartSettingsService : ObservableObject
         ? $"{StartDate:MMM d, yyyy} - {EndDate:MMM d, yyyy}"
         : string.Empty;
 
+    /// <summary>
+    /// Gets the label for comparison period based on selected date range.
+    /// </summary>
+    public string ComparisonPeriodLabel => SelectedDateRange switch
+    {
+        "This Month" => "from last month",
+        "Last Month" => "from prior month",
+        "Last 30 Days" => "from prior 30 days",
+        "Last 100 Days" => "from prior 100 days",
+        "This Quarter" => "from last quarter",
+        "Last Quarter" => "from prior quarter",
+        "This Year" => "from last year",
+        "Last Year" => "from prior year",
+        "All Time" => "",
+        "Custom Range" => "from prior period",
+        _ => "from last period"
+    };
+
     private ChartSettingsService()
     {
         // Try to get the global settings service from the app
@@ -160,6 +178,7 @@ public partial class ChartSettingsService : ObservableObject
     partial void OnSelectedDateRangeChanged(string value)
     {
         OnPropertyChanged(nameof(AppliedDateRangeText));
+        OnPropertyChanged(nameof(ComparisonPeriodLabel));
 
         if (value != "Custom Range")
         {
@@ -204,6 +223,16 @@ public partial class ChartSettingsService : ObservableObject
                 var lastMonth = now.AddMonths(-1);
                 StartDate = new DateTime(lastMonth.Year, lastMonth.Month, 1);
                 EndDate = new DateTime(lastMonth.Year, lastMonth.Month, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
+                break;
+
+            case "Last 30 Days":
+                StartDate = now.AddDays(-29).Date;
+                EndDate = now;
+                break;
+
+            case "Last 100 Days":
+                StartDate = now.AddDays(-99).Date;
+                EndDate = now;
                 break;
 
             case "This Quarter":

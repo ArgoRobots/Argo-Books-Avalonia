@@ -1122,7 +1122,6 @@ public class App : Application
 
         try
         {
-            // Check if sample company already exists and is up to date
             var sampleFilePath = SampleCompanyService.GetSampleCompanyPath();
             var needsCreation = true;
 
@@ -1139,7 +1138,6 @@ public class App : Application
                 ? "Creating sample company...".Translate()
                 : "Opening sample company...".Translate());
 
-            // Create the sample company if needed
             if (needsCreation)
             {
                 var assembly = Assembly.GetExecutingAssembly();
@@ -1161,11 +1159,23 @@ public class App : Application
                 sampleFilePath = await sampleService.CreateSampleCompanyAsync(stream);
             }
 
-            // Open the sample company
             var success = await CompanyManager.OpenCompanyAsync(sampleFilePath);
 
             if (success)
             {
+                if (CompanyManager.CompanyData != null)
+                {
+                    if (SampleCompanyService.TimeShiftSampleData(CompanyManager.CompanyData))
+                        CompanyManager.NotifyDataChanged();
+                    CompanyManager.CompanyData.MarkAsSaved();
+
+                    // Reset unsaved changes since time-shift is automatic and shouldn't count as a user change
+                    if (_mainWindowViewModel != null)
+                        _mainWindowViewModel.HasUnsavedChanges = false;
+                    if (_appShellViewModel != null)
+                        _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+                }
+
                 await LoadRecentCompaniesAsync();
                 // Note: Sample company welcome message is shown in DashboardPageViewModel.WelcomeSubtitle
             }
@@ -2234,7 +2244,25 @@ public class App : Application
     /// <returns>True if the file was saved successfully, false if cancelled or failed.</returns>
     private static async Task<bool> SaveCompanyAsDialogAsync(IClassicDesktopStyleApplicationLifetime desktop)
     {
-        var file = await ShowSaveFileDialogAsync(desktop, CompanyManager?.CurrentCompanyName ?? "Company");
+        var suggestedName = CompanyManager?.CurrentCompanyName ?? "Company";
+
+        if (CompanyManager?.IsSampleCompany == true)
+        {
+            var mainWindow = desktop.MainWindow as MainWindow;
+            if (mainWindow?.MessageBoxService != null)
+            {
+                var confirmed = await mainWindow.MessageBoxService.ConfirmAsync(
+                    "Sample Company".Translate(),
+                    "The sample company cannot be modified directly. You will be prompted to save a copy.".Translate(),
+                    "OK".Translate(),
+                    "Cancel".Translate());
+                if (!confirmed)
+                    return false;
+            }
+            suggestedName += " (copy)";
+        }
+
+        var file = await ShowSaveFileDialogAsync(desktop, suggestedName);
         if (file == null) return false;
 
         var filePath = file.Path.LocalPath;

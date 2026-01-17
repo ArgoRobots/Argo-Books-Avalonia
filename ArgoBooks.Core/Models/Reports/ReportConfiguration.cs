@@ -359,6 +359,7 @@ public static class DatePresetNames
     public const string Yesterday = "Yesterday";
     public const string Last7Days = "Last 7 days";
     public const string Last30Days = "Last 30 days";
+    public const string Last100Days = "Last 100 days";
     public const string ThisWeek = "This week";
     public const string LastWeek = "Last week";
     public const string ThisMonth = "This month";
@@ -396,6 +397,7 @@ public static class DatePresetNames
             "yesterday" => (today.AddDays(-1), today.AddSeconds(-1)),
             "last 7 days" => (today.AddDays(-6), today.AddDays(1).AddSeconds(-1)),
             "last 30 days" => (today.AddDays(-29), today.AddDays(1).AddSeconds(-1)),
+            "last 100 days" => (today.AddDays(-99), today.AddDays(1).AddSeconds(-1)),
             "this week" => (today.AddDays(-(int)today.DayOfWeek), today.AddDays(7 - (int)today.DayOfWeek).AddSeconds(-1)),
             "last week" => (today.AddDays(-(int)today.DayOfWeek - 7), today.AddDays(-(int)today.DayOfWeek).AddSeconds(-1)),
             "this month" => (new DateTime(now.Year, now.Month, 1), new DateTime(now.Year, now.Month, 1).AddMonths(1).AddSeconds(-1)),
@@ -506,6 +508,8 @@ public static class DatePresetNames
     [
         "This Month",
         "Last Month",
+        "Last 30 Days",
+        "Last 100 Days",
         "This Quarter",
         "Last Quarter",
         "This Year",

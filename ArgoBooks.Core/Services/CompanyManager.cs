@@ -543,6 +543,15 @@ public class CompanyManager : IDisposable
     }
 
     /// <summary>
+    /// Notifies listeners that company data has been updated without marking as modified.
+    /// Used for in-memory transformations like sample data time-shifting.
+    /// </summary>
+    public void NotifyDataChanged()
+    {
+        CompanyDataChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// Opens the containing folder for the current company file.
     /// </summary>
     public void ShowInFolder()

@@ -303,6 +303,7 @@ public partial class MessageBox : UserControl
     {
         InitializeComponent();
         UpdateButtonConfiguration();
+        UpdateMessageTypeClasses();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -312,6 +313,45 @@ public partial class MessageBox : UserControl
         if (change.Property == ButtonsProperty)
         {
             UpdateButtonConfiguration();
+        }
+        else if (change.Property == MessageTypeProperty)
+        {
+            UpdateMessageTypeClasses();
+        }
+    }
+
+    private void UpdateMessageTypeClasses()
+    {
+        var className = MessageType switch
+        {
+            MessageBoxType.Info => "info",
+            MessageBoxType.Success => "success",
+            MessageBoxType.Warning => "warning",
+            MessageBoxType.Error => "error",
+            MessageBoxType.Question => "question",
+            _ => "info"
+        };
+
+        var iconBorder = this.FindControl<Border>("IconBorder");
+        var iconPath = this.FindControl<PathIcon>("IconPath");
+        var primaryButton = this.FindControl<ArgoButton>("PrimaryButton");
+
+        if (iconBorder != null)
+        {
+            iconBorder.Classes.Clear();
+            iconBorder.Classes.Add(className);
+        }
+
+        if (iconPath != null)
+        {
+            iconPath.Classes.Clear();
+            iconPath.Classes.Add(className);
+        }
+
+        if (primaryButton != null)
+        {
+            primaryButton.Classes.Clear();
+            primaryButton.Classes.Add(className);
         }
     }
 
