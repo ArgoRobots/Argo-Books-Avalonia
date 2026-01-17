@@ -229,15 +229,29 @@ public class HoltWintersTests
     #region Season Length Detection Tests
 
     [Fact]
-    public void DetectSeasonLength_InsufficientData_ReturnsFirstCandidate()
+    public void DetectSeasonLength_InsufficientData_ReturnsFirstValidCandidate()
+    {
+        // With only 10 data points, data.Count / 2 = 5
+        // Only candidates <= 5 are valid, so it should return 4
+        var data = new List<decimal> { 100, 110, 120, 130, 140, 150, 160, 170, 180, 190 };
+        var candidates = new[] { 12, 4, 6 };
+
+        var detected = _forecasting.DetectSeasonLength(data, candidates);
+
+        // Should return 4 (first candidate that fits data.Count / 2 = 5)
+        Assert.Equal(4, detected);
+    }
+
+    [Fact]
+    public void DetectSeasonLength_VeryShortData_ReturnsZeroWhenNoCandidateFits()
     {
         var data = new List<decimal> { 100, 110, 120 };
         var candidates = new[] { 12, 4, 6 };
 
         var detected = _forecasting.DetectSeasonLength(data, candidates);
 
-        // With insufficient data, should return a candidate that fits
-        Assert.Contains(detected, candidates);
+        // With data.Count / 2 = 1, no candidates fit, returns default (0)
+        Assert.Equal(0, detected);
     }
 
     [Fact]

@@ -18,7 +18,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Draft,
-            DueDate = DateTime.UtcNow.AddDays(-1)
+            DueDate = DateTime.Today.AddDays(-1)
         };
 
         Assert.True(invoice.IsOverdue);
@@ -30,7 +30,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Paid,
-            DueDate = DateTime.UtcNow.AddDays(-30)
+            DueDate = DateTime.Today.AddDays(-30)
         };
 
         Assert.False(invoice.IsOverdue);
@@ -42,7 +42,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Cancelled,
-            DueDate = DateTime.UtcNow.AddDays(-30)
+            DueDate = DateTime.Today.AddDays(-30)
         };
 
         Assert.False(invoice.IsOverdue);
@@ -54,7 +54,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Pending,
-            DueDate = DateTime.UtcNow.AddDays(-1)
+            DueDate = DateTime.Today.AddDays(-1)
         };
 
         Assert.True(invoice.IsOverdue);
@@ -66,7 +66,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Sent,
-            DueDate = DateTime.UtcNow.AddDays(-1)
+            DueDate = DateTime.Today.AddDays(-1)
         };
 
         Assert.True(invoice.IsOverdue);
@@ -78,7 +78,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Viewed,
-            DueDate = DateTime.UtcNow.AddDays(-1)
+            DueDate = DateTime.Today.AddDays(-1)
         };
 
         Assert.True(invoice.IsOverdue);
@@ -90,7 +90,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Partial,
-            DueDate = DateTime.UtcNow.AddDays(-1)
+            DueDate = DateTime.Today.AddDays(-1)
         };
 
         Assert.True(invoice.IsOverdue);
@@ -102,7 +102,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Overdue,
-            DueDate = DateTime.UtcNow.AddDays(-1)
+            DueDate = DateTime.Today.AddDays(-1)
         };
 
         Assert.True(invoice.IsOverdue);
@@ -126,7 +126,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = InvoiceStatus.Pending,
-            DueDate = DateTime.UtcNow.AddDays(30)
+            DueDate = DateTime.Today.AddDays(30)
         };
 
         Assert.False(invoice.IsOverdue);
@@ -144,7 +144,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = status,
-            DueDate = DateTime.UtcNow.AddDays(-10)
+            DueDate = DateTime.Today.AddDays(-10)
         };
 
         Assert.True(invoice.IsOverdue);
@@ -158,7 +158,7 @@ public class InvoiceTests
         var invoice = new Invoice
         {
             Status = status,
-            DueDate = DateTime.UtcNow.AddDays(-10)
+            DueDate = DateTime.Today.AddDays(-10)
         };
 
         Assert.False(invoice.IsOverdue);
