@@ -1166,10 +1166,7 @@ public class App : Application
             if (success)
             {
                 await LoadRecentCompaniesAsync();
-                _appShellViewModel.AddNotification(
-                    "Welcome!".Translate(),
-                    "You're exploring TechFlow Solutions - a sample company. Feel free to experiment!".Translate(),
-                    NotificationType.Info);
+                // Note: Sample company welcome message is shown in DashboardPageViewModel.WelcomeSubtitle
             }
             else
             {
