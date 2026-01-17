@@ -160,7 +160,7 @@ public class ProductTests
 
     [Theory]
     [InlineData(CategoryType.Sales)]
-    [InlineData(CategoryType.Expenses)]
+    [InlineData(CategoryType.Purchase)]
     [InlineData(CategoryType.Rental)]
     public void Product_Type_SupportsAllCategoryTypes(CategoryType type)
     {
