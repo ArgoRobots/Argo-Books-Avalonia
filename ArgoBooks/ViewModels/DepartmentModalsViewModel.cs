@@ -1,6 +1,7 @@
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
-using ArgoBooks.Core.Models.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 

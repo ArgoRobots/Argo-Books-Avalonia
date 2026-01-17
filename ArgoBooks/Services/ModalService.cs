@@ -1,4 +1,5 @@
 using ArgoBooks.Controls;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Services;
 using Avalonia.Controls;
 using Avalonia.Threading;
@@ -65,7 +66,7 @@ public class ModalService : IModalService
                     ShowCloseButton = options.ShowCloseButton,
                     PrimaryButtonText = options.PrimaryButtonText,
                     SecondaryButtonText = options.SecondaryButtonText,
-                    Size = ParseSize(options.Size)
+                    Size = options.Size
                 };
 
                 container.CloseRequested += (_, _) => Close(ModalResult.Cancel);
@@ -111,7 +112,7 @@ public class ModalService : IModalService
                     ShowCloseButton = options.ShowCloseButton,
                     PrimaryButtonText = options.PrimaryButtonText,
                     SecondaryButtonText = options.SecondaryButtonText,
-                    Size = ParseSize(options.Size)
+                    Size = options.Size
                 };
 
                 container.CloseRequested += (_, _) => Close(ModalResult.Cancel);
@@ -146,7 +147,7 @@ public class ModalService : IModalService
         var options = new ModalOptions
         {
             Title = title,
-            Size = "Small",
+            Size = ModalSize.Small,
             PrimaryButtonText = confirmText,
             SecondaryButtonText = cancelText,
             CloseOnBackdropClick = false
@@ -168,7 +169,7 @@ public class ModalService : IModalService
         var options = new ModalOptions
         {
             Title = title,
-            Size = "Small",
+            Size = ModalSize.Small,
             PrimaryButtonText = buttonText,
             SecondaryButtonText = null,
             CloseOnBackdropClick = true
@@ -203,18 +204,5 @@ public class ModalService : IModalService
         // If modal was closed externally (backdrop click, escape), set result
         _resultTcs?.TrySetResult(ModalResult.Cancel);
         _valueResultTcs?.TrySetResult(null);
-    }
-
-    private static ModalSize ParseSize(string size)
-    {
-        return size.ToLowerInvariant() switch
-        {
-            "small" or "sm" => ModalSize.Small,
-            "medium" or "md" => ModalSize.Medium,
-            "large" or "lg" => ModalSize.Large,
-            "extralarge" or "xl" => ModalSize.ExtraLarge,
-            "full" => ModalSize.Full,
-            _ => ModalSize.Medium
-        };
     }
 }

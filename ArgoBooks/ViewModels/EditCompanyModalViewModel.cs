@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Localization;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;

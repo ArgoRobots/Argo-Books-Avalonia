@@ -1,45 +1,10 @@
 using System.Windows.Input;
+using ArgoBooks.Core.Enums;
 using Avalonia;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls;
-
-/// <summary>
-/// Modal size presets.
-/// </summary>
-public enum ModalSize
-{
-    /// <summary>
-    /// Small modal (400px).
-    /// </summary>
-    Small,
-
-    /// <summary>
-    /// Medium modal (500px). Default.
-    /// </summary>
-    Medium,
-
-    /// <summary>
-    /// Large modal (700px).
-    /// </summary>
-    Large,
-
-    /// <summary>
-    /// Extra large modal (900px).
-    /// </summary>
-    ExtraLarge,
-
-    /// <summary>
-    /// Full screen modal with margin.
-    /// </summary>
-    Full,
-
-    /// <summary>
-    /// Custom size - uses ModalWidth property.
-    /// </summary>
-    Custom
-}
 
 /// <summary>
 /// A styled container for modal content with header, content, and footer sections.

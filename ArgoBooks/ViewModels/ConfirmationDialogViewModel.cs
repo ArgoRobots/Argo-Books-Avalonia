@@ -1,19 +1,9 @@
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.ViewModels;
-
-/// <summary>
-/// Result of a confirmation dialog.
-/// </summary>
-public enum ConfirmationResult
-{
-    None,
-    Primary,    // e.g., "Save", "Yes", "OK"
-    Secondary,  // e.g., "Don't Save", "No"
-    Cancel      // e.g., "Cancel"
-}
 
 /// <summary>
 /// Configuration for a confirmation dialog.

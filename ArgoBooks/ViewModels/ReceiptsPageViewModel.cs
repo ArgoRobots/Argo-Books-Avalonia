@@ -788,13 +788,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void DeleteReceipt(ReceiptDisplayItem? receipt)
-    {
-        if (receipt == null) return;
-        // TODO: Implement delete with confirmation
-    }
-
-    [RelayCommand]
     private void SelectAll()
     {
         foreach (var receipt in Receipts)

@@ -1,35 +1,6 @@
+using ArgoBooks.Core.Enums;
+
 namespace ArgoBooks.Core.Services;
-
-/// <summary>
-/// Modal result indicating how the modal was closed.
-/// </summary>
-public enum ModalResult
-{
-    /// <summary>
-    /// Modal was closed without action.
-    /// </summary>
-    None,
-
-    /// <summary>
-    /// Modal was closed with OK/Primary action.
-    /// </summary>
-    Ok,
-
-    /// <summary>
-    /// Modal was closed with Cancel/Secondary action.
-    /// </summary>
-    Cancel,
-
-    /// <summary>
-    /// Modal was closed with Yes action.
-    /// </summary>
-    Yes,
-
-    /// <summary>
-    /// Modal was closed with No action.
-    /// </summary>
-    No
-}
 
 /// <summary>
 /// Configuration for showing a modal.
@@ -47,9 +18,9 @@ public class ModalOptions
     public string? Subtitle { get; set; }
 
     /// <summary>
-    /// Gets or sets the modal width (use predefined sizes like Small, Medium, Large).
+    /// Gets or sets the modal size preset.
     /// </summary>
-    public string Size { get; set; } = "Medium";
+    public ModalSize Size { get; set; } = ModalSize.Medium;
 
     /// <summary>
     /// Gets or sets whether clicking the backdrop closes the modal.
