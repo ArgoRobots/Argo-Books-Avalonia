@@ -1174,6 +1174,9 @@ public class App : Application
                         _mainWindowViewModel.HasUnsavedChanges = false;
                     if (_appShellViewModel != null)
                         _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+
+                    // Set date range to show full year of sample data
+                    ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
                 }
 
                 await LoadRecentCompaniesAsync();

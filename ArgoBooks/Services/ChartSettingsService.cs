@@ -74,6 +74,7 @@ public partial class ChartSettingsService : ObservableObject
         "Last Month" => "from prior month",
         "Last 30 Days" => "from prior 30 days",
         "Last 100 Days" => "from prior 100 days",
+        "Last 365 Days" => "from prior 365 days",
         "This Quarter" => "from last quarter",
         "Last Quarter" => "from prior quarter",
         "This Year" => "from last year",
@@ -232,6 +233,11 @@ public partial class ChartSettingsService : ObservableObject
 
             case "Last 100 Days":
                 StartDate = now.AddDays(-99).Date;
+                EndDate = now;
+                break;
+
+            case "Last 365 Days":
+                StartDate = now.AddDays(-364).Date;
                 EndDate = now;
                 break;
 
