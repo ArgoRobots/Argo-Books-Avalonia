@@ -382,6 +382,17 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
     #endregion
 
+    #region Welcome Subtitle
+
+    /// <summary>
+    /// Gets the welcome subtitle text, which changes based on whether this is a sample company.
+    /// </summary>
+    public string WelcomeSubtitle => _companyManager?.IsSampleCompany == true
+        ? "You're exploring TechFlow Solutions - a sample company. Feel free to experiment!".Translate()
+        : "Welcome back! Here is an overview of your business.".Translate();
+
+    #endregion
+
     #region Statistics Properties
 
     [ObservableProperty]
@@ -584,6 +595,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
         _companyManager = companyManager;
         LoadDashboardData();
 
+        // Notify welcome subtitle since it depends on company manager
+        OnPropertyChanged(nameof(WelcomeSubtitle));
+
         // Subscribe to data change events
         _companyManager.CompanyDataChanged += OnCompanyDataChanged;
 
@@ -616,6 +630,9 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase
 
         // Notify computed chart title properties to refresh
         OnPropertyChanged(nameof(SalesVsExpensesChartTitle));
+
+        // Refresh welcome subtitle for translation
+        OnPropertyChanged(nameof(WelcomeSubtitle));
 
         // Force ComboBox to re-render items with new translations
         // by refreshing the collection (items don't change, but triggers re-render)
