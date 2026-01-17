@@ -1,5 +1,10 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services;
 
@@ -171,5 +176,172 @@ public class SampleCompanyService
             try { File.Delete(sampleFilePath); }
             catch { /* Best effort */ }
         }
+    }
+
+    /// <summary>
+    /// Time-shifts all dates in the sample data so that the most recent transaction
+    /// appears as if it happened recently (within the last few days).
+    /// This ensures the dashboard shows meaningful data regardless of when the sample was created.
+    /// Should be called every time the sample company is opened.
+    /// </summary>
+    /// <param name="data">The company data to time-shift.</param>
+    /// <returns>True if data was shifted, false if already current.</returns>
+    public static bool TimeShiftSampleData(CompanyData data)
+    {
+        var maxDate = FindMaxDate(data);
+        if (maxDate == DateTime.MinValue)
+            return false;
+
+        var targetDate = DateTime.Today.AddDays(-3);
+        var offset = targetDate - maxDate.Date;
+
+        if (Math.Abs(offset.TotalDays) <= 3)
+            return false;
+
+        ApplyDateOffset(data, offset);
+        return true;
+    }
+
+    private static DateTime FindMaxDate(CompanyData data)
+    {
+        var dates = new List<DateTime>();
+
+        dates.AddRange(data.Sales.Select(s => s.Date));
+        dates.AddRange(data.Purchases.Select(p => p.Date));
+        dates.AddRange(data.Invoices.Select(i => i.IssueDate));
+        dates.AddRange(data.Payments.Select(p => p.Date));
+        dates.AddRange(data.Rentals.Select(r => r.StartDate));
+        dates.AddRange(data.Rentals.Where(r => r.ReturnDate.HasValue).Select(r => r.ReturnDate!.Value));
+        dates.AddRange(data.Returns.Select(r => r.ReturnDate));
+        dates.AddRange(data.Receipts.Select(r => r.Date));
+        dates.AddRange(data.LostDamaged.Select(ld => ld.DateDiscovered));
+        dates.AddRange(data.StockAdjustments.Select(sa => sa.Timestamp));
+        dates.AddRange(data.StockTransfers.Select(st => st.TransferDate));
+        dates.AddRange(data.StockTransfers.Where(st => st.CompletedAt.HasValue).Select(st => st.CompletedAt!.Value));
+        dates.AddRange(data.PurchaseOrders.Select(po => po.OrderDate));
+        dates.AddRange(data.RecurringInvoices.Select(ri => ri.StartDate));
+        dates.AddRange(data.RecurringInvoices.Where(ri => ri.LastGeneratedAt.HasValue).Select(ri => ri.LastGeneratedAt!.Value));
+        dates.AddRange(data.Customers.Where(c => c.LastTransactionDate.HasValue).Select(c => c.LastTransactionDate!.Value));
+
+        return dates.Count > 0 ? dates.Max() : DateTime.MinValue;
+    }
+
+    private static void ApplyDateOffset(CompanyData data, TimeSpan offset)
+    {
+        DateTime Shift(DateTime dt)
+        {
+            if (dt == DateTime.MinValue || dt.Year < 1900)
+                return dt;
+            try { return dt.Add(offset); }
+            catch (ArgumentOutOfRangeException) { return dt; }
+        }
+
+        DateTime? ShiftNullable(DateTime? dt)
+        {
+            if (!dt.HasValue || dt.Value == DateTime.MinValue || dt.Value.Year < 1900)
+                return dt;
+            try { return dt.Value.Add(offset); }
+            catch (ArgumentOutOfRangeException) { return dt; }
+        }
+
+        foreach (var sale in data.Sales)
+        {
+            sale.Date = Shift(sale.Date);
+            sale.CreatedAt = Shift(sale.CreatedAt);
+            sale.UpdatedAt = Shift(sale.UpdatedAt);
+        }
+
+        foreach (var purchase in data.Purchases)
+        {
+            purchase.Date = Shift(purchase.Date);
+            purchase.CreatedAt = Shift(purchase.CreatedAt);
+            purchase.UpdatedAt = Shift(purchase.UpdatedAt);
+        }
+
+        foreach (var invoice in data.Invoices)
+        {
+            invoice.IssueDate = Shift(invoice.IssueDate);
+            invoice.DueDate = Shift(invoice.DueDate);
+            invoice.CreatedAt = Shift(invoice.CreatedAt);
+            invoice.UpdatedAt = Shift(invoice.UpdatedAt);
+        }
+
+        foreach (var payment in data.Payments)
+        {
+            payment.Date = Shift(payment.Date);
+            payment.CreatedAt = Shift(payment.CreatedAt);
+        }
+
+        foreach (var rental in data.Rentals)
+        {
+            rental.StartDate = Shift(rental.StartDate);
+            rental.DueDate = Shift(rental.DueDate);
+            rental.ReturnDate = ShiftNullable(rental.ReturnDate);
+            rental.CreatedAt = Shift(rental.CreatedAt);
+            rental.UpdatedAt = Shift(rental.UpdatedAt);
+        }
+
+        foreach (var ret in data.Returns)
+        {
+            ret.ReturnDate = Shift(ret.ReturnDate);
+            ret.CreatedAt = Shift(ret.CreatedAt);
+        }
+
+        foreach (var receipt in data.Receipts)
+        {
+            receipt.Date = Shift(receipt.Date);
+            receipt.CreatedAt = Shift(receipt.CreatedAt);
+        }
+
+        foreach (var ld in data.LostDamaged)
+        {
+            ld.DateDiscovered = Shift(ld.DateDiscovered);
+            ld.CreatedAt = Shift(ld.CreatedAt);
+        }
+
+        foreach (var sa in data.StockAdjustments)
+            sa.Timestamp = Shift(sa.Timestamp);
+
+        foreach (var st in data.StockTransfers)
+        {
+            st.TransferDate = Shift(st.TransferDate);
+            st.CreatedAt = Shift(st.CreatedAt);
+            st.CompletedAt = ShiftNullable(st.CompletedAt);
+        }
+
+        foreach (var po in data.PurchaseOrders)
+        {
+            po.OrderDate = Shift(po.OrderDate);
+            po.ExpectedDeliveryDate = Shift(po.ExpectedDeliveryDate);
+            po.CreatedAt = Shift(po.CreatedAt);
+            po.UpdatedAt = Shift(po.UpdatedAt);
+        }
+
+        foreach (var ri in data.RecurringInvoices)
+        {
+            ri.StartDate = Shift(ri.StartDate);
+            ri.EndDate = ShiftNullable(ri.EndDate);
+            ri.NextInvoiceDate = Shift(ri.NextInvoiceDate);
+            ri.CreatedAt = Shift(ri.CreatedAt);
+            ri.LastGeneratedAt = ShiftNullable(ri.LastGeneratedAt);
+        }
+
+        foreach (var customer in data.Customers)
+            customer.LastTransactionDate = ShiftNullable(customer.LastTransactionDate);
+
+        foreach (var item in data.RentalInventory)
+        {
+            item.CreatedAt = Shift(item.CreatedAt);
+            item.UpdatedAt = Shift(item.UpdatedAt);
+        }
+
+        foreach (var product in data.Products)
+        {
+            product.CreatedAt = Shift(product.CreatedAt);
+            product.UpdatedAt = Shift(product.UpdatedAt);
+        }
+
+        foreach (var item in data.Inventory)
+            item.LastUpdated = Shift(item.LastUpdated);
     }
 }
