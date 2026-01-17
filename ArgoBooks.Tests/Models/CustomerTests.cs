@@ -90,7 +90,7 @@ public class CustomerTests
                 Street = "123 Main St",
                 City = "Springfield",
                 State = "IL",
-                PostalCode = "62701",
+                ZipCode = "62701",
                 Country = "USA"
             }
         };
@@ -98,7 +98,7 @@ public class CustomerTests
         Assert.Equal("123 Main St", customer.Address.Street);
         Assert.Equal("Springfield", customer.Address.City);
         Assert.Equal("IL", customer.Address.State);
-        Assert.Equal("62701", customer.Address.PostalCode);
+        Assert.Equal("62701", customer.Address.ZipCode);
         Assert.Equal("USA", customer.Address.Country);
     }
 

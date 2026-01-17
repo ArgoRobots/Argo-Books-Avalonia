@@ -71,8 +71,8 @@ public class PurchaseTests
         {
             LineItems =
             [
-                new LineItem { ProductId = "P1", Description = "Raw Material A", Quantity = 10, UnitPrice = 50.00m, Total = 500.00m },
-                new LineItem { ProductId = "P2", Description = "Raw Material B", Quantity = 5, UnitPrice = 100.00m, Total = 500.00m }
+                new LineItem { ProductId = "P1", Description = "Raw Material A", Quantity = 10, UnitPrice = 50.00m },
+                new LineItem { ProductId = "P2", Description = "Raw Material B", Quantity = 5, UnitPrice = 100.00m }
             ],
             Amount = 1000.00m,
             TaxRate = 0.08m,
@@ -81,7 +81,7 @@ public class PurchaseTests
         };
 
         Assert.Equal(2, purchase.LineItems.Count);
-        Assert.Equal(1000.00m, purchase.LineItems.Sum(li => li.Total));
+        Assert.Equal(1000.00m, purchase.LineItems.Sum(li => li.Amount));
     }
 
     [Fact]

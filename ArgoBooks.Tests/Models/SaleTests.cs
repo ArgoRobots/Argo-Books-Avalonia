@@ -92,8 +92,8 @@ public class SaleTests
         {
             LineItems =
             [
-                new LineItem { ProductId = "P1", Description = "Widget A", Quantity = 2, UnitPrice = 25.00m, Total = 50.00m },
-                new LineItem { ProductId = "P2", Description = "Widget B", Quantity = 3, UnitPrice = 10.00m, Total = 30.00m }
+                new LineItem { ProductId = "P1", Description = "Widget A", Quantity = 2, UnitPrice = 25.00m },
+                new LineItem { ProductId = "P2", Description = "Widget B", Quantity = 3, UnitPrice = 10.00m }
             ],
             Subtotal = 80.00m,
             TaxRate = 0.10m,
@@ -102,8 +102,8 @@ public class SaleTests
         };
 
         Assert.Equal(2, sale.LineItems.Count);
-        Assert.Equal(80.00m, sale.LineItems.Sum(li => li.Total));
-        Assert.Equal(sale.Subtotal, sale.LineItems.Sum(li => li.Total));
+        Assert.Equal(80.00m, sale.LineItems.Sum(li => li.Amount));
+        Assert.Equal(sale.Subtotal, sale.LineItems.Sum(li => li.Amount));
     }
 
     [Fact]
