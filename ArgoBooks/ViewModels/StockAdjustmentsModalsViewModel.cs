@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
