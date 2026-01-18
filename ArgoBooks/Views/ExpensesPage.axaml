@@ -94,7 +94,7 @@
                                         Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
                                         Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
                                         Command="{Binding OpenFilterModalCommand}"
-                                        ToolTip.Tip="{loc:Loc 'Filter'}">
+                                        ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc 'Filter'}}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                   Width="16" Height="16" />
@@ -108,7 +108,7 @@
                                         Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
                                         Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
                                         Click="OnAiScanButtonClick"
-                                        ToolTip.Tip="{loc:Loc 'AI Scan Receipt'}">
+                                        ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc 'AI Scan Receipt'}}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9.18-6.95L7.4 14.46 10.94 18l5.66-5.66-1.41-1.41-4.24 4.24-2.13-2.12z"
                                                   Width="16" Height="16"
@@ -122,7 +122,7 @@
                                         Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
                                         Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
                                         Command="{Binding OpenAddModalCommand}"
-                                        ToolTip.Tip="{loc:Loc 'Add Expense'}">
+                                        ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc 'Add Expense'}}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                   Width="16" Height="16"

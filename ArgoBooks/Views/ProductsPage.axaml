@@ -171,7 +171,7 @@
                                             Classes.compact="{Binding ResponsiveHeader.IsCompactMode}"
                                             Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
                                             Command="{Binding OpenFilterModalCommand}"
-                                            ToolTip.Tip="{loc:Loc Filter}">
+                                            ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc Filter}}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <PathIcon Data="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                                                       Width="16" Height="16" />
@@ -193,7 +193,7 @@
                                             Content="{loc:Loc Upgrade}"
                                             Command="{Binding UpgradeCommand}"
                                             IsVisible="{Binding ShowUpgradeButton}"
-                                            ToolTip.Tip="{loc:Loc Upgrade}"
+                                            ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc Upgrade}}"
                                             Padding="12,6" />
 
                                     <!-- Add Product Button -->
@@ -202,7 +202,7 @@
                                             Classes.medium="{Binding ResponsiveHeader.IsMediumMode}"
                                             Command="{Binding OpenAddModalCommand}"
                                             IsEnabled="{Binding CanAddProduct}"
-                                            ToolTip.Tip="{loc:Loc 'Add Product'}">
+                                            ToolTip.Tip="{Binding ResponsiveHeader.ShowButtonText, Converter={x:Static local:BoolConverters.ToParameterWhenFalse}, ConverterParameter={loc:Loc 'Add Product'}}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <PathIcon Data="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"
                                                       Width="16" Height="16"
