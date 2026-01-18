@@ -12,19 +12,72 @@ public partial class QuickActionsSettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isOpen;
 
-    #region Quick Action Visibility
+    #region Quick Action Visibility - Primary Actions
+
+    [ObservableProperty]
+    private bool _showNewInvoice = true;
 
     [ObservableProperty]
     private bool _showNewExpense = true;
 
     [ObservableProperty]
-    private bool _showNewSale = true;
+    private bool _showNewRevenue = true;
 
     [ObservableProperty]
-    private bool _showCreateInvoice = true;
+    private bool _showScanReceipt = true;
+
+    #endregion
+
+    #region Quick Action Visibility - Contact Actions
 
     [ObservableProperty]
-    private bool _showNewRental = true;
+    private bool _showNewCustomer;
+
+    [ObservableProperty]
+    private bool _showNewSupplier;
+
+    #endregion
+
+    #region Quick Action Visibility - Product & Inventory Actions
+
+    [ObservableProperty]
+    private bool _showNewProduct;
+
+    [ObservableProperty]
+    private bool _showRecordPayment;
+
+    #endregion
+
+    #region Quick Action Visibility - Rental Actions
+
+    [ObservableProperty]
+    private bool _showNewRentalItem;
+
+    [ObservableProperty]
+    private bool _showNewRentalRecord = true;
+
+    #endregion
+
+    #region Quick Action Visibility - Organization Actions
+
+    [ObservableProperty]
+    private bool _showNewCategory;
+
+    [ObservableProperty]
+    private bool _showNewDepartment;
+
+    [ObservableProperty]
+    private bool _showNewLocation;
+
+    #endregion
+
+    #region Quick Action Visibility - Order & Stock Actions
+
+    [ObservableProperty]
+    private bool _showNewPurchaseOrder;
+
+    [ObservableProperty]
+    private bool _showNewStockAdjustment;
 
     #endregion
 
@@ -82,10 +135,34 @@ public partial class QuickActionsSettingsModalViewModel : ViewModelBase
         var globalSettings = App.SettingsService?.GlobalSettings;
         if (globalSettings != null)
         {
-            ShowNewExpense = globalSettings.Ui.QuickActions.ShowNewExpense;
-            ShowNewSale = globalSettings.Ui.QuickActions.ShowNewSale;
-            ShowCreateInvoice = globalSettings.Ui.QuickActions.ShowCreateInvoice;
-            ShowNewRental = globalSettings.Ui.QuickActions.ShowNewRental;
+            var qa = globalSettings.Ui.QuickActions;
+
+            // Primary actions
+            ShowNewInvoice = qa.ShowNewInvoice;
+            ShowNewExpense = qa.ShowNewExpense;
+            ShowNewRevenue = qa.ShowNewRevenue;
+            ShowScanReceipt = qa.ShowScanReceipt;
+
+            // Contact actions
+            ShowNewCustomer = qa.ShowNewCustomer;
+            ShowNewSupplier = qa.ShowNewSupplier;
+
+            // Product & Inventory actions
+            ShowNewProduct = qa.ShowNewProduct;
+            ShowRecordPayment = qa.ShowRecordPayment;
+
+            // Rental actions
+            ShowNewRentalItem = qa.ShowNewRentalItem;
+            ShowNewRentalRecord = qa.ShowNewRentalRecord;
+
+            // Organization actions
+            ShowNewCategory = qa.ShowNewCategory;
+            ShowNewDepartment = qa.ShowNewDepartment;
+            ShowNewLocation = qa.ShowNewLocation;
+
+            // Order & Stock actions
+            ShowNewPurchaseOrder = qa.ShowNewPurchaseOrder;
+            ShowNewStockAdjustment = qa.ShowNewStockAdjustment;
         }
     }
 
@@ -94,10 +171,34 @@ public partial class QuickActionsSettingsModalViewModel : ViewModelBase
         var globalSettings = App.SettingsService?.GlobalSettings;
         if (globalSettings != null)
         {
-            globalSettings.Ui.QuickActions.ShowNewExpense = ShowNewExpense;
-            globalSettings.Ui.QuickActions.ShowNewSale = ShowNewSale;
-            globalSettings.Ui.QuickActions.ShowCreateInvoice = ShowCreateInvoice;
-            globalSettings.Ui.QuickActions.ShowNewRental = ShowNewRental;
+            var qa = globalSettings.Ui.QuickActions;
+
+            // Primary actions
+            qa.ShowNewInvoice = ShowNewInvoice;
+            qa.ShowNewExpense = ShowNewExpense;
+            qa.ShowNewRevenue = ShowNewRevenue;
+            qa.ShowScanReceipt = ShowScanReceipt;
+
+            // Contact actions
+            qa.ShowNewCustomer = ShowNewCustomer;
+            qa.ShowNewSupplier = ShowNewSupplier;
+
+            // Product & Inventory actions
+            qa.ShowNewProduct = ShowNewProduct;
+            qa.ShowRecordPayment = ShowRecordPayment;
+
+            // Rental actions
+            qa.ShowNewRentalItem = ShowNewRentalItem;
+            qa.ShowNewRentalRecord = ShowNewRentalRecord;
+
+            // Organization actions
+            qa.ShowNewCategory = ShowNewCategory;
+            qa.ShowNewDepartment = ShowNewDepartment;
+            qa.ShowNewLocation = ShowNewLocation;
+
+            // Order & Stock actions
+            qa.ShowNewPurchaseOrder = ShowNewPurchaseOrder;
+            qa.ShowNewStockAdjustment = ShowNewStockAdjustment;
 
             await App.SettingsService!.SaveGlobalSettingsAsync();
         }

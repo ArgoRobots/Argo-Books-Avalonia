@@ -42,10 +42,32 @@ public class UiSettings
 
 public class QuickActionsSettings
 {
+    // Primary actions (shown by default)
+    public bool ShowNewInvoice { get; set; } = true;
     public bool ShowNewExpense { get; set; } = true;
-    public bool ShowNewSale { get; set; } = true;
-    public bool ShowCreateInvoice { get; set; } = true;
-    public bool ShowNewRental { get; set; } = true;
+    public bool ShowNewRevenue { get; set; } = true;
+    public bool ShowScanReceipt { get; set; } = true;
+
+    // Contact actions
+    public bool ShowNewCustomer { get; set; } = false;
+    public bool ShowNewSupplier { get; set; } = false;
+
+    // Product & Inventory actions
+    public bool ShowNewProduct { get; set; } = false;
+    public bool ShowRecordPayment { get; set; } = false;
+
+    // Rental actions
+    public bool ShowNewRentalItem { get; set; } = false;
+    public bool ShowNewRentalRecord { get; set; } = true;
+
+    // Organization actions
+    public bool ShowNewCategory { get; set; } = false;
+    public bool ShowNewDepartment { get; set; } = false;
+    public bool ShowNewLocation { get; set; } = false;
+
+    // Order & Stock actions
+    public bool ShowNewPurchaseOrder { get; set; } = false;
+    public bool ShowNewStockAdjustment { get; set; } = false;
 }
 
 public class ChartSettings
