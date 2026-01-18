@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Media.Transformation;
+using Avalonia.Metadata;
 using ArgoBooks.Utilities;
 using CommunityToolkit.Mvvm.Input;
 
@@ -62,6 +63,7 @@ public partial class ModalOverlay : UserControl
     /// <summary>
     /// Gets or sets the modal content.
     /// </summary>
+    [Content]
     public new object? Content
     {
         get => GetValue(ContentProperty);
