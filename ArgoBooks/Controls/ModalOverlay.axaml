@@ -5,10 +5,18 @@
              xmlns:controls="using:ArgoBooks.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="ArgoBooks.Controls.ModalOverlay"
-             x:DataType="controls:ModalOverlay">
+             x:DataType="controls:ModalOverlay"
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+             HorizontalContentAlignment="Stretch"
+             VerticalContentAlignment="Stretch">
 
-    <Panel x:Name="OverlayPanel"
-           IsVisible="False">
+    <!-- Outer Panel always participates in layout -->
+    <Panel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Panel x:Name="OverlayPanel"
+               HorizontalAlignment="Stretch"
+               VerticalAlignment="Stretch"
+               IsVisible="False">
         <!-- Semi-transparent backdrop -->
         <Border x:Name="Backdrop"
                 Background="{DynamicResource OverlayBrush}"
@@ -36,5 +44,6 @@
 
             <ContentPresenter x:Name="ModalContentPresenter" />
         </Border>
+        </Panel>
     </Panel>
 </UserControl>

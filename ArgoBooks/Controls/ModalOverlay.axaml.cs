@@ -179,26 +179,14 @@ public partial class ModalOverlay : UserControl
 
         if (isOpen)
         {
-            // Set initial state before animation
+            // Ensure elements are visible (no animation for now to debug)
             if (_backdrop != null)
-                _backdrop.Opacity = 0;
+                _backdrop.Opacity = 1;
             if (_contentContainer != null)
             {
-                _contentContainer.Opacity = 0;
-                _contentContainer.RenderTransform = TransformOperations.Parse("scale(0.95)");
+                _contentContainer.Opacity = 1;
+                _contentContainer.RenderTransform = null;
             }
-
-            // Trigger animation to final state (on next frame so transitions kick in)
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                if (_backdrop != null)
-                    _backdrop.Opacity = 1;
-                if (_contentContainer != null)
-                {
-                    _contentContainer.Opacity = 1;
-                    _contentContainer.RenderTransform = TransformOperations.Parse("scale(1)");
-                }
-            }, Avalonia.Threading.DispatcherPriority.Render);
 
             Focus();
             Opened?.Invoke(this, EventArgs.Empty);
